@@ -294,4 +294,11 @@ public class StreamInlining {
     long count10 = list.stream().map(String::trim).count();
     if (<warning descr="Condition 'count10 == 0' is always 'false'">count10 == 0</warning>) {}
   }
+
+  void testFlatMapUnresolvedSymbol() {
+    Stream.of("foo", "bar").flatMap(x -> Stream.of(
+        <error descr="Cannot resolve symbol 'aa'">aa</error>, 
+        <error descr="Cannot resolve symbol 'bb'">bb</error>, 
+        <error descr="Cannot resolve symbol 'cc'">cc</error>));
+  }
 }

@@ -25,6 +25,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private ErrorLabel myErrorLabel;
   private JComponent myOptionsComponent;
   private final boolean myNameEditable;
+  @Nullable private final Runnable myUpdateTree;
 
   protected NamedConfigurable() {
     this(false, null);
@@ -32,27 +33,17 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   protected NamedConfigurable(boolean isNameEditable, @Nullable final Runnable updateTree) {
     myNameEditable = isNameEditable;
-    myNamePanel.setVisible(myNameEditable);
-    if (myNameEditable) {
-      myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          String name = myNameField.getText().trim();
-          try {
-            checkName(name);
-            myErrorLabel.setErrorText(null, null);
-            setDisplayName(name);
-            if (updateTree != null){
-              updateTree.run();
-            }
-          }
-          catch (ConfigurationException exc) {
-            myErrorLabel.setErrorText(exc.getMessage(), JBColor.RED);
-          }
-        }
-      });
-    }
-    myNamePanel.setBorder(JBUI.Borders.empty(10, 10, 6, 10));
+    myUpdateTree = updateTree;
+  }
+
+  /**
+   * This is a fake constructor which is needed to ensure that UI Form compiler won't insert calls of {@link #$$$setupUI$$$} method to other
+   * constructors.
+   */
+  @SuppressWarnings("unused")
+  private NamedConfigurable(boolean fake) {
+    this();
+    $$$setupUI$$$();
   }
 
   public boolean isNameEditable() {
@@ -60,6 +51,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   }
 
   public void setNameFieldShown(boolean shown) {
+    ensureUiInitialized();
     if (myNamePanel.isVisible() == shown) return;
 
     myNamePanel.setVisible(shown);
@@ -73,6 +65,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   @Override
   public final JComponent createComponent() {
+    ensureUiInitialized();
     if (myOptionsComponent == null){
       myOptionsComponent = createOptionsPanel();
       final JComponent component = createTopRightComponent();
@@ -93,6 +86,36 @@ public abstract class NamedConfigurable<T> implements Configurable {
     return myWholePanel;
   }
 
+  private void ensureUiInitialized() {
+    if (myWholePanel == null) {
+      $$$setupUI$$$();
+      myNamePanel.setVisible(myNameEditable);
+      if (myNameEditable) {
+        myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
+          protected void textChanged(@NotNull DocumentEvent e) {
+            String name = myNameField.getText().trim();
+            try {
+              checkName(name);
+              myErrorLabel.setErrorText(null, null);
+              setDisplayName(name);
+              if (myUpdateTree != null) {
+                myUpdateTree.run();
+              }
+            }
+            catch (ConfigurationException exc) {
+              myErrorLabel.setErrorText(exc.getMessage(), JBColor.RED);
+            }
+          }
+        });
+      }
+      myNamePanel.setBorder(JBUI.Borders.empty(10, 10, 6, 10));
+    }
+  }
+
+  private void $$$setupUI$$$() {
+  }
+
   protected void checkName(@NotNull String name) throws ConfigurationException {
     if (name.isEmpty()) {
       throw new ConfigurationException("Name cannot be empty");
@@ -105,11 +128,13 @@ public abstract class NamedConfigurable<T> implements Configurable {
   }
 
   protected void resetOptionsPanel() {
+    ensureUiInitialized();
     myOptionsComponent = null;
     myOptionsPanel.removeAll();
   }
 
   public void updateName() {
+    ensureUiInitialized();
     myNameField.setText(getDisplayName());
   }
 

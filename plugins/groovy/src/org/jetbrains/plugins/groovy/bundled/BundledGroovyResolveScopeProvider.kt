@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.module.impl.scopes.JdkScope
@@ -15,7 +15,9 @@ class BundledGroovyResolveScopeProvider : ResolveScopeProvider() {
 
   override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
     val index = ProjectFileIndex.SERVICE.getInstance(project)
-    index.getModuleForFile(file)?.let { return null }
+    if (index.getModuleForFile(file) != null) {
+      return null
+    }
 
     val rootFile = VfsUtil.getRootFile(file)
     if (rootFile == bundledGroovyJarRoot) {

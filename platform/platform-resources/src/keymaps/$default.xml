@@ -601,9 +601,6 @@
   <action id="CopyReference">
     <keyboard-shortcut first-keystroke="control alt shift C"/>
   </action>
-  <action id="CopyTBXReference">
-    <keyboard-shortcut first-keystroke="control alt shift R"/>
-  </action>
   <action id="EditorPasteFromX11">
     <mouse-shortcut keystroke="button2"/>
   </action>

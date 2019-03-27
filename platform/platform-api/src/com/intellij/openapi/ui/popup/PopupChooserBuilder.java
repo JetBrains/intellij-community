@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -25,6 +24,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * @author max
@@ -60,7 +60,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private Function<Object,String> myItemsNamer = null;
   private boolean myMayBeParent;
-  private int myAdAlignment = SwingUtilities.LEFT;
+  private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
@@ -107,8 +107,17 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       return false;
     }
 
+    /**
+     *  Keep in mind that by setting KeyEventHandler it gets a responsibility to close popup in case of close request.
+     *  In common cases it looks like:
+     *
+     *  if (AbstractPopup.isCloseRequest(e) && mySpeedSearch.isNotActive()) {
+     *    myPopup.cancel(e);
+     *    return true;
+     *  }
+     */
     @Nullable
-    default BooleanFunction<KeyEvent> getKeyEventHandler() {
+    default BiPredicate<KeyEvent, JBPopup> getKeyEventHandler() {
       return null;
     }
 
@@ -322,7 +331,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       public void mouseReleased(MouseEvent e) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           if (myCloseOnEnter) {
-            closePopup(true, e, true);
+            closePopup(e, true);
           }
           else {
             myItemChosenRunnable.run();
@@ -391,11 +400,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
-      .setCouldPin(myCouldPin);
+      .setCouldPin(myCouldPin)
+      .setOkHandler(myItemChosenRunnable);
 
-    BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
+    BiPredicate<KeyEvent, JBPopup> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
-      builder.setKeyEventHandler(keyEventHandler);
+      builder.setKeyEventHandler(event -> keyEventHandler.test(event, myPopup));
     }
 
     if (myCommandButton != null) {
@@ -442,7 +452,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
-        closePopup(shouldPerformAction, null, shouldPerformAction);
+        closePopup(null, shouldPerformAction);
       }
     });
   }
@@ -451,11 +461,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myChooserComponent.getComponent().registerKeyboardAction(action, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
-    if (shouldPerformAction) {
-      myPopup.setFinalRunnable(myItemChosenRunnable);
-    }
-
+  private void closePopup(MouseEvent e, boolean isOk) {
     if (isOk) {
       myPopup.closeOk(e);
     } else {
@@ -508,7 +514,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   @NotNull
   public PopupChooserBuilder<T> setAdText(String ad) {
-    setAdText(ad, SwingUtilities.LEFT);
+    setAdText(ad, SwingConstants.LEFT);
     return this;
   }
 

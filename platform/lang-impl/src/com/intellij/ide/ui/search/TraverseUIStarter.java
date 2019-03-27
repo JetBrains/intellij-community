@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -45,7 +45,7 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
  *
  * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
- * 
+ *
  * Pass {@code true} as the second parameter to have searchable options split by modules.
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
@@ -77,7 +77,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @Override
   public void premain(String[] args) {
     OUTPUT_PATH = args[1];
-    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]); 
+    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]);
   }
 
   @Override
@@ -97,13 +97,15 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     try {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeStart();
+      }
 
       SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
-      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension1.afterTraversal(options);
+      }
 
       final Map<String, Element> roots = newHashMap();
       for (SearchableConfigurable option : options.keySet()) {
@@ -155,8 +157,9 @@ public class TraverseUIStarter extends ApplicationStarterEx {
         JDOMUtil.writeDocument(new Document(entry.getValue()), output, "\n");
       }
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterResultsAreSaved();
+      }
 
       System.out.println("Searchable options index builder completed");
     }

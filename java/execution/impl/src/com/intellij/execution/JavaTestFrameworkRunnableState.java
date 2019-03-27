@@ -214,9 +214,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
     configureClasspath(javaParameters);
 
-    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
-    for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(project, module, javaParameters);
+    for (JUnitPatcher patcher : Extensions.getRootArea().<JUnitPatcher>getExtensionPoint(ExtensionPoints.JUNIT_PATCHER).getExtensionList()) {
+      patcher.patchJavaParameters(project, module, javaParameters);
     }
 
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
@@ -265,7 +264,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (Comparing.strEqual(forkMode, "none")) {
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
-          final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
+          final String actionName = executor.getActionName();
           throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
                                      "Please specify single working directory, or change test scope to single module.");
         }
@@ -315,8 +314,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
     final T configuration = getConfiguration();
-    final Object[] listeners = Extensions.getExtensions(epName);
-    for (final Object listener : listeners) {
+    for (final Object listener : Extensions.getRootArea().getExtensionPoint(epName).getExtensionList()) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
         if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {

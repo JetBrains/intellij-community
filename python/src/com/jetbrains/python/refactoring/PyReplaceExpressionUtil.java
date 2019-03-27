@@ -166,6 +166,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       for (PyExpression argument : arguments) {
         if (argument instanceof PyStarArgument) {
           hasStarArguments = true;
+          break;
         }
       }
       if (!hasStarArguments) {

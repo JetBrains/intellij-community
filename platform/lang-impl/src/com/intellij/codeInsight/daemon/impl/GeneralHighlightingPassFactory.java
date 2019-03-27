@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass.EmptyPass;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,19 +14,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-final class GeneralHighlightingPassFactory implements MainHighlightingPassFactory, BaseComponent {
+final class GeneralHighlightingPassFactory implements MainHighlightingPassFactory {
   private final Project myProject;
 
-  GeneralHighlightingPassFactory(@NotNull Project project) {
+  GeneralHighlightingPassFactory(@NotNull Project project, @NotNull TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     myProject = project;
-  }
-
-  @Override
-  public void initComponent() {
-    TextEditorHighlightingPassRegistrar.getInstance(myProject).registerTextEditorHighlightingPass(this,
-                                                                                                  null,
-                                                                                                  new int[]{Pass.UPDATE_FOLDING}, false,
-                                                                                                  Pass.UPDATE_ALL);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
+                                                                 null,
+                                                                 new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
   }
 
   @NotNull

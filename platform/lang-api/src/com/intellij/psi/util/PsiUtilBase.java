@@ -100,10 +100,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
-
-    if (!elt.isValid()) {
-      LOG.error(elt + "; file: " + file + "; isValid: " + file.isValid());
-    }
+    ensureValid(elt);
     return elt.getContainingFile();
   }
 

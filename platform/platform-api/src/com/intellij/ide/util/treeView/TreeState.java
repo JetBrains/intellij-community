@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
@@ -13,6 +13,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -102,6 +103,12 @@ public class TreeState implements JDOMExternalizable {
   private final List<List<PathElement>> myExpandedPaths;
   private final List<List<PathElement>> mySelectedPaths;
   private boolean myScrollToSelection;
+
+  // xml deserialization
+  @SuppressWarnings("unused")
+  TreeState() {
+    this(new SmartList<>(), new SmartList<>());
+  }
 
   private TreeState(List<List<PathElement>> expandedPaths, List<List<PathElement>> selectedPaths) {
     myExpandedPaths = expandedPaths;

@@ -70,7 +70,7 @@ public class GitCrlfProblemsDetector {
     myRepositoryManager = GitUtil.getRepositoryManager(project);
     myGit = git;
 
-    Map<VirtualFile, List<VirtualFile>> filesByRoots = sortFilesByRoots(files);
+    Map<VirtualFile, List<VirtualFile>> filesByRoots = GitUtil.sortFilesByGitRootIgnoringMissing(project, files);
 
     boolean shouldWarn = false;
     Collection<VirtualFile> rootsWithIncorrectAutoCrlf = getRootsWithIncorrectAutoCrlf(filesByRoots);
@@ -176,11 +176,6 @@ public class GitCrlfProblemsDetector {
     GitCommandResult result = myGit.config(repository, GitConfigUtil.CORE_AUTOCRLF);
     String value = result.getOutputAsJoinedString();
     return value.equalsIgnoreCase("true") || value.equalsIgnoreCase("input");
-  }
-
-  @NotNull
-  private static Map<VirtualFile, List<VirtualFile>> sortFilesByRoots(@NotNull Collection<VirtualFile> files) {
-    return GitUtil.sortFilesByGitRootsIgnoringOthers(files);
   }
 
   public boolean shouldWarn() {

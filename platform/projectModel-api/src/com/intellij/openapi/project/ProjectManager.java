@@ -18,8 +18,6 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 
   /**
-   * Gets {@code ProjectManager} instance.
-   *
    * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
@@ -27,7 +25,7 @@ public abstract class ProjectManager {
   }
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
@@ -35,13 +33,13 @@ public abstract class ProjectManager {
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);

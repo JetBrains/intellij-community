@@ -266,5 +266,6 @@ public class X {
   void font(@MagicConstant(flags = {FontType.PLAIN, FontType.BOLD, FontType.ITALIC}) int x) {
     // 0 is not allowed despite the fact that it's flags parameter
     font(<warning descr="Should be one of: FontType.PLAIN, FontType.BOLD, FontType.ITALIC or their combination">0</warning>);
+    font(x ^ FontType.BOLD);
   }
 }

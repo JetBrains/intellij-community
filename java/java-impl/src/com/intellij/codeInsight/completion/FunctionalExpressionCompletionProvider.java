@@ -298,10 +298,10 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       for (PsiMethod psiMethod : paramClass.getAllMethods()) {
         PsiClass containingClass = psiMethod.getContainingClass();
         PsiClass qualifierClass = containingClass != null ? containingClass : paramClass;
-        if (visited.add(psiMethod.getName()) &&
-            !psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+        if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
             hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
-            isSignatureAppropriate(psiMethod, params, substitutor, 1, originalPosition, paramClass)) {
+            isSignatureAppropriate(psiMethod, params, substitutor, 1, originalPosition, paramClass) &&
+            visited.add(psiMethod.getName())) {
           LookupElement methodRefLookupElement = createMethodRefOnClass(functionalInterfaceType, psiMethod, qualifierClass);
           if (prioritize && containingClass == paramClass) {
             methodRefLookupElement = PrioritizedLookupElement.withExplicitProximity(methodRefLookupElement, 1);

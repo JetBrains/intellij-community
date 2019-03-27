@@ -680,7 +680,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (enclosingClass != null) {
-      PsiClassType type = PsiElementFactory.SERVICE.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
+      PsiClassType type = PsiElementFactory.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
       if (!type.equals(parameter.getType())) {
         PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
         String text = JavaErrorMessages.message("receiver.type.mismatch");

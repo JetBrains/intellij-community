@@ -28,7 +28,7 @@ import java.util.Arrays;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
-  private static final String NO_IMPORTS_OPTIMIZED = "Unused imports not found";
+  private static final String NO_IMPORTS_OPTIMIZED = "No unused imports found";
   private static boolean myProcessVcsChangedFilesInTests;
 
   public OptimizeImportsAction() {

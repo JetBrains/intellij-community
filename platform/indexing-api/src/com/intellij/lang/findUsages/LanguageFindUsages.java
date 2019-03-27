@@ -108,7 +108,7 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
   }
 
   private static <T> T getFromProviders(@NotNull PsiElement psiElement,
-                                        T defaultValue, @NotNull Function<FindUsagesProvider, T> getter) {
+                                        T defaultValue, @NotNull Function<? super FindUsagesProvider, ? extends T> getter) {
     Language language = psiElement.getLanguage();
     List<FindUsagesProvider> providers = INSTANCE.allForLanguage(language);
     assert !providers.isEmpty() : "Element: " + psiElement + ", language: " + language;

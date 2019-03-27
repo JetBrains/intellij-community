@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
@@ -34,7 +38,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -114,7 +117,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     ApplicationManager.getApplication().runReadAction(() -> {
       AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
       try {
-        runActivities(myPreStartupActivities, StartUpMeasurer.Phases.PROJECT_PRE_STARTUP);
+        runActivities(myPreStartupActivities, Phases.PROJECT_PRE_STARTUP);
 
         // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
         synchronized (this) {
@@ -122,7 +125,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           myStartupActivitiesRunning = true;
         }
 
-        runActivities(myStartupActivities, StartUpMeasurer.Phases.PROJECT_STARTUP);
+        runActivities(myStartupActivities, Phases.PROJECT_STARTUP);
 
         synchronized (this) {
           myStartupActivitiesRunning = false;
@@ -137,35 +140,40 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public void runPostStartupActivitiesFromExtensions() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    // strictly speaking, it is not a sequential activity,
+    // because sub activities performed in a different threads (depends on dumb awareness),
+    // but because there is no any other concurrent phase and timeline end equals to last dumb-aware activity,
+    // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
+    Activity activity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES);
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
     for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
-      Runnable runnable = () -> logActivityDuration(uiFreezeWarned, extension);
       if (DumbService.isDumbAware(extension)) {
-        runActivity(runnable);
+        logActivityDuration(uiFreezeWarned, extension);
       }
       else {
-        queueSmartModeActivity(runnable);
+        queueSmartModeActivity(() -> logActivityDuration(uiFreezeWarned, extension));
       }
     }
+    activity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
-  private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
-    long duration = TimeoutUtil.measureExecutionTime(() -> extension.runActivity(myProject));
-
-    Application app = ApplicationManager.getApplication();
-    if (duration > 100 && !app.isUnitTestMode()) {
-      boolean edt = app.isDispatchThread();
-      if (edt && uiFreezeWarned.compareAndSet(false, true)) {
-        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
-                 " under modal progress, or just making them faster to speed up project opening.");
+  private void logActivityDuration(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
+    long startTime = StartUpMeasurer.getCurrentTime();
+    extension.runActivity(myProject);
+    long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass());
+    if (duration > 100) {
+      Application app = ApplicationManager.getApplication();
+      if (!app.isUnitTestMode() && app.isDispatchThread() && uiFreezeWarned.compareAndSet(false, true)) {
+        LOG.info(
+          "Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to run them in background" +
+          " under modal progress, or just making them faster to speed up project opening.");
       }
-      LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
     }
   }
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
-  private void queueSmartModeActivity(final Runnable activity) {
+  private void queueSmartModeActivity(@NotNull Runnable activity) {
     DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
@@ -181,7 +189,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       checkProjectRoots();
     }
 
-    runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
+    runActivities(myDumbAwarePostStartupActivities, Phases.PROJECT_DUMB_POST_STARTUP);
 
     DumbService dumbService = DumbService.getInstance(myProject);
     dumbService.runWhenSmart(new Runnable() {
@@ -190,7 +198,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         app.assertIsDispatchThread();
 
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
-        runActivities(myDumbAwarePostStartupActivities, StartUpMeasurer.Phases.PROJECT_DUMB_POST_STARTUP);
+        runActivities(myDumbAwarePostStartupActivities, Phases.PROJECT_DUMB_POST_STARTUP);
 
         while (true) {
           List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
@@ -352,11 +360,11 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private static void runActivities(@NotNull List<? extends Runnable> activities, @NotNull String phaseName) {
-    StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(phaseName);
+    Activity activity = StartUpMeasurer.start(phaseName);
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
-    measureToken.end();
+    activity.end();
   }
 
   public static void runActivity(Runnable runnable) {

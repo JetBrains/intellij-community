@@ -13,6 +13,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -552,7 +553,23 @@ public class VirtualFilePointerTest extends LightPlatformTestCase {
     Disposer.dispose(disposable);
     assertEquals(0, myVirtualFilePointerManager.numberOfCachedUrlToIdentity());
   }
-  
+
+  public void testListenerWorksInTempFileSystem() throws IOException {
+    VirtualFile child = WriteAction.computeAndWait(() -> getSourceRoot().createChildData(this, "a.txt"));
+    assertInstanceOf(child.getFileSystem(), TempFileSystem.class);
+    LoggingListener listener = new LoggingListener();
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(child, disposable, listener);
+
+    WriteAction.runAndWait(() -> child.delete(this));
+    assertEquals("[before:true, after:false]", listener.log.toString());
+    assertNull(pointer.getFile());
+
+    listener.log.clear();
+    VirtualFile newChild = WriteAction.computeAndWait(() -> getSourceRoot().createChildData(this, "a.txt"));
+    assertEquals("[before:false, after:true]", listener.log.toString());
+    assertEquals(newChild, pointer.getFile());
+  }
+
   public void testStressConcurrentAccess() throws Exception {
     VirtualFilePointer fileToCreatePointer = createPointerByFile(new File(myTempDir), null);
     VirtualFilePointerListener listener = new VirtualFilePointerListener() { };

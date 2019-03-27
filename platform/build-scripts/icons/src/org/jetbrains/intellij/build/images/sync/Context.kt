@@ -92,7 +92,10 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
     fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
 
-    devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: error(devRepoArg)
+    devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: {
+      log("WARNING: $devRepoArg not found")
+      File(System.getProperty("user.dir"))
+    }()
     val iconsRepoPath = System.getProperty(iconsRepoPathArg) ?: ""
     iconsRepoDir = System.getProperty(iconsRepoArg)?.let { "$it/$iconsRepoPath" }?.let { path ->
       File(path).takeIf(File::isDir) ?: ignoreCaseInDirName(path)?.takeIf(File::isDir)

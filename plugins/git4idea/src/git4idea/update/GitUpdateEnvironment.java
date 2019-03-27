@@ -40,7 +40,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
-    Set<VirtualFile> roots = gitRoots(Arrays.asList(filePaths));
+    Set<VirtualFile> roots = getRootsForFilePathsIfAny(myProject, Arrays.asList(filePaths));
     GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
     final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject,
                                                                    progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),

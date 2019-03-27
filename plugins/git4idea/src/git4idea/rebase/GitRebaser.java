@@ -131,20 +131,14 @@ public class GitRebaser {
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
 
-    makeContinueRebaseInteractiveEditor(root, rh);
-
-    final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
-    rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    rebaseTask.setProgressIndicator(myProgressIndicator);
-    return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
-  }
-
-  protected void makeContinueRebaseInteractiveEditor(VirtualFile root, GitLineHandler rh) {
-    GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
-    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(rebaseEditorService, myProject, root);
-    UUID rebaseEditorNo = editor.getHandlerNo();
-    rebaseEditorService.configureHandler(rh, rebaseEditorNo);
+    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(myProject, root);
+    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
+      final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
+      rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+      rebaseTask.setProgressIndicator(myProgressIndicator);
+      return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
+    }
   }
 
   /**
@@ -176,27 +170,17 @@ public class GitRebaser {
 
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
     h.setStdoutSuppressed(false);
-    UUID rebaseEditorNo = null;
-    GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
-    try {
-      h.addParameters("-i", "-m", "-v");
-      h.addParameters(parentCommit);
+    h.addParameters("-i", "-m", "-v");
+    h.addParameters(parentCommit);
 
-      final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-      h.addLineListener(rebaseConflictDetector);
+    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
+    h.addLineListener(rebaseConflictDetector);
 
-      final PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(rebaseEditorService, root, olderCommits, false);
-      rebaseEditorNo = pushRebaseEditor.getHandlerNo();
-      rebaseEditorService.configureHandler(h, rebaseEditorNo);
-
+    final PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(root, olderCommits, false);
+    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(h, pushRebaseEditor)) {
       final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
       rebaseTask.setProgressIndicator(myProgressIndicator);
       return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
-    } finally { // TODO should be unregistered in the task.success
-      // unregistering rebase service
-      if (rebaseEditorNo != null) {
-        rebaseEditorService.unregisterHandler(rebaseEditorNo);
-      }
     }
   }
 
@@ -288,10 +272,8 @@ public class GitRebaser {
   }
 
   public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{
-    public TrivialEditor(@NotNull GitRebaseEditorService service,
-                         @NotNull Project project,
-                         @NotNull VirtualFile root) {
-      super(service, project, root);
+    public TrivialEditor(@NotNull Project project, @NotNull VirtualFile root) {
+      super(project, root);
     }
 
     @Override
@@ -374,11 +356,10 @@ public class GitRebaser {
      * @param commits   the reordered commits
      * @param hasMerges if true, the vcs root has merges
      */
-    PushRebaseEditor(GitRebaseEditorService rebaseEditorService,
-                            final VirtualFile root,
-                            List<String> commits,
-                            boolean hasMerges) {
-      super(rebaseEditorService, myProject, root);
+    PushRebaseEditor(final VirtualFile root,
+                     List<String> commits,
+                     boolean hasMerges) {
+      super(myProject, root);
       myCommits = commits;
       myHasMerges = hasMerges;
     }

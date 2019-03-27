@@ -28,10 +28,11 @@ import org.jetbrains.plugins.github.api.data.GithubIssueLabel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubUser
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
 import org.jetbrains.plugins.github.util.*
 import java.awt.Component
 import java.awt.Cursor
@@ -48,6 +49,8 @@ import javax.swing.event.DocumentEvent
 
 class GithubPullRequestsMetadataServiceImpl internal constructor(private val project: Project,
                                                                  private val progressManager: ProgressManager,
+                                                                 private val repoDataLoader: GithubPullRequestsRepositoryDataLoader,
+                                                                 private val listLoader: GithubPullRequestsListLoader,
                                                                  private val dataLoader: GithubPullRequestsDataLoader,
                                                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                                  private val requestExecutor: GithubApiRequestExecutor,
@@ -56,26 +59,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                                                  private val repoPath: GithubFullPath)
   : GithubPullRequestsMetadataService {
 
-  private val repoCollaboratorsWithPushAccess: List<GithubUser> by lazy {
-    GithubApiPagesLoader
-      .loadAll(requestExecutor, progressManager.progressIndicator,
-               GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.user, repoPath.repository))
-      .filter { it.permissions.isPush }
-  }
-
-  private val repoIssuesAssignees: List<GithubUser> by lazy {
-    GithubApiPagesLoader.loadAll(requestExecutor, progressManager.progressIndicator,
-                                 GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.user, repoPath.repository))
-  }
-
-  private val repoIssuesLabels: List<GithubIssueLabel> by lazy {
-    GithubApiPagesLoader.loadAll(requestExecutor, progressManager.progressIndicator,
-                                 GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.user, repoPath.repository))
-  }
-
   override fun adjustReviewers(pullRequest: Long, parentComponent: JComponent) {
     showUsersChooser(pullRequest, "Reviewers", parentComponent,
-                     { _, details -> repoCollaboratorsWithPushAccess.filter { details.user != it } }) { it.requestedReviewers }
+                     { _, details -> repoDataLoader.collaboratorsWithPushAccess.filter { details.user != it } }) { it.requestedReviewers }
       .handleOnEdt(getAdjustmentHandler(pullRequest, "reviewer") { delta, indicator ->
         if (delta.removedItems.isNotEmpty()) {
           indicator.text2 = "Removing reviewers"
@@ -95,7 +81,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
   }
 
   override fun adjustAssignees(pullRequest: Long, parentComponent: JComponent) {
-    showUsersChooser(pullRequest, "Assignees", parentComponent, { _, _ -> repoIssuesAssignees }) { it.assignees }
+    showUsersChooser(pullRequest, "Assignees", parentComponent, { _, _ -> repoDataLoader.issuesAssignees }) { it.assignees }
       .handleOnEdt(getAdjustmentHandler(pullRequest, "assignee") { delta, indicator ->
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.Issues
@@ -106,7 +92,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
   override fun adjustLabels(pullRequest: Long, parentComponent: JComponent) {
     showChooser(pullRequest, "Labels", parentComponent,
-                { SelectionListCellRenderer.Labels() }, { _, _ -> repoIssuesLabels }, { it.labels.orEmpty() })
+                { SelectionListCellRenderer.Labels() }, { _, _ -> repoDataLoader.issuesLabels }, { it.labels.orEmpty() })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "label") { delta, indicator ->
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.Issues.Labels
@@ -297,7 +283,8 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
         override fun onFinished() {
           busyStateTracker.release(pullRequest)
-          dataLoader.reloadDetails(pullRequest)
+          dataLoader.findDataProvider(pullRequest)?.reloadDetails()
+          listLoader.outdated = true
         }
       })
     }

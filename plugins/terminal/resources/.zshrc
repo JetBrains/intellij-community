@@ -61,16 +61,3 @@ function override_jb_variables {
 }
 
 override_jb_variables
-
-function configureCommandHistory {
-  local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
-  if [ -n "$commandHistoryFile" ]
-  then
-    if [ ! -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
-    then
-      command cp "$HISTFILE" "$commandHistoryFile"
-    fi
-    export HISTFILE="$commandHistoryFile"
-  fi
-}
-configureCommandHistory

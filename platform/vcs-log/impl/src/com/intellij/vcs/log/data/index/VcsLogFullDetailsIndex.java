@@ -71,10 +71,9 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex);
   }
 
-  @NotNull
-  protected ForwardIndex<Integer, T> createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension)
-    throws IOException {
-    return new EmptyForwardIndex<>();
+  @Nullable
+  protected ForwardIndex<Integer, T> createForwardIndex(@NotNull IndexExtension<Integer, T, D> extension) throws IOException {
+    return null;
   }
 
   @NotNull
@@ -144,7 +143,7 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                      @NotNull MyMapIndexStorage<T> mapIndexStorage,
-                     @NotNull ForwardIndex<Integer, T> forwardIndex) {
+                     @Nullable ForwardIndex<Integer, T> forwardIndex) {
       super(extension, mapIndexStorage, forwardIndex);
     }
 
@@ -221,30 +220,6 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     @Override
     public int getVersion() {
       return myVersion;
-    }
-  }
-
-  private static class EmptyForwardIndex<T> implements ForwardIndex<Integer, T> {
-    @NotNull
-    @Override
-    public InputDataDiffBuilder<Integer, T> getDiffBuilder(int inputId) {
-      return new EmptyInputDataDiffBuilder<>(inputId);
-    }
-
-    @Override
-    public void putInputData(int inputId, @NotNull Map<Integer, T> data) {
-    }
-
-    @Override
-    public void flush() {
-    }
-
-    @Override
-    public void clear() {
-    }
-
-    @Override
-    public void close() {
     }
   }
 }

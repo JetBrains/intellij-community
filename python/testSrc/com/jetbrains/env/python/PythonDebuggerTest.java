@@ -426,6 +426,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-exceptions.ZeroDivisionError\"", "message=\"python-builtins.ZeroDivisionError\"");
         eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
         resume();
         waitForTerminate();
@@ -469,6 +470,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-BaseException\"");
         eval("__exception__[0].__name__").hasValue("'IndexError'");
         resume();
       }
@@ -522,6 +524,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-BaseException\"");
         eval("stopped_in_user_file").hasValue("True");
         resume();
         waitForTerminate();
@@ -547,6 +550,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-BaseException\"");
         eval("stopped_in_user_file").hasValue("True");
         resume();
         waitForTerminate();
@@ -572,6 +576,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-BaseException\"");
         eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
         resume();
         waitForTerminate();
@@ -598,6 +603,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        waitForOutput("message=\"python-BaseException\"");
         eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
         resume();
         waitForTerminate();

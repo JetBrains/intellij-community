@@ -24,11 +24,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -666,64 +668,62 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
     final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+    if (!shouldStickToEnd) {
+      myEditor.getScrollingModel().accumulateViewportChanges();
+    }
+    try {
+      // the text can contain one "\r" at the start meaning we should delete the last line
+      boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
+      if (startsWithCR) {
+        // remove last line if any
+        if (document.getLineCount() != 0) {
+          int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
+          document.deleteString(lineStartOffset, document.getTextLength());
+        }
+      }
+      int startIndex = startsWithCR ? 1 : 0;
+      List<TokenBuffer.TokenInfo> refinedTokens = new ArrayList<>(deferredTokens.size() - startIndex);
+      int backspacePrefixLength = evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens);
+      if (backspacePrefixLength > 0) {
+        int lineCount = document.getLineCount();
+        if (lineCount != 0) {
+          int lineStartOffset = document.getLineStartOffset(lineCount - 1);
+          document.deleteString(Math.max(lineStartOffset, document.getTextLength() - backspacePrefixLength), document.getTextLength());
+        }
+      }
+      addedTextRef.set(TokenBuffer.getRawText(refinedTokens));
+      document.insertString(document.getTextLength(), addedTextRef.get());
+      // add token information as range markers
+      // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
+      int offset = document.getTextLength();
+      int tokenLength = 0;
+      for (int i = refinedTokens.size() - 1; i >= 0; i--) {
+        TokenBuffer.TokenInfo token = refinedTokens.get(i);
+        contentTypes.add(token.contentType);
+        tokenLength += token.length();
+        TokenBuffer.TokenInfo prevToken = i == 0 ? null : refinedTokens.get(i - 1);
+        if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
+          // do not create highlighter yet because can merge previous token with the current
+          continue;
+        }
+        int start = Math.max(0, offset - tokenLength);
+        if (start == offset) {
+          continue;
+        }
+        final HyperlinkInfo info = token.getHyperlinkInfo();
+        if (info != null) {
+          myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
+        }
+        createTokenRangeHighlighter(token.contentType, start, offset);
+        offset = start;
+        tokenLength = 0;
+      }
+    }
+    finally {
       if (!shouldStickToEnd) {
-        myEditor.getScrollingModel().accumulateViewportChanges();
+        myEditor.getScrollingModel().flushViewportChanges();
       }
-      try {
-        // the text can contain one "\r" at the start meaning we should delete the last line
-        boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
-        if (startsWithCR) {
-          // remove last line if any
-          if (document.getLineCount() != 0) {
-            int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
-            document.deleteString(lineStartOffset, document.getTextLength());
-          }
-        }
-        int startIndex = startsWithCR ? 1 : 0;
-        List<TokenBuffer.TokenInfo> refinedTokens = new ArrayList<>(deferredTokens.size() - startIndex);
-        int backspacePrefixLength = evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens);
-        if (backspacePrefixLength > 0) {
-          int lineCount = document.getLineCount();
-          if (lineCount != 0) {
-            int lineStartOffset = document.getLineStartOffset(lineCount - 1);
-            document.deleteString(Math.max(lineStartOffset, document.getTextLength() - backspacePrefixLength), document.getTextLength());
-          }
-        }
-        addedTextRef.set(TokenBuffer.getRawText(refinedTokens));
-        document.insertString(document.getTextLength(), addedTextRef.get());
-        // add token information as range markers
-        // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
-        int offset = document.getTextLength();
-        int tokenLength = 0;
-        for (int i = refinedTokens.size() - 1; i >= 0; i--) {
-          TokenBuffer.TokenInfo token = refinedTokens.get(i);
-          contentTypes.add(token.contentType);
-          tokenLength += token.length();
-          TokenBuffer.TokenInfo prevToken = i == 0 ? null : refinedTokens.get(i - 1);
-          if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
-            // do not create highlighter yet because can merge previous token with the current
-            continue;
-          }
-          int start = Math.max(0, offset - tokenLength);
-          if (start == offset) {
-            continue;
-          }
-          final HyperlinkInfo info = token.getHyperlinkInfo();
-          if (info != null) {
-            myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
-          }
-          createTokenRangeHighlighter(token.contentType, start, offset);
-          offset = start;
-          tokenLength = 0;
-        }
-      }
-      finally {
-        if (!shouldStickToEnd) {
-          myEditor.getScrollingModel().flushViewportChanges();
-        }
-      }
-    }, null, DocCommandGroupId.noneGroupId(document));
+    }
     if (!contentTypes.isEmpty()) {
       for (ChangeListener each : myListeners) {
         each.contentAdded(contentTypes);
@@ -841,9 +841,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     final int documentTextLength = document.getTextLength();
     if (documentTextLength > 0) {
-      CommandProcessor.getInstance().executeCommand(myProject,
-         () -> DocumentUtil.executeInBulk(document, true,
-         ()->document.deleteString(0, documentTextLength)), null, DocCommandGroupId.noneGroupId(document));
+      DocumentUtil.executeInBulk(document, true, () -> document.deleteString(0, documentTextLength));
     }
     MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     model.removeAllHighlighters(); // remove all empty highlighters leftovers if any

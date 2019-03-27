@@ -129,7 +129,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
-      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
+      Set<File> files = configurationEntry.getValue().getArtifacts().getFiles().getFiles()
       artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
@@ -314,7 +314,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet generatedDirectorySet = null
       def hasExplicitlyDefinedGeneratedSources = generatedSourceDirs && !generatedSourceDirs.isEmpty()
       FileCollection generatedSourcesOutput = sourceSet.output.hasProperty("generatedSourcesDirs") ? sourceSet.output.generatedSourcesDirs : null
-      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !sourceSet.annotationProcessorPath.isEmpty()
+      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !isEmpty(sourceSet.annotationProcessorPath)
       if (hasExplicitlyDefinedGeneratedSources || hasAnnotationProcessorClasspath) {
 
         def files = new HashSet<File>()
@@ -511,6 +511,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     cleanupSharedSourceFolders(result)
 
     result
+  }
+
+  private static boolean isEmpty(FileCollection collection) {
+    try {
+      return collection.isEmpty()
+    } catch (Throwable ignored) {
+    }
+    return true
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {

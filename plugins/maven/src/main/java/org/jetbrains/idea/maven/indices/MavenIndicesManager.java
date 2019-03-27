@@ -168,7 +168,15 @@ public class MavenIndicesManager implements Disposable {
 
     for (Pair<String, String> eachIdAndUrl : remoteRepositoriesIdsAndUrls) {
       try {
-        result.add(indicesObjectCache.add(eachIdAndUrl.first, eachIdAndUrl.second, MavenIndex.Kind.REMOTE));
+        MavenIndex remoteIndex = indicesObjectCache.add(eachIdAndUrl.first, eachIdAndUrl.second, MavenIndex.Kind.REMOTE);
+
+        result.add(remoteIndex);
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+            MavenProjectsManager.getInstance(project).getGeneralSettings().isUpdateIndicesOnProjectOpen() &&
+            remoteIndex.getUpdateTimestamp() < System.currentTimeMillis() - 3600 * 24 * 1000 &&
+            remoteIndex.getUpdateTimestamp() != -1) {
+          scheduleUpdate(project, Collections.singletonList(remoteIndex));
+        }
       }
       catch (MavenIndexException e) {
         MavenLog.LOG.warn(e);

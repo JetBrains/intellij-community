@@ -55,6 +55,8 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   include 'META-INF/native/**'
   include 'META-INF/gradle-plugins/**'
   include 'META-INF/services/org.gradle.*'
+  
+  exclude 'org/gradle/internal/impldep/META-INF/versions/**'
 }
 """
     }
@@ -83,10 +85,12 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   }
 }
 
+def patchedVersionName = gradleApiVersion + (findProperty('versionNameSuffix') ?: '')
+
 task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
   extension 'jar'
   baseName gradleApiArtifactId
-  version gradleApiVersion
+  version patchedVersionName
 
   from gradleApiDepsDir
   exclude 'org/gradle/internal/impldep/**'
@@ -98,7 +102,7 @@ task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
 task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
   extension 'jar'
   baseName gradleApiImplDepArtifactId
-  version gradleApiVersion
+  version patchedVersionName
 
   from gradleApiDepsDir
   include 'org/gradle/internal/impldep/**'
@@ -109,24 +113,24 @@ publishing {
     gradleApi(MavenPublication) {
       groupId intelliJDepsGroupId
       artifactId gradleApiArtifactId
-      version gradleApiVersion
+      version patchedVersionName
       pom.withXml {
         def dependencies = asNode().appendNode('dependencies')
 
         def apiImplDep = dependencies.appendNode("dependency")
         apiImplDep.appendNode('groupId', intelliJDepsGroupId)
         apiImplDep.appendNode('artifactId', gradleApiImplDepArtifactId)
-        apiImplDep.appendNode('version', gradleApiVersion)
+        apiImplDep.appendNode('version', patchedVersionName)
 
         def wrapper = dependencies.appendNode("dependency")
         wrapper.appendNode('groupId', intelliJDepsGroupId)
         wrapper.appendNode('artifactId', gradleWrapperArtifactId)
-        wrapper.appendNode('version', gradleApiVersion)
+        wrapper.appendNode('version', patchedVersionName)
 
         def launcher = dependencies.appendNode("dependency")
         launcher.appendNode('groupId', intelliJDepsGroupId)
         launcher.appendNode('artifactId', gradleLauncherArtifactId)
-        launcher.appendNode('version', gradleApiVersion)
+        launcher.appendNode('version', patchedVersionName)
       }
 
       artifact gradleApiJar
@@ -134,14 +138,14 @@ publishing {
     gradleApiImplDep(MavenPublication) {
       groupId intelliJDepsGroupId
       artifactId gradleApiImplDepArtifactId
-      version gradleApiVersion
+      version patchedVersionName
 
       artifact gradleApiImplDepJar
     }
     gradleWrapper(MavenPublication) {
       groupId intelliJDepsGroupId
       artifactId gradleWrapperArtifactId
-      version gradleApiVersion
+      version patchedVersionName
 
       artifact(new File(gradleApiDepsDir, gradleWrapperFileName)) {
         builtBy expandGradleApiJar
@@ -150,7 +154,7 @@ publishing {
     gradleLauncher(MavenPublication) {
       groupId intelliJDepsGroupId
       artifactId gradleLauncherArtifactId
-      version gradleApiVersion
+      version patchedVersionName
 
       artifact(new File(gradleApiDepsDir, gradleLauncherFileName)) {
         builtBy expandGradleApiJar
@@ -176,7 +180,7 @@ bintray {
     userOrg = 'jetbrains'
 
     version {
-      name = gradleApiVersion
+      name = patchedVersionName
     }
   }
 

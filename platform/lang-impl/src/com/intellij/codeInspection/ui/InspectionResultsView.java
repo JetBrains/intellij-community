@@ -21,6 +21,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -111,7 +112,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myTree = new InspectionTree(globalInspectionContext, this);
+    myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -428,7 +429,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
         }
       }
-      final PsiFile file = selectedElement.getContainingFile();
+      final PsiFile file = InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(selectedElement);
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       if (document == null) {
         return Pair.create(InspectionResultsViewUtil.createLabelForText("Can't open preview for \'" + file.getName() + "\'"), null);

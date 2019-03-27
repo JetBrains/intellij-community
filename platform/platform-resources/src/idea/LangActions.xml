@@ -377,6 +377,9 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
 
+    <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
@@ -402,7 +405,7 @@
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
-      <separator/>
+      <separator text="File templates"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
@@ -411,6 +414,7 @@
 
     <group id="RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
+      <reference ref="ShowFilePath"/>
 
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </group>
@@ -422,7 +426,6 @@
 
     <group id="ToolbarRunGroup">
       <separator/>
-      <reference ref="RunAnything"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
@@ -437,6 +440,7 @@
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>
+      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
     </group>
 
@@ -471,7 +475,7 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="ProjectViewPopupMenuRefactoringGroup" class="com.intellij.openapi.actionSystem.DefaultCompactActionGroup">
+    <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">
       <reference ref="RefactoringMenu"/>
     </group>
 
@@ -519,7 +523,6 @@
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
-      <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
@@ -680,12 +683,13 @@
       <reference ref="TreeNodeExclusion"/>
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
-      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="AllIcons.Actions.Back"
-              use-shortcut-of="RecentFiles"/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" use-shortcut-of="ShowSearchHistory"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="ExportToTextFile"/>
     </group>
 
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
@@ -1264,21 +1268,23 @@
             text="Show control flow" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <group id="TodoMainGroup" text="TODO">
+      <add-to-group group-id="Other.KeymapGroup"/>
+      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
+        <separator text="Group By"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
+          <keyboard-shortcut first-keystroke="control M" keymap="$default"/>
+        </action>
 
-    <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
-      <separator text="Group by"/>
-      <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
-        <keyboard-shortcut first-keystroke="control M" keymap="$default" />
-      </action>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages">
+          <keyboard-shortcut first-keystroke="control P" keymap="$default"/>
+        </action>
 
-      <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages">
-        <keyboard-shortcut first-keystroke="control P" keymap="$default" />
-      </action>
+        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage">
+          <keyboard-shortcut first-keystroke="control F" keymap="$default"/>
+        </action>
 
-      <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage">
-        <keyboard-shortcut first-keystroke="control F" keymap="$default" />
-      </action>
-
+      </group>
     </group>
   </actions>
 </idea-plugin>

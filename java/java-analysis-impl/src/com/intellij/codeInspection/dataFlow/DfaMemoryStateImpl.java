@@ -957,7 +957,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? 
+                                       Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
@@ -1365,6 +1366,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+      if (value instanceof DfaVariableValue) {
+        return getDefaultState((DfaVariableValue)value).myFactMap;
+      }
     }
     if (value instanceof DfaBinOpValue) {
       return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
@@ -1491,6 +1495,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = variable.getDependentVariables().isEmpty() ? null : getEqClass(variable);
     DfaVariableValue newCanonical =
       eqClass == null ? null : StreamEx.of(eqClass.getVariables(false)).without(variable).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)
+        .filter(candidate -> !candidate.dependsOn(variable))
         .orElse(null);
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, variable, newCanonical));
 
@@ -1650,7 +1655,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
+      DfaFactMap result = state.myFactMap.unite(otherState.myFactMap);
+      Nullability nullability = state.getNullability();
+      Nullability otherNullability = otherState.getNullability();
+      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE)) {
+        // When merging nullable with something we cannot warn about nullability violation anymore
+        // because we lose the information about coherent state, thus noise warnings could be produced
+        result = result.with(DfaFactType.NULLABILITY, DfaNullability.FLUSHED);
+      }
+      setVariableState(var, state.withFacts(result));
     }
   }
 

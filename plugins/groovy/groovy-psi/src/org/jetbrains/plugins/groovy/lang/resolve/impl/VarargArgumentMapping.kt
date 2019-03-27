@@ -55,6 +55,8 @@ class VarargArgumentMapping(
     }
   }
 
+  override fun isVararg(parameter: PsiParameter): Boolean = varargParameter === parameter
+
   override val expectedTypes: Iterable<Pair<PsiType, Argument>>
     get() {
       val (positional, varargs) = mapping ?: return emptyList()

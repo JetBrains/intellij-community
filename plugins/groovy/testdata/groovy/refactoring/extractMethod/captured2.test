@@ -23,7 +23,7 @@ class Clazz {
     }
   }
 
-    private testMethod(int bar, List<Object> list1) {
+    private testMethod(int bar, List list1) {
         if (false) {
             list1 = [0]
         }

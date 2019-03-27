@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import static git4idea.commands.GitCommand.LockingPolicy.READ;
-import static git4idea.commands.GitCommand.LockingPolicy.READ_OPTIONAL_LOCKING;
 
 /**
  * Basic functionality for git handler execution.
@@ -169,7 +168,7 @@ abstract class GitImplBase implements Git {
     GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
     handler.addLineListener(resultListener);
 
-    try (AccessToken ignored = lock(handler, !canSuppressOptionalLocks)) {
+    try (AccessToken ignored = lock(handler)) {
       writeOutputToConsole(handler);
       handler.runInCurrentThread();
     }
@@ -292,13 +291,11 @@ abstract class GitImplBase implements Git {
   }
 
   @NotNull
-  private static AccessToken lock(@NotNull GitLineHandler handler, boolean canTakeOptionalLocks) {
+  private static AccessToken lock(@NotNull GitLineHandler handler) {
     Project project = handler.project();
     LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
 
-    if (project == null || project.isDefault() ||
-        lockingPolicy == READ ||
-        lockingPolicy == READ_OPTIONAL_LOCKING && !canTakeOptionalLocks) {
+    if (project == null || project.isDefault() || lockingPolicy == READ) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 

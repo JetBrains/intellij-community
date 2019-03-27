@@ -9,28 +9,27 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogRevisionFilter;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.visible.filters.FilterPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent
-  extends MultipleValueFilterPopupComponent<FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter>, VcsLogClassicFilterUi.BranchFilterModel> {
+  extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
   public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
@@ -42,19 +41,40 @@ public class BranchFilterPopupComponent
 
   @NotNull
   @Override
-  protected List<String> getFilterValues(@NotNull FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> filter) {
-    return myFilterModel.getFilterPresentation(filter);
+  protected List<String> getFilterValues(@NotNull BranchFilters filters) {
+    return myFilterModel.getFilterPresentation(filters);
   }
 
   @Override
   @Nullable
-  protected FilterPair<VcsLogBranchFilter, VcsLogRevisionFilter> createFilter(@NotNull List<String> values) {
+  protected BranchFilters createFilter(@NotNull List<String> values) {
     return myFilterModel.createFilterFromPresentation(values);
   }
 
   @Override
-  protected boolean supportsNegativeValues() {
-    return true;
+  @NotNull
+  protected MultilinePopupBuilder.CompletionPrefixProvider getCompletionPrefixProvider() {
+    return (text, offset) -> {
+      int index = 0;
+      for (String s : getCompletionSeparators()) {
+        int separatorIndex = text.lastIndexOf(s, offset - s.length());
+        if (separatorIndex > index) {
+          index = separatorIndex + s.length();
+        }
+      }
+      String prefix = text.substring(index, offset);
+      return StringUtil.trimLeading(prefix, '-');
+    };
+  }
+
+  @NotNull
+  private static List<String> getCompletionSeparators() {
+    List<String> separators = new ArrayList<>();
+    for (char c : MultilinePopupBuilder.SEPARATORS) {
+      separators.add(String.valueOf(c));
+    }
+    separators.add("..");
+    return separators;
   }
 
   @NotNull

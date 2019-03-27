@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 
 @CompileStatic
 class GradleRepositoriesTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -16,7 +17,21 @@ class GradleRepositoriesTest extends GradleHighlightingBaseTest implements Resol
   @Test
   void repositoriesTest() {
     importProject("")
-    'repositories closure delegate'()
+    new RunAll().append {
+      'repositories closure delegate'()
+    } append {
+      'maven repository closure delegate'()
+    } append {
+      'ivy repository closure delegate'()
+    } append {
+      'flat repository closure delegate'()
+    } append {
+      'maven repository method setter'()
+    } append {
+      'ivy repository method setter'()
+    } append {
+      'flat repository method setter'()
+    } run()
   }
 
   @Override
@@ -26,10 +41,52 @@ class GradleRepositoriesTest extends GradleHighlightingBaseTest implements Resol
 
   void 'repositories closure delegate'() {
     doTest('repositories { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_REPOSITORY_HANDLER)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_REPOSITORY_HANDLER, 1)
+    }
+  }
+
+  void 'maven repository closure delegate'() {
+    doTest('repositories { maven { <caret> } }') {
+      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY, 1)
+    }
+  }
+
+  void 'ivy repository closure delegate'() {
+    doTest('repositories { ivy { <caret> } }') {
+      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY, 1)
+    }
+  }
+
+  void 'flat repository closure delegate'() {
+    doTest('repositories { flatDir { <caret> } }') {
+      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY, 1)
+    }
+  }
+
+  void 'maven repository method setter'() {
+    doTest('repositories { maven { <caret>url(42) } }') {
+      def expression = elementUnderCaret(GrReferenceExpression)
+      def method = assertInstanceOf(expression.resolve(), PsiMethod)
+      assert method.name == 'setUrl'
+      assert method.containingClass.qualifiedName == GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY
+    }
+  }
+
+  void 'ivy repository method setter'() {
+    doTest('repositories { ivy { <caret>url("") } }') {
+      def expression = elementUnderCaret(GrReferenceExpression)
+      def method = assertInstanceOf(expression.resolve(), PsiMethod)
+      assert method.name == 'setUrl'
+      assert method.containingClass.qualifiedName == GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY
+    }
+  }
+
+  void 'flat repository method setter'() {
+    doTest('repositories { ivy { <caret>name("") } }') {
+      def expression = elementUnderCaret(GrReferenceExpression)
+      def method = assertInstanceOf(expression.resolve(), PsiMethod)
+      assert method.name == 'setName'
+      assert method.containingClass.qualifiedName == GRADLE_API_ARTIFACTS_REPOSITORIES_ARTIFACT_REPOSITORY
     }
   }
 }

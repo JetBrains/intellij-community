@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final static Logger LOG = Logger.getInstance(CleanupInspectionIntention.class);
-
   private final InspectionToolWrapper myToolWrapper;
   private final FileModifier myQuickfix;
   @Nullable private final PsiFile myFile;

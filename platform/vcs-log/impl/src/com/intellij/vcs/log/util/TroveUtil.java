@@ -143,6 +143,15 @@ public class TroveUtil {
   }
 
   @NotNull
+  public static TIntHashSet union(@NotNull Collection<TIntHashSet> sets) {
+    TIntHashSet result = new TIntHashSet();
+    for (TIntHashSet set : sets) {
+      addAll(result, set);
+    }
+    return result;
+  }
+
+  @NotNull
   public static IntStream stream(@NotNull TIntHashSet set) {
     TIntIterator it = set.iterator();
     return IntStream.generate(it::next).limit(set.size());

@@ -18,13 +18,10 @@ package com.siyeh.ig.bitwise;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -137,14 +134,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
       } else {
         return;
       }
-      LongRangeSet actualRange;
-      if (PsiUtil.isConstantExpression(rhs)) {
-        final Long valueObject = (Long)ConstantExpressionUtil.computeCastTo(rhs, PsiType.LONG);
-        if (valueObject == null) return;
-        actualRange = LongRangeSet.point(valueObject);
-      } else {
-        actualRange = CommonDataflow.getExpressionFact(rhs, DfaFactType.RANGE);
-      }
+      LongRangeSet actualRange = CommonDataflow.getExpressionRange(rhs);
       if (actualRange != null && !actualRange.isEmpty() && !actualRange.intersects(allowedRange)) {
         registerError(sign, actualRange, expressionType.equals(PsiType.LONG));
       }

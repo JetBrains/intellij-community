@@ -54,9 +54,15 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
+  @NotNull
+  @Override
+  public PySourcePosition create(@NotNull String file, int line) {
+    return convertPythonToFrame(file, line);
+  }
+
   @Override
   @NotNull
-  public PySourcePosition create(@NotNull final String filePath, final int line) {
+  public PySourcePosition convertPythonToFrame(@NotNull final String filePath, final int line) {
     File file = new File(filePath);
 
     if (file.exists()) {
@@ -65,6 +71,12 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     else {
       return new PyRemoteSourcePosition(filePath, line);
     }
+  }
+
+  @NotNull
+  @Override
+  public PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
+    return position; // frame and Python positions are the same for Python files
   }
 
   @Override

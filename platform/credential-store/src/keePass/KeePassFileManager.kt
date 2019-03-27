@@ -148,13 +148,13 @@ internal open class KeePassFileManager(private val file: Path,
     val currentPasswordField = JPasswordField()
     val newPasswordField = JPasswordField()
     val panel = panel {
-      row("Current password:") { currentPasswordField() }
+      row("Current password:") { currentPasswordField().focused() }
       row("New password:") { newPasswordField() }
 
       commentRow("If the current password is unknown, clear the KeePass database.")
     }
 
-    return dialog(title = "Change Master Password", panel = panel, focusedComponent = currentPasswordField, parent = contextComponent) {
+    return dialog(title = "Change Master Password", panel = panel, parent = contextComponent) {
       val errors = SmartList<ValidationInfo>()
       val current = checkIsEmpty(currentPasswordField, errors)
       val new = checkIsEmpty(newPasswordField, errors)
@@ -204,10 +204,10 @@ internal open class KeePassFileManager(private val file: Path,
       topNote?.let {
         noteRow(it)
       }
-      row("Master password:") { passwordField() }
+      row("Master password:") { passwordField().focused() }
     }
 
-    return dialog(title = title, panel = panel, focusedComponent = passwordField, parent = contextComponent) {
+    return dialog(title = title, panel = panel, parent = contextComponent) {
       val errors = SmartList<ValidationInfo>()
       val value = checkIsEmpty(passwordField, errors)
       if (errors.isEmpty()) {

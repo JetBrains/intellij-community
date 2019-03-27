@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public abstract class GrJoinLinesHandlerBase implements JoinRawLinesHandlerDelegate {
-  private static final boolean BACK = false;
-  private static final boolean FORWARD = false;
-
   @Override
   public int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     if (!(file instanceof GroovyFileBase)) return CANNOT_JOIN;
@@ -47,10 +44,10 @@ public abstract class GrJoinLinesHandlerBase implements JoinRawLinesHandlerDeleg
     for (PsiElement child = statementOwner.getFirstChild(); child != null; child = child.getNextSibling()) {
       final TextRange range = child.getTextRange();
       if (range.getEndOffset() == start) {
-        first = skipSemicolonsAndWhitespaces(child, BACK);
+        first = skipSemicolonsAndWhitespaces(child, false);
       }
       else if (range.getStartOffset() == end) {
-        last = skipSemicolonsAndWhitespaces(child, FORWARD);
+        last = skipSemicolonsAndWhitespaces(child, true);
       }
 
     }

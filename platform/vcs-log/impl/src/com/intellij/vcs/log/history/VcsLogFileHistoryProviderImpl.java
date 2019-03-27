@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -47,8 +48,8 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
     VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
     FilePath correctedPath = getCorrectedPath(project, path, root, revisionNumber);
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
-
-    VcsLogManager logManager = assertNotNull(VcsProjectLog.getInstance(project).getLogManager());
+    
+    triggerFileHistoryUsage(path, hash);
 
     BiConsumer<AbstractVcsLogUi, Boolean> historyUiConsumer = (ui, firstTime) -> {
       if (hash != null) {
@@ -58,12 +59,20 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
         ui.jumpToRow(0);
       }
     };
+    
+    VcsLogManager logManager = assertNotNull(VcsProjectLog.getInstance(project).getLogManager());
     if (path.isDirectory() && VcsLogUtil.isFolderHistoryShownInLog()) {
       findOrOpenFolderHistory(project, logManager, root, correctedPath, hash, historyUiConsumer);
     }
     else {
       findOrOpenHistory(project, logManager, root, correctedPath, hash, historyUiConsumer);
     }
+  }
+
+  private static void triggerFileHistoryUsage(@NotNull FilePath path, @Nullable Hash hash) {
+    String name = path.isDirectory() ? "Folder" : "File";
+    String suffix = hash != null ? "ForRevision" : "";
+    VcsLogUsageTriggerCollector.triggerUsage("Show" + name + "History" + suffix);
   }
 
   private static void findOrOpenHistory(@NotNull Project project, @NotNull VcsLogManager logManager,

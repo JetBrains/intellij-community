@@ -22,7 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 /**
@@ -68,12 +70,14 @@ public class ScreenReader {
    * @return true if enabled, otherwise false
    */
   public static boolean isEnabled(String a11yClassName) {
-    String[] paths = new String[] {System.getProperty("user.home") + File.separator + ".accessibility.properties",
-      System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties"};
+    String[] paths = new String[]{
+      System.getProperty("user.home") + File.separator + ".accessibility.properties",
+      System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties"
+    };
     Properties properties = new Properties();
     for (String path : paths) {
       try {
-        try (FileInputStream in = new FileInputStream(new File(path))) {
+        try (InputStream in = Files.newInputStream(Paths.get(path))) {
           properties.load(in);
         }
       }

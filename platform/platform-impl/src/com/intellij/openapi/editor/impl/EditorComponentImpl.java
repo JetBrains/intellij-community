@@ -5,6 +5,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Caret;
@@ -69,7 +69,6 @@ import java.util.Map;
 
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
   private final EditorImpl myEditor;
-  private final ApplicationImpl myApplication;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -96,7 +95,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         return myEditor.visualPositionToXY(magnificationPosition);
       }
     });
-    myApplication = (ApplicationImpl)ApplicationManager.getApplication();
+    putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
 
     // This editor extends JTextComponent rather than JComponent *only* for accessibility
     // purposes, and the JTextComponent is not fully supported: it does not reflect the
@@ -510,23 +509,23 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
 
     @Override
-    public void remove(final int offset, final int length) throws BadLocationException {
+    public void remove(final int offset, final int length) {
       editDocumentSafely(offset, length, null);
     }
 
     @Override
-    public void insertString(final int offset, final String text, AttributeSet attributeSet) throws BadLocationException {
+    public void insertString(final int offset, final String text, AttributeSet attributeSet) {
       editDocumentSafely(offset, 0, text);
     }
 
     @Override
-    public String getText(final int offset, final int length) throws BadLocationException {
+    public String getText(final int offset, final int length) {
       return ReadAction
         .compute(() -> myEditor.getDocument().getText(new TextRange(offset, offset + length)));
     }
 
     @Override
-    public void getText(int offset, int length, Segment segment) throws BadLocationException {
+    public void getText(int offset, int length, Segment segment) {
       char[] s = getText(offset, length).toCharArray();
       segment.array = s;
       segment.offset = 0;
@@ -549,7 +548,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Position createPosition(int i) throws BadLocationException {
+    public Position createPosition(int i) {
       notSupported();
       return null;
     }
@@ -814,7 +813,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   private class EditorAccessibilityTextUI extends TextUI {
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset) throws BadLocationException {
+    public Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
     }
 
@@ -826,7 +825,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) throws BadLocationException {
+    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) {
       LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
       LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
         .leanForward(bias != Position.Bias.Forward);
@@ -845,7 +844,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public int getNextVisualPositionFrom(JTextComponent t, int pos, Position.Bias b,
                                          int direction,
-                                         Position.Bias[] biasRet) throws BadLocationException {
+                                         Position.Bias[] biasRet) {
       notSupported();
       return 0;
     }

@@ -11,7 +11,6 @@ import com.intellij.util.ThreeState.*
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
 import org.jetbrains.plugins.gradle.settings.TestRunner.*
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -57,22 +56,6 @@ class GradleSettingsTest : UsefulTestCase() {
     assertEquals(UNSURE, gradleProjectSettings.delegatedBuild)
     assertFalse(defaultSettings.isDelegatedBuild)
     assertFalse(settingsService.isDelegatedBuildEnabled(gradleProjectSettings.externalProjectPath))
-  }
-
-  @Test
-  fun `test old delegation settings migration`() {
-    val oldSettings = getInstance()
-    oldSettings.loadState(MyState().apply { useGradleAwareMake = true })
-    defaultSettings.loadState(DefaultGradleProjectSettings.MyState().apply { isMigrated = false })
-
-    assertEquals(PLATFORM, defaultSettings.testRunner)
-    assertTrue(defaultSettings.isDelegatedBuild)
-
-    oldSettings.loadState(MyState().apply { preferredTestRunner = PreferredTestRunner.GRADLE_TEST_RUNNER })
-    defaultSettings.loadState(DefaultGradleProjectSettings.MyState().apply { isMigrated = false })
-
-    assertEquals(GRADLE, defaultSettings.testRunner)
-    assertFalse(defaultSettings.isDelegatedBuild)
   }
 
   @Test

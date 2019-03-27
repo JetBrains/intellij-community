@@ -30,6 +30,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -156,6 +157,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchFrom.setRenderer(new TaskInfoCellRenderer(myBranchFrom));
       myUseBranchCombo.setRenderer(new TaskInfoCellRenderer(myUseBranchCombo));
       myBranchName.setText(branchName);
+      new ComboboxSpeedSearch(myBranchFrom);
+      new ComboboxSpeedSearch(myUseBranchCombo);
     }
 
     updateFields(true);

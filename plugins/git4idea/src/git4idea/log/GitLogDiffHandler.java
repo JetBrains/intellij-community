@@ -254,6 +254,6 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
   @Override
   public ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash) {
     GitRevisionNumber revisionNumber = new GitRevisionNumber(hash.asString());
-    return GitContentRevision.createRevision(filePath, revisionNumber, myProject, null);
+    return GitContentRevision.createRevision(filePath, revisionNumber, myProject);
   }
 }

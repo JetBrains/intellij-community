@@ -13,9 +13,7 @@
       ]]>
   </description>
   <category>VCS Integration</category>
-  <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and
-    Willem Verstraeten, JetBrains
-  </vendor>
+  <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.handler
 import com.intellij.util.net.loopbackSocketAddress
@@ -15,7 +15,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.ChannelExceptionHandler
 import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
-import org.jetbrains.io.NettyUtil.nioClientBootstrap
 import org.junit.ClassRule
 import org.junit.Test
 import java.util.*
@@ -25,14 +24,17 @@ import java.util.concurrent.TimeUnit
 internal class BinaryRequestHandlerTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val appRule = ApplicationRule()
   }
 
-  @Test fun test() {
+  @Test
+  fun test() {
     val text = "Hello!"
     val result = AsyncPromise<String>()
 
-    val bootstrap = nioClientBootstrap().handler {
+    val builtInServerManager = BuiltInServerManager.getInstance().waitForStart()
+    val bootstrap = builtInServerManager.createClientBootstrap().handler {
       it.pipeline().addLast(object : Decoder() {
         override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
           val requiredLength = 4 + text.length
@@ -44,7 +46,7 @@ internal class BinaryRequestHandlerTest {
       }, ChannelExceptionHandler.getInstance())
     }
 
-    val port = BuiltInServerManager.getInstance().waitForStart().port
+    val port = builtInServerManager.port
     val channel = bootstrap.connect(loopbackSocketAddress(port)).syncUninterruptibly().channel()
     val buffer = channel.alloc().buffer()
     buffer.writeByte('C'.toInt())
@@ -76,43 +78,39 @@ internal class BinaryRequestHandlerTest {
       channel.close()
     }
   }
+}
 
-  class MyBinaryRequestHandler : BinaryRequestHandler() {
-    companion object {
-      val ID: UUID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
+private class MyBinaryRequestHandler : BinaryRequestHandler() {
+  companion object {
+    val ID: UUID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
+  }
+
+  override fun getId(): UUID = ID
+
+  override fun getInboundHandler(context: ChannelHandlerContext): ChannelHandler = MyDecoder()
+
+  private class MyDecoder : MessageDecoder() {
+    private var state = State.HEADER
+
+    private enum class State {
+      HEADER,
+      CONTENT
     }
 
-    override fun getId(): UUID {
-      return ID
-    }
+    override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
+      while (true) {
+        when (state) {
+          State.HEADER -> {
+            val buffer = getBufferIfSufficient(input, 2, context) ?: return
+            contentLength = buffer.readUnsignedShort()
+            state = State.CONTENT
+          }
 
-    override fun getInboundHandler(context: ChannelHandlerContext): ChannelHandler {
-      return MyDecoder()
-    }
+          State.CONTENT -> {
+            val messageText = readChars(input) ?: return
 
-    private class MyDecoder : MessageDecoder() {
-      private var state = State.HEADER
-
-      private enum class State {
-        HEADER,
-        CONTENT
-      }
-
-      override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
-        while (true) {
-          when (state) {
-            State.HEADER -> {
-              val buffer = getBufferIfSufficient(input, 2, context) ?: return
-              contentLength = buffer.readUnsignedShort()
-              state = State.CONTENT
-            }
-
-            State.CONTENT -> {
-              val messageText = readChars(input) ?: return
-
-              state = State.HEADER
-              context.writeAndFlush(Unpooled.copiedBuffer("got-$messageText", Charsets.UTF_8))
-            }
+            state = State.HEADER
+            context.writeAndFlush(Unpooled.copiedBuffer("got-$messageText", Charsets.UTF_8))
           }
         }
       }

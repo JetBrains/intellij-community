@@ -10,6 +10,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,11 +90,10 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
     }
 
     private void checkForForLoopParam(PsiExpression expression) {
-      final PsiElement element = resolveLocal(expression);
-      if (!(element instanceof PsiLocalVariable)) {
+      final PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(expression);
+      if (variable == null) {
         return;
       }
-      final PsiLocalVariable variable = (PsiLocalVariable)element;
       final PsiElement variableParent = variable.getParent();
       if (!(variableParent instanceof PsiDeclarationStatement)) {
         return;
@@ -118,20 +118,19 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
       if (!m_checkForeachParameters) {
         return;
       }
-      final PsiElement element = resolveLocal(expression);
+      expression = ParenthesesUtils.stripParentheses(expression);
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      if (referenceExpression.getQualifierExpression() != null) {
+        return;
+      }
+      PsiElement element = referenceExpression.resolve();
       if (!(element instanceof PsiParameter) || !(element.getParent() instanceof PsiForeachStatement)) {
         return;
       }
       registerError(expression, Boolean.TRUE);
-    }
-
-    private PsiElement resolveLocal(PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return null;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      return referenceExpression.getQualifierExpression() == null ? referenceExpression.resolve() : null;
     }
 
     private boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {

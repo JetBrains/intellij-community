@@ -139,7 +139,7 @@ public abstract class JiraTask extends Task {
    * Map task's type name in JIRA's API to corresponding {@link TaskType} item.
    *
    * @param type issue's type name
-   * @return {@link TaskType} item or {@link TaskType.OTHER}, if none matches
+   * @return {@link TaskType} item or {@link TaskType#OTHER}, if none matches
    */
   @SuppressWarnings("MethodMayBeStatic")
   protected final TaskType getTypeByName(@Nullable String type) {

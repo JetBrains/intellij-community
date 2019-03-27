@@ -80,6 +80,7 @@ foo.with {
   defaultArgs(<hint name="a">1, <hint name="c">2)
   defaultArgs(<hint name="a">1, <hint name="b">2, <hint name="c">3)
   mapArgs(foo: 1, <hint name="a">null, bar: 2)
+  varArgs(<hint name="a">1, <hint name="...b">2)
   varArgs(<hint name="a">1, <hint name="...b">2, 3, 4)
   varArgs(<hint name="a">1, <hint name="...b">2, aa)
   varArgs(<hint name="a">1, <hint name="...b">aa, 3)
@@ -99,6 +100,7 @@ foo.with {
   defaultArgs <hint name="a">1, <hint name="c">2
   defaultArgs <hint name="a">1, <hint name="b">2, <hint name="c">3
   mapArgs foo: 1, <hint name="a">null, bar: 2
+  varArgs <hint name="a">1, <hint name="...b">2
   varArgs <hint name="a">1, <hint name="...b">2, 3, 4
   varArgs <hint name="a">1, <hint name="...b">2, aa
   varArgs <hint name="a">1, <hint name="...b">aa, 3

@@ -5,4 +5,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <myPlugin.myDependencyModuleClassEp implementation="DependencyModuleClass"/>
     </extensions>
+    <actions>
+        <action class="DependencyModuleAction"/>
+    </actions>
 </idea-plugin>

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -50,18 +49,17 @@ import java.util.List;
  * Also used to manage highlighters.
  */
 @State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
-public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, BaseComponent {
+public final class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
 
-  private AnAction nextAction;
-  private AnAction prevAction;
+  private final AnAction nextAction;
+  private final AnAction prevAction;
 
   private Config configuration = new Config();
 
-  @Override
-  public void initComponent() {
-     ActionManager actionManager = ActionManager.getInstance();
+  public XPathAppComponent() {
+    ActionManager actionManager = ActionManager.getInstance();
     nextAction = actionManager.getAction(ACTION_FIND_NEXT);
     prevAction = actionManager.getAction(ACTION_FIND_PREVIOUS);
 

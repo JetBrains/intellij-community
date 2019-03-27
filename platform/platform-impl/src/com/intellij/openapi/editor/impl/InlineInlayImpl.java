@@ -100,4 +100,9 @@ class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R
     Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
     return value == null ? -1 : value;
   }
+
+  @Override
+  public String toString() {
+    return "[Inline inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]";
+  }
 }

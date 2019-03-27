@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.webSocket;
 
 import com.intellij.openapi.Disposable;
@@ -78,7 +79,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
     context.channel().attr(ClientManagerKt.getCLIENT()).set(client);
     handshaker.handshake(context.channel(), request).addListener(new ChannelFutureListener() {
       @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
+      public void operationComplete(ChannelFuture future) {
         if (future.isSuccess()) {
           ClientManager clientManager = WebSocketHandshakeHandler.this.clientManager.getValue();
           clientManager.addClient(client);

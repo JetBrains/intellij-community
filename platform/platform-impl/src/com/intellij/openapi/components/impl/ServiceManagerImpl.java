@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -24,8 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.StartUpMeasurer;
-import com.intellij.util.StartUpMeasurer.Activities;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -40,6 +40,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
@@ -231,16 +233,14 @@ public final class ServiceManagerImpl implements Disposable {
 
     @NotNull
     private Object createAndInitialize(@NotNull PicoContainer container) {
-      // if it will be module service, then get rid of such component instead of measurement
-      boolean appComponent = myComponentManager instanceof Application;
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(appComponent ? Activities.APP_SERVICE : Activities.PROJECT_SERVICE);
+      long startTime = StartUpMeasurer.getCurrentTime();
       Object instance = getDelegate().getComponentInstance(container);
       if (instance instanceof Disposable) {
         Disposer.register(myComponentManager, (Disposable)instance);
       }
 
       myComponentManager.initializeComponent(instance, true);
-      measureToken.endWithThreshold(instance.getClass());
+      ParallelActivity.SERVICE.record(startTime, instance.getClass(), getActivityLevel(container));
       return instance;
     }
 

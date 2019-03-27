@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,24 +39,6 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 public final class CommandLineInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("commandLine.inspection.name");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 
   @NotNull
   @Override

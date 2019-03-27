@@ -17,7 +17,7 @@ public class ServiceViewToolWindowFactory implements ToolWindowFactory, Conditio
 
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
-    return Registry.is("ide.service.view");
+    return Registry.is("ide.service.view") && ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).hasServices();
   }
 
   @Override

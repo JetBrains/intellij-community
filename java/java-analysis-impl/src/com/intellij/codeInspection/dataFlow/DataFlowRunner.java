@@ -159,6 +159,12 @@ public class DataFlowRunner {
       flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       stats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
+      
+      if (Registry.is("idea.dfa.live.variables.analysis")) {
+        new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
+      }
+      stats.endLVA();
+
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
       initializeVariables(psiBlock, initialStates, flow);
@@ -275,7 +281,8 @@ public class DataFlowRunner {
       myWasForciblyMerged |= queue.wasForciblyMerged();
       stats.endProcess();
       if (stats.isTooSlow()) {
-        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + stats;
+        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + stats+
+                         "\nControl flow size: "+flow.getInstructionCount();
         reportDfaProblem(psiBlock, flow, null, new RuntimeException(message));
       }
       return RunnerResult.OK;
@@ -283,7 +290,7 @@ public class DataFlowRunner {
     catch (ProcessCanceledException ex) {
       throw ex;
     }
-    catch (RuntimeException e) {
+    catch (RuntimeException | AssertionError e) {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
@@ -329,7 +336,7 @@ public class DataFlowRunner {
 
   private static void reportDfaProblem(@NotNull PsiElement psiBlock,
                                        ControlFlow flow,
-                                       DfaInstructionState lastInstructionState, RuntimeException e) {
+                                       DfaInstructionState lastInstructionState, Throwable e) {
     Attachment[] attachments = {new Attachment("method_body.txt", psiBlock.getText())};
     if (flow != null) {
       String flowText = flow.toString();
@@ -599,7 +606,7 @@ public class DataFlowRunner {
     private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
     private final @Nullable ThreadMXBean myMxBean;
     private final long myStart;
-    private long myMergeStart, myFlowTime, myMergeTime, myProcessTime;
+    private long myMergeStart, myFlowTime, myLVATime, myMergeTime, myProcessTime;
 
     TimeStats() {
       Application application = ApplicationManager.getApplication();
@@ -615,6 +622,12 @@ public class DataFlowRunner {
     void endFlow() {
       if (myMxBean != null) {
         myFlowTime = myMxBean.getCurrentThreadCpuTime() - myStart;
+      }
+    }
+    
+    void endLVA() {
+      if (myMxBean != null) {
+        myLVATime = myMxBean.getCurrentThreadCpuTime() - myStart - myFlowTime;
       }
     }
     
@@ -643,11 +656,12 @@ public class DataFlowRunner {
     @Override
     public String toString() {
       double flowTime = myFlowTime/1e9;
+      double lvaTime = myLVATime / 1e9;
       double mergeTime = myMergeTime/1e9;
-      double interpretTime = (myProcessTime - myFlowTime - myMergeTime)/1e9;
+      double interpretTime = (myProcessTime - myFlowTime - myLVATime - myMergeTime)/1e9;
       double totalTime = myProcessTime/1e9;
-      return String.format(Locale.ENGLISH, "Building ControlFlow: %.2fs\nMerging states: %.2fs\nInterpreting: %.2fs\nTotal: %.2fs", 
-                           flowTime, mergeTime, interpretTime, totalTime);
+      String format = "Building ControlFlow: %.2fs\nLiveVariableAnalyzer: %.2fs\nMerging states: %.2fs\nInterpreting: %.2fs\nTotal: %.2fs";
+      return String.format(Locale.ENGLISH, format, flowTime, lvaTime, mergeTime, interpretTime, totalTime);
     }
   }
 }

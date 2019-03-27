@@ -3,6 +3,7 @@ package com.jetbrains.changeReminder.commit.handle
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
@@ -24,7 +25,11 @@ import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.predict.PredictedFile
 import com.jetbrains.changeReminder.predict.PredictionProvider
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
+import com.jetbrains.changeReminder.stats.ChangeReminderData
+import com.jetbrains.changeReminder.stats.ChangeReminderEvent
+import com.jetbrains.changeReminder.stats.logEvent
 import java.util.function.Consumer
+import kotlin.system.measureTimeMillis
 
 class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
                                    private val dataManager: VcsLogData,
@@ -85,36 +90,49 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
     try {
       val rootFiles = panel.getGitRootFiles(project)
       if (!userSettings.isTurnedOn || rootFiles.size > 25) {
+        logEvent(project, ChangeReminderEvent.PLUGIN_DISABLED)
         return ReturnResult.COMMIT
       }
 
       val isAmend = panel.isAmend()
       val threshold = userSettings.threshold
-      val predictedFiles = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(
-          ThrowableComputable<List<PredictedFile>, Exception> {
-            getPredictedFiles(rootFiles, isAmend, threshold)
-          },
-          "Calculating whether something should be added to this commit",
-          true,
-          project
-        )
+      val (executionTime, predictedFiles) = measureSupplierTimeMillis {
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(
+            ThrowableComputable<List<PredictedFile>, Exception> {
+              getPredictedFiles(rootFiles, isAmend, threshold)
+            },
+            "Calculating whether something should be added to this commit",
+            true,
+            project
+          )
+      }
+      logEvent(project, ChangeReminderEvent.PREDICTION_CALCULATED, ChangeReminderData.EXECUTION_TIME, executionTime)
 
       if (predictedFiles.isEmpty()) {
+        logEvent(project, ChangeReminderEvent.NOT_SHOWED)
         return ReturnResult.COMMIT
       }
 
       val dialog = ChangeReminderDialog(project, predictedFiles)
-      dialog.show()
+      val showDialogTime = measureTimeMillis {
+        dialog.show()
+      }
+      logEvent(project, ChangeReminderEvent.DIALOG_CLOSED, ChangeReminderData.SHOW_DIALOG_TIME, showDialogTime)
 
       return if (dialog.exitCode == 1) {
+        logEvent(project, ChangeReminderEvent.COMMIT_CANCELED)
         userSettings.updateState(UserSettings.Companion.UserAction.CANCEL)
         ReturnResult.CANCEL
       }
       else {
+        logEvent(project, ChangeReminderEvent.COMMITTED_ANYWAY)
         userSettings.updateState(UserSettings.Companion.UserAction.COMMIT)
         ReturnResult.COMMIT
       }
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
     }
     catch (e: Exception) {
       LOG.error("Unexpected problem with ChangeReminder prediction", e)

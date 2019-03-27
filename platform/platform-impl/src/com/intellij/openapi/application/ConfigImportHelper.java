@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -65,11 +64,10 @@ public class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull String newConfigPath, @NotNull Logger log) {
+  public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
-    Path newConfigDir = Paths.get(newConfigPath);
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
@@ -80,13 +78,10 @@ public class ConfigImportHelper {
     Pair<Path, Path> result = dialog.getSelectedFile();
     if (result != null) {
       doImport(result.first, newConfigDir, result.second, log);
-      settings.importFinished(newConfigPath);
+      if (settings != null) {
+        settings.importFinished(newConfigDir);
+      }
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
-    }
-
-    CloudConfigProvider provider = CloudConfigProvider.getProvider();
-    if (provider != null) {
-      provider.importFinished(newConfigDir);
     }
   }
 
@@ -127,6 +122,7 @@ public class ConfigImportHelper {
     return false;
   }
 
+  @Nullable
   private static ConfigImportSettings getConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
@@ -136,7 +132,7 @@ public class ConfigImportHelper {
       }
     }
     catch (ClassNotFoundException | RuntimeException ignored) { }
-    return new ConfigImportSettings();
+    return null;
   }
 
   @NotNull
@@ -419,7 +415,7 @@ public class ConfigImportHelper {
   /**
    * Fix VM options in the custom *.vmoptions file which don't work with the current IDE version.
    */
-  private static void updateVMOptions(@NotNull Path newConfigDir, Logger log) {
+  private static void updateVMOptions(@NotNull Path newConfigDir, @NotNull Logger log) {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
     if (Files.exists(vmOptionsFile)) {
       try {

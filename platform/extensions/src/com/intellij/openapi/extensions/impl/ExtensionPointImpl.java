@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.ConstructorInjectionAdapter;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -13,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -24,6 +29,8 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
 
 /**
  * @author AKireyev
@@ -50,7 +57,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   // guarded by this
   @NotNull
-  List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
+  protected List<ExtensionComponentAdapter> myAdapters = Collections.emptyList();
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -81,7 +88,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public String getClassName() {
     return myClassName;
   }
-
 
   @Override
   public void registerExtension(@NotNull T extension) {
@@ -247,6 +253,66 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return array.length == 0 ? array : array.clone();
   }
 
+  /**
+   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
+   * events will be fired during iteration and probably it will be not expected.
+   *
+   * Use only for interface extension points, not for bean.
+   *
+   * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
+   * so, `next` may return `null` (in this case stop iteration).
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public Iterator<T> iterator() {
+    List<T> result = myExtensionsCache;
+    if (result == null) {
+      synchronized (this) {
+        result = myExtensionsCache;
+        if (result == null) {
+          return createIterator();
+        }
+      }
+    }
+    return result.iterator();
+  }
+
+  @NotNull
+  private synchronized Iterator<T> createIterator() {
+    assertBeforeProcessing();
+    CHECK_CANCELED.run();
+
+    List<ExtensionComponentAdapter> adapters = myAdapters;
+    LoadingOrder.sort(adapters);
+
+    int size = adapters.size();
+
+    // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
+    LOG.assertTrue(myListeners.length == 0);
+
+    return new Iterator<T>() {
+      private int currentIndex = 0;
+
+      @Override
+      public boolean hasNext() {
+        return currentIndex < size;
+      }
+
+      @Override
+      @Nullable
+      public T next() {
+        do {
+          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null);
+          if (extension != null) {
+            return extension;
+          }
+        }
+        while (hasNext());
+        return null;
+      }
+    };
+  }
+
   @NotNull
   @Override
   public Stream<T> extensions() {
@@ -267,10 +333,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private boolean processingAdaptersNow; // guarded by this
   @NotNull
   private synchronized T[] processAdapters() {
-    if (processingAdaptersNow) {
-      throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
-    }
-    assertNotReadOnlyMode();
+    assertBeforeProcessing();
+
+    long startTime = StartUpMeasurer.getCurrentTime();
 
     int totalSize = myAdapters.size();
     Class<T> extensionClass = getExtensionClass();
@@ -281,62 +346,89 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
     // check before to avoid any "restore" work if already cancelled
     CHECK_CANCELED.run();
-
     processingAdaptersNow = true;
     try {
       List<ExtensionComponentAdapter> adapters = myAdapters;
       LoadingOrder.sort(adapters);
 
-      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
+      OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(adapters.size());
 
       ExtensionPointListener<T>[] listeners = myListeners;
       int extensionIndex = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < adapters.size(); i++) {
-        ExtensionComponentAdapter adapter = adapters.get(i);
-        try {
-          boolean isNotifyThatAdded = listeners.length != 0 && !adapter.isInstanceCreated();
-          // do not call CHECK_CANCELED here in loop because it is called by createInstance()
-          @SuppressWarnings("unchecked") T extension = (T)adapter.createInstance(myPicoContainer);
-          if (!duplicates.add(extension)) {
-            T duplicate = duplicates.get(extension);
-            LOG.error("Duplicate extension found: " + extension + "; " +
-                      " Prev extension:  " + duplicate + ";\n" +
-                      " Adapter:         " + adapter + ";\n" +
-                      " Extension class: " + getExtensionClass() + ";\n" +
-                      " result:" + Arrays.asList(result));
-          }
-          else {
-            checkExtensionType(extension, adapter);
-            // registerExtension can throw error for not correct extension, so, add to result only if call successful
-            result[extensionIndex++] = extension;
-
-            if (isNotifyThatAdded) {
-              notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), listeners);
-            }
-          }
-        }
-        catch (ExtensionNotApplicableException ignore) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(adapter + " not loaded because it reported that not applicable");
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+        T extension = processAdapter(adapters.get(i), listeners, result, duplicates);
+        if (extension != null) {
+          result[extensionIndex++] = extension;
         }
       }
 
       if (extensionIndex != result.length) {
         result = Arrays.copyOf(result, extensionIndex);
       }
+
+      // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
+      ParallelActivity.EXTENSION.record(startTime, extensionClass, getActivityLevel(myPicoContainer));
       return result;
     }
     finally {
       processingAdaptersNow = false;
     }
+  }
+
+  @Nullable
+  private T processAdapter(@NotNull ExtensionComponentAdapter adapter,
+                           @Nullable ExtensionPointListener<T>[] listeners,
+                           @Nullable T[] result,
+                           @Nullable OpenTHashSet<T> duplicates) {
+    try {
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
+      // do not call CHECK_CANCELED here in loop because it is called by createInstance()
+      @SuppressWarnings("unchecked")
+      T extension = (T)adapter.createInstance(myPicoContainer);
+      if (duplicates != null && !duplicates.add(extension)) {
+        T duplicate = duplicates.get(extension);
+        assert result != null;
+
+        LOG.error("Duplicate extension found:\n" +
+                  "                   " + extension + ";\n" +
+                  "  prev extension:  " + duplicate + ";\n" +
+                  "  adapter:         " + adapter + ";\n" +
+                  "  extension class: " + getExtensionClass() + ";\n" +
+                  "  result:          " + Arrays.asList(result) + ";\n" +
+                  "  adapters:        " + myAdapters
+        );
+      }
+      else {
+        checkExtensionType(extension, adapter);
+
+        if (isNotifyThatAdded) {
+          notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), listeners);
+        }
+
+        return extension;
+      }
+    }
+    catch (ExtensionNotApplicableException ignore) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(adapter + " not loaded because it reported that not applicable");
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+    return null;
+  }
+
+  private void assertBeforeProcessing() {
+    if (processingAdaptersNow) {
+      throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. " +
+                                      "Either pass extension via constructor parameter or call getExtensions() later.");
+    }
+    assertNotReadOnlyMode();
   }
 
   // used in upsource
@@ -728,18 +820,24 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @NotNull
-  static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
-                                                   @NotNull Element extensionElement,
-                                                   boolean isNeedToDeserialize,
-                                                   @NotNull PluginDescriptor pluginDescriptor,
-                                                   boolean isConstructorInjectionSupported) {
+  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                             @NotNull Element extensionElement,
+                                                             boolean isNeedToDeserialize,
+                                                             @NotNull PluginDescriptor pluginDescriptor,
+                                                             boolean isConstructorInjectionSupported,
+                                                             boolean isUsePicoComponentAdapter) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = isNeedToDeserialize ? extensionElement : null;
-    if (isConstructorInjectionSupported) {
-      return new XmlExtensionAdapter.ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    if (isUsePicoComponentAdapter) {
+      return new ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
     }
-    return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    else if (isConstructorInjectionSupported) {
+      return new SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
+    else {
+      return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
   }
 
   @TestOnly
@@ -749,6 +847,26 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
       }
     }
+  }
+
+  @Nullable
+  public synchronized T findExtension(@NotNull Class<T> instanceOf, boolean isRequired) {
+    Iterator<T> iterator = myListeners.length == 0 ? iterator() : getExtensionList().iterator();
+    while (iterator.hasNext()) {
+      T object = iterator.next();
+      if (object != null && instanceOf.isInstance(object)) {
+        return object;
+      }
+    }
+
+    if (isRequired) {
+      String message = "could not find extension implementation " + instanceOf;
+      if (isInReadOnlyMode()) {
+        message += " (point in read-only mode)";
+      }
+      throw new IllegalArgumentException(message);
+    }
+    return null;
   }
 
   private static final class ObjectComponentAdapter<T> extends ExtensionComponentAdapter {
@@ -772,7 +890,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  public synchronized boolean isInReadOnlyMode() {
+  protected synchronized boolean isInReadOnlyMode() {
     return POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this);
   }
 

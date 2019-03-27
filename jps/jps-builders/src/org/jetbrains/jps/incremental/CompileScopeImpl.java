@@ -24,10 +24,7 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -37,6 +34,7 @@ public class CompileScopeImpl extends CompileScope {
   private final Collection<BuildTargetType<?>> myTypesToForceBuild;
   private final Collection<BuildTarget<?>> myTargets;
   private final Map<BuildTarget<?>, Set<File>> myFiles;
+  private final Map<BuildTarget<?>, Set<File>> myIndirectlyAffectedFiles = Collections.synchronizedMap(new HashMap<>());
 
   public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
                           Collection<? extends BuildTargetType<?>> typesToForceBuild,
@@ -62,7 +60,7 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isAffected(@NotNull BuildTarget<?> target) {
-    return isWholeTargetAffected(target) || myFiles.containsKey(target);
+    return isWholeTargetAffected(target) || myFiles.containsKey(target) || myIndirectlyAffectedFiles.containsKey(target);
   }
 
   @Override
@@ -92,14 +90,30 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isAffected(BuildTarget<?> target, @NotNull File file) {
-    if (myFiles.isEmpty()) {//optimization
-      return isWholeTargetAffected(target);
-    }
-    final Set<File> files = myFiles.get(target);
+    final Set<File> files = myFiles.isEmpty()? null : myFiles.get(target);
     if (files == null) {
-      return isWholeTargetAffected(target);
+      return isWholeTargetAffected(target) || isIndirectlyAffected(target, file);
     }
-    return files.contains(file);
+    return files.contains(file) || isIndirectlyAffected(target, file);
+  }
+
+  private boolean isIndirectlyAffected(BuildTarget<?> target, @NotNull File file) {
+    synchronized (myIndirectlyAffectedFiles) {
+      final Set<File> indirect = myIndirectlyAffectedFiles.get(target);
+      return indirect != null && indirect.contains(file);
+    }
+  }
+
+  @Override
+  public void markIndirectlyAffected(BuildTarget<?> target, @NotNull File file) {
+    synchronized (myIndirectlyAffectedFiles) {
+      Set<File> files = myIndirectlyAffectedFiles.get(target);
+      if (files == null) {
+        files = new HashSet<>();
+        myIndirectlyAffectedFiles.put(target, files);
+      }
+      files.add(file);
+    }
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {

@@ -24,15 +24,11 @@ public class ExceptionUtil extends ExceptionUtilRt {
   }
 
   public static <T> T findCause(Throwable e, Class<T> klass) {
-    while (e != null && !klass.isInstance(e)) {
-      e = e.getCause();
-    }
-    //noinspection unchecked
-    return (T)e;
+    return ExceptionUtilRt.findCause(e, klass);
   }
 
   public static boolean causedBy(Throwable e, Class klass) {
-    return findCause(e, klass) != null;
+    return ExceptionUtilRt.causedBy(e, klass);
   }
 
   @NotNull
@@ -117,12 +113,15 @@ public class ExceptionUtil extends ExceptionUtilRt {
 
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
-    ExceptionUtilRt.rethrow(throwable);
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    ExceptionUtilRt.rethrowAllAsUnchecked(t);
+    if (t != null) {
+      rethrow(t);
+    }
   }
 
   @NotNull

@@ -1,14 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1140,6 +1143,13 @@ public class StringUtil extends StringUtilRt {
 
   @Nullable
   @Contract(pure = true)
+  public static String nullize(@Nullable String s, @Nullable String defaultValue) {
+    boolean empty = isEmpty(s) || Comparing.equal(s, defaultValue);
+    return empty ? null : s;
+  }
+
+  @Nullable
+  @Contract(pure = true)
   public static String nullize(@Nullable String s, boolean nullizeSpaces) {
     boolean empty = nullizeSpaces ? isEmptyOrSpaces(s) : isEmpty(s);
     return empty ? null : s;
@@ -1566,34 +1576,61 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    String[] units = TIME_UNITS;
+    return formatDuration(duration, unitSeparator, Integer.MAX_VALUE);
+  }
 
-    StringBuilder sb = new StringBuilder();
+  @NotNull
+  @Contract(pure = true)
+  private static String formatDuration(long duration, @NotNull String unitSeparator, int maxFragments) {
+    TLongArrayList unitValues = new TLongArrayList();
+    TIntArrayList unitIndices = new TIntArrayList();
+
     long count = duration;
     int i = 1;
-    for (; i < units.length && count > 0; i++) {
+    for (; i < TIME_UNITS.length && count > 0; i++) {
       long multiplier = TIME_MULTIPLIERS[i];
       if (count < multiplier) break;
       long remainder = count % multiplier;
       count /= multiplier;
-      if (remainder != 0 || sb.length() > 0) {
-        if (!units[i - 1].isEmpty()) {
-          sb.insert(0, units[i - 1]);
-          sb.insert(0, unitSeparator);
-        }
-        sb.insert(0, remainder).insert(0, " ");
+      if (remainder != 0 || unitValues.size() > 0) {
+        unitValues.insert(0, remainder);
+        unitIndices.insert(0, i - 1);
       }
       else {
         remainder = Math.round(remainder * 100 / (double)multiplier);
         count += remainder / 100;
       }
     }
-    if (!units[i - 1].isEmpty()) {
-      sb.insert(0, units[i - 1]);
-      sb.insert(0, unitSeparator);
+    unitValues.insert(0, count);
+    unitIndices.insert(0, i - 1);
+
+    if (unitValues.size() > maxFragments) {
+      int lastUnitIndex = unitIndices.get(maxFragments - 1);
+      long lastMultiplier = TIME_MULTIPLIERS[lastUnitIndex];
+      // Round up if needed
+      if (unitValues.get(maxFragments) > lastMultiplier / 2) {
+        long increment = lastMultiplier - unitValues.get(maxFragments);
+        for (int unit = lastUnitIndex - 1; unit > 0; unit--) {
+          increment *= TIME_MULTIPLIERS[unit];
+        }
+        return formatDuration(duration + increment, unitSeparator, maxFragments);
+      }
     }
-    sb.insert(0, count);
-    return sb.toString();
+
+    StringBuilder result = new StringBuilder();
+    for (i = 0; i < unitValues.size() && i < maxFragments; i++) {
+      if (i > 0) result.append(" ");
+      result.append(unitValues.get(i)).append(unitSeparator).append(TIME_UNITS[unitIndices.get(i)]);
+    }
+    return result.toString();
+  }
+
+  /**
+   * Formats given duration as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456, "") = "2m 3s"}).
+   */
+  public static String formatDurationApproximate(long duration) {
+    return formatDuration(duration, " ", 2);
   }
 
   /**

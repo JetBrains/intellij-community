@@ -113,7 +113,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
 
     final GlobalSearchScope scope = new EverythingGlobalScope();
     for (final String ns : result) {
-      if (ns.startsWith("file://")) continue;
+      if (ns.isEmpty()) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
         @Override
         public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {

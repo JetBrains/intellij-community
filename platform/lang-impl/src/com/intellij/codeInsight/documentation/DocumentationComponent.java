@@ -18,10 +18,7 @@ import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -127,7 +124,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
-  private final ActionToolbar myToolBar;
+  private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
   private JSlider myFontSizeSlider;
@@ -155,6 +152,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
+  private final boolean myStoreSize;
+  private boolean myManuallyResized;
 
   private AbstractPopup myHint;
 
@@ -172,8 +171,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public DocumentationComponent(DocumentationManager manager) {
+    this(manager, true);
+  }
+
+  public DocumentationComponent(DocumentationManager manager, boolean storeSize) {
     myManager = manager;
     myIsEmpty = true;
+    myStoreSize = storeSize;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
       {
@@ -319,7 +323,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   @Override
                   public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
                     Rectangle alloc = (Rectangle)a;
-                    if (x < alloc.x + (alloc.width / 2)) {
+                    if (x < alloc.x + (alloc.width / 2f)) {
                       bias[0] = Position.Bias.Forward;
                       return getStartOffset();
                     }
@@ -353,6 +357,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                   Rectangle bounds = a.getBounds();
                   int width = (int)super.getPreferredSpan(View.X_AXIS);
                   int height = (int)super.getPreferredSpan(View.Y_AXIS);
+                  if (width <= 0 || height <= 0) return;
                   @SuppressWarnings("UndesirableClassUsage")
                   BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                   Graphics2D graphics = image.createGraphics();
@@ -473,6 +478,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         super.processMouseMotionEvent(e);
       }
     };
+    myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -512,13 +518,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.addSeparator();
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.General.GearPlain);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
-      @Override
-      public void paintComponent(Graphics g) {
-        paintButtonLook(g);
-      }
-    };
+    presentation.setIcon(AllIcons.Actions.More);
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20));
     myCorner.setNoIconsInPopup(true);
     layeredPane.add(myCorner);
     layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
@@ -611,6 +613,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
+    editorKit.getStyleSheet().addRule("h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
     editorKit.getStyleSheet().addRule(".definition-only { padding: 3px 17px 0 7px; }");
@@ -618,7 +621,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 5px 16px 0 7px; }");
+    editorKit.getStyleSheet().addRule("ol { padding: 0 16px 0 0; }");
+    editorKit.getStyleSheet().addRule("ul { padding: 0 16px 0 0; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
     editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
@@ -667,7 +671,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
         applyFontProps();
         // resize popup according to new font size, if user didn't set popup size manually
-        if (myHint != null && myHint.getDimensionServiceKey() == null) showHint();
+        if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }
     });
 
@@ -871,24 +875,27 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setHintSize() {
-    Component popupAnchor = getPopupAnchor();
-    int maxWidth = popupAnchor != null ? JBUI.scale(435) : MAX_DEFAULT.width;
     Dimension hintSize;
-    if (myHint.getDimensionServiceKey() == null) {
-      Dimension preferredSize = myEditorPane.getPreferredSize();
-      int width = definitionPreferredWidth();
-      width = width < 0 ? preferredSize.width : width;
-      width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
+    if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
+      int minWidth = JBUI.scale(300);
+      int maxWidth = getPopupAnchor() != null ? JBUI.scale(435) : MAX_DEFAULT.width;
+
+      int width = Math.max(definitionPreferredWidth(), myEditorPane.getMinimumSize().width);
+      width = Math.min(maxWidth, Math.max(minWidth, width));
+
       myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
       myEditorPane.setText(myDecoratedText);
-      preferredSize = myEditorPane.getPreferredSize();
+      Dimension preferredSize = myEditorPane.getPreferredSize();
 
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
       height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
+
       hintSize = new Dimension(width, height);
     }
     else {
-      hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+      hintSize = myManuallyResized
+                 ? myHint.getSize()
+                 : DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
       if (hintSize == null) {
         hintSize = new Dimension(MIN_DEFAULT);
       }
@@ -919,8 +926,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
     hint.addResizeListener(() -> {
-      hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
-      hint.storeDimensionSize();
+      myManuallyResized = true;
+      if (myStoreSize) {
+        hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+        hint.storeDimensionSize();
+      }
     }, this);
   }
 
@@ -971,7 +981,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (links != null) {
       text = text + getBottom(location != null) + links;
     }
-
+    //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+    text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
     text = addExternalLinksIcon(text);
     return text;
   }
@@ -1767,13 +1778,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
+      e.getPresentation().setEnabledAndVisible(myHint != null && (myManuallyResized || myHint.getDimensionServiceKey() != null));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
-      myHint.setDimensionServiceKey(null);
+      myManuallyResized = false;
+      if (myStoreSize) {
+        DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
+        myHint.setDimensionServiceKey(null);
+      }
       showHint();
     }
   }

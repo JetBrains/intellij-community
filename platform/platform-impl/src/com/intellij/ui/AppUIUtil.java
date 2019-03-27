@@ -1,6 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -28,13 +31,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -62,20 +62,23 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  * @author yole
  */
 public class AppUIUtil {
-  private static final Logger LOG = Logger.getInstance(AppUIUtil.class);
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static boolean ourMacDocIconSet = false;
 
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance(AppUIUtil.class);
+  }
+
   public static void updateWindowIcon(@NotNull Window window) {
-    if (SystemInfo.isWindows &&
-        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
-        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
-    {
-      return; // JDK will load icon from the exe resource
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
+      return;  // JDK will load icon from the exe resource
     }
+
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
+    List<Image> images = new ArrayList<>(3);
 
     if (SystemInfo.isUnix) {
       Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
@@ -115,7 +118,7 @@ public class AppUIUtil {
           SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ScaleContext.create(window), size, size);
       }
       catch (IOException e) {
-        LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
+        getLogger().info("Cannot load svg application icon from " + svgIconUrl, e);
       }
     }
     else if (fallbackImageResourcePath != null) {
@@ -158,15 +161,20 @@ public class AppUIUtil {
     }
   }
 
-  public static void updateFrameClass() {
+  public static void updateFrameClass(@NotNull Toolkit toolkit) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
+      return;
+    }
+
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_FRAME_CLASS);
     try {
-      Toolkit toolkit = Toolkit.getDefaultToolkit();
       Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
         ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
       }
     }
     catch (Exception ignore) { }
+    activity.end();
   }
 
   // keep in sync with LinuxDistributionBuilder#getFrameClass
@@ -182,33 +190,50 @@ public class AppUIUtil {
   }
 
   public static void registerBundledFonts() {
-    if (SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
-      registerFont("/fonts/Inconsolata.ttf");
-      registerFont("/fonts/SourceCodePro-Regular.ttf");
-      registerFont("/fonts/SourceCodePro-Bold.ttf");
-      registerFont("/fonts/SourceCodePro-It.ttf");
-      registerFont("/fonts/SourceCodePro-BoldIt.ttf");
-      registerFont("/fonts/FiraCode-Regular.ttf");
-      registerFont("/fonts/FiraCode-Bold.ttf");
-      registerFont("/fonts/FiraCode-Light.ttf");
-      registerFont("/fonts/FiraCode-Medium.ttf");
-      registerFont("/fonts/FiraCode-Retina.ttf");
-    }
-  }
-
-  private static void registerFont(@NonNls String name) {
-    URL url = AppUIUtil.class.getResource(name);
-    if (url == null) {
-      Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+    if (!SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
       return;
     }
 
-    try (InputStream is = url.openStream()) {
-      Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
+
+    File fontDir = PluginManagerCore.isRunningFromSources()
+                   ? new File(PathManager.getCommunityHomePath(), "platform/platform-resources/src/fonts")
+                   : null;
+
+    registerFont("Inconsolata.ttf", fontDir);
+    registerFont("SourceCodePro-Regular.ttf", fontDir);
+    registerFont("SourceCodePro-Bold.ttf", fontDir);
+    registerFont("SourceCodePro-It.ttf", fontDir);
+    registerFont("SourceCodePro-BoldIt.ttf", fontDir);
+    registerFont("FiraCode-Regular.ttf", fontDir);
+    registerFont("FiraCode-Bold.ttf", fontDir);
+    registerFont("FiraCode-Light.ttf", fontDir);
+    registerFont("FiraCode-Medium.ttf", fontDir);
+    registerFont("FiraCode-Retina.ttf", fontDir);
+    activity.end();
+  }
+
+  private static void registerFont(@NotNull String name, @Nullable File fontDir) {
+    try {
+      Font font;
+      if (fontDir == null) {
+        URL url = AppUIUtil.class.getResource("/fonts/" + name);
+        if (url == null) {
+          getLogger().warn("Resource missing: " + name);
+          return;
+        }
+
+        try (InputStream is = url.openStream()) {
+          font = Font.createFont(Font.TRUETYPE_FONT, is);
+        }
+      }
+      else {
+        font = Font.createFont(Font.TRUETYPE_FONT, new File(fontDir, name));
+      }
       GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
-      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + url, t);
+      getLogger().warn("Cannot register font: " + name, t);
     }
   }
 
@@ -258,7 +283,7 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showUserAgreementAndConsentsIfNeeded() {
+  public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
@@ -268,14 +293,14 @@ public class AppUIUtil {
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
-      showConsentsAgreementIfNeed();
+      showConsentsAgreementIfNeed(log);
     }
   }
 
-  public static boolean showConsentsAgreementIfNeed() {
+  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     AtomicBoolean result = new AtomicBoolean();
     if (consentsToShow.second) {
@@ -288,12 +313,13 @@ public class AppUIUtil {
       };
       if (SwingUtilities.isEventDispatchThread()) {
         runnable.run();
-      } else {
+      }
+      else {
         try {
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
     }

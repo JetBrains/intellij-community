@@ -218,6 +218,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     for (EnumSet<ParameterInfoUIContextEx.Flag> set : hintFlags.values()) {
       if (set.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT)) {
         canOfferNext = false;
+        break;
       }
     }
     // highlight the next parameter to be filled

@@ -49,7 +49,7 @@
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
     <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
-
+    <multiHostInjector implementation="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector"/>
     <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
 
     <localInspection language="yaml" bundle="messages.YAMLBundle"

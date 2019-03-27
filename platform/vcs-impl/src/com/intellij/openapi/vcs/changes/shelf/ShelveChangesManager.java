@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
@@ -503,7 +503,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
            anyMatch(vcs -> VcsType.distributed.equals(vcs.getType()));
   }
 
-  public ShelvedChangeList importFilePatches(final String fileName, final List<? extends FilePatch> patches, final PatchEP[] patchTransitExtensions)
+  public ShelvedChangeList importFilePatches(final String fileName, final List<? extends FilePatch> patches, final List<PatchEP> patchTransitExtensions)
     throws IOException {
     try {
       File schemePatchDir = generateUniqueSchemePatchDir(fileName, true);

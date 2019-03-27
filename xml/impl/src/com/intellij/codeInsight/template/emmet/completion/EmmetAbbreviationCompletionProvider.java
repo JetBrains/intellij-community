@@ -30,9 +30,7 @@ public class EmmetAbbreviationCompletionProvider extends CompletionProvider<Comp
                                 @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     if (LiveTemplateCompletionContributor.shouldShowAllTemplates() || !parameters.isAutoPopup()) {
-      /**
-       * covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
-       */
+       // covered with com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
       return;
     }
 

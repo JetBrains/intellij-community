@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * {@link ChangesBrowser} extension with Rollback/Revert action added to the toolbar.
+ * {@link ChangesBrowserBase} extension with Rollback/Revert action added to the toolbar.
  * After the revert completes, the changes list is automatically refreshed according to the actual changes
  * retrieved from the {@link ChangeListManager}.
  */

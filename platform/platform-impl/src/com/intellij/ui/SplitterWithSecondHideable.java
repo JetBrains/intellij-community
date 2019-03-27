@@ -30,7 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.icons.AllIcons.General.ArrowDownSmall;
+import static com.intellij.icons.AllIcons.General.ArrowDown;
 import static com.intellij.icons.AllIcons.General.ArrowRight;
 
 public abstract class SplitterWithSecondHideable {
@@ -95,7 +95,7 @@ public abstract class SplitterWithSecondHideable {
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
-      super(ArrowRight, vertical ? ArrowDownSmall : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
+      super(ArrowRight, vertical ? ArrowDown : ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
 
     @Override

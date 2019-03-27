@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.NotNull;
+
+@FunctionalInterface
 public interface VirtualFileFilter {
   boolean accept(VirtualFile file);
 
@@ -24,6 +27,7 @@ public interface VirtualFileFilter {
       return true;
     }
 
+    @Override
     public String toString() {
       return "ALL";
     }
@@ -35,8 +39,14 @@ public interface VirtualFileFilter {
       return false;
     }
 
+    @Override
     public String toString() {
       return "NONE";
     }
   };
+
+  @NotNull
+  default VirtualFileFilter and(@NotNull VirtualFileFilter other) {
+    return file -> accept(file) && other.accept(file);
+  }
 }

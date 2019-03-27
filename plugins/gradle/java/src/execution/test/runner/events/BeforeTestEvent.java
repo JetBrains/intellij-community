@@ -48,34 +48,32 @@ public class BeforeTestEvent extends AbstractTestEvent {
     registerTestProxy(testId, testProxy);
 
     if (StringUtil.isEmpty(parentTestId)) {
-      addToInvokeLater(() -> getResultsViewer().getTestsRootNode().addChild(testProxy));
+      getResultsViewer().getTestsRootNode().addChild(testProxy);
     }
     else {
       final SMTestProxy parentTestProxy = findTestProxy(parentTestId);
       if (parentTestProxy != null) {
-        addToInvokeLater(() -> {
-          final List<GradleSMTestProxy> notYetAddedParents = ContainerUtil.newSmartList();
-          SMTestProxy currentParentTestProxy = parentTestProxy;
-          while (currentParentTestProxy instanceof GradleSMTestProxy) {
-            final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
-            if (currentParentTestProxy.getParent() == null && parentId != null) {
-              notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);
-            }
-            currentParentTestProxy = findTestProxy(parentId);
+        final List<GradleSMTestProxy> notYetAddedParents = ContainerUtil.newSmartList();
+        SMTestProxy currentParentTestProxy = parentTestProxy;
+        while (currentParentTestProxy instanceof GradleSMTestProxy) {
+          final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
+          if (currentParentTestProxy.getParent() == null && parentId != null) {
+            notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);
           }
+          currentParentTestProxy = findTestProxy(parentId);
+        }
 
-          for (GradleSMTestProxy gradleSMTestProxy : ContainerUtil.reverse(notYetAddedParents)) {
-            final SMTestProxy parentTestProxy1 = findTestProxy(gradleSMTestProxy.getParentId());
-            if (parentTestProxy1 != null) {
-              parentTestProxy1.addChild(gradleSMTestProxy);
-              getResultsViewer().onSuiteStarted(gradleSMTestProxy);
-            }
+        for (GradleSMTestProxy gradleSMTestProxy : ContainerUtil.reverse(notYetAddedParents)) {
+          final SMTestProxy parentTestProxy1 = findTestProxy(gradleSMTestProxy.getParentId());
+          if (parentTestProxy1 != null) {
+            parentTestProxy1.addChild(gradleSMTestProxy);
+            getResultsViewer().onSuiteStarted(gradleSMTestProxy);
           }
-          parentTestProxy.addChild(testProxy);
-        });
+        }
+        parentTestProxy.addChild(testProxy);
       }
     }
 
-    addToInvokeLater(() -> getResultsViewer().onTestStarted(testProxy));
+    getResultsViewer().onTestStarted(testProxy);
   }
 }

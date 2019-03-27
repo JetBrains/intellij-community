@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -131,7 +132,9 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
 
         try {
           Project project = myDebugProcess.getProject();
+          Ref<TextWithImportsImpl> text = new Ref<>();
           ExpressionEvaluator evaluator = ReadAction.compute(() -> {
+            text.set(new TextWithImportsImpl(element));
             CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
             try {
               return factory.getEvaluatorBuilder().build(element, debuggerContext.getSourcePosition());
@@ -139,7 +142,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             catch (UnsupportedExpressionException ex) {
               PsiElement context = PositionUtil.getContextElement(debuggerContext);
               ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
-                factory.createCodeFragment(new TextWithImportsImpl(element), context, project));
+                factory.createCodeFragment(text.get(), context, project));
               if (eval != null) {
                 return eval;
               }
@@ -147,8 +150,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             }
           });
           Value value = evaluator.evaluate(evalContext);
-          TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text, value, evalContext);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text.get(), value, evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
         catch (EvaluateException e) {

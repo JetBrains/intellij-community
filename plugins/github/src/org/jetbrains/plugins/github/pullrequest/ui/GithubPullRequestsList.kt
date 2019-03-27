@@ -18,6 +18,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
@@ -62,7 +63,11 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   override fun isCopyVisible(dataContext: DataContext) = false
 
-  override fun getData(dataId: String) = if (PlatformDataKeys.COPY_PROVIDER.`is`(dataId)) this else null
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+    GithubPullRequestKeys.SELECTED_SEARCHED_ISSUE.`is`(dataId) -> selectedValue
+    else -> null
+  }
 
   override fun dispose() {}
 

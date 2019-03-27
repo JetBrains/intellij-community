@@ -6,21 +6,24 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build"
   },
+  "//": "https://github.com/amcharts/amcharts4/issues/1101",
   "dependencies": {
-    "@amcharts/amcharts4": "4.1.14",
-    "element-ui": "^2.6.0",
-    "vue": "^2.6.7",
+    "@amcharts/amcharts4": "4.2.3",
+    "element-ui": "^2.6.2",
+    "semver": "^5.6.0",
+    "vue": "^2.6.10",
     "vue-class-component": "^7.0.1",
-    "vue-property-decorator": "^7.3.0",
+    "vue-property-decorator": "^8.0.0",
     "vue-router": "^3.0.2",
     "vuex": "^3.1.0",
     "vuex-persist": "^2.0.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-typescript": "^3.4.1",
-    "@vue/cli-service": "^3.4.1",
-    "typescript": "^3.3.3333",
-    "vue-template-compiler": "^2.6.7",
+    "@types/semver": "^5.5.0",
+    "@vue/cli-plugin-typescript": "^3.5.1",
+    "@vue/cli-service": "^3.5.1",
+    "typescript": "^3.3.4000",
+    "vue-template-compiler": "^2.6.10",
     "vuex-module-decorators": "^0.9.8"
   },
   "postcss": {

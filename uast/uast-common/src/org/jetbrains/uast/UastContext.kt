@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
-val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
+internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 /**
  * Manages the UAST to PSI conversion.
@@ -60,18 +60,8 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     return findPlugin(element)?.convertElement(element, parent, requiredType)
   }
 
-  override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-    if (element is PsiWhiteSpace) {
-      return null
-    }
-
-    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-    if (cachedElement != null) {
-      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-    }
-
-    return findPlugin(element)?.convertElementWithParent(element, requiredType)
-  }
+  override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? =
+    doConvertElementWithParent(element, requiredType)
 
   override fun getMethodCallExpression(
     element: PsiElement,
@@ -106,18 +96,29 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     findPlugin(element)?.convertToAlternatives(element, requiredTypes) ?: emptySequence()
 }
 
+private fun doConvertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
+  if (element is PsiWhiteSpace) {
+    return null
+  }
+
+  val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
+  if (cachedElement != null) {
+    return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
+  }
+
+  return UastLanguagePlugin.byLanguage(element.language)?.convertElementWithParent(element, requiredType)
+}
+
 /**
  * Converts the element along with its parents to UAST.
  */
-fun PsiElement?.toUElement(): UElement? =
-  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
+fun PsiElement?.toUElement(): UElement? = this?.let { doConvertElementWithParent(this, null) }
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
  * to the given UAST element type.
  */
-fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? =
-  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
+fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { doConvertElementWithParent(this, cls) as T? }
 
 fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
   this?.let {

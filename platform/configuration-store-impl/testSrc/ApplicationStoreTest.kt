@@ -299,10 +299,10 @@ internal class ApplicationStoreTest {
 
   @Test
   fun `remove stalled data`() = runBlocking<Unit> {
-    val stalledStorageBean = StalledStorageBean()
-    stalledStorageBean.file = "i_do_not_want_to_be_deleted_but.xml"
-    stalledStorageBean.components.addAll(listOf("loser1", "loser2", "lucky"))
-    PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean), disposableRule.disposable)
+    val obsoleteStorageBean = ObsoleteStorageBean()
+    obsoleteStorageBean.file = "i_do_not_want_to_be_deleted_but.xml"
+    obsoleteStorageBean.components.addAll(listOf("loser1", "loser2", "lucky"))
+    PlatformTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
 
     @State(name = "loser1", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
     class AOther : A()
@@ -325,8 +325,8 @@ internal class ApplicationStoreTest {
 
     componentStore.save()
 
-    // all must be saved regardless of stalledStorageBean because we have such components
-    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+    // all must be saved regardless of obsoleteStorageBean because we have such components
+    assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
         <component name="loser1" foo="old" />
         <component name="loser2" foo="old?" />
@@ -338,7 +338,7 @@ internal class ApplicationStoreTest {
 
     // first looser is deleted since state equals to default (no committed component data)
     componentStore.save()
-    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+    assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
         <component name="loser2" foo="old?" />
         <component name="lucky" bar="foo" />
@@ -349,7 +349,7 @@ internal class ApplicationStoreTest {
 
     // second looser is deleted since state equals to default (no committed component data)
     componentStore.save()
-    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+    assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
         <component name="lucky" bar="foo" />
       </application>
@@ -358,12 +358,12 @@ internal class ApplicationStoreTest {
 
   @Test
   fun `remove stalled data - keep file if another unknown component`() = runBlocking<Unit> {
-    val stalledStorageBean = StalledStorageBean()
-    stalledStorageBean.file = "i_will_be_not_deleted.xml"
-    stalledStorageBean.components.addAll(listOf("Loser"))
-    PlatformTestUtil.maskExtensions(STALLED_STORAGE_EP, listOf(stalledStorageBean), disposableRule.disposable)
+    val obsoleteStorageBean = ObsoleteStorageBean()
+    obsoleteStorageBean.file = "i_will_be_not_deleted.xml"
+    obsoleteStorageBean.components.addAll(listOf("Loser"))
+    PlatformTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
 
-    testAppConfig.resolve(stalledStorageBean.file).write("""
+    testAppConfig.resolve(obsoleteStorageBean.file).write("""
       <application>
         <component name="Unknown" data="some data" />
         <component name="Loser" foo="old?" />
@@ -372,7 +372,7 @@ internal class ApplicationStoreTest {
 
     componentStore.save()
 
-    assertThat(testAppConfig.resolve(stalledStorageBean.file)).isEqualTo("""
+    assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
         <component name="Unknown" data="some data" />
       </application>

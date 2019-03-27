@@ -30,12 +30,7 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
   override fun selectChange(change: ChangeViewDiffRequestProcessor.Wrapper) {}
 
   fun updatePreview(state: Boolean) {
-    if (state) {
-      refresh(false)
-    }
-    else {
-      clear()
-    }
+    updatePreview(state, false)
   }
 
   override fun getFastLoadingTimeMillis(): Int {

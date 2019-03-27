@@ -6,6 +6,9 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +19,10 @@ import java.util.Collection;
 
 public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
   protected TestFilesIndex(@NotNull File file) throws IOException {
-    super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        return new PersistentHashMap<>(new File(file, "forward.idx"), EnumeratorIntegerDescriptor.INSTANCE,
-                                       new IntCollectionDataExternalizer());
-      }
-    });
+    super(INDEX_EXTENSION,
+          new MyIndexStorage(file),
+          new PersistentMapBasedForwardIndex(new File(file, "forward.idx")),
+          new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @Override
@@ -38,7 +37,9 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
 
   @Nullable
   Collection<Integer> getTestDataFor(int testId) throws IOException {
-    return ((MyForwardIndex)myForwardIndex).containsDataFrom(testId);
+    ForwardIndex forwardIndex = getForwardIndexMap();
+    KeyCollectionForwardIndexAccessor<Integer, Void, UsedSources> forwardIndexAccessor = (KeyCollectionForwardIndexAccessor<Integer, Void, UsedSources>)getForwardIndexAccessor();
+    return forwardIndexAccessor.deserializeData(forwardIndex.get(testId));
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, Void> {
@@ -80,16 +81,4 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
       return DiscoveredTestDataHolder.VERSION;
     }
   };
-
-
-  private abstract static class MyForwardIndex extends KeyCollectionBasedForwardIndex<Integer, Void> {
-    protected MyForwardIndex() throws IOException {
-      super(INDEX_EXTENSION);
-    }
-
-    @Nullable
-    public Collection<Integer> containsDataFrom(int testId) throws IOException {
-      return getInput(testId);
-    }
-  }
 }

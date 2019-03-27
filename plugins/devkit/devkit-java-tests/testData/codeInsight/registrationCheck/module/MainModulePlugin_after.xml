@@ -8,10 +8,13 @@
   <extensionPoints>
     <extensionPoint name="myMainModuleClassEp" interface="MainModuleClass"/>
     <extensionPoint name="myDependencyModuleClassEp" interface="DependencyModuleClass"/>
+    <extensionPoint name="myAdditionalClassEp" beanClass="AdditionalModuleClass"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
   </extensions>
 
+  <actions>
+  </actions>
 </idea-plugin>

@@ -89,8 +89,7 @@ public class SpecialAnnotationsUtilBase {
         if (name == null) continue;
         if (name.startsWith("java.") || //name.startsWith("javax.") ||
             name.startsWith("org.jetbrains.") ||
-            NullableNotNullManager.isNullableAnnotation(psiAnnotation) ||
-            NullableNotNullManager.isNotNullAnnotation(psiAnnotation)) continue;
+            NullableNotNullManager.isNullabilityAnnotation(psiAnnotation)) continue;
         if (!processor.process(name)) break;
       }
     }

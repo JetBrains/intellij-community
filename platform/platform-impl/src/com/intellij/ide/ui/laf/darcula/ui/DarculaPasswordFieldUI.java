@@ -61,9 +61,9 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   }
 
   protected Dimension updatePreferredSize(Dimension size) {
+    JBInsets.addTo(size, getComponent().getMargin());
     Insets i = getComponent().getInsets();
     size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
-    JBInsets.addTo(size, getComponent().getMargin());
     return size;
   }
 
@@ -121,7 +121,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBUI.insets(0, 5));
+    getComponent().setMargin(JBUI.insets(2, 5));
   }
 
   @Override

@@ -817,6 +817,7 @@
         <reference ref="ShowSettings"/>
       </group>
       <separator/>
+      <reference ref="RunAnything"/>
       <reference ref="SearchEverywhere"/>
     </group>
 

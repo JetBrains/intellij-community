@@ -411,6 +411,11 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
+  @NotNull
+  public static String fileToUrl(@NotNull File file) {
+    return pathToUrl(FileUtil.toSystemIndependentName(file.getPath()));
+  }
+
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
@@ -727,6 +732,16 @@ public class VfsUtilCore {
     protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
       return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
     }
+  }
+
+  @NotNull
+  public static VirtualFile getRootFile(@NotNull VirtualFile file) {
+    while (true) {
+      VirtualFile parent = file.getParent();
+      if (parent == null) break;
+      file = parent;
+    }
+    return file;
   }
 
   //<editor-fold desc="Deprecated stuff.">

@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -15,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -61,29 +59,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   private static final Key<EditorNotificationPanel> KEY = Key.create("add sources to class");
 
-  // todo remove when Scala removes its usage
-  @Deprecated
-  public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
-  }
-
   @NotNull
   @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
-  }
-
-  // todo remove when Scala removes its usage
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @Override
-  @Deprecated
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-    Project project = editor == null ? null : editor.getProject();
-    if (project != null) {
-      return createNotificationPanel(file, fileEditor, project);
-    }
-    return null;
   }
 
   @Override

@@ -106,7 +106,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
-    if (!isCustomUI()) {
+    if (!isCustomUI() && !Registry.is("ide.tree.ui.experimental")) {
       if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
@@ -775,7 +775,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   @NotNull
-  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
+  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 

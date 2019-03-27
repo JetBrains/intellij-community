@@ -330,15 +330,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
-        @Override
-        @ButtonState
-        public int getPopState() {
-          return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
-                 ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
-                 : super.getPopState();
-        }
-      };
+      mySecondaryActionsButton =
+        new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
+          @Override
+          @ButtonState
+          public int getPopState() {
+            return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
+                   ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
+                   : super.getPopState();
+          }
+        };
       mySecondaryActionsButton.setNoIconsInPopup(true);
       add(mySecondaryActionsButton);
     }
@@ -1394,7 +1395,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setSecondaryActionsIcon(Icon icon) {
-    mySecondaryActions.getTemplatePresentation().setIcon(icon);
+    setSecondaryActionsIcon(icon, false);
+  }
+
+  @Override
+  public void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon) {
+    Presentation presentation = mySecondaryActions.getTemplatePresentation();
+    presentation.setIcon(icon);
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, hideDropdownIcon ? Boolean.TRUE : null);
   }
 
   @NotNull

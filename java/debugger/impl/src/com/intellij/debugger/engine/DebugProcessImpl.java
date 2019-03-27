@@ -104,7 +104,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final RequestManagerImpl myRequestManager;
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
-  @Nullable protected volatile MemoryAgent myMemoryAgent;
   protected final EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
@@ -917,11 +916,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   public DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
-  }
-
-  @Nullable
-  public MemoryAgent getMemoryAgent() {
-    return myMemoryAgent;
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {

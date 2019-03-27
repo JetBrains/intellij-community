@@ -134,11 +134,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     def macCustomizer = customizer
     buildContext.ant.copy(todir: "$target/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/mac")
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "libyjpagent.jnilib")
-        }
-      }
     }
 
     buildContext.ant.copy(todir: target) {
@@ -180,9 +175,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
     String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof".trim()
-    if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
-      ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
-    }
     new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
@@ -274,7 +266,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private String buildMacZip(String macDistPath) {
-    return buildContext.messages.block("Build zip archive for macOS") {
+    return buildContext.messages.block("Build .zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = getZipRoot(buildContext, customizer)
@@ -285,7 +277,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
       generateProductJson(buildContext, productJsonDir, null)
-      allPaths += [productJsonDir]
+      allPaths += productJsonDir
 
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {

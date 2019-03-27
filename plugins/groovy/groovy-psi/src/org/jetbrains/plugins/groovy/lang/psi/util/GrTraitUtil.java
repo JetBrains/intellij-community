@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -18,11 +18,14 @@ import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
@@ -225,8 +228,14 @@ public class GrTraitUtil {
 
   private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
     GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
-    if ((descriptor.flags & TraitFieldDescriptor.STATIC) != 0) field.getModifierList().addModifier(STATIC_MASK);
-    field.getModifierList().addModifier((descriptor.flags & TraitFieldDescriptor.PUBLIC) != 0 ? PUBLIC_MASK : PRIVATE_MASK);
+    GrLightModifierList modifierList = field.getModifierList();
+    if ((descriptor.flags & TraitFieldDescriptor.STATIC) != 0) modifierList.addModifier(STATIC_MASK);
+    modifierList.addModifier((descriptor.flags & TraitFieldDescriptor.PUBLIC) != 0 ? PUBLIC_MASK : PRIVATE_MASK);
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(trait.getProject());
+    for (String annotationText : descriptor.annotations) {
+      GrAnnotation annotation = factory.createAnnotationFromText(annotationText, modifierList);
+      modifierList.addAnnotation(annotation);
+    }
     return field;
   }
 }

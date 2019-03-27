@@ -9,6 +9,7 @@ import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
+import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -20,10 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -229,19 +227,29 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private void resolveLinksToBundledSchemes() {
+    List<EditorColorsScheme> brokenSchemesList = new ArrayList<>();
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
-      if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-        try {
-          ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
-        }
-        catch (InvalidDataException e) {
-          String message = "Color scheme '" + scheme.getName() + "'" +
-                           " points to incorrect or non-existent default (base) scheme " +
-                           e.getMessage();
-          Notifications.Bus.notify(
-            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
-        }
+      try {
+        resolveSchemeParent(scheme);
       }
+      catch (InvalidDataException e) {
+        brokenSchemesList.add(scheme);
+        String message = "Color scheme '" + scheme.getName() + "'" +
+                         " points to incorrect or non-existent default (base) scheme " +
+                         e.getMessage();
+        Notifications.Bus.notify(
+          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
+      }
+    }
+    for (EditorColorsScheme brokenScheme : brokenSchemesList) {
+      mySchemeManager.removeScheme(brokenScheme);
+    }
+  }
+
+  @Override
+  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
+    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
+      ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
     }
   }
 
@@ -394,6 +402,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   @Nullable
   private EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+    if (isTempScheme(scheme)) return scheme;
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
       EditorColorsScheme editableCopy = getScheme(editableCopyName);
@@ -456,6 +465,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
     EditorColorsScheme scheme = null;
+    if (lookAndFeelInfo instanceof TempUIThemeBasedLookAndFeelInfo) {
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (isTempScheme(globalScheme)) {
+        return globalScheme;
+      }
+    }
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
       String schemeName = theme.getEditorSchemeName();

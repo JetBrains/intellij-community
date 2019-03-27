@@ -39,7 +39,10 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void consoleInputRequested(boolean isStarted);
 
+  @Deprecated
   void showCythonWarning();
+
+  void showWarning(String warningId);
 
   XDebugSession getSession();
 }

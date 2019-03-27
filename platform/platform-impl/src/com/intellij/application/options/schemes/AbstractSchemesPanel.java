@@ -63,7 +63,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
 
   protected static final int DEFAULT_VGAP = 8;
-  
+  private JSeparator mySettingsPanelSeparator;
+
   // endregion
 
   AbstractSchemesPanel() {
@@ -93,11 +94,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       horizontalContainer.add(rightCustomComponent);
       add(horizontalContainer);
     }
-    add(new JSeparator());
+    mySettingsPanelSeparator = new JSeparator();
+    add(mySettingsPanelSeparator);
     if (vGap > 0) {
       add(Box.createVerticalGlue());
       add(Box.createRigidArea(new JBDimension(0, vGap)));
     }
+  }
+
+  public void setSeparatorVisible(boolean visible) {
+    mySettingsPanelSeparator.setVisible(visible);
   }
 
   @NotNull
@@ -142,6 +148,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
+    Dimension maxSize = toolbarComponent.getMaximumSize();
+    toolbarComponent.setMaximumSize(JBUI.size(22, maxSize.height));
     toolbarComponent.setBorder(JBUI.Borders.empty(3));
     return toolbarComponent;
   }

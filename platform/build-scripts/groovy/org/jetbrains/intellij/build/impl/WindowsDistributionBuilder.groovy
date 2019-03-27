@@ -42,11 +42,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           exclude(name: "breakgen*")
         }
       }
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "yjpagent*.dll")
-        }
-      }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
 
@@ -78,8 +73,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
     //do not include win32 launcher into winzip with 9+ jbr bundled
-    def List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
+    String jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
     if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
@@ -121,11 +116,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath64 != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.is32bitArchSupported() ? "32bitArchSupported" : null)
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.is32bitArchSupported())
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8 ? "32bitArchSupported" : null)
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
       }
     }
   }
@@ -171,9 +166,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
     architectures.each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName)
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
       new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
 

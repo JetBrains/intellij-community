@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +33,6 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
+public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
@@ -56,8 +53,7 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
   }
 
   public EditorFactoryImpl() {
-    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    MessageBusConnection busConnection = bus.connect();
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void beforeProjectLoaded(@NotNull final Project project) {
@@ -70,16 +66,12 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
       }
     });
     busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
-  }
 
-  @Override
-  public void initComponent() {
-    ModalityStateListener myModalityStateListener = entering -> {
+    LaterInvocator.addModalityStateListener(entering -> {
       for (Editor editor : myEditors) {
         ((EditorImpl)editor).beforeModalityStateChanged();
       }
-    };
-    LaterInvocator.addModalityStateListener(myModalityStateListener, ApplicationManager.getApplication());
+    }, ApplicationManager.getApplication());
   }
 
   public void validateEditorsAreReleased(Project project, boolean isLastProjectClosed) {

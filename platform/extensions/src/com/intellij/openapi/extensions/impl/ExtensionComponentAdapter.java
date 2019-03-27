@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-/**
- * @author Alexander Kireyev
- */
 public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
@@ -111,6 +108,6 @@ public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderabl
 
   @Override
   public String toString() {
-    return "ExtensionComponentAdapter[" + getAssignableToClassName() + "]: plugin=" + myPluginDescriptor;
+    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + myPluginDescriptor + ")";
   }
 }

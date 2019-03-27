@@ -1,6 +1,7 @@
 package com.intellij.json;
 
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -13,6 +14,7 @@ import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
@@ -55,8 +57,14 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     Project project = element.getProject();
     final JsonSchemaService service = JsonSchemaService.Impl.get(project);
     if (!service.isApplicableToFile(file)) return false;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(file);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(element.getContainingFile());
     if (rootSchema == null) return false;
+    if (service.isSchemaFile(rootSchema)) {
+      JsonProperty property = ObjectUtils.tryCast(element.getParent(), JsonProperty.class);
+      if (property != null && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(property.getName())) {
+        return true;
+      }
+    }
 
     String value = element.getValue();
     if (StringUtil.isEmpty(value)) return false;
@@ -68,7 +76,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     final JsonPointerPosition position = walker.findPosition(checkable, isName == ThreeState.NO);
     if (position == null || position.isEmpty() && isName == ThreeState.NO) return false;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, false, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, rootSchema, position).resolve();
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> s.getProperties().keySet().contains(value)

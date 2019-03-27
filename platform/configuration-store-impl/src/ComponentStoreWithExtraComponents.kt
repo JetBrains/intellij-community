@@ -11,8 +11,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
-// A way to remove stalled/unused component data.
-internal val STALLED_STORAGE_EP = ExtensionPointName<StalledStorageBean>("com.intellij.stalledStorage")
+// A way to remove obsolete component data.
+internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   @Suppress("DEPRECATION")
@@ -81,14 +81,14 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     // ensure that this task will not interrupt regular saving
     LOG.runAndLogException {
-      commitStalledComponents(session, false)
+      commitObsoleteComponents(session, false)
     }
 
     super.commitComponents(isForce, session, errors)
   }
 
-  internal open fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in STALLED_STORAGE_EP.extensionList) {
+  internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+    for (bean in OBSOLETE_STORAGE_EP.extensionList) {
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }

@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -13,34 +12,28 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultJdkConfigurator implements BaseComponent {
-  private final JavaSdk myJavaSdk;
-  private final PropertiesComponent myPropertiesComponent;
-  private final ProjectJdkTable myProjectJdkTable;
+final class DefaultJdkConfigurator {
+  DefaultJdkConfigurator() {
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    if (propertiesComponent.getBoolean("defaultJdkConfigured", false)) {
+      return;
+    }
 
-  public DefaultJdkConfigurator(JavaSdk javaSdk, PropertiesComponent propertiesComponent, ProjectJdkTable projectJdkTable) {
-    myJavaSdk = javaSdk;
-    myPropertiesComponent = propertiesComponent;
-    myProjectJdkTable = projectJdkTable;
-  }
-
-  @Override
-  public void initComponent() {
-    if (!myPropertiesComponent.getBoolean("defaultJdkConfigured", false)) {
-      List<Sdk> jdks = myProjectJdkTable.getSdksOfType(myJavaSdk);
-      if (jdks.isEmpty()) {
-        Collection<String> homePaths = myJavaSdk.suggestHomePaths();
-        String homePath = ContainerUtil.getFirstItem(homePaths);
-        if (homePath != null && myJavaSdk.isValidSdkHome(homePath)) {
-          String suggestedName = JdkUtil.suggestJdkName(myJavaSdk.getVersionString(homePath));
-          if (suggestedName != null) {
-            ApplicationManager.getApplication().runWriteAction(
-              () -> myProjectJdkTable.addJdk(myJavaSdk.createJdk(suggestedName, homePath, false))
-            );
-          }
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+    List<Sdk> jdks = projectJdkTable.getSdksOfType(javaSdk);
+    if (jdks.isEmpty()) {
+      Collection<String> homePaths = javaSdk.suggestHomePaths();
+      String homePath = ContainerUtil.getFirstItem(homePaths);
+      if (homePath != null && javaSdk.isValidSdkHome(homePath)) {
+        String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
+        if (suggestedName != null) {
+          ApplicationManager.getApplication().runWriteAction(
+            () -> projectJdkTable.addJdk(javaSdk.createJdk(suggestedName, homePath, false))
+          );
         }
       }
-      myPropertiesComponent.setValue("defaultJdkConfigured", true);
     }
+    propertiesComponent.setValue("defaultJdkConfigured", true);
   }
 }

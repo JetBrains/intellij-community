@@ -397,7 +397,7 @@ public class GitRebaseProcess {
 
   @Contract("_, !null -> !null")
   private static <T> T getItemIfAllTheSame(@NotNull Collection<T> collection, @Nullable T defaultItem) {
-    return newHashSet(collection).size() == 1 ? getFirstItem(collection) : defaultItem;
+    return new HashSet<>(collection).size() == 1 ? getFirstItem(collection) : defaultItem;
   }
 
   private void notifyNotAllConflictsResolved(@NotNull GitRepository conflictingRepository,

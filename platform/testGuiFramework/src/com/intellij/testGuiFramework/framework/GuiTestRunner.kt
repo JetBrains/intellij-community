@@ -171,9 +171,9 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
   private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
     val jUnitTestContainer = if (runner is GuiTestLocalRunnerParam)
-      JUnitTestContainer(method.declaringClass, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
+      JUnitTestContainer(method.declaringClass.canonicalName, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
     else
-      JUnitTestContainer(method.declaringClass, testName)
+      JUnitTestContainer(method.declaringClass.canonicalName, testName)
     runTest(jUnitTestContainer)
   }
 

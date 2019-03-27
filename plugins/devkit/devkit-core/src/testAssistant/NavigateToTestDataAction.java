@@ -70,7 +70,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
           return method == null ? Collections.emptyList() : TestDataGuessByExistingFilesUtil.guessTestDataName(method);
         });
       }
-      return Collections.emptyList();
+      return fileNames;
     }, DevKitBundle.message("testdata.searching"), true, project);
   }
 

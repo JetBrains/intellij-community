@@ -2,9 +2,9 @@
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
     <!--  use v-once because `charts` is not going to be changed  -->
-    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.name" lazy>
+    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.id" lazy>
       <keep-alive>
-        <ItemChart :type="item.name"/>
+        <ActivityChart :type="item.id"/>
       </keep-alive>
     </el-tab-pane>
   </el-tabs>
@@ -12,15 +12,15 @@
 
 <script lang="ts">
   import {Component, Vue, Watch} from "vue-property-decorator"
-  import ItemChart from "@/charts/ItemChart.vue"
+  import ActivityChart from "@/charts/ActivityChart.vue"
   import {Location} from "vue-router"
-  import {chartDescriptors, ItemChartType} from "@/charts/ItemChartDescriptor"
+  import {ActivityChartType, chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
-  @Component({components: {ItemChart}})
+  @Component({components: {ActivityChart}})
   export default class TabbedCharts extends Vue {
     charts = chartDescriptors
 
-    activeName: ItemChartType = this.charts[0].name
+    activeName: ActivityChartType = chartDescriptors[0].id
 
     created() {
       this.updateLocation(this.$route)
@@ -34,11 +34,22 @@
     private updateLocation(location: Location): void {
       const tab = location.query == null ? null : location.query.tab
       // do not check `location.path === "/"` because if component displayed, so, active
-      this.activeName = tab == null ? this.charts[0].name : tab as ItemChartType
+      if (tab == null) {
+        this.activeName = chartDescriptors[0].id
+      }
+      else {
+        const descriptor = chartDescriptors.find(it => it.id === tab)
+        this.activeName = descriptor == null ? chartDescriptors[0].id : descriptor.id
+      }
     }
 
     navigate(): void {
-      this.$router.push({query: {tab: this.activeName}})
+      this.$router.push({
+        query: {
+          ...this.$route.query,
+          tab: this.activeName,
+        },
+      })
     }
   }
 </script>

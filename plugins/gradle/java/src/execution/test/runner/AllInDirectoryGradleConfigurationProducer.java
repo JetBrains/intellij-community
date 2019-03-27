@@ -108,6 +108,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
     if (projectPath == null) return null;
     PsiElement contextLocation = context.getPsiLocation();
     if (contextLocation == null) return null;
+    if (AllInPackageGradleConfigurationProducer.extractPackage(contextLocation) != null) return null;
     if (!(contextLocation instanceof PsiFileSystemItem)) return null;
     PsiFileSystemItem directory = (PsiFileSystemItem)contextLocation;
     if (!directory.isDirectory()) return null;
@@ -122,7 +123,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
     return ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TEST).stream()
       .map(DataNode::getData)
       .flatMap(it -> it.getSourceFolders().stream())
-      .filter(it -> FileUtil.isAncestor(rootPath, it, true))
+      .filter(it -> FileUtil.isAncestor(rootPath, it, false))
       .map(it -> VfsUtil.findFile(Paths.get(it), false))
       .filter(Objects::nonNull)
       .distinct()

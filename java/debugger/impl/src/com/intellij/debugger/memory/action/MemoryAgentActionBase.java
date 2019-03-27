@@ -3,9 +3,12 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.managerThread.DebuggerCommand;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
+import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,13 +27,17 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(project);
     ObjectReference reference = getObjectReference(node);
     if (debugProcess == null || reference == null) return;
-    debugProcess.getManagerThread().invokeCommand(new DebuggerCommand() {
+    SuspendContextImpl suspendContext = debugProcess.getSuspendManager().getPausedContext();
+    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void action() {
-        MemoryAgent memoryAgent = debugProcess.getMemoryAgent();
-        LOG.assertTrue(memoryAgent != null);
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        EvaluationContextImpl evaluationContext = suspendContext.getEvaluationContext();
+        if (evaluationContext == null) {
+          LOG.error("Evaluation impossible");
+          return;
+        }
         try {
-          perform(memoryAgent, reference, node);
+          perform(evaluationContext, reference, node);
         }
         catch (EvaluateException ex) {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("Action failed", NotificationType.ERROR);
@@ -48,19 +55,19 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
-    MemoryAgent memoryAgent = debugProcess == null ? null : debugProcess.getMemoryAgent();
-    if (memoryAgent == null || !memoryAgent.isLoaded()) {
+    if (debugProcess == null || debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).capabilities().isLoaded()) {
       e.getPresentation().setVisible(false);
       return false;
     }
+
     ObjectReference reference = getObjectReference(node);
 
-    return reference != null && isEnabled(memoryAgent);
+    return reference != null && isEnabled(MemoryAgent.get(debugProcess).capabilities());
   }
 
-  protected abstract boolean isEnabled(@NotNull MemoryAgent agent);
+  protected abstract boolean isEnabled(@NotNull MemoryAgentCapabilities agentCapabilities);
 
-  protected abstract void perform(@NotNull MemoryAgent agent,
+  protected abstract void perform(@NotNull EvaluationContextImpl evaluationContext,
                                   @NotNull ObjectReference reference,
                                   @NotNull XValueNodeImpl node) throws EvaluateException;
 }

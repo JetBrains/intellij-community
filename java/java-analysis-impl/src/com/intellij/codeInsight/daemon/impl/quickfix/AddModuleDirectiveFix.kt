@@ -44,7 +44,7 @@ class AddExportsDirectiveFix(module: PsiJavaModule,
     else if (!targetName.isEmpty()) {
       val targets = existing.moduleNames
       if (!targets.isEmpty() && targetName !in targets) {
-        existing.add(PsiElementFactory.SERVICE.getInstance(project).createModuleReferenceFromText(targetName, null))
+        existing.add(PsiElementFactory.getInstance(project).createModuleReferenceFromText(targetName, null))
       }
     }
   }

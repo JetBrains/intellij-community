@@ -31,6 +31,8 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
@@ -43,11 +45,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 import static com.intellij.util.containers.ContainerUtil.list;
@@ -110,7 +111,7 @@ public class TextDiffViewerUtil {
   public static void installDocumentListeners(@NotNull DocumentListener listener,
                                               @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
-    for (Document document : ContainerUtil.newHashSet(documents)) {
+    for (Document document : new HashSet<>((Collection<? extends Document>)documents)) {
       document.addDocumentListener(listener, disposable);
     }
   }
@@ -160,7 +161,7 @@ public class TextDiffViewerUtil {
     });
 
     if (properties.size() < 2) return true;
-    return ContainerUtil.newHashSet(properties).size() == 1;
+    return new HashSet<>(properties).size() == 1;
   }
 
   //
@@ -443,6 +444,20 @@ public class TextDiffViewerUtil {
     protected abstract void doApply(boolean readOnly);
 
     protected abstract boolean canEdit();
+
+    protected void putEditorHint(@NotNull EditorEx editor, boolean readOnly) {
+      if (readOnly) {
+        EditorModificationUtil.setReadOnlyHint(editor, EditorBundle.message("editing.viewer.hint") + ". <a href=\"\">Enable editing</a>",
+                                               (e) -> {
+                                                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                   setSelected(false);
+                                                 }
+                                               });
+      }
+      else {
+        EditorModificationUtil.setReadOnlyHint(editor, null);
+      }
+    }
   }
 
   public static class EditorReadOnlyLockAction extends ReadOnlyLockAction {
@@ -458,6 +473,7 @@ public class TextDiffViewerUtil {
     protected void doApply(boolean readOnly) {
       for (EditorEx editor : myEditableEditors) {
         editor.setViewer(readOnly);
+        putEditorHint(editor, readOnly);
       }
     }
 

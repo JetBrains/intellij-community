@@ -1,12 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -695,57 +694,43 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static boolean isAvailable() { return ourLib != null; }
 
-  private static boolean _isUnderVMWare() {
-    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("lspci");
-    try {
-      final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
-      final String stdout = out.getStdout();
-      return stdout.toLowerCase().contains("vmware");
-    } catch (ExecutionException e) {
-      LOG.error(e);
-    }
-    return false;
-  }
-
   private static GlobalMenuLib _loadLibrary() {
-    try {
-      if (!SystemInfo.isLinux
-          || Registry.is("linux.native.menu.force.disable")
-          || (isCLionSwiftPluginInstalled() && _isUnderVMWare())
-      )
-        return null;
-      if (!Experiments.isFeatureEnabled("linux.native.menu"))
-        return null;
-    } catch (Throwable e) {
-      LOG.error(e);
+    if (!SystemInfo.isLinux ||
+        Registry.is("linux.native.menu.force.disable") ||
+        !Experiments.isFeatureEnabled("linux.native.menu") ||
+        !JnaLoader.isLoaded() ||
+        isUnderVMWareWithSwiftPluginInstalled()) {
       return null;
     }
 
     try {
       NativeLibraryLoader.loadPlatformLibrary("dbm");
 
-      // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-      // the way we tell CF to interpret our char*
-      // May be removed if we use toStringViaUTF16
-      System.setProperty("jna.encoding", "UTF8");
-
-      final Map<String, Object> options = new HashMap<>();
-      return Native.loadLibrary("dbm", GlobalMenuLib.class, options);
-    } catch (UnsatisfiedLinkError ule) {
+      return Native.loadLibrary("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    }
+    catch (UnsatisfiedLinkError ule) {
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       LOG.error(e);
-    } finally {
-      System.clearProperty("jna.encoding");
     }
 
     return null;
   }
 
-  private static boolean isCLionSwiftPluginInstalled() {
+  private static boolean isUnderVMWareWithSwiftPluginInstalled() {
     // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
+    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+      try {
+        String stdout = ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout();
+        return stdout.toLowerCase(Locale.ENGLISH).contains("vmware");
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    return false;
   }
 
   private static class MenuItemInternal {

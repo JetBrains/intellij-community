@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.highlighting
 
 import com.intellij.openapi.application.ReadAction
@@ -32,11 +32,13 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   }
 
   void testHighlighting(@NotNull String text) {
-    VirtualFile file = createProjectSubFile "build.gradle", text
+    testHighlighting "build.gradle", text
+  }
 
-    importProject()
+  void testHighlighting(@NotNull String relativePath, @NotNull String text) {
+    VirtualFile file = createProjectSubFile relativePath, text
     EdtTestUtil.runInEdtAndWait {
-      fixture.testHighlightingAllFiles(true, false, true, file)
+      fixture.testHighlighting(true, false, true, file)
     }
   }
 
@@ -60,11 +62,20 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   }
 
   void doTest(@NotNull String text, Closure test) {
+    doTest(text, getParentCalls(), test)
+  }
+
+  void doTest(@NotNull String text, @NotNull List<String> calls, Closure test) {
     List<String> testPatterns = [text]
-    getParentCalls().each { testPatterns.add("$it { $text }") }
+    calls.each { testPatterns.add("$it { $text }") }
     testPatterns.each {
       updateProjectFile(it)
-      ReadAction.run(test)
+      try {
+        ReadAction.run(test)
+      }
+      catch (AssertionError e) {
+        throw new AssertionError(it, e)
+      }
     }
   }
 

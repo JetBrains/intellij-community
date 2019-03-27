@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.openapi.project.Project;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
@@ -16,12 +17,12 @@ import java.util.Set;
  * @author egor
  */
 public class JavaDebuggerAttachUtil {
-  public static boolean canAttach(int pid) {
-    return JavaAttachDebuggerProvider.getProcessAttachInfo(String.valueOf(pid)) != null;
+  public static boolean canAttach(BaseProcessHandler processHandler) {
+    return JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler) != null;
   }
 
-  public static boolean attach(int pid, Project project) {
-    JavaAttachDebuggerProvider.LocalAttachInfo info = JavaAttachDebuggerProvider.getProcessAttachInfo(String.valueOf(pid));
+  public static boolean attach(BaseProcessHandler processHandler, Project project) {
+    JavaAttachDebuggerProvider.LocalAttachInfo info = JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler);
     if (info != null) {
       JavaAttachDebuggerProvider.attach(info, project);
       return true;

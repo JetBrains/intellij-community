@@ -2,7 +2,6 @@
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -11,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,26 +20,25 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
-import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
+import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class Utils {
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
-  private static final String PROJECT_ADVERTISEMENT_FLAG    = "editor.config.ad.shown";
 
   private static boolean ourIsFullSettingsSupportEnabledInTest;
 
@@ -128,13 +127,13 @@ public class Utils {
   }
 
   private static String getEndOfFile() {
-    return DocumentSettingsManager.insertFinalNewlineKey + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
+    return StandardEditorConfigProperties.INSERT_FINAL_NEWLINE + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
   }
 
   private static String getTrailingSpaces() {
     final String spaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=false\n";
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return DocumentSettingsManager.trimTrailingWhitespaceKey + "=true\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=false\n";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=true\n";
     return "";
   }
 
@@ -199,11 +198,32 @@ public class Utils {
     result.append("\n");
   }
 
-  public static boolean isShowAdvertisementText(@NotNull Project project) {
-    final PropertiesComponent projectProperties = PropertiesComponent.getInstance(project);
-    boolean adFlag = projectProperties.getBoolean(PROJECT_ADVERTISEMENT_FLAG);
-    if (adFlag) return false;
-    projectProperties.setValue(PROJECT_ADVERTISEMENT_FLAG, true);
-    return true;
+
+  public static boolean editorConfigExists(@NotNull Project project) {
+    SettingsProviderComponent settingsProvider  = SettingsProviderComponent.getInstance();
+    String basePath = project.getBasePath();
+    if (basePath == null) return false;
+    File projectDir = new File(basePath);
+    Set<String> rootDirs = settingsProvider.getRootDirs(project);
+    if (rootDirs.isEmpty()) {
+        rootDirs = Collections.singleton(basePath);
+    }
+    for (String rootDir : rootDirs) {
+      File currRoot = new File(rootDir);
+      while (currRoot != null) {
+        if (containsEditorConfig(currRoot)) return true;
+        if (EditorConfigRegistry.shouldStopAtProjectRoot() && FileUtil.filesEqual(currRoot, projectDir)) break;
+        currRoot = currRoot.getParentFile();
+      }
+    }
+    return false;
+  }
+
+  private static boolean containsEditorConfig(@NotNull File dir) {
+    if (dir.exists() && dir.isDirectory()) {
+      File file = new File(dir.getPath() + File.separator + ".editorconfig");
+      if (file.exists()) return true;
+    }
+    return false;
   }
 }

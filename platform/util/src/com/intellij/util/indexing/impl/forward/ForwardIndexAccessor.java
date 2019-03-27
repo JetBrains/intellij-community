@@ -9,16 +9,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public interface ForwardIndexAccessor<Key, Value, Input> {
+/**
+ *
+ * @param <DataType> should not hold strong reference to Input because it may lead to OOMs
+ */
+public interface ForwardIndexAccessor<Key, Value, DataType, Input> {
   /**
-   * Creates a diff builder for given inputId.
+   * creates a diff builder for given inputId.
    */
   @NotNull
   InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException;
 
   /**
-   * Serialize indexed data to forward index format.
+   * convert mapped key-values and input to a data type before it will be serialized
+   */
+  DataType convertToDataType(@Nullable Map<Key, Value> map, @Nullable Input content);
+
+  /**
+   * serialize indexed data to forward index format.
    */
   @Nullable
-  ByteArraySequence serializeIndexedData(@Nullable Map<Key, Value> data, @Nullable Input content) throws IOException;
+  ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException;
 }

@@ -15,61 +15,57 @@
  */
 package com.intellij.util.containers;
 
-import gnu.trove.TLongFunction;
+import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.Unsafe;
 
 import java.io.*;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.locks.StampedLock;
 
 /**
  * This class is a thread-safe version of the
  * {@code java.util.BitSet} except for some methods which don't make sense in concurrent environment or those i was too lazy to implement.
  *
- * Implementation is based on "Lock-free Dynamically Resizable Arrays" by Dechev, Pirkelbauer, Bjarne Stroustrup.
- * http://www.stroustrup.com/lock-free-vector.pdf
+ * Implementation: bits stored packed in {@link #array}, 32 bits per array element.
+ * When bit change request comes, the array is reallocated as necessary.
  *
  * @see java.util.BitSet
  */
+@ReviseWhenPortedToJDK("9") // todo port to VarHandles
 public class ConcurrentBitSet {
   public ConcurrentBitSet() {
+    clear();
   }
 
-  /**
-   * An array of 32 longword vectors.
-   * Vector at index "i" has length of (1 << i) long words.
-   * Each long word stores next 64 bits part of the set.
-   * Therefore the i-th bit of the set is stored in {@code arrays.get(arrayIndex(i)).get(wordIndexInArray(i))} word in the {@code 1L << i} position.
-   */
-  private final AtomicReferenceArray<AtomicLongArray> arrays = new AtomicReferenceArray<>(32);
+  private static final Unsafe UNSAFE = AtomicFieldUpdater.getUnsafe();
+  private static final int base = UNSAFE.arrayBaseOffset(int[].class);
+  private static final int shift;
+
+  static {
+    int scale = UNSAFE.arrayIndexScale(int[].class);
+    if (!BitUtil.isPowerOfTwo(scale)) {
+      throw new Error("data type scale not a power of two, got: "+scale);
+    }
+    shift = 31 - Integer.numberOfLeadingZeros(scale);
+  }
+
+  private volatile int[] array;
+
   private static int arrayIndex(int bitIndex) {
-    int i = (bitIndex >> ADDRESS_BITS_PER_WORD) + 1;
-    return 31 - Integer.numberOfLeadingZeros(i);
+    return bitIndex >> ADDRESS_BITS_PER_WORD;
   }
-  private static int wordIndexInArray(int bitIndex) {
-    int i = (bitIndex >> ADDRESS_BITS_PER_WORD) + 1;
-    return clearHighestBit(i);
+  private static int wordMaskForIndex(int bitIndex) {
+    return 1 << bitIndex;
   }
 
-  private static int clearHighestBit(int index) {
-    int i = index>>1;
-    i |= i >>  1;
-    i |= i >>  2;
-    i |= i >>  4;
-    i |= i >>  8;
-    i |= i >> 16;
-    return index & i;
-  }
+  private final StampedLock lock = new StampedLock();
 
-  /* BitSets are packed into arrays of "words."  Currently a word is
-     a long, which consists of 64 bits, requiring 6 address bits.
-     The choice of word size is determined purely by performance concerns.
-  */
-  private static final int ADDRESS_BITS_PER_WORD = 6;
-  private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
-
-  /* Used to shift left or right for a partial word mask */
-  private static final long WORD_MASK = -1L;
+  private static final int ADDRESS_BITS_PER_WORD = 5;
+  static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
 
   /**
    * Sets the bit at the specified index to the complement of its
@@ -80,8 +76,9 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean flip(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, word -> word ^ (1L << bitIndex));
-    return (prevWord & (1L << bitIndex)) == 0;
+    int wordMaskForIndex = wordMaskForIndex(bitIndex);
+    long prevWord = changeWord(bitIndex, word -> word ^ wordMaskForIndex);
+    return (prevWord & wordMaskForIndex) == 0;
   }
 
   /**
@@ -92,27 +89,63 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean set(final int bitIndex) {
-    final long mask = 1L << bitIndex;
+    int mask = wordMaskForIndex(bitIndex);
     long prevWord = changeWord(bitIndex, word -> word | mask);
     return (prevWord & mask) != 0;
   }
 
-  long changeWord(int bitIndex, @NotNull TLongFunction change) {
+  private static long checkedByteOffset(int i, int[] array) {
+    if (i < 0 || i >= array.length) {
+      throw new IndexOutOfBoundsException("index " + i);
+    }
+
+    return byteOffset(i);
+  }
+
+  private static long byteOffset(int i) {
+      return ((long) i << shift) + base;
+  }
+
+  int changeWord(int bitIndex, @NotNull TIntFunction change) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
 
-    AtomicLongArray array = getOrCreateArray(bitIndex);
+    long stamp = lock.writeLock();
+    try {
+      int i = arrayIndex(bitIndex);
+      int[] array = growArrayTo(i);
+      long offset = checkedByteOffset(i, array);
 
-    int wordIndexInArray = wordIndexInArray(bitIndex);
-    long word;
-    long newWord;
-    do {
-      word = array.get(wordIndexInArray);
-      newWord = change.execute(word);
+      int word;
+      int newWord;
+      do {
+        word = getVolatile(array, i);
+        newWord = change.execute(word);
+      }
+      while (!UNSAFE.compareAndSwapInt(array, offset, word, newWord));
+      return word;
     }
-    while (!array.compareAndSet(wordIndexInArray, word, newWord));
-    return word;
+    finally {
+      lock.unlockWrite(stamp);
+    }
+  }
+
+  private static int getVolatile(int[] array, int i) {
+    return UNSAFE.getIntVolatile(array, checkedByteOffset(i, array));
+  }
+
+  private static final AtomicFieldUpdater<ConcurrentBitSet, int[]> ARRAY_UPDATER = AtomicFieldUpdater.forFieldOfType(ConcurrentBitSet.class, int[].class);
+  private int[] growArrayTo(int arrayIndex) {
+    int[] newArray;
+    int[] array;
+    do {
+      array = this.array;
+      if (arrayIndex < array.length) return array;
+      newArray = ArrayUtil.realloc(array, Math.max(array.length * 2, arrayIndex + 1));
+    }
+    while (!ARRAY_UPDATER.compareAndSet(this, array, newArray));
+    return newArray;
   }
 
   /**
@@ -139,30 +172,22 @@ public class ConcurrentBitSet {
    * @return previous value
    */
   public boolean clear(final int bitIndex) {
-    long prevWord = changeWord(bitIndex, word -> word & ~(1L << bitIndex));
-    return (prevWord & (1L << bitIndex)) != 0;
+    int wordMaskForIndex = wordMaskForIndex(bitIndex);
+    int prevWord = changeWord(bitIndex, word -> word & ~wordMaskForIndex);
+    return (prevWord & wordMaskForIndex) != 0;
   }
-
-  @NotNull
-  private AtomicLongArray getOrCreateArray(int bitIndex) {
-    int arrayIndex = arrayIndex(bitIndex);
-    AtomicLongArray array;
-
-    // while loop is here because of clear() method
-    while ((array = arrays.get(arrayIndex)) == null) {
-      arrays.compareAndSet(arrayIndex, null, new AtomicLongArray(1<<arrayIndex));
-    }
-    return array;
-  }
-
 
   /**
    * Clear method in presense of concurrency complicates everything to no end.
    * PLEASE REWRITE EVERY OTHER METHOD IF EVER DECIDE TO IMPLEMENT THIS
    */
   public void clear() {
-    for (int i=0; i<arrays.length();i++) {
-      arrays.set(i, null);
+    long stamp = lock.writeLock();
+    try {
+      array = new int[32];
+    }
+    finally {
+      lock.unlockWrite(stamp);
     }
   }
 
@@ -176,22 +201,22 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean get(int bitIndex) {
-    return (getWord(bitIndex) & (1L<<bitIndex)) != 0;
+    return (getWord(bitIndex) & wordMaskForIndex(bitIndex)) != 0;
   }
 
-  long getWord(int bitIndex) {
+  int getWord(int bitIndex) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
-
+    long stamp;
+    int word;
     int arrayIndex = arrayIndex(bitIndex);
-    AtomicLongArray array = arrays.get(arrayIndex);
-    if (array == null) {
-      return 0;
-    }
-
-    int wordIndexInArray = wordIndexInArray(bitIndex);
-    return array.get(wordIndexInArray);
+    do {
+      stamp = lock.tryOptimisticRead();
+      int[] array = this.array;
+      word = arrayIndex < array.length ? getVolatile(array, arrayIndex) : 0;
+    } while (!lock.validate(stamp));
+    return word;
   }
 
   /**
@@ -216,32 +241,33 @@ public class ConcurrentBitSet {
     if (fromIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + fromIndex);
     }
-
-    int arrayIndex;
-    AtomicLongArray array = null;
-    for (arrayIndex = arrayIndex(fromIndex); arrayIndex < arrays.length() && (array = arrays.get(arrayIndex)) == null; arrayIndex++);
-    if (array == null) {
-      return -1;
-    }
-
-    int wordIndexInArray = wordIndexInArray(fromIndex);
-
-    long word = array.get(wordIndexInArray) & (WORD_MASK << fromIndex);
-
-    while (true) {
-      if (word != 0) {
-        return ((1<<arrayIndex)-1 + wordIndexInArray) * BITS_PER_WORD + Long.numberOfTrailingZeros(word);
-      }
-      if (++wordIndexInArray == array.length()) {
-        wordIndexInArray = 0;
-        for (++arrayIndex; arrayIndex != arrays.length() && (array = arrays.get(arrayIndex)) == null; arrayIndex++);
-        if (array == null) {
-          return -1;
+    int i = arrayIndex(fromIndex);
+    int result;
+    long stamp;
+    do {
+      result = -1;
+      stamp = lock.tryOptimisticRead();
+      int[] array = this.array;
+      if (i < array.length) {
+        int w = getVolatile(array, i);
+        int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
+        if (nextBitsInWord != 0) {
+          int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+          result = i * BITS_PER_WORD + wordIndex;
+        }
+        else {
+          for (i += 1; i < array.length; i++) {
+            w = getVolatile(array, i);
+            if (w == 0) continue;
+            int wordIndex = Integer.numberOfTrailingZeros(w);
+            result = i * BITS_PER_WORD + wordIndex;
+            break;
+          }
         }
       }
-
-      word = array.get(wordIndexInArray);
     }
+    while (!lock.validate(stamp));
+    return result;
   }
 
 
@@ -258,62 +284,36 @@ public class ConcurrentBitSet {
       throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
     }
 
-    int arrayIndex = arrayIndex(fromIndex);
-    AtomicLongArray array = arrays.get(arrayIndex);
-    int wordIndexInArray = wordIndexInArray(fromIndex);
-    if (array == null) {
-      return ((1<<arrayIndex)-1+wordIndexInArray) * BITS_PER_WORD+(fromIndex%BITS_PER_WORD);
-    }
-
-    long word = ~array.get(wordIndexInArray) & (WORD_MASK << fromIndex);
-
-    while (true) {
-      if (word != 0) {
-        return ((1<<arrayIndex)-1 + wordIndexInArray) * BITS_PER_WORD + Long.numberOfTrailingZeros(word);
+    int i = arrayIndex(fromIndex);
+    int result;
+    long stamp;
+    do {
+      stamp = lock.tryOptimisticRead();
+      int[] array = this.array;
+      result = array.length * BITS_PER_WORD;
+      if (i >= array.length) {
+        result = fromIndex;
       }
-      if (++wordIndexInArray == array.length()) {
-        wordIndexInArray = 0;
-        if (++arrayIndex == arrays.length()) return -1;
-        array = arrays.get(arrayIndex);
-        if (array == null) {
-          return ((1<<arrayIndex)-1+wordIndexInArray) * BITS_PER_WORD;
+      else {
+        int w = ~getVolatile(array, i);
+        int nextBitsInWord = w & -wordMaskForIndex(fromIndex);
+        if (nextBitsInWord != 0) {
+          int wordIndex = Integer.numberOfTrailingZeros(nextBitsInWord);
+          result = i * BITS_PER_WORD + wordIndex;
+        }
+        else {
+          for (i += 1; i < array.length; i++) {
+            w = ~getVolatile(array, i);
+            if (w == 0) continue;
+            int wordIndex = Integer.numberOfTrailingZeros(w);
+            result = i * BITS_PER_WORD + wordIndex;
+            break;
+          }
         }
       }
-
-      word = ~array.get(wordIndexInArray);
     }
-  }
-
-  /**
-  * Returns the hash code value for this bit set. The hash code depends
-  * only on which bits are set.
-  * <p/>
-  * <p>The hash code is defined to be the result of the following
-  * calculation:
-  * <pre> {@code
-  * public int hashCode() {
-  *     long h = 1234;
-  *     for (int i = words.length; --i >= 0; )
-  *         h ^= words[i] * (i + 1);
-  *     return (int)((h >> 32) ^ h);
-  * }}</pre>
-  * Note that the hash code changes if the set of bits is altered.
-  *
-  * @return the hash code value for this bit set
-  */
-  @Override
-  public int hashCode() {
-    long h = 1234;
-    for (int a = 0; a<arrays.length();a++) {
-      AtomicLongArray array = arrays.get(a);
-      if (array == null) continue;
-      for (int i=0;i<array.length();i++) {
-        long word = array.get(i);
-        h ^= word * ((1<<a)+ i);
-      }
-    }
-
-    return (int)(h >> 32 ^ h);
+    while (!lock.validate(stamp));
+    return result;
   }
 
 
@@ -323,52 +323,7 @@ public class ConcurrentBitSet {
   * @return the number of bits currently in this bit set
   */
   public int size() {
-    int a;
-    for (a = arrays.length() - 1; a >= 0; a--) {
-      AtomicLongArray array = arrays.get(a);
-      if (array != null) break;
-    }
-    return ((1<<a+1)-1)*BITS_PER_WORD;
-  }
-
-  /**
-  * Compares this object against the specified object.
-  * The result is {@code true} if and only if the argument is
-  * not {@code null} and is a {@code ConcurrentBitSet} object that has
-  * exactly the same set of bits set to {@code true} as this bit
-  * set. That is, for every nonnegative {@code int} index {@code k},
-  * <pre>((ConcurrentBitSet)obj).get(k) == this.get(k)</pre>
-  * must be true. The current sizes of the two bit sets are not compared.
-  *
-  * @param obj the object to compare with
-  * @return {@code true} if the objects are the same;
-  * {@code false} otherwise
-  * @see #size()
-  */
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ConcurrentBitSet)) {
-      return false;
-    }
-    if (this == obj) {
-      return true;
-    }
-
-    ConcurrentBitSet set = (ConcurrentBitSet)obj;
-
-    for (int i = 0; i < arrays.length(); i++) {
-      AtomicLongArray array1 = arrays.get(i);
-      AtomicLongArray array2 = set.arrays.get(i);
-      if (array1 == null && array2 == null) continue;
-      int size = array1 == null ? array2.length() : array1.length();
-      for (int k=0; k<size;k++) {
-        long word1 = array1 == null ? 0 : array1.get(k);
-        long word2 = array2 == null ? 0 : array2.get(k);
-        if (word1 != word2) return false;
-      }
-    }
-
-    return true;
+    return array.length*BITS_PER_WORD;
   }
 
   /**
@@ -412,23 +367,15 @@ public class ConcurrentBitSet {
   }
 
   @NotNull
-  public long[] toLongArray() {
-    int bits = size();
-    long[] result = new long[bits/BITS_PER_WORD];
-    int i = 0;
-    for (int b=0; b<bits;b += BITS_PER_WORD){
-      AtomicLongArray array = arrays.get(arrayIndex(b));
-      long word = array == null ? 0 : array.get(wordIndexInArray(b));
-      result[i++] = word;
-    }
-    return result;
+  public int[] toIntArray() {
+    return array.clone();
   }
 
   public void writeTo(@NotNull File file) throws IOException {
     try (DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
-      long[] words = toLongArray();
-      for (long word : words) {
-        bitSetStorage.writeLong(word);
+      int[] words = toIntArray();
+      for (int word : words) {
+        bitSetStorage.writeInt(word);
       }
     }
   }
@@ -440,22 +387,15 @@ public class ConcurrentBitSet {
     }
     try (DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
       long length = file.length();
-      long[] words = new long[(int)(length / 8)];
+      int[] words = new int[(int)(length / 8)];
       for (int i = 0; i < words.length; i++) {
-        words[i] = bitSetStorage.readLong();
+        words[i] = bitSetStorage.readInt();
       }
       return new ConcurrentBitSet(words);
     }
   }
 
-  private ConcurrentBitSet(@NotNull long[] words) {
-    for (int i = 0; i < words.length; i++) {
-      long word = words[i];
-      for (int b=0;b<BITS_PER_WORD;b++) {
-        boolean bit = (word & (1L << b)) != 0;
-        set(i * BITS_PER_WORD + b, bit);
-      }
-    }
+  private ConcurrentBitSet(@NotNull int[] words) {
+    array = words;
   }
-
 }

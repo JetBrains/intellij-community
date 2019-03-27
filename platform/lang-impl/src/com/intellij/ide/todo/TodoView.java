@@ -124,7 +124,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     if (toolWindow instanceof ToolWindowEx) {
       DefaultActionGroup group = new DefaultActionGroup() {
         {
-          getTemplatePresentation().setText("View Options");
+          getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
           setPopup(true);
           add(myAllTodos.createAutoScrollToSourceAction());
           addSeparator();

@@ -10,37 +10,41 @@ foo
 }
 -----
 Groovy script
-  Reference expression
-    Method call
-      Reference expression
-        PsiElement(identifier)('foo')
-      Arguments
-        <empty list>
-      PsiElement(new line)('\n        ')
-      Closable block
-        PsiElement({)('{')
-        PsiWhiteSpace('\n\n')
-        Parameter list
+  Method call
+    Reference expression
+      Method call
+        Reference expression
+          Method call
+            Reference expression
+              PsiElement(identifier)('foo')
+            Arguments
+              <empty list>
+            PsiElement(new line)('\n        ')
+            Closable block
+              PsiElement({)('{')
+              PsiWhiteSpace('\n\n')
+              Parameter list
+                <empty list>
+              PsiElement(})('}')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('bar')
+        Arguments
           <empty list>
-        PsiElement(})('}')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('bar')
-  PsiElement(new line)('\n')
-  Call expression
+        PsiElement(new line)('\n')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n        ')
+          Parameter list
+            <empty list>
+          PsiElement(})('}')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('df')
+    Arguments
+      <empty list>
+    PsiElement(new line)('\n        ')
     Closable block
       PsiElement({)('{')
-      PsiWhiteSpace('\n\n        ')
+      PsiWhiteSpace('\n\n')
       Parameter list
         <empty list>
       PsiElement(})('}')
-    PsiWhiteSpace(' ')
-    Command arguments
-      Reference expression
-        PsiElement(identifier)('df')
-  PsiElement(new line)('\n        ')
-  Closable block
-    PsiElement({)('{')
-    PsiWhiteSpace('\n\n')
-    Parameter list
-      <empty list>
-    PsiElement(})('}')

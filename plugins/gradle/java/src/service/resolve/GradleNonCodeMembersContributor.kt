@@ -46,8 +46,6 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
     val containingFile = place.containingFile
     if (!containingFile.isGradleScript() || containingFile?.originalFile?.virtualFile == aClass.containingFile?.originalFile?.virtualFile) return
 
-    processDeclarations(aClass, processor, state, place)
-
     if (qualifierType.equalsToText(GRADLE_API_PROJECT)) {
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val extensionsData: GradleExtensionsData?
@@ -94,10 +92,13 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         processor.execute(variable, state)
       }
 
-      extensionsData.tasks.firstOrNull { it.name == propCandidate }?.let(processVariable)
+      extensionsData.tasksMap[propCandidate]?.let(processVariable)
       extensionsData.findProperty(propCandidate)?.let(processVariable)
     }
     else {
+      if (!shouldSkipDeclarationsAndSetters(aClass.qualifiedName)) {
+        processDeclarations(aClass, processor, state, place)
+      }
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull()
                              ?: return
@@ -155,5 +156,10 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         if (!processor.execute(wrappedBase, state)) return
       }
     }
+  }
+
+  private fun shouldSkipDeclarationsAndSetters(qualifiedName: String?): Boolean {
+    return qualifiedName in GradleSetterAsMethodContributor.knownDecoratedClasses
+           || qualifiedName in GradleConventionsContributor.conventions
   }
 }

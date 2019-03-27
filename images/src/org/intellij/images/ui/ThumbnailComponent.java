@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/** $Id$ */
-
 package org.intellij.images.ui;
 
 import com.intellij.openapi.util.text.StringUtil;

@@ -118,16 +118,12 @@ public class IndexDataGetter {
     });
   }
 
+  @Deprecated
   @NotNull
   public Set<FilePath> getChangedPaths(int commit) {
     List<Hash> parents = getParents(commit);
     if (parents == null || parents.size() > 1) return Collections.emptySet();
-    return getChangedPaths(commit, 0);
-  }
-
-  @NotNull
-  public Set<FilePath> getChangedPaths(int commit, int parentIndex) {
-    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit, parentIndex), Collections.emptySet());
+    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit), Collections.emptySet());
   }
 
   //

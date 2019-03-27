@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2016 Silent Forest AB
- * created: 28 April 2016
- */
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ui.ListTable;

@@ -26,4 +26,14 @@ class ExpressionTypeTest extends GroovyLatestTest implements TypingTest {
   void 'ternary with primitive types'() {
     expressionTypeTest "char a = '1'; char b = '1'; c ? a : b", JAVA_LANG_CHARACTER
   }
+
+  @Test
+  void 'unary increment'() {
+    fixture.addFileToProject 'classes.groovy', '''\
+class A { B next() { new B() } }
+class B {}
+'''
+    expressionTypeTest 'new A()++', 'A'
+    expressionTypeTest '++new A()', 'B'
+  }
 }

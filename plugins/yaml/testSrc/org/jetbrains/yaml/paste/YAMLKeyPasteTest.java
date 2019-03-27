@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -75,16 +76,24 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testDoNotPasteKeysWithBadPattern2() {
-    doTest("some. strange. text");
+    doTest("some. strange. text", "simple.before.yml");
   }
 
   // Ambiguity in dot splitting
   public void testDoNotPasteKeysWithBadPattern3() {
-    doTest("some.strange..text");
+    doTest("some.strange..text", "simple.before.yml");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern4() {
+    doTest("'quoted.string'", "simple.before.yml");
+  }
+
+  public void testDoNotPasteKeysWithBadPattern5() {
+    doTest("\"quoted.string\"", "simple.before.yml");
   }
 
   public void testDoNotPasteArrayAsKeys() {
-    doTest("[x.y]");
+    doTest("[x.y]", "simple.before.yml");
   }
 
   // It is disputable behaviour
@@ -102,6 +111,10 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testDoNotPasteKeysInSequenceNode() {
     doTest("next.subKey");
+  }
+
+  public void testPasteKeysWithStringKeys() {
+    doTest("'|'.\">\"", "simple.before.yml");
   }
 
   // It is disputable behaviour
@@ -125,9 +138,13 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   private void doTest(@NotNull String pasteText) {
+    doTest(pasteText, null);
+  }
+
+  private void doTest(@NotNull String pasteText, @Nullable String inputName) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
-    myFixture.configureByFile(fileName + ".before.yml");
+    myFixture.configureByFile(StringUtil.notNullize(inputName, fileName + ".before.yml"));
     CopyPasteManager.getInstance().setContents(new StringSelection(pasteText));
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
     myFixture.checkResultByFile(fileName + ".after.yml");

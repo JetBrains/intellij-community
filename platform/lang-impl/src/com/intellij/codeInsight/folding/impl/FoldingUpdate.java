@@ -85,16 +85,17 @@ public class FoldingUpdate {
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFold,
                                                                                 applyDefaultStateMode(applyDefaultState),
                                                                                 !applyDefaultState, false);
-    long documentTimestamp = document.getModificationStamp();
     int documentLength = document.getTextLength();
     AtomicBoolean alreadyExecuted = new AtomicBoolean();
     Runnable runnable = () -> {
       if (alreadyExecuted.compareAndSet(false, true)) {
-        if (documentTimestamp != editor.getDocument().getModificationStamp()) {
-          LOG.error("Document has changed since fold regions were calculated");
-        }
-        else if (documentLength != editor.getDocument().getTextLength()) {
-          LOG.error("Document length has changed since fold regions were calculated");
+        int curLength = editor.getDocument().getTextLength();
+        boolean committed = PsiDocumentManager.getInstance(project).isCommitted(document);
+        if (documentLength != curLength || !committed) {
+          LOG.error("Document has changed since fold regions were calculated: " +
+                    "lengths " + documentLength + " vs " + curLength + ", " +
+                    "document=" + document + ", " +
+                    "committed=" + committed);
         }
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
       }

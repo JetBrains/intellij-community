@@ -134,6 +134,13 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     configure();
     assertSize(1, FunctionalExpressionSearch.search(findClass("pkg.p1.p2.p3.I")).findAll());
   }
+  
+  public void testInsideArrayInitializer() {
+    myFixture.addClass("public interface Foo { void run() {}}");
+    myFixture.addClass("public interface Bar { void run() {}}");
+    configure();
+    assertSize(3, FunctionalExpressionSearch.search(findClass("Foo")).findAll());
+  }
 
   public void testCallOnGenericParameter() {
     configure();

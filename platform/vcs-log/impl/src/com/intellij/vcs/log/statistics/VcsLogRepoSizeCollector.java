@@ -38,7 +38,7 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
         MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet(new UsageDescriptor("dataInitialized"));
         usages.add(StatisticsUtilKt.getCountingUsage("commit.count", permanentGraph.getAllCommits().size(),
                                                      asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000, 1000 * 1000)));
         usages.add(StatisticsUtilKt.getCountingUsage("branches.count", dataPack.getRefsModel().getBranches().size(),

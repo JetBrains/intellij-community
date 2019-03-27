@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.StartUpPerformanceReporter;
@@ -24,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.StartUpMeasurer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +62,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     Class<?> clazz = provider.getClass();
     return cache.map.computeIfAbsent(clazz, type -> {
-      StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(project == null
-                                                                        ? StartUpMeasurer.Activities.APP_OPTIONS_TOP_HIT_PROVIDER
-                                                                        : StartUpMeasurer.Activities.PROJECT_OPTIONS_TOP_HIT_PROVIDER);
+      long startTime = StartUpMeasurer.getCurrentTime();
       Collection<OptionDescription> result;
       if (provider instanceof ProjectLevelProvider) {
         //noinspection ConstantConditions
@@ -73,10 +72,10 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
         result = ((ApplicationLevelProvider)provider).getOptions();
       }
       else {
-        //noinspection deprecation
         result = ((OptionsTopHitProvider)provider).getOptions(project);
       }
-      measureToken.endWithThreshold(clazz);
+      (project == null ? ParallelActivity.APP_OPTIONS_TOP_HIT_PROVIDER : ParallelActivity.PROJECT_OPTIONS_TOP_HIT_PROVIDER)
+        .record(startTime, clazz);
       return result;
     });
   }

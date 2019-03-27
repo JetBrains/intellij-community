@@ -20,7 +20,6 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +155,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         }
         catch (Throwable t) {
           LOG.error("Error while filtering log by " + requests, t);
+          myTaskController.removeRequests(requests);
         }
       }
 

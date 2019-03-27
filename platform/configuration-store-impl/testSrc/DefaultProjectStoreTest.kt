@@ -78,13 +78,12 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new project from default - directory-based storage`() = runBlocking {
-    val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
     defaultTestComponent.loadState(JDOMUtil.load("""
       <component>
         <main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" />
       </component>""".trimIndent()))
-    val stateStore = defaultProject.stateStore as ComponentStoreImpl
+    val stateStore = ProjectManager.getInstance().defaultProject.stateStore as ComponentStoreImpl
     stateStore.initComponent(defaultTestComponent, true)
     try {
       // obviously, project must be directory-based also
@@ -97,8 +96,9 @@ internal class DefaultProjectStoreTest {
     finally {
       // clear state
       defaultTestComponent.loadState(Element("empty"))
-      defaultProject.stateStore.save()
-      stateStore.removeComponent(TEST_COMPONENT_NAME)
+      val defaultStore = ProjectManager.getInstance().defaultProject.stateStore as ComponentStoreImpl
+      defaultStore.save()
+      defaultStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }
 

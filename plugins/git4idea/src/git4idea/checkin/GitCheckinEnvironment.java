@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -140,7 +140,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : gitRoots(asList(filesToCheckin))) {
+    for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -189,7 +189,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
-    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
 
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
@@ -772,19 +772,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
-  /**
-   * Preform a merge commit
-   *
-   * @param project          a project
-   * @param root             a vcs root
-   * @param added            added files
-   * @param removed          removed files
-   * @param messageFile      a message file for commit
-   * @param author           an author
-   * @param exceptions       the list of exceptions to report
-   * @param partialOperation
-   * @return true if merge commit was successful
-   */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
@@ -1005,7 +992,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = sortFilePathsByGitRoot(files);
+      sortedFiles = sortFilePathsByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1060,7 +1047,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = sortFilesByGitRoot(files);
+      sortedFiles = sortFilesByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1095,28 +1082,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<? extends Change> changes, List<? super VcsException> exceptions) {
+  @NotNull
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
+                                                                           @NotNull List<? extends Change> changes,
+                                                                           @NotNull List<? super VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
-      // note that any path will work, because changes could happen within single vcs root
-      final FilePath filePath = getFilePath(change);
-      final VirtualFile vcsRoot;
       try {
+        // note that any path will work, because changes could happen within single vcs root
+        final FilePath filePath = getFilePath(change);
+
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        vcsRoot = getGitRoot(filePath.getParentPath());
+        GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
+        Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+        changeList.add(change);
       }
       catch (VcsException e) {
         exceptions.add(e);
-        continue;
       }
-      Collection<Change> changeList = result.get(vcsRoot);
-      if (changeList == null) {
-        changeList = new ArrayList<>();
-        result.put(vcsRoot, changeList);
-      }
-      changeList.add(change);
     }
     return result;
   }
@@ -1264,7 +1249,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       @NotNull
       @Override
       protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
-        return gitRoots(files);
+        return getRootsForFilePathsIfAny(myProject, files);
       }
 
       @Nullable

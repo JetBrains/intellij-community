@@ -8,16 +8,17 @@ import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
  *
- * 1. Relative path without slash are resolved when they either contain dot or are argument of function/method which is likely to accept
- * paths. Such functions consist of a) predefined list of functions (read_csv etc) b) such functions that their names comply to "file-ish" pattern like *path* or *file*
- * 2. Paths which contain slash and are not URLS except URLS of the form "file://*".
+ * 1. Relative path without slash are resolved when they are argument of function/method which is likely to accept
+ * paths. Such functions consist of<br>
+ * a) predefined list of functions (read_csv etc);<br>
+ * b) such functions that their names comply to "file-ish" pattern like *path* or *file*;<p>
+ *
+ * 2. Paths which contain file separator.
  * Relative paths are resolved against current folder and project root.
  */
 public class DefaultPyPathFilter implements PyPathFilter {
@@ -25,15 +26,18 @@ public class DefaultPyPathFilter implements PyPathFilter {
     FILTERING_PATTERN = Pattern.compile("[/\\\\]", SystemInfo.isFileSystemCaseSensitive ? Pattern.CASE_INSENSITIVE : 0);
   private static final int STRING_LITERAL_LIMIT = 10_000;
 
-  /** For this functions every String will be treated as a candidate for path */
-  private static final Collection<String> DEFAULT_FUNCTIONS_TO_CHECK = Arrays.asList(
+  /** For this functions every String will be treated as a candidate for path. */
+  private static final Collection<String> DEFAULT_FUNCTIONS_TO_CHECK = new HashSet<>(Arrays.asList(
     "read_csv",
     "open"
-  );
+  ));
+
+  /** For functions with names complying thus pattern every string will be treated as a candidate for path. */
+  private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("((file)|(path))");
 
   @Override
   public boolean test(PyStringLiteralExpression expr) {
-    if (checkFunction(DEFAULT_FUNCTIONS_TO_CHECK, expr)) {
+    if (checkFunction(expr)) {
       return true;
     }
 
@@ -44,16 +48,12 @@ public class DefaultPyPathFilter implements PyPathFilter {
     return false;
   }
 
-  public static boolean checkFunction(Collection<String> functionsToCheck, PyStringLiteralExpression expr) {
-    // Quick return if there are no functions to check.
-    if (functionsToCheck.isEmpty()) {
-      return false;
-    }
-
+  public static boolean checkFunction(PyStringLiteralExpression expr) {
     Optional<PyCallExpression> call = getAncestorByBackwardPath(expr, PyCallExpression.class, PyArgumentList.class);
 
     return call
-      .map(c -> c.getCallee() != null && functionsToCheck.contains(c.getCallee().getName()))
+      .map(c -> c.getCallee() != null && DEFAULT_FUNCTIONS_TO_CHECK.contains(c.getCallee().getName()) || FUNCTION_NAME_PATTERN.matcher(
+        Objects.requireNonNull(c.getCallee().getName())).matches())
       .orElse(false);
   }
 
@@ -68,6 +68,7 @@ public class DefaultPyPathFilter implements PyPathFilter {
    * @param <T> Type of topmost ancestor.
    * @return
    */
+  @SuppressWarnings("unchecked")
   private static <T extends PsiElement> Optional<T> getAncestorByBackwardPath(PsiElement el,
                                                                               Class<T> topmostAncestorClass,
                                                                               Class<? extends PsiElement> ... reversedAncestorsClasses) {

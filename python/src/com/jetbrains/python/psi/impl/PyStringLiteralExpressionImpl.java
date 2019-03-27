@@ -27,9 +27,6 @@ import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.CachedValueProvider.Result;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -204,9 +201,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   @NotNull
   public final PsiReference[] getReferences() {
-    return CachedValuesManager.getCachedValue(this, () -> Result.create(
-      ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS),
-      PsiModificationTracker.MODIFICATION_COUNT));
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS);
   }
 
   @Override

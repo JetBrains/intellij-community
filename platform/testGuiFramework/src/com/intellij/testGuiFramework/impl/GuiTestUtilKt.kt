@@ -208,7 +208,7 @@ object GuiTestUtilKt {
   }
 
   /**
-   * waits for 30 sec timeout when functionProbeToNull() not return null
+   * waits for  [timeout] when functionProbeToNull() not return null
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */

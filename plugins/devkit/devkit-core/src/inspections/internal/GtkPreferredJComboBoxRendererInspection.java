@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,15 +46,16 @@ public class GtkPreferredJComboBoxRendererInspection extends DevKitInspectionBas
       public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
 
-        final Project project = expression.getProject();
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
         final PsiElement target = expression.getMethodExpression().resolve();
         if (!(target instanceof PsiMethod)) return;
         final PsiMethod method = (PsiMethod)target;
         if (!SETTER_METHOD_NAME.equals(method.getName())) return;
-        final PsiClass aClass = ((PsiMethod)target).getContainingClass();
+
+        final Project project = holder.getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+
         final PsiClass comboClass = facade.findClass(COMBO_BOX_CLASS_NAME, GlobalSearchScope.allScope(project));
+        final PsiClass aClass = ((PsiMethod)target).getContainingClass();
         if (!InheritanceUtil.isInheritorOrSelf(aClass, comboClass, true)) return;
 
         final PsiExpression[] arguments = expression.getArgumentList().getExpressions();

@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Producer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +39,10 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
+import java.util.function.Supplier;
+
 public class ChooseFileIntentionAction implements IntentionAction {
-  private Producer<VirtualFile[]> myFileChooser = null;
+  private Supplier<VirtualFile[]> myFileChooser = null;
 
   @Override
   @NotNull
@@ -79,7 +80,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
       files = FileChooser.chooseFiles(descriptor, project, toSelect);
     }
     else {
-      files = myFileChooser.produce();
+      files = myFileChooser.get();
     }
     if (files == null || files.length == 0) return;
 
@@ -93,7 +94,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
   }
 
   @TestOnly
-  public void setFileChooser(@Nullable final Producer<VirtualFile[]> fileChooser) {
+  public void setFileChooser(@Nullable final Supplier<VirtualFile[]> fileChooser) {
     myFileChooser = fileChooser;
   }
 

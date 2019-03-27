@@ -13,6 +13,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -412,6 +413,7 @@ public class DarculaUIUtil {
 
   public static boolean isTableCellEditor(Component c) {
     return Boolean.TRUE.equals(((JComponent)c).getClientProperty("JComboBox.isTableCellEditor")) ||
+           UIUtil.findParentByCondition(c, p -> p instanceof JBTableRowEditor) == null &&
            UIUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 

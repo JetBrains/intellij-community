@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Transient
 
 /**
  * @author yole
@@ -17,21 +18,23 @@ class RegistryKeyBean : PluginAware {
   @JvmField @Attribute("defaultValue") val defaultValue: String = ""
   @JvmField @Attribute("restartRequired") val restartRequired: Boolean = false
 
+  @Transient
   var pluginDescriptor: PluginDescriptor? = null
     private set
 
+  @Transient
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor?) {
     this.pluginDescriptor = pluginDescriptor
   }
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<RegistryKeyBean>("com.intellij.registryKey")
+    val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
   }
 }
 
 class RegistryExtensionCollector {
   init {
-    for (extension in RegistryKeyBean.EP_NAME.extensions) {
+    for (extension in RegistryKeyBean.EP_NAME.extensionList) {
       val contributedByThirdParty = extension.pluginDescriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
       Registry.addKey(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
                       contributedByThirdParty)

@@ -95,7 +95,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
 
-    <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
+    <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
+                            order="before commonJavaCustomizer"/>
   </extensions>
 
   <extensionPoints>

@@ -72,11 +72,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     new UiNotifyConnector(myDragComponent, new Activatable() {
       @Override
       public void showNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(MouseDragHelper.this);
         attach();
       }
 
       @Override
       public void hideNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
         detach(true);
       }
     });
@@ -92,9 +94,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(myParentDisposable,
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this));
   }
 
   public void stop() {

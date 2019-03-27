@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.controlflow.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
+import com.intellij.codeInsight.controlflow.TransparentInstruction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +37,19 @@ public class DetachedInstructionImpl extends InstructionBaseImpl {
   }
 
   public final void addToInstructions(@NotNull ControlFlowBuilder builder) {
+    assert !(this instanceof TransparentInstruction);
     builder.instructions.add(this);
     updateNum(builder.instructionCount++);
   }
 
+  public final void addTransparentNode(@NotNull ControlFlowBuilder builder) {
+    assert this instanceof TransparentInstruction;
+    updateNum(builder.transparentInstructionCount++);
+    builder.addNodeAndCheckPending(this);
+  }
+
   public final void addNode(@NotNull ControlFlowBuilder builder) {
+    assert !(this instanceof TransparentInstruction);
     updateNum(builder.instructionCount++);
     builder.addNodeAndCheckPending(this);
   }

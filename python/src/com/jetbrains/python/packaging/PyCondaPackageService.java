@@ -17,18 +17,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 @State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
@@ -75,18 +72,29 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   public static String getCondaPython() {
     final String conda = getSystemCondaExecutable();
-    final String pythonName = SystemInfo.isWindows ? "python.exe" : "python";
     if (conda != null) {
-      final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(conda);
-      if (condaFile != null) {
-        final VirtualFile condaDir = SystemInfo.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
-        final VirtualFile python = condaDir.findChild(pythonName);
-        if (python != null) {
-          return python.getPath();
-        }
+      final String python = getCondaBasePython(conda);
+      if (python != null) return python;
+    }
+    return getCondaExecutableByName(getPythonName());
+  }
+
+  @Nullable
+  public static String getCondaBasePython(@NotNull String systemCondaExecutable) {
+    final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(systemCondaExecutable);
+    if (condaFile != null) {
+      final VirtualFile condaDir = SystemInfo.isWindows ? condaFile.getParent().getParent() : condaFile.getParent();
+      final VirtualFile python = condaDir.findChild(getPythonName());
+      if (python != null) {
+        return python.getPath();
       }
     }
-    return getCondaExecutableByName(pythonName);
+    return null;
+  }
+
+  @NotNull
+  private static String getPythonName() {
+    return SystemInfo.isWindows ? "python.exe" : "python";
   }
 
   @Nullable
@@ -183,13 +191,12 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       return;
     }
     final String path = PythonHelpersLocator.getHelperPath("conda_packaging_tool.py");
-    final String runDirectory = new File(condaPython).getParent();
-    final String[] command = {condaPython, path, "listall"};
-    final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, command);
-    if (output.getExitCode() != 0) {
-      LOG.warn("Failed to get list of conda packages");
-      LOG.warn(StringUtil.join(command, " "));
-      LOG.warn(output.getStderr());
+    final ProcessOutput output;
+    try {
+      output = PyCondaRunKt.runCondaPython(condaPython, Arrays.asList(path, "listall"));
+    }
+    catch (PyExecutionException e) {
+      LOG.warn("Failed to get list of conda packages. " + e);
       return;
     }
 
@@ -213,9 +220,14 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final String condaPython = getCondaPython();
     if (condaPython == null) return;
     final String path = PythonHelpersLocator.getHelperPath("conda_packaging_tool.py");
-    final String runDirectory = new File(condaPython).getParent();
-    final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, new String[]{condaPython, path, "channels"});
-    if (output.getExitCode() != 0) return;
+    final ProcessOutput output;
+    try {
+      output = PyCondaRunKt.runCondaPython(condaPython, Arrays.asList(path, "channels"));
+    }
+    catch (PyExecutionException e) {
+      LOG.warn("Failed to update conda channels. " + e);
+      return;
+    }
     final List<String> lines = output.getStdoutLines();
     CONDA_CHANNELS.addAll(lines);
     LAST_TIME_CHECKED = System.currentTimeMillis();

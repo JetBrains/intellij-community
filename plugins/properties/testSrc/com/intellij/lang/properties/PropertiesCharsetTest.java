@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -32,18 +32,18 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldIsNative = EncodingManager.getInstance().isNative2AsciiForPropertiesFiles();
-    myOldCs = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null);
-    myOldCharset = EncodingManager.getInstance().getDefaultCharset();
+    myOldIsNative = EncodingProjectManager.getInstance(getProject()).isNative2AsciiForPropertiesFiles();
+    myOldCs = EncodingProjectManager.getInstance(getProject()).getDefaultCharsetForPropertiesFiles(null);
+    myOldCharset = EncodingProjectManager.getInstance(getProject()).getDefaultCharset();
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, myOldIsNative);
-      EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, myOldCs);
+      EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, myOldIsNative);
+      EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, myOldCs);
       if (myOldCharset != null) {
-        EncodingManager.getInstance().setDefaultCharsetName(myOldCharset.name());
+        EncodingProjectManager.getInstance(getProject()).setDefaultCharsetName(myOldCharset.name());
       }
     }
     catch (Throwable e) {
@@ -59,7 +59,7 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testCharsetOn() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
 
     configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
     List<IProperty> properties = ((PropertiesFile)myFile).getProperties();
@@ -82,8 +82,8 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testCharsetOff() {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, false);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, Charset.forName("ISO-8859-1"));
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, Charset.forName("ISO-8859-1"));
 
     PlatformTestUtil.withEncoding("UTF-8", () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
@@ -108,9 +108,9 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testDefaultCharset() {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, false);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingManager.getInstance().setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
 
     PlatformTestUtil.withEncoding("UTF-8", () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
@@ -134,9 +134,9 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testCharsBelow128() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingManager.getInstance().setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
 
     configureByText("xxx=\\u3210\\uzzzz\\n\\t\\y");
     List<IProperty> properties = ((PropertiesFile)myFile).getProperties();
@@ -154,9 +154,9 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testForceRefresh() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingManager.getInstance().setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     UIUtil.dispatchAllInvocationEvents();
 
     configureByText("xxx=\\u1234");
@@ -167,7 +167,7 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
     IProperty property = properties.get(0);
     assertEquals('\u1234' + "", property.getValue());
 
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, false);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
     UIUtil.dispatchAllInvocationEvents();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
@@ -178,23 +178,23 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   }
 
   public void testChangeEncodingMustReloadFile() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, false);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
     UIUtil.dispatchAllInvocationEvents();
 
     configureByText("xxx=\\u1234");
     assertEquals(CharsetToolkit.UTF8_CHARSET, myFile.getVirtualFile().getCharset());
 
     Charset win = Charset.forName("windows-1251");
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, win);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, win);
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(win, myFile.getVirtualFile().getCharset());
   }
 
   public void testBOMMarkedFileWithNativeConversion() throws Exception {
-    EncodingManager.getInstance().setNative2AsciiForPropertiesFiles(null, true);
-    EncodingManager.getInstance().setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
     UIUtil.dispatchAllInvocationEvents();
 
     VirtualFile file =

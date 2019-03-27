@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.typing
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
-import com.intellij.util.toArray
+import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.getReturnType

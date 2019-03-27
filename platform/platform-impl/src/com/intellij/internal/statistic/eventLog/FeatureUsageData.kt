@@ -13,8 +13,10 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.*
 
 /**
@@ -91,6 +93,14 @@ class FeatureUsageData {
     return this
   }
 
+  fun addCurrentFile(language: Language): FeatureUsageData {
+    val type = getPluginType(language.javaClass)
+    if (type.isSafeToReport()) {
+      data["current_file"] = language.id
+    }
+    return this
+  }
+
   fun addInputEvent(event: AnActionEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getActionEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -101,6 +111,14 @@ class FeatureUsageData {
 
   fun addInputEvent(event: KeyEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getKeyEventText(event)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: MouseEvent): FeatureUsageData {
+    val inputEvent = ShortcutDataProvider.getMouseEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent
     }

@@ -56,7 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
+/*
  * TODO: Move {@link com.jetbrains.python.gherkin.PyBDDEnvTestTask} to the new API and git rid of this class
  */
 
@@ -322,7 +322,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final List<String> resultStrings = new ArrayList<>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      /**
+      /*
        * To fetch data from console we need to flush it first.
        * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
        * So, we flush it explicitly to make test run on TC.

@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
+import com.intellij.util.NotNullizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,8 @@ import static com.intellij.openapi.util.Conditions.not;
  * @author gregsh
  */
 public abstract class TreeTraversal {
+
+  private static final NotNullizer ourNotNullizer = new NotNullizer("TreeTraversal.NotNull");
 
   private final String debugName;
 
@@ -131,7 +134,7 @@ public abstract class TreeTraversal {
       @Override
       public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
                                       @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
-        final Condition<? super T> inRangeCondition = (Condition < ? super T >)rangeCondition;
+        final Condition<? super T> inRangeCondition = (Condition<? super T>)rangeCondition;
         final Condition<? super T> notInRangeCondition = (Condition<? super T>)not(rangeCondition);
         class WrappedTree implements Function<T, Iterable<? extends T>> {
           @Override
@@ -191,7 +194,7 @@ public abstract class TreeTraversal {
     protected JBIterable<T> _transform(JBIterable<?> original) {
       JBIterable<?> result = original;
       for (Function<Object, Object> f : getTransformations()) {
-        result = result.transform(f);
+        result = result.map(f);
       }
       //noinspection unchecked
       return (JBIterable<T>)result;
@@ -404,7 +407,9 @@ public abstract class TreeTraversal {
     private boolean curDescending;
     private boolean descending = true;
 
-    BiOrderIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree, @NotNull Order order) {
+    BiOrderIt(@NotNull Iterable<? extends T> roots,
+              @NotNull Function<? super T, ? extends Iterable<? extends T>> tree,
+              @NotNull Order order) {
       super(tree);
       this.order = order;
       last = P1.create(roots);
@@ -530,17 +535,17 @@ public abstract class TreeTraversal {
 
     PlainBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
       super(tree);
-      JBIterable.from(roots).addAllTo(queue);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(queue);
     }
 
     @Override
     public T nextImpl() {
       if (top != null) {
-        JBIterable.from(top.iterable(tree)).addAllTo(queue);
+        JBIterable.from(top.iterable(tree)).map(ourNotNullizer::notNullize).addAllTo(queue);
         top = null;
       }
       if (queue.isEmpty()) return stop();
-      top = P1.create(queue.remove());
+      top = P1.create(ourNotNullizer.nullize(queue.remove()));
       return top.node;
     }
   }
@@ -551,17 +556,17 @@ public abstract class TreeTraversal {
 
     LeavesBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
       super(tree);
-      JBIterable.from(roots).addAllTo(queue);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(queue);
     }
 
     @Override
     public T nextImpl() {
       while (!queue.isEmpty()) {
-        T result = queue.remove();
+        T result = ourNotNullizer.nullize(queue.remove());
         Iterable<? extends T> children = tree.fun(result);
         Iterator<? extends T> it = children == null ? null: children.iterator();
         if (it == null || !it.hasNext()) return result;
-        while (it.hasNext()) queue.add(it.next());
+        while (it.hasNext()) queue.add(ourNotNullizer.notNullize(it.next()));
       }
       return stop();
     }
@@ -570,13 +575,13 @@ public abstract class TreeTraversal {
   private final static class TracingBfsIt<T> extends TracingIt<T> {
 
     final ArrayDeque<T> queue = new ArrayDeque<>();
-    final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.identityStrategy());
+    final Map<T, T> paths = ContainerUtil.newIdentityHashMap();
     P1<T> top;
     P1<T> cur;
 
     TracingBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
       super(tree);
-      JBIterable.from(roots).addAllTo(queue);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(queue);
     }
 
     @Override
@@ -589,13 +594,13 @@ public abstract class TreeTraversal {
       if (top != null) {
         for (T t : top.iterable(tree)) {
           if (paths.containsKey(t)) continue;
-          queue.add(t);
+          queue.add(ourNotNullizer.notNullize(t));
           paths.put(t, top.node);
         }
         top = null;
       }
       if (queue.isEmpty()) return stop();
-      top = P1.create(queue.remove());
+      top = P1.create(ourNotNullizer.nullize(queue.remove()));
       return top.node;
     }
 

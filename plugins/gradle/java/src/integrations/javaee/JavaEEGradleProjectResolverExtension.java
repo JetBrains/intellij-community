@@ -41,10 +41,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAllRecursively;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath;
@@ -90,7 +87,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
       ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
       if (externalProject != null) {
         if (externalProject.getArtifactsByConfiguration().get("archives") != null) {
-          final Set<File> archivesArtifacts = ContainerUtil.newHashSet(externalProject.getArtifactsByConfiguration().get("archives"));
+          final Set<File> archivesArtifacts = new HashSet<>(externalProject.getArtifactsByConfiguration().get("archives"));
           final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
           if (testsArtifacts != null) {
             archivesArtifacts.removeAll(testsArtifacts);

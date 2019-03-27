@@ -7,7 +7,6 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 class NonDefaultConstructorInspectionTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() = "${DevkitJavaTestsUtil.TESTDATA_PATH}inspections/nonDefaultConstructor"
 
-  @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
@@ -19,7 +18,7 @@ class NonDefaultConstructorInspectionTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun `test custom un-allowed constructor`() {
-    myFixture.addClass("package com.intellij.openapi.extensions; class AbstractExtensionPointBean {}")
+    myFixture.addClass("package com.intellij.codeInsight.completion; public class CompletionContributor {}")
     myFixture.testHighlighting("CustomConstructor.java")
   }
 }

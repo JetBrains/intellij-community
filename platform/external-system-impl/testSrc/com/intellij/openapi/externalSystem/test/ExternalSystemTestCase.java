@@ -37,7 +37,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -268,7 +268,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   @SystemIndependent
   protected String path(@NotNull String relativePath) {
-    return file(relativePath).getPath();
+    return PathUtil.toSystemIndependentName(file(relativePath).getPath());
   }
 
   protected File file(@NotNull String relativePath) {
@@ -453,7 +453,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       }
     }
     catch (Exception e) {
-      ExceptionUtilRt.rethrow(e);
+      ExceptionUtil.rethrow(e);
     }
   }
 

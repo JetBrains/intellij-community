@@ -23,10 +23,8 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +35,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 

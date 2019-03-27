@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +19,28 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   private volatile PersistentHashMap<Integer, ByteArraySequence> myPersistentMap;
   @NotNull
   private final File myMapFile;
+  private final boolean myUseChunks;
 
   public PersistentMapBasedForwardIndex(@NotNull File mapFile) throws IOException {
+    this(mapFile, true);
+  }
+
+  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean useChunks) throws IOException {
     myPersistentMap = createMap(mapFile);
     myMapFile = mapFile;
+    myUseChunks = useChunks;
   }
 
   @NotNull
   protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+    Boolean oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myUseChunks);
+    try {
+      return new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
+    }
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
+    }
   }
 
   @Nullable

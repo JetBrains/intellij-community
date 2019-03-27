@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListUtil;
@@ -12,9 +13,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * @author yole
@@ -66,7 +66,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       List<T> list = myList.getSelectedValuesList();
-      callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
+      callback.consume(list != null ? new HashSet<>(list) : Collections.emptySet());
     });
   }
 
@@ -82,8 +82,14 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Nullable
   @Override
-  public BooleanFunction<KeyEvent> getKeyEventHandler() {
-    return InputEvent::isConsumed;
+  public BiPredicate<KeyEvent, JBPopup> getKeyEventHandler() {
+    return (event, popup) -> {
+      if (AbstractPopup.isCloseRequest(event)) {
+        popup.cancel(event);
+        return true;
+      }
+      return event.isConsumed();
+    };
   }
 
   @Override

@@ -93,7 +93,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiMethod methodPrototype = myMethodPrototype.getElement();
@@ -112,7 +112,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   protected void postAddAction(@NotNull PsiFile file,
-                               @Nullable("is null when called from inspection") Editor editor,
+                               @Nullable Editor editor,
                                PsiMethod newMethod) {
     if (editor != null && newMethod.getContainingFile() == file) {
       GenerateMembersUtil.positionCaret(editor, newMethod, true);

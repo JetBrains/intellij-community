@@ -65,4 +65,9 @@ class ConditionalCanBePushedInsideExpression {
     return s;
   }
 
+  void pushDifferentArrays(boolean flag) {
+    int a = flag ? new Object[0].length : new int[0].length;
+    int b = flag ? new long[0].length : new int[0].length;
+    int c = <warning descr="Conditional expression can be pushed inside branch">flag ? new Object[0].length : new String[0].length</warning>;
+  }
 }

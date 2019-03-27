@@ -281,7 +281,7 @@ class JsonSchemaAnnotatorChecker {
       }
 
       final JsonPointerPosition step = JsonPointerPosition.createSingleProperty(name);
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, true, false);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema, false);
       if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
         error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
               JsonValidationError.FixableIssueKind.ProhibitedProperty,
@@ -317,7 +317,7 @@ class JsonSchemaAnnotatorChecker {
         for (Map.Entry<String, List<String>> entry : dependencies.entrySet()) {
           if (set.contains(entry.getKey())) {
             final List<String> list = entry.getValue();
-            HashSet<String> deps = ContainerUtil.newHashSet(list);
+            HashSet<String> deps = new HashSet<>(list);
             deps.removeAll(set);
             if (!deps.isEmpty()) {
               JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, deps);
@@ -870,7 +870,7 @@ class JsonSchemaAnnotatorChecker {
         // also check maybe some currently not checked properties like format are different with schemes
         // todo note that JsonSchemaObject#equals is broken by design, so normally it shouldn't be used until rewritten
         //  but for now we use it here to avoid similar schemas being marked as duplicates
-        if (ContainerUtil.newHashSet(correct).size() > 1 && !schemesDifferWithNotCheckedProperties(correct)) {
+        if (new HashSet<>(correct).size() > 1 && !schemesDifferWithNotCheckedProperties(correct)) {
           error("Validates to more than one variant", value.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
         }
       }

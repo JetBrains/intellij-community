@@ -89,9 +89,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.reuseNotModifiedTabs = value
     }
 
-  val maxClipboardContents: Int
-    get() = state.maxClipboardContents
-
   var disableMnemonics: Boolean
     get() = state.disableMnemonics
     set(value) {
@@ -345,7 +342,11 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
 
     @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+    private fun verbose(msg: String, vararg args: Any) {
+      if (UIUtil.SCALE_VERBOSE) {
+        LOG.info(String.format(msg, *args))
+      }
+    }
 
     const val ANIMATION_DURATION = 300 // Milliseconds
 
@@ -435,7 +436,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
@@ -560,10 +561,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
     if (state.alphaModeRatio < 0.0f || state.alphaModeRatio > 1.0f) {
       state.alphaModeRatio = 0.5f
-    }
-
-    if (state.maxClipboardContents <= 0) {
-      state.maxClipboardContents = 5
     }
 
     fireUISettingsChanged()

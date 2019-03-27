@@ -7,16 +7,49 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.util.PropertyUtilBase.*
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.util.Processor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_ACTION
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 
 /**
  * @author Vladislav.Soroka
  */
 class GradleImplicitUsageProvider : ImplicitUsageProvider {
+  companion object {
+    val taskAnnotations = listOf("org.gradle.api.tasks.Input",
+                                 "org.gradle.api.tasks.InputFile",
+                                 "org.gradle.api.tasks.InputFiles",
+                                 "org.gradle.api.tasks.InputDirectory",
+                                 "org.gradle.api.tasks.OutputDirectory",
+                                 "org.gradle.api.tasks.OutputDirectories",
+                                 "org.gradle.api.tasks.OutputFile",
+                                 "org.gradle.api.tasks.LocalState",
+                                 "org.gradle.api.tasks.Destroys",
+                                 "org.gradle.api.tasks.Classpath",
+                                 "org.gradle.api.tasks.Console")
+  }
+
   override fun isImplicitUsage(element: PsiElement): Boolean {
-    if (element is PsiMethod && element.modifierList.hasAnnotation(GRADLE_API_TASKS_ACTION)) return true
+    var modifierList: PsiModifierList? = null
+    if (element is GrField) {
+      modifierList = element.modifierList
+    }
+    else if (element is PsiMethod) {
+      if (element.modifierList.hasAnnotation(GRADLE_API_TASKS_ACTION)) return true
+      if (isSimplePropertyGetter(element)) {
+        modifierList = element.modifierList
+      }
+      else if (isSimplePropertySetter(element)) {
+        val getter = getPropertyName(element)?.let { findPropertyGetter(element.containingClass, it, false, false) }
+        modifierList = getter?.modifierList
+      }
+    }
+    if (modifierList?.let { taskAnnotations.find(modifierList::hasAnnotation) } != null) {
+      return true
+    }
     return hasUsageOfType(element, null)
   }
 

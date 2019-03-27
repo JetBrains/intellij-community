@@ -27,6 +27,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * Use {@link #showDiff}/{@link #showMerge} methods to show diff viewer in a frame or modal window.
+ * <p>
+ * Use {@link #createRequestPanel} to embed diff viewer as JComponent.
+ * For a more fine-grained control over content behavior, extend {@link com.intellij.diff.impl.DiffRequestProcessor} directly.
+ * <p>
+ * Use {@link com.intellij.diff.util.DiffUserDataKeys} and {@link DiffRequest#putUserData}/{@link com.intellij.diff.contents.DiffContent#putUserData}
+ * to pass additional hints (such as default scrollbar position). Note, that these hints might be ignored.
+ * <p>
+ * Use {@link DiffExtension} to customize existing diff viewers.
+ * Register custom {@link FrameDiffTool} to support custom {@link DiffRequest} or to add new views for default ones.
+ *
+ * @see DiffRequestFactory
+ * @see DiffContentFactory
+ * @see DiffRequestChain
+ * @see com.intellij.diff.impl.CacheDiffRequestProcessor
+ */
 public abstract class DiffManager {
   @NotNull
   public static DiffManager getInstance() {
@@ -46,6 +63,9 @@ public abstract class DiffManager {
   @CalledInAwt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 
+  /**
+   * Creates simple JComponent, capable of displaying {@link DiffRequest}.
+   */
   @NotNull
   public abstract DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window);
 

@@ -46,6 +46,7 @@ import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    int startOffset = context.getStartOffset();
     Document document = InjectedLanguageUtil.getTopLevelEditor(editor).getDocument();
     Ref<PsiElement> currentElementRef = Ref.create();
     // Need to insert " " to prevent creating tags like <tagThis is my text
@@ -65,7 +67,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       final int offset = editor.getCaretModel().getOffset();
       editor.getDocument().insertString(offset, " ");
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      currentElementRef.set(context.getFile().findElementAt(context.getStartOffset()));
+      currentElementRef.set(context.getFile().findElementAt(startOffset));
       editor.getDocument().deleteString(offset, offset + 1);
     });
 
@@ -365,7 +367,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static void completeTagTail(Template template, XmlElementDescriptor descriptor, PsiFile file, XmlTag context, boolean firstLevel) {
-    boolean completeIt = !firstLevel || descriptor.getAttributesDescriptors(null).length == 0;
+    boolean completeIt = !firstLevel || !canHaveAttributes(descriptor, context);
     switch (descriptor.getContentType()) {
       case XmlElementDescriptor.CONTENT_TYPE_UNKNOWN:
         return;
@@ -396,6 +398,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
          }
          break;
     }
+  }
+
+  private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
+    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
+                   ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
+                   0;
+    return attributes.length - required > 0 ;
   }
 
   private static void addTagEnd(Template template, XmlElementDescriptor descriptor, XmlTag context) {

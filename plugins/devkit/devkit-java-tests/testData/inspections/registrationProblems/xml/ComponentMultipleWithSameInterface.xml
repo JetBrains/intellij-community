@@ -8,7 +8,18 @@
       <interface-class><error descr="Multiple components with the same interface-class are not allowed">ApplicationComponentInterface</error></interface-class>
       <implementation-class>ApplicationComponent</implementation-class>
     </component>
+    <component>
+      <interface-class>java.lang.Number</interface-class>
+      <implementation-class>java.lang.Double</implementation-class>
+    </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>java.lang.Number</interface-class>
+      <implementation-class>java.lang.Double</implementation-class>
+    </component>
+  </project-components>
 
   <module-components>
     <!-- within same module type -->

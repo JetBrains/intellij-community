@@ -57,61 +57,74 @@ public class ImageLoader implements Serializable {
   public static class ImageDesc {
     public enum Type {IMG, SVG}
 
-    final String path;
-    final Class cls; // resource class if present
+    final @NotNull String path;
+    final @Nullable Class cls; // resource class if present
+    final @Nullable InputStream inputStream;
     final double scale; // initial scale factor
-    final Type type;
+    final @NotNull Type type;
     final boolean original; // path is not altered
     // The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
     // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
-    @NotNull Dimension2D origUsrSize;
+    final @NotNull Dimension2D origUsrSize;
 
-    ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
       this(path, cls, scale, type, false);
     }
 
-    ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
+    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
+      this(path, cls, null, scale, type, original);
+    }
+
+    public ImageDesc(@NotNull InputStream inputStream, double scale) {
+      this("", null, inputStream, scale, IMG, false);
+    }
+
+    private ImageDesc(@NotNull String path, @Nullable Class cls, @Nullable InputStream inputStream, double scale, @NotNull Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
       this.type = type;
       this.original = original;
       this.origUsrSize = new Dimension2DDouble(0, 0);
-    }
-
-    @Nullable
-    public Image load() throws IOException {
-      return load(true);
+      this.inputStream = inputStream;
     }
 
     @Nullable
     public Image load(boolean useCache) throws IOException {
-      InputStream stream = null;
-      if (cls != null) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        stream = cls.getResourceAsStream(path);
-        if (stream == null) return null;
-      }
       String cacheKey = null;
       URL url = null;
+      InputStream stream = inputStream;
+
+      // Either {inputStream} or {path} should be defined
       if (stream == null) {
-        if (useCache) {
-          cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
-          Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
-          if (pair != null) {
-            origUsrSize = pair.second;
-            return pair.first;
+        if (StringUtil.isEmpty(path)) {
+          LOG.warn("empty image path", new Throwable());
+          return null;
+        }
+        if (cls != null) {
+          //noinspection IOResourceOpenedButNotSafelyClosed
+          stream = cls.getResourceAsStream(path);
+          if (stream == null) return null;
+        }
+        if (stream == null) {
+          if (useCache) {
+            cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
+            Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
+            if (pair != null) {
+              origUsrSize.setSize(pair.second);
+              return pair.first;
+            }
           }
+          url = new URL(path);
+          URLConnection connection = url.openConnection();
+          if (connection instanceof HttpURLConnection) {
+            if (!original) return null;
+            connection.addRequestProperty("User-Agent", "IntelliJ");
+          }
+          stream = connection.getInputStream();
         }
-        url = new URL(path);
-        URLConnection connection = url.openConnection();
-        if (connection instanceof HttpURLConnection) {
-          if (!original) return null;
-          connection.addRequestProperty("User-Agent", "IntelliJ");
-        }
-        stream = connection.getInputStream();
       }
-      Image image = loadImpl(url, stream, origUsrSize);
+      Image image = loadImpl(url, stream);
       if (image != null && cacheKey != null &&
           4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
       {
@@ -120,19 +133,16 @@ public class ImageLoader implements Serializable {
       return image;
     }
 
-    Image loadImpl(final URL url, final InputStream stream, @NotNull Dimension2D size) throws IOException {
+    @Nullable
+    private Image loadImpl(final URL url, final InputStream stream) throws IOException {
       LoadFunction f = new LoadFunction() {
         @Override
         public Image load(@Nullable LoadFunction delegate, @NotNull Type type) throws IOException {
           switch (type) {
             case SVG:
-              return SVGLoader.load(url, stream, scale, size);
+              return SVGLoader.load(url, stream, scale, origUsrSize);
             case IMG: {
-              Image img = ImageLoader.load(stream, scale);
-              if (img != null) {
-                size.setSize(img.getWidth(null) / scale, img.getHeight(null) / scale);
-              }
-              return img;
+              return loadImpl(stream);
             }
           }
           return null;
@@ -142,6 +152,38 @@ public class ImageLoader implements Serializable {
         return measureLoad.load(f, type);
       }
       return f.load(null, type);
+    }
+
+    @Nullable
+    private Image loadImpl(@NotNull InputStream stream) {
+      try {
+        BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+        try {
+          byte[] buffer = new byte[1024];
+          while (true) {
+            final int n = stream.read(buffer);
+            if (n < 0) break;
+            outputStream.write(buffer, 0, n);
+          }
+        }
+        finally {
+          stream.close();
+        }
+
+        Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
+
+        waitForImage(image);
+
+        if (image != null) {
+          origUsrSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
+        }
+
+        return image;
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
+      return null;
     }
 
     @Override
@@ -452,9 +494,15 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
-    Image image = load(inputStream, scale);
-    ImageDesc desc = new ImageDesc("", null, scale, IMG);
-    return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
+    try {
+      ImageDesc desc = new ImageDesc(inputStream, scale);
+      Image image = desc.load(false);
+      return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
+    }
+    catch (IOException ex) {
+      LOG.error(ex);
+    }
+    return null;
   }
 
   public static @Nullable Image loadCustomIcon(@NotNull File f) throws IOException {
@@ -482,35 +530,6 @@ public class ImageLoader implements Serializable {
     final ScaleContext ctx = ScaleContext.create();
     final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
     final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null,  scale, StringUtil.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
-    return ImageUtil.ensureHiDPI(desc.load(), ctx);
-  }
-
-  private static Image load(@NotNull final InputStream inputStream, double scale) {
-    if (scale <= 0) throw new IllegalArgumentException("Scale must be 1 or greater");
-    try {
-      BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-      try {
-        byte[] buffer = new byte[1024];
-        while (true) {
-          final int n = inputStream.read(buffer);
-          if (n < 0) break;
-          outputStream.write(buffer, 0, n);
-        }
-      }
-      finally {
-        inputStream.close();
-      }
-
-      Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
-
-      waitForImage(image);
-
-      return image;
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-
-    return null;
+    return ImageUtil.ensureHiDPI(desc.load(true), ctx);
   }
 }

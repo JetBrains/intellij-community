@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,10 +105,13 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   /**
-   * Return true if the filter supports "negative" values, i.e. values like "-value" which means "match anything but 'value'".
+   * By default, the completion prefix is calculated based on the item separators.
+   * If a filter popup supports some special syntax, it can redefine this method which will be provided to
+   * {@link TextCompletionProvider#getPrefix}.
    */
-  protected boolean supportsNegativeValues() {
-    return false;
+  @Nullable
+  protected MultilinePopupBuilder.CompletionPrefixProvider getCompletionPrefixProvider() {
+    return null;
   }
 
   @NotNull
@@ -163,7 +167,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       List<String> values = filter == null ? Collections.emptyList() : getFilterValues(filter);
       final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants,
                                                                            getPopupText(values),
-                                                                           supportsNegativeValues());
+                                                                           getCompletionPrefixProvider());
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override

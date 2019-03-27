@@ -119,7 +119,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
    *
    * @param type  target source type
    * @return      file system path to use for compile output for the target source type;
-   *              {@link JavaProjectData#getCompileOutputPath() project compile output path} should be used if current module
+   *              {@link com.intellij.externalSystem.JavaProjectData#getCompileOutputPath() project compile output path} should be used if current module
    *              doesn't provide specific compile output path
    */
   @Nullable

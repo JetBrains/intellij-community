@@ -1,18 +1,4 @@
-/*
- * Copyright 2005-2019 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -1034,6 +1020,7 @@ public class ExpressionUtils {
   @Contract(value = "null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
     return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
@@ -1048,11 +1035,14 @@ public class ExpressionUtils {
       // red code
       return false;
     }
-    @NonNls final String text = literal.getText();
-    if (text.charAt(0) != '0' || text.length() < 2) {
+    return isOctalLiteralText(literal.getText());
+  }
+
+  public static boolean isOctalLiteralText(String literalText) {
+    if (literalText.charAt(0) != '0' || literalText.length() < 2) {
       return false;
     }
-    final char c1 = text.charAt(1);
+    final char c1 = literalText.charAt(1);
     return c1 == '_' || (c1 >= '0' && c1 <= '7');
   }
 
@@ -1479,9 +1469,8 @@ public class ExpressionUtils {
         case "printf":
         case "format":
           if (arguments.length < 1) return false;
-          final PsiParameterList parameterList = method.getParameterList();
-          if (parameterList.getParametersCount() < 1) return false;
-          final PsiParameter[] parameters = parameterList.getParameters();
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (parameters.length == 0) return false;
           final PsiParameter parameter = parameters[0];
           final PsiType firstParameterType = parameter.getType();
           final int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;

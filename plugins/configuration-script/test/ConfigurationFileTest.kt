@@ -57,7 +57,7 @@ class ConfigurationFileTest {
   fun `empty rc type group`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
     """)
     assertThat(result).isEmpty()
   }
@@ -66,17 +66,17 @@ class ConfigurationFileTest {
   fun `empty rc`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         -
     """)
     assertThat(result).isEmpty()
   }
 
   @Test
-  fun `one jvmMainMethod`() {
+  fun `one java`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         isAlternativeJrePathEnabled: true
     """)
     val options = JvmMainMethodRunConfigurationOptions()
@@ -85,10 +85,10 @@ class ConfigurationFileTest {
   }
 
   @Test
-  fun `one jvmMainMethod as list`() {
+  fun `one java as list`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         - isAlternativeJrePathEnabled: true
     """)
     val options = JvmMainMethodRunConfigurationOptions()
@@ -97,11 +97,11 @@ class ConfigurationFileTest {
   }
 
   @Test
-  fun `one jvmMainMethod as list - template`() {
+  fun `one v as list - template`() {
     val result = readRunConfigurations("""
     runConfigurations:
       templates:
-        jvmMainMethod:
+        java:
           - isAlternativeJrePathEnabled: true
     """, isTemplatesOnly = true)
     val options = JvmMainMethodRunConfigurationOptions()

@@ -9,7 +9,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
@@ -18,6 +17,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,9 +62,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private static final Key<List<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private ProjectEx myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
-
   private Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
@@ -72,8 +69,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private volatile boolean myDefaultProjectWasDisposed;
+  private final DefaultProjectTimed myDefaultProjectTimed = new DefaultProjectTimed(this);
   private final ProjectManagerListener myBusPublisher;
+  private final ExcludeRootsCache myExcludeRootsCache;
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
@@ -136,6 +134,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     });
+    myExcludeRootsCache = new ExcludeRootsCache(messageBus);
   }
 
   private static void handleListenerError(@NotNull Throwable e, @NotNull ProjectManagerListener listener) {
@@ -150,12 +149,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public void dispose() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myDefaultProject != null) {
-      Disposer.dispose(myDefaultProject);
-
-      myDefaultProject = null;
-      myDefaultProjectWasDisposed = true;
-    }
+    // dispose manually, because TimedReference.dispose() can already be called (in Timed.disposeTimed()) and then default project resurrected
+    Disposer.dispose(myDefaultProjectTimed);
   }
 
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
@@ -258,16 +253,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @TestOnly
   private Collection<Project> getLeakedProjects() {
-    myProjects.remove(getDefaultProject()); // process queue
+    myProjects.remove(DummyProject.getInstance()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }
   @TestOnly
   private int getLeakedProjectsCount() {
-    myProjects.remove(getDefaultProject()); // process queue
+    myProjects.remove(DummyProject.getInstance()); // process queue
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+  static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
       indicator.setIndeterminate(false);
@@ -292,7 +287,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  private static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+  static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
     if (isDefault) {
       return new DefaultProject("");
     }
@@ -334,26 +329,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @TestOnly
   public synchronized boolean isDefaultProjectInitialized() {
-    return myDefaultProject != null;
+    return myDefaultProjectTimed.isCached();
   }
 
   @Override
   @NotNull
   public synchronized Project getDefaultProject() {
-    LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
-    if (myDefaultProject == null) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        try {
-          myDefaultProject = createProject(null, "", true);
-          initProject(myDefaultProject, null);
-        }
-        catch (Throwable t) {
-          PluginManager.processException(t);
-        }
-      });
-    }
-    return myDefaultProject;
+    LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
+    Project defaultProject = myDefaultProjectTimed.get();
+    // disable "the only project" optimization since we have now more than one project.
+    // (even though the default project is not a real project, it can be used indirectly in e.g. "Settings|Code Style" code fragments PSI)
+    updateTheOnlyProjectField();
+    return defaultProject;
   }
 
   @Override
@@ -457,18 +444,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
       myOpenProjects = ArrayUtil.append(myOpenProjects, project);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? project : null;
+      updateTheOnlyProjectField();
       myOpenProjectByHash.put(project.getLocationHash(), project);
     }
     return true;
   }
 
+  void updateTheOnlyProjectField() {
+    synchronized (lock) {
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultProjectInitialized() ? myOpenProjects[0] : null;
+    }
+  }
+
   private void removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
+      updateTheOnlyProjectField();
       myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
   }
@@ -891,5 +882,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProject = null;
       super.expire();
     }
+  }
+
+  @NotNull
+  public String[] getAllExcludedUrls() {
+    return myExcludeRootsCache.getExcludedUrls();
   }
 }

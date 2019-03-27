@@ -6,7 +6,7 @@
     </component>
     <component>
       <interface-class>com.intellij.configurationStore.StoreReloadManager</interface-class>
-      <implementation-class>com.intellij.configurationStore.StoreAwareProjectManager</implementation-class>
+      <implementation-class>com.intellij.configurationStore.StoreReloadManagerImpl</implementation-class>
     </component>
 
     <component>

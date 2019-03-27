@@ -928,7 +928,7 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");

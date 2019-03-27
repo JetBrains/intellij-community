@@ -19,13 +19,20 @@ fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: Vc
 
   val withRefIndex = storage.getCommitIndex(withRef.commitHash, withRef.root)
   val withoutRefIndex = storage.getCommitIndex(withoutRef.commitHash, withoutRef.root)
+
+  return subgraphDifference(withRefIndex, withoutRefIndex)
+}
+
+fun DataPack.subgraphDifference(withRefIndex: Int, withoutRefIndex: Int): TIntHashSet? {
   if (withRefIndex == withoutRefIndex) return TIntHashSet()
 
-  if (permanentGraph !is PermanentGraphInfo<*>) return null
+  @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return null
 
-  val permanentGraphInfo = permanentGraph as PermanentGraphInfo<Int>
-  val withRefNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(
-    permanentGraphInfo.permanentCommitsInfo.getNodeId(withRefIndex),
-    permanentGraphInfo.permanentCommitsInfo.getNodeId(withoutRefIndex))
+  val withRefNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(withRefIndex)
+  val withoutRefNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(withoutRefIndex)
+
+  if (withRefNode < 0 || withoutRefNode < 0) return null
+
+  val withRefNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(withRefNode, withoutRefNode)
   return TroveUtil.map2IntSet(withRefNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }

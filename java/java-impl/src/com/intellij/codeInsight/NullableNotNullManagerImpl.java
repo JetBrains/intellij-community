@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,6 +292,18 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       CachedValueProvider.Result.create(ContainerUtil.concat(getNotNulls(), filterNickNames(Nullability.NOT_NULL)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  @Override
+  protected Set<String> getAllNullabilityAnnotationsWithNickNames() {
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
+      Set<String> result = new THashSet<>();
+      result.addAll(getNotNulls());
+      result.addAll(getNullables());
+      result.addAll(ContainerUtil.mapNotNull(getAllNullabilityNickNames(), PsiClass::getQualifiedName));
+      return CachedValueProvider.Result.create(Collections.unmodifiableSet(result), PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Override

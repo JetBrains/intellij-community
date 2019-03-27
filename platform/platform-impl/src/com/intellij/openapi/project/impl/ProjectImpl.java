@@ -268,7 +268,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     //noinspection CodeBlock2Expr
     init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    } : null, true);
+    } : null);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
@@ -380,7 +380,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Nullable
   @Override
-  protected String measureTokenNamePrefix() {
+  protected String activityNamePrefix() {
     return "project ";
   }
 }

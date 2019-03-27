@@ -351,10 +351,7 @@ public class ExpectedTypesProvider {
       if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock();
         if (block instanceof PsiSwitchExpression) {
-          if (myForCompletion) {
-            myExpr = (PsiSwitchExpression)block;
-          }
-          block.getParent().accept(this);
+          Collections.addAll(myResult, getExpectedTypes((PsiExpression)block, myForCompletion));
           return;
         }
       }

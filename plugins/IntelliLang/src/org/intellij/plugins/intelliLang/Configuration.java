@@ -322,7 +322,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         });
     };
     for (String key : ContainerUtil.newTreeSet(myInjections.keySet())) {
-      Set<BaseInjection> injections = ContainerUtil.newHashSet(myInjections.get(key));
+      Set<BaseInjection> injections = new HashSet<>(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
       for (BaseInjection injection : ContainerUtil.sorted(injections, comparator)) {
         element.addContent(injection.getState());

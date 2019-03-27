@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
-import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigActionUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +27,6 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   @Override
   public String getTooltip() {
     return EditorConfigBundle.message("config.code.style.overridden");
-  }
-
-  @Nullable
-  @Override
-  public String getAdvertisementText(@NotNull PsiFile psiFile) {
-    return Utils.isShowAdvertisementText(psiFile.getProject()) ? EditorConfigBundle.message("config.code.style.overridden") : null;
   }
 
   @Nullable

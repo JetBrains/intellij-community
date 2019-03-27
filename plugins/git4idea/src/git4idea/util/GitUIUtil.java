@@ -92,7 +92,8 @@ public class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
+  @NotNull
+  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -129,8 +130,17 @@ public class GitUIUtil {
   public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
     return new ListCellRendererWrapper<VirtualFile>() {
       @Override
-      public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
+      public void customize(JList list, VirtualFile file, int index, boolean selected, boolean hasFocus) {
         setText(file == null ? "(invalid)" : file.getPresentableUrl());
+      }
+    };
+  }
+
+  public static ListCellRendererWrapper<GitRepository> getRepositoryListCellRenderer() {
+    return new ListCellRendererWrapper<GitRepository>() {
+      @Override
+      public void customize(JList list, GitRepository repository, int index, boolean selected, boolean hasFocus) {
+        setText(repository == null ? "(invalid)" : repository.getPresentableUrl());
       }
     };
   }
@@ -368,5 +378,4 @@ public class GitUIUtil {
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
-
 }

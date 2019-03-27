@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class Extensions {
+public final class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<>("com.intellij.arealistener");
   private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
   private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
@@ -73,8 +73,9 @@ public class Extensions {
   }
 
   @NotNull
+  @Deprecated
   public static Object[] getExtensions(@NonNls @NotNull String extensionPointName) {
-    return getExtensions(extensionPointName, null);
+    return getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
   /**
@@ -95,11 +96,10 @@ public class Extensions {
     return extensionPointName.getExtensions(areaInstance);
   }
 
+  @Deprecated
   @NotNull
   public static <T> T[] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
-    ExtensionsArea area = getArea(areaInstance);
-    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(extensionPointName);
-    return extensionPoint.getExtensions();
+    return getArea(areaInstance).<T>getExtensionPoint(extensionPointName).getExtensions();
   }
 
   /**
@@ -111,15 +111,10 @@ public class Extensions {
     return extensionPointName.findExtensionOrFail(extClass);
   }
 
+  @Deprecated
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance, @NotNull Class<U> extClass) {
-    for (T t : extensionPointName.getExtensions(areaInstance)) {
-      if (extClass.isInstance(t)) {
-        //noinspection unchecked
-        return (U) t;
-      }
-    }
-    throw new IllegalArgumentException("could not find extension implementation " + extClass);
+    return extensionPointName.findExtensionOrFail(extClass, areaInstance);
   }
 
   public static void instantiateArea(@NonNls @NotNull String areaClass, @NotNull AreaInstance areaInstance, @Nullable("null means root") AreaInstance parentAreaInstance) {
@@ -229,5 +224,4 @@ public class Extensions {
   public enum OS {
     mac, linux, windows, unix, freebsd
   }
-
 }

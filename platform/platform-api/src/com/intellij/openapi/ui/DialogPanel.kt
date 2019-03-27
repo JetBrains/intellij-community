@@ -11,7 +11,14 @@ import javax.swing.JPanel
 class DialogPanel : JPanel {
   var preferredFocusedComponent: JComponent? = null
   var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
+  var applyCallbacks: List<() -> Unit> = emptyList()
 
   constructor() : super()
   constructor(layout: LayoutManager?) : super(layout)
+
+  fun apply() {
+    for (applyCallback in applyCallbacks) {
+      applyCallback()
+    }
+  }
 }

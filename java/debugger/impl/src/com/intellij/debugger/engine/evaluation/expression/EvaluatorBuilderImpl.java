@@ -137,7 +137,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
 
-      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator);
+      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator, expression.getProject());
 
       if (assignmentType != JavaTokenType.EQ) {
         IElementType opType = TypeConversionUtil.convertEQtoOperation(assignmentType);
@@ -151,7 +151,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     // returns rEvaluator possibly wrapped with boxing/unboxing and casting evaluators
-    private static Evaluator handleAssignmentBoxingAndPrimitiveTypeConversions(PsiType lType, PsiType rType, Evaluator rEvaluator) {
+    private static Evaluator handleAssignmentBoxingAndPrimitiveTypeConversions(PsiType lType,
+                                                                               PsiType rType,
+                                                                               Evaluator rEvaluator,
+                                                                               Project project) {
       final PsiType unboxedLType = PsiPrimitiveType.getUnboxedType(lType);
 
       if (unboxedLType != null) {
@@ -174,6 +177,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             if (!lType.equals(_rType)) {
               rEvaluator = createTypeCastEvaluator(rEvaluator, lType);
             }
+          }
+        }
+        else if (lType instanceof PsiClassType && rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(rType)) {
+          final PsiClassType rightBoxed =
+            ((PsiPrimitiveType)rType).getBoxedType(PsiManager.getInstance(project), ((PsiClassType)lType).getResolveScope());
+          if (rightBoxed != null && TypeConversionUtil.isAssignable(lType, rightBoxed)) {
+            rEvaluator = new BoxingEvaluator(rEvaluator);
           }
         }
       }
@@ -329,10 +339,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitForeachStatement(PsiForeachStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
-        String iterationParameterName = statement.getIterationParameter().getName();
+        PsiParameter parameter = statement.getIterationParameter();
+        String iterationParameterName = parameter.getName();
         myCurrentFragmentEvaluator.setInitialValue(iterationParameterName, null);
         SyntheticVariableEvaluator iterationParameterEvaluator =
-          new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName);
+          new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, iterationParameterName, null);
 
         Evaluator iteratedValueEvaluator = accept(statement.getIteratedValue());
         Evaluator bodyEvaluator = accept(statement.getBody());
@@ -650,7 +661,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
                 localVarReference.accept(this);
                 Evaluator lEvaluator = myResult;
-                rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(localVarReference.getType(), rType, rEvaluator);
+                rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(localVarReference.getType(), rType, rEvaluator,
+                                                                               statement.getProject());
 
                 Evaluator assignment = new AssignmentEvaluator(lEvaluator, rEvaluator);
                 evaluators.add(assignment);
@@ -730,7 +742,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
           // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
           // that's why we need to check that containing code fragment is the one we visited
-          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName());
+          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(),
+                                                    JVMNameUtil.getJVMQualifiedName(((PsiVariable)element).getType()));
           return;
         }
         // local variable

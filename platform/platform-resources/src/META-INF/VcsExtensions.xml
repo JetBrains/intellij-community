@@ -41,6 +41,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"
                     serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesStoreState"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
@@ -99,7 +101,7 @@
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
-    <editorNotificationProviderApp implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
     <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
 
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>

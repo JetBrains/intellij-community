@@ -45,6 +45,7 @@ public class AnimatedIcon implements Icon {
   }
 
   public static class Default extends AnimatedIcon {
+
     public Default() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -59,6 +60,8 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
       AllIcons.Process.Step_8);
+
+    public static final AnimatedIcon INSTANCE = new Default();
   }
 
   public static class Big extends AnimatedIcon {

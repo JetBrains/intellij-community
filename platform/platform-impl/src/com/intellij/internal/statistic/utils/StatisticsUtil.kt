@@ -10,13 +10,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.CachedValue
+import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.io.IOException
@@ -172,19 +172,12 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
   }
 }
 
-private val safeToReportPluginIds: Set<String>
-  get() {
-    val project = DefaultProjectFactory.getInstance().defaultProject
-    if (project.isDisposed) {
-      return emptySet()
-    }
-    return CachedValuesManager.getManager(project).getCachedValue(project) {
-      val plugins = collectSafePluginDescriptors()
-      val ids = mutableSetOf<String>()
-      plugins.mapNotNullTo(ids) { descriptor: PluginDescriptor -> descriptor.pluginId?.idString }
-      CachedValueProvider.Result.create(ids, DelayModificationTracker(1, TimeUnit.HOURS))
-    }
-  }
+private val safeToReportPluginIds: Getter<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+  val plugins = collectSafePluginDescriptors()
+  val ids = mutableSetOf<String>()
+  plugins.mapNotNullTo(ids) { descriptor: PluginDescriptor -> descriptor.pluginId?.idString }
+  ids
+};
 
 /**
  * We are safe to report only plugins which are developed by JetBrains or in our official plugin repository due to GDPR
@@ -249,7 +242,7 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
  * On the very first invocation may need to load cached plugins later; in that case no plugins are considered safe
  */
 fun isSafeToReport(pluginId: String?): Boolean {
-  return pluginId != null && safeToReportPluginIds.contains(pluginId)
+  return pluginId != null && safeToReportPluginIds.get().contains(pluginId)
 }
 
 /**

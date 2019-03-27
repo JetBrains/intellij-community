@@ -17,6 +17,7 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -55,17 +56,28 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
   }
 
-  @NotNull
+  @Nullable
   @Override
   protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeKind>, VcsIndexableDetails> extension)
     throws IOException {
     if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
-    return new VcsLogPathsForwardIndex(extension) {
+    return new KeyCollectionBasedForwardIndex<Integer, List<ChangeKind>>(extension) {
       @NotNull
       @Override
-      public PersistentHashMap<Integer, List<Collection<Integer>>> createMap() throws IOException {
+      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
         File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionListExternalizer(), Page.PAGE_SIZE);
+        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(),
+                                       Page.PAGE_SIZE);
+      }
+
+      @NotNull
+      @Override
+      protected Collection<Integer> convertToMapValueType(int inputId, @NotNull Map<Integer, List<ChangeKind>> map) {
+        if (!map.isEmpty()) {
+          List<ChangeKind> changesToParents = ContainerUtil.getFirstItem(map.values());
+          if (changesToParents.size() > 1) return Collections.emptySet();
+        }
+        return super.convertToMapValueType(inputId, map);
       }
     };
   }
@@ -104,7 +116,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) throws IOException {
+  public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept)
+    throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
     for (Couple<Integer> rename : renames) {
@@ -119,12 +132,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @NotNull
-  public Set<FilePath> getPathsChangedInCommit(int commit, int parentIndex) throws IOException {
-    List<Collection<Integer>> keysForCommit = getKeysForCommit(commit);
-    if (keysForCommit == null || keysForCommit.size() <= parentIndex) return Collections.emptySet();
+  public Set<FilePath> getPathsChangedInCommit(int commit) throws IOException {
+    Collection<Integer> keysForCommit = getKeysForCommit(commit);
+    if (keysForCommit == null) return Collections.emptySet();
 
     Set<FilePath> paths = ContainerUtil.newHashSet();
-    for (Integer pathId : ContainerUtil.newHashSet(keysForCommit.get(parentIndex))) {
+    for (Integer pathId : keysForCommit) {
       LightFilePath lightFilePath = myPathsIndexer.getPathsEnumerator().valueOf(pathId);
       if (lightFilePath.isDirectory()) continue;
       paths.add(toFilePath(lightFilePath));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
@@ -53,7 +53,7 @@ import java.util.Map;
  */
 @State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements Disposable, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
+  private static final Logger LOG = Logger.getInstance(Palette.class);
 
   private final MyLafManagerListener myLafManagerListener;
   private final Map<Class, IntrospectedProperty[]> myClass2Properties;
@@ -148,14 +148,6 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   public void addListener(@NotNull final Listener l) {
     LOG.assertTrue(!myListeners.contains(l));
     myListeners.add(l);
-  }
-
-  /**
-   * Removes specified listener.
-   */
-  public void removeListener(@NotNull final Listener l) {
-    LOG.assertTrue(myListeners.contains(l));
-    myListeners.remove(l);
   }
 
   void fireGroupsChanged() {
@@ -513,7 +505,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     itemElement.setAttribute(ATTRIBUTE_AUTO_CREATE_BINDING, Boolean.toString(item.isAutoCreateBinding()));
     itemElement.setAttribute(ATTRIBUTE_CAN_ATTACH_LABEL, Boolean.toString(item.isCanAttachLabel()));
     if (item.isContainer()) {
-      itemElement.setAttribute(ATTRIBUTE_IS_CONTAINER, Boolean.toString(item.isContainer()));
+      itemElement.setAttribute(ATTRIBUTE_IS_CONTAINER, Boolean.toString(true));
     }
 
     // Default constraints

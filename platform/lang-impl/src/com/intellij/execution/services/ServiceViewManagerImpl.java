@@ -7,6 +7,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
@@ -20,14 +21,16 @@ import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 
-@State(
-  name = "ServiceViewManager",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
-public class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
+@State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
+  static final ExtensionPointName<ServiceViewContributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.serviceViewContributor");
+
   // TODO [konstantin.aleev] provide help id
   @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
@@ -41,7 +44,14 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
     myProject.getMessageBus().connect(myProject).subscribe(ServiceViewContributor.TOPIC, this::updateToolWindow);
   }
 
-  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
+  boolean hasServices() {
+    for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
+      if (!contributor.getNodes(myProject).isEmpty()) return true;
+    }
+    return false;
+  }
+
+  void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     myServiceView = new ServiceView(myProject, myState.viewState);
 
     Content toolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myServiceView, null, false);
@@ -55,14 +65,30 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
     toolWindow.getContentManager().addContent(toolWindowContent);
   }
 
+  @NotNull
   @Override
-  public void selectNode(Object node) {
+  public Promise<Void> selectNode(Object node, boolean activate, boolean focus) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-      ServiceView content = myServiceView;
-      if (content != null) {
-        content.selectNode(node);
+      Runnable runnable = () -> {
+        ServiceView view = myServiceView;
+        if (view == null) {
+          result.setError("");
+        }
+        else {
+          view.selectNode(node);
+          result.setResult(null);
+        }
+      };
+      ToolWindow window = activate ? ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.SERVICES) : null;
+      if (window != null) {
+        window.activate(runnable, false, focus);
+      }
+      else {
+        runnable.run();
       }
     });
+    return result;
   }
 
   private void updateToolWindow(ServiceViewContributor.ServiceEvent event) {
@@ -74,7 +100,7 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
         return;
       }
 
-      boolean available = true; //TODO [konstantin.aleev] hasContent();
+      boolean available = hasServices();
       ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
       if (toolWindow == null) {
         toolWindow = createToolWindow(toolWindowManager, available);
@@ -133,7 +159,7 @@ public class ServiceViewManagerImpl implements ServiceViewManager, PersistentSta
   }
 
   private static Icon getToolWindowIcon() {
-    return AllIcons.Toolwindows.ToolWindowRun;
+    return AllIcons.Toolwindows.ToolWindowServices;
   }
 
   static String getToolWindowContextHelpId() {

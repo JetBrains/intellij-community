@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClass
@@ -14,11 +14,8 @@ class ListConstraint(private val leftType: PsiType?, private val literal: GrList
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val type = literal.type
-    if (type is EmptyListLiteralType || type is EmptyMapLiteralType) {
-      // TODO consider adding separate interface for such cases
-      val result = (type as? EmptyListLiteralType)?.resolveResult
-                   ?: (type as? EmptyMapLiteralType)?.resolveResult
-                   ?: return true
+    if (type is EmptyMapLiteralType) {
+      val result = type.resolveResult ?: return true
       val clazz = result.element
       val contextSubstitutor = result.contextSubstitutor
       require(contextSubstitutor === PsiSubstitutor.EMPTY)
@@ -29,7 +26,8 @@ class ListConstraint(private val leftType: PsiType?, private val literal: GrList
       return true
     }
     if (leftType != null) {
-      constraints.add(TypeConstraint(leftType, type, literal))
+      val rightType = if (type is EmptyListLiteralType) type.resolve()?.rawType() else type
+      constraints.add(TypeConstraint(leftType, rightType, literal))
     }
     return true
   }

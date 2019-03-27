@@ -59,7 +59,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
 
   private static boolean hasReversibleFiles(@NotNull AnActionEvent e) {
     ChangeListManager manager = ChangeListManager.getInstance(e.getRequiredData(CommonDataKeys.PROJECT));
-    Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(manager.getModifiedWithoutEditing());
+    Set<VirtualFile> modifiedWithoutEditing = new HashSet<>(manager.getModifiedWithoutEditing());
 
     return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).anyMatch(
       file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file));
@@ -68,7 +68,7 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
   private static boolean currentChangelistNotEmpty(Project project) {
     ChangeListManager clManager = ChangeListManager.getInstance(project);
     ChangeList list = clManager.getDefaultChangeList();
-    return list != null && !list.getChanges().isEmpty();
+    return !list.getChanges().isEmpty();
   }
 
   @Override

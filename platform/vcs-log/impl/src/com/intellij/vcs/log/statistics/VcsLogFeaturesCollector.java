@@ -7,11 +7,14 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,9 +34,12 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         MainVcsLogUiProperties properties = ui.getProperties();
         VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
 
-        Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
+        Set<UsageDescriptor> usages = ContainerUtil.newHashSet(new UsageDescriptor("uiInitialized"));
+
         addBooleanUsage(properties, defaultProperties, usages, "details", CommonUiProperties.SHOW_DETAILS);
         addBooleanUsage(properties, defaultProperties, usages, "diffPreview", CommonUiProperties.SHOW_DIFF_PREVIEW);
+        addBooleanUsage(properties, defaultProperties, usages, "parentChanges", SHOW_CHANGES_FROM_PARENTS);
+        addBooleanUsage(properties, defaultProperties, usages, "onlyAffectedChanges", SHOW_ONLY_AFFECTED_CHANGES);
         addBooleanUsage(properties, defaultProperties, usages, "long.edges", SHOW_LONG_EDGES);
 
         addEnumUsage(properties, defaultProperties, usages, "sort", BEK_SORT_TYPE);
@@ -52,6 +58,21 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           if (factory.showMenuItem()) {
             addBooleanUsage(properties, defaultProperties, usages, "highlighter." + getFactoryIdSafe(factory),
                             VcsLogHighlighterProperty.get(factory.getId()));
+          }
+        }
+
+        for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
+          if (properties.getFilterValues(key.getName()) != null) {
+            usages.add(StatisticsUtilKt.getBooleanUsage(key.getName() + "Filter", true));
+          }
+        }
+
+        Set<Integer> currentColumns = new HashSet<>(properties.get(CommonUiProperties.COLUMN_ORDER));
+        Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(CommonUiProperties.COLUMN_ORDER));
+        for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
+          if (currentColumns.contains(column) != defaultColumns.contains(column)) {
+            usages.add(StatisticsUtilKt.getBooleanUsage(StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column",
+                                                        currentColumns.contains(column)));
           }
         }
 

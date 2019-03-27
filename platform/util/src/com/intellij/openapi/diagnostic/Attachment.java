@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Base64;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Base64;
 
 public class Attachment {
   private static final Logger LOG = Logger.getInstance(Attachment.class);
@@ -65,7 +65,7 @@ public class Attachment {
 
   @NotNull
   public String getEncodedBytes() {
-    return Base64.encode(getBytes());
+    return Base64.getEncoder().encodeToString(getBytes());
   }
 
   @NotNull

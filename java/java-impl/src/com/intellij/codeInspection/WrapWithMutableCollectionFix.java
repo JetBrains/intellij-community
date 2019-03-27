@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -90,7 +90,7 @@ public class WrapWithMutableCollectionFix implements LocalQuickFix {
       anchor = ((PsiReferenceExpression)anchor.getParent()).getQualifierExpression();
     }
     if (!(anchor instanceof PsiExpression)) return null;
-    return ExpressionUtils.resolveLocalVariable(PsiUtil.skipParenthesizedExprDown((PsiExpression)anchor));
+    return ExpressionUtils.resolveLocalVariable((PsiExpression)anchor);
   }
 
   @Contract("null -> null")

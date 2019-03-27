@@ -19,6 +19,8 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -97,6 +99,19 @@ class GitPushResultNotification extends Notification {
 
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
 
+    boolean hasForceWithLeaseRejection = ContainerUtil.exists(pushResult.getResults().values(),
+                                                              it -> it.getType() == GitPushRepoResult.Type.REJECTED_STALE_INFO);
+    if (hasForceWithLeaseRejection) {
+      notification.setContextHelpAction(new AnAction(
+        "What is force-with-lease?",
+        "Force-with-lease push prevents overriding remote changes that are unknown to local repository.<br>" +
+        "Fetch latest changes to verify that they can be safely discarded and repeat push operation.", null) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+        }
+      });
+    }
+
     UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
     if (!updatedFiles.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -170,6 +185,9 @@ class GitPushResultNotification extends Notification {
         break;
       case REJECTED_NO_FF:
         description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
+        break;
+      case REJECTED_STALE_INFO:
+        description = String.format("force-with-lease push %s to %s was rejected", sourceBranch, targetBranch);
         break;
       case REJECTED_OTHER:
         description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);

@@ -2,7 +2,7 @@
 class Test {
   void test() {
     Object x = "  hello  ";
-    System.out.println(((Str<caret>ing)x).trim());
-    System.out.println(((String)x).substring(1));
+    System.out.println(((Str<caret>ing)(x)).trim());
+    System.out.println(((String)(x)).substring(1));
   }
 }

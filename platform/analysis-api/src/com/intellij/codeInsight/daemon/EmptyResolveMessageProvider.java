@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ public interface EmptyResolveMessageProvider {
   /**
    * Returns custom unresolved message pattern. First, returned value is used as pattern in {@code MessageFormat.format()} call.
    * If the call fails, returned value is used as is.
+   *
    * @return pattern or message
-   * @see XmlHighlightVisitor#getErrorDescription()
    */
   @NotNull
   String getUnresolvedMessagePattern();

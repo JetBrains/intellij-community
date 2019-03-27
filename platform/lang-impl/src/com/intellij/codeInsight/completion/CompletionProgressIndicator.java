@@ -12,7 +12,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -122,11 +121,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
   private final CompletionThreadingBase myThreading;
-  private final Object myLock = new String("CompletionProgressIndicator");
+  private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, @NotNull OffsetMap offsetMap, @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers, LookupImpl lookup) {
+                              boolean hasModifiers, @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
@@ -336,11 +335,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @Override
-  public void setParameters(CompletionParameters parameters) {
+  public void setParameters(@NotNull CompletionParameters parameters) {
     myParameters = parameters;
   }
 
   @Override
+  @NotNull
   public LookupImpl getLookup() {
     return myLookup;
   }
@@ -376,10 +376,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
         return;
-      }
-
-      if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
-        PerformanceWatcher.getInstance().dumpThreads("emptyLookup/", true);
       }
 
       if (!myLookup.showLookup()) {
@@ -787,7 +783,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, listener);
     assert text != null;
-    HintManager.getInstance().showErrorHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
+    HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(text), HintManager.UNDER);
     connection.disconnect();
     return result[0];
   }

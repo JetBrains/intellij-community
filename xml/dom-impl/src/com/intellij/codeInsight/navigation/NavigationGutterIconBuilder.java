@@ -323,6 +323,10 @@ public class NavigationGutterIconBuilder<T> {
     final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
+        if (psiElement == null) {
+          throw new IllegalArgumentException(converter + " returned null element");
+        }
+
         if (elements.add(psiElement) && psiElement.isValid()) {
           list.add(manager.createSmartPsiElementPointer(psiElement));
         }

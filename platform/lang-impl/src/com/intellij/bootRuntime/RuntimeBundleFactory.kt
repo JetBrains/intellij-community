@@ -20,13 +20,25 @@ enum class OperationSystem {
   Windows32, Windows64, Linux, MacOSX
 }
 
+fun javaHomeFromFile(file:File): File {
+  return file.parentFile.parentFile
+}
+
+fun javaHomeToInstallationLocation(file:File): File {
+  if (SystemInfo.isMac) {
+    return file.parentFile.parentFile
+  } else {
+    return file
+  }
+}
+
 class RuntimeLocationsFactory {
 
   fun runtimesFrom (locations: List<File>) : List<File> {
     return locations.flatMap{ l -> l.walk().filter {
       file -> file.name == "tools.jar" ||
               file.name == "jrt-fs.jar"
-    }.map{ file -> file.parentFile.parentFile }.toList()}.toList()
+    }.map{ file -> javaHomeToInstallationLocation(javaHomeFromFile(file)) }.toList()}.toList()
   }
 
   fun runtimeLocations(operationSystem: OperationSystem): List<File> {

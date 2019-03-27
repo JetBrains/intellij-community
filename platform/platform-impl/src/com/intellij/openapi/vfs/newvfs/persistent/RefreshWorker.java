@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -152,17 +153,25 @@ public class RefreshWorker {
       // reading children attributes
       String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
       Set<String> newNames = newTroveSet(strategy, upToDateNames);
-      ContainerUtil.removeAll(newNames, persistedNames);
+      if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
+        for (VirtualFile child : children) {
+          newNames.remove(child.getName());
+        }
+      }
+      else {
+        ContainerUtil.removeAll(newNames, persistedNames);
+      }
+
       Set<String> deletedNames = newTroveSet(strategy, persistedNames);
       ContainerUtil.removeAll(deletedNames, upToDateNames);
 
       OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
       if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
 
-      List<NewChildRecord> newKids = new ArrayList<>(newNames.size());
+      List<ChildInfo> newKids = new ArrayList<>(newNames.size());
       for (String newName : newNames) {
         checkCancelled(dir);
-        NewChildRecord record = childRecord(fs, dir, newName);
+        ChildInfo record = childRecord(fs, dir, newName);
         if (record != null) {
           newKids.add(record);
         }
@@ -192,8 +201,8 @@ public class RefreshWorker {
           }
         }
 
-        for (NewChildRecord record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.attributes, record.isEmptyDir, record.symlinkTarget);
+        for (ChildInfo record : newKids) {
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget);
         }
 
         for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -242,11 +251,11 @@ public class RefreshWorker {
         existingMap.add(pair(child, fs.getAttributes(child)));
       }
 
-      List<NewChildRecord> newKids = new ArrayList<>(wanted.size());
+      List<ChildInfo> newKids = new ArrayList<>(wanted.size());
       for (String name : wanted) {
         if (name.isEmpty()) continue;
         checkCancelled(dir);
-        NewChildRecord record = childRecord(fs, dir, name);
+        ChildInfo record = childRecord(fs, dir, name);
         if (record != null) {
           newKids.add(record);
         }
@@ -271,8 +280,8 @@ public class RefreshWorker {
           }
         }
 
-        for (NewChildRecord record : newKids) {
-          myHelper.scheduleCreation(dir, record.name, record.attributes, record.isEmptyDir, record.symlinkTarget);
+        for (ChildInfo record : newKids) {
+          myHelper.scheduleCreation(dir, record.name, record.attributes, record.symLinkTarget);
         }
 
         return true;
@@ -282,34 +291,19 @@ public class RefreshWorker {
     }
   }
 
-  private static class NewChildRecord {
-    @NotNull
-    final String name;
-    @NotNull
-    final FileAttributes attributes;
-    final boolean isEmptyDir;
-    final String symlinkTarget;
-
-    NewChildRecord(@NotNull String name, @NotNull FileAttributes attributes, boolean isEmptyDir, @Nullable String symlinkTarget) {
-      this.name = name;
-      this.attributes = attributes;
-      this.isEmptyDir = isEmptyDir;
-      this.symlinkTarget = symlinkTarget;
-    }
-  }
-
-  private static NewChildRecord childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
+  @Nullable
+  private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new NewChildRecord(name, attributes, isEmptyDir, symlinkTarget);
+    return new ChildInfo(-1, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   private static class RefreshCancelledException extends RuntimeException { }
 
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) {
+  private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
@@ -326,7 +320,7 @@ public class RefreshWorker {
     file.markDirty();
   }
 
-  private void checkAndScheduleChildRefresh(NewVirtualFileSystem fs,
+  private void checkAndScheduleChildRefresh(@NotNull NewVirtualFileSystem fs,
                                             @NotNull VirtualFile parent,
                                             @NotNull VirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
@@ -338,7 +332,7 @@ public class RefreshWorker {
     }
   }
 
-  private boolean checkAndScheduleFileTypeChange(NewVirtualFileSystem fs,
+  private boolean checkAndScheduleFileTypeChange(@NotNull NewVirtualFileSystem fs,
                                                  @NotNull VirtualFile parent,
                                                  @NotNull VirtualFile child,
                                                  @NotNull FileAttributes childAttributes) {
@@ -351,9 +345,8 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      boolean isEmptyDir = upToDateIsDirectory && !fs.hasChildren(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes, isEmptyDir, symlinkTarget);
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget);
       return true;
     }
 

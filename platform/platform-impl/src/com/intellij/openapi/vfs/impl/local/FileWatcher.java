@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -22,14 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -69,17 +67,20 @@ public class FileWatcher {
     }
   }
 
+  private static ExecutorService executor() {
+    boolean async = Registry.is("vfs.filewatcher.works.in.async.way");
+    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : MoreExecutors.newDirectExecutorService();
+  }
+
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
   private final PluggableFileWatcher[] myWatchers;
   private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
+  private final ExecutorService myFileWatcherExecutor = executor();
+  private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
   private volatile CanonicalPathMap myPathMap = new CanonicalPathMap();
   private volatile List<Collection<String>> myManualWatchRoots = Collections.emptyList();
-  
-  private final ExecutorService myFileWatcherExecutor = Registry.is("vfs.filewatcher.works.in.async.way") ?
-                                                        AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) :
-                                                        MoreExecutors.newDirectExecutorService();
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
@@ -87,18 +88,35 @@ public class FileWatcher {
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
 
     myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.initialize(myManagingFS, myNotificationSink);
+      try {
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.initialize(myManagingFS, myNotificationSink);
+        }
+      }
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
       }
     });
   }
 
   public void dispose() {
-    waitForFuture(myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.dispose();
+    myFileWatcherExecutor.shutdown();
+
+    Future<?> lastTask = myLastTask.get();
+    if (lastTask != null) {
+      lastTask.cancel(false);
+      try {
+        lastTask.get();
       }
-    }));
+      catch (CancellationException ignored) { }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+
+    for (PluggableFileWatcher watcher : myWatchers) {
+      watcher.dispose();
+    }
   }
 
   public boolean isOperational() {
@@ -109,24 +127,14 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    flushCommandQueue();
-    
+    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seem to be an acceptable race
+    if (lastTask != null && !lastTask.isDone()) {
+      return true;
+    }
     for (PluggableFileWatcher watcher : myWatchers) {
       if (watcher.isSettingRoots()) return true;
     }
     return false;
-  }
-
-  private void flushCommandQueue() {
-    waitForFuture(myFileWatcherExecutor.submit(EmptyRunnable.getInstance()));
-  }
-
-  private void waitForFuture(@NotNull Future<?> future) {
-    try {
-      future.get();
-    }
-    catch (InterruptedException | ExecutionException ignore) {
-    }
   }
 
   @NotNull
@@ -141,7 +149,7 @@ public class FileWatcher {
     Set<String> result = null;
     for (Collection<String> roots : manualWatchRoots) {
       if (result == null) {
-        result = ContainerUtil.newHashSet(roots);
+        result = new HashSet<>(roots);
       }
       else {
         result.retainAll(roots);
@@ -155,16 +163,24 @@ public class FileWatcher {
    * Clients should take care of not calling this method in parallel.
    */
   void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
+    Future<?> prevTask = myLastTask.getAndSet(myFileWatcherExecutor.submit(() -> {
+      try {
+        CanonicalPathMap pathMap = new CanonicalPathMap(recursive, flat);
 
-    myPathMap = pathMap;
-    myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+        myPathMap = pathMap;
+        myManualWatchRoots = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    myFileWatcherExecutor.submit(() -> {
-      for (PluggableFileWatcher watcher : myWatchers) {
-        watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        for (PluggableFileWatcher watcher : myWatchers) {
+          watcher.setWatchRoots(pathMap.getCanonicalRecursiveWatchRoots(), pathMap.getCanonicalFlatWatchRoots());
+        }
       }
-    });
+      catch (RuntimeException | Error e) {
+        LOG.error(e);
+      }
+    }));
+    if (prevTask != null) {
+      prevTask.cancel(false);
+    }
   }
 
   public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
@@ -202,7 +218,7 @@ public class FileWatcher {
 
     @Override
     public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : ContainerUtil.newHashSet(roots));
+      myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : new HashSet<>(roots));
       notifyOnEvent(OTHER);
     }
 

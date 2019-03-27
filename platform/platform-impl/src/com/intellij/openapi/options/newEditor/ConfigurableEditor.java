@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.JBIterable;
@@ -47,7 +47,6 @@ import static javax.swing.SwingUtilities.isDescendingFrom;
  * @author Sergey.Malenkov
  */
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private static final JBColor ERROR_BACKGROUND = new JBColor(0xffbfbf, 0x591f1f);
   private static final String RESET_NAME = "Reset";
   private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
@@ -95,7 +94,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
-    myErrorLabel.setBackground(ERROR_BACKGROUND);
+    myErrorLabel.setBackground(LightColors.RED);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
     Disposer.register(this, myCardPanel);

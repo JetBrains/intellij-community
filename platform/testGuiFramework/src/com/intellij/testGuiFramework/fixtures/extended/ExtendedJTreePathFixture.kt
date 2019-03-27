@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isComponentShowing
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
@@ -107,18 +108,20 @@ import javax.swing.tree.TreePath
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
-          try {
-            partialPath = ExtendedJTreePathFinder(tree)
-              .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
-            partialPath != null
+        step("search partial path $partialList") {
+          GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
+            try {
+              partialPath = ExtendedJTreePathFinder(tree)
+                .findMatchingPathByPredicate(predicate = predicate, pathStrings = partialList)
+              partialPath != null
+            }
+            catch (e: Exception) {
+              false
+            }
           }
-          catch (e: Exception) {
-            false
-          }
+          cachePaths[partialList] = partialPath!!
+          myDriver.expandPath(tree, cachePaths.getValue(partialList))
         }
-        cachePaths[partialList] = partialPath!!
-        myDriver.expandPath(tree, cachePaths.getValue(partialList))
       }
     }
     return cachePaths.getValue(stringPath)

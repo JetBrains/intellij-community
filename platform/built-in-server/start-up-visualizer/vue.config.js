@@ -9,6 +9,7 @@ module.exports = {
       "@amcharts/amcharts4/core": "am4core",
       "@amcharts/amcharts4/charts": "am4charts",
       "@amcharts/amcharts4/themes/animated": "am4themes_animated",
+      "@amcharts/amcharts4/plugins/sunburst": "am4plugins_sunburst",
     })
   },
 }

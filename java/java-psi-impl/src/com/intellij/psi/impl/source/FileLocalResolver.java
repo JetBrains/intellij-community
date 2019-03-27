@@ -135,7 +135,28 @@ public class FileLocalResolver {
    */
   @Nullable
   public String getShortClassTypeName(@NotNull LighterASTNode var) {
-    LighterASTNode typeRef = LightTreeUtil.firstChildOfType(myTree, LightTreeUtil.firstChildOfType(myTree, var, TYPE), JAVA_CODE_REFERENCE);
+    return getShortClassTypeName(var, 0);
+  }
+
+  /**
+   * Determine the type name of the given variable, unwrapping the expected array type. 
+   * Can be used to later iterate over all classes with this name for lightweight checks
+   * before loading AST and fully resolving the type.
+   * @param var Variable node
+   * @param arrayDepth Expected array depth
+   * @return the short name of the class corresponding to the type of the variable, or null if the variable is not of class type or
+   * the type is generic
+   */
+  @Nullable
+  public String getShortClassTypeName(@NotNull LighterASTNode var, int arrayDepth) {
+    LighterASTNode typeNode = LightTreeUtil.firstChildOfType(myTree, var, TYPE);
+    while (arrayDepth > 0) {
+      LighterASTNode bracket = LightTreeUtil.firstChildOfType(myTree, typeNode, JavaTokenType.LBRACKET);
+      if (bracket == null) return null;
+      typeNode = LightTreeUtil.firstChildOfType(myTree, typeNode, TYPE);
+      arrayDepth--;
+    }
+    LighterASTNode typeRef = LightTreeUtil.firstChildOfType(myTree, typeNode, JAVA_CODE_REFERENCE);
     String refName = JavaLightTreeUtil.getNameIdentifierText(myTree, typeRef);
     if (refName == null) return null;
 
@@ -187,7 +208,6 @@ public class FileLocalResolver {
     @NotNull
     static LightResolveResult resolved(@NotNull final LighterASTNode target) {
       return new LightResolveResult() {
-        @Nullable
         @Override
         public LighterASTNode getTarget() {
           return target;

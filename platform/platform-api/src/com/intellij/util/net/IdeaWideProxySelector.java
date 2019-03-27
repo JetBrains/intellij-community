@@ -60,12 +60,7 @@ public class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      try {
-        return selectUsingPac(uri);
-      }
-      catch (Throwable e) {
-        throw new RuntimeException("Cannot select proxy for \"" + uri + "\" using PAC script", e);
-      }
+      return selectUsingPac(uri);
     }
 
     return CommonProxy.NO_PROXY_LIST;

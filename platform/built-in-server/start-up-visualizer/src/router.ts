@@ -3,18 +3,18 @@ import Vue from "vue"
 import Router, {RouteConfig} from "vue-router"
 import {Notification} from "element-ui"
 import Main from "@/views/Main.vue"
-import ItemChart from "@/charts/ItemChart.vue"
-import {chartDescriptors} from "@/charts/ItemChartDescriptor"
+import ItemChart from "@/charts/ActivityChart.vue"
+import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
 Vue.use(Router)
 
 // to simplify development
 const chartComponentRoutes: Array<RouteConfig> = chartDescriptors.map(it => {
   return {
-    path: `/${it.name}`,
+    path: `/${it.id}`,
     name: it.label,
     component: ItemChart,
-    props: {type: it.name},
+    props: {type: it.id},
   }
 })
 

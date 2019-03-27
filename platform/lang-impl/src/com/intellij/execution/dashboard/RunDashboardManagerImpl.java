@@ -2,7 +2,6 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
@@ -20,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -56,6 +55,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
+  private static final ExtensionPointName<RunDashboardCustomizer> EP_NAME =
+    ExtensionPointName.create("com.intellij.runDashboardCustomizer");
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
   @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
@@ -178,8 +179,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           RunnerAndConfigurationSettings configurationSettings = ContainerUtil.getFirstItem(configurationsSettings);
           if (configurationSettings != null) {
             RunConfigurationNode node = new RunConfigurationNode(myProject, Pair.create(configurationSettings, contentDescriptor),
-                                                                 getContributor(configurationSettings.getType()));
-            ServiceViewManager.getInstance(myProject).selectNode(node);
+                                                                 getCustomizers(configurationSettings, contentDescriptor));
+            ServiceViewManager.getInstance(myProject).selectNode(node, true, false);
           }
         }
       }
@@ -291,8 +292,25 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public void setShowConfigurations(boolean value) {
     myShowConfigurations = value;
-    updateToolWindowContent();
+
+    // Ensure dashboard tree gets focus before tool window content update.
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+    toolWindowManager.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      if (myToolWindowContentManager != null) {
+        Content content = myToolWindowContentManager.getSelectedContent();
+        if (content != null && content.equals(myToolWindowContent)) {
+          myToolWindowContentManager.setSelectedContent(content, true);
+        }
+      }
+    });
+    // Hide or show dashboard tree at first in order to get focus events on tree component which will be added/removed from tool window.
     updateDashboard(false);
+    // Add or remove dashboard tree content from tool window.
+    updateToolWindowContent();
   }
 
   @Override
@@ -309,12 +327,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
-    if (myState.configurationTypes.contains(runConfiguration.getType().getId())) {
-      RunDashboardContributor contributor = getContributor(runConfiguration.getType());
-      return contributor == null || contributor.isShowInDashboard(runConfiguration);
-    }
-
-    return false;
+    return myState.configurationTypes.contains(runConfiguration.getType().getId());
   }
 
   @Override
@@ -334,18 +347,22 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
-  @Nullable
-  public RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
-    for (RunDashboardContributor contributor : RunDashboardContributor.EP_NAME.getExtensions()) {
-      if (type.equals(contributor.getType())) {
-        return contributor;
+  @NotNull
+  public List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings,
+                                                     @Nullable RunContentDescriptor descriptor) {
+    List<RunDashboardCustomizer> customizers = ContainerUtil.newSmartList();
+    for (RunDashboardCustomizer customizer : EP_NAME.getExtensions()) {
+      if (customizer.isApplicable(settings, descriptor)) {
+        customizers.add(customizer);
       }
     }
-    return null;
+    return customizers;
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && (getContributor(settings.getType()) != null || isShowInDashboard(settings.getConfiguration()))) {
+    if (settings != null &&
+        (isShowInDashboard(settings.getConfiguration()) ||
+        !filterByContent(ExecutionManagerImpl.getInstance(myProject).getDescriptors(s -> settings.equals(s))).isEmpty())) {
       updateDashboard(true);
     }
   }
@@ -429,7 +446,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateToolWindowContent() {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+
+    toolWindowManager.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+
       if (myToolWindowContent == null || myToolWindowContentManager == null ||
           myToolWindowContentManagerListener == null) {
         return;
@@ -474,9 +498,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
       }
-
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager == null) return;
 
       ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
       if (toolWindow instanceof ToolWindowImpl) {

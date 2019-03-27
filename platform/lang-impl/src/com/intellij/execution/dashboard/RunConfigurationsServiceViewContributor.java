@@ -11,6 +11,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -39,7 +40,7 @@ public class RunConfigurationsServiceViewContributor
   public List<RunConfigurationNode> getNodes(@NotNull Project project) {
     RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
-                             value -> new RunConfigurationNode(project, value, runDashboardManager.getContributor(value.first.getType())));
+                             value -> new RunConfigurationNode(project, value, runDashboardManager.getCustomizers(value.first, value.second)));
   }
 
   @NotNull
@@ -113,9 +114,13 @@ public class RunConfigurationsServiceViewContributor
 
       @Override
       public boolean handleDoubleClick(@NotNull MouseEvent event) {
-        RunDashboardContributor contributor = node.getContributor();
-        return contributor != null && contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
-      };
+        for (RunDashboardCustomizer customizer : node.getCustomizers()) {
+          if (customizer.handleDoubleClick(event, node)) {
+            return true;
+          }
+        }
+        return false;
+      }
     };
   }
 
@@ -215,6 +220,12 @@ public class RunConfigurationsServiceViewContributor
     };
   }
 
+  @Nullable
+  @Override
+  public SubtreeDescriptor<?> getNodeSubtree(@NotNull RunConfigurationNode node) {
+    return node.getChildren().isEmpty() ? null : new RunConfigurationSubtreeDescriptor(node);
+  }
+
   @NotNull
   private static JComponent createEmptyContent() {
     return new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
@@ -244,5 +255,58 @@ public class RunConfigurationsServiceViewContributor
     actions.add(actionManager.getAction(RUN_DASHBOARD_TREE_TOOLBAR));
     actions.add(actionManager.getAction(RUN_DASHBOARD_POPUP));
     return actions;
+  }
+
+  private static class RunConfigurationSubtreeDescriptor implements SubtreeDescriptor<AbstractTreeNode> {
+    private final AbstractTreeNode<?> myNode;
+
+    RunConfigurationSubtreeDescriptor(AbstractTreeNode<?> node) {
+      myNode = node;
+    }
+
+    @NotNull
+    @Override
+    public List<AbstractTreeNode> getItems() {
+      return new ArrayList<>(myNode.getChildren());
+    }
+
+    @NotNull
+    @Override
+    public ViewDescriptor getItemDescriptor(@NotNull AbstractTreeNode item) {
+      return new ViewDescriptor() {
+        @Override
+        public JComponent getContentComponent() {
+          return null;
+        }
+
+        @Override
+        public ActionGroup getToolbarActions() {
+          DefaultActionGroup actionGroup = new DefaultActionGroup();
+          actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+          return actionGroup;
+        }
+
+        @Override
+        public ActionGroup getPopupActions() {
+          return RunConfigurationsServiceViewContributor.getPopupActions();
+        }
+
+        @Override
+        public ItemPresentation getPresentation() {
+          return item.getPresentation();
+        }
+
+        @Override
+        public DataProvider getDataProvider() {
+          return null;
+        }
+      };
+    }
+
+    @Nullable
+    @Override
+    public SubtreeDescriptor<?> getNodeSubtree(@NotNull AbstractTreeNode node) {
+      return null;
+    }
   }
 }

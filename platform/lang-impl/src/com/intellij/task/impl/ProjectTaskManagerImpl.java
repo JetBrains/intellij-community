@@ -16,6 +16,7 @@
 package com.intellij.task.impl;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,7 @@ import static java.util.stream.Collectors.groupingBy;
  */
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.task.ProjectTaskManager");
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
 
@@ -144,7 +146,15 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(getTaskRunners())
-          .filter(runner -> runner.canRun(myProject, aTask))
+          .filter(runner -> {
+            try {
+              return runner.canRun(myProject, aTask);
+            }
+            catch (Exception e) {
+              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
+            }
+            return false;
+          })
           .findFirst()
           .orElse(myDummyTaskRunner))
       );

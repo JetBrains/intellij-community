@@ -158,7 +158,32 @@ def check_call(args: _CMD,
                pass_fds: Any = ...,
                timeout: float = ...) -> int: ...
 
-if sys.version_info >= (3, 6):
+if sys.version_info >= (3, 7):
+    # 3.7 added text
+    def check_output(args: _CMD,
+                     bufsize: int = ...,
+                     executable: _PATH = ...,
+                     stdin: _FILE = ...,
+                     stderr: _FILE = ...,
+                     preexec_fn: Callable[[], Any] = ...,
+                     close_fds: bool = ...,
+                     shell: bool = ...,
+                     cwd: Optional[_PATH] = ...,
+                     env: Optional[_ENV] = ...,
+                     universal_newlines: bool = ...,
+                     startupinfo: Any = ...,
+                     creationflags: int = ...,
+                     restore_signals: bool = ...,
+                     start_new_session: bool = ...,
+                     pass_fds: Any = ...,
+                     *,
+                     timeout: float = ...,
+                     input: _TXT = ...,
+                     encoding: Optional[str] = ...,
+                     errors: Optional[str] = ...,
+                     text: Optional[bool] = ...,
+                     ) -> Any: ...  # morally: -> _TXT
+elif sys.version_info >= (3, 6):
     # 3.6 added encoding and errors
     def check_output(args: _CMD,
                      bufsize: int = ...,

@@ -151,10 +151,9 @@ public class GradleRunnerUtil {
       }
       GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
       if (extensionsData != null) {
-        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
-          if (taskNameCandidate.equals(task.name)) {
-            return Collections.singletonList(taskNameCandidate);
-          }
+        GradleExtensionsSettings.GradleTask gradleTask = extensionsData.tasksMap.get(taskNameCandidate);
+        if (gradleTask != null) {
+          return Collections.singletonList(taskNameCandidate);
         }
       }
     }

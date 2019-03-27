@@ -149,7 +149,7 @@ public class IntroduceTargetChooser {
       }).createPopup();
     popup.showInBestPositionFor(editor);
     Project project = editor.getProject();
-    if (project != null) {
+    if (project != null && !popup.isDisposed()) {
       NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
     }
   }
@@ -176,6 +176,11 @@ public class IntroduceTargetChooser {
     @Override
     public String render() {
       return myRenderer.fun(getPlace());
+    }
+
+    @Override
+    public String toString() {
+      return isValid() ? render() : "invalid";
     }
   }
 }

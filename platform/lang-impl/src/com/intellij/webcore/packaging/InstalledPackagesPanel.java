@@ -349,7 +349,7 @@ public class InstalledPackagesPanel extends JPanel {
           ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
-            myPackagesTable.setPaintBusy(false);
+            myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
             if (errorDescription == null) {
               if (packageName != null) {
                 myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");

@@ -122,7 +122,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final JBValue GAP_BETWEEN_ANNOTATIONS = JBVG.value(5);
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
-  private int myLogicalLineAtCursor;
+  private ClickInfo myLastActionableClick;
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
@@ -644,7 +644,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return myEditor;
     }
     if (EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR.is(dataId)) {
-      return myLogicalLineAtCursor;
+      if (myLastActionableClick == null) return null;
+      return myLastActionableClick.myLogicalLineAtCursor;
+    }
+    if (EditorGutterComponentEx.ICON_CENTER_POSITION.is(dataId)) {
+      if (myLastActionableClick == null) return null;
+      return myLastActionableClick.myIconCenterPosition;
     }
     return null;
   }
@@ -1214,8 +1219,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
       case COLLAPSED:
+      case COLLAPSED_SINGLE_LINE:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlus(g, centerX, centerY, width, active);
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, true, active);
+        }
+        break;
+      case EXPANDED_SINGLE_LINE:
+        if (y <= clip.y + clip.height && y + height >= clip.y) {
+          drawSquareWithPlusOrMinus(g, centerX, centerY, width, false, active);
         }
         break;
       case EXPANDED_TOP:
@@ -1257,23 +1268,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(getOutlineColor(active));
     LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
+    drawLine(g, false, centerX, centerY, width, sw);
   }
 
-  private void drawPlusOrMinus(Graphics2D g, boolean plus, double centerX, double centerY, double width, double strokeWidth) {
+  private void drawLine(Graphics2D g, boolean vertical, double centerX, double centerY, double width, double strokeWidth) {
     double length = width - getSquareInnerOffset(width) * 2;
     Line2D line = LinePainter2D.align(g,
                                       EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
-                                      centerX, centerY, length, plus, StrokeType.CENTERED, strokeWidth);
+                                      centerX, centerY, length, vertical, StrokeType.CENTERED, strokeWidth);
 
     LinePainter2D.paint(g, line, StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF);
   }
 
-  private void drawSquareWithPlus(Graphics2D g,
-                                  double centerX,
-                                  double centerY,
-                                  double width,
-                                  boolean active)
+  private void drawSquareWithPlusOrMinus(Graphics2D g,
+                                         double centerX,
+                                         double centerY,
+                                         double width,
+                                         boolean plus,
+                                         boolean active)
   {
     double sw = getStrokeWidth();
     Rectangle2D rect = RectanglePainter2D.align(g,
@@ -1286,8 +1298,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(getOutlineColor(active));
     RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
-    drawPlusOrMinus(g, true, centerX, centerY, width, sw);
+    drawLine(g, false, centerX, centerY, width, sw);
+    if (plus) {
+      drawLine(g, true, centerX, centerY, width, sw);
+    }
   }
 
   /**
@@ -1627,6 +1641,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  private Point getClickedIconCenter(@NotNull MouseEvent e) {
+    GutterMark renderer = getGutterRenderer(e);
+    final Ref<Point> point = new Ref<>(e.getPoint());
+    int line = myEditor.yToVisualLine(e.getY());
+    List<GutterMark> row = getGutterRenderers(line);
+    if (row == null) return point.get();
+    processIconsRow(line, row, (x, y, r) -> {
+      if (renderer == r) {
+        Icon icon = scaleIcon(r.getIcon());
+        point.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
+      }
+    });
+    return point.get();
+  }
+
   void validateMousePointer(@NotNull MouseEvent e) {
     if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
 
@@ -1940,7 +1969,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void invokePopup(MouseEvent e) {
-    myLogicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
+    int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
+    myLastActionableClick = new ClickInfo(logicalLineAtCursor, getClickedIconCenter(e));
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
       final List<AnAction> addActions = new ArrayList<>();
@@ -1948,7 +1978,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       //if (line >= myEditor.getDocument().getLineCount()) return;
 
       for (TextAnnotationGutterProvider gutterProvider : myTextAnnotationGutters) {
-        final List<AnAction> list = gutterProvider.getPopupActions(myLogicalLineAtCursor, myEditor);
+        final List<AnAction> list = gutterProvider.getPopupActions(logicalLineAtCursor, myEditor);
         if (list != null) {
           for (AnAction action : list) {
             if (! addActions.contains(action)) {
@@ -2096,6 +2126,16 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   void escapeCurrentAccessibleLine() {
     if (myAccessibleGutterLine != null) {
       myAccessibleGutterLine.escape(true);
+    }
+  }
+
+  private static class ClickInfo {
+    public final int myLogicalLineAtCursor;
+    public final Point myIconCenterPosition;
+
+    private ClickInfo(int logicalLineAtCursor, Point iconCenterPosition) {
+      myLogicalLineAtCursor = logicalLineAtCursor;
+      myIconCenterPosition = iconCenterPosition;
     }
   }
 }

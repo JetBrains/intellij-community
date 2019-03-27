@@ -439,7 +439,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
   @Override
   public boolean isProjectLevel() {
-    return myScheme != null && !myScheme.getProject().isDefault();
+    return myScheme != null && myScheme != FileTemplatesScheme.DEFAULT && !myScheme.getProject().isDefault();
   }
 
   // internal template could not be removed and should be rendered bold

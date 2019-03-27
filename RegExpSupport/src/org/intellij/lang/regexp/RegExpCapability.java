@@ -85,6 +85,11 @@ public enum RegExpCapability {
   CARET_NEGATED_PROPERTIES,
 
   /**
+   * supports properties with name and value like \p{name=value}
+   */
+  PROPERTY_VALUES,
+
+  /**
    * \\u, \l, \\U, \L, and \E
    */
   TRANSFORMATION_ESCAPES,

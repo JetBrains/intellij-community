@@ -16,6 +16,7 @@
 package com.intellij.build.events.impl;
 
 import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
@@ -25,6 +26,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +52,8 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   private ExecutionEnvironment myExecutionEnvironment;
   @Nullable
   private Supplier<RunContentDescriptor> myContentDescriptorSupplier;
+  @Nullable
+  private BuildViewSettingsProvider myBuildViewSettingsProvider;
 
   public StartBuildEventImpl(@NotNull BuildDescriptor descriptor, @NotNull String message) {
     super(descriptor.getId(), null, descriptor.getStartTime(), message);
@@ -104,6 +108,12 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
     return myAttachedConsoleConsumer;
   }
 
+  @Nullable
+  @ApiStatus.Experimental
+  public BuildViewSettingsProvider getBuildViewSettingsProvider() {
+    return myBuildViewSettingsProvider;
+  }
+
   public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
                                                 @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
@@ -138,6 +148,12 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
 
   public StartBuildEventImpl withExecutionFilters(Filter... filters) {
     myFilters.addAll(Arrays.asList(filters));
+    return this;
+  }
+
+  @ApiStatus.Experimental
+  public StartBuildEventImpl withBuildViewSettingsProvider(@Nullable BuildViewSettingsProvider viewSettingsProvider) {
+    myBuildViewSettingsProvider = viewSettingsProvider;
     return this;
   }
 }

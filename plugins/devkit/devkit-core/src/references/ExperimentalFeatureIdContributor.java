@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
@@ -59,7 +60,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public Object[] getVariants() {
-      final List<LookupElement> variants = new SmartList<>();
+      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
       processCandidates(extension -> {
         final GenericAttributeValue<String> id = extension.getId();
         if (id == null || extension.getXmlElement() == null) return true;

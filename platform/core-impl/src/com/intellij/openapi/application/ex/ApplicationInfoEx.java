@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -116,17 +115,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     String getPatchesUrl();
   }
 
-  public interface PluginChooserPage {
-    @NotNull
-    String getTitle();
-    @Nullable
-    String getCategory();
-    @Nullable
-    String getDependentPlugin();
-  }
-
-  public abstract List<PluginChooserPage> getPluginChooserPages();
-
   /**
    * @return {@code true} if the specified plugin is an essential part of the IDE so it cannot be disabled and isn't shown in Settings | Plugins
    */
@@ -154,4 +142,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public final boolean isVendorJetBrains() {
     return "JetBrains".equals(getShortCompanyName());
   }
+
+  public abstract List<ProgressSlide> getProgressSlides();
 }

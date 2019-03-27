@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -10,15 +11,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides 'import from external model' functionality.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectImportProvider extends ProjectImportProvider {
-  
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  
+  @NotNull
+  private final ProjectSystemId myExternalSystemId;
+
   public AbstractExternalProjectImportProvider(ProjectImportBuilder builder, @NotNull ProjectSystemId externalSystemId) {
     super(builder);
+    myExternalSystemId = externalSystemId;
+  }
+
+  public AbstractExternalProjectImportProvider(@NotNull ProjectSystemId externalSystemId) {
     myExternalSystemId = externalSystemId;
   }
 

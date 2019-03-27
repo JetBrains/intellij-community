@@ -323,7 +323,7 @@ public class QuickDocOnMouseOverManager {
 
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
                            editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
-        docManager.showJavaDocInfo(editor, targetElement, originalElement, new MyCloseDocCallback(editor), documentation, true);
+        docManager.showJavaDocInfo(editor, targetElement, originalElement, new MyCloseDocCallback(editor), documentation, true, false);
         myDocumentationManager = new WeakReference<>(docManager);
       }, ApplicationManager.getApplication().getNoneModalityState());
     }

@@ -90,13 +90,13 @@ class PluginsCollector {
       if (!id) {
         return
       }
-      def declaredModules = new HashSet()
+      def declaredModules = new HashSet<String>()
       for (module in xml.module) {
         if (module.@value) {
           declaredModules += module.@value
         }
       }
-      def requiredDependencies = new HashSet()
+      def requiredDependencies = new HashSet<String>()
       for (dependency in xml.depends) {
         if (dependency.@optional != 'true') {
           requiredDependencies += dependency.text()

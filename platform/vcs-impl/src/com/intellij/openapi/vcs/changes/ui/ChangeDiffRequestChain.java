@@ -2,9 +2,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestChainBase;
-import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.*;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -56,8 +55,8 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
    * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
    */
   @NotNull
-  public static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
-                                                @NotNull Consumer<? super Integer> onSelected) {
+  private static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
+                                                 @NotNull Consumer<? super Integer> onSelected) {
     return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, chain.getIndex()) {
       @NotNull
       @Override
@@ -163,6 +162,19 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     @Override
     public int compareTo(@NotNull GenericChangesBrowserNode o) {
       return compareFilePaths(myFilePath, o.myFilePath);
+    }
+  }
+
+
+  public static abstract class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {
+    @NotNull
+    @Override
+    protected abstract ListSelection<? extends ChangeDiffRequestChain.Producer> loadRequestProducers() throws DiffRequestProducerException;
+
+    @Nullable
+    @Override
+    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
+      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
     }
   }
 }

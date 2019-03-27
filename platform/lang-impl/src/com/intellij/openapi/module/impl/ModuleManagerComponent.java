@@ -2,6 +2,8 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -16,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.StartUpMeasurer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,11 @@ import java.util.Set;
 /**
  * @author yole
  */
-@State(name = ModuleManagerImpl.COMPONENT_NAME, storages = @Storage("modules.xml"))
+@State(
+  name = ModuleManagerImpl.COMPONENT_NAME,
+  storages = @Storage("modules.xml"),
+  useLoadedStateAsExisting = false /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */
+)
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private final MessageBusConnection myMessageBusConnection;
 
@@ -49,9 +54,9 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
       public void projectComponentsInitialized(@NotNull final Project project) {
         if (project != myProject) return;
 
-        StartUpMeasurer.MeasureToken measureToken = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
+        Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.LOAD_MODULES);
         loadModules(myModuleModel);
-        measureToken.end("module count: " + myModuleModel.getModules().length);
+        activity.end("module count: " + myModuleModel.getModules().length);
       }
     });
 

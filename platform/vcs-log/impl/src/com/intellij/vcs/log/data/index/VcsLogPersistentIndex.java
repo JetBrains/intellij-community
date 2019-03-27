@@ -70,7 +70,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 11;
+  private static final int VERSION = 12;
   private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;

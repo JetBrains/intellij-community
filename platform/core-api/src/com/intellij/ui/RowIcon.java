@@ -66,6 +66,16 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconP
   }
 
   @NotNull
+  @Override
+  public RowIcon deepCopy() {
+    RowIcon icon = new RowIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
+    }
+    return icon;
+  }
+
+  @NotNull
   private Icon[] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;

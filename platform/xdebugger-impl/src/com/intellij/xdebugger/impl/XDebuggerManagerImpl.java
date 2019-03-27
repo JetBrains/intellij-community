@@ -41,7 +41,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -161,11 +160,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
     });
 
-    if (Registry.is("debugger.run.to.cursor.gesture")) {
-      DebuggerEditorListener listener = new DebuggerEditorListener();
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(listener, myProject);
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(listener, myProject);
-    }
+    DebuggerEditorListener listener = new DebuggerEditorListener();
+    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(listener, myProject);
+    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(listener, myProject);
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
@@ -372,7 +369,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       Editor editor = e.getEditor();
       if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA ||
           editor.getProject() != myProject ||
-          !EditorUtil.isRealFileEditor(editor)) {
+          !EditorUtil.isRealFileEditor(editor) ||
+          !XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isRunToCursorGestureEnabled()) {
         return false;
       }
       XDebugSessionImpl session = getCurrentSession();

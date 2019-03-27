@@ -53,7 +53,7 @@ class CodeType:
     co_cellvars = ...  # type: Tuple[str, ...]
     co_code = ...  # type: str
     co_consts = ...  # type: Tuple[Any, ...]
-    co_filename = ...  # type: Optional[str]
+    co_filename = ...  # type: str
     co_firstlineno = ...  # type: int
     co_flags = ...  # type: int
     co_freevars = ...  # type: Tuple[str, ...]
@@ -88,10 +88,7 @@ class UnboundMethodType:
     def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
-class InstanceType:
-    __doc__ = ...  # type: Optional[str]
-    __class__ = ...  # type: type
-    __module__ = ...  # type: Any
+class InstanceType(object): ...
 
 MethodType = UnboundMethodType
 

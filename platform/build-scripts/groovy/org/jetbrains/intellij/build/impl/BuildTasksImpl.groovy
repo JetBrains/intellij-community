@@ -476,7 +476,6 @@ idea.fatal.error.notification=disabled
     def properties = buildContext.productProperties
     checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
     checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
-    checkPaths([properties.yourkitAgentBinariesDirectoryPath], "productProperties.yourkitAgentBinariesDirectoryPath")
     checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
 
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")

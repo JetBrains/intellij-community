@@ -135,6 +135,9 @@ public class Replacer {
 
       return result;
     }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new IncorrectOperationException(e);
     }

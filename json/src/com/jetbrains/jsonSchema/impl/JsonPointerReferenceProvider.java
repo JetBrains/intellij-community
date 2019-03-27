@@ -84,18 +84,20 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }
     if (!myIsSchemaProperty) {
       String relativePath = normalizeSlashes(normalizeId(splitter.getRelativePath()));
-      List<String> parts1 = split(relativePath);
-      String[] strings = ContainerUtil.toArray(parts1, String[]::new);
-      List<String> parts2 = split(normalizeSlashes(originalText.substring(hash + 1)));
-      if (strings.length == parts2.size()) {
-        int start = hash + 2;
-        for (int i = 0; i < parts2.size(); i++) {
-          int length = parts2.get(i).length();
-          if (i == parts2.size() - 1) length--;
-          if (length <= 0) break;
-          refs.add(new JsonPointerReference((JsonValue)element, new TextRange(start, start + length),
+      if (!StringUtil.isEmpty(relativePath)) {
+        List<String> parts1 = split(relativePath);
+        String[] strings = ContainerUtil.toArray(parts1, String[]::new);
+        List<String> parts2 = split(normalizeSlashes(originalText.substring(hash + 1)));
+        if (strings.length == parts2.size()) {
+          int start = hash + 2;
+          for (int i = 0; i < parts2.size(); i++) {
+            int length = parts2.get(i).length();
+            if (i == parts2.size() - 1) length--;
+            if (length <= 0) break;
+            refs.add(new JsonPointerReference((JsonValue)element, new TextRange(start, start + length),
                                               (id == null ? "" : id) + "#/" + StringUtil.join(strings, 0, i + 1, "/")));
-          start += length + 1;
+            start += length + 1;
+          }
         }
       }
     }

@@ -182,6 +182,8 @@ public abstract class DialogWrapper {
 
   private final List<Function0<ValidationInfo>> myValidateCallbacks = new ArrayList<>();
 
+  private DialogPanel myDialogPanel = null;
+
   @NotNull
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -197,6 +199,8 @@ public abstract class DialogWrapper {
 
   public static final Color BALLOON_WARNING_BORDER = new JBColor(new Color(0xcca869), new Color(0x4e452f));
   public static final Color BALLOON_WARNING_BACKGROUND = new JBColor(new Color(0xf9f4ee), new Color(0x594e32));
+
+  public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
   /**
    * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
@@ -1040,6 +1044,9 @@ public abstract class DialogWrapper {
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
+      if (myDialogPanel != null) {
+        myDialogPanel.apply();
+      }
       close(OK_EXIT_CODE);
     }
   }
@@ -1311,11 +1318,13 @@ public abstract class DialogWrapper {
 
     final JComponent centerPanel = createCenterPanel();
     if (centerPanel != null) {
+      centerPanel.putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
       centerSection.add(centerPanel, BorderLayout.CENTER);
       if (centerPanel instanceof DialogPanel) {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
+        myDialogPanel = dialogPanel;
       }
     }
 

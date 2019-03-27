@@ -17,6 +17,7 @@ package com.intellij.lang.cacheBuilder;
 
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The default primitive implementation of a words scanner. The implementation does not
@@ -27,7 +28,7 @@ import com.intellij.util.text.CharArrayUtil;
  */
 public class SimpleWordsScanner extends VersionedWordsScanner {
   @Override
-  public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
     int index = 0;
     WordOccurrence occurrence = null;
     final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(fileText);

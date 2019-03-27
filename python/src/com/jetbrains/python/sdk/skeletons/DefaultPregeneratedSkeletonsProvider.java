@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,9 +72,12 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
       return null;
     }
 
-    @NonNls final String versionString = sdk.getVersionString();
+    @NonNls String versionString = sdk.getVersionString();
     if (versionString == null) {
       return null;
+    }
+    if (PythonSdkType.isConda(sdk)) {
+      versionString = "Anaconda-" + versionString;
     }
 
     return getPrebuiltSkeletonsName(generatorVersion, versionString, withMinorVersion, withExtension);

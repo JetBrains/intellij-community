@@ -43,7 +43,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
           //if (module == null) return false;
 
           final VirtualFile vf = file.getVirtualFile();
-          String thisNs = ReadAction.compute(() -> XmlNamespaceIndex.getNamespace(vf, project, file));
+          String thisNs = ReadAction.compute(() -> XmlNamespaceIndex.getNamespace(vf, project));
           thisNs = thisNs == null ? getDefaultNs(file) : thisNs;
           // so thisNs can be null
           if (thisNs == null) return false;

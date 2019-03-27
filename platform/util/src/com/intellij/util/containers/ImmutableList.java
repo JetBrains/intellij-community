@@ -94,6 +94,13 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @NotNull
   @Override
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
+    // optimization: do not excessively nest SubLists one into the other
+    if (this instanceof SubList) {
+      //noinspection unchecked
+      List<E> original = ((SubList)this).l;
+      int originalOffset = ((SubList)this).offset;
+      return new SubList<>(original, fromIndex + originalOffset, toIndex + originalOffset);
+    }
     return new SubList<>(this, fromIndex, toIndex);
   }
 
@@ -214,7 +221,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     private final int offset;
     private final int size;
 
-    SubList(List<? extends E> list, int fromIndex, int toIndex) {
+    SubList(@NotNull List<? extends E> list, int fromIndex, int toIndex) {
       if (fromIndex < 0) {
         throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
       }

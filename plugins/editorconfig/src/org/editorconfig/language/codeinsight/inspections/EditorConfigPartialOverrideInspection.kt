@@ -2,7 +2,6 @@
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
@@ -18,7 +17,7 @@ class EditorConfigPartialOverrideInspection : LocalInspectionTool() {
       val isPartiallyOverridden = EditorConfigOverridingHeaderSearcher().findMatchingHeaders(header).any { it.isPartial }
       if (!isPartiallyOverridden && !isPartiallyOverriding) return
       val message = EditorConfigBundle["inspection.header.partially.overridden.message"]
-      holder.registerProblem(header, message, ProblemHighlightType.WEAK_WARNING)
+      holder.registerProblem(header, message)
     }
   }
 }

@@ -108,7 +108,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Function<Structure, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
       if (!disposed) {
@@ -126,7 +126,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
       Node node = (Node)component;
@@ -141,7 +141,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
     return onValidThread(structure -> {
       Node node = root.get();
       if (node == null) return null;
@@ -545,7 +545,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return isLeaf(null);
     }
 
-    private boolean isLeaf(@Nullable Consumer<Node> validator) {
+    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;

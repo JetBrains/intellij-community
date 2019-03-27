@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -72,5 +74,16 @@ fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Ar
 }
 
 fun PsiClass.type(): PsiClassType {
-  return PsiElementFactory.SERVICE.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
+  return PsiElementFactory.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
+}
+
+fun PsiClass.rawType(): PsiClassType {
+  val factory = PsiElementFactory.getInstance(project)
+  return factory.createType(this, factory.createRawSubstitutor(this))
+}
+
+fun inferDerivedSubstitutor(leftType: PsiType, derived: PsiClass, context: PsiElement): PsiSubstitutor {
+  val session = InferenceSession(derived.typeParameters, PsiSubstitutor.EMPTY, context.manager, null)
+  session.addConstraint(TypeCompatibilityConstraint(leftType, session.substituteWithInferenceVariables(derived.type())))
+  return session.infer()
 }

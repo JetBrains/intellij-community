@@ -70,7 +70,7 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   public int getEffectiveBuiltInServerPort() {
-    MyCustomPortServerManager portServerManager = CustomPortServerManager.EP_NAME.findExtension(MyCustomPortServerManager.class);
+    MyCustomPortServerManager portServerManager = CustomPortServerManager.EP_NAME.findExtensionOrFail(MyCustomPortServerManager.class);
     if (!portServerManager.isBound()) {
       return BuiltInServerManager.getInstance().getPort();
     }
@@ -100,6 +100,6 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   public static void onBuiltInServerPortChanged() {
-    CustomPortServerManager.EP_NAME.findExtension(MyCustomPortServerManager.class).portChanged();
+    CustomPortServerManager.EP_NAME.findExtensionOrFail(MyCustomPortServerManager.class).portChanged();
   }
 }

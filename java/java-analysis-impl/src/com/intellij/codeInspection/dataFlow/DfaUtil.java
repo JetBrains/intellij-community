@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -151,7 +150,18 @@ public class DfaUtil {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(method, InferenceFromSourceUtil.suppressNullable(method));
+    return inferBlockNullability(method, suppressNullable(method));
+  }
+
+  private static boolean suppressNullable(PsiMethod method) {
+    if (method.getParameterList().isEmpty()) return false;
+
+    for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
+      if (contract.getReturnValue().isNull()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

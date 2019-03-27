@@ -470,7 +470,7 @@ public class InferenceSession {
     return false;
   }
 
-  public static PsiMethod getCalledMethod(PsiCall arg) {
+  private static PsiMethod getCalledMethod(PsiCall arg) {
     final PsiExpressionList argumentList = arg.getArgumentList();
     if (argumentList == null) {
       return null;

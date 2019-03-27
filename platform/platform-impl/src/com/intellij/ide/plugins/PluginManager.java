@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.diagnostic.PluginConflictReporter;
-import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
@@ -27,7 +25,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.StartUpMeasurer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +45,14 @@ public class PluginManager extends PluginManagerCore {
   public static final String INSTALLED_TXT = "installed.txt";
 
   @SuppressWarnings("StaticNonFinalField")
-  public static StartUpMeasurer.MeasureToken startupStart;
+  public static Activity startupStart;
 
   /**
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
   protected static void start(final String mainClass, final String methodName, final String[] args) {
-    startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
+    startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);
 
@@ -68,12 +65,14 @@ public class PluginManager extends PluginManagerCore {
 
     Runnable runnable = () -> {
       try {
+        Activity activity = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
         ClassUtilCore.clearJarURLCache();
 
         Class<?> aClass = Class.forName(mainClass);
         Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
         method.setAccessible(true);
         Object[] argsArray = {args};
+        activity.end();
         method.invoke(null, argsArray);
       }
       catch (Throwable t) {

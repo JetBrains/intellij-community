@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
 @Tag("serviceView")
-class ServiceViewState {
+final class ServiceViewState {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
 
   @Attribute("id")
@@ -16,6 +16,7 @@ class ServiceViewState {
   public float contentProportion = DEFAULT_CONTENT_PROPORTION;
   @Tag("treeState")
   public Element treeStateElement;
+
   @Transient
   public TreeState treeState = TreeState.createFrom(null);
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -185,7 +184,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
-        public boolean execute(CompileContext context) {
+        public boolean execute(@NotNull CompileContext context) {
           ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
           return true;
         }

@@ -1,31 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author anna
- * @author Konstantin Bulenkov
- */
-public class DefaultScopesProvider extends CustomScopesProviderEx {
+public final class DefaultScopesProvider extends CustomScopesProviderEx {
   private final Project myProject;
   private final List<NamedScope> myScopes;
 
   public static DefaultScopesProvider getInstance(Project project) {
-    return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, DefaultScopesProvider.class);
+    return CUSTOM_SCOPES_PROVIDER.findExtension(DefaultScopesProvider.class, project);
   }
 
   public DefaultScopesProvider(@NotNull Project project) {
@@ -49,14 +42,5 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   @NotNull
   public NamedScope getProblemsScope() {
     return ProblemsScope.INSTANCE;
-  }
-
-  @NotNull
-  public List<NamedScope> getAllCustomScopes() {
-    final List<NamedScope> scopes = new SmartList<>();
-    for (CustomScopesProvider provider : CUSTOM_SCOPES_PROVIDER.getExtensionList(myProject)) {
-      scopes.addAll(provider.getFilteredScopes());
-    }
-    return scopes;
   }
 }

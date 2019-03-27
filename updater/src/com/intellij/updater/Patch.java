@@ -362,9 +362,13 @@ public class Patch {
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
     }
 
+    File jre64 = new File(toDir.getAbsolutePath() + "/jre64");
     for (File directory : createdDirectories) {
       File[] children = directory.listFiles();
-      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
+      if (children != null &&
+         (!directory.getAbsolutePath().contains("jre64") ||
+           directory.getAbsolutePath().contains("jre64") && !jre64.exists()) &&
+          createdOptionalFiles.containsAll(Arrays.asList(children))) {
         Runner.logger().info("Pruning empty directory: " + directory);
         try {
           Utils.delete(directory);

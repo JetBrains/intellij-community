@@ -34,7 +34,6 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   @NotNull private final Project myProject;
   @NotNull private final BuildOutputInstantReader myInstantReader;
   @NotNull private final ExternalSystemTaskId myTaskId;
-  @NotNull private final String myTitle;
   @NotNull private final String myWorkingDir;
   @NotNull private final MavenLogOutputParser myParser;
   private final BuildDescriptor myDescriptor;
@@ -48,7 +47,6 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myBuildProgressListener = buildProgressListener;
     myProject = project;
     myTaskId = taskId;
-    myTitle = descriptor.getTitle();
     myWorkingDir = workingDir;
     myDescriptor = descriptor;
 
@@ -56,8 +54,14 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId,
-      myBuildProgressListener,
+      wrapListener(project, myBuildProgressListener, myWorkingDir),
       Collections.singletonList(myParser));
+  }
+
+  private BuildProgressListener wrapListener(@NotNull Project project,
+                                             @NotNull BuildProgressListener listener,
+                                             @NotNull String workingDir) {
+    return new MavenProgressListener(project, listener, workingDir);
   }
 
   public void finish() {

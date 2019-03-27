@@ -4,11 +4,8 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-
-import java.util.Arrays;
-import java.util.List;
 
 public interface NSTLibrary extends Library {
   ID createTouchBar(String name, ItemCreator creator, String escId); // if defined escId => replace esc button with custom item
@@ -21,30 +18,23 @@ public interface NSTLibrary extends Library {
     void execute();
   }
 
-  class ScrubberItemData extends Structure {
-    @Override
-    protected List<String> getFieldOrder() { return Arrays.asList("text", "raster4ByteRGBA", "rasterW", "rasterH", "action"); }
-
-    public static class ByRef extends ScrubberItemData implements Structure.ByReference {
-      public ByRef() {}
-    }
-
-    public Pointer text;
-    public Pointer raster4ByteRGBA;
-    public int rasterW;
-    public int rasterH;
-    public Action action;
-  }
-
   interface ItemCreator extends Callback {
     ID createItem(String uid);
   }
 
+  interface ScrubberDelegate extends Callback {
+    void execute(int itemIndex);
+  }
+
+  interface ScrubberCacheUpdater extends Callback {
+    int update(); // NOTE: called from AppKit when last cached item become visible and we need to update native cache with new items
+  }
+
   // all creators are called from AppKit (when TB becomes visible and asks delegate to create objects) => autorelease objects are owned by default NSAutoReleasePool (of AppKit-thread)
   // creator returns non-autorelease obj to be owned by java-wrapper
-  ID createButton(String uid, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
-  ID createPopover(String uid, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
-  ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
+  ID createButton(String uid, int buttWidth, int buttonFlags, String text, Pointer raster4ByteRGBA, int w, int h, Action action);
+  ID createPopover(String uid, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
+  ID createScrubber(String uid, int itemWidth, ScrubberDelegate delegate, ScrubberCacheUpdater updater, Memory packedItems, int byteCount);
   ID createGroupItem(String uid, ID[] items, int count);
 
   int BUTTON_UPDATE_LAYOUT  = 1;
@@ -73,11 +63,14 @@ public interface NSTLibrary extends Library {
 
   // all updaters are called from EDT (when update UI, or from all another threads except AppKit)
   // C-implementation creates NSAutoReleasePool internally
-  void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
-  void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
-  void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
+  void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, Pointer raster4ByteRGBA, int w, int h, Action action);
+  void updatePopover(ID popoverObj, int itemWidth, String text, Pointer raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
 
-  void setArrowImage(ID buttObj, byte[] raster4ByteRGBA, int w, int h);
+  void enableScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean enabled);
+  void showScrubberItems(ID scrubObj, Memory itemIndices, int count, boolean show);
+  void appendScrubberItems(ID scrubObj, Memory packedItems, int byteCount);
+
+  void setArrowImage(ID buttObj, Pointer raster4ByteRGBA, int w, int h);
 
   static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
   static int margin2mask(byte margin) { return ((int)margin & 0xFF) << LAYOUT_MARGIN_SHIFT; }

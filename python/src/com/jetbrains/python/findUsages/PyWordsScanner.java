@@ -22,6 +22,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -30,7 +31,7 @@ class PyWordsScanner extends VersionedWordsScanner {
   private volatile DefaultWordsScanner myDelegate;
 
   @Override
-  public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
     DefaultWordsScanner delegate = myDelegate;
     if (delegate == null) {
       myDelegate = delegate = new DefaultWordsScanner(new PythonLexer(),

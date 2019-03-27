@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -14,7 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +193,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     private final XmlFile myXmlFile;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
-    private final Set<String> myInterfaceClasses = new THashSet<>();
+    private final MultiMap<ComponentType, String> myInterfaceClasses = MultiMap.createSet();
     private final boolean myOnTheFly;
 
     private RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
@@ -250,17 +250,17 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             final String fqn = intfClass.getQualifiedName();
 
             if (type == ComponentType.MODULE) {
-              if (!checkInterface(fqn, intf)) {
+              if (!checkInterface(type, fqn, intf)) {
                 // module components can be restricted to modules of certain types
                 final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
                 for (String key : keys) {
-                  checkInterface(key, intf);
-                  myInterfaceClasses.add(key);
+                  checkInterface(type, key, intf);
+                  myInterfaceClasses.putValue(type, key);
             }
               }
             } else {
-              checkInterface(fqn, intf);
-              myInterfaceClasses.add(fqn);
+              checkInterface(type, fqn, intf);
+              myInterfaceClasses.putValue(type, fqn);
             }
 
             if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
@@ -274,8 +274,8 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       return true;
     }
 
-    private boolean checkInterface(String fqn, XmlTagValue value) {
-      if (myInterfaceClasses.contains(fqn)) {
+    private boolean checkInterface(ComponentType type, String fqn, XmlTagValue value) {
+      if (myInterfaceClasses.get(type).contains(fqn)) {
         addProblem(value,
             DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);

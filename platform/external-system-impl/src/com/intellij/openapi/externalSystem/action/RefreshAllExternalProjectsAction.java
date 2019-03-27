@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +43,7 @@ import java.util.List;
  *
  * @author Denis Zhdanov
  */
-public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate {
+public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
 
   public RefreshAllExternalProjectsAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", "external"));

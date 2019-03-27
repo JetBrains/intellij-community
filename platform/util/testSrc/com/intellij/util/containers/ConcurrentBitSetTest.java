@@ -15,17 +15,18 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import junit.framework.TestCase;
 
+import java.util.Random;
 import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
   public void test() {
     ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    final ConcurrentBitSet emptySet = new ConcurrentBitSet();
     assertEquals(0, bitSet.nextClearBit(0));
-    assertEquals(bitSet, emptySet);
+    assertEquals(-1, bitSet.nextSetBit(0));
     int N = 3000;
     for (int i = 0; i < N; i++) {
       assertEquals(-1, bitSet.nextSetBit(i));
@@ -35,11 +36,11 @@ public class ConcurrentBitSetTest extends TestCase {
       assertTrue(bitSet.get(i));
       bitSet.clear(i);
       assertFalse(bitSet.get(i));
-      assertEquals(bitSet, emptySet);
+      assertEquals(-1, bitSet.nextSetBit(0));
     }
     bitSet = new ConcurrentBitSet();
     for (int b=0;b<N;b++) {
-      assertEquals(bitSet, emptySet);
+      assertEquals(-1, bitSet.nextSetBit(0));
       boolean set = bitSet.flip(b);
       assertTrue(set);
       assertEquals(b, bitSet.nextSetBit(0));
@@ -67,9 +68,10 @@ public class ConcurrentBitSetTest extends TestCase {
       }
     }
     bitSet.set(100, true);
-    assertFalse(bitSet.equals(emptySet));
+    assertEquals(100, bitSet.nextSetBit(0));
+
     bitSet.clear();
-    assertEquals(bitSet, emptySet);
+    assertEquals(-1, bitSet.nextSetBit(0));
   }
 
   public void testStressFineGrainedSmallSet() {
@@ -100,4 +102,83 @@ public class ConcurrentBitSetTest extends TestCase {
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }
+
+  public void testReadPerformance() {
+    int len = 100_000;
+    ConcurrentBitSet set = new ConcurrentBitSet();
+    Random random = new Random();
+    int s = 0;
+    for (int i = 0; i < len; i++) {
+      set.set(i, random.nextBoolean());
+      s += set.get(i)?1:0;
+    }
+    int sum = s;
+
+    int N = 10_000;
+
+    PlatformTestUtil.startPerformanceTest("ConcurrentBitSet.get() must be fast", 20_000, ()-> {
+      int r = 0;
+      for (int n = 0; n < N; n++) {
+        for (int j = 0; j < len; j++) {
+          r += set.get(j) ? 1 : 0;
+        }
+      }
+      assertEquals(N * sum, r);
+    }).assertTiming();
+  }
+
+  public void testParallelReadPerformance() {
+    int len = 100000;
+    ConcurrentBitSet set = new ConcurrentBitSet();
+    Random random = new Random();
+    int s = 0;
+    for (int i = 0; i < len; i++) {
+      set.set(i, random.nextBoolean());
+      s += set.get(i)?1:0;
+    }
+    int sum = s;
+
+    int N = 10000;
+
+    for (int i=0; i<10; i++) {
+      long el = PlatformTestUtil.measure(() ->
+        IntStream.range(0,N).parallel().forEach(__-> {
+          int r = 0;
+          for (int j = 0; j < len; j++) {
+            r += set.get(j)?1:0;
+          }
+          assertEquals(sum, r);
+        })
+      );
+
+      System.out.println("elapsed = " + el);
+    }
+  }
+
+  public void testFlipPerformance() {
+    int len = 100000;
+    ConcurrentBitSet set = new ConcurrentBitSet();
+    Random random = new Random();
+    for (int i = 0; i < len; i++) {
+      set.set(i, random.nextBoolean());
+    }
+
+    // must be even
+    int N = 1000;
+
+    for (int i=0; i<10; i++) {
+      long el = PlatformTestUtil.measure(() -> {
+        int r = 0;
+        for (int n = 0; n < N; n++) {
+          for (int j = 0; j < len; j++) {
+            r += set.flip(j)?1:0;
+          }
+        }
+        assertEquals(N/2 * len, r);
+      });
+
+      System.out.println("elapsed = " + el);
+    }
+  }
+
 }

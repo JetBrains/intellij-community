@@ -73,4 +73,6 @@ public abstract class CompileScope {
    * were changed since last compilation
    */
   public abstract boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType);
+
+  public abstract void markIndirectlyAffected(BuildTarget<?> target, @NotNull File file);
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.List;
  *
  * @author Vladislav.Soroka
  */
-public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
+public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
 
   public RefreshExternalProjectAction() {
     super(AbstractExternalEntityData.class);

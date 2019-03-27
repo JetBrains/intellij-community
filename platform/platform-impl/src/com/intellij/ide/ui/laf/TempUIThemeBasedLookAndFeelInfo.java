@@ -8,11 +8,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,10 +46,14 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
     String name = getTheme().getEditorScheme();
     if (name != null && mySchemeFile != null) {
       EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
-      final DefaultColorsScheme scheme = new DefaultColorsScheme();
+      AbstractColorsScheme tmpScheme = new DefaultColorsScheme();
       boolean loaded = false;
       try {
-        scheme.readExternal(JDOMUtil.load(mySchemeFile.getInputStream()));
+        Element xml = JDOMUtil.load(mySchemeFile.getInputStream());
+        String parentSchemeName = xml.getAttributeValue("parent_scheme", EditorColorsManager.DEFAULT_SCHEME_NAME);
+        EditorColorsScheme parentScheme = EditorColorsManager.getInstance().getScheme(parentSchemeName);
+        tmpScheme = new EditorColorsSchemeImpl(parentScheme);
+        tmpScheme.readExternal(xml);
         loaded = true;
       }
       catch (Exception e) {
@@ -54,6 +61,7 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
       }
 
       if (loaded) {
+        AbstractColorsScheme scheme = tmpScheme;
         EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
         cm.setGlobalScheme(scheme);
         MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();

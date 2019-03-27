@@ -42,7 +42,7 @@ public class AssignmentToForLoopParameter
 
     void list(List<String> strings) {
         for (String string : strings) {
-            <warning descr="Assignment to for-loop parameter '(string)'">(string)</warning> = "";
+            (<warning descr="Assignment to for-loop parameter 'string'">string</warning>) = "";
             System.out.println("string = " + string);
         }
     }
