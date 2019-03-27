@@ -68,6 +68,7 @@ open class JavaUVariable(
       }
     }
   }
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 open class JavaUParameter(
@@ -80,6 +81,7 @@ open class JavaUParameter(
     get() = javaPsi
 
   override val javaPsi: PsiParameter = sourcePsi
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 open class JavaUField(
@@ -91,6 +93,7 @@ open class JavaUField(
     get() = javaPsi
 
   override val javaPsi: PsiField = unwrap<UField, PsiField>(sourcePsi)
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 open class JavaULocalVariable(
@@ -110,6 +113,8 @@ open class JavaULocalVariable(
       else -> it
     }
   }
+
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 
 }
 
@@ -175,4 +180,6 @@ open class JavaUEnumConstant(
     override val identifier: String
       get() = sourcePsi.containingClass?.name ?: "<error>"
   }
+
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }

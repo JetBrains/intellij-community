@@ -60,4 +60,5 @@ class DetachedJavaUastTest : AbstractJavaUastTest() {
 }
 
 private infix fun Class<out PsiElement>.through(detacher: (PsiElementFactory, String, PsiElement) -> PsiElement)
-  : Pair<Class<PsiElement>, (PsiElementFactory, String, PsiElement) -> PsiElement> = (this as Class<PsiElement>) to detacher
+  : Pair<Class<PsiElement>, (PsiElementFactory, String, PsiElement) -> PsiElement> =
+  @Suppress("UNCHECKED_CAST") (this as Class<PsiElement>) to detacher
