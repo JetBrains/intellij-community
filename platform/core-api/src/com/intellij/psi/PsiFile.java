@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A PSI element representing a file.
  * <p/>
- * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
+ * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi_files.html">PSI Files</a>
  * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
@@ -30,7 +30,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * Returns the virtual file corresponding to the PSI file.
    *
-   * @return the virtual file, or null if the file exists only in memory.
+   * @return the virtual file, or {@code null} if the file exists only in memory.
    */
   @Override
   VirtualFile getVirtualFile();
@@ -38,7 +38,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * Returns the directory containing the file.
    *
-   * @return the containing directory, or null if the file exists only in memory.
+   * @return the containing directory, or {@code null} if the file exists only in memory.
    */
   PsiDirectory getContainingDirectory();
 
@@ -93,7 +93,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * Called by the PSI framework when the contents of the file changes.
    * If you override this method, you <b>must</b> call the base class implementation.
-   * While this method can be used to invalidate file-level caches, it is more much safe to invalidate them in  {@link #clearCaches()}
+   * While this method can be used to invalidate file-level caches, it is more much safe to invalidate them in {@link #clearCaches()}
    * since file contents can be reloaded completely (without any specific subtree change) without this method being called.
    */
   void subtreeChanged();
