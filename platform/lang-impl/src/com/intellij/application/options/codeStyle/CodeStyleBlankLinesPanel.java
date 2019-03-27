@@ -120,28 +120,21 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     OptionGroup optionGroup = new OptionGroup(groupName);
 
     for (CodeStyleSettingPresentation setting: settings) {
-      createOption(optionGroup, setting.getUiName(), setting.getFieldName());
+      if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {
+        doCreateOption(optionGroup, new IntOption(setting.getUiName(), setting.getFieldName()), setting.getFieldName());
+      }
     }
-    initCustomOptions(optionGroup, groupName);
+    for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
+      doCreateOption(optionGroup, new IntOption(each.third, each.first, each.second), each.second);
+    }
 
     if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup;
   }
 
-  private void initCustomOptions(OptionGroup optionGroup, String groupName) {
-    for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> each : myCustomOptions.get(groupName)) {
-      doCreateOption(optionGroup, each.third, new IntOption(each.third, each.first, each.second), each.second);
-    }
-  }
-
-  private void createOption(OptionGroup optionGroup, String title, String fieldName) {
-    if (myAllOptionsAllowed || myAllowedOptions.contains(fieldName)) {
-      doCreateOption(optionGroup, title, new IntOption(title, fieldName), fieldName);
-    }
-  }
-
-  private void doCreateOption(OptionGroup optionGroup, String title, IntOption option, String fieldName) {
+  private void doCreateOption(OptionGroup optionGroup, IntOption option, String fieldName) {
+    String title = option.myIntField.getName();
     String renamed = myRenamedFields.get(fieldName);
     if (renamed != null) title = renamed;
 
