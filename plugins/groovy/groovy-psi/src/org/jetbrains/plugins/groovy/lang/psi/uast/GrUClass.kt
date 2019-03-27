@@ -64,8 +64,6 @@ class GrUMethod(val grElement: GrMethod,
 
   override val uastParameters: List<UParameter> by lazy { grElement.parameters.map { GrUParameter(it, { this }) } }
 
-  override val isOverride: Boolean by lazy { psi.modifierList.hasAnnotation("java.lang.Override") }
-
   override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 

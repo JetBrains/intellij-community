@@ -95,7 +95,7 @@ fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpress
     }
   }?.firstOrNull()
 
-@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.2",
+@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.3",
             replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile(): UFile? = getContainingUFile()
 
@@ -105,13 +105,13 @@ fun UElement.getContainingUClass(): UClass? = getParentOfType(UClass::class.java
 fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.java)
 fun UElement.getContainingUVariable(): UVariable? = getParentOfType(UVariable::class.java)
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
 fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.javaPsi
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
 fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.javaPsi
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1",
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
 fun PsiElement?.getContainingClass(): PsiClass? = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
 
@@ -136,10 +136,6 @@ fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): 
   if (probablyParent == null) return false
   return isChildOf(if (strict) uastParent else this, probablyParent)
 }
-
-@Deprecated("contains a bug in negation of `strict` parameter, will be removed in IDEA 2019.2",
-            replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
-fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false) = isUastChildOf(probablyParent, !strict)
 
 /**
  * Resolves the receiver element if it implements [UResolvable].

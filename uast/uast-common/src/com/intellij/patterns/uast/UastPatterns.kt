@@ -16,10 +16,6 @@ import org.jetbrains.uast.*
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
-@Deprecated("Interpolated strings (in Kotlin) are not single string literals, use `injectionHostUExpression()` to be language-abstract",
-            ReplaceWith("injectionHostUExpression()", "com.intellij.patterns.uast.injectionHostUExpression"))
-fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().filter(ULiteralExpression::isStringLiteral)
-
 @JvmOverloads
 fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpression, *> =
   uExpression().filterWithContext { _, processingContext ->

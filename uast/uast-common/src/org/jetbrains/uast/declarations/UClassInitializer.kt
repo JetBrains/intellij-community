@@ -16,8 +16,6 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClassInitializer
-import com.intellij.psi.PsiCodeBlock
-
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -40,8 +38,6 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
   private val javaPsiInternal
     get() = (this as? UClassInitializerEx)?.javaPsi ?: psi
 
-  @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody(): PsiCodeBlock = javaPsiInternal.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitInitializer(this)) return
