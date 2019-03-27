@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), UClassTypeSpecific, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
+  givenParent), UClass, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
 
   abstract override val javaPsi: PsiClass
 
@@ -76,6 +76,8 @@ class JavaUClass private constructor(override val sourcePsi: PsiClass, val given
         JavaUClass(psi, containingElement)
     }
   }
+
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 class JavaUAnonymousClass(
@@ -105,4 +107,5 @@ class JavaUAnonymousClass(
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
   override fun getMethods(): Array<UMethod> = super<AbstractJavaUClass>.getMethods()
   override fun getInnerClasses(): Array<UClass> = super<AbstractJavaUClass>.getInnerClasses()
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }

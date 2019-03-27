@@ -72,6 +72,7 @@ fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UE
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
 @Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("UExpression.evaluateString()"))
+@Suppress("Deprecation")
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.jetbrains.uast.*
@@ -11,7 +12,7 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 open class JavaUMethod(
   override val sourcePsi: PsiMethod,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UMethodTypeSpecific, JavaUElementWithComments, UAnchorOwner, PsiMethod by sourcePsi {
+) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, UAnchorOwner, PsiMethod by sourcePsi {
 
 
   @Suppress("OverridingDeprecatedMember")
@@ -47,6 +48,7 @@ open class JavaUMethod(
     sourcePsi.returnTypeElement?.let { JavaUTypeReferenceExpression(it, this) }
   }
 
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }
 
 class JavaUAnnotationMethod(

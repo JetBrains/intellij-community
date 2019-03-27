@@ -132,7 +132,7 @@ val UElement?.sourcePsiElement: PsiElement?
 
 
 @ApiStatus.Experimental
-@SuppressWarnings("unchecked")
+@Suppress("UNCHECKED_CAST")
 fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
   this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
 

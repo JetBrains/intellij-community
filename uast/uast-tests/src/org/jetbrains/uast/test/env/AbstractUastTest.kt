@@ -49,6 +49,7 @@ fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
   accept(object : UastVisitor {
     override fun visitElement(node: UElement): Boolean {
       if (cls.isInstance(node) && node.sourcePsi?.text == refText) {
+        @Suppress("UNCHECKED_CAST")
         matchingElements.add(node as T)
       }
       return false
