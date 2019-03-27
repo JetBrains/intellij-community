@@ -15,19 +15,24 @@
  */
 package com.intellij.terminal;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -290,7 +295,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @NotNull
   @Override
   public AnAction[] createConsoleActions() {
-    return AnAction.EMPTY_ARRAY;
+    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
   }
 
   @Override
@@ -370,6 +375,42 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         return TerminalExecutionConsole.this;
       }
       return null;
+    }
+  }
+
+  private class ClearAction extends DumbAwareAction {
+    private ClearAction() {
+      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      clear();
+    }
+  }
+
+  private class ScrollToTheEndAction extends DumbAwareAction {
+    private ScrollToTheEndAction() {
+      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            AllIcons.RunConfigurations.Scroll_down);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      e.getPresentation().setEnabled(model.getValue() != 0);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      model.setValue(0);
     }
   }
 }
