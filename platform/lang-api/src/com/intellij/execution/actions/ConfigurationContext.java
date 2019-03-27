@@ -34,6 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Context for creating run configurations from a location in the source code.
@@ -53,6 +56,7 @@ public class ConfigurationContext {
 
   public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
   private List<RuntimeConfigurationProducer> myPreferredProducers;
+  private List<RunConfigurationProducer<?>> myPreferredConfigurationProducers;
   private List<ConfigurationFromContext> myConfigurationsFromContext;
 
   @NotNull
@@ -208,7 +212,12 @@ public class ConfigurationContext {
       myExistingConfiguration.set(null);
       return null;
     }
+    cacheExistingRuntimeConfiguration();
+    cacheExistingRunConfiguration();
+    return myExistingConfiguration.get();
+  }
 
+  private void cacheExistingRuntimeConfiguration() {
     final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
     if (myRuntimeConfiguration != null) {
       if (producers != null) {
@@ -234,7 +243,12 @@ public class ConfigurationContext {
         }
       }
     }
-    for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(getProject())) {
+  }
+
+  private void cacheExistingRunConfiguration() {
+    List<RunConfigurationProducer<?>> producers = findPreferredConfigurationProducers();
+    if (producers == null) return;
+    for (RunConfigurationProducer producer : producers) {
       RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
         if (!Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
@@ -242,7 +256,6 @@ public class ConfigurationContext {
         }
       }
     }
-    return myExistingConfiguration.get();
   }
 
   @Nullable
@@ -326,6 +339,19 @@ public class ConfigurationContext {
       myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
     }
     return myPreferredProducers;
+  }
+
+  @Nullable
+  private List<RunConfigurationProducer<?>> findPreferredConfigurationProducers() {
+    if (myPreferredConfigurationProducers == null) {
+      List<ConfigurationFromContext> configurations = getConfigurationsFromContext();
+      if (configurations == null) return null;
+      List<RunConfigurationProducer<?>> producers = RunConfigurationProducer.getProducers(getProject());
+      Function<ConfigurationFromContext, Stream<RunConfigurationProducer<?>>> mapper = configurationFromContext ->
+        producers.stream().filter(producer -> configurationFromContext.isProducedBy(producer.getClass()));
+      myPreferredConfigurationProducers = configurations.stream().flatMap(mapper).collect(Collectors.toList());
+    }
+    return myPreferredConfigurationProducers;
   }
 
   @Nullable

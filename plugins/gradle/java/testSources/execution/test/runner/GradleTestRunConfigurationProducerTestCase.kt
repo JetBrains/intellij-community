@@ -3,9 +3,12 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
@@ -18,6 +21,7 @@ import com.intellij.psi.*
 import com.intellij.testFramework.MapDataContext
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
 import java.io.File
@@ -39,10 +43,28 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     }
   }
 
+  protected fun withConfiguration(runner: TestRunner, vararg elements: PsiClass, action: (ConfigurationType) -> Unit) {
+    currentExternalProjectSettings.testRunner = runner
+    val context = getContextByLocation(*elements)
+    val configurationFromContext = getConfigurationFromContext(context)
+    val configuration = configurationFromContext.configurationSettings
+    val runManager = RunManager.getInstance(myProject) as RunManagerImpl
+    runManager.clearAll()
+    runManager.addConfiguration(configuration)
+    action(configuration.type)
+  }
+
+  protected fun assertExistingConfigurationType(runner: TestRunner, type: ConfigurationType?, vararg elements: PsiClass) {
+    currentExternalProjectSettings.testRunner = runner
+    val context = getContextByLocation(*elements)
+    val existing = context.findExisting()
+    assertEquals(type, existing?.type)
+  }
+
   protected fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
     val fromContexts = context.configurationsFromContext
     val fromContext = fromContexts?.firstOrNull()
-    assertNotNull("Gradle configuration from context not found", fromContext)
+    assertNotNull("Configuration from context not found", fromContext)
     return fromContext as ConfigurationFromContextImpl
   }
 
@@ -281,6 +303,6 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
      */
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(GradleImportingTestCase.BASE_GRADLE_VERSION))
+    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
 }

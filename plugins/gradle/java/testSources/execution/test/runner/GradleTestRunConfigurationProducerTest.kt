@@ -229,4 +229,25 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       }
     }
   }
+
+  @Test
+  fun `test find existing preferred run configuration`() {
+    val projectData = generateAndImportTemplateProject()
+    runReadActionAndWait {
+      val psiClass = projectData["project"]["TestCase"].element
+      assertExistingConfigurationType(TestRunner.GRADLE, null, psiClass)
+      assertExistingConfigurationType(TestRunner.PLATFORM, null, psiClass)
+      assertExistingConfigurationType(TestRunner.CHOOSE_PER_TEST, null, psiClass)
+      withConfiguration(TestRunner.GRADLE, psiClass) { gradleType ->
+        assertExistingConfigurationType(TestRunner.GRADLE, gradleType, psiClass)
+        assertExistingConfigurationType(TestRunner.PLATFORM, null, psiClass)
+        assertExistingConfigurationType(TestRunner.CHOOSE_PER_TEST, gradleType, psiClass)
+      }
+      withConfiguration(TestRunner.PLATFORM, psiClass) { platformType ->
+        assertExistingConfigurationType(TestRunner.GRADLE, null, psiClass)
+        assertExistingConfigurationType(TestRunner.PLATFORM, platformType, psiClass)
+        assertExistingConfigurationType(TestRunner.CHOOSE_PER_TEST, platformType, psiClass)
+      }
+    }
+  }
 }
