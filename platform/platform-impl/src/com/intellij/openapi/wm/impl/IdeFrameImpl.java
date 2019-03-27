@@ -98,7 +98,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
-    setMinimumSize(new JBDimension(400, 300));
+    setMinimumSize(new Dimension(340, getMinimumSize().height));
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&

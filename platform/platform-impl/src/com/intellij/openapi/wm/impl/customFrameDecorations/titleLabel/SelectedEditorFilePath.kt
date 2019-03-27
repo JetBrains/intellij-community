@@ -25,6 +25,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
   companion object {
     const val fileSeparatorChar = '/'
     const val ellipsisSymbol = "\u2026"
+    const val delimiterSymbol = " - "
   }
 
   private var clippedText: String? = null
@@ -57,7 +58,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
   }
 
-  var inited = false
+  private var inited = false
   open fun getView(): JComponent {
     if(!inited) {
       init()
@@ -107,7 +108,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
 
   protected open fun changeProject(project: Project, dsp: Disposable) {
-    projectName = "[${project.name}] "
+    projectName = project.name
     val fileEditorManager = FileEditorManager.getInstance(project)
 
     fun updatePath() {
@@ -147,6 +148,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
       val pnWidth = SwingUtilities2.stringWidth(label, pnfm, projectName)
       val textWidth = SwingUtilities2.stringWidth(label, fm, path)
       val symbolWidth = SwingUtilities2.stringWidth(label, fm, ellipsisSymbol)
+      val delimiterWidth = SwingUtilities2.stringWidth(label, fm, delimiterSymbol)
 
       when {
         pnWidth > width -> {
@@ -155,21 +157,22 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
           ""
         }
 
-        pnWidth == width || pnWidth + symbolWidth >= width -> {
+        pnWidth == width || pnWidth + symbolWidth + delimiterWidth >= width -> {
           label.toolTipText = path
           clippedProjectName = projectName
           ""
         }
 
-        textWidth > width - pnWidth -> {
+        textWidth > width - pnWidth - delimiterWidth -> {
           getView().toolTipText = path
           clippedProjectName = projectName
-          clipString(label, path, width - pnWidth)
+          val clipString = clipString(label, path, width - pnWidth - delimiterWidth)
+          if(clipString.isEmpty()) "" else "$delimiterSymbol$clipString"
         }
         else -> {
           getView().toolTipText = null
           clippedProjectName = projectName
-          path
+          "$delimiterSymbol$path"
         }
       }
     }
