@@ -4,11 +4,14 @@ package com.intellij.ui.tree.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import javax.swing.*;
@@ -291,6 +294,32 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected AbstractLayoutCache createLayoutCache() {
     return super.createLayoutCache();
+  }
+
+  @Override
+  protected MouseListener createMouseListener() {
+    return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+      @NotNull
+      @Override
+      protected MouseEvent convert(@NotNull MouseEvent event) {
+        JTree tree = getTree();
+        if (tree != null && tree == event.getSource() && tree.isEnabled()) {
+          if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
+            int x = event.getX();
+            int y = event.getY();
+            TreePath path = getClosestPathForLocation(tree, x, y);
+            if (path != null && !isLocationInExpandControl(path, x, y)) {
+              Rectangle bounds = getPathBounds(tree, path);
+              if (bounds != null && bounds.y <= y && y <= (bounds.y + bounds.height)) {
+                x = Math.max(bounds.x, Math.min(x, bounds.x + bounds.width - 1));
+                if (x != event.getX()) event = convert(event, tree, x, y);
+              }
+            }
+          }
+        }
+        return event;
+      }
+    };
   }
 
   // TreeUI
