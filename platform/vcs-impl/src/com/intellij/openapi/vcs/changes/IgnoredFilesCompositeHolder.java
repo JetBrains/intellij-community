@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -15,12 +16,14 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   private final Map<AbstractVcs, IgnoredFilesHolder> myVcsIgnoredHolderMap;
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
+  private final VcsConfiguration myVcsConfiguration;
 
   public IgnoredFilesCompositeHolder(final Project project) {
     super();
     myProject = project;
     myVcsIgnoredHolderMap = new HashMap<>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
   @Override
@@ -61,10 +64,17 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   public boolean containsFile(@NotNull VirtualFile file) {
-    final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    AbstractVcs vcs = myVcsManager.getVcsFor(file);
     if (vcs == null) return false;
-    final IgnoredFilesHolder ignoredFilesHolder = myVcsIgnoredHolderMap.get(vcs);
-    return ignoredFilesHolder != null && ignoredFilesHolder.containsFile(file);
+    IgnoredFilesHolder ignoredFilesHolder = myVcsIgnoredHolderMap.get(vcs);
+    if (ignoredFilesHolder == null) return false;
+
+    if (vcs.areDirectoriesVersionedItems()) {
+      return ignoredFilesHolder.containsFile(file);
+    }
+    else {
+      return ignoredFilesHolder.containsFile(file) && (!file.isDirectory() || myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    }
   }
 
   @NotNull
