@@ -73,7 +73,7 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
 
         is JavaUBlockExpression -> {
           val sourcePsi = codeBlockParent.sourcePsi
-          if (sourcePsi is PsiBlockStatement && sourcePsi.parent is PsiSwitchLabeledRuleStatement)
+          if (sourcePsi.parent is PsiSwitchLabeledRuleStatement)
             (codeBlockParent.uastParent as? JavaUSwitchEntry)?.let { return it.body }
         }
 

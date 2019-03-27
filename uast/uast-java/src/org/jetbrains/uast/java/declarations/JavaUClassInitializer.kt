@@ -17,6 +17,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
@@ -41,4 +42,5 @@ class JavaUClassInitializer(
 
   override fun equals(other: Any?): Boolean = this === other
   override fun hashCode(): Int = sourcePsi.hashCode()
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }

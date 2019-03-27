@@ -118,8 +118,10 @@ fun PsiElement?.toUElement(): UElement? = this?.let { doConvertElementWithParent
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
  * to the given UAST element type.
  */
+@Suppress("UNCHECKED_CAST")
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { doConvertElementWithParent(this, cls) as T? }
 
+@Suppress("UNCHECKED_CAST")
 fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
   this?.let {
     ServiceManager.getService(project, UastContext::class.java)

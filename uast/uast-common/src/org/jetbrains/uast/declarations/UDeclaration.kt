@@ -69,6 +69,7 @@ fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingEl
 fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
   val element = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
   return if (element != null && cls.isInstance(element)) {
+    @Suppress("UNCHECKED_CAST")
     element as T
   } else {
     null

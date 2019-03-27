@@ -65,7 +65,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
       override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context)
     })
 
-  fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, processingContext -> filter(t) }
+  fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, _ -> filter(t) }
 
   fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 

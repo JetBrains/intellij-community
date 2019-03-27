@@ -87,7 +87,7 @@ interface UClass : UDeclaration, PsiClass {
       append(superTypes.joinToString { it.asRenderString() })
     }
     appendln(" {")
-    uastDeclarations.forEachIndexed { index, declaration ->
+    uastDeclarations.forEachIndexed { _, declaration ->
       appendln(declaration.asRenderString().withMargin)
     }
     append("}")

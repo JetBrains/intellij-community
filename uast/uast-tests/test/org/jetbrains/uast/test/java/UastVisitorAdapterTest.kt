@@ -2,7 +2,6 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.uast.UastVisitorAdapter
 import junit.framework.TestCase
@@ -14,7 +13,7 @@ import org.junit.Test
 class UastVisitorAdapterTest : AbstractJavaUastTest() {
 
   override fun check(testName: String, file: UFile) {
-    val psiFile = file.sourcePsi as PsiFile
+    val psiFile = file.sourcePsi
     val toList = SyntaxTraverser.psiTraverser(psiFile).toList()
 
     val listSources = mutableSetOf<PsiElement>()
