@@ -44,10 +44,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 
 import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
 
@@ -69,12 +66,11 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
-  @SuppressWarnings("SSBasedInspection")
   public static void initApplication(@NotNull String[] args) {
     Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
-      IdeaApplication app = new IdeaApplication(args);
+      IdeaApplication app = new IdeaApplication(args, pluginDescriptorsFuture);
 
       // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
       Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
@@ -104,6 +100,10 @@ public class IdeaApplication {
   private volatile boolean myLoaded;
 
   public IdeaApplication(@NotNull String[] args) {
+    this(args, null);
+  }
+
+  private IdeaApplication(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
     LOG.assertTrue(ourInstance == null);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
@@ -120,7 +120,7 @@ public class IdeaApplication {
       activity.end();
     }
 
-    myStarter = getStarter();
+    myStarter = getStarter(myArgs, pluginsLoaded);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
@@ -219,11 +219,21 @@ public class IdeaApplication {
   }
 
   @NotNull
-  public ApplicationStarter getStarter() {
-    if (myArgs.length > 0) {
-      PluginManagerCore.getPlugins();
+  private static ApplicationStarter getStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+    if (args.length > 0) {
+      if (pluginsLoaded == null) {
+        PluginManagerCore.getPlugins();
+      }
+      else {
+        try {
+          pluginsLoaded.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new CompletionException(e);
+        }
+      }
 
-      ApplicationStarter starter = findStarter(myArgs[0]);
+      ApplicationStarter starter = findStarter(args[0]);
       if (starter != null) {
         return starter;
       }
@@ -257,7 +267,7 @@ public class IdeaApplication {
       plugins = pluginDescriptorsFuture.get();
       activity.end();
     }
-    catch (InterruptedException|ExecutionException e) {
+    catch (InterruptedException | ExecutionException e) {
       throw new CompletionException(e);
     }
 
