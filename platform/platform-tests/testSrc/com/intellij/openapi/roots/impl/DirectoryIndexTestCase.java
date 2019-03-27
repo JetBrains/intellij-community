@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -99,12 +100,12 @@ public abstract class DirectoryIndexTestCase extends PlatformTestCase {
     assertExcluded(file, null);
   }
 
-  protected void assertIteratedContent(Module module, @Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
-    assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), contains, doesntContain);
-    assertIteratedContent(myFileIndex, contains, doesntContain);
+  protected void assertIteratedContent(Module module, @Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {
+    assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), mustContain, mustNotContain);
+    assertIteratedContent(myFileIndex, mustContain, mustNotContain);
   }
 
-  protected void assertIndexableContent(@Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
+  protected void assertIndexableContent(@Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {
     final Set<VirtualFile> collected = new THashSet<>();
     FileBasedIndex.getInstance().iterateIndexableFiles(fileOrDir -> {
       if (!collected.add(fileOrDir)) {
@@ -112,13 +113,13 @@ public abstract class DirectoryIndexTestCase extends PlatformTestCase {
       }
       return true;
     }, getProject(), new EmptyProgressIndicator());
-    if (contains != null) assertContainsElements(collected, contains);
-    if (doesntContain != null) assertDoesntContain(collected, doesntContain);
+    if (mustContain != null) assertContainsElements(collected, mustContain);
+    if (mustNotContain != null) assertDoesntContain(collected, mustNotContain);
   }
 
-  protected static void assertIteratedContent(FileIndex fileIndex,
-                                              @Nullable List<VirtualFile> contains,
-                                              @Nullable List<VirtualFile> doesntContain) {
+  protected static void assertIteratedContent(@NotNull FileIndex fileIndex,
+                                              @Nullable List<VirtualFile> mustContain,
+                                              @Nullable List<VirtualFile> mustNotContain) {
     final Set<VirtualFile> collected = new THashSet<>();
     fileIndex.iterateContent(fileOrDir -> {
       if (!collected.add(fileOrDir)) {
@@ -126,7 +127,21 @@ public abstract class DirectoryIndexTestCase extends PlatformTestCase {
       }
       return true;
     });
-    if (contains != null) assertContainsElements(collected, contains);
-    if (doesntContain != null) assertDoesntContain(collected, doesntContain);
+    if (mustContain != null) assertContainsElements(collected, mustContain);
+    if (mustNotContain != null) assertDoesntContain(collected, mustNotContain);
+  }
+  protected static void assertIteratedContent(@NotNull FileIndex fileIndex,
+                                              @NotNull VirtualFile root,
+                                              @Nullable List<VirtualFile> mustContain,
+                                              @Nullable List<VirtualFile> mustNotContain) {
+    final Set<VirtualFile> collected = new THashSet<>();
+    fileIndex.iterateContentUnderDirectory(root, fileOrDir -> {
+      if (!collected.add(fileOrDir)) {
+        fail(fileOrDir + " visited twice");
+      }
+      return true;
+    });
+    if (mustContain != null) assertContainsElements(collected, mustContain);
+    if (mustNotContain != null) assertDoesntContain(collected, mustNotContain);
   }
 }
