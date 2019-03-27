@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
+  public static final File NAME_STORAGE_FILE = new File(PathManager.getIndexRoot(), "rep.names");
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile;
@@ -44,7 +45,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   private StubSerializationHelper myStubSerializationHelper;
 
   public SerializationManagerImpl() {
-    this(new File(PathManager.getIndexRoot(), "rep.names"));
+    this(NAME_STORAGE_FILE);
   }
 
   public SerializationManagerImpl(@NotNull File nameStorageFile) {

@@ -55,7 +55,7 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
+  static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
     public void save(@NotNull final DataOutput out, @NotNull final SerializedStubTree v) throws IOException {
       v.write(out);
