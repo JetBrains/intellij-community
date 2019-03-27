@@ -54,8 +54,8 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
     final CoverageDataManager manager = getCoverageDataManager();
     if (manager == null) return;
     final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
-    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(node.getProject())
-                                                                     : null;
+    Project project = node.getProject();
+    final CoverageAnnotator coverageAnnotator = currentSuite == null || project == null ? null : currentSuite.getAnnotator(project);
     if (coverageAnnotator == null) {
       // N/A
       return;
