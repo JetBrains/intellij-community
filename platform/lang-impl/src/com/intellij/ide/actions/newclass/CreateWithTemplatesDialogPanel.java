@@ -55,7 +55,7 @@ public class CreateWithTemplatesDialogPanel extends JBPanel {
 
   @NotNull
   public String getSelectedTemplate() {
-    return myTemplatesList.getSelectedValue().first;
+    return myTemplatesList.getSelectedValue().third;
   }
 
   public void setError(boolean error) {
