@@ -33,16 +33,18 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
     val manager = place.manager
     val objectVarargType = PsiEllipsisType(getJavaLangObject(place))
 
-    val configuration = data.configurations[methodName] ?: return
-    val configurationName = configuration.name ?: return
-
-    val method = GrLightMethodBuilder(manager, configurationName).apply {
-      methodKind = ourMethodKind
-      containingClass = clazz
-      returnType = null
-      addParameter("artifactNotation", objectVarargType)
-      setBaseIcon(Gradle)
+    // The null method name means we are in completion, and in this case all available declarations should be fed into the processor.
+    val configurations = if (methodName == null) data.configurations.values else listOf(data.configurations[methodName] ?: return)
+    for (configuration in configurations) {
+      val configurationName = configuration.name ?: continue
+      val method = GrLightMethodBuilder(manager, configurationName).apply {
+        methodKind = ourMethodKind
+        containingClass = clazz
+        returnType = null
+        addParameter("artifactNotation", objectVarargType)
+        setBaseIcon(Gradle)
+      }
+      if (!processor.execute(method, state)) return
     }
-    if (!processor.execute(method, state)) return
   }
 }
