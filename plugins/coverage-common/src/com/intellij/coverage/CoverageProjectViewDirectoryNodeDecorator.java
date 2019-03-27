@@ -22,16 +22,20 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
 
   @Override
   public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
-    final CoverageDataManager manager = getCoverageDataManager();
-    if (manager == null) return;
-
     final PsiElement element = node.getPsiElement();
     if (element == null || !element.isValid()) {
       return;
     }
 
+    Project project = element.getProject();
+
+    final CoverageDataManager manager = getCoverageDataManager(project);
+    if (manager == null) {
+      return;
+    }
+
     final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
-    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(element.getProject()) : null;
+    final CoverageAnnotator coverageAnnotator = currentSuite != null ? currentSuite.getAnnotator(project) : null;
     if (coverageAnnotator == null) {
       // N/A
       return;
@@ -51,11 +55,16 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
 
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
-    final CoverageDataManager manager = getCoverageDataManager();
+    Project project = node.getProject();
+    if (project == null) {
+      return;
+    }
+
+    final CoverageDataManager manager = getCoverageDataManager(project);
     if (manager == null) return;
     final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
-    Project project = node.getProject();
-    final CoverageAnnotator coverageAnnotator = currentSuite == null || project == null ? null : currentSuite.getAnnotator(project);
+
+    final CoverageAnnotator coverageAnnotator = currentSuite == null ? null : currentSuite.getAnnotator(project);
     if (coverageAnnotator == null) {
       // N/A
       return;

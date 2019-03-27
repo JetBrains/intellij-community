@@ -23,39 +23,35 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
 
   @Override
   public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
-    final CoverageDataManager dataManager = getCoverageDataManager();
-    if (dataManager == null) return;
-
     final PsiElement element = node.getPsiElement();
-    if (element == null || !element.isValid()) {
+    if (element == null || !element.isValid() || !(element instanceof PsiClass)) {
       return;
     }
 
-    final CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
     final Project project = element.getProject();
 
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
+    final CoverageDataManager dataManager = getCoverageDataManager(project);
+    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(dataManager, project);
     // This decorator is applicable only to JavaCoverageAnnotator
     if (javaCovAnnotator == null) {
       return;
     }
 
-    if (element instanceof PsiClass) {
-      final String qName = ((PsiClass)element).getQualifiedName();
-      if (qName != null) {
-        appendCoverageInfo(cellRenderer, javaCovAnnotator.getClassCoverageInformationString(qName, dataManager));
-      }
+    final String qName = ((PsiClass)element).getQualifiedName();
+    if (qName != null) {
+      appendCoverageInfo(cellRenderer, javaCovAnnotator.getClassCoverageInformationString(qName, dataManager));
     }
   }
 
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
-    final CoverageDataManager coverageDataManager = getCoverageDataManager();
-    if (coverageDataManager == null) return;
-    final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
-
     final Project project = node.getProject();
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
+    if (project == null) {
+      return;
+    }
+
+    final CoverageDataManager coverageDataManager = getCoverageDataManager(project);
+    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(coverageDataManager, project);
     // This decorator is applicable only to JavaCoverageAnnotator
     if (javaCovAnnotator == null) {
       return;
@@ -78,7 +74,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
     }
 
     if (element instanceof PsiClass) {
-      final GlobalSearchScope searchScope = currentSuite.getSearchScope(project);
+      final GlobalSearchScope searchScope = coverageDataManager.getCurrentSuitesBundle().getSearchScope(project);
       final VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
       if (vFile != null && searchScope.contains(vFile)) {
         final String qName = ((PsiClass)element).getQualifiedName();
@@ -90,7 +86,12 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
   }
 
   @Nullable
-  private static JavaCoverageAnnotator getCovAnnotator(final CoverageSuitesBundle currentSuite, Project project) {
+  private static JavaCoverageAnnotator getCovAnnotator(@Nullable CoverageDataManager dataManager, @NotNull Project project) {
+    if (dataManager == null) {
+      return null;
+    }
+
+    CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
     if (currentSuite != null) {
       final CoverageAnnotator coverageAnnotator = currentSuite.getAnnotator(project);
       if (coverageAnnotator instanceof JavaCoverageAnnotator) {
