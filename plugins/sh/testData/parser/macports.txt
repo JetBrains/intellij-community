@@ -22,7 +22,7 @@ BASH_FILE
               PIPELINE
                 CONDITIONAL_COMMAND
                   PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(cond_op)('-z')
+                  PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
                   STRING
                     PsiElement(")('"')
@@ -173,10 +173,10 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('MSG')
+          PsiElement(word)('MSG')
           PsiElement(=)('=')
           STRING
-            PsiElement(string_begin)('"')
+            PsiElement(")('"')
             PsiElement($)('$')
             SUBSHELL_COMMAND
               PsiElement(()('(')
@@ -191,11 +191,11 @@ BASH_FILE
                           PsiElement(var)('$CARD2')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
-                          PsiElement(>)('>')
-                          PsiElement(file descriptor)('&1')
+                          PsiElement(>&)('>&')
+                          PsiElement(int)('1')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
                           PsiElement(>)('>')
                           PsiElement(word)('/dev/null')
               PsiElement())(')')
-            PsiElement(string_end)('"')
+            PsiElement(")('"')

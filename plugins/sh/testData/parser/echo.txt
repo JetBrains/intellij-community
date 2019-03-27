@@ -212,7 +212,8 @@ BASH_FILE
                   PsiElement(var)('$VERSION')
                 PsiElement(])(']')
                 PsiElement(})('}')
-              PsiElement(string_content)(' /tmp/')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('/tmp/')
               VARIABLE
                 PsiElement(var)('$FILE')
               PsiElement(")('"')

@@ -28,7 +28,7 @@ InputCharacter = [^\r\n]
 LineTerminator = \r\n | \r | \n
 LineContinuation = "\\" {LineTerminator}
 WhiteSpace=[ \t\f]
-WhiteSpaceLineContinuation=[ \t\f] {LineContinuation}*
+WhiteSpaceLineContinuation={WhiteSpace} {LineContinuation}*
 
 Shebang = "#!" {InputCharacter}* {LineTerminator}?
 Comment = "#"  {InputCharacter}*
@@ -42,17 +42,17 @@ UnescapedCharacter = [^\']
 RawString = "'"[^"'"]*"'"
 
 WordFirst = [\p{Letter}||\p{Digit}||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
-WordAfter = {WordFirst} | [#!\[\]]
+WordAfter = {WordFirst} | [#!] // \[\]
 
 ArithWordFirst = [a-zA-Z_@?.:] | {EscapedChar} | {LineContinuation}
 // No "[" | "]"
-ArithWordAfter =  {ArithWordFirst} | [0-9#!]
+ArithWordAfter = {ArithWordFirst} | [0-9#!]
 
 ParamExpansionWordFirst = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
 ParamExpansionWord = {ParamExpansionWordFirst}+
 
 AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^~,]] | {EscapedChar} | {LineContinuation}
-AssignListWordAfter =  {AssignListWordFirst} | [$#!]
+AssignListWordAfter =  {AssignListWordFirst} | [#!]
 AssignListWord = {AssignListWordFirst}{AssignListWordAfter}*
 
 Word = {WordFirst}{WordAfter}*

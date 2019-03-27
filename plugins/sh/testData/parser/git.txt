@@ -47,7 +47,7 @@ BASH_FILE
                         PsiElement(")('"')
                         VARIABLE
                           PsiElement(var)('$repo')
-                        PsiElement(/)('/')
+                        PsiElement(word)('/')
                         PsiElement(")('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT

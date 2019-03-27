@@ -92,6 +92,8 @@ f=1 b=2 cat movecach.sh
 file="current_line.txt"
 let count=0
 let indx+=1
+let indx-=1
+let indx=1*1
 
 
 
