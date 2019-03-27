@@ -293,7 +293,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), module.getName()));
     }
 
-    if (!createEmptyContentRootDirectories && !generated) {
+    if (!createEmptyContentRootDirectories) {
       if (!FileUtil.exists(root.getPath())) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
@@ -301,7 +301,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         logUnitTest("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]");
         String url = pathToUrl(root.getPath());
         String packagePrefix = StringUtil.notNullize(root.getPackagePrefix());
-        sourceFolderManager.addSourceFolder(module, url, sourceRootType, packagePrefix);
+        sourceFolderManager.addSourceFolder(module, url, sourceRootType, packagePrefix, generated);
         return;
       }
     }

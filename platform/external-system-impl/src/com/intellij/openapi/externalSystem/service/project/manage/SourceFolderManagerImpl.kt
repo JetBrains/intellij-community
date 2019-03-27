@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import gnu.trove.THashMap
 import gnu.trove.THashSet
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager, Disposable {
@@ -29,9 +30,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private val sourceFolders = PathPrefixTreeMapImpl<SourceFolderModel>()
   private val sourceFoldersByModule = THashMap<String, ModuleModel>()
 
-  override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>, packagePrefix: String) {
+  override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>, packagePrefix: String, generated: Boolean) {
     synchronized(mutex) {
-      sourceFolders[url] = SourceFolderModel(module, url, type, packagePrefix)
+      sourceFolders[url] = SourceFolderModel(module, url, type, packagePrefix, generated)
       val moduleModel = sourceFoldersByModule.getOrPut(module.name) {
         ModuleModel(module).also {
           Disposer.register(module, it)
@@ -100,7 +101,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       }
       ExternalSystemApiUtil.executeProjectChangeAction(false, object : DisposeAwareProjectChange(project) {
         override fun execute() {
-          for ((module, url, type, packagePrefix) in sourceFoldersToChange) {
+          for ((module, url, type, packagePrefix, generated) in sourceFoldersToChange) {
             val moduleManager = ModuleRootManager.getInstance(module)
             val modifiableModuleModel = moduleManager.modifiableModel
             try {
@@ -108,6 +109,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
               if (contentEntry != null) {
                 val sourceFolder = contentEntry.addSourceFolder(url, type)
                 sourceFolder.packagePrefix = packagePrefix
+                (sourceFolder.jpsElement.getProperties(type) as? JavaSourceRootProperties)?.let { it.isForGeneratedSources = generated }
               }
             }
             finally {
@@ -119,7 +121,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }
   }
 
-  private data class SourceFolderModel(val module: Module, val url: String, val type: JpsModuleSourceRootType<*>, var packagePrefix: String)
+  private data class SourceFolderModel(val module: Module, val url: String, val type: JpsModuleSourceRootType<*>, var packagePrefix: String, val generated: Boolean = false)
 
   private inner class ModuleModel(val module: Module, val sourceFolders: MutableSet<String>) : Disposable {
     constructor(module: Module) : this(module, THashSet(FileUtil.PATH_HASHING_STRATEGY))
