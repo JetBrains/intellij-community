@@ -26,18 +26,18 @@ open class KindsResolverProcessor(
 
   final override fun getName(state: ResolveState): String? = name
 
-  final override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds
+  final override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds && kind !in candidates
 
   private val candidates = enumMapOf<GroovyResolveKind, GroovyResolveResult>()
 
-  final override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    if (element !is PsiNamedElement) return true
+  private fun executeInner(element: PsiElement, state: ResolveState) {
+    if (element !is PsiNamedElement) return
     require(element.isValid) {
       "Invalid element. ${elementInfo(element)}"
     }
 
     val elementName = getName(state, element)
-    if (name != elementName) return true
+    if (name != elementName) return
 
     val kind = getResolveKind(element)
     if (kind == null) {
@@ -51,7 +51,11 @@ open class KindsResolverProcessor(
     else if (kind !in candidates) {
       candidates[kind] = BaseGroovyResolveResult(element, place, state)
     }
-    return true
+  }
+
+  final override fun execute(element: PsiElement, state: ResolveState): Boolean {
+    executeInner(element, state)
+    return kinds.any { it !in candidates }
   }
 
   fun getCandidate(kind: GroovyResolveKind): GroovyResolveResult? = candidates[kind]
