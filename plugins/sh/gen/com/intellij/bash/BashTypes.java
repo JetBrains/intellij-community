@@ -166,7 +166,6 @@ public interface BashTypes {
   IElementType VAR = new BashTokenType("var");
   IElementType WHILE = new BashTokenType("while");
   IElementType WORD = new BashTokenType("word");
-  IElementType WORD_A = new BashTokenType("word a");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {

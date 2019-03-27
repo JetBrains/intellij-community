@@ -94,7 +94,7 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | '@' | '!' | vars | string | num | bash_expansion | 'file descriptor'
+private w ::= word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
 
 redirection ::= redirection_inner | '&>' w | num redirection_inner
 private redirection_inner ::= ('<&' | '>&') (num | '-')
@@ -108,7 +108,8 @@ string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
 
 variable ::= var
 private vars ::= variable | composed_var | command_substitution_command
-private composed_var ::= '$' (arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion) {pin=1}
+private composed_var ::= '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner {pin=2}
+private composed_var_inner ::= arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
 shell_parameter_expansion ::= '{' parameter_expansion_body '}' {pin=1}
 private parameter_expansion_body ::= param_body* {recoverWhile=parameter_expansion_body_recover}// todo: simplify lexer for parameters
@@ -195,7 +196,7 @@ function_def ::=           word argument_list  newlines block
                 | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
 private argument_list ::= '(' ')'
 
-subshell_command ::=  '(' list ')' {pin=1}
+subshell_command ::= '(' list ')' {pin=1}
 
 if_command ::= if compound_list then_clause
                elif_clause*

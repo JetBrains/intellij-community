@@ -879,22 +879,47 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '$' (arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion)
+  // '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner
   static boolean composed_var(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var")) return false;
     if (!nextTokenIs(b, DOLLAR)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, DOLLAR);
-    p = r; // pin = 1
     r = r && composed_var_1(b, l + 1);
+    p = r; // pin = 2
+    r = r && composed_var_inner(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
+  // &('(' | '((' | '{' | ARITH_SQUARE_LEFT)
   private static boolean composed_var_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = composed_var_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '(' | '((' | '{' | ARITH_SQUARE_LEFT
+  private static boolean composed_var_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "composed_var_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_PAREN);
+    if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
+    if (!r) r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, ARITH_SQUARE_LEFT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
+  static boolean composed_var_inner(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "composed_var_inner")) return false;
     boolean r;
     r = arithmetic_expansion(b, l + 1);
     if (!r) r = old_arithmetic_expansion(b, l + 1);
@@ -2529,7 +2554,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | '@' | '!' | vars | string | num | bash_expansion | 'file descriptor'
+  // word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
@@ -2538,6 +2563,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, AT);
     if (!r) r = consumeToken(b, BANG);
     if (!r) r = vars(b, l + 1);
+    if (!r) r = consumeToken(b, DOLLAR);
     if (!r) r = string(b, l + 1);
     if (!r) r = num(b, l + 1);
     if (!r) r = bash_expansion(b, l + 1);
