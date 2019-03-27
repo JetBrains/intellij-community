@@ -82,7 +82,6 @@ public class PluginManagerConfigurableNew
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
-  @SuppressWarnings("UseJBColor")
   public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", new JBColor(UIUtil.getListBackground(), new Color(0x313335)));
 
