@@ -24,6 +24,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -268,13 +271,18 @@ public class JDOMUtil {
     return load(file, null);
   }
 
+  @NotNull
+  public static Element load(@NotNull Path file) throws JDOMException, IOException {
+    return loadUsingStaX(new BufferedReader(new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)), null);
+  }
+
   /**
    * Internal use only.
    */
   @ApiStatus.Experimental
   @NotNull
   public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET)), factory);
+    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)), factory);
   }
 
   /**

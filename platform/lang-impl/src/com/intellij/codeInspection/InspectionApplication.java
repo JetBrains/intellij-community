@@ -9,6 +9,7 @@ import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -21,7 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -31,15 +34,22 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
@@ -81,24 +91,38 @@ public class InspectionApplication {
     }
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+    ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
+    try {
+      execute();
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      logError(e.getMessage());
+      gracefulExit();
+      return;
+    }
 
+    if (myErrorCodeRequired) {
+      ApplicationManagerEx.getApplicationEx().exit(true, true);
+    }
+  }
+
+  public void execute() throws Exception {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    application.runReadAction(() -> {
-      try {
-        final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        logMessage(1, InspectionsBundle.message("inspection.application.starting.up",
-                                                appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
-        application.setSaveAllowed(false);
-        logMessageLn(1, InspectionsBundle.message("inspection.done"));
+    application.runReadAction((ThrowableComputable<Object, Exception>)() -> {
+      final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+      logMessage(1, InspectionsBundle.message("inspection.application.starting.up",
+                                              appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
+      logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-        run();
-      }
-      catch (Exception e) {
-        LOG.error(e);
+      Disposable disposable = Disposer.newDisposable();
+      try {
+        run(FileUtilRt.toSystemIndependentName(myProjectPath), disposable);
       }
       finally {
-        if (myErrorCodeRequired) application.exit(true, true);
+        Disposer.dispose(disposable);
       }
+      return null;
     });
   }
 
@@ -108,134 +132,112 @@ public class InspectionApplication {
     myHelpProvider.printHelpAndExit();
   }
 
-  private void run() {
-    File tmpDir = null;
-    Project project = null;
-    try {
-      myProjectPath = myProjectPath.replace(File.separatorChar, '/');
-      VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(myProjectPath);
-      if (vfsProject == null) {
-        logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProjectPath));
+  private void run(@NotNull @SystemIndependent String projectPath, @NotNull Disposable parentDisposable) throws IOException, JDOMException {
+    VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(projectPath);
+    if (vfsProject == null) {
+      logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
+      printHelp();
+    }
+
+    logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
+    if (ConversionService.getInstance().convertSilently(projectPath, createConversionListener()).openingIsCanceled()) {
+      gracefulExit();
+      return;
+    }
+
+    Project project = ProjectUtil.openOrImport(projectPath, null, false);
+    if (project == null) {
+      logError("Unable to open project");
+      gracefulExit();
+      return;
+    }
+
+    Disposer.register(parentDisposable, () -> closeProject(project));
+
+    ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
+
+    PatchProjectUtil.patchProject(project);
+
+    logMessageLn(1, InspectionsBundle.message("inspection.done"));
+    logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
+
+    InspectionProfileImpl inspectionProfile = loadInspectionProfile(project);
+    if (inspectionProfile == null) return;
+
+    final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(project);
+    GlobalInspectionContextImpl context = im.createNewGlobalContext();
+    context.setExternalProfile(inspectionProfile);
+    im.setProfile(inspectionProfile.getName());
+
+    final AnalysisScope scope;
+    if (mySourceDirectory == null) {
+      final String scopeName = System.getProperty("idea.analyze.scope");
+      final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+      scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)
+                                 : new AnalysisScope(project);
+    }
+    else {
+      mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
+
+      VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
+      if (vfsDir == null) {
+        logError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
         printHelp();
       }
 
-      logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      final ConversionService conversionService = ConversionService.getInstance();
-      if (conversionService.convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
-        gracefulExit(null);
+      PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
+      scope = new AnalysisScope(psiDirectory);
+    }
+
+    logMessageLn(1, InspectionsBundle.message("inspection.done"));
+
+    if (!myRunWithEditorSettings) {
+      logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log.message", inspectionProfile.getName()));
+    }
+
+    InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
+    if (reportConverter == null && myOutputFormat != null && myOutputFormat.endsWith(".xsl")) {
+      // xslt converter
+      reportConverter = new XSLTReportConverter(myOutputFormat);
+    }
+
+    final Path resultsDataPath;
+    if ((reportConverter == null || !reportConverter.useTmpDirForRawData())
+        // use default xml converter(if null( or don't store default xml report in tmp dir
+        &&
+        myOutPath != null) {  // and don't use STDOUT stream
+      resultsDataPath = Paths.get(myOutPath);
+      Files.createDirectories(resultsDataPath);
+    }
+    else {
+      try {
+        File tmpDir = FileUtilRt.createTempDirectory("inspections", "data", false);
+        Disposer.register(parentDisposable, () -> FileUtil.delete(tmpDir));
+        resultsDataPath = tmpDir.toPath();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        System.err.println("Cannot create tmp directory.");
+        System.exit(1);
         return;
       }
-
-      project = ProjectUtil.openOrImport(myProjectPath, null, false);
-      if (project == null) {
-        logError("Unable to open project");
-        gracefulExit(null);
-        return;
-      }
-
-      ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
-
-      PatchProjectUtil.patchProject(project);
-
-      logMessageLn(1, InspectionsBundle.message("inspection.done"));
-      logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
-
-      InspectionProfileImpl inspectionProfile = loadInspectionProfile(project);
-      if (inspectionProfile == null) return;
-
-      final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(project);
-
-      GlobalInspectionContextImpl context = im.createNewGlobalContext();
-      context.setExternalProfile(inspectionProfile);
-      im.setProfile(inspectionProfile.getName());
-
-      final AnalysisScope scope;
-      if (mySourceDirectory == null) {
-        final String scopeName = System.getProperty("idea.analyze.scope");
-        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)
-                                   : new AnalysisScope(project);
-      }
-      else {
-        mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
-
-        VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
-        if (vfsDir == null) {
-          logError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          printHelp();
-        }
-
-        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
-        scope = new AnalysisScope(psiDirectory);
-      }
-
-      logMessageLn(1, InspectionsBundle.message("inspection.done"));
-
-      if (!myRunWithEditorSettings) {
-        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log.message", inspectionProfile.getName()));
-      }
-
-      InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
-      if (reportConverter == null && myOutputFormat != null && myOutputFormat.endsWith(".xsl")) {
-        // xslt converter
-        reportConverter = new XSLTReportConverter(myOutputFormat);
-      }
-
-      final String resultsDataPath;
-      if ((reportConverter == null || !reportConverter.useTmpDirForRawData()) // use default xml converter(if null( or don't store default xml report in tmp dir
-          && myOutPath != null) {  // and don't use STDOUT stream
-        resultsDataPath = myOutPath;
-      }
-      else {
-        try {
-          tmpDir = FileUtil.createTempDirectory("inspections", "data");
-          resultsDataPath = tmpDir.getPath();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          System.err.println("Cannot create tmp directory.");
-          System.exit(1);
-          return;
-        }
-      }
-
-      final List<File> inspectionsResults = new ArrayList<>();
-      runUnderProgress(project, context, scope, resultsDataPath, inspectionsResults);
-      File resultsDataFile = new File(resultsDataPath);
-      if (!resultsDataFile.exists() && !resultsDataFile.mkdirs()) {
-        logError("Unable to create output directory " + resultsDataPath);
-        gracefulExit(project);
-      }
-      final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
-      describeInspections(descriptionsFile,
-                          myRunWithEditorSettings ? null : inspectionProfile.getName(),
-                          inspectionProfile);
-      inspectionsResults.add(new File(descriptionsFile));
-      // convert report
-      if (reportConverter != null) {
-        try {
-          reportConverter.convert(resultsDataPath, myOutPath, context.getTools(), inspectionsResults);
-        }
-        catch (InspectionsReportConverter.ConversionException e) {
-          logError("\n" + e.getMessage());
-          printHelp();
-        }
-      }
     }
-    catch (IOException e) {
-      LOG.error(e);
-      logError(e.getMessage());
-      printHelp();
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      logError(e.getMessage());
-      gracefulExit(project);
-    }
-    finally {
-      // delete tmp dir
-      if (tmpDir != null) {
-        FileUtil.delete(tmpDir);
+
+    final List<Path> inspectionsResults = new ArrayList<>();
+    runUnderProgress(project, context, scope, resultsDataPath, inspectionsResults);
+    final Path descriptionsFile = resultsDataPath.resolve(DESCRIPTIONS + XML_EXTENSION);
+    describeInspections(descriptionsFile,
+                        myRunWithEditorSettings ? null : inspectionProfile.getName(),
+                        inspectionProfile);
+    inspectionsResults.add(descriptionsFile);
+    // convert report
+    if (reportConverter != null) {
+      try {
+        reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(), ContainerUtilRt.map2List(inspectionsResults, path -> path.toFile()));
+      }
+      catch (InspectionsReportConverter.ConversionException e) {
+        logError("\n" + e.getMessage());
+        printHelp();
       }
     }
   }
@@ -243,14 +245,14 @@ public class InspectionApplication {
   private void runUnderProgress(@NotNull Project project,
                                 @NotNull GlobalInspectionContextImpl context,
                                 @NotNull AnalysisScope scope,
-                                @NotNull String resultsDataPath,
-                                @NotNull List<File> inspectionsResults) {
+                                @NotNull Path resultsDataPath,
+                                @NotNull List<Path> inspectionsResults) {
     ProgressManager.getInstance().runProcess(() -> {
       if (!GlobalInspectionContextUtil.canRunInspections(project, false)) {
-        gracefulExit(project);
+        gracefulExit();
         return;
       }
-      context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+      context.launchInspectionsOffline(scope, resultsDataPath.toString(), myRunGlobalToolsOnly, inspectionsResults);
       logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
       if (!myErrorCodeRequired) {
         closeProject(project);
@@ -293,14 +295,11 @@ public class InspectionApplication {
     });
   }
 
-  private void gracefulExit(@Nullable Project project) {
+  private void gracefulExit() {
     if (myErrorCodeRequired) {
       System.exit(1);
     }
     else {
-      if (project != null) {
-        closeProject(project);
-      }
       throw new RuntimeException("Failed to proceed");
     }
   }
@@ -323,7 +322,7 @@ public class InspectionApplication {
       inspectionProfile = loadProfileByName(project, myProfileName);
       if (inspectionProfile == null) {
         logError("Profile with configured name (" + myProfileName + ") was not found (neither in project nor in config directory)");
-        gracefulExit(project);
+        gracefulExit();
         return null;
       }
       return inspectionProfile;
@@ -333,7 +332,7 @@ public class InspectionApplication {
       inspectionProfile = loadProfileByPath(myProfilePath);
       if (inspectionProfile == null) {
         logError("Failed to load profile from \'" + myProfilePath + "\'");
-        gracefulExit(project);
+        gracefulExit();
         return null;
       }
       return inspectionProfile;
@@ -457,7 +456,7 @@ public class InspectionApplication {
     }
   }
 
-  private static void describeInspections(@NonNls String myOutputPath, final String name, final InspectionProfile profile) throws IOException {
+  private static void describeInspections(@NonNls Path outputPath, @Nullable String name, @NotNull InspectionProfile profile) throws IOException {
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     final Map<String, Set<InspectionToolWrapper>> map = new HashMap<>();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
@@ -466,7 +465,7 @@ public class InspectionApplication {
       groupInspections.add(toolWrapper);
     }
 
-    try (FileWriter fw = new FileWriter(myOutputPath)) {
+    try (Writer fw = new OutputStreamWriter(Files.newOutputStream(outputPath), StandardCharsets.UTF_8)) {
       @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode(INSPECTIONS_NODE);
       if (name != null) {
