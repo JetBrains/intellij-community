@@ -1109,34 +1109,29 @@ public class PluginManagerConfigurableNew
         Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
         try {
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
-              Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
-              Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+            Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
 
-              if (query.length() > 1) {
-                try {
-                  for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
-                    IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
-                    if (descriptor != null) {
-                      result.add(descriptor);
-                    }
-                  }
-                }
-                catch (IOException ignore) {
-                }
-              }
-
-              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
-                for (IdeaPluginDescriptor descriptor : descriptors) {
-                  if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+            if (query.length() > 1) {
+              try {
+                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                  IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
+                  if (descriptor != null) {
                     result.add(descriptor);
                   }
                 }
               }
+              catch (IOException ignore) {
+              }
             }
-            catch (IOException e) {
-              PluginManagerMain.LOG.info(e);
+
+            for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
+              for (IdeaPluginDescriptor descriptor : descriptors) {
+                if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+                  result.add(descriptor);
+                }
+              }
             }
           }).get(300, TimeUnit.MILLISECONDS);
         }
@@ -1373,7 +1368,7 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() throws IOException {
+  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() {
     synchronized (myRepositoriesLock) {
       if (myAllRepositoriesMap != null) {
         return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
