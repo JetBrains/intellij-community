@@ -51,8 +51,8 @@ ArithWordAfter =  {ArithWordFirst} | [0-9#!]
 ParamExpansionWordFirst = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
 ParamExpansionWord = {ParamExpansionWordFirst}+
 
-AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^+~,;-]] | {EscapedChar} | {LineContinuation}
-AssignListWordAfter =  {AssignListWordFirst} | [$#!]
+AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^+~,-]] | {EscapedChar} | {LineContinuation}
+AssignListWordAfter =  {AssignListWordFirst} | [#!]
 AssignListWord = {AssignListWordFirst}{AssignListWordAfter}*
 
 Word = {WordFirst}{WordAfter}*
