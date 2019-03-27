@@ -48,6 +48,10 @@ public class ForwardIndexBasedExporter<Key, Value, Input> implements IndexExport
                               int inputId,
                               @NotNull MapReduceIndex<Key, Value, Input> mrIndex) throws IOException {
     ByteArraySequence inputData = mrIndex.getForwardIndexMap().get(inputId);
+    //TODO
+    if (inputData == null) {
+      inputData = new ByteArraySequence(new byte[0]);
+    }
     myExportMap.put(substitutedInput, inputData);
   }
 

@@ -31,7 +31,7 @@ import java.security.MessageDigest;
 /**
  * @author Maxim.Mossienko
  */
-class ContentHashesSupport {
+public class ContentHashesSupport {
   private static volatile ContentHashesUtil.HashEnumerator ourHashesWithFileType;
 
   static void initContentHashesEnumerator() throws IOException {
@@ -56,7 +56,7 @@ class ContentHashesSupport {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
-  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
+  public static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
     MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
 
     Charset defaultCharset = Charset.defaultCharset();
@@ -72,7 +72,7 @@ class ContentHashesSupport {
     return enumerateHash(calcContentHashWithFileType(bytes, charset, fileType));
   }
 
-  static int calcContentHashId(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+  public static int calcContentHashId(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
     return enumerateHash(calcContentHash(bytes, fileType));
   }
 
