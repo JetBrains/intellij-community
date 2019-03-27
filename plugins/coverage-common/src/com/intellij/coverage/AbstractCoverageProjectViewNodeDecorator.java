@@ -22,9 +22,20 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
     myProject = project;
   }
 
+  /**
+   * @deprecated Use {@link #getCoverageDataManager(Project)}
+   * @return
+   */
   @Nullable
+  @Deprecated
   protected final CoverageDataManager getCoverageDataManager() {
-    return CoverageDataManager.getInstance(myProject);
+    return getCoverageDataManager(myProject);
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  @Nullable
+  protected final CoverageDataManager getCoverageDataManager(@NotNull Project project) {
+    return CoverageDataManager.getInstance(project);
   }
 
   protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, String coverageInfo) {
