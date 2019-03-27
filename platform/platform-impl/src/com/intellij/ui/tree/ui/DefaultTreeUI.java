@@ -81,8 +81,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return super.tree; // TODO: tree ???
   }
 
-  private boolean isLeaf(@NotNull TreePath path) {
-    return super.treeModel.isLeaf(path.getLastPathComponent()); // TODO: treeModel ???
+  private boolean isLeaf(@Nullable Object value) {
+    return value == null || super.treeModel.isLeaf(value); // TODO: treeModel ???
   }
 
   private boolean isValid(@Nullable JTree tree) {
@@ -134,7 +134,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           bounds.y += insets.top;
 
           int depth = getDepth(tree, path);
-          boolean leaf = isLeaf(path);
+          boolean leaf = isLeaf(path.getLastPathComponent());
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
           boolean focused = tree.hasFocus();
@@ -168,7 +168,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
       }
       paintDropLine(g);
-      // TODO: rendererPane ???
       rendererPane.removeAll();
     }
     finally {
@@ -189,7 +188,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();
-    if (tree == null || path == null || isLeaf(path)) return false;
+    if (tree == null || path == null || isLeaf(path.getLastPathComponent())) return false;
     int depth = getDepth(tree, path);
     Control.Painter painter = getPainter(tree);
     Insets insets = tree.getInsets();
@@ -203,7 +202,44 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return 0;
     TreePath path = getPathForRow(tree, row);
     if (path == null) return 0;
-    return getPainter(tree).getRendererOffset(control, getDepth(tree, path), isLeaf(path));
+    return getPainter(tree).getRendererOffset(control, getDepth(tree, path), isLeaf(path.getLastPathComponent()));
+  }
+
+  @Override
+  protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
+    return new AbstractLayoutCache.NodeDimensions() {
+      @Override
+      public Rectangle getNodeDimensions(Object value, int row, int depth, boolean expanded, Rectangle bounds) {
+        JTree tree = getTree();
+        if (tree == null) return null;
+
+        boolean leaf = isLeaf(value);
+        Dimension size = null;
+        // TODO: editingComponent, editingRow ???
+        if (editingComponent != null && editingRow == row) {
+          size = editingComponent.getPreferredSize();
+        }
+        else if (currentCellRenderer != null) {
+          boolean selected = tree.isRowSelected(row);
+          Component component = currentCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, false);
+          rendererPane.add(component); // Only ever removed when UI changes, this is OK!
+          component.validate();
+          size = component.getPreferredSize();
+        }
+        if (size == null) return null;
+
+        int x = getPainter(tree).getRendererOffset(control, depth, leaf);
+        int height = getRowHeight();
+        if (height <= 0) height = size.height;
+        if (bounds == null) return new Rectangle(x, 0, size.width, height);
+
+        bounds.x = x;
+        bounds.y = 0;
+        bounds.width = size.width;
+        bounds.height = height;
+        return bounds;
+      }
+    };
   }
 
   @Override
