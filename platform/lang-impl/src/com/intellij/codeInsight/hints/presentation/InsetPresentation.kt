@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent
 
 /**
  * Presentation that wraps existing one into rectangle with given insets
+ * All mouse events (even those, that are outside of inner rectangle) are still passed to underlying presentation.
  */
 class InsetPresentation(
   val presentation: InlayPresentation,
@@ -25,32 +26,5 @@ class InsetPresentation(
     g.withTranslated(left, top) {
       presentation.paint(g, attributes)
     }
-  }
-
-  override fun mouseClicked(e: MouseEvent, editorPoint: Point) {
-    if (isInBounds(e)) {
-      e.withTranslated(left, top) {
-        presentation.mouseClicked(e, editorPoint)
-      }
-    }
-  }
-
-  private fun isInBounds(e: MouseEvent): Boolean {
-    val eventX = e.x
-    val eventY = e.y
-    return eventX > left && eventX < presentation.width - (left + right) && eventY > top && eventY < presentation.height - (top + down)
-  }
-
-  override fun mouseMoved(e: MouseEvent) {
-    if (isInBounds(e)) {
-      e.withTranslated(left, top) {
-        presentation.mouseMoved(e)
-      }
-    }
-  }
-
-  override fun mouseExited() {
-    super.mouseExited()
-    // TODO
   }
 }

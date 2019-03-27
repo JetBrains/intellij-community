@@ -4,6 +4,9 @@ package com.intellij.codeInsight.hints.presentation
 import java.awt.Point
 import java.awt.event.MouseEvent
 
+/**
+ * Note to all API: you should not rely on fact, that if some method called then mouse inside rectangle (0, 0), (width, height)
+ */
 interface InputHandler {
   /**
    * Called when user clicks on presentation.
