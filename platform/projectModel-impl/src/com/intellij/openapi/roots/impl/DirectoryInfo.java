@@ -65,4 +65,9 @@ public abstract class DirectoryInfo {
    */
   @Nullable
   public abstract String getUnloadedModuleName();
+
+  /**
+   * @return true if {@code dir} is excluded and there are content entries under(including) the {@code dir}
+   */
+  public abstract boolean hasContentBeneathExcluded(@NotNull VirtualFile dir);
 }
