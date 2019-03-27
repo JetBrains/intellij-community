@@ -288,8 +288,8 @@ public class ConsoleHistoryController {
     public void actionPerformed(@NotNull final AnActionEvent e) {
       boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
       Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
-      if (!myMultiline && command == null) return;
-      setConsoleText(command, myNext && !hasHistory, true);
+      if (!myMultiline && command == null || !hasHistory && !myNext) return;
+      setConsoleText(command, !hasHistory, true);
     }
 
     @Override
