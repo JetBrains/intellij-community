@@ -27,6 +27,6 @@ class GrUReferenceExpression(
 
   override fun resolve(): PsiElement? = sourcePsi.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =
-    (psi as? PsiPolyVariantReference)?.multiResolve(false)?.asIterable() ?: emptyList()
+    (sourcePsi as? PsiPolyVariantReference)?.multiResolve(false)?.asIterable() ?: emptyList()
 
 }
