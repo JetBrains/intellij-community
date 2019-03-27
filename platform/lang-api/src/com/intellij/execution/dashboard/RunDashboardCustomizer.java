@@ -18,11 +18,13 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 
 /**
  * Register this extension to customize Run Dashboard.
@@ -48,5 +50,10 @@ public abstract class RunDashboardCustomizer {
 
   public boolean handleDoubleClick(@NotNull MouseEvent event, @NotNull RunDashboardRunConfigurationNode node) {
     return false;
+  }
+
+  @Nullable
+  public Collection<? extends AbstractTreeNode> getChildren(@NotNull RunDashboardRunConfigurationNode node) {
+    return null;
   }
 }

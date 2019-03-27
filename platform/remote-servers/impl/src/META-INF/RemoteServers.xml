@@ -61,9 +61,13 @@
               text="Debug" description="Deploy and debug a chosen item on the selected remote server" icon="AllIcons.Actions.StartDebugger"/>
 
       <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"
-              text="Deploy" description="Deploy the selected item" icon="AllIcons.Nodes.Deploy"/>
+              text="Deploy" description="Deploy the selected item" icon="AllIcons.Nodes.Deploy">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
       <action id="Servers.Undeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.UndeployAction"
-              text="Undeploy" description="Undeploy the selected item" icon="AllIcons.Nodes.Undeploy"/>
+              text="Undeploy" description="Undeploy the selected item" icon="AllIcons.Nodes.Undeploy">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
       <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"
               text="Debug" description="Deploy and debug the selected item" icon="AllIcons.Actions.StartDebugger"/>
       <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"
