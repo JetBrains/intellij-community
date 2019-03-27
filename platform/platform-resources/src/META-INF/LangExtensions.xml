@@ -377,7 +377,20 @@
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
 
+    <!--  Inlay hints  -->
     <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
+
+    <projectConfigurable instance="com.intellij.codeInsight.hints.config.InlayHintsConfigurable"
+                         id="inlay.hints"
+                         parentId="editor"
+                         key="settings.hints"
+                         bundle="messages.ApplicationBundle"
+                         dynamic="true"
+                         groupWeight="1"/>
+
+    <projectService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
+    <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.ParameterInlayHintsProviderFactory"/>
+    <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
