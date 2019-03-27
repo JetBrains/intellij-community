@@ -15,7 +15,10 @@
  */
 package org.jetbrains.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -39,29 +42,11 @@ interface UMethod : UDeclaration, PsiMethod {
    */
   val uastParameters: List<UParameter>
 
-  /**
-   * Returns true, if the method overrides a method of a super class.
-   *
-   * **Deprecated:** current implementation for Java relies on presence of `@Override` annotation which is not fully reliable.
-   * Please perform your own check with required level of reliability.
-   * To be removed in IDEA 2019.2
-   */
-  @Deprecated("Redundant method with uncertain implementation",
-              ReplaceWith(
-                "javaPsi.modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) || javaPsi.findSuperMethods().isNotEmpty()",
-                "com.intellij.psi.CommonClassNames"
-              )
-  )
-  val isOverride: Boolean
-
   override fun getName(): String
 
   override fun getReturnType(): PsiType?
 
   override fun isConstructor(): Boolean
-
-  @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody(): PsiCodeBlock? = javaPsi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return

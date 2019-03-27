@@ -23,10 +23,6 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, UElement {
 
-  @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
-  @Deprecated("use JavaAbstractUElement(givenParent)", ReplaceWith("JavaAbstractUElement(givenParent)"))
-  constructor() : this(null)
-
   override fun equals(other: Any?): Boolean {
     if (other !is UElement || other.javaClass != this.javaClass) return false
     return if (this.sourcePsi != null) this.sourcePsi == other.sourcePsi else this === other
@@ -127,10 +123,6 @@ private inline fun branchHasElement(child: PsiElement?, parent: PsiElement?, pre
 }
 
 abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUElement(givenParent), UExpression {
-
-  @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
-  @Deprecated("use JavaAbstractUExpression(givenParent)", ReplaceWith("JavaAbstractUExpression(givenParent)"))
-  constructor() : this(null)
 
   override fun evaluate(): Any? {
     val project = sourcePsi?.project ?: return null
