@@ -16,16 +16,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.java"/>
 
-  <module value="com.intellij.modules.externalSystem"/>
-  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <extensionPoints>
-    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-  </extensionPoints>
-  <extensions defaultExtensionNs="com.intellij">
-    <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-  </extensions>
-  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
   <xi:include href="/componentSets/Compiler.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
