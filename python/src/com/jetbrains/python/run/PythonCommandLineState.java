@@ -322,7 +322,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static GeneralCommandLine generalCommandLine(boolean runWithPty) {
-    return runWithPty ? new PtyCommandLine() : new GeneralCommandLine();
+    return runWithPty ? new PtyCommandLine().withConsoleMode(false) : new GeneralCommandLine();
   }
 
   /**
