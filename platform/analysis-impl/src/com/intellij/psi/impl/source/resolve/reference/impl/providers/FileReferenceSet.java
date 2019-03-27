@@ -441,19 +441,8 @@ public class FileReferenceSet {
     return myReferences == null || myReferences.length == 0 ? null : myReferences[myReferences.length - 1];
   }
 
-  //TODO: в HTML реализовано.
-  // Djano project -> TEMPLATES -> DIRS
-  // относительный -- относительно текущей папки + возможно, относительно WORKING_DIR
-  // подумать о том, чтобы резолвить по точке + разумный набор функций.
-
   @NotNull
   public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
-    return getAbsoluteTopLevelDirLocations(file, false);
-  }
-
-  @NotNull
-  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file,
-                                                                              boolean shouldCheckOutsideProject) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return Collections.emptyList();
 

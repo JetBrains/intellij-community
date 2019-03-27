@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- *
+ * We accept following paths.
  * 1. Relative path without slash are resolved when they are argument of function/method which is likely to accept
  * paths. Such functions consist of<br>
  * a) predefined list of functions (read_csv etc);<br>
