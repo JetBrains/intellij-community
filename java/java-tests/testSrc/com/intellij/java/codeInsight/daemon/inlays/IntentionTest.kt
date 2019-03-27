@@ -22,7 +22,7 @@ class BlackListMethodIntentionTest : LightCodeInsightFixtureTestCase() {
 
   override fun tearDown() {
     EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
-    ParameterNameHintsSettings.Companion.getInstance().loadState(default.state)
+    ParameterNameHintsSettings.getInstance().loadState(default.state)
 
     super.tearDown()
   }

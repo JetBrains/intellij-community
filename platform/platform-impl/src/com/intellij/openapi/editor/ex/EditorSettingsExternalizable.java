@@ -623,10 +623,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.hints.InlayHintsSettings#hintsEnabled to get information about concrete language
+   */
+  @Deprecated
   public boolean isShowParameterNameHints() {
     return myOptions.SHOW_PARAMETER_NAME_HINTS;
   }
 
+  /**
+   * @deprecated Use com.intellij.codeInsight.hints.InlayHintsSettings#changeHintTypeStatus to do it for concrete language
+   */
+  @Deprecated
   public void setShowParameterNameHints(boolean value) {
     myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }
