@@ -37,7 +37,7 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final long myDurationMillis;
   private final boolean myExpectedFileTemp;
   private final boolean myActualFileTemp;
-  private boolean myPrintExpectedAndActualValues = true;
+  private final boolean myPrintExpectedAndActualValues;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
@@ -137,6 +137,34 @@ public class TestFailedEvent extends TreeNodeEvent {
                          boolean expectedFileTemp,
                          boolean actualFileTemp,
                          long durationMillis) {
+    this(testName,
+         id,
+         localizedFailureMessage,
+         stackTrace,
+         testError,
+         comparisonFailureActualText,
+         comparisonFailureExpectedText,
+         true,
+         expectedFilePath,
+         actualFilePath,
+         expectedFileTemp,
+         actualFileTemp,
+         durationMillis);
+  }
+
+  private TestFailedEvent(@Nullable String testName,
+                          @Nullable String id,
+                          @NotNull String localizedFailureMessage,
+                          @Nullable String stackTrace,
+                          boolean testError,
+                          @Nullable String comparisonFailureActualText,
+                          @Nullable String comparisonFailureExpectedText,
+                          boolean printExpectedAndActualValues,
+                          @Nullable String expectedFilePath,
+                          @Nullable String actualFilePath,
+                          boolean expectedFileTemp,
+                          boolean actualFileTemp,
+                          long durationMillis) {
     super(testName, id);
     myLocalizedFailureMessage = localizedFailureMessage;
     myStacktrace = stackTrace;
@@ -149,6 +177,7 @@ public class TestFailedEvent extends TreeNodeEvent {
       catch (IOException ignore) {}
     }
     myComparisonFailureActualText = comparisonFailureActualText;
+    myPrintExpectedAndActualValues = printExpectedAndActualValues;
 
     myActualFilePath = actualFilePath;
     myComparisonFailureExpectedText = comparisonFailureExpectedText;
