@@ -128,6 +128,10 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         final String interpreter = findInterpreter(scripts);
         if (interpreter != null) candidates.add(interpreter);
       }
+      if (candidates.isEmpty()) {
+        final String interpreter = findInterpreter(rootDir);
+        if (interpreter != null) candidates.add(interpreter);
+      }
     }
     return candidates;
   }
