@@ -1,6 +1,6 @@
 word ('read')
 WHITE_SPACE (' ')
-STRING2 (''test'')
+RAW_STRING (''test'')
 WHITE_SPACE (' ')
 assignment_word ('a')
 [ ('[')

@@ -36,7 +36,7 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey REDIRECTION = TextAttributesKey.createTextAttributesKey("BASH.REDIRECTION", DefaultLanguageHighlighterColors.OPERATION_SIGN);
   public static final TextAttributesKey CONDITIONAL = TextAttributesKey.createTextAttributesKey("BASH.CONDITIONAL", DefaultLanguageHighlighterColors.KEYWORD);
 
-  public static final TextAttributesKey STRING2 = TextAttributesKey.createTextAttributesKey("BASH.STRING2", DefaultLanguageHighlighterColors.STRING);
+  public static final TextAttributesKey RAW_STRING = TextAttributesKey.createTextAttributesKey("BASH.RAW_STRING", DefaultLanguageHighlighterColors.STRING);
 
   //psi highlighting
   public static final TextAttributesKey BINARY_DATA = TextAttributesKey.createTextAttributesKey("BASH.BINARY_DATA");
@@ -91,7 +91,7 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
 
     fillMap(attributes1, shebangSet, SHEBANG_COMMENT);
 
-    fillMap(attributes1, STRING2, BashTokenTypes.STRING2);
+    fillMap(attributes1, RAW_STRING, BashTokenTypes.RAW_STRING);
 
     fillMap(attributes1, VAR_USE, BashTokenTypes.VAR);
 

@@ -158,7 +158,7 @@ public interface BashTokenTypes extends BashTypes {
   //mapped element type
 //  IElementType STRING_CONTENT = new BashTokenType("string content");
 
-  TokenSet stringLiterals = TokenSet.create(WORD, STRING2, INT, COLON);
+  TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);
   IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
 
   // test Operators

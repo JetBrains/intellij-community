@@ -154,7 +154,7 @@ public interface BashTypes {
   IElementType SHEBANG = new BashTokenType("shebang");
   IElementType SHIFT_LEFT = new BashTokenType("<<");
   IElementType SHIFT_RIGHT = new BashTokenType(">>");
-  IElementType STRING2 = new BashTokenType("STRING2");
+  IElementType RAW_STRING = new BashTokenType("RAW_STRING");
   IElementType STRING_BEGIN = new BashTokenType("string_begin");
   IElementType STRING_CONTENT = new BashTokenType("string_content");
   IElementType STRING_END = new BashTokenType("string_end");

@@ -403,7 +403,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(STRING2)(''$[1+2]'')
+              PsiElement(RAW_STRING)(''$[1+2]'')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

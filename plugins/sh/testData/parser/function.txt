@@ -310,7 +310,7 @@ BASH_FILE
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
                     STRING
-                      PsiElement(STRING2)('''')
+                      PsiElement(RAW_STRING)('''')
               PsiElement(\n)('\n')
             PsiElement(})('}')
         PsiWhiteSpace(' ')

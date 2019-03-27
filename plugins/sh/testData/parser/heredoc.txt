@@ -10,7 +10,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(STRING2)(''/lib/systemd/system/add-localhost.service'')
+              PsiElement(RAW_STRING)(''/lib/systemd/system/add-localhost.service'')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -104,7 +104,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(STRING2)(''/etc/add-localhost.sh'')
+              PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -127,7 +127,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(STRING2)(''/etc/add-localhost.sh'')
+              PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

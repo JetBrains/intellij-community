@@ -396,7 +396,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)('''')
+                        PsiElement(RAW_STRING)('''')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
@@ -521,7 +521,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''{ print $2 }'')
+                        PsiElement(RAW_STRING)(''{ print $2 }'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
@@ -531,7 +531,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''linux-image-.*-generic'')
+                        PsiElement(RAW_STRING)(''linux-image-.*-generic'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')

@@ -12,7 +12,7 @@ BASH_FILE
       PsiElement(word)('-pl')
       PsiWhiteSpace(' ')
       STRING
-        PsiElement(STRING2)(''exit'')
+        PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
       PsiElement(int)('1')
   PsiElement(\n)('\n')
@@ -29,7 +29,7 @@ BASH_FILE
       PsiElement(word)('-pl')
       PsiWhiteSpace(' ')
       STRING
-        PsiElement(STRING2)(''exit'')
+        PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
       PsiElement(int)('1')
       PsiWhiteSpace(' ')

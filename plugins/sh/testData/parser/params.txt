@@ -1165,7 +1165,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 SIMPLE_COMMAND_ELEMENT
                                   STRING
-                                    PsiElement(STRING2)(''^#'')
+                                    PsiElement(RAW_STRING)(''^#'')
                                 PsiWhiteSpace(' ')
                                 SIMPLE_COMMAND_ELEMENT
                                   STRING
@@ -1350,7 +1350,7 @@ BASH_FILE
                                           PsiWhiteSpace(' ')
                                           SIMPLE_COMMAND_ELEMENT
                                             STRING
-                                              PsiElement(STRING2)(''^#'')
+                                              PsiElement(RAW_STRING)(''^#'')
                                           PsiWhiteSpace(' ')
                                           SIMPLE_COMMAND_ELEMENT
                                             STRING
@@ -1370,7 +1370,7 @@ BASH_FILE
                                           PsiWhiteSpace(' ')
                                           SIMPLE_COMMAND_ELEMENT
                                             STRING
-                                              PsiElement(STRING2)(''^service'')
+                                              PsiElement(RAW_STRING)(''^service'')
                                         PsiWhiteSpace(' ')
                                         PsiElement(|)('|')
                                         PsiWhiteSpace(' ')
@@ -1383,7 +1383,7 @@ BASH_FILE
                                           PsiWhiteSpace(' ')
                                           SIMPLE_COMMAND_ELEMENT
                                             STRING
-                                              PsiElement(STRING2)(''^group'')
+                                              PsiElement(RAW_STRING)(''^group'')
                                         PsiWhiteSpace(' ')
                                         PsiElement(|)('|')
                                         PsiWhiteSpace(' ')

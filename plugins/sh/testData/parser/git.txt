@@ -144,7 +144,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''branches/*__closed__*'')
+                        PsiElement(RAW_STRING)(''branches/*__closed__*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
@@ -168,7 +168,7 @@ BASH_FILE
                               PsiElement(assignment_word)('IFS')
                               PsiElement(=)('=')
                               STRING
-                                PsiElement(STRING2)('''')
+                                PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement(word)('read')
@@ -260,7 +260,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''branches/*__head__*'')
+                        PsiElement(RAW_STRING)(''branches/*__head__*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
@@ -284,7 +284,7 @@ BASH_FILE
                               PsiElement(assignment_word)('IFS')
                               PsiElement(=)('=')
                               STRING
-                                PsiElement(STRING2)('''')
+                                PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement(word)('read')
@@ -376,7 +376,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''branches/*'')
+                        PsiElement(RAW_STRING)(''branches/*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
@@ -400,7 +400,7 @@ BASH_FILE
                               PsiElement(assignment_word)('IFS')
                               PsiElement(=)('=')
                               STRING
-                                PsiElement(STRING2)('''')
+                                PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement(word)('read')

@@ -370,7 +370,7 @@ BASH_FILE
           PsiElement(assignment_word)('name')
           PsiElement(=)('=')
           STRING
-            PsiElement(STRING2)(''name'')
+            PsiElement(RAW_STRING)(''name'')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -493,7 +493,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(STRING2)(''hello'')
+              PsiElement(RAW_STRING)(''hello'')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('world')
@@ -620,7 +620,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''*[0-9]*'')
+                        PsiElement(RAW_STRING)(''*[0-9]*'')
                     PsiWhiteSpace(' ')
                     PsiWhiteSpace('\\n')
                     PsiWhiteSpace(' ')
@@ -636,7 +636,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''\.*'')
+                        PsiElement(RAW_STRING)(''\.*'')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(!)('!')
@@ -646,7 +646,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''*conf'')
+                        PsiElement(RAW_STRING)(''*conf'')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('-maxdepth')
@@ -665,7 +665,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''s/^\.\///'')
+                        PsiElement(RAW_STRING)(''s/^\.\///'')
             PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -713,7 +713,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''*[0-9]*'')
+                        PsiElement(RAW_STRING)(''*[0-9]*'')
                     PsiWhiteSpace(' ')
                     PsiWhiteSpace('\\n')
                     PsiWhiteSpace(' ')
@@ -729,7 +729,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''\.*'')
+                        PsiElement(RAW_STRING)(''\.*'')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(!)('!')
@@ -739,7 +739,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''*conf'')
+                        PsiElement(RAW_STRING)(''*conf'')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement(word)('-maxdepth')
@@ -758,7 +758,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(STRING2)(''s/^\.\///'')
+                        PsiElement(RAW_STRING)(''s/^\.\///'')
             PsiElement())(')')
           LIST_TERMINATOR
             PsiElement(\n)('\n')
