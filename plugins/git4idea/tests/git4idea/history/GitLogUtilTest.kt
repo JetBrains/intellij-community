@@ -62,7 +62,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     git("mv fileToRename.txt renamedFile.txt")
     repo.addCommit("Rename fileToRename.txt")
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, false, true)
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true, false, false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })
