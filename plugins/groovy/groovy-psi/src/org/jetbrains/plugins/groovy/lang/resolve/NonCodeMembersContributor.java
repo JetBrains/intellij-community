@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
@@ -106,11 +105,7 @@ public abstract class NonCodeMembersContributor {
       if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, contributor)) return false;
     }
 
-    return GroovyDslFileIndex.processExecutors(
-      qualifierType,
-      place,
-      (holder, descriptor) -> holder.processMembers(descriptor, processor, state)
-    );
+    return true;
   }
 
   private static boolean invokeContributor(@NotNull PsiType qualifierType,

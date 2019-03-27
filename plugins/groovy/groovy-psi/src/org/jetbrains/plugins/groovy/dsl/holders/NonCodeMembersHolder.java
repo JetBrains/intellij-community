@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDes
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -203,18 +202,16 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
 
   @Override
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
-    for (PsiScopeProcessor each : MultiProcessor.allProcessors(_processor)) {
-      String hint = ResolveUtil.getNameHint(each);
-      ElementClassHint classHint = each.getHint(ElementClassHint.KEY);
-      if (shouldProcessMethods(classHint)) {
-        for (PsiMethod declaration : myMethods) {
-          if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
-        }
+    String hint = ResolveUtil.getNameHint(_processor);
+    ElementClassHint classHint = _processor.getHint(ElementClassHint.KEY);
+    if (shouldProcessMethods(classHint)) {
+      for (PsiMethod declaration : myMethods) {
+        if (checkName(hint, declaration) && !_processor.execute(declaration, state)) return false;
       }
-      if (shouldProcessProperties(classHint)) {
-        for (PsiVariable declaration : myVariables) {
-          if (checkName(hint, declaration) && !each.execute(declaration, state)) return false;
-        }
+    }
+    if (shouldProcessProperties(classHint)) {
+      for (PsiVariable declaration : myVariables) {
+        if (checkName(hint, declaration) && !_processor.execute(declaration, state)) return false;
       }
     }
     return true;
