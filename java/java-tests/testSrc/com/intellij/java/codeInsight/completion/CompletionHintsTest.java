@@ -1718,6 +1718,17 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { Character.toChars(<Hint text=\"codePoint:\"/>, <Hint text=\"dst:\"/>, <HINT text=\"dstIndex:\"/><caret>) } }");
   }
 
+  public void testPreferSamePackageClassesToConstructorsFromNonImportedClass() {
+    myFixture.addClass("package pkg; public class SubmissionPublisher {" +
+                       "public SubmissionPublisher(int a) {}" +
+                       "public SubmissionPublisher(int a, int b) {}" +
+                       "}");
+    myFixture.addClass("class Submarine {}");
+    configureJava("class C { new Subm<caret> } }");
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "Submarine", "SubmissionPublisher");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

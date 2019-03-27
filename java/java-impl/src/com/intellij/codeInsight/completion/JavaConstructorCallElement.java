@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -114,6 +115,11 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     presentation.appendTailText(tailText.substring(0, genericsEnd), false);
     presentation.appendTailText(MemberLookupHelper.getMethodParameterString(myConstructor, mySubstitutor), false);
     presentation.appendTailText(tailText.substring(genericsEnd), true);
+  }
+
+  @NotNull
+  public PsiClass getConstructedClass() {
+    return Objects.requireNonNull(myConstructor.getContainingClass());
   }
 
   static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
