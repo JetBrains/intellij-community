@@ -13,7 +13,6 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.impl.DebugAssertions;
-import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
@@ -74,10 +73,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
   public Map<Key, Value> readData(@NotNull Input content) throws IOException {
     Map<Key, Value> data = null;
 
-    FileContent fileContent = (FileContent)content;
     if (doReadSavedPersistentData) {
       if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-        int hashId = getHashOfContent(fileContent);
+        int hashId = getHashId(content);
         ByteArraySequence bytes = readContents(hashId);
 
         if (bytes != null) {
@@ -87,11 +85,9 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
             boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
             if (!sameValueForSavedIndexedResultAndCurrentOne) {
               DebugAssertions.error(
-                "Unexpected difference in indexing of %s by index %s, file type %s, charset %s\ndiff %s\nprevious indexed info %s",
-                fileContent.getFile(),
+                "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
+                getContentDebugData(content),
                 myIndexId,
-                fileContent.getFileType().getName(),
-                ((FileContentImpl)fileContent).getCharset(),
                 buildDiff(data, contentData),
                 myIndexingTrace.get(hashId)
               );
@@ -105,17 +101,12 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
 
   @Override
   public void putData(@Nullable Input content, @NotNull Map<Key, Value> data) throws IOException {
-    FileContent fileContent = (FileContent)content;
-    int hashId = getHashOfContent(fileContent);
+    int hashId = getHashId(content);
     boolean saved = savePersistentData(data, hashId);
     if (DebugAssertions.EXTRA_SANITY_CHECKS) {
       if (saved) {
         try {
-          myIndexingTrace.put(hashId, ((FileContentImpl)fileContent).getCharset() +
-                                      "," +
-                                      fileContent.getFileType().getName() +
-                                      "," +
-                                      fileContent.getFile().getPath() +
+          myIndexingTrace.put(hashId, getContentDebugData(content) +
                                       "," +
                                       ExceptionUtil.getThrowableText(new Throwable()));
         }
@@ -124,6 +115,12 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
         }
       }
     }
+  }
+
+  @NotNull
+  private String getContentDebugData(Input input) {
+    FileContentImpl content = (FileContentImpl) input;
+    return "[" + content.getFile().getPath() + ";" + content.getFileType().getName() + ";" + content.getCharset() + "]";
   }
 
   @Override
