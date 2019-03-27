@@ -40,7 +40,7 @@ interface UClass : UDeclaration, PsiClass {
    * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
    */
   override fun getSuperClass(): UClass? {
-    val superClass = psi.superClass ?: return null
+    val superClass = javaPsi.superClass ?: return null
     return getUastContext().convertWithParent(superClass)
   }
 
@@ -52,16 +52,16 @@ interface UClass : UDeclaration, PsiClass {
   val uastDeclarations: List<UDeclaration>
 
   override fun getFields(): Array<UField> =
-    psi.fields.map { getLanguagePlugin().convert<UField>(it, this) }.toTypedArray()
+    javaPsi.fields.map { getLanguagePlugin().convert<UField>(it, this) }.toTypedArray()
 
   override fun getInitializers(): Array<UClassInitializer> =
-    psi.initializers.map { getLanguagePlugin().convert<UClassInitializer>(it, this) }.toTypedArray()
+    javaPsi.initializers.map { getLanguagePlugin().convert<UClassInitializer>(it, this) }.toTypedArray()
 
   override fun getMethods(): Array<UMethod> =
-    psi.methods.map { getLanguagePlugin().convert<UMethod>(it, this) }.toTypedArray()
+    javaPsi.methods.map { getLanguagePlugin().convert<UMethod>(it, this) }.toTypedArray()
 
   override fun getInnerClasses(): Array<UClass> =
-    psi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
+    javaPsi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
 
   override fun asLogString(): String = log("name = $name")
 
@@ -73,14 +73,14 @@ interface UClass : UDeclaration, PsiClass {
   }
 
   override fun asRenderString(): String = buildString {
-    append(psi.renderModifiers())
+    append(javaPsi.renderModifiers())
     val kind = when {
-      psi.isAnnotationType -> "annotation"
-      psi.isInterface -> "interface"
-      psi.isEnum -> "enum"
+      javaPsi.isAnnotationType -> "annotation"
+      javaPsi.isInterface -> "interface"
+      javaPsi.isEnum -> "enum"
       else -> "class"
     }
-    append(kind).append(' ').append(psi.name)
+    append(kind).append(' ').append(javaPsi.name)
     val superTypes = uastSuperTypes
     if (superTypes.isNotEmpty()) {
       append(" : ")
