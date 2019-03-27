@@ -58,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -752,9 +753,8 @@ public class InjectedLanguageUtil {
       .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())
       .stream()
       .map(documentWindow -> PsiDocumentManager.getInstance(containingFile.getProject()).getPsiFile(documentWindow))
-      .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.INSTANCE.substituteLanguage(language, file.getVirtualFile(),
-                                                                                                             file.getProject()))
-      .findFirst()
+      .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.INSTANCE.substituteLanguage(language, file.getVirtualFile(), file.getProject()))
+      .max(Comparator.comparingInt(PsiElement::getTextLength))
       .orElse(null);
   }
 
