@@ -15,10 +15,7 @@
  */
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiAnnotationMemberValue
-import com.intellij.psi.PsiAnnotationMethod
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -47,6 +44,9 @@ interface UMethod : UDeclaration, PsiMethod {
   override fun getReturnType(): PsiType?
 
   override fun isConstructor(): Boolean
+
+  @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
+  override fun getBody(): PsiCodeBlock? = javaPsi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return
