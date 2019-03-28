@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -450,14 +451,15 @@ public class ExtractMethodWithResultObjectProcessor {
   void doRefactoring() {
     LOG.warn("doRefactoring");
 
-    Set<PsiElement> exited = myExits.values().stream().map(Exit::getExitedElement).collect(Collectors.toSet());
-    if (exited.size() == 1) {
+    Set<ExitType> exitTypes = myExits.values().stream().map(e -> e.getType()).collect(Collectors.toSet());
+    if (!exitTypes.contains(ExitType.UNDEFINED) && !exitTypes.contains(ExitType.THROW)) {
       List<ResultItem> resultItems = collectResultItems();
       PsiClass resultClass = createResultClass(resultItems);
       createMethod(resultItems, resultClass);
     }
     else {
-      dumpText("exit count: " + exited.size());
+      //dumpText("exit count: " + exitTypes.size());
+      dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));
     }
 
     dumpTexts(myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), "exit");
@@ -467,17 +469,19 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private List<ResultItem> collectResultItems() {
-    List<ResultItem> resultItems = new ArrayList<>();
     if (myExpression != null) {
+      assert myExits.size() == 1 : "one exit with expression";
       PsiType expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
       if (expressionType == null) {
         expressionType = PsiType.getJavaLangObject(myExpression.getManager(), GlobalSearchScope.allScope(myProject));
       }
-      resultItems.add(new ExpressionResultItem(myExpression, expressionType));
+      return Collections.singletonList(new ExpressionResultItem(myExpression, expressionType));
     }
 
-    boolean hasReturn = myExits.values().stream().map(Exit::getType).anyMatch(ExitType.RETURN::equals);
-    if (hasReturn) {
+    List<ResultItem> resultItems = new ArrayList<>();
+
+    List<Exit> returnExits = ContainerUtil.filter(myExits.values(), exit -> ExitType.RETURN.equals(exit.getType()));
+    if (!returnExits.isEmpty()) {
       PsiType returnType = null;
       if (myCodeFragmentMember instanceof PsiMethod) {
         returnType = ((PsiMethod)myCodeFragmentMember).getReturnType();
@@ -560,7 +564,7 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiStatement[] originalBodyStatements = body.getStatements();
 
     if (exitTypes.contains(ExitType.RETURN)) {
-      List<PsiReturnStatement> statementsToReplace = collectReturnStatements(originalBodyStatements);
+      List<PsiReturnStatement> statementsToReplace = collectStatements(originalBodyStatements, PsiReturnStatement.class);
       for (PsiReturnStatement statementToReplace : statementsToReplace) {
         PsiReturnStatement returnStatement = createReturnStatement(resultItems, body, statementToReplace.getReturnValue(), factory);
         assert returnStatement != null : "returnStatement";
@@ -576,13 +580,31 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   @NotNull
-  private static List<PsiReturnStatement> collectReturnStatements(PsiStatement[] bodyStatements) {
-    List<PsiReturnStatement> returnStatements = new ArrayList<>();
+  private static <T extends PsiStatement> List<T> collectStatements(PsiStatement[] bodyStatements, Class<T> statementClass) {
+    List<T> results = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
-        returnStatements.add(statement);
+        addStatement(statement);
+      }
+
+      @Override
+      public void visitBreakStatement(PsiBreakStatement statement) {
+        super.visitBreakStatement(statement);
+        addStatement(statement);
+      }
+
+      @Override
+      public void visitContinueStatement(PsiContinueStatement statement) {
+        super.visitContinueStatement(statement);
+        addStatement(statement);
+      }
+
+      private void addStatement(PsiStatement statement) {
+        if (statementClass.isInstance(statement)) {
+          results.add(statementClass.cast(statement));
+        }
       }
 
       @Override
@@ -594,7 +616,7 @@ public class ExtractMethodWithResultObjectProcessor {
     for (PsiStatement bodyStatement : bodyStatements) {
       bodyStatement.accept(visitor);
     }
-    return returnStatements;
+    return results;
   }
 
   private static PsiReturnStatement createReturnStatement(List<ResultItem> resultItems,
