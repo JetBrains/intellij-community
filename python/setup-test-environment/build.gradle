@@ -102,13 +102,6 @@ envs {
                "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango20",
                true)
 
-  // Mostly for tox
-  createPython("py34",
-               "3.4.4",
-                [],
-               "python3.4",
-               true)
-
   createPython("py36_django2_1",
                "3.6.8",
                ["django==2.1", "jinja2", "pandas"],

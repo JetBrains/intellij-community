@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
@@ -58,8 +58,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
-                                                       // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       // Does not support 3.6
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -75,7 +75,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -91,7 +91,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -106,7 +106,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
-                                                       Pair.create("py34", new InterpreterExpectations("", false))
+                                                       Pair.create("py36", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -137,7 +137,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("I am 2.7", true)),
                                                        // Should have output
-                                                       Pair.create("py34", new InterpreterExpectations("I am 3.4", true))
+                                                       Pair.create("py36", new InterpreterExpectations("I am 3.6", true))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -153,7 +153,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        //26 and 27 only used for first time, they aren't used after rerun
                                                        Pair.create("py27", new InterpreterExpectations("", true, 1)),
-                                                       Pair.create("py34", new InterpreterExpectations("", false))
+                                                       Pair.create("py36", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -202,7 +202,7 @@ public final class PyToxTest extends PyEnvTestCase {
    */
   @Test
   public void testConcreteEnv() {
-    final String[] envsToRun = {"py27", "py34"};
+    final String[] envsToRun = {"py27", "py36"};
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxSuccess/", SdkCreationType.EMPTY_SDK) {
         @NotNull
@@ -220,7 +220,7 @@ public final class PyToxTest extends PyEnvTestCase {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           assertThat(environments)
             .describedAs("Wrong environments launched")
-            .containsExactly(envsToRun);
+            .containsExactlyInAnyOrderElementsOf(Arrays.asList(envsToRun));
           assertThat(all).contains("-v");
         }
 
