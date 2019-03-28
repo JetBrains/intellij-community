@@ -103,6 +103,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myRootNode = new ExecutionNode(myProject, null);
     myRootNode.setAutoExpandNode(true);
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode);
+    myBuildProgressRootNode.setAutoExpandNode(true);
     myRootNode.add(myBuildProgressRootNode);
 
     SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRootNode);
@@ -231,13 +232,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     final ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
     final Object eventId = myGroupingSupport.getGroupedId(event);
     ExecutionNode currentNode = nodesMap.get(eventId);
+    ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
     if (event instanceof StartEvent || event instanceof MessageEvent) {
       if (currentNode == null) {
         if (event instanceof StartBuildEvent) {
-          currentNode = getBuildProgressRootNode();
+          currentNode = buildProgressRootNode;
           installContextMenu((StartBuildEvent)event);
           String buildTitle = ((StartBuildEvent)event).getBuildTitle();
           currentNode.setTitle(buildTitle);
+          currentNode.setAutoExpandNode(true);
         }
         else {
           currentNode = new ExecutionNode(myProject, parentNode);
@@ -259,6 +262,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
               }
             }
           }
+          currentNode.setAutoExpandNode(currentNode == buildProgressRootNode || parentNode == buildProgressRootNode);
         }
         nodesMap.put(eventId, currentNode);
       }
@@ -304,7 +308,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
       if (myConsoleViewHandler.myExecutionNode == null) {
-        ExecutionNode element = getBuildProgressRootNode();
+        ExecutionNode element = buildProgressRootNode;
         ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(element));
       }
     }
