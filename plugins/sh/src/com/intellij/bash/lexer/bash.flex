@@ -2,6 +2,8 @@ package com.intellij.bash.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
+import com.intellij.util.containers.Stack;
+
 %%
 
 %class _BashLexerGen
@@ -14,7 +16,16 @@ import static com.intellij.bash.lexer.BashTokenTypes.*;
 %type IElementType
 
 %{
-    long yychar = 0;
+  private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
+  private void popState() { yybegin(myStack.pop());}
+  private void yy_switch_state(int state) { popState(); pushState(state); }
+  private Stack<Integer> myStack = new Stack<>();
+
+  protected void onReset() {
+    myStack.clear();
+  }
+
+  long yychar = 0;
 
     // return the complete buffer
     protected CharSequence getBuffer() {
@@ -73,7 +84,10 @@ CasePattern = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor = "&" {IntegerLiteral} | "&-"
 AssigOp = "=" | "+="
 
+EscapedRightCurly = "\\}"
+
 %state EXPRESSIONS
+%state PARAMETER_EXPANSION
 
 %%
 
@@ -100,6 +114,12 @@ AssigOp = "=" | "+="
     "))"                          { yybegin(YYINITIAL); return RIGHT_DOUBLE_PAREN; }
 }
 
+<PARAMETER_EXPANSION> {
+  "{"                                 {             return LEFT_CURLY; }
+  "}"                                 { popState(); return RIGHT_CURLY; }
+  ([^{}]|{EscapedRightCurly})+ / "}"  {             return PARAMETER_EXPANSION_BODY; }
+  [^]                                 { popState(); }
+}
 
 <YYINITIAL, EXPRESSIONS> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
@@ -180,6 +200,8 @@ AssigOp = "=" | "+="
 
   "<<<"                           { return REDIRECT_HERE_STRING; }
 
+  "${"                            {pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+
 
     {IntegerLiteral}              { return INT; }
     {HexIntegerLiteral}           { return HEX; }
@@ -207,8 +229,6 @@ AssigOp = "=" | "+="
     {Word}                        { return WORD; }
     "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
 }
-
-
 
 [^]                               { return BAD_CHARACTER; }
 

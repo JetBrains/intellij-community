@@ -137,6 +137,7 @@ public interface BashTypes {
   IElementType NUMBER = new BashTokenType("number");
   IElementType OCTAL = new BashTokenType("octal");
   IElementType OR_OR = new BashTokenType("||");
+  IElementType PARAMETER_EXPANSION_BODY = new BashTokenType("parameter_expansion_body");
   IElementType PIPE = new BashTokenType("|");
   IElementType PIPE_AMP = new BashTokenType("|&");
   IElementType QUOTE = new BashTokenType("\"");

@@ -38,6 +38,23 @@ ${!prefix@}
 
 ${3:+; }
 
+${a}
+${a:a}
+${a:-a}
+${a:.*}
+${a[@]}
+${a[*]}
+${level%%[a-zA-Z]*}
+${a[var]}
+${a[var+var2]}
+${a[var+var2+1]#[a-z][0]}
+${#a[1]}
+${a-`$[1]`}
+${\}}
+
+
+$(( ${param} + 1))
+
 msg="Entering $funcname($args)${envstr:+ with environment $envstr${3:+; }}$3"
 
 

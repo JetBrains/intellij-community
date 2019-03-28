@@ -27,42 +27,6 @@ public class BashShellParameterExpansionImpl extends BashCompositeElementImpl im
 
   @Override
   @NotNull
-  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashBashExpansion> getBashExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashCommand> getCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashString> getStringList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashVariable> getVariableList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
-  }
-
-  @Override
-  @NotNull
   public PsiElement getLeftCurly() {
     return findNotNullChildByType(LEFT_CURLY);
   }
@@ -71,6 +35,12 @@ public class BashShellParameterExpansionImpl extends BashCompositeElementImpl im
   @Nullable
   public PsiElement getRightCurly() {
     return findChildByType(RIGHT_CURLY);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getParameterExpansionBody() {
+    return findChildByType(PARAMETER_EXPANSION_BODY);
   }
 
 }

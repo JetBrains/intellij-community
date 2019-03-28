@@ -46,3 +46,6 @@ exec 0<&10 10<&-
 
 
 name='name'
+
+${asdasd#assdf}
+${asdasd#assdf}
