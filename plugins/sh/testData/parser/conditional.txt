@@ -59,8 +59,7 @@ BASH_FILE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -69,9 +68,9 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       STRING
-                        PsiElement(string_begin)('"')
-                        PsiElement(string_content)('foo')
-                        PsiElement(string_end)('"')
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
     PsiElement(;)(';')
@@ -86,19 +85,19 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
-              PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+              PsiElement([ )('[ ')
               STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('foo')
-                PsiElement(string_end)('"')
+                PsiElement(")('"')
+                PsiElement(word)('foo')
+                PsiElement(")('"')
               PsiWhiteSpace(' ')
-              PsiElement(cond_op)('=')
+              PsiElement(=)('=')
               PsiWhiteSpace(' ')
               STRING
-                PsiElement(string_begin)('"')
-                PsiElement(string_content)('foo')
-                PsiElement(string_end)('"')
-              PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                PsiElement(")('"')
+                PsiElement(word)('foo')
+                PsiElement(")('"')
+              PsiElement( ])(' ]')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -111,24 +110,23 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(word)('!a')
+                  PsiElement([ )('[ ')
+                  PsiElement(!)('!')
+                  PsiElement(word)('a')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   VARIABLE
                     PsiElement(var)('$a')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -152,13 +150,14 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(word)('1')
+                  PsiElement([ )('[ ')
+                  PsiElement(int)('1')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('1')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                  PsiElement(int)('1')
+                  PsiElement( ])(' ]')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
           THEN_CLAUSE
@@ -185,23 +184,21 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(word)('1')
+                  PsiElement([ )('[ ')
+                  PsiElement(int)('1')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('1')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                  PsiElement(int)('1')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -225,29 +222,27 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('1')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
+                    PsiElement(int)('1')
+                    PsiElement(")('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('1')
-                    PsiElement(string_end)('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                    PsiElement(")('"')
+                    PsiElement(int)('1')
+                    PsiElement(")('"')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -271,29 +266,26 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('foo')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
+                    PsiElement(word)('foo')
+                    PsiElement(")('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('foo')
-                    PsiElement(string_end)('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                    PsiElement(")('"')
+                    PsiElement(word)('foo')
+                    PsiElement(")('"')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -317,19 +309,19 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('foo')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
+                    PsiElement(word)('foo')
+                    PsiElement(")('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('foo')
-                    PsiElement(string_end)('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                    PsiElement(")('"')
+                    PsiElement(word)('foo')
+                    PsiElement(")('"')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -359,52 +351,51 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   STRING
-                    PsiElement(string_begin)('"')
+                    PsiElement(")('"')
                     VARIABLE
                       PsiElement(var)('$PACKER_BUILD_NAME')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('virtualbox')
-                    PsiElement(string_end)('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                    PsiElement(")('"')
+                    PsiElement(word)('virtualbox')
+                    PsiElement(")('"')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(word)('SERVER_URL')
                     PsiElement(=)('=')
                     STRING
-                      PsiElement(string_begin)('"')
+                      PsiElement(")('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
-                        PsiElement(word)('TEAMCITY_SERVER')
+                        PsiElement(parameter_expansion_body)('TEAMCITY_SERVER')
                         PsiElement(})('}')
-                      PsiElement(string_end)('"')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
             PsiElement(else)('else')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(word)('SERVER_URL')
                     PsiElement(=)('=')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -420,23 +411,21 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(word)('1')
+                  PsiElement([ )('[ ')
+                  PsiElement(int)('1')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('1')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                  PsiElement(int)('1')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -450,10 +439,7 @@ BASH_FILE
             PsiElement(else)('else')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -476,20 +462,21 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   STRING
-                    PsiElement(string_begin)('"')
+                    PsiElement(")('"')
                     VARIABLE
                       PsiElement(var)('$PACKER_BUILD_NAME')
-                    PsiElement(string_end)('"')
+                    PsiElement(")('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(cond_op ==)('==')
+                  PsiElement(=)('=')
+                  PsiElement(=)('=')
                   PsiWhiteSpace(' ')
                   STRING
-                    PsiElement(string_begin)('"')
-                    PsiElement(string_content)('virtualbox')
-                    PsiElement(string_end)('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                    PsiElement(")('"')
+                    PsiElement(word)('virtualbox')
+                    PsiElement(")('"')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -498,10 +485,7 @@ BASH_FILE
               PsiElement(\n)('\n')
               PsiComment(Comment)('#  SERVER_URL="${TEAMCITY_SERVER}"')
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -515,12 +499,11 @@ BASH_FILE
             PsiElement(else)('else')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(assignment_word)('SERVER_URL')
+                    PsiElement(word)('SERVER_URL')
                     PsiElement(=)('=')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -566,13 +549,14 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-          PsiElement(word)('1')
+          PsiElement([ )('[ ')
+          PsiElement(int)('1')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op ==)('==')
+          PsiElement(=)('=')
+          PsiElement(=)('=')
           PsiWhiteSpace(' ')
-          PsiElement(word)('1')
-          PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+          PsiElement(int)('1')
+          PsiElement( ])(' ]')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -580,9 +564,10 @@ BASH_FILE
       PIPELINE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[ ')
-          PsiElement(word)('1')
+          PsiElement(int)('1')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op ==)('==')
+          PsiElement(=)('=')
+          PsiElement(=)('=')
           PsiWhiteSpace(' ')
           PsiElement(word)('1+1')
           PsiElement(]])(' ]]')
@@ -598,11 +583,12 @@ BASH_FILE
       PIPELINE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[ ')
-          PsiElement(word)('123')
+          PsiElement(int)('123')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op ==)('==')
+          PsiElement(=)('=')
+          PsiElement(=)('=')
           PsiWhiteSpace(' ')
-          PsiElement(word)('123')
+          PsiElement(int)('123')
           PsiElement(]])(' ]]')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
@@ -621,26 +607,27 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(']')
+                  PsiElement([ )('[ ')
+                  PsiElement(])(']')
+                  PsiErrorElement:Add space
+                    <empty list>
             PsiWhiteSpace(' ')
             PsiElement(||)('||')
             PsiWhiteSpace(' ')
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(']')
+                  PsiElement([ )('[ ')
+                  PsiElement(])(']')
+                  PsiErrorElement:Add space
+                    <empty list>
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
             PsiElement(then)('then')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
@@ -694,9 +681,7 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('/dev/null')
             PsiElement(\n)('\n')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
-            PsiWhiteSpace(' ')
+            PsiWhiteSpace('   ')
             PIPELINE_COMMAND
               PIPELINE
                 SIMPLE_COMMAND
@@ -725,37 +710,37 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-          PsiElement(cond_op !)('!')
+          PsiElement([ )('[ ')
+          PsiElement(!)('!')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op !)('!')
+          PsiElement(!)('!')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op !)('!')
+          PsiElement(!)('!')
+          PsiWhiteSpace('  ')
+          PsiElement(int)('1')
           PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiElement(=)('=')
           PsiWhiteSpace(' ')
-          PsiElement(word)('1')
-          PsiWhiteSpace(' ')
-          PsiElement(cond_op ==)('==')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('1')
-          PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+          PsiElement(int)('1')
+          PsiElement( ])(' ]')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
-          PsiElement(cond_op !)('!')
+          PsiElement([ )('[ ')
+          PsiElement(!)('!')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op)('-d')
+          PsiElement(word)('-d')
           PsiWhiteSpace(' ')
           STRING
-            PsiElement(string_begin)('"')
+            PsiElement(")('"')
             VARIABLE
               PsiElement(var)('$1')
-            PsiElement(string_end)('"')
-          PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+            PsiElement(")('"')
+          PsiElement( ])(' ]')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -766,12 +751,12 @@ BASH_FILE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiElement(word)('osvers')
+            PsiElement(parameter_expansion_body)('osvers')
             PsiElement(})('}')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op)('-ge')
+          PsiElement(word)('-ge')
           PsiWhiteSpace(' ')
-          PsiElement(word)('7')
+          PsiElement(int)('7')
           PsiElement(]])(' ]]')
   PsiElement(\n)('\n')
   COMMANDS_LIST

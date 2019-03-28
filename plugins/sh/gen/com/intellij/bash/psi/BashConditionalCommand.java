@@ -35,6 +35,12 @@ public interface BashConditionalCommand extends BashCommand {
   PsiElement getLeftDoubleBracket();
 
   @Nullable
+  PsiElement getLeftSquare();
+
+  @Nullable
   PsiElement getRightDoubleBracket();
+
+  @Nullable
+  PsiElement getRightSquare();
 
 }

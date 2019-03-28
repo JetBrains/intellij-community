@@ -81,8 +81,20 @@ public class BashConditionalCommandImpl extends BashCommandImpl implements BashC
 
   @Override
   @Nullable
+  public PsiElement getLeftSquare() {
+    return findChildByType(LEFT_SQUARE);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getRightDoubleBracket() {
     return findChildByType(RIGHT_DOUBLE_BRACKET);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRightSquare() {
+    return findChildByType(RIGHT_SQUARE);
   }
 
 }

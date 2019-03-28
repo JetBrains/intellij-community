@@ -107,8 +107,8 @@ public interface BashTypes {
   IElementType EQ = new BashTokenType("=");
   IElementType ESAC = new BashTokenType("esac");
   IElementType EXPONENT = new BashTokenType("**");
-  IElementType EXPR_CONDITIONAL_LEFT = new BashTokenType("EXPR_CONDITIONAL_LEFT");
-  IElementType EXPR_CONDITIONAL_RIGHT = new BashTokenType("EXPR_CONDITIONAL_RIGHT");
+  IElementType EXPR_CONDITIONAL_LEFT = new BashTokenType("[ ");
+  IElementType EXPR_CONDITIONAL_RIGHT = new BashTokenType(" ]");
   IElementType FI = new BashTokenType("fi");
   IElementType FILEDESCRIPTOR = new BashTokenType("file descriptor");
   IElementType FOR = new BashTokenType("for");

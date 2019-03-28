@@ -1170,13 +1170,13 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           CONDITIONAL_COMMAND
-                            PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                            PsiElement([ )('[ ')
                             STRING
                               PsiElement(")('"')
                               VARIABLE
                                 PsiElement(var)('$entryFound')
                               PsiElement(")('"')
-                            PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                            PsiElement( ])(' ]')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     THEN_CLAUSE
@@ -1243,7 +1243,7 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           CONDITIONAL_COMMAND
-                            PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                            PsiElement([ )('[ ')
                             STRING
                               PsiElement(")('"')
                               VARIABLE
@@ -1271,7 +1271,7 @@ BASH_FILE
                               PsiElement(")('"')
                               PsiElement(word)('guest')
                               PsiElement(")('"')
-                            PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                            PsiElement( ])(' ]')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     THEN_CLAUSE
@@ -1361,13 +1361,13 @@ BASH_FILE
                                 PIPELINE_COMMAND
                                   PIPELINE
                                     CONDITIONAL_COMMAND
-                                      PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                                      PsiElement([ )('[ ')
                                       STRING
                                         PsiElement(")('"')
                                         VARIABLE
                                           PsiElement(var)('$entryFound')
                                         PsiElement(")('"')
-                                      PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                                      PsiElement( ])(' ]')
                                 PsiElement(;)(';')
                               PsiWhiteSpace(' ')
                               THEN_CLAUSE

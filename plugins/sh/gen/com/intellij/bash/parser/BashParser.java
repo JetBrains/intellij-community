@@ -977,20 +977,31 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // EXPR_CONDITIONAL_LEFT | '[['
+  // '[ ' | '[[' | ('[' <<addSpace>>)
   static boolean cond_left(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cond_left")) return false;
-    if (!nextTokenIs(b, "", EXPR_CONDITIONAL_LEFT, LEFT_DOUBLE_BRACKET)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
     if (!r) r = consumeToken(b, LEFT_DOUBLE_BRACKET);
+    if (!r) r = cond_left_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '[' <<addSpace>>
+  private static boolean cond_left_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cond_left_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_SQUARE);
+    r = r && addSpace(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // EXPR_CONDITIONAL_RIGHT | ']]'
+  // ' ]' | ']]'
   static boolean cond_right(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cond_right")) return false;
     if (!nextTokenIs(b, "", EXPR_CONDITIONAL_RIGHT, RIGHT_DOUBLE_BRACKET)) return false;
@@ -1003,16 +1014,15 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cond_left (<<condOp>> | lit | vars)* cond_right
+  // cond_left (<<condOp>> | lit | vars)* (cond_right | ']' <<addSpace>>)
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
-    if (!nextTokenIs(b, "<conditional command>", EXPR_CONDITIONAL_LEFT, LEFT_DOUBLE_BRACKET)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _COLLAPSE_, CONDITIONAL_COMMAND, "<conditional command>");
     r = cond_left(b, l + 1);
     p = r; // pin = 1
     r = r && report_error_(b, conditional_command_1(b, l + 1));
-    r = p && cond_right(b, l + 1) && r;
+    r = p && conditional_command_2(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -1038,6 +1048,29 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = vars(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // cond_right | ']' <<addSpace>>
+  private static boolean conditional_command_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_command_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = cond_right(b, l + 1);
+    if (!r) r = conditional_command_2_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ']' <<addSpace>>
+  private static boolean conditional_command_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_command_2_1")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, RIGHT_SQUARE);
+    p = r; // pin = 1
+    r = r && addSpace(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */

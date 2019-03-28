@@ -31,6 +31,8 @@
     BACKQUOTE = '`'
     QUOTE = '"'
 
+    EXPR_CONDITIONAL_LEFT = "[ "
+    EXPR_CONDITIONAL_RIGHT = " ]"
     LEFT_DOUBLE_BRACKET = "[["
     RIGHT_DOUBLE_BRACKET = "]]"
 
@@ -118,9 +120,9 @@ bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
 
-conditional_command ::= cond_left (<<condOp>> | lit | vars)* cond_right {pin(".*")=1}
-private cond_right ::= EXPR_CONDITIONAL_RIGHT | ']]'
-private cond_left ::= EXPR_CONDITIONAL_LEFT | '[['
+conditional_command ::= cond_left (<<condOp>> | lit | vars)* (cond_right | ']' <<addSpace>>) {pin(".*")=1}
+private cond_right ::= ' ]' | ']]'
+private cond_left ::= '[ ' | '[[' | ('[' <<addSpace>>)
 private lit ::= literal | '(' lit ')' {pin(".*")=1}
 
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}

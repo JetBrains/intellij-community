@@ -84,6 +84,11 @@ public class BashParserUtil extends GeneratedParserUtilBase {
     return true;
   }
 
+  static boolean addSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    b.error("Add space");
+    return true;
+  }
+
   static boolean parseUntilSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
     PsiBuilder.Marker mark = b.mark();
     while (true) {

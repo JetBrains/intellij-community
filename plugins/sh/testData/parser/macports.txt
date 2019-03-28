@@ -21,7 +21,7 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
-                  PsiElement(EXPR_CONDITIONAL_LEFT)('[ ')
+                  PsiElement([ )('[ ')
                   PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
                   STRING
@@ -32,7 +32,7 @@ BASH_FILE
                       PsiElement(parameter_expansion_body)('MACPORTS')
                       PsiElement(})('}')
                     PsiElement(")('"')
-                  PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')
+                  PsiElement( ])(' ]')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
