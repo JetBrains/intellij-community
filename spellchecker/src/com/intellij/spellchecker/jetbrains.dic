@@ -760,6 +760,7 @@ stderr
 stdlib
 stdout
 stepic
+stemmer
 stmt
 strictfp
 stringifier
