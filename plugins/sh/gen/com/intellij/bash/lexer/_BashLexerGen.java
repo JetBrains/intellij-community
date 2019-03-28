@@ -5,7 +5,6 @@ package com.intellij.bash.lexer;
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
 import com.intellij.util.containers.Stack;
-import java.io.Reader;
 import com.intellij.lexer.FlexLexer;
 
 
@@ -785,7 +784,7 @@ public class _BashLexerGen implements FlexLexer {
   private boolean zzEOFDone;
 
   /* user code: */
-  public _BashLexerGen() { this((Reader)null); }
+  public _BashLexerGen() { this(null); }
   private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }

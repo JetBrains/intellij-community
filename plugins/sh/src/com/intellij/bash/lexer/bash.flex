@@ -3,7 +3,6 @@ package com.intellij.bash.lexer;
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
 import com.intellij.util.containers.Stack;
-import java.io.Reader;
 import com.intellij.lexer.FlexLexer;
 
 %%
@@ -17,7 +16,7 @@ import com.intellij.lexer.FlexLexer;
 %type IElementType
 
 %{
-  public _BashLexerGen() { this((Reader)null); }
+  public _BashLexerGen() { this(null); }
   private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }
@@ -127,15 +126,15 @@ EscapedRightCurly = "\\}"
 }
 
 <CASE_CLAUSE> {
-  "esac"                       { popState();                 return ESAC; }
-  ";&" | ";;&" | ";;"          { pushState(CASE_PATTERN);    return CASE_END; }
-  "in"                         { pushState(CASE_PATTERN);    return WORD; }
+  "esac"                          { popState();                 return ESAC; }
+  ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
+  "in"                            { pushState(CASE_PATTERN);    return WORD; }
 }
 
 <CASE_PATTERN> {
-  "esac"                        { popState(); yypushback(yylength()); }
-  ")"                           { popState(); return RIGHT_PAREN; }
-  {CasePattern}                 { return WORD; }
+  "esac"                          { popState(); yypushback(yylength()); }
+  ")"                             { popState(); return RIGHT_PAREN; }
+  {CasePattern}                   { return WORD; }
 }
 
 <YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN> {
