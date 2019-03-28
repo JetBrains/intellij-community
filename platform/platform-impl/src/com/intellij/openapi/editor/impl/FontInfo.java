@@ -6,12 +6,13 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.font.CompositeGlyphMapper;
 import sun.font.FontDesignMetrics;
 
 import java.awt.*;
@@ -19,8 +20,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -28,7 +29,6 @@ import java.util.List;
 public class FontInfo {
   private static final Logger LOG = Logger.getInstance(FontInfo.class);
   
-  private static final boolean USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE = Registry.is("ide.mac.fix.font.fallback");
   private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
   private static final Font DUMMY_FONT = new Font(null);
 
@@ -145,7 +145,7 @@ public class FontInfo {
     try {
       if (codePoint < 128) return true;
       if (mySafeCharacters.contains(codePoint)) return true;
-      if (canDisplayImpl(codePoint)) {
+      if (canDisplay(myFont, codePoint, false)) {
         mySafeCharacters.add(codePoint);
         return true;
       }
@@ -157,13 +157,14 @@ public class FontInfo {
     }
   }
 
-  private boolean canDisplayImpl(int codePoint) {
+  public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
     if (!Character.isValidCodePoint(codePoint)) return false;
-    if (USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE) {
-      return myFont.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0) > 0;
+    if (disableFontFallback && SystemInfo.isMac) {
+      int glyphCode = font.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0);
+      return (glyphCode & CompositeGlyphMapper.GLYPHMASK) != 0 && (glyphCode & CompositeGlyphMapper.SLOTMASK) == 0;
     }
     else {
-      return myFont.canDisplay(codePoint);
+      return font.canDisplay(codePoint);
     }
   }
 
