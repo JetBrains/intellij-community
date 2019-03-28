@@ -294,6 +294,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         .setCancelOnClickOutside(false)
         .setCancelKeyEnabled(true)
         .setCancelOnWindowDeactivation(false)
+        .setCancelOnClickOutside(true)
         .addUserData("SIMPLE_WINDOW")
         .createPopup();
 
