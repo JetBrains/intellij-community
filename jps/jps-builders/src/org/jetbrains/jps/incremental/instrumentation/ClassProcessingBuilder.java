@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -135,8 +135,8 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     };
   }
 
-  public static int getAsmClassWriterFlags(int version) {
-    return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+  public static int getAsmClassWriterFlags(int classFileVersion) {
+    return (classFileVersion & 0xFFFF) >= Opcodes.V1_6 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   public static int getClassFileVersion(ClassReader reader) {
