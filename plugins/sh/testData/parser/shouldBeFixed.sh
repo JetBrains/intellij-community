@@ -8,5 +8,3 @@ echo [foo[1]]
 
 [[ ((pwd)) ]]
 [[ ((1+1)) ]]
-
-chmod go-rwx "$FILENAME"
