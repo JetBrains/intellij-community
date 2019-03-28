@@ -99,10 +99,6 @@ public class StartupUtil {
     default void importFinished(@NotNull Path newConfigDir) {}
   }
 
-  static boolean isStartParallel() {
-    return SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
-  }
-
   private static void runPreAppClass(Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
@@ -153,7 +149,7 @@ public class StartupUtil {
 
     Logger log = lockDirsAndConfigureLogger(args);
 
-    boolean isParallelExecution = isStartParallel();
+    boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
     List<Future<?>> futures = new ArrayList<>();
     ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
     futures.add(executorService.submit(() -> {
