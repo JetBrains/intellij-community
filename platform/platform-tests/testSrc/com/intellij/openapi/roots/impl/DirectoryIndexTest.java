@@ -608,7 +608,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
       rootModel.getContentEntries()[0]
-        .addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
+        .addExcludeFolder(VfsUtilCore.pathToUrl(f.getParentFile().getParent()));
       rootModel.commit();
 
       ModuleRootModificationUtil.addContentRoot(myModule2, FileUtil.toSystemIndependentName(f.getPath()));

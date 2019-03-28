@@ -559,7 +559,7 @@ public class JarRepositoryManager {
           }
         }
         // search for jar file first otherwise lib root won't be found!
-        manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath())));
+        manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
         final String url = VfsUtil.getUrlForLibraryRoot(toFile);
         final VirtualFile file = manager.refreshAndFindFileByUrl(url);
         if (file != null) {
