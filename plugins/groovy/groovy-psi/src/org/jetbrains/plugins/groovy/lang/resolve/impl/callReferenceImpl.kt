@@ -6,11 +6,11 @@ import com.intellij.psi.ResolveState
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.rValueProcessor
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.resolveKinds
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyRValueProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodProcessor
 
 fun GroovyMethodCallReference.resolveImpl(incomplete: Boolean): Collection<GroovyResolveResult> {
@@ -49,7 +49,7 @@ fun GroovyMethodCallReference.resolveImpl2(incomplete: Boolean): Collection<Groo
     return it
   }
 
-  val propertyProcessor = GroovyRValueProcessor(methodName, place, resolveKinds(true))
+  val propertyProcessor = rValueProcessor(methodName, place, resolveKinds(true))
   receiver.processReceiverType(propertyProcessor, state, place)
   val properties = propertyProcessor.results
   if (properties.size == 1) {

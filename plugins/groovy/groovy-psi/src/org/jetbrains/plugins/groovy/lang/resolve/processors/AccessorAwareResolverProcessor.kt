@@ -10,10 +10,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.singleOrValid
 
-abstract class AccessorAwareResolverProcessor(
+class AccessorAwareResolverProcessor(
   name: String,
   place: PsiElement,
-  kinds: Set<GroovyResolveKind>
+  kinds: Set<GroovyResolveKind>,
+  private val accessorProcessors: Collection<GrResolverProcessor<*>>
 ) : KindsResolverProcessor(name, place, kinds),
     GrResolverProcessor<GroovyResolveResult>,
     ElementClassHint,
@@ -21,21 +22,21 @@ abstract class AccessorAwareResolverProcessor(
     MultiProcessor {
 
   init {
-    @Suppress("LeakingThis") hint(ElementClassHint.KEY, this)
-    @Suppress("LeakingThis") hint(DynamicMembersHint.KEY, this)
+    hint(ElementClassHint.KEY, this)
+    hint(DynamicMembersHint.KEY, this)
   }
 
-  final override fun shouldProcessProperties(): Boolean = true
+  override fun shouldProcessProperties(): Boolean = true
 
-  final override fun shouldProcessMethods(): Boolean = false
+  override fun shouldProcessMethods(): Boolean = false
 
-  final override fun shouldProcess(kind: ElementClassHint.DeclarationKind): Boolean {
+  override fun shouldProcess(kind: ElementClassHint.DeclarationKind): Boolean {
     return kind != ElementClassHint.DeclarationKind.METHOD && kinds.any { kind in it.declarationKinds }
   }
 
-  final override fun getProcessors(): Collection<PsiScopeProcessor> = listOf(this) + accessorProcessors
+  override fun getProcessors(): Collection<PsiScopeProcessor> = allProcessors
 
-  protected abstract val accessorProcessors: Collection<GrResolverProcessor<*>>
+  private val allProcessors = listOf(this) + accessorProcessors
 
   private val accessorCandidates get() = accessorProcessors.flatMap { it.results }
 
@@ -44,7 +45,7 @@ abstract class AccessorAwareResolverProcessor(
     return if (kind == GroovyResolveKind.PROPERTY) result + accessorCandidates else result
   }
 
-  final override val results: List<GroovyResolveResult>
+  override val results: List<GroovyResolveResult>
     get() {
       val variables = getCandidates(GroovyResolveKind.VARIABLE)
       if (variables.isNotEmpty()) {
