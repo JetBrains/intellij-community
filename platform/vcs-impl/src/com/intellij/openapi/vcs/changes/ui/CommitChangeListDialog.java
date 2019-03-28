@@ -49,8 +49,8 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflowKt.getPresentableText;
+import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.getCommitHandlerFactories;
+import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflowKt.getPresentableText;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -76,7 +76,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
 
   @NotNull private final Project myProject;
-  @NotNull private final DialogCommitWorkflow myWorkflow;
+  @NotNull private final SingleChangeListCommitWorkflow myWorkflow;
   @NotNull private final EventDispatcher<CommitWorkflowUiStateListener> myStateEventDispatcher =
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
@@ -204,9 +204,9 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     boolean isDefaultChangeListFullyIncluded = new HashSet<>(changes).containsAll(defaultList.getChanges());
-    DialogCommitWorkflow workflow =
-      new DialogCommitWorkflow(project, included, initialSelection, executors, showVcsCommit, forceCommitInVcs, affectedVcses,
-                               isDefaultChangeListFullyIncluded, comment, customResultHandler);
+    SingleChangeListCommitWorkflow workflow =
+      new SingleChangeListCommitWorkflow(project, included, initialSelection, executors, showVcsCommit, forceCommitInVcs, affectedVcses,
+                                         isDefaultChangeListFullyIncluded, comment, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
     return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
@@ -222,7 +222,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return result;
   }
 
-  protected CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
+  protected CommitChangeListDialog(@NotNull SingleChangeListCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
