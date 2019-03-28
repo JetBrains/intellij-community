@@ -422,23 +422,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
+    if (IdeEventQueue.JAVA_11_OR_LATER && SystemInfo.isWindows && e.isAltGraphDown()) return false; // don't search for shortcuts
+
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr")) {
         return false;
       }
-      final InputContext inputContext = focusOwner.getInputContext();
-      if (inputContext != null) {
-        Locale locale = inputContext.getLocale();
-        if (locale != null) {
-          @NonNls final String language = locale.getLanguage();
-          if (ALT_GR_LAYOUTS.contains(language)) {
-            // don't search for shortcuts
-            return false;
-          }
-        }
-      }
+      if (isAltGrLayout(focusOwner)) return false; // don't search for shortcuts
     }
 
     KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
@@ -985,5 +977,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);
+  }
+
+  public static boolean isAltGrLayout(Component component) {
+    if (component == null) return false;
+    InputContext context = component.getInputContext();
+    if (context == null) return false;
+    Locale locale = context.getLocale();
+    if (locale == null) return false;
+    return ALT_GR_LAYOUTS.contains(locale.getLanguage());
   }
 }
