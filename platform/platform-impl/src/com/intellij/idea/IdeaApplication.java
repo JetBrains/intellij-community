@@ -122,7 +122,7 @@ public class IdeaApplication {
 
     myStarter = getStarter(myArgs, pluginsLoaded);
 
-    if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
+    if (headless && !myStarter.isHeadless()) {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
