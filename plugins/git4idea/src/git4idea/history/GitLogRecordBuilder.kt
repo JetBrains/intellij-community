@@ -2,6 +2,7 @@
 package git4idea.history
 
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.containers.WeakStringInterner
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import git4idea.history.GitLogParser.GitLogOption
 
@@ -11,7 +12,7 @@ internal interface GitLogRecordBuilder {
   fun clear()
 }
 
-internal class DefaultGitLogRecordBuilder : GitLogRecordBuilder {
+internal open class DefaultGitLogRecordBuilder : GitLogRecordBuilder {
   private var statuses: MutableList<VcsFileStatusInfo> = mutableListOf()
 
   override fun build(options: MutableMap<GitLogOption, String>, supportsRawBody: Boolean): GitLogRecord {
@@ -24,5 +25,13 @@ internal class DefaultGitLogRecordBuilder : GitLogRecordBuilder {
 
   override fun clear() {
     statuses = mutableListOf()
+  }
+}
+
+internal class InternedGitLogRecordBuilder : DefaultGitLogRecordBuilder() {
+  private val interner = WeakStringInterner()
+
+  override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
+    super.addPath(type, interner.intern(firstPath), secondPath?.let { interner.intern(it) })
   }
 }
