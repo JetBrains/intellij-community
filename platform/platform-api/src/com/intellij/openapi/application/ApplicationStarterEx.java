@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class ApplicationStarterEx implements ApplicationStarter {
-  public abstract boolean isHeadless();
-
   public boolean canProcessExternalCommandLine() {
     return false;
   }

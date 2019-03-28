@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
-import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
 import java.io.*;
@@ -14,12 +14,7 @@ import java.util.stream.Stream;
 /**
  * @author Ivan Chirkov
  */
-public class BundledPluginsLister extends ApplicationStarterEx {
-  @Override
-  public boolean isHeadless() {
-    return true;
-  }
-
+public class BundledPluginsLister implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "listBundledPlugins";
