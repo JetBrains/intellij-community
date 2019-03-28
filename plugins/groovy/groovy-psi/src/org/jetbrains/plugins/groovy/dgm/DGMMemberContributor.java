@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
@@ -27,22 +26,13 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * Provides members from extension classes referenced in {@code META-INF/services/org.codehaus.groovy.runtime.ExtensionModule}.
  */
-public class DGMMemberContributor extends NonCodeMembersContributor {
+public class DGMMemberContributor {
 
-  @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
-                                     @NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiElement place,
-                                     @NotNull ResolveState state) {
-    processDgmMethods(qualifierType, processor, place, state);
-  }
-
-  public static void processDgmMethods(@NotNull PsiType qualifierType,
-                                        @NotNull PsiScopeProcessor processor,
-                                        @NotNull PsiElement place,
-                                        @NotNull ResolveState state) {
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return;
+  public static boolean processDgmMethods(@NotNull PsiType qualifierType,
+                                          @NotNull PsiScopeProcessor processor,
+                                          @NotNull PsiElement place,
+                                          @NotNull ResolveState state) {
+    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true;
 
     final Project project = place.getProject();
 
@@ -60,9 +50,11 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
 
     for (GdkMethodHolder holder : gdkMethods) {
       if (!holder.processMethods(processor, state, qualifierType, project)) {
-        return;
+        return false;
       }
     }
+
+    return true;
   }
 
   @NotNull

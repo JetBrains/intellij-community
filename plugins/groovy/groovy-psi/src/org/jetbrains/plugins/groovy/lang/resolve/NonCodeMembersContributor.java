@@ -23,7 +23,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.scope.JavaScopeProcessorEvent.CHANGE_LEVEL;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static org.jetbrains.plugins.groovy.dgm.DGMMemberContributor.processDgmMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributorKt.processCategoriesInScope;
+import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
  * @author peter
@@ -101,11 +105,25 @@ public abstract class NonCodeMembersContributor {
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
     if (TransformationUtilKt.isUnderTransformation(aClass)) return true;
 
-    List<MyDelegatingScopeProcessor> allDelegates = map(MultiProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
+    final Iterable<? extends PsiScopeProcessor> unwrappedOriginals = MultiProcessor.allProcessors(processor);
+    for (PsiScopeProcessor each : unwrappedOriginals) {
+      if (!processClassMixins(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processCategoriesInScope(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processDgmMethods(qualifierType, each, place, state)) {
+        return false;
+      }
+    }
+
+    List<MyDelegatingScopeProcessor> allDelegates = map(unwrappedOriginals, MyDelegatingScopeProcessor::new);
 
     final Iterable<NonCodeMembersContributor> contributors = getApplicableContributors(aClass);
     for (NonCodeMembersContributor contributor : contributors) {
       ProgressManager.checkCanceled();
+      processor.handleEvent(CHANGE_LEVEL, null);
       for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
         ProgressManager.checkCanceled();
         contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
