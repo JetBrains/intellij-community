@@ -1,6 +1,5 @@
 package com.intellij.bash.lexer;
 
-import com.intellij.bash.BashVersion;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public class BashV3OldLexerTest extends LexerTestCase {
   @Override
   protected Lexer createLexer() {
-    return new BashLexer(BashVersion.V3);
+    return new BashLexer();
   }
 
   @Override
