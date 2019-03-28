@@ -3,6 +3,7 @@ package com.intellij.ui.win;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationStarterBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,7 +20,7 @@ public class RecentProjectApplication extends ApplicationStarterBase {
   }
 
   @Override
-  protected void processCommand(String[] args, @Nullable String currentDirectory) {
+  protected void processCommand(@NotNull String[] args, @Nullable String currentDirectory) {
     ProjectUtil.openProject(args[1], null, false);
   }
 }

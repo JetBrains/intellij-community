@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
 import java.io.*;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 /**
  * @author Ivan Chirkov
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BundledPluginsLister implements ApplicationStarter {
   @Override
   public String getCommandName() {
@@ -21,8 +23,7 @@ public class BundledPluginsLister implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) {
-  }
+  public void premain(String[] args) { }
 
   @Override
   public void main(String[] args) {
@@ -30,8 +31,8 @@ public class BundledPluginsLister implements ApplicationStarter {
       OutputStream out;
       if (args.length == 2) {
         File outFile = new File(args[1]);
-        File parentFile = outFile.getParentFile();
-        if (parentFile != null) parentFile.mkdirs();
+        FileUtil.createParentDirs(outFile);
+        //noinspection IOResourceOpenedButNotSafelyClosed
         out = new FileOutputStream(outFile);
       }
       else {
@@ -58,7 +59,7 @@ public class BundledPluginsLister implements ApplicationStarter {
       }
     }
     catch (IOException e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       System.exit(1);
     }
 
