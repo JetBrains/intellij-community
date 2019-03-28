@@ -71,6 +71,11 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       if (KeymapUtil.isEventForAction(e, "EditorDeleteToWordStart")) {
         if (isHoldingFilter()) {
+          // first delete all consecutive whitespace
+          while (!myString.isEmpty() && Character.isWhitespace(myString.charAt(myString.length() - 1))) {
+            backspace();
+          }
+          // now delete all until whitespace is found
           while (!myString.isEmpty() && !Character.isWhitespace(myString.charAt(myString.length() - 1))) {
             backspace();
           }
