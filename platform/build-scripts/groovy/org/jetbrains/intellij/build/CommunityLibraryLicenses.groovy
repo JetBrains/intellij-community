@@ -412,7 +412,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "pycodestyle.py", attachedTo: "intellij.python.helpers", version: "2.3.1", license: "MIT",
                        url: "http://pycodestyle.readthedocs.io/"),
     new LibraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT",
-                       url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php"),
+                       url: "https://github.com/kohsuke/rngom", licenseUrl: "http://www.opensource.org/licenses/mit-license.php"),
 
     new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino", version: "1.7.10", license: "MPL 1.1",
                        url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
