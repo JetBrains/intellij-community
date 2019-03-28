@@ -1,3 +1,9 @@
+Message="Start thinking about cleaning out some stuff.  Theres a partition that is space  full."
+
+
+echo 1
+
+
 file="foo"
 
 case $space in
@@ -5,7 +11,7 @@ case $space in
   Message="All is quiet."
   ;;
 [7-8]*)
-  Message="Start thinking about cleaning out some stuff.  There's a partition that is $space % full."
+  Message="Start thinking about cleaning out some stuff.  Theres a partition that is $space % full."
   ;;
 9[1-8])
   Message="Better hurry with that new disk...  One partition is $space % full."
@@ -83,34 +89,34 @@ function tokenReader {
     enttype="${entry%%[[:space:]]*}"
     members="$enttype,$name,$(cutParentheses "$entry")"
 
-#    let indx=0
-#    typeset IFS=","
-#    for key in $keys ; do
-#        # Try to read the positional index number from defined syntax.
-#        varname="syntax_${enttype}_${key}"
-#        position="$(eval printf '%s\\n' "\$$varname")"
-#
-#        reportDebug "Looking up $key for $name at position $position"
-#        if [ "$key" != "members" ]; then
-#            # Not looking for group members, use position.
-#            value="$(printf "$members\n" | cut -d ',' -f "$position")"
-#        else
-#            # Looking for members, which is a csv list in itself.
-#            value="$(cutParentheses "$entry")"
-#        fi
-#
-#        (( "$position" )) || { reportError "Position $position for $varname unset" ; return 1 ; }
-#
-#        if [ "$function" = "printVals" ]; then
-#            values[indx]="$value"
-##            let indx+=1
-#        elif [ "$function" = "setVars" ]; then
-#            export "$key"="$value"
-#        else
-#            reportError "Invalid function passed: $function"
-#            return 1
-#        fi
-#    done
+    let indx=0
+    typeset IFS=","
+    for key in $keys ; do
+        # Try to read the positional index number from defined syntax.
+        varname="syntax_${enttype}_${key}"
+        position="$(eval printf '%s\\n' "\$$varname")"
+
+        reportDebug "Looking up $key for $name at position $position"
+        if [ "$key" != "members" ]; then
+            # Not looking for group members, use position.
+            value="$(printf "$members\n" | cut -d ',' -f "$position")"
+        else
+            # Looking for members, which is a csv list in itself.
+            value="$(cutParentheses "$entry")"
+        fi
+
+        (( "$position" )) || { reportError "Position $position for $varname unset" ; return 1 ; }
+
+        if [ "$function" = "printVals" ]; then
+            values[indx]="$value"
+#            let indx+=1
+        elif [ "$function" = "setVars" ]; then
+            export "$key"="$value"
+        else
+            reportError "Invalid function passed: $function"
+            return 1
+        fi
+    done
 
     typeset IFS=" "
     if [ "$function" = "printVals" ]; then

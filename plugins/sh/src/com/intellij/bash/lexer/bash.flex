@@ -3,12 +3,13 @@ package com.intellij.bash.lexer;
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
 import com.intellij.util.containers.Stack;
+import java.io.Reader;
+import com.intellij.lexer.FlexLexer;
 
 %%
 
 %class _BashLexerGen
-%implements StatesSwitcher
-%abstract
+%implements FlexLexer
 %unicode
 %public
 
@@ -16,6 +17,7 @@ import com.intellij.util.containers.Stack;
 %type IElementType
 
 %{
+  public _BashLexerGen() { this((Reader)null); }
   private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }
@@ -88,6 +90,8 @@ EscapedRightCurly = "\\}"
 
 %state EXPRESSIONS
 %state PARAMETER_EXPANSION
+%state CASE_CLAUSE
+%state CASE_PATTERN
 
 %%
 
@@ -121,10 +125,22 @@ EscapedRightCurly = "\\}"
   [^]                                 { popState(); }
 }
 
-<YYINITIAL, EXPRESSIONS> {
+<CASE_CLAUSE> {
+  "esac"                       { popState();                 return ESAC; }
+  ";&" | ";;&" | ";;"          { pushState(CASE_PATTERN);    return CASE_END; }
+  "in"                         { pushState(CASE_PATTERN);    return WORD; }
+}
+
+<CASE_PATTERN> {
+  "esac"                        { popState(); yypushback(yylength()); }
+  ")"                           { popState(); return RIGHT_PAREN; }
+  {CasePattern}                 { return WORD; }
+}
+
+<YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
-    "case"                        { return CASE; }
+    "case"                        { pushState(CASE_CLAUSE); return CASE; }
     "esac"                        { return ESAC; }
     "!"                           { return BANG; }
     "do"                          { return DO; }
