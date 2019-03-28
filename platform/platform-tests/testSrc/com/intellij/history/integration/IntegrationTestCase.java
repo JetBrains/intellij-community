@@ -181,7 +181,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
       ModifiableRootModel m = rm.getModifiableModel();
       for (ContentEntry e : m.getContentEntries()) {
         if (!Comparing.equal(e.getFile(), myRoot)) continue;
-        e.addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
+        e.addExcludeFolder(VfsUtilCore.pathToUrl(path));
       }
       m.commit();
     });

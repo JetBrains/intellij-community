@@ -248,6 +248,6 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       path = FileUtil.resolveShortWindowsName(path);
     }
     catch (IOException ignored) { }
-    return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path));
+    return VfsUtilCore.pathToUrl(path);
   }
 }

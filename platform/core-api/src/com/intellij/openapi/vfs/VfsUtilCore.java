@@ -408,12 +408,12 @@ public class VfsUtilCore {
 
   @NotNull
   public static String pathToUrl(@NotNull String path) {
-    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtil.toSystemIndependentName(path));
   }
 
   @NotNull
   public static String fileToUrl(@NotNull File file) {
-    return pathToUrl(FileUtil.toSystemIndependentName(file.getPath()));
+    return pathToUrl(file.getPath());
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {

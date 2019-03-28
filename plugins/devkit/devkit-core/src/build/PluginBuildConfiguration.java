@@ -149,7 +149,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath))));
+    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath)));
   }
 
   public void setManifestPath(@Nullable String manifestPath) {
@@ -162,7 +162,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     if (manifest == null) {
       Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
       ReadAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-        VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null));
+        VfsUtilCore.pathToUrl(manifestPath), myModule, null));
     }
     else {
       WriteAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null));
