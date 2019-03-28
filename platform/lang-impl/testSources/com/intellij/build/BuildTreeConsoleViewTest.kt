@@ -6,18 +6,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PlatformTestUtil.expandAll
 import com.intellij.testFramework.RunAll
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.ui.tree.treeTable.TreeTableModelWithColumns
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 class BuildTreeConsoleViewTest: LightPlatformTestCase() {
