@@ -2,9 +2,11 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.Comparator
 
+@ApiStatus.Experimental
 interface PySdkTypeComparator : Comparator<PySdkTypeComparator.PySdkType> {
 
   override fun compare(type1: PySdkType, type2: PySdkType): Int
