@@ -102,6 +102,7 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 <YYINITIAL, EXPRESSIONS> {
     "case"                        { return CASE; }
+    "esac"                        { return ESAC; }
     "!"                           { return BANG; }
     "do"                          { return DO; }
     "done"                        { return DONE; }

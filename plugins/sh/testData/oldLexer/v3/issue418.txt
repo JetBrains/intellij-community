@@ -1,4 +1,4 @@
-assignment_word ('foo')
+word ('foo')
 = ('=')
 ( ('(')
 $ ('$')
