@@ -13,8 +13,8 @@ import java.awt.Rectangle
  * Wrapper around InlayModel used to setup listeners for presentation renderer.
  */
 class InlayModelWrapper(private val model: InlayModel) : InlayModel by model {
-  override fun <T : EditorCustomElementRenderer> addInlineElement(offset: Int, renderer: T) : Inlay<T>? {
-    val inlay = model.addInlineElement(offset, renderer) ?: return null
+  override fun <T : EditorCustomElementRenderer> addInlineElement(offset: Int, relatesToPreceedingText: Boolean, renderer: T) : Inlay<T>? {
+    val inlay = model.addInlineElement(offset, relatesToPreceedingText, renderer) ?: return null
     if (renderer is PresentationRenderer) {
       val presentation = renderer.presentation
       presentation.addListener(object: PresentationListener {
