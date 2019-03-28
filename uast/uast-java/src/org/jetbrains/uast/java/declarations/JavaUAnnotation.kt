@@ -46,15 +46,13 @@ class JavaUAnnotation(
     sourcePsi.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override fun findAttributeValue(name: String?): UExpression? {
-    val context = getUastContext()
     val attributeValue = sourcePsi.findAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
+    return UastFacade.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? {
-    val context = getUastContext()
     val attributeValue = sourcePsi.findDeclaredAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
+    return UastFacade.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   companion object {

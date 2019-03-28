@@ -15,7 +15,6 @@
  */
 package org.jetbrains.uast.test.common
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import junit.framework.TestCase
@@ -85,8 +84,7 @@ interface RenderLogTestBase {
 
     file.sourcePsi.accept(object : PsiRecursiveElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val uElement = ServiceManager.getService(element.project, UastContext::class.java)
-          .convertElementWithParent(element, null)
+        val uElement = element.toUElement()
         val expectedParents = parentMap[element]
         if (expectedParents != null) {
           TestCase.assertNotNull("Expected to be able to convert PSI element $element", uElement)
