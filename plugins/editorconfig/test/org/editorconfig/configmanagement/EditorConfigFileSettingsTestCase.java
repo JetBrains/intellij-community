@@ -15,25 +15,6 @@ import static com.intellij.psi.util.PsiUtilCore.getPsiFile;
 
 public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Utils.setFullIntellijSettingsSupportEnabledInTest(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Utils.setFullIntellijSettingsSupportEnabledInTest(false);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   protected abstract String getRelativePath();
 
   protected final String getTestDataPath() {
