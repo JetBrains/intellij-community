@@ -99,7 +99,6 @@ public class FileListeningTest extends IntegrationTestCase {
                  " excluded\n" +
                  "  content\n" +
                  "   f.txt\n" +
-                 "  subsubdir2\n" +
                  " f.class\n" +
                  " f.txt\n"
                  , buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()

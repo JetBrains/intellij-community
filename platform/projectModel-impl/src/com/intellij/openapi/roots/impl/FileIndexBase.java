@@ -65,7 +65,12 @@ public abstract class FileIndexBase implements FileIndex {
       public Result visitFileEx(@NotNull VirtualFile file) {
         if (file.isDirectory()) {
           DirectoryInfo info = getInfoForFileOrDirectory(file);
-          if (info.isExcluded(file) && !info.hasContentBeneathExcluded(file)) return SKIP_CHILDREN;
+          if (info.isExcluded(file)) {
+            if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processor, customFilter))) {
+              return skipTo(dir);
+            }
+            return SKIP_CHILDREN;
+          }
         }
         return !filter.accept(file) || processor.processFile(file) ? CONTINUE : skipTo(dir);
       }

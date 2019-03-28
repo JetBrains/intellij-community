@@ -94,12 +94,12 @@ class RootIndex {
       assert dirInfo != null;
       boolean hasContent = !isExcluded(dirInfo) && dirInfo.getContentRoot() != null;
       if (hasContent) {
-        // start with the strict parent and update all parent excluded dir infos
-        for (int k = 1; k < hierarchy.size(); k++) {
-          VirtualFile file = hierarchy.get(k);
-          DirectoryInfo parentInfo = myRootInfos.get(file);
+        // start with the strict parent and update parent excluded dir info
+        VirtualFile parentRoot = hierarchy.size() >= 2 ? hierarchy.get(1) : null;
+        if (parentRoot != null) {
+          DirectoryInfo parentInfo = myRootInfos.get(parentRoot);
           if (isExcluded(parentInfo)) {
-            addContentBeneathExcludedInfo(parentInfo, file, dirInfo);
+            addContentBeneathExcludedInfo(parentInfo, parentRoot, dirInfo);
           }
         }
       }
