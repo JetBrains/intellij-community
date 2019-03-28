@@ -54,6 +54,9 @@ interface UVariable : UDeclaration, PsiVariable {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitVariable(this, data)
 
+  @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
+  override fun getInitializer(): PsiExpression? = javaPsiInternal.initializer
+
   override fun asLogString(): String = log("name = $name")
 
   override fun asRenderString(): String = buildString {
