@@ -14,7 +14,7 @@ class AccessorAwareProcessor(
   name: String,
   place: PsiElement,
   kinds: Set<GroovyResolveKind>,
-  private val accessorProcessors: Collection<GrResolverProcessor<*>>
+  private val accessorProcessors: Collection<AccessorProcessor>
 ) : KindsResolverProcessor(name, place, kinds),
     GrResolverProcessor<GroovyResolveResult>,
     ElementClassHint,
@@ -34,9 +34,21 @@ class AccessorAwareProcessor(
     return kind != ElementClassHint.DeclarationKind.METHOD && kinds.any { kind in it.declarationKinds }
   }
 
+  override fun shouldProcess(kind: GroovyResolveKind): Boolean {
+    return super.shouldProcess(kind) && (kind != GroovyResolveKind.PROPERTY || accessorsNeeded)
+  }
+
+  override fun handleEvent(event: PsiScopeProcessor.Event, associated: Any?) {
+    for (processor in accessorProcessors) {
+      processor.handleEvent(event, associated)
+    }
+  }
+
   override fun getProcessors(): Collection<PsiScopeProcessor> = allProcessors
 
   private val allProcessors = listOf(this) + accessorProcessors
+
+  private val accessorsNeeded get() = accessorProcessors.all { it.acceptMore }
 
   private val accessorCandidates get() = accessorProcessors.flatMap { it.results }
 

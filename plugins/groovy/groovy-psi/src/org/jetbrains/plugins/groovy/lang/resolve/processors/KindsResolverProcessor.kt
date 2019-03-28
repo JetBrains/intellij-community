@@ -26,7 +26,7 @@ open class KindsResolverProcessor(
 
   final override fun getName(state: ResolveState): String? = name
 
-  final override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds && kind !in candidates
+  override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds && kind !in candidates
 
   private val candidates = enumMapOf<GroovyResolveKind, GroovyResolveResult>()
 
