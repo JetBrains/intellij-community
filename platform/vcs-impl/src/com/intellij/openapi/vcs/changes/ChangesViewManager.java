@@ -86,6 +86,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -180,6 +181,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
+  @Nullable
+  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return myCommitWorkflowHandler;
+  }
+
   private JComponent createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
@@ -193,7 +199,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+      ChangesViewCommitPanel commitPanel = new ChangesViewCommitPanel(myProject);
+      contentPanel.addToBottom(commitPanel);
+
+      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(commitPanel);
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
