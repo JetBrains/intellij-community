@@ -349,6 +349,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
       myWarningLabel.setCopyable(true);
+      myWarningLabel.setAllowAutoWrapping(true);
       myWarningLabel.setIcon(AllIcons.General.BalloonError);
 
       myComponentPlace.setLayout(new GridBagLayout());
@@ -483,7 +484,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
-      return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
+      return "<html><body><b>" + configurationException.getTitle() + ": </b>"
+             + configurationException.getMessage()
+             + configurationException.getMessage()
+             + configurationException.getMessage()
+             + configurationException.getMessage()
+             + "</body></html>";
     }
 
     private void createUIComponents() {
