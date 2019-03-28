@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,7 +13,7 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class ApplicationStarterBase extends ApplicationStarterEx {
+public abstract class ApplicationStarterBase implements ApplicationStarter {
   private final String myCommandName;
   private final int[] myArgsCount;
 
@@ -30,6 +30,11 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   @Override
   public boolean isHeadless() {
     return false;
+  }
+
+  @Override
+  public boolean canProcessExternalCommandLine() {
+    return true;
   }
 
   @Override
@@ -90,10 +95,5 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     }
 
     System.exit(0);
-  }
-
-  @Override
-  public boolean canProcessExternalCommandLine() {
-    return true;
   }
 }

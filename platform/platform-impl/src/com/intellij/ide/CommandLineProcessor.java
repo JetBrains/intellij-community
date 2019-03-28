@@ -110,9 +110,9 @@ public class CommandLineProcessor {
       }
 
       if (command.equals(starter.getCommandName())) {
-        if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
+        if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+          starter.processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
         }
         else {
           String title = "Cannot execute command '" + command + "'";
