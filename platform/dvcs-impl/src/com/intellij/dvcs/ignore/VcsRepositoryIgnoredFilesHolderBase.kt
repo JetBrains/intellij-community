@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -71,7 +72,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
+  override fun filesChanged(events: List<VFileEvent>) = processEvents(events)
+
+  private fun processEvents(events: List<VFileEvent>) {
     val affectedFiles = events
       .asSequence()
       .mapNotNull(::getAffectedFile)
@@ -79,10 +82,18 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       .map(VcsUtil::getFilePath)
       .toList()
 
-    if (affectedFiles.isNotEmpty()) {
-      removeIgnoredFiles(affectedFiles)
-      checkIgnored(affectedFiles)
-    }
+    val affectedOldParents = events
+      .asSequence()
+      .mapNotNull(::getAffectedOldParents)
+      .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
+      .map(VcsUtil::getFilePath)
+      .toList()
+
+    val parents = collectTopLevelPathParentsUnderRoot(repository.root, affectedFiles)
+    val oldParents = collectTopLevelPathParentsUnderRoot(repository.root, affectedOldParents)
+    val totalAffected = parents + oldParents
+    removeIgnoredFiles(totalAffected)
+    checkIgnored(totalAffected)
   }
 
   fun setupVfsListener() =
@@ -139,6 +150,26 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     queueIgnoreUpdate(isFullRescan = false) {
       doCheckIgnored(paths)
     }
+  }
+
+  private fun collectTopLevelPathParentsUnderRoot(root: VirtualFile, paths: Collection<FilePath>): Set<FilePath> {
+    if (paths.isEmpty()) return emptySet()
+
+    val rootPath = root.path
+    val parents = mutableSetOf<FilePath>()
+    for (path in paths) {
+      var parent = path.parentPath
+      var prevParent = if (path.isDirectory) path else parent
+      while (parent != null) {
+        if (!FileUtil.isAncestor(rootPath, parent.path, true) &&
+            (prevParent != null && FileUtil.isAncestor(rootPath, prevParent.path, true))) {
+          parents.add(prevParent)
+        }
+        prevParent = parent
+        parent = parent.parentPath
+      }
+    }
+    return parents
   }
 
   private fun queueIgnoreUpdate(isFullRescan: Boolean, doAfterRescan: Runnable? = null, action: () -> Set<FilePath>) {
@@ -209,6 +240,15 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
           event is VFileCreateEvent && event.parent.isValid -> event.file
           event is VFileDeleteEvent || event is VFileMoveEvent || event.isRename() -> event.file
           event is VFileCopyEvent && event.newParent.isValid -> event.newParent.findChild(event.newChildName)
+          else -> null
+        }
+      }
+
+    @JvmStatic
+    fun getAffectedOldParents(event: VFileEvent): VirtualFile? =
+      runReadAction {
+        when {
+          event is VFileMoveEvent && event.oldParent != event.newParent -> event.oldParent
           else -> null
         }
       }
