@@ -16,7 +16,6 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -126,12 +125,10 @@ interface UElement {
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
 }
 
-@get:ApiStatus.Experimental
 val UElement?.sourcePsiElement: PsiElement?
   get() = this?.sourcePsi
 
 
-@ApiStatus.Experimental
 @Suppress("UNCHECKED_CAST")
 fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
   this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
