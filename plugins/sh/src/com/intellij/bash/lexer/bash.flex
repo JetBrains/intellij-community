@@ -23,16 +23,7 @@ import com.intellij.lexer.FlexLexer;
   private Stack<Integer> myStack = new Stack<>();
   private boolean inString;
 
-  protected void onReset() {
-    myStack.clear();
-  }
-
-  long yychar = 0;
-
-    // return the complete buffer
-    protected CharSequence getBuffer() {
-        return zzBuffer;
-    }
+  protected void onReset() { myStack.clear(); }
 %}
 
 /***** Custom user code *****/
