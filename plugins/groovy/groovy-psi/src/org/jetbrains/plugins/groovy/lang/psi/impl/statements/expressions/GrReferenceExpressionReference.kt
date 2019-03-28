@@ -101,7 +101,7 @@ fun rValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKin
 }
 
 fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>, argument: Argument): GrResolverProcessor<*> {
-  val accessorProcessors: Collection<GrResolverProcessor<*>> = if (name.isPropertyName()) {
+  val accessorProcessors = if (name.isPropertyName()) {
     listOf(AccessorProcessor(name, PropertyKind.SETTER, listOf(argument), place))
   }
   else {
