@@ -53,6 +53,10 @@ public abstract class NonCodeMembersContributor {
     processDynamicElements(qualifierType, processor, place, state);
   }
 
+  protected boolean unwrapMultiprocessor() {
+    return true;
+  }
+
   @Nullable
   protected String getParentClassName() {
     return null;
@@ -118,13 +122,15 @@ public abstract class NonCodeMembersContributor {
       }
     }
 
-    List<MyDelegatingScopeProcessor> allDelegates = map(unwrappedOriginals, MyDelegatingScopeProcessor::new);
+    final List<MyDelegatingScopeProcessor> wrapped = Collections.singletonList(new MyDelegatingScopeProcessor(processor));
+    final List<MyDelegatingScopeProcessor> unwrapped = map(MultiProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
 
     final Iterable<NonCodeMembersContributor> contributors = getApplicableContributors(aClass);
     for (NonCodeMembersContributor contributor : contributors) {
       ProgressManager.checkCanceled();
       processor.handleEvent(CHANGE_LEVEL, null);
-      for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
+      final List<MyDelegatingScopeProcessor> delegates = contributor.unwrapMultiprocessor() ? unwrapped : wrapped;
+      for (MyDelegatingScopeProcessor delegatingProcessor : delegates) {
         ProgressManager.checkCanceled();
         contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
         if (!delegatingProcessor.wantMore) {
@@ -136,7 +142,7 @@ public abstract class NonCodeMembersContributor {
     return true;
   }
 
-  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
+  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor implements MultiProcessor {
     public boolean wantMore = true;
 
     MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
@@ -150,6 +156,12 @@ public abstract class NonCodeMembersContributor {
       }
       wantMore = super.execute(element, state);
       return wantMore;
+    }
+
+    @NotNull
+    @Override
+    public Iterable<? extends PsiScopeProcessor> getProcessors() {
+      return MultiProcessor.allProcessors(getDelegate());
     }
   }
 }
