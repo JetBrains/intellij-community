@@ -9,7 +9,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.jetbrains.changeReminder.changedFilePaths
 import com.jetbrains.changeReminder.processCommitsFromHashes
 
-data class Commit(val id: Int, val time: Long, val files: Set<FilePath>)
+data class Commit(val id: Int, val time: Long, val author: String, val files: Set<FilePath>)
 
 class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
   private fun getCommitHashesWithFile(file: FilePath): Collection<Int> {
@@ -31,7 +31,8 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
         val id = hashes[commit.id.asString()] ?: return@consume
         val time = commit.commitTime
         val files = commit.changedFilePaths().toSet()
-        commitsData[id] = Commit(id, time, files)
+        val author = commit.author
+        commitsData[id] = Commit(id, time, author.name, files)
       }
     }
     return commitsData
