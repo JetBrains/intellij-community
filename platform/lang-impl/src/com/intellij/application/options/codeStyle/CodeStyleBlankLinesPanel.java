@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -39,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel {
 
@@ -125,16 +124,19 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       }
     }
     groupOptions.addAll(myCustomOptions.get(groupName));
-    sortOptions(groupOptions).forEach(option -> {
-      String title = option.myIntField.getName();
-      String renamed = myRenamedFields.get(option.getOptionName());
-      if (renamed != null) title = renamed;
-      optionGroup.add(new JBLabel(title), option.myIntField);
-    });
+    sortOptions(groupOptions).forEach(option -> addToOptionGroup(optionGroup, option));
     myOptions.addAll(groupOptions);
     if (optionGroup.getComponents().length == 0) return null;
 
     return optionGroup;
+  }
+
+
+  private void addToOptionGroup(OptionGroup optionGroup, IntOption option) {
+    String title = option.myIntField.getName();
+    String renamed = myRenamedFields.get(option.getOptionName());
+    if (renamed != null) title = renamed;
+    optionGroup.add(new JBLabel(title), option.myIntField);
   }
 
   @Override
