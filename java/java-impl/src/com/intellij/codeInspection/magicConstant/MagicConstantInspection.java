@@ -32,6 +32,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -49,8 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
@@ -440,14 +439,10 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static AllowedValues getCalendarGetValues(PsiMethodCallExpression call) {
-    Integer argument = tryCast(ExpressionUtils.computeConstantExpression(call.getArgumentList().getExpressions()[0]), Integer.class);
+    Integer argument = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(call.getArgumentList().getExpressions()[0]), Integer.class);
     PsiMethod method = call.resolveMethod();
     if (method == null || argument == null) return null;
     return CachedValuesManager.getCachedValue(method, () -> {
-      final String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
-      final String[] months = {"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
-        "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"};
-      final String[] amPm = {"AM", "PM"};
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
       Function<String[], AllowedValues> converter = strings -> {
         String expression = StreamEx.of(strings)
@@ -456,8 +451,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
         return new AllowedValues(initializer.getInitializers(), false);
       };
       Map<Integer, AllowedValues> map = new HashMap<>();
+      final String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
       map.put(Calendar.DAY_OF_WEEK, converter.apply(days));
+      final String[] months = {"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
+        "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"};
       map.put(Calendar.MONTH, converter.apply(months));
+      final String[] amPm = {"AM", "PM"};
       map.put(Calendar.AM_PM, converter.apply(amPm));
       return CachedValueProvider.Result.create(map, method);
     }).get(argument);
@@ -465,12 +464,9 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    PsiModifierListOwner realElement;
-    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
-      realElement = (PsiModifierListOwner)element.getNavigationElement();
-    } else {
-      realElement = element;
-    }
+    PsiModifierListOwner realElement = element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner
+                  ? (PsiModifierListOwner)element.getNavigationElement()
+                  : element;
     return CachedValuesManager.getCachedValue(realElement, () ->
       CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
