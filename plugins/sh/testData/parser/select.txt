@@ -10,9 +10,31 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('This script can make any of the files in this directory private.')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(word)('This')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('script')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('can')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('make')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('any')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('of')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('the')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('files')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('in')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('this')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('directory')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('private.')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -23,32 +45,67 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('Enter the number of the file you want to protect:')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
+              PsiElement(word)('Enter')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('the')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('number')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('of')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('the')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('file')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('you')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('want')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('to')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('protect:')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('PS3')
+          PsiElement(word)('PS3')
           PsiElement(=)('=')
           STRING
-            PsiElement(string_begin)('"')
-            PsiElement(string_content)('Your choice: ')
-            PsiElement(string_end)('"')
+            PsiElement(")('"')
+            PsiElement(word)('Your')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('choice:')
+            PsiWhiteSpace(' ')
+            PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('QUIT')
+          PsiElement(word)('QUIT')
           PsiElement(=)('=')
           STRING
-            PsiElement(string_begin)('"')
-            PsiElement(string_content)('QUIT THIS PROGRAM - I feel safe now.')
-            PsiElement(string_end)('"')
+            PsiElement(")('"')
+            PsiElement(word)('QUIT')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('THIS')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('PROGRAM')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('-')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('I')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('feel')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('safe')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('now.')
+            PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -59,10 +116,10 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
+              PsiElement(")('"')
               VARIABLE
                 PsiElement(var)('$QUIT')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -83,8 +140,7 @@ BASH_FILE
             PsiElement(do)('do')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiWhiteSpace(' ')
-              PsiWhiteSpace(' ')
+              PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   CASE_COMMAND
@@ -96,33 +152,17 @@ BASH_FILE
                     PsiElement(word)('in')
                     CASE_CLAUSE
                       PsiElement(\n)('\n')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
+                      PsiWhiteSpace('        ')
                       PATTERN
                         STRING
-                          PsiElement(string_begin)('"')
+                          PsiElement(")('"')
                           VARIABLE
                             PsiElement(var)('$QUIT')
-                          PsiElement(string_end)('"')
+                          PsiElement(")('"')
                       PsiElement())(')')
                       COMPOUND_LIST
                         PsiElement(\n)('\n')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace('          ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
@@ -131,61 +171,27 @@ BASH_FILE
                               PsiWhiteSpace(' ')
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('Exiting.')
-                                  PsiElement(string_end)('"')
+                                  PsiElement(")('"')
+                                  PsiElement(word)('Exiting.')
+                                  PsiElement(")('"')
                         PsiElement(\n)('\n')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace('          ')
                         PIPELINE_COMMAND
                           PIPELINE
                             GENERIC_COMMAND_DIRECTIVE
                               PsiElement(word)('break')
                         PsiElement(\n)('\n')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
-                    PsiWhiteSpace(' ')
+                    PsiWhiteSpace('          ')
                     PsiElement(;;)(';;')
                     CASE_CLAUSE
                       PsiElement(\n)('\n')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
-                      PsiWhiteSpace(' ')
+                      PsiWhiteSpace('        ')
                       PATTERN
                         PsiElement(word)('*')
                       PsiElement())(')')
                       COMPOUND_LIST
                         PsiElement(\n)('\n')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace('          ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
@@ -194,26 +200,21 @@ BASH_FILE
                               PsiWhiteSpace(' ')
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
-                                  PsiElement(string_begin)('"')
-                                  PsiElement(string_content)('You picked ')
+                                  PsiElement(")('"')
+                                  PsiElement(word)('You')
+                                  PsiWhiteSpace(' ')
+                                  PsiElement(word)('picked')
+                                  PsiWhiteSpace(' ')
                                   VARIABLE
                                     PsiElement(var)('$FILENAME')
-                                  PsiElement(string_content)(' (')
+                                  PsiWhiteSpace(' ')
+                                  PsiElement(()('(')
                                   VARIABLE
                                     PsiElement(var)('$REPLY')
-                                  PsiElement(string_content)(')')
-                                  PsiElement(string_end)('"')
+                                  PsiElement())(')')
+                                  PsiElement(")('"')
                         PsiElement(\n)('\n')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
-                        PsiWhiteSpace(' ')
+                        PsiWhiteSpace('          ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
