@@ -18,6 +18,7 @@ do
           ;;
         *)
           echo "You picked $FILENAME ($REPLY)"
+          chmod go-rwx "$FILENAME"
           ;;
   esac
 done

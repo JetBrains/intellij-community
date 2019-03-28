@@ -37,6 +37,7 @@ public class BashFileLexerTest extends LexerTestCase {
   public void testTrap2()       { doFileTest("sh"); }
   public void testLet()         { doFileTest("sh"); }
   public void testParams()      { doFileTest("sh"); }
+  public void testSelect()      { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("bash"); }
 
   public void testPerf() throws IOException {

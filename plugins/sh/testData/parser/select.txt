@@ -125,6 +125,24 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('chmod')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('go-rwx')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              VARIABLE
+                PsiElement(var)('$FILENAME')
+              PsiElement(")('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
         SELECT_COMMAND
           PsiElement(select)('select')
           PsiWhiteSpace(' ')
@@ -212,6 +230,23 @@ BASH_FILE
                                   VARIABLE
                                     PsiElement(var)('$REPLY')
                                   PsiElement())(')')
+                                  PsiElement(")('"')
+                        PsiElement(\n)('\n')
+                        PsiWhiteSpace('          ')
+                        PIPELINE_COMMAND
+                          PIPELINE
+                            SIMPLE_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
+                                PsiElement(word)('chmod')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                PsiElement(word)('go-rwx')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$FILENAME')
                                   PsiElement(")('"')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('          ')

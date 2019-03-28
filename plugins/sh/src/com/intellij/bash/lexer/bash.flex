@@ -240,7 +240,7 @@ EscapedRightCurly = "\\}"
     {RawString}                   { if (inString) yypushback(yylength() - 1); else return RAW_STRING; }
 }
 
-<YYINITIAL> {
+<YYINITIAL, CASE_CLAUSE, CASE_PATTERN> {
     {Word}                        { return WORD; }
     "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
 }
