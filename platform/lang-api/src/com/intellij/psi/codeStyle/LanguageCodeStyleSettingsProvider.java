@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -372,8 +373,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       try {
-        provider.getClass().getDeclaredMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
-        settingsPagesProviders.add(provider);
+        Method configMethod = provider.getClass().getMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
+        Class declaringClass = configMethod.getDeclaringClass();
+        if (!declaringClass.equals(LanguageCodeStyleSettingsProvider.class)) {
+          settingsPagesProviders.add(provider);
+        }
       }
       catch (NoSuchMethodException e) {
         // Do not add the provider.
