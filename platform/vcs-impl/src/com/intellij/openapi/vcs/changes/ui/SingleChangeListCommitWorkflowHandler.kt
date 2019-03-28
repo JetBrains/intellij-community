@@ -69,9 +69,9 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(DataProvider { dataId ->
-      when (dataId) {
-        COMMIT_WORKFLOW_HANDLER.name -> this
-        Refreshable.PANEL_KEY.name -> commitPanel
+      when {
+        COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+        Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
         else -> null
       }
     })
