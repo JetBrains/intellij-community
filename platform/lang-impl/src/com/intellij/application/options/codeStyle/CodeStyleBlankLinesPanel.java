@@ -127,7 +127,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     groupOptions.addAll(myCustomOptions.get(groupName));
     sortOptions(groupOptions).forEach(option -> {
       String title = option.myIntField.getName();
-      String renamed = myRenamedFields.get(option.getFieldName());
+      String renamed = myRenamedFields.get(option.getOptionName());
       if (renamed != null) title = renamed;
       optionGroup.add(new JBLabel(title), option.myIntField);
     });
@@ -235,7 +235,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
-    private final String myFieldName;
 
     private IntOption(@NotNull String title, String fieldName) {
       this(title, CommonCodeStyleSettings.class, fieldName, false);
@@ -253,7 +252,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
       super(fieldName, anchor, anchorOptionName);
-      myFieldName = fieldName;
       try {
         myTarget = fieldClass.getField(fieldName);
       }
@@ -277,10 +275,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    private String getFieldName(){
-      return myFieldName;
     }
 
     public void setFieldValue(CodeStyleSettings settings, int value) {
