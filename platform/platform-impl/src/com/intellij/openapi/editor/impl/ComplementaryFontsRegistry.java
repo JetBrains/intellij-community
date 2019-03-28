@@ -25,7 +25,7 @@ import java.util.List;
 public class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
   
-  private static final Object lock = new String("common lock");
+  private static final Object lock = new Object();
   private static final List<String> ourFontNames;
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<>();
   private static final LinkedHashMap<FontFaceKey, FallBackInfo> ourUsedFonts;
@@ -123,7 +123,7 @@ public class ComplementaryFontsRegistry {
   }
 
   /**
-   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)}} instead.
+   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)}} instead. To be removed in 2020.2 version.
    */
   @Deprecated
   @NotNull
@@ -247,7 +247,7 @@ public class ComplementaryFontsRegistry {
   }
 
   /**
-   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, int, String, FontRenderContext)}}
+   * @deprecated Use {{@link #getFontAbleToDisplay(int, int, int, String, FontRenderContext)}} instead. To be removed in 2020.2 version.
    */
   @Deprecated
   @NotNull
