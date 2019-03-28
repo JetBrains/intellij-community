@@ -15,7 +15,6 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
@@ -239,7 +238,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
 
   private void showProfile(InspectionProfileModifiableModel profile) {
     final SingleInspectionProfilePanel panel = myAbstractSchemesPanel.getModel().getProfilePanel(profile);
-    if (!ArrayUtil.contains(panel, myAbstractSchemesPanel.getModel().getProfilePanels())) {
+    if (!myAbstractSchemesPanel.getModel().getProfilePanels().contains(panel)) {
       myProfilePanelHolder.add(panel);
     }
     for (Component component : myProfilePanelHolder.getComponents()) {
