@@ -94,12 +94,11 @@ function tokenReader {
     for key in $keys ; do
         # Try to read the positional index number from defined syntax.
         varname="syntax_${enttype}_${key}"
-        position="$(eval printf '%s\\n' "\$$varname")"
 
         reportDebug "Looking up $key for $name at position $position"
         if [ "$key" != "members" ]; then
             # Not looking for group members, use position.
-            value="$(printf "$members\n" | cut -d ',' -f "$position")"
+            value="$position"
         else
             # Looking for members, which is a csv list in itself.
             value="$(cutParentheses "$entry")"

@@ -56,8 +56,6 @@ else
   sudo easy_install sh
 fi
 
-echo [ foo[1] ]
-echo [foo[1]]
 
 array=(*.sh)
 a=array[1]

@@ -2,10 +2,6 @@
 
 ' "its also not a double string" '
 
-value="$(printf "$members\n" | cut -d ',' -f "$position")"
-entryFound="$(grep -v '^#' "$usrcff" | grep " $name(")"
-
-
 "a$"
 $
 
@@ -34,7 +30,6 @@ a b "a b \"" "a" b
 \>
 \<
 "||"
-"$(||)"
 "&&"
 #"$(&&)"  # todo: michail
 a#%%
@@ -43,8 +38,6 @@ echo level%%[a-zA-Z]*
 [ \${a} ]
 [  ]
 #[ ] # todo
-[ a  ]
-[ a | b ]
 [[ a || b ]]
 ${rdev%:*?}
 ${@!-+}

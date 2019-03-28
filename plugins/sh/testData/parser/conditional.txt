@@ -774,37 +774,13 @@ BASH_FILE
       PIPELINE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[ ')
-          PsiElement(()('(')
-          PsiElement(()('(')
-          PsiElement(word)('pwd')
-          PsiElement())(')')
-          PsiElement())(')')
-          PsiElement(]])(' ]]')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[ ')
-          PsiElement(()('(')
-          PsiElement(()('(')
-          PsiElement(word)('1+1')
-          PsiElement())(')')
-          PsiElement())(')')
-          PsiElement(]])(' ]]')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[ ')
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiElement(word)('sss')
+            PsiElement(parameter_expansion_body)('sss')
             PsiElement(})('}')
           PsiWhiteSpace(' ')
-          PsiElement(cond_op)('-ge')
+          PsiElement(word)('-ge')
           PsiWhiteSpace(' ')
-          PsiElement(word)('7')
+          PsiElement(int)('7')
           PsiElement(]])(' ]]')
