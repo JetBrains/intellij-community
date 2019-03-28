@@ -40,6 +40,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -53,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -779,7 +779,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private static boolean hasContent(ContentManager manager, Content content) {
-    return StreamEx.of(manager.getContents()).has(content);
+    return ArrayUtil.contains(content, manager.getContents());
   }
 
   private static void moveFollowingTabs(int index, final JBTabs tabs) {
