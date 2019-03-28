@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
-import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.Refreshable
@@ -27,7 +27,7 @@ private fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>>) =
   ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
 
 class SingleChangeListCommitWorkflowHandler(
-  internal val workflow: DialogCommitWorkflow,
+  internal val workflow: SingleChangeListCommitWorkflow,
   internal val ui: SingleChangeListCommitWorkflowUi
 ) : CommitWorkflowHandler,
     CommitWorkflowListener,

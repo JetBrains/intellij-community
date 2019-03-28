@@ -11,7 +11,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
 import java.awt.Dimension
 
-class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) : CommitChangeListDialog(workflow) {
+class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
   private val browser =

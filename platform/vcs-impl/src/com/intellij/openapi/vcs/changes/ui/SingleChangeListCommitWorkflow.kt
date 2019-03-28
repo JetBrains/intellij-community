@@ -34,7 +34,7 @@ import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import java.util.*
 
-private val LOG = logger<DialogCommitWorkflow>()
+private val LOG = logger<SingleChangeListCommitWorkflow>()
 
 internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
@@ -59,16 +59,18 @@ interface CommitWorkflowListener : EventListener {
   fun customCommitSucceeded()
 }
 
-open class DialogCommitWorkflow(val project: Project,
-                                val initiallyIncluded: Collection<*>,
-                                val initialChangeList: LocalChangeList? = null,
-                                val executors: List<CommitExecutor> = emptyList(),
-                                val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-                                val vcsToCommit: AbstractVcs<*>? = null,
-                                val affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
-                                private val isDefaultChangeListFullyIncluded: Boolean = true,
-                                val initialCommitMessage: String? = null,
-                                private val resultHandler: CommitResultHandler? = null) {
+open class SingleChangeListCommitWorkflow(
+  val project: Project,
+  val initiallyIncluded: Collection<*>,
+  val initialChangeList: LocalChangeList? = null,
+  val executors: List<CommitExecutor> = emptyList(),
+  val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
+  val vcsToCommit: AbstractVcs<*>? = null,
+  val affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
+  private val isDefaultChangeListFullyIncluded: Boolean = true,
+  val initialCommitMessage: String? = null,
+  private val resultHandler: CommitResultHandler? = null
+) {
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
   val commitContext: CommitContext = CommitContext()
