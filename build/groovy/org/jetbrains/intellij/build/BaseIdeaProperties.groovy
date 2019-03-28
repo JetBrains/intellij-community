@@ -166,7 +166,9 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     } as Consumer<PlatformLayout>
 
+/* Android Studio: disabled
     productLayout.setPluginPublishingSpec("intellij.statsCollector", new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false))
+Android Studio: disabled */
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
