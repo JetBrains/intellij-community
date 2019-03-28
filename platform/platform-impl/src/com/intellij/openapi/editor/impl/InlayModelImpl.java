@@ -107,12 +107,14 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   void reinitSettings() {
     myInlineElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
     myBlockElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
+    myAfterLineEndElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
   }
 
   @Override
   public void dispose() {
     myInlineElementsTree.dispose(myEditor.getDocument());
     myBlockElementsTree.dispose(myEditor.getDocument());
+    myAfterLineEndElementsTree.dispose(myEditor.getDocument());
   }
 
   @Nullable

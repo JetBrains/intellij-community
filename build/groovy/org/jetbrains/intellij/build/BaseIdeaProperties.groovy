@@ -82,7 +82,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.xml.langInjection",
     "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
-    "intellij.android.smali",
+    "intellij.android.smali"
     /* Disabled in Android Studio
     "intellij.ant",
     "intellij.java.byteCodeViewer",
@@ -91,7 +91,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.javaFX.community",
     "intellij.maven",
     "intellij.java.guiForms.designer",
-    "intellij.statsCollector"
     "intellij.xpath",
     "intellij.xslt.debugger",
     */
@@ -166,6 +165,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
       }
     } as Consumer<PlatformLayout>
+
+    productLayout.setPluginPublishingSpec("intellij.statsCollector", new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false))
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
