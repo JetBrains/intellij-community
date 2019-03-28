@@ -100,4 +100,10 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
     if (other is UastEmptyExpression) other.uastParent == uastParent
     else false
 
+  @Deprecated("create class instance instead")
+  companion object : UastEmptyExpression(null) {
+    @JvmField
+    val INSTANCE: UastEmptyExpression = this
+  }
+
 }
