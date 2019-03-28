@@ -109,11 +109,11 @@ open class DialogCommitWorkflow(val project: Project,
 
   fun executeDefault(executor: CommitExecutor?, commitState: ChangeListCommitState) {
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor, commitState.changeList)
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (beforeCommitChecksResult) {
       CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
       CheckinHandler.ReturnResult.CLOSE_WINDOW ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
+      CheckinHandler.ReturnResult.CANCEL -> Unit
     }
   }
 
@@ -121,7 +121,6 @@ open class DialogCommitWorkflow(val project: Project,
     if (!configureCommitSession(executor, session, commitState.changes, commitState.commitMessage)) return
 
     val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor, commitState.changeList)
-    @Suppress("NON_EXHAUSTIVE_WHEN")
     when (beforeCommitChecksResult) {
       CheckinHandler.ReturnResult.COMMIT -> {
         val success = doCommitCustom(executor, session, commitState)
@@ -129,6 +128,7 @@ open class DialogCommitWorkflow(val project: Project,
       }
       CheckinHandler.ReturnResult.CLOSE_WINDOW ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
+      CheckinHandler.ReturnResult.CANCEL -> Unit
     }
   }
 
