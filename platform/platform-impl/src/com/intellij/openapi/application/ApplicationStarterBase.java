@@ -47,9 +47,8 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
       processCommand(args, currentDirectory);
     }
     catch (Exception e) {
-      Messages.showMessageDialog(String.format("Error showing %s: %s", getCommandName(), e.getMessage()),
-                                 StringUtil.toTitleCase(getCommandName()),
-                                 Messages.getErrorIcon());
+      String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
+      Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
     }
     finally {
       saveAll();
