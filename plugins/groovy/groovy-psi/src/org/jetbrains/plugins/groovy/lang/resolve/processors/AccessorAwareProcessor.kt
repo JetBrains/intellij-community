@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.singleOrValid
 
-class AccessorAwareResolverProcessor(
+class AccessorAwareProcessor(
   name: String,
   place: PsiElement,
   kinds: Set<GroovyResolveKind>,

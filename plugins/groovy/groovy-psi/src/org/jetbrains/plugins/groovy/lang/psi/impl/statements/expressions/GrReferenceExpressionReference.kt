@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
-import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorAwareResolverProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorAwareProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*
@@ -97,7 +97,7 @@ fun rValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKin
   else {
     emptyList()
   }
-  return AccessorAwareResolverProcessor(name, place, kinds, accessorProcessors)
+  return AccessorAwareProcessor(name, place, kinds, accessorProcessors)
 }
 
 fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>, argument: Argument): GrResolverProcessor<*> {
@@ -107,5 +107,5 @@ fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKin
   else {
     emptyList()
   }
-  return AccessorAwareResolverProcessor(name, place, kinds, accessorProcessors)
+  return AccessorAwareProcessor(name, place, kinds, accessorProcessors)
 }
