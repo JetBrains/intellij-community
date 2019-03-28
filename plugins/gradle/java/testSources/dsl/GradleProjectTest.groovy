@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.RunAll
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -33,6 +34,7 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     } append {
       'resolve implicit setter without argument'()
     } append {
+      'property vs task'()
     } run()
   }
 
@@ -109,6 +111,13 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
       def original = assertInstanceOf(method.navigationElement, PsiMethod)
       assert original.name == 'setGroup'
       assert original.containingClass.qualifiedName == GRADLE_API_PROJECT
+    }
+  }
+
+  @CompileDynamic
+  void 'property vs task'() {
+    doTest('<caret>dependencies') {
+      methodTest(resolveTest(PsiMethod), "getDependencies", GRADLE_API_PROJECT)
     }
   }
 }

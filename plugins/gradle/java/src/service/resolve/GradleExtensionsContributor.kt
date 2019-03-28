@@ -10,6 +10,7 @@ import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -164,23 +165,6 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       }
 
       if (name != null && place is GrReferenceExpression && !place.isQualified) {
-        if (!shouldProcessMethods && shouldProcessProperties) {
-          extensionsData.tasksMap[name]?.let {
-            val docRef = Ref.create<String>()
-            val variable = object : GrLightVariable(place.manager, name, it.typeFqn, place) {
-              override fun getNavigationElement(): PsiElement {
-                val navigationElement = super.getNavigationElement()
-                navigationElement.putUserData(DOCUMENTATION, docRef.get())
-                return navigationElement
-              }
-            }
-            val doc = getDocumentation(it, variable)
-            docRef.set(doc)
-            place.putUserData(DOCUMENTATION, doc)
-            if (!processor.execute(variable, state)) return false
-          }
-        }
-
         val propExecutionResult = extensionsData.findProperty(name)?.let {
           if (!shouldProcessMethods && shouldProcessProperties) {
             val docRef = Ref.create<String>()
@@ -266,11 +250,14 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       return buffer.toString()
     }
 
-    fun getDocumentation(gradleTask: GradleTask,
-                         lightVariable: GrLightVariable): String {
+    fun getDocumentation(gradleTask: GradleTask, lightVariable: GrLightVariable): String {
+      return getDocumentation(gradleTask, lightVariable.type, lightVariable)
+    }
+
+    fun getDocumentation(gradleTask: GradleTask, type: PsiType, context: PsiElement): String {
       val buffer = StringBuilder()
       buffer.append("<PRE>")
-      JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
+      JavaDocInfoGenerator.generateType(buffer, type, context, true)
       buffer.append(" " + gradleTask.name)
       buffer.append("</PRE>")
       if (!gradleTask.description.isNullOrBlank()) {

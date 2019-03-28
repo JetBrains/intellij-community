@@ -99,6 +99,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       if (!shouldSkipDeclarationsAndSetters(aClass.qualifiedName)) {
         processDeclarations(aClass, processor, state, place)
       }
+      if (state[DELEGATED_TYPE] == true) return
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull()
                              ?: return
