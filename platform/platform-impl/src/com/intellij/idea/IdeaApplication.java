@@ -283,7 +283,7 @@ public class IdeaApplication {
     myStarter = null;
   }
 
-  public static class IdeStarter extends ApplicationStarterEx {
+  public static class IdeStarter implements ApplicationStarter {
     private Splash mySplash;
 
     @Override

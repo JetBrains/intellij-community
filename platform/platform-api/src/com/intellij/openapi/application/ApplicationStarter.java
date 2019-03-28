@@ -3,6 +3,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This extension point allows to run custom [command-line] application based on IDEA platform
@@ -14,7 +16,6 @@ import org.jetbrains.annotations.NonNls;
  * my.plugin.package.MyApplicationStarter class must implement {@link ApplicationStarter} interface.
  *
  * @author max
- * @see ApplicationStarterEx
  */
 public interface ApplicationStarter {
   ExtensionPointName<ApplicationStarter> EP_NAME = new ExtensionPointName<>("com.intellij.appStarter");
@@ -48,5 +49,20 @@ public interface ApplicationStarter {
    */
   default boolean isHeadless() {
     return true;
+  }
+
+  /**
+   * Applications that are capable of processing command-line arguments within a running IDE instance
+   * should return {@code true} from this method and implement {@link #processExternalCommandLine}.
+   *
+   * @see #processExternalCommandLine
+   */
+  default boolean canProcessExternalCommandLine() {
+    return false;
+  }
+
+  /** @see #canProcessExternalCommandLine */
+  default void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
   }
 }
