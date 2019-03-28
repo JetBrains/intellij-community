@@ -6,19 +6,19 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
 
-interface SingleChangeListCommitWorkflowUi : DataProvider, Disposable {
+interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider, Disposable {
   val commitMessageUi: CommitMessageUi
   val commitOptionsUi: CommitOptionsUi
 
   var defaultCommitActionName: String
 
-  fun activate(): Boolean
   fun deactivate()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
