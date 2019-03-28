@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -201,8 +202,8 @@ public abstract class InspectionRVContentProvider {
   private static StackTraceElement[] extractStackTrace(Throwable throwable) {
     // Remove top-of-stack frames which are common for different inspections,
     // leaving only inspection-specific frames
-    Set<String> classes = StreamEx.of(ProblemDescriptorBase.class, InspectionManagerBase.class, ProblemsHolder.class)
-      .map(Class::getName).toSet();
+    Set<String> classes = ContainerUtil.newHashSet(ProblemDescriptorBase.class.getName(), InspectionManagerBase.class.getName(), ProblemsHolder.class.getName());
+
     return StreamEx.of(throwable.getStackTrace())
             .dropWhile(ste -> classes.contains(ste.getClassName()))
             .toArray(StackTraceElement.class);
