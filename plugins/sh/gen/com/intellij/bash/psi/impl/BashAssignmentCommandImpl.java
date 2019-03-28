@@ -69,6 +69,12 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
+  public PsiElement getAddEq() {
+    return findChildByType(ADD_EQ);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getAt() {
     return findChildByType(AT);
   }
@@ -86,9 +92,9 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getEq() {
-    return findNotNullChildByType(EQ);
+    return findChildByType(EQ);
   }
 
   @Override

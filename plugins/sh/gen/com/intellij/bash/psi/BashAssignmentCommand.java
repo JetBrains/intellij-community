@@ -29,6 +29,9 @@ public interface BashAssignmentCommand extends BashCommand {
   BashVariable getVariable();
 
   @Nullable
+  PsiElement getAddEq();
+
+  @Nullable
   PsiElement getAt();
 
   @Nullable
@@ -37,7 +40,7 @@ public interface BashAssignmentCommand extends BashCommand {
   @Nullable
   PsiElement getDollar();
 
-  @NotNull
+  @Nullable
   PsiElement getEq();
 
   @Nullable

@@ -8,6 +8,8 @@
 # Usage: ./line_count.sh file
 # -----------------------------------------------------------------------------
 
+function="$1"
+
 # Link filedescriptor 10 with stdin
 exec 10<&0
 # stdin replaced with a file supplied as a first argument

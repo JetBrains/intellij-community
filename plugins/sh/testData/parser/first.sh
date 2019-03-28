@@ -95,6 +95,10 @@ let indx+=1
 let indx-=1
 let indx=1*1
 
+typeset function="$1"
+typeset function+="$1"
+typeset name="$2"
+typeset keys="$3"
 
 
 

@@ -71,6 +71,7 @@ CaseAfter={EscapedChar} | [^|\"'$`)( \n\r\f\t\f;]
 CasePattern = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 
 Filedescriptor = "&" {IntegerLiteral} | "&-"
+AssigOp = "=" | "+="
 
 %state EXPRESSIONS
 
@@ -101,6 +102,8 @@ Filedescriptor = "&" {IntegerLiteral} | "&-"
 
 
 <YYINITIAL, EXPRESSIONS> {
+    {AssignmentWord} / {AssigOp}  { return WORD; }
+
     "case"                        { return CASE; }
     "esac"                        { return ESAC; }
     "!"                           { return BANG; }
