@@ -484,12 +484,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     @NonNls
     private String generateWarningLabelText(final ValidationResult configurationException) {
-      return "<html><body><b>" + configurationException.getTitle() + ": </b>"
-             + configurationException.getMessage()
-             + configurationException.getMessage()
-             + configurationException.getMessage()
-             + configurationException.getMessage()
-             + "</body></html>";
+      return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
     }
 
     private void createUIComponents() {
