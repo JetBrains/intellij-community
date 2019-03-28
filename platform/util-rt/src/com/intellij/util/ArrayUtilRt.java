@@ -12,7 +12,7 @@ import java.util.Collection;
  * Stripped-down version of {@code com.intellij.util.ArrayUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
-@SuppressWarnings({"SSBasedInspection"})
+@SuppressWarnings("SSBasedInspection")
 public class ArrayUtilRt {
   public static final short[] EMPTY_SHORT_ARRAY = new short[0];
   public static final char[] EMPTY_CHAR_ARRAY = new char[0];

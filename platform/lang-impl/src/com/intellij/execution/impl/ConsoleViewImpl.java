@@ -666,11 +666,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     final RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
-    final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
 
     if (!shouldStickToEnd) {
       myEditor.getScrollingModel().accumulateViewportChanges();
     }
+    final Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
       boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
@@ -741,9 +741,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     sendUserInput(addedTextRef.get());
   }
 
-  private static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
+  private static int evaluateBackspacesInTokens(@NotNull List<? extends TokenBuffer.TokenInfo> source,
                                                 int sourceStartIndex,
-                                                @NotNull List<TokenBuffer.TokenInfo> dest) {
+                                                @NotNull List<? super TokenBuffer.TokenInfo> dest) {
     int backspacesFromNextToken = 0;
     for (int i = source.size() - 1; i >= sourceStartIndex; i--) {
       TokenBuffer.TokenInfo token = source.get(i);
