@@ -45,6 +45,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class InspectionDescriptionInfo {
@@ -64,13 +65,15 @@ public class InspectionDescriptionInfo {
   }
 
   public static InspectionDescriptionInfo create(Module module, PsiClass psiClass) {
-    PsiMethod method = PsiUtil.findNearestMethod("getShortName", psiClass);
-    if (method != null && method.getContainingClass().hasModifierProperty(PsiModifier.ABSTRACT)) {
-      method = null;
+    PsiMethod getShortNameMethod = PsiUtil.findNearestMethod("getShortName", psiClass);
+    if (getShortNameMethod != null &&
+        Objects.requireNonNull(getShortNameMethod.getContainingClass()).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      getShortNameMethod = null;
     }
+
     boolean shortNameInXml;
     String filename = null;
-    if (method == null) {
+    if (getShortNameMethod == null) {
       shortNameInXml = true;
       String className = psiClass.getQualifiedName();
       if (className != null) {
@@ -82,7 +85,7 @@ public class InspectionDescriptionInfo {
     }
     else {
       shortNameInXml = false;
-      filename = PsiUtil.getReturnedLiteral(method, psiClass);
+      filename = PsiUtil.getReturnedLiteral(getShortNameMethod, psiClass);
     }
 
     if (filename == null) {
@@ -92,7 +95,7 @@ public class InspectionDescriptionInfo {
     }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);
-    return new InspectionDescriptionInfo(filename, method, descriptionFile, shortNameInXml);
+    return new InspectionDescriptionInfo(filename, getShortNameMethod, descriptionFile, shortNameInXml);
   }
 
   @Nullable
@@ -139,6 +142,7 @@ public class InspectionDescriptionInfo {
       });
       Extension extension = result.get();
       if (extension != null) return extension;
+
       processed.addAll(origElements);
     }
     return null;
@@ -150,7 +154,7 @@ public class InspectionDescriptionInfo {
 
     String nameWithSuffix = filename + ".html";
     return DescriptionCheckerUtil.allDescriptionDirs(module, DescriptionType.INSPECTION)
-      .map(description -> description.findFile(nameWithSuffix)).nonNull().findFirst().orElse(null);
+      .map(directory -> directory.findFile(nameWithSuffix)).nonNull().findFirst().orElse(null);
   }
 
   public boolean isValid() {
