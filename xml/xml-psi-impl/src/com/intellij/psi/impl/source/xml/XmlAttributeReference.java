@@ -18,19 +18,19 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlAttributeReference implements PsiReference {
+public class XmlAttributeReference implements PsiPolyVariantReference {
   private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
     @Override
     protected XmlAttributeDescriptor compute() {
@@ -70,6 +70,13 @@ public class XmlAttributeReference implements PsiReference {
     return myAttribute.getName();
   }
 
+  @NotNull
+  @Override
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    final XmlAttributeDescriptor descriptor = getDescriptor();
+    return descriptor != null ? PsiElementResolveResult.createResults(descriptor.getDeclarations())
+                              : ResolveResult.EMPTY_ARRAY;
+  }
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newName = newElementName;
@@ -97,7 +104,9 @@ public class XmlAttributeReference implements PsiReference {
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    return myAttribute.getManager().areElementsEquivalent(element, resolve());
+    PsiManager manager = getElement().getManager();
+    return ContainerUtil.exists(multiResolve(false), result ->
+      result.isValidResult() && manager.areElementsEquivalent(element, result.getElement()));
   }
 
   @Override
@@ -112,7 +121,7 @@ public class XmlAttributeReference implements PsiReference {
   }
 
   @Nullable
-  private XmlAttributeDescriptor getDescriptor() {
+  protected XmlAttributeDescriptor getDescriptor() {
     return myDescriptor.getValue();
   }
 }
