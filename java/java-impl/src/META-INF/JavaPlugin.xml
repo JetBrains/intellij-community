@@ -1927,6 +1927,8 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
+    <java.externalAnnotation.locationProvider
+        implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
