@@ -24,7 +24,7 @@ import org.jetbrains.uast.values.UValue
 // Role: at the current state, evaluate expression(s)
 interface UEvaluator {
 
-  val context: UastContext
+  val context: UastLanguagePlugin
 
   val languageExtensions: List<UEvaluatorExtension>
     get() {
@@ -48,5 +48,5 @@ interface UEvaluator {
   fun getDependents(dependency: UDependency): Set<UValue>
 }
 
-fun createEvaluator(context: UastContext, extensions: List<UEvaluatorExtension>): UEvaluator =
+fun createEvaluator(context: UastLanguagePlugin, extensions: List<UEvaluatorExtension>): UEvaluator =
   TreeBasedEvaluator(context, extensions)

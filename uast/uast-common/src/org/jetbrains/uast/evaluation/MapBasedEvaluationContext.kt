@@ -24,7 +24,7 @@ import java.lang.ref.SoftReference
 import java.util.*
 
 class MapBasedEvaluationContext(
-  override val uastContext: UastContext,
+  override val uastContext: UastLanguagePlugin,
   override val extensions: List<UEvaluatorExtension>
 ) : UEvaluationContext {
 

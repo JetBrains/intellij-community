@@ -15,21 +15,17 @@
  */
 package org.jetbrains.uast.test.env
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UastContext
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
 
 abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
-  protected val uastContext: UastContext by lazy {
-    ServiceManager.getService(project, UastContext::class.java)
-  }
 
   abstract fun getVirtualFile(testName: String): VirtualFile
   abstract fun check(testName: String, file: UFile)
@@ -38,7 +34,7 @@ abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
     val virtualFile = getVirtualFile(testName)
 
     val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
-    val uFile = uastContext.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+    val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
     checkCallback(testName, uFile as UFile)
   }
 }

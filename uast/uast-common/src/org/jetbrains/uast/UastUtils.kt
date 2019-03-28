@@ -146,6 +146,9 @@ fun UElement.tryResolve(): PsiElement? = (this as? UResolvable)?.resolve()
 
 fun UElement.tryResolveNamed(): PsiNamedElement? = (this as? UResolvable)?.resolve() as? PsiNamedElement
 
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
+            replaceWith = ReplaceWith("(this as? UResolvable)?.resolve().toUElementOfType<UDeclaration>()"))
+@Suppress("Deprecation")
 fun UElement.tryResolveUDeclaration(context: UastContext): UDeclaration? {
   return (this as? UResolvable)?.resolve()?.let { context.convertElementWithParent(it, null) as? UDeclaration }
 }
@@ -162,6 +165,8 @@ fun UExpression.evaluateString(): String? = evaluate() as? String
  */
 fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
+@Deprecated("use UastFacade", ReplaceWith("UastFacade"))
+@Suppress("Deprecation")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi
   if (psi != null) {
@@ -174,8 +179,7 @@ tailrec fun UElement.getUastContext(): UastContext {
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {
-    val uastContext = ServiceManager.getService(psi.project, UastContext::class.java) ?: error("UastContext not found")
-    return uastContext.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
+    return UastFacade.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
   }
 
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
