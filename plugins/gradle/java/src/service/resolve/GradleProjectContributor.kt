@@ -63,8 +63,4 @@ class GradleProjectContributor : GradleMethodContextContributor {
     }
     return null
   }
-
-  override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    return GradleProjectAwareType(GRADLE_API_PROJECT, place.containingFile).processReceiverType(processor, state, place)
-  }
 }
