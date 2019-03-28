@@ -285,10 +285,7 @@ BASH_FILE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiElement(word)('distrs')
-            PsiElement([)('[')
-            PsiElement(word)('*')
-            PsiElement(])(']')
+            PsiElement(parameter_expansion_body)('distrs[*]')
             PsiElement(})('}')
           LIST_TERMINATOR
             PsiElement(\n)('\n')

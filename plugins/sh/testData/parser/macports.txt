@@ -29,7 +29,7 @@ BASH_FILE
                     PsiElement($)('$')
                     SHELL_PARAMETER_EXPANSION
                       PsiElement({)('{')
-                      PsiElement(word)('MACPORTS')
+                      PsiElement(parameter_expansion_body)('MACPORTS')
                       PsiElement(})('}')
                     PsiElement(")('"')
                   PsiElement(EXPR_CONDITIONAL_RIGHT)(' ]')

@@ -420,7 +420,7 @@ BASH_FILE
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(word)('BASH_VERSION')
+                PsiElement(parameter_expansion_body)('BASH_VERSION')
                 PsiElement(})('}')
               PsiElement(word)('...')
               PsiElement(")('"')
