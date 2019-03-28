@@ -122,6 +122,11 @@ public class IdeaApplication {
 
     myStarter = getStarter(myArgs, pluginsLoaded);
 
+    if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
+      Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
+      System.exit(Main.NO_GRAPHICS);
+    }
+
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
         new CommandLineApplication(isInternal, isUnitTest, headless);
@@ -138,11 +143,6 @@ public class IdeaApplication {
       Activity activity = StartUpMeasurer.start("create app");
       new ApplicationImpl(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION);
       activity.end();
-    }
-
-    if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
-      Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
-      System.exit(Main.NO_GRAPHICS);
     }
 
     myStarter.premain(myArgs);
