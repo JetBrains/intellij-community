@@ -1,13 +1,13 @@
-package org.jetbrains.java.knownAnnotations
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.externalAnnotation.location
 
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
-import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
-import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider
 import com.intellij.ide.extensionResources.ExtensionsRootType
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
@@ -15,7 +15,7 @@ import com.intellij.util.text.VersionComparatorUtil
 
 class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
-  private val myPluginId = PluginId.getId("org.jetbrains.java.knownAnnotations")
+  private val myPluginId = PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID)
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
   override fun getLocations(library: Library,
@@ -31,17 +31,6 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
     return listOf(matchers.entries.find { it.key.matches(version) }?.value ?: return emptyList())
   }
-
-  private fun versionMatches(available: String, requested: String): Boolean {
-    val majorRequested = extractMajor(requested)
-    val availableWithoutAnSuffix = dropAnSuffix(available)
-
-    return VersionComparatorUtil.compare(majorRequested, available) <= 0
-           && VersionComparatorUtil.compare(availableWithoutAnSuffix, requested) <= 0
-  }
-
-  private fun extractMajor(versionStr: String): String = versionStr.split('(', ')', '.', '_', '-', ';', ':', '/', ',', ' ', '+', '~')[0]
-  private fun dropAnSuffix(versionStr: String): String = versionStr.split(Regex("-an[\\d]+$"))[0]
 
   private fun buildAnnotations(): Map<String, Map<VersionRange, AnnotationsLocation>> {
     val extensionsRootType = ExtensionsRootType.getInstance()
