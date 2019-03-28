@@ -18,7 +18,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
@@ -157,10 +157,8 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
 
 @CalledInAny
 private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (!project.isDisposed) {
-      saveSettings(project, forceSavingAllSettings)
-    }
+  processOpenedProjects { project ->
+    saveSettings(project, forceSavingAllSettings)
   }
 }
 

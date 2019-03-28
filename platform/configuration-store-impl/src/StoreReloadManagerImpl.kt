@@ -21,8 +21,8 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectReloadState
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -55,15 +55,11 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
 
     val projectsToReload = THashSet<Project>()
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (project.isDisposed) {
-        continue
-      }
-
+    processOpenedProjects { project ->
       val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
       if ((changedSchemes == null || changedSchemes.isEmpty) && (changedStorages == null || changedStorages.isEmpty)) {
-        continue
+        return@processOpenedProjects
       }
 
       runBatchUpdate(project.messageBus) {
