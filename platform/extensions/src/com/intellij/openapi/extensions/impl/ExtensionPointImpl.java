@@ -117,7 +117,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   // extension will be not part of pico container
   private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order, @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
-    checkExtensionType(extension, null);
+    checkExtensionType(extension, getExtensionClass(), null);
 
     for (ExtensionComponentAdapter adapter : myAdapters) {
       if (adapter instanceof ObjectComponentAdapter && castComponentInstance(adapter) == extension) {
@@ -194,8 +194,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return index;
   }
 
-  private synchronized void checkExtensionType(@NotNull T extension, @Nullable ExtensionComponentAdapter adapter) {
-    Class<T> extensionClass = getExtensionClass();
+  private synchronized void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
       String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
       if (adapter != null) {
@@ -283,9 +282,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     CHECK_CANCELED.run();
 
     List<ExtensionComponentAdapter> adapters = myAdapters;
-    LoadingOrder.sort(adapters);
-
     int size = adapters.size();
+    if (size == 0) {
+      return Collections.emptyIterator();
+    }
+
+    LoadingOrder.sort(adapters);
 
     // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
     LOG.assertTrue(myListeners.length == 0);
@@ -302,7 +304,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       @Nullable
       public T next() {
         do {
-          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null);
+          T extension = processAdapter(adapters.get(currentIndex++), null /* don't even pass it */, null, null, null);
           if (extension != null) {
             return extension;
           }
@@ -357,7 +359,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       int extensionIndex = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < adapters.size(); i++) {
-        T extension = processAdapter(adapters.get(i), listeners, result, duplicates);
+        T extension = processAdapter(adapters.get(i), listeners, result, duplicates, extensionClass);
         if (extension != null) {
           result[extensionIndex++] = extension;
         }
@@ -380,7 +382,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private T processAdapter(@NotNull ExtensionComponentAdapter adapter,
                            @Nullable ExtensionPointListener<T>[] listeners,
                            @Nullable T[] result,
-                           @Nullable OpenTHashSet<T> duplicates) {
+                           @Nullable OpenTHashSet<T> duplicates,
+                           @Nullable Class<T> extensionClassForCheck) {
     try {
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
@@ -394,13 +397,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
                   "                   " + extension + ";\n" +
                   "  prev extension:  " + duplicate + ";\n" +
                   "  adapter:         " + adapter + ";\n" +
-                  "  extension class: " + getExtensionClass() + ";\n" +
+                  "  extension class: " + extensionClassForCheck + ";\n" +
                   "  result:          " + Arrays.asList(result) + ";\n" +
                   "  adapters:        " + myAdapters
         );
       }
       else {
-        checkExtensionType(extension, adapter);
+        if (extensionClassForCheck != null) {
+          checkExtensionType(extension, extensionClassForCheck, adapter);
+        }
 
         if (isNotifyThatAdded) {
           notifyListenersOnAdd(extension, adapter.getPluginDescriptor(), listeners);
@@ -462,7 +467,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
-   * For tests this method is more preferable than {@link #checkExtensionType} because makes registration more isolated and strict
+   * For tests this method is more preferable than {@link #registerExtension)} because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
    *
    * Please use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)} instead of direct usage.

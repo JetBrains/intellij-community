@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -87,5 +90,21 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
     //noinspection ConstantConditions
     return findExtension(this, instanceOf, areaInstance, true);
+  }
+
+
+  /**
+   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
+   * events will be fired during iteration and probably it will be not expected.
+   * <p>
+   * Use only for interface extension points, not for bean.
+   * <p>
+   * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
+   * so, `next` may return `null` (in this case stop iteration).
+   */
+  @NotNull
+  @ApiStatus.Experimental
+  public Iterator<T> iterator(@Nullable AreaInstance areaInstance) {
+    return ((ExtensionPointImpl<T>)getPoint(areaInstance)).iterator();
   }
 }
