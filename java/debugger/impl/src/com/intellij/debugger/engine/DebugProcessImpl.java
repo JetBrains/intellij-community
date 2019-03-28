@@ -19,7 +19,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -1084,16 +1083,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                       }
                     }
                   }
-                }
-              }
-            }
-
-            // workaround for multi-array args bug in jdi calls
-            for (Value arg : myArgs) {
-              if (arg instanceof ArrayReference) {
-                Type type = arg.type();
-                while (type instanceof ArrayType) {
-                  type = ((ArrayType)type).componentType(); // this will throw ClassNotLoadedException if necessary
                 }
               }
             }
