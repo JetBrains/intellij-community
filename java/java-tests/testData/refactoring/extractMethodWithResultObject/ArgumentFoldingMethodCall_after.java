@@ -15,15 +15,18 @@ class C {
 //exit: SEQUENTIAL PsiMethod:foo
 
     public NewMethodResult newMethod() {
-        if (x.isEmpty()) return new NewMethodResult();
+        if (x.isEmpty()) return new NewMethodResult((1 /* exit key */));
         x.remove(0);
         y.add(str());
         baz();
-        return new NewMethodResult();
+        return new NewMethodResult((-1 /* exit key */));
     }
 
     public class NewMethodResult {
-        public NewMethodResult() {
+        private int exitKey;
+
+        public NewMethodResult(int exitKey) {
+            this.exitKey = exitKey;
         }
     }
 

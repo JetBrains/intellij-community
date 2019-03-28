@@ -18,7 +18,26 @@ class C {
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:null
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:null
 //exit: SEQUENTIAL PsiBlockStatement
-//exit count: 2
+
+    public NewMethodResult newMethod() {
+        if (foo()) {
+            return new NewMethodResult((1 /* exit key */), null);
+        }
+        if (bar()) {
+            return new NewMethodResult((1 /* exit key */), null);
+        }
+        return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private String returnResult;
+
+        public NewMethodResult(int exitKey, String returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 
     String get() { return null; }
   boolean foo() { return false; }

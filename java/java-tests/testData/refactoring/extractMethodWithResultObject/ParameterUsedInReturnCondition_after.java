@@ -21,5 +21,24 @@ class C {
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:true
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:true
 //exit: SEQUENTIAL PsiForeachStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(String b, String s) {
+        if (b == null) {
+            return new NewMethodResult((1 /* exit key */), true);
+        }
+        if (b.equals(s)) {
+            return new NewMethodResult((1 /* exit key */), true);
+        }
+        return new NewMethodResult((-1 /* exit key */), (false /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private boolean returnResult;
+
+        public NewMethodResult(int exitKey, boolean returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 }

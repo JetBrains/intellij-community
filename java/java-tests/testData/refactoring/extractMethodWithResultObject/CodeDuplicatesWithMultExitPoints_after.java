@@ -7,5 +7,19 @@ class A {
 //in: PsiParameter:o
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:0
 //exit: SEQUENTIAL PsiIfStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(Object o) {
+        if (o == null) return new NewMethodResult((1 /* exit key */), 0);
+        return new NewMethodResult((-1 /* exit key */), (0 /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private int returnResult;
+
+        public NewMethodResult(int exitKey, int returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 }

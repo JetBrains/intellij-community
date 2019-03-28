@@ -12,5 +12,23 @@ class Test {
 //in: PsiParameter:args
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:null
 //exit: SEQUENTIAL PsiIfStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(String[] args) {
+        for(String arg : args) {
+          if (arg == null) continue;
+          System.out.println(arg);
+        }
+        if (args.length == 0) return new NewMethodResult((1 /* exit key */), null);
+        return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private String returnResult;
+
+        public NewMethodResult(int exitKey, String returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 }

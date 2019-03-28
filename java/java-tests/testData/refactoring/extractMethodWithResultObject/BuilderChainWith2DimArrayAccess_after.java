@@ -13,5 +13,20 @@ class Foo {
 //in: PsiParameter:a
 //exit: RETURN PsiMethod:bar<-PsiLiteralExpression:true
 //exit: SEQUENTIAL PsiForStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(String[][] a, int i, int j) {
+        if (a[i][j].length() > 3 && i % 3 == 0)
+            return new NewMethodResult((1 /* exit key */), true);
+        return new NewMethodResult((-1 /* exit key */), (false /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private boolean returnResult;
+
+        public NewMethodResult(int exitKey, boolean returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 }

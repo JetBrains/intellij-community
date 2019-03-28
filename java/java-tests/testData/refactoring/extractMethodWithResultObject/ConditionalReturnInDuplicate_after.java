@@ -13,7 +13,27 @@ class Conditional {
 //in: PsiParameter:s
 //exit: RETURN PsiMethod:bar<-PsiReferenceExpression:n
 //exit: SEQUENTIAL PsiIfStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(String[] s) {
+        if (s != null) {
+            int[] n = new int[s.length];
+            for (int i = 0; i < s.length; i++) {
+                n[i] = s[i].length();
+            }
+            return new NewMethodResult((1 /* exit key */), n);
+        }
+        return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private int[] returnResult;
+
+        public NewMethodResult(int exitKey, int[] returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 
     int[] baz(String[] z) {
         if (z != null) {

@@ -12,7 +12,19 @@ class Test10 {
       }
     };
   }//ins and outs
-//exit: RETURN PsiMethod:test<-PsiLiteralExpression:0
 //exit: SEQUENTIAL PsiExpressionStatement
-//exit count: 2
+
+    public NewMethodResult newMethod() {
+        new Object() {
+          int get() {
+            return 0;
+          }
+        };
+        return new NewMethodResult();
+    }
+
+    public class NewMethodResult {
+        public NewMethodResult() {
+        }
+    }
 }

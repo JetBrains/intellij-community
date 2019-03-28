@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractMethodWithResultObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -52,6 +53,8 @@ public class ExtractMethodWithResultObjectProcessor {
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
+  private static final Key<Integer> EXIT_STATEMENT_INDEX_KEY = Key.create("ExtractMethodWithResultObjectProcessor.ExitStatementIndex");
+
   private enum ExitType {
     EXPRESSION,
     RETURN,
@@ -66,7 +69,7 @@ public class ExtractMethodWithResultObjectProcessor {
     private final ExitType myType;
     private final PsiElement myExitedElement;
 
-    private Exit(ExitType type, PsiElement element) {
+    private Exit(@NotNull ExitType type, @Nullable PsiElement element) {
       myType = type;
       myExitedElement = element;
     }
@@ -77,6 +80,20 @@ public class ExtractMethodWithResultObjectProcessor {
 
     PsiElement getExitedElement() {
       return myExitedElement;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Exit)) return false;
+
+      Exit exit = (Exit)o;
+      return myType == exit.myType && Objects.equals(myExitedElement, exit.myExitedElement);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myType.hashCode() + (myExitedElement != null ? myExitedElement.hashCode() : 0);
     }
 
     @Override
@@ -148,7 +165,7 @@ public class ExtractMethodWithResultObjectProcessor {
   private void collectInputsAndOutputs() {
     // todo take care of surrounding try-catch
     JavaRecursiveElementWalkingVisitor elementsVisitor = new JavaRecursiveElementWalkingVisitor() {
-      private boolean myExpressionsOnly;
+      private final Set<PsiElement> mySkippedContexts = new HashSet<>();
 
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -193,7 +210,7 @@ public class ExtractMethodWithResultObjectProcessor {
       public void visitReturnStatement(PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
 
-        if (!myExpressionsOnly) {
+        if (!isInSkippedContext(statement)) {
           myExits.put(statement, new Exit(ExitType.RETURN, myCodeFragmentMember));
         }
       }
@@ -202,7 +219,7 @@ public class ExtractMethodWithResultObjectProcessor {
       public void visitContinueStatement(PsiContinueStatement statement) {
         super.visitContinueStatement(statement);
 
-        if (!myExpressionsOnly) {
+        if (!isInSkippedContext(statement)) {
           PsiStatement continuedStatement = statement.findContinuedStatement();
           if (continuedStatement instanceof PsiLoopStatement && !isInside(continuedStatement)) {
             myExits.put(statement, new Exit(ExitType.CONTINUE, ((PsiLoopStatement)continuedStatement).getBody()));
@@ -214,7 +231,7 @@ public class ExtractMethodWithResultObjectProcessor {
       public void visitBreakStatement(PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
 
-        if (!myExpressionsOnly) {
+        if (!isInSkippedContext(statement)) {
           PsiElement exitedElement = statement.findExitedElement();
           if (exitedElement != null && !isInside(exitedElement)) {
             PsiElement outermostExited = findOutermostExitedElement(statement);
@@ -227,7 +244,7 @@ public class ExtractMethodWithResultObjectProcessor {
       public void visitThrowStatement(PsiThrowStatement statement) {
         super.visitThrowStatement(statement);
 
-        if (!myExpressionsOnly) {
+        if (!isInSkippedContext(statement)) {
           PsiTryStatement throwTarget = findThrowTarget(statement);
           if (throwTarget == null) {
             myExits.put(statement, new Exit(ExitType.THROW, myCodeFragmentMember));
@@ -240,23 +257,25 @@ public class ExtractMethodWithResultObjectProcessor {
 
       @Override
       public void visitClass(PsiClass aClass) {
-        myExpressionsOnly = true;
-        try {
-          super.visitClass(aClass);
-        }
-        finally {
-          myExpressionsOnly = false;
-        }
+        mySkippedContexts.add(aClass);
+        super.visitClass(aClass);
       }
 
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
-        myExpressionsOnly = true;
-        try {
-          super.visitLambdaExpression(expression);
-        }
-        finally {
-          myExpressionsOnly = false;
+        mySkippedContexts.add(expression);
+        super.visitLambdaExpression(expression);
+      }
+
+      private boolean isInSkippedContext(PsiElement element) {
+        while (true) {
+          if (element == myCodeFragmentMember) {
+            return false;
+          }
+          if (element == null || mySkippedContexts.contains(element)) {
+            return true;
+          }
+          element = element.getContext();
         }
       }
     };
@@ -453,12 +472,12 @@ public class ExtractMethodWithResultObjectProcessor {
 
     Set<ExitType> exitTypes = myExits.values().stream().map(e -> e.getType()).collect(Collectors.toSet());
     if (!exitTypes.contains(ExitType.UNDEFINED) && !exitTypes.contains(ExitType.THROW)) {
-      List<ResultItem> resultItems = collectResultItems();
+      Map<Exit, Integer> distinctExits = getDistinctExits();
+      List<ResultItem> resultItems = collectResultItems(distinctExits);
       PsiClass resultClass = createResultClass(resultItems);
-      createMethod(resultItems, resultClass);
+      createMethod(resultItems, resultClass, distinctExits);
     }
     else {
-      //dumpText("exit count: " + exitTypes.size());
       dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));
     }
 
@@ -468,7 +487,7 @@ public class ExtractMethodWithResultObjectProcessor {
     dumpText("ins and outs");
   }
 
-  private List<ResultItem> collectResultItems() {
+  private List<ResultItem> collectResultItems(Map<Exit, Integer> distinctExits) {
     if (myExpression != null) {
       assert myExits.size() == 1 : "one exit with expression";
       PsiType expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
@@ -479,6 +498,10 @@ public class ExtractMethodWithResultObjectProcessor {
     }
 
     List<ResultItem> resultItems = new ArrayList<>();
+
+    if (distinctExits.size() > 1) {
+      resultItems.add(new ExitKeyResultItem());
+    }
 
     List<Exit> returnExits = ContainerUtil.filter(myExits.values(), exit -> ExitType.RETURN.equals(exit.getType()));
     if (!returnExits.isEmpty()) {
@@ -528,7 +551,8 @@ public class ExtractMethodWithResultObjectProcessor {
     return resultClass;
   }
 
-  private void createMethod(List<ResultItem> resultItems, PsiClass resultClass) {
+  private void createMethod(List<ResultItem> resultItems,
+                            PsiClass resultClass, Map<Exit, Integer> distinctExits) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
     PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
@@ -556,55 +580,106 @@ public class ExtractMethodWithResultObjectProcessor {
       });
 
     PsiCodeBlock body = method.getBody();
-    assert body != null;
-    if (myExpression == null) {
-      body.addRange(myElements[0], myElements[myElements.length - 1]);
-    }
-    Set<ExitType> exitTypes = myExits.values().stream().map(Exit::getType).collect(Collectors.toSet());
-    PsiStatement[] originalBodyStatements = body.getStatements();
+    assert body != null : "method body";
 
-    if (exitTypes.contains(ExitType.RETURN)) {
-      List<PsiReturnStatement> statementsToReplace = collectStatements(originalBodyStatements, PsiReturnStatement.class);
-      for (PsiReturnStatement statementToReplace : statementsToReplace) {
-        PsiReturnStatement returnStatement = createReturnStatement(resultItems, body, statementToReplace.getReturnValue(), factory);
-        assert returnStatement != null : "returnStatement";
-        statementToReplace.replace(returnStatement);
+    if (myExpression != null) {
+      body.add(createReturnStatement(resultItems, -1, body, null, factory));
+      myAnchor.getParent().addAfter(method, myAnchor);
+      return;
+    }
+
+    List<PsiStatement> oldExitStatements = new ArrayList<>();
+    for (PsiStatement statement : myExits.keySet()) {
+      if (statement != null) {
+        Integer index = oldExitStatements.size();
+        oldExitStatements.add(statement);
+        statement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, index);
       }
     }
 
-    if (exitTypes.contains(ExitType.SEQUENTIAL) || exitTypes.contains(ExitType.EXPRESSION)) {
-      body.add(createReturnStatement(resultItems, body, null, factory));
+    body.addRange(myElements[0], myElements[myElements.length - 1]);
+    PsiStatement[] methodBodyStatements = body.getStatements();
+    List<PsiStatement> newExitStatements = collectExitStatements(methodBodyStatements);
+
+    Map<PsiStatement, PsiStatement> newToOldExitStatements = new HashMap<>();
+    for (PsiStatement newExitStatement : newExitStatements) {
+      Integer index = newExitStatement.getCopyableUserData(EXIT_STATEMENT_INDEX_KEY);
+      if (index == null) {
+        continue; // break or continue within the method
+      }
+      assert index >= 0 && index < oldExitStatements.size() : "exit statement index";
+      PsiStatement oldExitStatement = oldExitStatements.get(index);
+      newToOldExitStatements.put(newExitStatement, oldExitStatement);
+
+      newExitStatement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, null);
+      oldExitStatement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, null);
+    }
+
+    Set<ExitType> exitTypes = myExits.values().stream().map(Exit::getType).collect(Collectors.toSet());
+
+    for (PsiStatement newExitStatement : newExitStatements) {
+      PsiStatement oldExitStatement = newToOldExitStatements.get(newExitStatement);
+      if (oldExitStatement == null) {
+        continue; // break or continue within the method
+      }
+      Exit exit = myExits.get(oldExitStatement);
+      Integer exitKey = distinctExits.get(exit);
+      assert exitKey != null : "exit key";
+
+      PsiExpression expression = null;
+      if (newExitStatement instanceof PsiReturnStatement) {
+        expression = ((PsiReturnStatement)newExitStatement).getReturnValue();
+      }
+      else if (newExitStatement instanceof PsiBreakStatement) {
+        expression = ((PsiBreakStatement)newExitStatement).getValueExpression();
+      }
+
+      PsiReturnStatement returnStatement = createReturnStatement(resultItems, exitKey, body, expression, factory);
+      assert returnStatement != null : "returnStatement ";
+      newExitStatement.replace(returnStatement);
+    }
+
+    if (exitTypes.contains(ExitType.SEQUENTIAL)) {
+      body.add(createReturnStatement(resultItems, -1, body, null, factory));
     }
 
     myAnchor.getParent().addAfter(method, myAnchor);
   }
 
   @NotNull
-  private static <T extends PsiStatement> List<T> collectStatements(PsiStatement[] bodyStatements, Class<T> statementClass) {
-    List<T> results = new ArrayList<>();
+  private Map<Exit, Integer> getDistinctExits() {
+    Map<Exit, Integer> distinctExits = new HashMap<>();
+    EntryStream.of(myExits)
+      .mapKeys(s -> s != null ? s.getTextOffset() : 0)
+      .sorted(Comparator.comparing((Map.Entry<Integer, Exit> e) -> e.getKey()).thenComparing(e -> e.getValue().getType()))
+      .forKeyValue((offset, exit) -> {
+        if (!distinctExits.containsKey(exit)) {
+          distinctExits.put(exit, distinctExits.size());
+        }
+      });
+    return distinctExits;
+  }
+
+  @NotNull
+  private static List<PsiStatement> collectExitStatements(PsiStatement[] bodyStatements) {
+    List<PsiStatement> exitStatements = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
-        addStatement(statement);
+        exitStatements.add(statement);
       }
 
       @Override
       public void visitBreakStatement(PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
-        addStatement(statement);
+        exitStatements.add(statement);
       }
 
       @Override
       public void visitContinueStatement(PsiContinueStatement statement) {
         super.visitContinueStatement(statement);
-        addStatement(statement);
-      }
-
-      private void addStatement(PsiStatement statement) {
-        if (statementClass.isInstance(statement)) {
-          results.add(statementClass.cast(statement));
-        }
+        exitStatements.add(statement);
       }
 
       @Override
@@ -616,10 +691,11 @@ public class ExtractMethodWithResultObjectProcessor {
     for (PsiStatement bodyStatement : bodyStatements) {
       bodyStatement.accept(visitor);
     }
-    return results;
+    return exitStatements;
   }
 
   private static PsiReturnStatement createReturnStatement(List<ResultItem> resultItems,
+                                                          int exitKey,
                                                           PsiCodeBlock body,
                                                           PsiExpression expression,
                                                           PsiElementFactory factory) {
@@ -628,7 +704,7 @@ public class ExtractMethodWithResultObjectProcessor {
       .replace(factory.createExpressionFromText("new NewMethodResult()", returnStatement));
     PsiExpressionList returnArgumentList = notNull(returnExpression.getArgumentList());
     for (ResultItem resultItem : resultItems) {
-      PsiExpression resultObjectArgument = resultItem.createResultObjectArgument(expression, body, factory);
+      PsiExpression resultObjectArgument = resultItem.createResultObjectArgument(expression, exitKey, body, factory);
       assert resultObjectArgument != null : "resultObjectArgument";
       returnArgumentList.add(notNull(resultObjectArgument));
     }
@@ -700,7 +776,7 @@ public class ExtractMethodWithResultObjectProcessor {
       body.add(factory.createStatementFromText(PsiKeyword.THIS + '.' + myFieldName + '=' + myFieldName + ';', body.getRBrace()));
     }
 
-    abstract PsiExpression createResultObjectArgument(PsiExpression expression, PsiCodeBlock body, PsiElementFactory factory);
+    abstract PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory);
   }
 
   private static class VariableResultItem extends ResultItem {
@@ -712,7 +788,7 @@ public class ExtractMethodWithResultObjectProcessor {
     }
 
     @Override
-    PsiExpression createResultObjectArgument(PsiExpression expression, PsiCodeBlock body, PsiElementFactory factory) {
+    PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory) {
       return factory.createExpressionFromText(myFieldName, body.getRBrace());
     }
   }
@@ -726,7 +802,7 @@ public class ExtractMethodWithResultObjectProcessor {
     }
 
     @Override
-    PsiExpression createResultObjectArgument(PsiExpression expression, PsiCodeBlock body, PsiElementFactory factory) {
+    PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory) {
       return myExpression;
     }
   }
@@ -737,12 +813,23 @@ public class ExtractMethodWithResultObjectProcessor {
     }
 
     @Override
-    PsiExpression createResultObjectArgument(PsiExpression expression, PsiCodeBlock body, PsiElementFactory factory) {
+    PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory) {
       if (expression == null) {
         String text = myType instanceof PsiPrimitiveType ? PsiTypesUtil.getDefaultValueOfType(myType) : PsiKeyword.NULL;
-        return factory.createExpressionFromText('(' + text + " /* missing value */" + ')', body.getRBrace());
+        return factory.createExpressionFromText("(" + text + " /* missing value */)", body.getRBrace());
       }
       return expression;
+    }
+  }
+
+  private static class ExitKeyResultItem extends ResultItem {
+    ExitKeyResultItem() {
+      super("exitKey", PsiType.INT);
+    }
+
+    @Override
+    PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory) {
+      return factory.createExpressionFromText("(" + exitKey + " /* exit key */)", body.getRBrace());
     }
   }
 }

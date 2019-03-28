@@ -21,5 +21,22 @@ class X {
 //in: PsiParameter:b
 //exit: RETURN PsiMethod:fun2<-PsiMethodCallExpression:fun1(x)
 //exit: SEQUENTIAL PsiIfStatement
-//exit count: 2
+
+    public NewMethodResult newMethod(String b) {
+        if (b != null) {
+          int x = 1;
+            return new NewMethodResult((1 /* exit key */), fun1(x));
+        }
+        return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
+    }
+
+    public class NewMethodResult {
+        private int exitKey;
+        private X returnResult;
+
+        public NewMethodResult(int exitKey, X returnResult) {
+            this.exitKey = exitKey;
+            this.returnResult = returnResult;
+        }
+    }
 }
