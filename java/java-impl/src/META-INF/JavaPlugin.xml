@@ -48,14 +48,10 @@
     <xi:fallback/>
   </xi:include>
 
-
   <application-components>
     <component>
       <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.util.xml.impl.JavaDomApplicationComponent</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
@@ -1929,6 +1925,8 @@
     <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
+
+    <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
