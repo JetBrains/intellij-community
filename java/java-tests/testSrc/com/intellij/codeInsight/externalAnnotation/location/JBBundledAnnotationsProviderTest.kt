@@ -1,15 +1,12 @@
-package org.jetbrains.java.knowAnnotatinos
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.externalAnnotation.location
 
-import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.LightPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.java.knownAnnotations.JBBundledAnnotationsProvider
 import org.junit.Test
-
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
