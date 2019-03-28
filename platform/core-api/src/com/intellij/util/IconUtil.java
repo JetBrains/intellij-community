@@ -187,7 +187,7 @@ public class IconUtil {
       return icon;
     }
     FileType fileType = vFile.getFileType();
-    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
+    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return PlatformIcons.FOLDER_ICON;
     }
     return fileType.getIcon();
