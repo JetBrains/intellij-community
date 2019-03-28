@@ -1,13 +1,8 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-import java.io.IOException;
 
 public class BashFileLexerTest extends LexerTestCase {
   @Override
@@ -39,28 +34,4 @@ public class BashFileLexerTest extends LexerTestCase {
   public void testParams()      { doFileTest("sh"); }
   public void testSelect()      { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("bash"); }
-
-  public void testPerf() throws IOException {
-    String text = FileUtil.loadFile(new File("/Users/ignatov/src/BashSupport/testData/editor/highlighting/syntaxHighlighter/performance/functions_issue96.bash"));
-
-    BashLexer lexer = new BashLexer();
-    long start = System.currentTimeMillis();
-
-    lexer.start(text, 0, text.length());
-//    StringBuilder result = new StringBuilder();
-//    ArrayList<IElementType> types = new ArrayList<>();
-    IElementType tokenType;
-       int i=0;
-    while ((tokenType = lexer.getTokenType()) != null) {
-
-      i++;
-//      result.append(printSingleToken(text, tokenType, lexer.getTokenStart(), lexer.getTokenEnd()));
-      lexer.advance();
-    }
-
-    System.out.println(System.currentTimeMillis() - start + " for " + i);
-
-//    System.out.println(result.length());
-//    return result.toString();
-  }
 }
