@@ -8,10 +8,10 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangeListCommitState
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.DefaultCommitResultHandler
-import com.intellij.openapi.vcs.changes.ui.DialogCommitWorkflow
+import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow
 
 class AlienCommitWorkflow(val vcs: AbstractVcs<*>, changeListName: String, changes: List<Change>, commitMessage: String?) :
-  DialogCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {
+  SingleChangeListCommitWorkflow(vcs.project, changes, vcsToCommit = vcs, initialCommitMessage = commitMessage) {
   val changeList = AlienLocalChangeList(changes, changeListName)
 
   override fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) = checks.run()
