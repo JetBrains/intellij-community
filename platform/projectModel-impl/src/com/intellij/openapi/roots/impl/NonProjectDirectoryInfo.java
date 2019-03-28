@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -115,8 +116,9 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   }
 
   @Override
-  public boolean hasContentBeneathExcluded(@NotNull VirtualFile dir) {
-    return false;
+  public boolean processContentBeneathExcluded(@NotNull VirtualFile dir,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    return true;
   }
 
   static class WithBeneathInfo extends NonProjectDirectoryInfo {
@@ -131,8 +133,10 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     }
 
     @Override
-    public boolean hasContentBeneathExcluded(@NotNull VirtualFile dir) {
-      return ContainerUtil.exists(myContentInfosBeneath, child -> VfsUtilCore.isAncestor(dir, child.myRoot, false));
+    public boolean processContentBeneathExcluded(@NotNull VirtualFile dir,
+                                                 @NotNull Processor<? super VirtualFile> processor) {
+      return isExcluded(dir) &&
+             ContainerUtil.process(myContentInfosBeneath, child -> !VfsUtilCore.isAncestor(dir, child.myRoot, false) || processor.process(child.myRoot));
     }
 
     @Override

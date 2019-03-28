@@ -9,7 +9,9 @@ import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
   public void testDirectoryInfoMustKnowAboutContentDirectoriesBeneathExcluded() throws IOException {
@@ -17,6 +19,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     assertNotNull(root);
     /*
       /root
+         /rootSub
          /myModule (module content root)
             /src (source root)
             /src1 (source root)
@@ -24,10 +27,13 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
                   /e.txt
             /excluded (excluded)
                /myModule2 (module2 content root)
-                  /src (module2 source root)
-                     /my.txt
+                  /src2 (module2 source root)
+                     /my2.txt
                /subExcluded
      */
+    assertFalse(myFileIndex.isInContent(root));
+    VirtualFile rootSub = createChildDirectory(root, "rootSub");
+    assertFalse(myFileIndex.isInContent(rootSub));
     VirtualFile module = createChildDirectory(root, "myModule");
     VirtualFile src = createChildDirectory(module, "src");
     VirtualFile src1 = createChildDirectory(module, "src1");
@@ -36,8 +42,8 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     VirtualFile excluded = createChildDirectory(module, "excluded");
     VirtualFile subExcluded = createChildDirectory(excluded, "subExcluded");
     VirtualFile module2 = createChildDirectory(excluded, "myModule2");
-    VirtualFile src2 = createChildDirectory(module2, "src");
-    VirtualFile myTxt = createChildData(src2, "my.txt");
+    VirtualFile src2 = createChildDirectory(module2, "src2");
+    VirtualFile my2Txt = createChildData(src2, "my2.txt");
 
     Module myModule = newModuleWithContent("myModule", module);
     PsiTestUtil.addSourceRoot(myModule, src);
@@ -48,22 +54,26 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     Module myModule2 = newModuleWithContent("myModule2", module2);
     PsiTestUtil.addSourceRoot(myModule2, src2);
 
-    check(excluded1, false, false);
-    check(eTxt, false, false);
-    check(excluded, false, true);
-    check(module2, true, false);
-    check(subExcluded, false, false);
+    checkIterate(root, module, src, src1, module2, src2, my2Txt);
+    checkIterate(src, src);
+    checkIterate(src1, src1);
+    checkIterate(excluded1);
+    checkIterate(module, module, src, src1, module2, src2, my2Txt);
+    checkIterate(eTxt);
+    checkIterate(excluded, module2, src2, my2Txt);
+    checkIterate(module2, module2, src2, my2Txt);
+    checkIterate(subExcluded);
 
     assertIteratedContent(myFileIndex,
                           root,
-                          Arrays.asList(module, src, src1, module2, src2, myTxt),
+                          Arrays.asList(module, src, src1, module2, src2, my2Txt),
                           Arrays.asList(root, excluded1, eTxt, excluded, subExcluded));
   }
 
-  private void check(@NotNull VirtualFile file, boolean expectInProject, boolean expectContentBeneathExcluded) {
-    DirectoryInfo info = DirectoryIndex.getInstance(getProject()).getInfoForFile(file);
-    assertEquals(expectInProject, info.isInProject(file));
-    assertEquals(expectContentBeneathExcluded, info.hasContentBeneathExcluded(file));
+  private void checkIterate(@NotNull VirtualFile file, @NotNull VirtualFile... expectToIterate) {
+    final List<VirtualFile> collected = new ArrayList<>();
+    myFileIndex.iterateContentUnderDirectory(file, fileOrDir -> collected.add(fileOrDir));
+    assertSameElements(collected, expectToIterate);
   }
 
   @NotNull
