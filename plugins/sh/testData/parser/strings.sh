@@ -1,3 +1,11 @@
+"'" 1234 "'"
+
+' "its also not a double string" '
+
+value="$(printf "$members\n" | cut -d ',' -f "$position")"
+entryFound="$(grep -v '^#' "$usrcff" | grep " $name(")"
+
+
 "a$"
 $
 

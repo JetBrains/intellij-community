@@ -22,6 +22,7 @@ import com.intellij.lexer.FlexLexer;
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }
   private Stack<Integer> myStack = new Stack<>();
+  private boolean inString;
 
   protected void onReset() {
     myStack.clear();
@@ -236,9 +237,8 @@ EscapedRightCurly = "\\}"
     {LineTerminator}              { return LINEFEED; }
     {Variable}                    { return VAR; }
 
-    {Quote}                       { return QUOTE; }
-
-    {RawString}                   { return RAW_STRING; }
+    {Quote}                       { inString = !inString; return QUOTE; } // todo: refactor
+    {RawString}                   { if (inString) yypushback(yylength() - 1); else return RAW_STRING; }
 }
 
 <YYINITIAL> {

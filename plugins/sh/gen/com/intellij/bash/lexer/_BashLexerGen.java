@@ -790,6 +790,7 @@ public class _BashLexerGen implements FlexLexer {
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }
   private Stack<Integer> myStack = new Stack<>();
+  private boolean inString;
 
   protected void onReset() {
     myStack.clear();
@@ -1073,7 +1074,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 97: break;
           case 6: 
-            { return QUOTE;
+            { inString = !inString; return QUOTE;
             } 
             // fall through
           case 98: break;
@@ -1233,7 +1234,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 129: break;
           case 38: 
-            { return RAW_STRING;
+            { if (inString) yypushback(yylength() - 1); else return RAW_STRING;
             } 
             // fall through
           case 130: break;
