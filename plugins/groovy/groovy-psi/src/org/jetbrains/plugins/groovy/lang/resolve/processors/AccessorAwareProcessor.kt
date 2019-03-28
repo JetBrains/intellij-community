@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.util.containers.ContainerUtil
@@ -46,7 +47,7 @@ class AccessorAwareProcessor(
 
   override fun getProcessors(): Collection<PsiScopeProcessor> = allProcessors
 
-  private val allProcessors = listOf(this) + accessorProcessors
+  private val allProcessors = listOf(object : DelegatingScopeProcessor(this) {}) + accessorProcessors
 
   private val accessorsNeeded get() = accessorProcessors.all { it.acceptMore }
 
