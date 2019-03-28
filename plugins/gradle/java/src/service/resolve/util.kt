@@ -26,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor
 import java.util.*
 
+
+val DELEGATED_TYPE: Key<Boolean> = Key.create("gradle.delegated.type")
+
 /**
  * @author Vladislav.Soroka
  */
