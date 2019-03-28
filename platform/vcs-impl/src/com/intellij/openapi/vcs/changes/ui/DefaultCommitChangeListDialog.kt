@@ -11,10 +11,7 @@ import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
 import java.awt.Dimension
 
-class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) :
-  CommitChangeListDialog(workflow),
-  SingleChangeListCommitWorkflowUi.ChangeListListener {
-
+class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
   private val browser =
@@ -40,18 +37,20 @@ class DefaultCommitChangeListDialog(workflow: DialogCommitWorkflow) :
 
     browser.setSelectedListChangeListener { changeListEventDispatcher.multicaster.changeListChanged() }
 
-    addChangeListListener(this, this)
+    addChangeListListener(object : SingleChangeListCommitWorkflowUi.ChangeListListener {
+      override fun changeListChanged() = this@DefaultCommitChangeListDialog.changeListChanged()
+    }, this)
   }
 
   override fun getBrowser(): CommitDialogChangesBrowser = browser
 
-  override fun changeListChanged() {
+  override fun addChangeListListener(listener: SingleChangeListCommitWorkflowUi.ChangeListListener, parent: Disposable) =
+    changeListEventDispatcher.addListener(listener, parent)
+
+  private fun changeListChanged() {
     commitMessageComponent.setChangeList(getChangeList())
     updateWarning()
   }
-
-  override fun addChangeListListener(listener: SingleChangeListCommitWorkflowUi.ChangeListListener, parent: Disposable) =
-    changeListEventDispatcher.addListener(listener, parent)
 }
 
 private class DiffCommitMessageEditor(project: Project, commitMessage: CommitMessage) : CommitMessage(project) {
