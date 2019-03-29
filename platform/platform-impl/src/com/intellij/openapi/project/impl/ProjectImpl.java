@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -347,6 +348,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
   }
