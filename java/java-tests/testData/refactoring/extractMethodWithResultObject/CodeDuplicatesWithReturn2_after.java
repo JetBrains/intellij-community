@@ -13,7 +13,7 @@ class C {
         return new NewMethodResult(i.toString());
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private String returnResult;
 
         public NewMethodResult(String returnResult) {

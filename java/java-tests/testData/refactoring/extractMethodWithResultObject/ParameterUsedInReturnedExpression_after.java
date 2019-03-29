@@ -28,7 +28,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int exitKey;
         private String returnResult;
 

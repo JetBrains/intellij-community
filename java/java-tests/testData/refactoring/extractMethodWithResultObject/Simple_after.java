@@ -10,7 +10,7 @@ class C {
         return new NewMethodResult();
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         public NewMethodResult() {
         }
     }

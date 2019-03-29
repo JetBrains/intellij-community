@@ -13,7 +13,7 @@ class Test {
         return new NewMethodResult(foos);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private String[] expressionResult;
 
         public NewMethodResult(String[] expressionResult) {

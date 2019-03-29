@@ -13,7 +13,7 @@ class C {
         return new NewMethodResult(A.getInstance());
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private Object returnResult;
 
         public NewMethodResult(Object returnResult) {

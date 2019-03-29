@@ -17,7 +17,7 @@ class WillWorkTest {
         return new NewMethodResult(k, k);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int returnResult;
         private int k;
 

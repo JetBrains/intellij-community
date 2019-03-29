@@ -18,7 +18,7 @@ class Foo {
         return new NewMethodResult((-1 /* exit key */), (false /* missing value */));
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int exitKey;
         private boolean returnResult;
 

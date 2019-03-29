@@ -14,7 +14,7 @@ class C {
         return new NewMethodResult(c);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private C expressionResult;
 
         public NewMethodResult(C expressionResult) {

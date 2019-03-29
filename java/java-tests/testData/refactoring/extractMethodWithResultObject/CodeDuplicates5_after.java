@@ -37,7 +37,7 @@ class C extends D {
         return new NewMethodResult();
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         public NewMethodResult() {
         }
     }

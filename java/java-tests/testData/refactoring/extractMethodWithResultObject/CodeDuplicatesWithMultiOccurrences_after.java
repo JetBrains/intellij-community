@@ -10,7 +10,7 @@ class Test {
         return new NewMethodResult(f);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

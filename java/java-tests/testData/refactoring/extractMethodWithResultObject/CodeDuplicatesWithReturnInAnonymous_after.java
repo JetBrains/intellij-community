@@ -24,7 +24,7 @@ class Test10 {
         return new NewMethodResult();
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         public NewMethodResult() {
         }
     }

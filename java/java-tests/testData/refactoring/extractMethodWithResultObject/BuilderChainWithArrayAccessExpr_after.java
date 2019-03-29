@@ -10,7 +10,7 @@ class UseBuilder {
         return new NewMethodResult(builder.foo("xyz").bar(arr[0]));
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private Builder expressionResult;
 
         public NewMethodResult(Builder expressionResult) {

@@ -20,7 +20,7 @@ class CommentAfterSelectedFragment {
         return new NewMethodResult(i);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int i;
 
         public NewMethodResult(int i) {

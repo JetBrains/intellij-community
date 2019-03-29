@@ -20,7 +20,7 @@ class C {
         return new NewMethodResult(l1);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private List l1;
 
         public NewMethodResult(List l1) {

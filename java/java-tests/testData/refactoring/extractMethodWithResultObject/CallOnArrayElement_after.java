@@ -10,7 +10,7 @@ class C {
         return new NewMethodResult(vars[i].length());
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int expressionResult;
 
         public NewMethodResult(int expressionResult) {

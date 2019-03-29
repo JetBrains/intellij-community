@@ -18,7 +18,7 @@ class X {
         return new NewMethodResult((-1 /* exit key */), x);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int exitKey;
         private String x;
 

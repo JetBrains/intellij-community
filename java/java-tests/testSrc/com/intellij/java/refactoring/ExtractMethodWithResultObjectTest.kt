@@ -51,14 +51,14 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testChainedConstructor() = doTest()
   fun testChainedConstructorDuplicates() = doTest()
   fun testChainedConstructorInvalidDuplicates() = doTest()
-  fun testChangedReturnType() = doTest(false)
+  fun testChangedReturnType() = doTest(false) // todo
   fun testCheckQualifierMapping() = doTest()
   fun testClassReference2() = doTest()
   fun testClassReference() = doTest()
   fun testCodeDuplicates2() = doTest()
   fun testCodeDuplicates3() = doTest()
   fun testCodeDuplicates4() = doTest()
-  fun testCodeDuplicates5() = doTest(false)
+  fun testCodeDuplicates5() = doTest(false) // expected
   fun testCodeDuplicates() = doTest()
   fun testCodeDuplicatesVarargsShouldNotChangeReturnType() = doTest()
   fun testCodeDuplicatesWithComments() = doTest()
@@ -77,7 +77,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testConditionalReturnInDuplicate() = doTest()
   fun testConditionalReturnVsAssignDuplicate() = doTest()
   fun testConditionalWithTwoParameters() = doTest()
-  fun testConflictingAnonymous() = doTest(false)
+  fun testConflictingAnonymous() = doTest(false) // todo
   fun testConstantConditionsAffectingControlFlow1() = doTest()
   fun testConstantConditionsAffectingControlFlow() = doTest()
   fun testContinueInside() = doTest()

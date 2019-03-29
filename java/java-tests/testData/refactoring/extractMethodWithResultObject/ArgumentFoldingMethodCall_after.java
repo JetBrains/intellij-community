@@ -23,7 +23,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */));
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private int exitKey;
 
         public NewMethodResult(int exitKey) {

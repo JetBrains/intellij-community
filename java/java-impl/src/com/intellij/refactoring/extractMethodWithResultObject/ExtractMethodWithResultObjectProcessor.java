@@ -589,6 +589,12 @@ public class ExtractMethodWithResultObjectProcessor {
 
     PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(myFactory.createClass(myResultClassName), classAnchor);
     notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+    PsiElement ancestor = PsiTreeUtil.getParentOfType(classAnchor, PsiClass.class, PsiMethod.class);
+    if (ancestor instanceof PsiClass && (ancestor.getParent() instanceof PsiFile ||
+                                         ((PsiClass)ancestor).hasModifierProperty(PsiModifier.STATIC))) {
+      notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.STATIC, true);
+    }
+
     for (ResultItem resultItem : resultItems) {
       resultItem.createField(resultClass, myFactory);
     }
@@ -612,6 +618,10 @@ public class ExtractMethodWithResultObjectProcessor {
 
     PsiMethod method = myFactory.createMethod(myMethodName, myFactory.createType(resultClass), myAnchor);
     method.getModifierList().setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+    if (myCodeFragmentMember instanceof PsiMethod && ((PsiMethod)myCodeFragmentMember).hasModifierProperty(PsiModifier.STATIC)) {
+      method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
+    }
+
     PsiTypeParameterList typeParameterList = createMethodTypeParameterList(resultItems);
     if (typeParameterList != null) {
       notNull(method.getTypeParameterList()).replace(typeParameterList);

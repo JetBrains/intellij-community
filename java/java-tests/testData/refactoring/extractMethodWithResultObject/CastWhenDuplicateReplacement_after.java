@@ -11,7 +11,7 @@ class Test {
         return new NewMethodResult(((String)x).substring(1));
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

@@ -9,7 +9,7 @@ class Test {
         return new NewMethodResult(i == 0);
     }
 
-    class NewMethodResult {
+    static class NewMethodResult {
         private boolean expressionResult;
 
         public NewMethodResult(boolean expressionResult) {
