@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
@@ -20,10 +19,6 @@ import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.util.PairConsumer
 
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
-
-private fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>>) =
-  vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
-  ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: SingleChangeListCommitWorkflow,

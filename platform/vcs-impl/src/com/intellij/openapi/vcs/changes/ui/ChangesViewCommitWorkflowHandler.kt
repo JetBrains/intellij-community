@@ -21,6 +21,7 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   override fun vcsesChanged() {
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
   }
 
