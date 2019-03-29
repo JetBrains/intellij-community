@@ -19,9 +19,10 @@ import com.intellij.lexer.FlexLexer;
   public _BashLexerGen() { this(null); }
   private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
   private void popState() { yybegin(myStack.pop());}
-  private void yy_switch_state(int state) { popState(); pushState(state); }
+  private void switchState(int state) { popState(); pushState(state); }
   private IntStack myStack = new IntStack(20);
   private boolean inString;
+  private CharSequence heredocMarker;
 
   protected void onReset() { myStack.clear(); }
 %}
@@ -79,10 +80,18 @@ AssigOp = "=" | "+="
 
 EscapedRightCurly = "\\}"
 
+HeredocMarker = [^\r\n|&\\;()[] ] | {EscapedChar}
+HeredocMarkerInQuotes = {HeredocMarker}+
+
 %state EXPRESSIONS
 %state PARAMETER_EXPANSION
 %state CASE_CLAUSE
 %state CASE_PATTERN
+
+%state HERE_DOC_START_MARKER
+%state HERE_DOC_END_MARKER
+%state HERE_DOC_PIPELINE
+%state HERE_DOC_BODY
 
 %%
 
@@ -128,7 +137,23 @@ EscapedRightCurly = "\\}"
   {CasePattern}                   { return WORD; }
 }
 
-<YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN> {
+<HERE_DOC_START_MARKER> {
+  {HeredocMarkerInQuotes}               { heredocMarker = yytext(); yybegin(HERE_DOC_PIPELINE); return HEREDOC_MARKER_START; }
+  {WhiteSpaceLineContinuation}+         { return WHITESPACE; }
+}
+
+<HERE_DOC_END_MARKER> {
+  {HeredocMarkerInQuotes}               { if (yytext().equals(heredocMarker)) { heredocMarker = ""; yybegin(YYINITIAL); return HEREDOC_MARKER_END; }
+                                          else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
+  [^]                                   { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
+}
+
+<HERE_DOC_BODY> {
+    {InputCharacter}*             { return HEREDOC_LINE; }
+    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
+}
+
+<YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
     "case"                        { pushState(CASE_CLAUSE); return CASE; }
@@ -177,14 +202,16 @@ EscapedRightCurly = "\\}"
     "]"                           { return RIGHT_SQUARE; }
     ">"                           { return GT; }
     "<"                           { return LT; }
-    "<<"                          { return SHIFT_LEFT; }
-    ">>"                          { return SHIFT_RIGHT; }
     ">="                          { return GE; }
     "<="                          { return LE; }
     "!="                          { return ARITH_NE; }
 
 
-    "<<"                          { return SHIFT_LEFT; }
+    "<<-" |
+    "<<"                          { if (yystate() != HERE_DOC_PIPELINE) { yybegin(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
+                                    else return SHIFT_LEFT; }
+    ">>"                          { return SHIFT_RIGHT; }
+
 
 //        "!"                           { return ARITH_NEGATE; } // todo: never match wtf?
 
@@ -224,7 +251,7 @@ EscapedRightCurly = "\\}"
 
     {WhiteSpaceLineContinuation}+ { return WHITESPACE; }
     {LineContinuation}+           { return WHITESPACE; }
-    {LineTerminator}              { return LINEFEED; }
+    {LineTerminator}              { if (yystate() == HERE_DOC_PIPELINE) yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
     {Variable}                    { return VAR; }
 
     {Quote}                       { inString = !inString; return QUOTE; } // todo: refactor
