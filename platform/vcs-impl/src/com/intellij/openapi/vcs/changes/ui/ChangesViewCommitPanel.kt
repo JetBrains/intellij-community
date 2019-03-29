@@ -43,7 +43,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
     editorField.setPlaceholder("Commit Message")
   }
-  private val commitButton = object : JButton("Commit") {
+  private val commitButton = object : JButton(getDefaultCommitActionName()) {
     init {
       isEnabled = false
     }
@@ -69,6 +69,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
+
+  override var defaultCommitActionName: String
+    get() = commitButton.text
+    set(value) {
+      commitButton.text = value
+    }
 
   override var isDefaultCommitActionEnabled: Boolean
     get() = commitButton.isEnabled

@@ -2,9 +2,22 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
+
+// Need to support '_' for mnemonics as it is supported in DialogWrapper internally
+private fun String.fixUnderscoreMnemonic() = replace('_', '&')
+
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>> = emptyList()): String =
+  replaceMnemonicAmpersand(
+    (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
+     ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
+    ).fixUnderscoreMnemonic()
+  )
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
   CommitWorkflowHandler,

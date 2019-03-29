@@ -11,8 +11,6 @@ import java.util.*
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
   val commitOptionsUi: CommitOptionsUi
 
-  var defaultCommitActionName: String
-
   fun deactivate()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
