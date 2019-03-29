@@ -1,42 +1,31 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 
 // TODO track exact project id to obtain project extension data
 class GradleProjectAwareType(
-  private val fqn: String,
-  private val context: PsiElement
+  private val delegate: PsiClassType
 ) : PsiClassType(LanguageLevel.HIGHEST) {
 
-  override fun isValid(): Boolean = context.isValid
-  override fun getResolveScope(): GlobalSearchScope = context.resolveScope
-  override fun resolve(): PsiClass? = JavaPsiFacade.getInstance(context.project).findClass(canonicalText, resolveScope)
+  override fun isValid(): Boolean = delegate.isValid
+  override fun getResolveScope(): GlobalSearchScope = delegate.resolveScope
+  override fun resolve(): PsiClass? = delegate.resolve()
+  override fun resolveGenerics(): ClassResolveResult = delegate.resolveGenerics()
+  override fun getParameters(): Array<PsiType> = delegate.parameters
+  override fun rawType(): PsiClassType = GradleProjectAwareType(delegate.rawType())
 
-  override fun resolveGenerics(): ClassResolveResult {
-    val resolved = resolve() ?: return ClassResolveResult.EMPTY
-    return object : ClassResolveResult {
-      override fun getElement(): PsiClass = resolved
-      override fun getSubstitutor(): PsiSubstitutor = PsiSubstitutor.EMPTY
-      override fun isValidResult(): Boolean = true
-      override fun isAccessible(): Boolean = true
-      override fun isStaticsScopeCorrect(): Boolean = true
-      override fun getCurrentFileResolveScope(): PsiElement? = null
-      override fun isPackagePrefixPackageReference(): Boolean = false
-    }
-  }
+  override fun getClassName(): String = delegate.className
+  override fun getCanonicalText(): String = delegate.canonicalText
+  override fun getPresentableText(): String = delegate.presentableText
+  override fun equalsToText(text: String): Boolean = delegate.equalsToText(text)
 
-  override fun getParameters(): Array<PsiType> = PsiType.EMPTY_ARRAY
-  override fun rawType(): PsiClassType = this
-
-  override fun getCanonicalText(): String = fqn
-  override fun getClassName(): String = StringUtil.getShortName(fqn)
-  override fun getPresentableText(): String = className
-  override fun equalsToText(text: String): Boolean = text == fqn
-
-  override fun getLanguageLevel(): LanguageLevel = myLanguageLevel
+  override fun getLanguageLevel(): LanguageLevel = delegate.languageLevel
   override fun setLanguageLevel(languageLevel: LanguageLevel): PsiClassType = error("must not be called")
+
+  fun setType(delegate: PsiClassType): GradleProjectAwareType = GradleProjectAwareType(delegate)
 }

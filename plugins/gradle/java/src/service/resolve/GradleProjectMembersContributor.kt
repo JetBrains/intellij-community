@@ -18,12 +18,8 @@ class GradleProjectMembersContributor : NonCodeMembersContributor() {
   override fun getParentClassName(): String? = GRADLE_API_PROJECT
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
-    val delegate = if (qualifierType is GradleProjectAwareType) {
-      GradleProjectAwareType(GRADLE_API_TASK_CONTAINER, place)
-    }
-    else {
-      TypesUtil.createType(GRADLE_API_TASK_CONTAINER, place)
-    }
+    val taskContainer = TypesUtil.createType(GRADLE_API_TASK_CONTAINER, place)
+    val delegate = if (qualifierType is GradleProjectAwareType) qualifierType.setType(taskContainer) else taskContainer
     delegate.processReceiverType(processor, state.put(DELEGATED_TYPE, true), place)
   }
 }
