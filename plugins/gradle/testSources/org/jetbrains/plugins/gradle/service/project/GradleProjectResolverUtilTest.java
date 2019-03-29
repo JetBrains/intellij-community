@@ -38,8 +38,6 @@ public class GradleProjectResolverUtilTest {
 
   @Test
   public void testGetGradlePath() {
-    assertNull(GradleProjectResolverUtil.getGradlePath(null));
-
     final Module rootModule = createModuleMock("rootModule");
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
 
