@@ -22,7 +22,6 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -50,19 +49,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
+import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
 public class ActionsTree {
-  private static final Logger LOG = Logger.getInstance(ActionsTree.class);
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
 
@@ -592,8 +589,7 @@ public class ActionsTree {
           icon = link.getIcon();
           setIcon(getEvenIcon(link.getIcon()));
           Rectangle treeVisibleRect = tree.getVisibleRect();
-          TreePath path = tree.getPathForRow(row);
-          int rowX = path != null ? getRowX((BasicTreeUI)tree.getUI(), row, path.getPathCount() - 1) : 0;
+          int rowX = getNodeRowX(tree, row);
           setupLinkDimensions(treeVisibleRect, rowX);
         }
         else {
@@ -812,29 +808,6 @@ public class ActionsTree {
     }
 
     config.restore();
-  }
-
-  private static Method ourGetRowXMethod = null;
-
-  private static int getRowX(BasicTreeUI ui, int row, int depth) {
-    if (ourGetRowXMethod == null) {
-      try {
-        ourGetRowXMethod = BasicTreeUI.class.getDeclaredMethod("getRowX", int.class, int.class);
-        ourGetRowXMethod.setAccessible(true);
-      }
-      catch (NoSuchMethodException e) {
-        LOG.error(e);
-      }
-    }
-    if (ourGetRowXMethod != null) {
-      try {
-        return (Integer)ourGetRowXMethod.invoke(ui, row, depth);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    return 0;
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
