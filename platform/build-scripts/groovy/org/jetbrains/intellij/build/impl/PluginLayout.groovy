@@ -170,6 +170,9 @@ class PluginLayout extends BaseLayout {
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
      * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
      * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
+     *
+     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
+     * as a custom plugin, so it isn't recommended to use optional dependencies. Use {@link #withModule(java.lang.String, java.lang.String)} instead.
      */
     void withOptionalModule(String moduleName, String relativeJarPath) {
       layout.optionalModules << moduleName
@@ -179,6 +182,9 @@ class PluginLayout extends BaseLayout {
     /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     *
+     * @deprecated if a module is not included into the plugin in some IDE, it may cause problems if a plugin it optionally depends on is installed
+     * as a custom plugin, so it isn't recommended to use optional dependencies. Use  {@link #withModule(java.lang.String)} instead.
      */
     void withOptionalModule(String moduleName) {
       layout.optionalModules << moduleName

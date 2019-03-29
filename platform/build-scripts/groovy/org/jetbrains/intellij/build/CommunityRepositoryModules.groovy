@@ -105,8 +105,8 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withOptionalModule("intellij.platform.remoteServers.git")
-      withOptionalModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
+      withModule("intellij.platform.remoteServers.git")
+      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"
@@ -119,9 +119,9 @@ class CommunityRepositoryModules {
       withModule("intellij.xslt.debugger.rt", "rt/xslt-rt.jar")
     },
     plugin("intellij.platform.langInjection") {
-      withOptionalModule("intellij.java.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.xml.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
+      withModule("intellij.java.langInjection", "IntelliLang.jar")
+      withModule("intellij.xml.langInjection", "IntelliLang.jar")
+      withModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
@@ -129,7 +129,7 @@ class CommunityRepositoryModules {
       withModule("intellij.tasks")
       withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
-      withOptionalModule("intellij.tasks.java")
+      withModule("intellij.tasks.java")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
