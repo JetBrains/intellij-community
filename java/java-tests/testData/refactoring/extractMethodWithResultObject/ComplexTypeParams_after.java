@@ -8,7 +8,7 @@ class Test
 //in: PsiParameter:tr
 //exit: SEQUENTIAL PsiMethod:foo
 
-    NewMethodResult newMethod(List<? extends List<T>> tr) {
+    <T> NewMethodResult newMethod(List<? extends List<T>> tr) {
         tr.add(null);
         return new NewMethodResult();
     }

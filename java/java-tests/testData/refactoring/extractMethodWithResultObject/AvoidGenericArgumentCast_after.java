@@ -5,7 +5,7 @@ class C {
 //in: PsiParameter:k
 //exit: SEQUENTIAL PsiMethod:f
 
-    NewMethodResult newMethod(K k) {
+    <K> NewMethodResult newMethod(K k) {
         System.out.println(k);
         return new NewMethodResult();
     }

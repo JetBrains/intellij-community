@@ -8,13 +8,13 @@ class Test {
             System.out.println("");
             return new NewMethodResult();
         }
-
-        class NewMethodResult {
-            public NewMethodResult() {
-            }
-        }
     };
   }
+
+    class NewMethodResult {
+        public NewMethodResult() {
+        }
+    }
 }
 class A {
   void newMethod(){}

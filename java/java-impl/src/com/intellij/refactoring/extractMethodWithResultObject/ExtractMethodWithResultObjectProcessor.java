@@ -506,8 +506,10 @@ public class ExtractMethodWithResultObjectProcessor {
     List<Exit> returnExits = ContainerUtil.filter(myExits.values(), exit -> ExitType.RETURN.equals(exit.getType()));
     if (!returnExits.isEmpty()) {
       PsiType returnType = null;
+      PsiTypeElement returnTypeElement = null;
       if (myCodeFragmentMember instanceof PsiMethod) {
         returnType = ((PsiMethod)myCodeFragmentMember).getReturnType();
+        returnTypeElement = ((PsiMethod)myCodeFragmentMember).getReturnTypeElement();
       }
       else if (myCodeFragmentMember instanceof PsiLambdaExpression) {
         returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember);
@@ -516,7 +518,7 @@ public class ExtractMethodWithResultObjectProcessor {
         returnType = PsiType.getJavaLangObject(myCodeFragmentMember.getManager(), GlobalSearchScope.allScope(myProject));
       }
       if (!PsiType.VOID.equals(returnType)) {
-        resultItems.add(new ReturnResultItem(returnType));
+        resultItems.add(new ReturnResultItem(returnType, returnTypeElement));
       }
     }
 
@@ -532,7 +534,17 @@ public class ExtractMethodWithResultObjectProcessor {
   private PsiClass createResultClass(List<ResultItem> resultItems) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
-    PsiClass resultClass = (PsiClass)myAnchor.getParent().addAfter(factory.createClass("NewMethodResult"), myAnchor);
+    PsiElement classAnchor = myAnchor;
+    while (classAnchor != null) {
+      PsiElement parent = classAnchor.getParent();
+      if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
+        break;
+      }
+      classAnchor = parent;
+    }
+    assert classAnchor != null : "class anchor";
+
+    PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(factory.createClass("NewMethodResult"), classAnchor);
     notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     for (ResultItem resultItem : resultItems) {
       resultItem.createField(resultClass, factory);
@@ -558,6 +570,11 @@ public class ExtractMethodWithResultObjectProcessor {
 
     PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
     method.getModifierList().setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+    PsiTypeParameterList typeParameterList = createMethodTypeParameterList(resultItems);
+    if (typeParameterList != null) {
+      notNull(method.getTypeParameterList()).replace(typeParameterList);
+    }
+
     PsiParameterList parameterList = method.getParameterList();
 
     Map<PsiVariable, Pair<PsiExpression, Integer>> orderedInputs = new HashMap<>();
@@ -646,6 +663,23 @@ public class ExtractMethodWithResultObjectProcessor {
     }
 
     myAnchor.getParent().addAfter(method, myAnchor);
+  }
+
+  private PsiTypeParameterList createMethodTypeParameterList(List<ResultItem> resultItems) {
+    PsiElement container = PsiTreeUtil.getParentOfType(myElements[0], PsiClass.class, PsiMethod.class);
+    while (container instanceof PsiMethod && ((PsiMethod)container).getContainingClass() != myTargetClass) {
+      container = PsiTreeUtil.getParentOfType(container, PsiMethod.class, true);
+    }
+    if (container instanceof PsiMethod) {
+      List<PsiElement> elements = new ArrayList<>();
+      ContainerUtil.addAll(elements, myElements);
+      for (ResultItem resultItem : resultItems) {
+        resultItem.contributeToTypeParameters(elements);
+      }
+      return RefactoringUtil.createTypeParameterListWithUsedTypeParameters(((PsiMethod)container).getTypeParameterList(),
+                                                                           elements.toArray(PsiElement.EMPTY_ARRAY));
+    }
+    return null;
   }
 
   @NotNull
@@ -778,6 +812,8 @@ public class ExtractMethodWithResultObjectProcessor {
       body.add(factory.createStatementFromText(PsiKeyword.THIS + '.' + myFieldName + '=' + myFieldName + ';', body.getRBrace()));
     }
 
+    void contributeToTypeParameters(List<PsiElement> elements) {}
+
     abstract PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory);
   }
 
@@ -792,6 +828,11 @@ public class ExtractMethodWithResultObjectProcessor {
     @Override
     PsiExpression createResultObjectArgument(PsiExpression expression, int exitKey, PsiCodeBlock body, PsiElementFactory factory) {
       return factory.createExpressionFromText(myFieldName, body.getRBrace());
+    }
+
+    @Override
+    void contributeToTypeParameters(List<PsiElement> elements) {
+      elements.add(myVariable);
     }
   }
 
@@ -810,8 +851,11 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private static class ReturnResultItem extends ResultItem {
-    ReturnResultItem(@NotNull PsiType type) {
-      super("returnResult", type);
+    private final PsiTypeElement myReturnTypeElement;
+
+    ReturnResultItem(@NotNull PsiType returnType, PsiTypeElement returnTypeElement) {
+      super("returnResult", returnType);
+      myReturnTypeElement = returnTypeElement;
     }
 
     @Override
@@ -821,6 +865,13 @@ public class ExtractMethodWithResultObjectProcessor {
         return factory.createExpressionFromText("(" + text + " /* missing value */)", body.getRBrace());
       }
       return expression;
+    }
+
+    @Override
+    void contributeToTypeParameters(List<PsiElement> elements) {
+      if (myReturnTypeElement != null) {
+        elements.add(myReturnTypeElement);
+      }
     }
   }
 

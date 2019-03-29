@@ -19,12 +19,12 @@ class Foo {
                 setVisible( false );
                 return new NewMethodResult();
             }
-
-            class NewMethodResult {
-                public NewMethodResult() {
-                }
-            }
         };
+    }
+
+    class NewMethodResult {
+        public NewMethodResult() {
+        }
     }
 }
 

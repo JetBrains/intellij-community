@@ -34,7 +34,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testArrayReturnType() = doTest()
   fun testAvoidGenericArgumentCast() = doTest()
   fun testAvoidGenericArgumentCastLocalClass() = doTest()
-  fun testBeforeCommentAfterSelectedFragment() = doTest()
+  fun testBeforeCommentAfterSelectedFragment() = doTest(false)
   fun testBooleanExpression() = doTest()
   fun testBoxedConditionalReturn() = doTest()
   fun testBuilderChainWith2DimArrayAccess() = doTest()
@@ -51,14 +51,14 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testChainedConstructor() = doTest()
   fun testChainedConstructorDuplicates() = doTest()
   fun testChainedConstructorInvalidDuplicates() = doTest()
-  fun testChangedReturnType() = doTest()
+  fun testChangedReturnType() = doTest(false)
   fun testCheckQualifierMapping() = doTest()
   fun testClassReference2() = doTest()
   fun testClassReference() = doTest()
   fun testCodeDuplicates2() = doTest()
   fun testCodeDuplicates3() = doTest()
   fun testCodeDuplicates4() = doTest()
-  fun testCodeDuplicates5() = doTest()
+  fun testCodeDuplicates5() = doTest(false)
   fun testCodeDuplicates() = doTest()
   fun testCodeDuplicatesVarargsShouldNotChangeReturnType() = doTest()
   fun testCodeDuplicatesWithComments() = doTest()
@@ -77,7 +77,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testConditionalReturnInDuplicate() = doTest()
   fun testConditionalReturnVsAssignDuplicate() = doTest()
   fun testConditionalWithTwoParameters() = doTest()
-  fun testConflictingAnonymous() = doTest()
+  fun testConflictingAnonymous() = doTest(false)
   fun testConstantConditionsAffectingControlFlow1() = doTest()
   fun testConstantConditionsAffectingControlFlow() = doTest()
   fun testContinueInside() = doTest()
@@ -96,10 +96,10 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
 
     performAction()
 
-    myFixture.checkResultByFile(BASE_PATH + testName + "_after.java", true)
     if (checkHighlighting) {
-      //      myFixture.checkHighlighting()
+      myFixture.checkHighlighting()
     }
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.java", true)
   }
 
   private fun performAction() {
