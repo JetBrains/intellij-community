@@ -13,14 +13,10 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import sun.swing.SwingUtilities2
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.UIManager
 
 
 open class SelectedEditorFilePath(val disposable: Disposable) {
@@ -31,36 +27,17 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
   }
 
   private var clippedText: String? = null
-    set(value) {
-      if (value == field) return
-      field = value
-      label.revalidate()
-      label.repaint()
-    }
-
   private var clippedProjectName: String = ""
 
   fun isClipped(): Boolean {
     return clippedText.equals(path)
   }
 
-  private val label = object : JLabel() {
-    override fun paint(g: Graphics?) {
-      g as Graphics2D
-
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g.setColor(UIManager.getColor("Label.disabledForeground"))
-
-      val h = height - insets.top - insets.bottom
-
-      SwingUtilities2.drawStringUnderlineCharAt(this, g, clippedProjectName + clippedText, -1, insets.left, getBaseline(width, h))
-    }
-  }.apply {
+  private val label = JLabel().apply {
     isEnabled = false
-
   }
 
-  var inited = false
+  private var inited = false
   open fun getView(): JComponent {
     if(!inited) {
       init()
@@ -80,8 +57,6 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     set(value) {
       if (value == field) return
       field = value
-      label.text = projectName + path
-
       update()
     }
 
@@ -174,10 +149,11 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
         else -> {
           getView().toolTipText = null
           clippedProjectName = projectName
-          "$delimiterSymbol$path"
+          if(path.isEmpty())"" else "$delimiterSymbol$path"
         }
       }
     }
+    label.text = clippedProjectName + clippedText
   }
 
   private fun clipString(component: JComponent, string: String, maxWidth: Int): String {
