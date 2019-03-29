@@ -1465,13 +1465,9 @@ public abstract class DialogWrapper {
     myCrossClosesWindow = crossClosesWindow;
   }
 
-  protected final void setCancelButtonIcon(Icon icon) {
-    // Setting icons causes buttons be 'square' style instead of
-    // 'rounded', which is expected by apple users.
-    if (!SystemInfo.isMac) {
-      myCancelAction.putValue(Action.SMALL_ICON, icon);
-    }
-  }
+  /** @deprecated button icons aren't used anymore (except "OK" action). Button style is standardized. */
+  @Deprecated
+  protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
   protected final void setCancelButtonText(@NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
@@ -1494,11 +1490,7 @@ public abstract class DialogWrapper {
   }
 
   protected final void setOKButtonIcon(Icon icon) {
-    // Setting icons causes buttons be 'square' style instead of
-    // 'rounded', which is expected by apple users.
-    if (!SystemInfo.isMac) {
-      myOKAction.putValue(Action.SMALL_ICON, icon);
-    }
+    myOKAction.putValue(Action.SMALL_ICON, icon);
   }
 
   /**
