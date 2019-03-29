@@ -203,10 +203,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         addNode(new ReadWriteVariableInstruction(parameterName, parameter, ReadWriteVariableInstruction.WRITE));
       }
     }
-
-    PsiElement anchor = expression.getArrow();
-    if (expression instanceof GrClosableBlock) anchor = ((GrClosableBlock)expression).getLBrace();
-    addNode(new ReadWriteVariableInstruction("owner", anchor, ReadWriteVariableInstruction.WRITE));
   }
 
   private <T extends InstructionImpl> T addNode(T instruction) {
