@@ -459,7 +459,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private void removeFromOpened(@NotNull Project project) {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
-      updateTheOnlyProjectField();
       myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
   }
