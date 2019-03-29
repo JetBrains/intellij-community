@@ -11,6 +11,7 @@ class Foo {
     private JButton createOKButton() {
         return new MyButton( "OK" ) {
             public void actionPerformed( int e ) {
+                NewMethodResult x = newMethod();
                 setVisible( false );
             }//ins and outs
 //exit: SEQUENTIAL PsiMethod:actionPerformed

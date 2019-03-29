@@ -5,6 +5,7 @@ class C extends D {
 
     {
         int i = 5;
+        NewMethodResult x = newMethod(i);
         myField = i;
         myOtherField = i;
 

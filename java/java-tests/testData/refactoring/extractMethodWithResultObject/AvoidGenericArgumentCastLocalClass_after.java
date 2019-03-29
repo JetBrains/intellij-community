@@ -2,6 +2,7 @@ class C {
     <K> void method() {
         class Local {
             void foo(K k) {
+                NewMethodResult x = newMethod(k);
                 System.out.println(k);
             }//ins and outs
 //in: PsiParameter:k

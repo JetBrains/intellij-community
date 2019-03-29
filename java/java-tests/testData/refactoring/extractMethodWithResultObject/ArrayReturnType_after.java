@@ -2,7 +2,7 @@ class Test {
   String[] foos;
 
   void test() {
-    for (String foo : foos) {
+    for (String foo : newMethod().expressionResult) {
 
     }
     System.out.println(foos.length);

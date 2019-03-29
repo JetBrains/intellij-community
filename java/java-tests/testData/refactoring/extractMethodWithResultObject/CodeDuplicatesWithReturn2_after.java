@@ -1,6 +1,7 @@
 class C {
     String method(Object o) {
         System.out.println(o);
+        NewMethodResult x = newMethod(o);
         Integer i = new Integer(o.hashCode());
         return i.toString();
     }//ins and outs

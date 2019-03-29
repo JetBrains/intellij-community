@@ -2,7 +2,8 @@ class C {
   String test(int n) {
     String s = "";
 
-    if (n == 1) {
+      NewMethodResult x = newMethod(n, s);
+      if (n == 1) {
       return "A" + s;
     }
     if (n == 2) {

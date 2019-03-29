@@ -3,7 +3,8 @@ class Test {
 
   public void method() {
     String a = "A";
-    ArrayList<String> listA = new ArrayList<String>();
+      NewMethodResult x = newMethod(a);
+      ArrayList<String> listA = new ArrayList<String>();
     listA.add(a);
 
     ArrayList<String> listB = new ArrayList<String>();

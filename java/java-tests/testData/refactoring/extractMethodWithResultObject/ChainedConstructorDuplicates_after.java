@@ -4,6 +4,7 @@ class A {
     private String s;
 
     public A(int i, int j) {
+        NewMethodResult x = newMethod(i);
         this.i = i;
         this.j = j;
     }//ins and outs

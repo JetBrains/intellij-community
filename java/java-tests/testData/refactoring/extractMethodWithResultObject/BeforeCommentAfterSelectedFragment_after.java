@@ -2,6 +2,7 @@ class CommentAfterSelectedFragment {
     void foo(boolean debugMode) {
         int i= 0;
 
+        NewMethodResult x = newMethod(debugMode);
         if (debugMode) {
             i = 1;
         } /* comment */

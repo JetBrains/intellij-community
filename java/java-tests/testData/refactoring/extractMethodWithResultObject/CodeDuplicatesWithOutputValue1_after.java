@@ -4,6 +4,7 @@ class C {
     {
         Object[] array = { "a", 1 };
 
+        NewMethodResult x = newMethod(array);
         List l1 = null;
         l1 = new ArrayList(Arrays.asList(array));
 

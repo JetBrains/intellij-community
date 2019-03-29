@@ -1,6 +1,6 @@
 class CallChainExpression {
     String foo() {
-        String s = A.a().b().c;
+        String s = newMethod().expressionResult;
         System.out.println(s);
         return s;
     }//ins and outs

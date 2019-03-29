@@ -1,7 +1,7 @@
 class C {
     String[] vars;
     int foo(C c, int i) {
-        return c.vars[i].length();
+        return newMethod(c, i).expressionResult;
     }//ins and outs
 //in: PsiParameter:c
 //in: PsiParameter:i

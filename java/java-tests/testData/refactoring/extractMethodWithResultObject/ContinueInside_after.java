@@ -1,7 +1,8 @@
 class Test {
   String foo(String[] args) {
 
-    for(String arg : args) {
+      NewMethodResult x = newMethod(args);
+      for(String arg : args) {
       if (arg == null) continue;
       System.out.println(arg);
     }

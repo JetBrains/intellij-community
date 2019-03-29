@@ -6,7 +6,7 @@ class C {
     }
 
     void foo() {
-      System.out.println(c);
+      System.out.println(newMethod().expressionResult);
     }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:c
 

@@ -1,7 +1,8 @@
 class X {
   private int myI;
   void foo() {
-    int i = myI++;
+      NewMethodResult x = newMethod();
+      int i = myI++;
   }//ins and outs
 //exit: SEQUENTIAL PsiMethod:foo
 

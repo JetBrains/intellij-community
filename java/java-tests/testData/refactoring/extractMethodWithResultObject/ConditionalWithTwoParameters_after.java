@@ -4,6 +4,7 @@ class RenamedParameter {
     public void foo() {
         String a = "s";
         String b = "t";
+        NewMethodResult x = newMethod(b, a);
         if (c) {
             String t = b;
             x(t);

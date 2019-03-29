@@ -1,7 +1,8 @@
 class C {
   Object foo(boolean b) {
     if (b) {
-      return A.getInstance();
+        NewMethodResult x = newMethod();
+        return A.getInstance();
     } else {
       return B.getInstance();
     }

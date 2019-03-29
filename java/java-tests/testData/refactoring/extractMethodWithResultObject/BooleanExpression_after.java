@@ -1,6 +1,6 @@
 class Test {
     void method(int i) {
-        boolean isDirty = i == 0 || otherTests();
+        boolean isDirty = newMethod(i).expressionResult || otherTests();
     }//ins and outs
 //in: PsiParameter:i
 //exit: EXPRESSION PsiBinaryExpression:i == 0

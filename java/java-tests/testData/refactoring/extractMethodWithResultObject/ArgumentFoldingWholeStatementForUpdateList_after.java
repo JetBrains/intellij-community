@@ -9,6 +9,7 @@ class ArgumentFoldingWholeStatement {
         for (int i = 0; i < 5; i++, x.indexOf(str())) {
             baz();
         }
+        NewMethodResult x = newMethod();
     }//ins and outs
 //exit: SEQUENTIAL PsiMethod:foo
 

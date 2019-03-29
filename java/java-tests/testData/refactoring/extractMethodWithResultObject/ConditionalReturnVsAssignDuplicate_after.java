@@ -1,5 +1,6 @@
 class Conditional {
     int bar(String s) {
+        NewMethodResult x = newMethod(s);
         if (s != null) {
             int n = s.length();
             return n;

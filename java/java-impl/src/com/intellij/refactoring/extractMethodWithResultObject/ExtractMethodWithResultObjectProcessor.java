@@ -48,8 +48,11 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Map<PsiStatement, Exit> myExits = new HashMap<>();
   private final Set<PsiVariable> myWrittenOuterVariables = new HashSet<>();
 
+  private String myMethodName = "newMethod";
+  private String myResultClassName = "NewMethodResult";
+
   // in the order the expressions appear in the original code
-  private final List<Pair.NonNull<String, PsiExpression>> myParameters = new ArrayList<>();
+  private final List<Pair.NonNull<String, PsiExpression>> myArguments = new ArrayList<>();
 
   private PsiClass myTargetClass;
   private PsiElement myAnchor;
@@ -483,6 +486,8 @@ public class ExtractMethodWithResultObjectProcessor {
       List<ResultItem> resultItems = collectResultItems(distinctExits);
       PsiClass resultClass = createResultClass(resultItems);
       createMethod(resultItems, resultClass, distinctExits);
+
+      createMethodCall(resultClass);
     }
     else {
       dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));
@@ -492,6 +497,34 @@ public class ExtractMethodWithResultObjectProcessor {
     dumpElements(myOutputVariables, "out");
     dumpElements(new HashSet<>(myInputs.values()), "in");
     dumpText("ins and outs");
+  }
+
+  private void createMethodCall(PsiClass resultClass) {
+    PsiElement firstElement = myElements[0];
+    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myFactory.createExpressionFromText(myMethodName + "()", firstElement);
+    PsiExpressionList argumentList = methodCall.getArgumentList();
+
+    for (Pair.NonNull<String, PsiExpression> argument : myArguments) {
+      argumentList.add(argument.second);
+    }
+
+    if (myExpression != null) {
+      PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)myFactory.createExpressionFromText("x." + ExpressionResultItem.EXPRESSION_RESULT, null);
+      referenceExpression.setQualifierExpression(methodCall);
+      myExpression.replace(referenceExpression);
+
+    } else {
+      PsiDeclarationStatement methodResultDeclaration =
+        myFactory.createVariableDeclarationStatement("x", myFactory.createType(resultClass), null, firstElement);
+      PsiElement[] declaredElements = methodResultDeclaration.getDeclaredElements();
+
+      LOG.assertTrue(declaredElements.length == 1, "declaredElements.length");
+      LOG.assertTrue(declaredElements[0] instanceof PsiLocalVariable, "declaredElements[0]");
+      ((PsiLocalVariable)declaredElements[0]).setInitializer(methodCall);
+
+      firstElement.getParent().addBefore(methodResultDeclaration, firstElement);
+    }
   }
 
   private List<ResultItem> collectResultItems(Map<Exit, Integer> distinctExits) {
@@ -549,7 +582,7 @@ public class ExtractMethodWithResultObjectProcessor {
     }
     assert classAnchor != null : "class anchor";
 
-    PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(myFactory.createClass("NewMethodResult"), classAnchor);
+    PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(myFactory.createClass(myResultClassName), classAnchor);
     notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     for (ResultItem resultItem : resultItems) {
       resultItem.createField(resultClass, myFactory);
@@ -572,7 +605,7 @@ public class ExtractMethodWithResultObjectProcessor {
   private void createMethod(List<ResultItem> resultItems,
                             PsiClass resultClass, Map<Exit, Integer> distinctExits) {
 
-    PsiMethod method = myFactory.createMethod("newMethod", myFactory.createType(resultClass), myAnchor);
+    PsiMethod method = myFactory.createMethod(myMethodName, myFactory.createType(resultClass), myAnchor);
     method.getModifierList().setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     PsiTypeParameterList typeParameterList = createMethodTypeParameterList(resultItems);
     if (typeParameterList != null) {
@@ -594,7 +627,7 @@ public class ExtractMethodWithResultObjectProcessor {
       .sortedBy(entry -> entry.getValue().second)
       .forKeyValue((variable, pair) -> {
         String name = notNull(variable.getName());
-        myParameters.add(Pair.createNonNull(name, pair.first));
+        myArguments.add(Pair.createNonNull(name, pair.first));
 
         PsiParameter parameter = myFactory.createParameter(name, variable.getType(), method);
         parameter = (PsiParameter)parameterList.add(parameter);
@@ -861,10 +894,11 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private static class ExpressionResultItem extends ResultItem {
+    static final String EXPRESSION_RESULT = "expressionResult";
     private final PsiExpression myExpression;
 
     ExpressionResultItem(@NotNull PsiExpression expression, PsiType type) {
-      super("expressionResult", type);
+      super(EXPRESSION_RESULT, type);
       myExpression = expression;
     }
 

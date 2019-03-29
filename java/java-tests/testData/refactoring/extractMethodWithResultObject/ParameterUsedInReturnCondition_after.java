@@ -5,7 +5,8 @@ class C {
     for (String s : array) {
       if (a.equals(s)) {
 
-        if (b == null) {
+          NewMethodResult x = newMethod(b, s);
+          if (b == null) {
           return true;
         }
         if (b.equals(s)) {

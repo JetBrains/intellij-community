@@ -2,7 +2,7 @@ class Test {
 
     void foo(Object x) {
         if (x instanceof String) x = ((String)x).substring(1);
-        if (x instanceof String) x = ((String)x).substring(1);
+        if (x instanceof String) x = newMethod(x).expressionResult;
     }//ins and outs
 //in: PsiParameter:x
 //exit: EXPRESSION PsiMethodCallExpression:((String)x).substring(1)

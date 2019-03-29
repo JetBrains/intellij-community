@@ -6,7 +6,8 @@ class C {
       }
       catch (Exception e) {}
 
-      if (foo()) {
+        NewMethodResult x = newMethod();
+        if (foo()) {
         return null;
       }
       if (bar()) {

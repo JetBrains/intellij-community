@@ -1,7 +1,7 @@
 class Test {
     void t(java.util.Map<String, String> m) {
         String f = "";
-        System.out.println("f = " + f + ", " + m.get(f));
+        System.out.println("f = " + newMethod(f).expressionResult + ", " + m.get(f));
     }//ins and outs
 //in: PsiLocalVariable:f
 //exit: EXPRESSION PsiReferenceExpression:f

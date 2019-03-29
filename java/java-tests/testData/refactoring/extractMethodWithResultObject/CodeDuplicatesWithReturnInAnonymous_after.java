@@ -1,6 +1,7 @@
 class Test10 {
   void test() {
-    new Object() {
+      NewMethodResult x = newMethod();
+      new Object() {
       int get() {
         return 0;
       }

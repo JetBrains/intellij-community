@@ -1,6 +1,6 @@
 class C {
     int foo(String[][] vars, int i, int j) {
-        return vars[i][j].length();
+        return newMethod(vars, i, j).expressionResult;
     }//ins and outs
 //in: PsiParameter:i
 //in: PsiParameter:j

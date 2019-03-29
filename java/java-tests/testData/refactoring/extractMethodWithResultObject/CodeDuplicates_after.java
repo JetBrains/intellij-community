@@ -2,6 +2,7 @@ class C {
     {
         int i = 0;
 
+        NewMethodResult x = newMethod(i);
         System.out.println(i);
         System.out.println(128);
     }//ins and outs

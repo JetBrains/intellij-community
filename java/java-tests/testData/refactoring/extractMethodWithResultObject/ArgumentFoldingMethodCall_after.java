@@ -10,6 +10,7 @@ class C {
         x.remove(0);
         y.add(str());
         baz();
+        NewMethodResult x = newMethod();
     }//ins and outs
 //exit: RETURN PsiMethod:foo<-void
 //exit: SEQUENTIAL PsiMethod:foo

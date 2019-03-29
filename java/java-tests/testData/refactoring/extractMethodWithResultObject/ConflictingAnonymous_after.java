@@ -1,7 +1,9 @@
 class Test {
   void foo() {
     new A() {
-      void fe() {System.out.println("");}//ins and outs
+      void fe() {
+          NewMethodResult x = newMethod();
+          System.out.println("");}//ins and outs
 //exit: SEQUENTIAL PsiMethod:fe
 
         NewMethodResult newMethod() {

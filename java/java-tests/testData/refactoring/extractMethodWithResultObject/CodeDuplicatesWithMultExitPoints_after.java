@@ -1,6 +1,7 @@
 class A {
    int foo (Object o) {
-     if (o == null) return 0;
+       NewMethodResult x = newMethod(o);
+       if (o == null) return 0;
      if (o == null) return 0;
      return 1;
    }//ins and outs

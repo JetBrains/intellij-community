@@ -5,6 +5,7 @@ class Test {
         if (true) {
             System.out.println(a);
         } else {
+            NewMethodResult x = newMethod(a);
             System.out.println(a);
         }
     }//ins and outs

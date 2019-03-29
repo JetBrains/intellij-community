@@ -1,7 +1,8 @@
 class X {
   void foo(java.util.List l) {
     for (Object o : l) {
-      if (o == null) continue;
+        NewMethodResult x = newMethod(o);
+        if (o == null) continue;
       String x = bar(o);
       System.out.println(x);
     }

@@ -1,6 +1,6 @@
 class UseBuilder {
     void test(Builder builder, int[] arr) {
-        builder.foo("xyz").bar(arr[0]).foo("abc");
+        newMethod(builder, arr).expressionResult.foo("abc");
     }//ins and outs
 //in: PsiParameter:arr
 //in: PsiParameter:builder

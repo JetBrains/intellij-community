@@ -1,6 +1,7 @@
 class C {
   {
-    int i = 1;
+      NewMethodResult x = newMethod();
+      int i = 1;
   }//ins and outs
 //exit: SEQUENTIAL PsiClassInitializer
 

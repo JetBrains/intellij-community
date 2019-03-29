@@ -2,6 +2,7 @@ class WillWorkTest {
     int opera() {
         int i = 0;
 
+        NewMethodResult x = newMethod(i);
         int k;
         if (true) k = i;
         return k;
