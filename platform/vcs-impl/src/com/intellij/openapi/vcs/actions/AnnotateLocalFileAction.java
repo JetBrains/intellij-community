@@ -76,14 +76,14 @@ public class AnnotateLocalFileAction {
 
   private static boolean isAnnotated(@NotNull AnActionEvent e) {
     List<Editor> editors = getEditors(e.getDataContext());
-    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
+    return ContainerUtil.exists(editors, editor -> AnnotateToggleAction.hasVcsAnnotations(editor));
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
     if (!selected) {
       List<Editor> editors = getEditors(e.getDataContext());
       for (Editor editor : editors) {
-        editor.getGutter().closeAllAnnotations();
+        AnnotateToggleAction.closeVcsAnnotations(editor);
       }
     }
     else {

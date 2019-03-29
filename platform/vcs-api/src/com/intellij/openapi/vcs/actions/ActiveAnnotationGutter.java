@@ -18,5 +18,10 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 
+/**
+ * Marker interface for VCS annotations.
+ *
+ * @see com.intellij.openapi.vcs.actions.AnnotateToggleAction
+ */
 public interface ActiveAnnotationGutter extends TextAnnotationGutterProvider, EditorGutterAction {
 }

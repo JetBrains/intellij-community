@@ -79,7 +79,7 @@ public class AnnotateVcsVirtualFileAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = getEditors(project, file, e.getDataContext());
-    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
+    return ContainerUtil.exists(editors, editor -> AnnotateToggleAction.hasVcsAnnotations(editor));
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
@@ -89,7 +89,7 @@ public class AnnotateVcsVirtualFileAction {
 
     if (!selected) {
       for (Editor editor : editors) {
-        editor.getGutter().closeAllAnnotations();
+        AnnotateToggleAction.closeVcsAnnotations(editor);
       }
     }
     else {
