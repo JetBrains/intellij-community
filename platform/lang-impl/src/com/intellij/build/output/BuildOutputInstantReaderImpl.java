@@ -3,12 +3,10 @@ package com.intellij.build.output;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -27,6 +25,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   private final Object myBuildId;
   @Nullable
   private StringBuilder myBuffer;
+  private int bufferOffset = 0;
   private final BlockingQueue<String> myQueue = new LinkedTransferQueue<>();
 
   private int myCurrentIndex = -1;
@@ -135,8 +134,9 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
     if (myClosed.get()) return null;
 
     myCurrentIndex++;
-    if (myLinesBuffer.size() > myCurrentIndex) {
-      return myLinesBuffer.get(myCurrentIndex);
+    int bufferIndex = myCurrentIndex - bufferOffset;
+    if (myLinesBuffer.size() > bufferIndex) {
+      return myLinesBuffer.get(bufferIndex);
     }
     try {
       String line = myQueue.take();
@@ -146,6 +146,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
       }
       myLinesBuffer.addLast(line);
       if (myLinesBuffer.size() > MAX_LINES_BUFFER_SIZE) {
+        bufferOffset++;
         myLinesBuffer.removeFirst();
       }
       return line;
@@ -168,6 +169,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
   @Override
   public String getCurrentLine() {
-    return myLinesBuffer.size() > myCurrentIndex ? myLinesBuffer.get(myCurrentIndex) : null;
+    int bufferIndex = myCurrentIndex - bufferOffset;
+    return (myLinesBuffer.size() > bufferIndex && bufferIndex >= 0) ? myLinesBuffer.get(bufferIndex) : null;
   }
 }
