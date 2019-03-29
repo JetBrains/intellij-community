@@ -609,7 +609,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlName xmlName = description.getXmlName();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
     if (myStub != null && description.isStubbed()) {
-      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
+      List<DomStub> stubs = myStub.getChildrenByName(xmlName);
       DomStub stub = stubs.isEmpty() ? null : stubs.get(0);
       DomParentStrategy strategy = stub == null ? new StubParentStrategy.Empty(myStub) : new StubParentStrategy(stub);
       return new IndexedElementInvocationHandler(evaluatedXmlName, description, 0, strategy, myManager, (ElementStub)stub);
@@ -836,10 +836,17 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
-        List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
-        List<DomElement> elements =
-          ContainerUtil.map(stubs, stub -> stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
-        return addIncludedElements(elements, xmlName);
+        SmartList<DomElement> result = new SmartList<>();
+        List<? extends Stub> stubs = myStub.getChildrenStubs();
+        for (Stub stub : stubs) {
+          if (stub instanceof DomStub && ((DomStub)stub).matches(xmlName)) {
+            result.add(((DomStub)stub).getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
+          }
+          else if (stub instanceof XIncludeStub) {
+            ((XIncludeStub)stub).resolve(this, result, xmlName);
+          }
+        }
+        return result;
       }
       else if (description instanceof CustomDomChildrenDescriptionImpl) {
         List<? extends Stub> stubs = myStub.getChildrenStubs();

@@ -16,6 +16,7 @@ import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -27,19 +28,11 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
   private final String myHref;
   private final String myXpointer;
 
-  public XIncludeStub(ElementStub parent, String href, String xpointer) {
+  public XIncludeStub(ElementStub parent, @Nullable String href, @Nullable String xpointer) {
     super(parent);
     myHref = href;
     myXpointer = xpointer;
     parent.addChild(this);
-  }
-
-  public String getHref() {
-    return myHref;
-  }
-
-  public String getXpointer() {
-    return myXpointer;
   }
 
   @NotNull
@@ -95,10 +88,10 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
 
   @Override
   public String toString() {
-    return "href=" + getHref() + " xpointer=" + getXpointer();
+    return "href=" + myHref + " xpointer=" + myXpointer;
   }
 
-  public final static ObjectStubSerializer ourSerializer = new ObjectStubSerializer<XIncludeStub, ElementStub>() {
+  final static ObjectStubSerializer ourSerializer = new ObjectStubSerializer<XIncludeStub, ElementStub>() {
 
     @NotNull
     @Override
@@ -108,8 +101,8 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
 
     @Override
     public void serialize(@NotNull XIncludeStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-      dataStream.writeUTFFast(StringUtil.notNullize(stub.getHref()));
-      dataStream.writeUTFFast(StringUtil.notNullize(stub.getXpointer()));
+      dataStream.writeUTFFast(StringUtil.notNullize(stub.myHref));
+      dataStream.writeUTFFast(StringUtil.notNullize(stub.myXpointer));
     }
 
     @NotNull
