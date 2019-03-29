@@ -133,6 +133,7 @@ public class CreateWithTemplatesDialogPanel extends JBPanel {
     list.addMouseMotionListener(mouseListener);
     list.addMouseListener(mouseListener);
     list.setCellRenderer(LIST_RENDERER);
+    list.setFocusable(false);
     return list;
   }
 
