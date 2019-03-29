@@ -1,7 +1,7 @@
 class X {
   void foo(java.util.List l) {
     for (Object o : l) {
-        NewMethodResult x = newMethod(o);
+        NewMethodResult x1 = newMethod(o);
         if (o == null) continue;
       String x = bar(o);
       System.out.println(x);

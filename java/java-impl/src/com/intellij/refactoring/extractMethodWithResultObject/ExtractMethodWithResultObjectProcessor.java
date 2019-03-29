@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,6 +51,7 @@ public class ExtractMethodWithResultObjectProcessor {
 
   private String myMethodName = "newMethod";
   private String myResultClassName = "NewMethodResult";
+  private String myResultVariableName = "x";
 
   // in the order the expressions appear in the original code
   private final List<Pair.NonNull<String, PsiExpression>> myArguments = new ArrayList<>();
@@ -515,8 +517,11 @@ public class ExtractMethodWithResultObjectProcessor {
       myExpression.replace(referenceExpression);
 
     } else {
+
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      myResultVariableName = codeStyleManager.suggestUniqueVariableName(myResultVariableName, firstElement, true);
       PsiDeclarationStatement methodResultDeclaration =
-        myFactory.createVariableDeclarationStatement("x", myFactory.createType(resultClass), null, firstElement);
+        myFactory.createVariableDeclarationStatement(myResultVariableName, myFactory.createType(resultClass), null, firstElement);
       PsiElement[] declaredElements = methodResultDeclaration.getDeclaredElements();
 
       LOG.assertTrue(declaredElements.length == 1, "declaredElements.length");

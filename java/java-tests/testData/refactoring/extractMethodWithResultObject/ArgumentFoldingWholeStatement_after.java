@@ -5,6 +5,7 @@ class ArgumentFoldingWholeStatement {
     List<String> y;
 
     private void foo() {
+        NewMethodResult x1 = newMethod();
         x.add(str());
         baz();
     }//ins and outs
