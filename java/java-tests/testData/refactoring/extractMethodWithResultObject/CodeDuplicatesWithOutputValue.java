@@ -2,7 +2,7 @@ import java.util.*;
 
 class C {
     {
-        Object[] array;
+        Object[] array = { "a", 1 };
 
         <selection>List l1 = new ArrayList(Arrays.asList(array));</selection>
 
@@ -11,6 +11,5 @@ class C {
         System.out.println("l1 = " + l1 + ", l2 = " + l2);
     }
 
-    String[] getObjects() {
-    }
+    String[] getObjects() { return new String[1]; }
 }

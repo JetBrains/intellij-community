@@ -2,7 +2,7 @@ import java.util.*;
 
 class C {
     {
-        Object[] array;
+        Object[] array = { "a", 1 };
 
         List l1 = new ArrayList(Arrays.asList(array));
 
@@ -27,6 +27,5 @@ class C {
         }
     }
 
-    String[] getObjects() {
-    }
+    String[] getObjects() { return new String[1]; }
 }

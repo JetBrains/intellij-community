@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   void foo(Object o) {
     if (o instanceof A) {
       ((A)o).bar();

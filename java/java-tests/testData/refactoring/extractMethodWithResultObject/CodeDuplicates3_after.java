@@ -1,13 +1,13 @@
 class C {
     {
-        Object[] array;
+        Object[] array = { "a", 1 };
 
         for (int i = 0; i < array.length; i++) {
             System.out.println(array[i]);
         }
 
 
-        Object[] array1;
+        Object[] array1 = { "b", 2 };
         for (int i = 0; i < array1.length; i++) {
             System.out.println(array1[i]);
         }

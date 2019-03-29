@@ -1,4 +1,4 @@
-public /*abstract*/ class WillWorkTest {
+class WillWorkTest {
     int opera() {
         int i = 0;
         <selection>

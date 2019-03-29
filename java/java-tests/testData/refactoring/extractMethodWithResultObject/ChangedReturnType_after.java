@@ -12,7 +12,7 @@ class X {
 //exit: SEQUENTIAL PsiDeclarationStatement
 
     public NewMethodResult newMethod(Object o) {
-        if (o == null) return new NewMethodResult((1 /* exit key */), x); //todo
+        if (o == null) return new NewMethodResult((1 /* exit key */), x);
         String x = bar(o);
         return new NewMethodResult((-1 /* exit key */), x);
     }

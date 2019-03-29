@@ -9,12 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectHandler
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectProcessor
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
-import com.intellij.testFramework.LightCodeInsightTestCase
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
+class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   private val BASE_PATH = "/refactoring/extractMethodWithResultObject/"
 
   override fun getTestDataPath(): String {
@@ -94,11 +94,12 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightTestCase() {
     val testName = getTestName(false)
     if (testName.isEmpty()) return
 
-    configureByFile("$BASE_PATH$testName.java")
+    myFixture.configureByFile("$BASE_PATH$testName.java")
+    myFixture.checkHighlighting()
 
     performAction()
 
-    checkResultByFile(null, BASE_PATH + testName + "_after.java", true)
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.java", true)
   }
 
   private fun performAction() {

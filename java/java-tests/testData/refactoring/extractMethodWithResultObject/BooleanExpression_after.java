@@ -16,4 +16,6 @@ class Test {
             this.expressionResult = expressionResult;
         }
     }
+
+    boolean otherTests() { return true; }
 }

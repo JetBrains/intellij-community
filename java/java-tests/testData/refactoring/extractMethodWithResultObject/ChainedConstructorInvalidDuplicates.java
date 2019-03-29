@@ -1,7 +1,7 @@
 class A {
     private int i;
     private int j;
-    private int s;
+    private String s;
 
     public A(int i, int j) {
         <selection>this.i = i;</selection>

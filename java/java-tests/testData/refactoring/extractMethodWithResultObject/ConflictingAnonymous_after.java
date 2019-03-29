@@ -1,4 +1,4 @@
-public class Test {
+class Test {
   void foo() {
     new A() {
       void fe() {System.out.println("");}//ins and outs
@@ -13,7 +13,7 @@ public class Test {
             public NewMethodResult() {
             }
         }
-    }
+    };
   }
 }
 class A {

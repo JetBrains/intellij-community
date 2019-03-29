@@ -1,5 +1,5 @@
 
-public class ExtractMethods { }
+class ExtractMethods { }
 abstract class MyButton
         extends JButton
         {

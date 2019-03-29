@@ -1,5 +1,5 @@
 class CommentAfterSelectedFragment {
-    foo(boolean debugMode) {
+    void foo(boolean debugMode) {
         int i= 0;
 
         if (debugMode) {

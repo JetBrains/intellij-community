@@ -1,3 +1,6 @@
+import java.util.List;
+import java.util.ArrayList;
+
 class Test {
     private List<Object> list1 = new ArrayList<Object>();
 
