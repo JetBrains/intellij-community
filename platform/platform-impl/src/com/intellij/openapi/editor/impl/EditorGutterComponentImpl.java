@@ -293,7 +293,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void paint(Graphics g_) {
+  public void paintComponent(Graphics g_) {
     Rectangle clip = g_.getClipBounds();
     if (clip.height < 0) return;
 
