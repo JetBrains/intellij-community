@@ -323,14 +323,21 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
         continue;
       }
 
-      ExternalSystemApiUtil.visit(externalProject.getExternalProjectStructure(), dataNode -> {
-        try {
-          dataNode.checkIsSerializable();
-        }
-        catch (IOException e) {
-          dataNode.clear(true);
-        }
-      });
+      DataNode<ProjectData> externalProjectStructure = externalProject.getExternalProjectStructure();
+      try {
+        externalProjectStructure.checkIsSerializable();
+      }
+      catch (IOException e) {
+        // try to identify a node which is not serializable and fix it
+        ExternalSystemApiUtil.visit(externalProjectStructure, dataNode -> {
+          try {
+            dataNode.checkIsSerializable();
+          }
+          catch (IOException ignored) {
+            dataNode.clear(true);
+          }
+        });
+      }
     }
 
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)))) {
