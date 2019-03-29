@@ -1616,11 +1616,10 @@ public abstract class DialogWrapper {
    *
    * @throws IllegalStateException if the method is invoked not on the event dispatch thread
    * @see #showAndGet()
-   * @see #showAndGetOk()
    */
   public void show() {
     logShowDialogEvent();
-    invokeShow();
+    doShow();
   }
 
   /**
@@ -1629,7 +1628,6 @@ public abstract class DialogWrapper {
    * @return true if the {@link #getExitCode() exit code} is {@link #OK_EXIT_CODE}.
    * @throws IllegalStateException if the dialog is non-modal, or if the method is invoked not on the EDT.
    * @see #show()
-   * @see #showAndGetOk()
    */
   public boolean showAndGet() {
     if (!isModal()) {
@@ -1639,37 +1637,30 @@ public abstract class DialogWrapper {
     return isOK();
   }
 
-  /**
-   * You need this method ONLY for NON-MODAL dialogs. Otherwise, use {@link #show()} or {@link #showAndGet()}.
-   *
-   * @return result callback which set to "Done" on dialog close, and then its {@code getResult()} will contain {@code isOK()}
-   */
+  /** @deprecated override {@link #doOKAction()} / {@link #doCancelAction()} or hook on {@link #myDisposable} */
+  @Deprecated
   @NotNull
-  @SuppressWarnings("deprecation")
   public AsyncResult<Boolean> showAndGetOk() {
     if (isModal()) {
       throw new IllegalStateException("The showAndGetOk() method is for modeless dialogs only");
     }
-    return invokeShow();
+
+    AsyncResult<Boolean> result = new AsyncResult<>();
+    Disposer.register(myDisposable, () -> result.setDone(isOK()));
+    doShow();
+    return result;
   }
 
-  @SuppressWarnings("deprecation")
-  private AsyncResult<Boolean> invokeShow() {
-    final AsyncResult<Boolean> result = new AsyncResult<>();
-
+  private void doShow() {
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
-    final Disposable uiParent = Disposer.get("ui");
+    Disposable uiParent = Disposer.get("ui");
     if (uiParent != null) { // may be null if no app yet (license agreement)
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
-    Disposer.register(myDisposable, () -> result.setDone(isOK()));
-
     myPeer.show();
-
-    return result;
   }
 
   /**
