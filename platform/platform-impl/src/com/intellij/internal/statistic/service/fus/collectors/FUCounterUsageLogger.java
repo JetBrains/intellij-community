@@ -41,7 +41,7 @@ public class FUCounterUsageLogger {
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
-    int version = EventLogConfiguration.version;
+    int version = FeatureUsageLogger.INSTANCE.getConfig().getVersion();
     for (String group : GENERAL_GROUPS) {
       // platform groups which record events for all languages,
       // have the same version as a recorder to simplify further data analysis
