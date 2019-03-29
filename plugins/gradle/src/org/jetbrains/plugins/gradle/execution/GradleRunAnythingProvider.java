@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -225,15 +226,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
       MultiMap<String, String> projectTasks = MultiMap.createOrderedSet();
       for (DataNode<ModuleData> moduleDataNode : getChildren(projectData.getExternalProjectStructure(), ProjectKeys.MODULE)) {
-        String gradlePath;
-        String moduleId = moduleDataNode.getData().getId();
-        if (moduleId.charAt(0) != ':') {
-          int colonIndex = moduleId.indexOf(':');
-          gradlePath = colonIndex > 0 ? moduleId.substring(colonIndex) : ":";
-        }
-        else {
-          gradlePath = moduleId;
-        }
+        String gradlePath = GradleProjectResolverUtil.getGradlePath(moduleDataNode.getData());
         for (DataNode<TaskData> node : getChildren(moduleDataNode, ProjectKeys.TASK)) {
           TaskData taskData = node.getData();
           String taskName = taskData.getName();

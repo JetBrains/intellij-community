@@ -303,6 +303,20 @@ public class GradleProjectResolverUtil {
   }
 
   @NotNull
+  public static String getGradlePath(@NotNull ModuleData moduleData) {
+    String gradlePath;
+    String moduleId = moduleData.getId();
+    if (moduleId.charAt(0) != ':') {
+      int colonIndex = moduleId.indexOf(':');
+      gradlePath = colonIndex > 0 ? moduleId.substring(colonIndex) : ":";
+    }
+    else {
+      gradlePath = moduleId;
+    }
+    return gradlePath;
+  }
+
+  @NotNull
   public static DependencyScope getDependencyScope(@Nullable String scope) {
     return scope != null ? DependencyScope.valueOf(scope) : DependencyScope.COMPILE;
   }
