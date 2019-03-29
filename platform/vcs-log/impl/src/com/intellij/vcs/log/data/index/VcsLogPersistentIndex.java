@@ -40,11 +40,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
 import com.intellij.vcsUtil.VcsUtil;
@@ -178,7 +181,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         continue;
       }
 
-      mySingleTaskController.request(new IndexingRequest(root, commits, isFull, false));
+      mySingleTaskController.request(new IndexingRequest(root, myIndexStorage.paths.getPathsEncoder(), commits, isFull, false));
     }
 
     if (isFull) {
@@ -187,7 +190,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
   }
 
-  private void storeDetail(@NotNull VcsFullCommitDetails detail) {
+  private void storeDetail(@NotNull VcsLogIndexer.CompressedDetails detail) {
     if (myIndexStorage == null) return;
     try {
       int index = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
@@ -195,10 +198,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myIndexStorage.messages.put(index, detail.getFullMessage());
       myIndexStorage.trigrams.update(index, detail);
       myIndexStorage.users.update(index, detail);
-      if (detail instanceof VcsIndexableDetails) myIndexStorage.paths.update(index, (VcsIndexableDetails)detail);
+      myIndexStorage.paths.update(index, detail);
       myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
       // we know the whole graph without timestamps now
-      if (!(detail instanceof VcsIndexableDetails) || ((VcsIndexableDetails)detail).hasRenames()) {
+      if (detail.hasRenames()) {
         myIndexStorage.renames.put(index);
       }
       if (!detail.getAuthor().equals(detail.getCommitter())) {
@@ -279,8 +282,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Override
   public synchronized void reindexWithRenames(int commit, @NotNull VirtualFile root) {
     LOG.assertTrue(myRoots.contains(root));
-    if (hasRenames(commit)) return;
-    mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
+    if (hasRenames(commit) || myIndexStorage == null) return;
+    mySingleTaskController.request(new IndexingRequest(root, myIndexStorage.paths.getPathsEncoder(),
+                                                       TroveUtil.singleton(commit), false, true));
   }
 
   @Nullable
@@ -474,6 +478,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final TIntHashSet myCommits;
+    @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
     private final boolean myReindex;
 
@@ -481,8 +486,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
 
-    IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
+    IndexingRequest(@NotNull VirtualFile root,
+                    @NotNull VcsLogIndexer.PathsEncoder encoder,
+                    @NotNull TIntHashSet commits,
+                    boolean full,
+                    boolean reindex) {
       myRoot = root;
+      myPathsEncoder = encoder;
       myCommits = commits;
       myFull = full;
       myReindex = reindex;
@@ -595,7 +605,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         indicator.checkCanceled();
 
         List<String> hashes = TroveUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
-        myIndexers.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
+        myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();
 
@@ -609,7 +619,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
       displayProgress(indicator);
 
-      myIndexers.get(myRoot).readAllFullDetails(myRoot, details -> {
+      myIndexers.get(myRoot).readAllFullDetails(myRoot, myPathsEncoder, details -> {
         storeDetail(details);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();

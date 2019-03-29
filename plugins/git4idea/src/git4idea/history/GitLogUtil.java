@@ -243,8 +243,8 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static VcsCommitMetadata createMetadata(@NotNull VirtualFile root, @NotNull GitLogRecord record,
-                                                  @NotNull VcsLogObjectsFactory factory) {
+  static VcsCommitMetadata createMetadata(@NotNull VirtualFile root, @NotNull GitLogRecord record,
+                                          @NotNull VcsLogObjectsFactory factory) {
     List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
     return factory.createCommitMetadata(factory.createHash(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                                         record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
