@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 class CodeStyleCachingUtil {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachingUtil.class);
-  private final static Object COMPUTATION_LOCK = new Object();
 
   @NotNull
   static CodeStyleSettings getCachedCodeStyle(@NotNull PsiFile file) {
@@ -23,9 +22,7 @@ class CodeStyleCachingUtil {
 
   private static CachedCodeStyleHolder createHolder(@NotNull PsiFile file) {
     CachedCodeStyleHolder holder = new CachedCodeStyleHolder();
-    synchronized (COMPUTATION_LOCK) {
-      holder.compute(file);
-    }
+    holder.compute(file);
     if (LOG.isDebugEnabled()) {
       logCached(file, holder);
     }
