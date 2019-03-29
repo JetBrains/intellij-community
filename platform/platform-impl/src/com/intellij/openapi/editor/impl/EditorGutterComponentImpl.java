@@ -58,10 +58,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntFunction;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,8 +131,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
   private int myTextAnnotationExtraSize;
-  TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
-  ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
+  final TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
+  final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
   @NotNull private TIntFunction myLineNumberConvertor = value -> value;
@@ -1868,18 +1865,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void closeAllAnnotations() {
-    if (!myCanCloseAnnotations) return;
-
-    for (TextAnnotationGutterProvider provider : myTextAnnotationGutters) {
-      provider.gutterClosed();
-    }
-
-    revalidateSizes();
+    closeTextAnnotations(myTextAnnotationGutters);
   }
 
-  private void revalidateSizes() {
-    myTextAnnotationGutters = new ArrayList<>();
-    myTextAnnotationGutterSizes = new TIntArrayList();
+  @Override
+  public void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations) {
+    if (!myCanCloseAnnotations) return;
+
+    THashSet<TextAnnotationGutterProvider> toClose = new THashSet<>(annotations, ContainerUtil.identityStrategy());
+    for (int i = myTextAnnotationGutters.size() - 1; i >= 0; i--) {
+      TextAnnotationGutterProvider provider = myTextAnnotationGutters.get(i);
+      if (toClose.contains(provider)) {
+        provider.gutterClosed();
+        myTextAnnotationGutters.remove(i);
+        myTextAnnotationGutterSizes.remove(i);
+      }
+    }
+
     updateSize();
   }
 

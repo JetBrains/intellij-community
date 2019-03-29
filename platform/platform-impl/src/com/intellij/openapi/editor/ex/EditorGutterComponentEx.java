@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
@@ -80,4 +81,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   @NotNull
   public abstract List<TextAnnotationGutterProvider> getTextAnnotations();
+
+  public abstract void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations);
 }
