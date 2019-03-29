@@ -135,6 +135,9 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
     myCurrentIndex++;
     int bufferIndex = myCurrentIndex - bufferOffset;
+    if (bufferIndex < 0) {
+      return null;
+    }
     if (myLinesBuffer.size() > bufferIndex) {
       return myLinesBuffer.get(bufferIndex);
     }
