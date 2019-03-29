@@ -5,10 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitExecutorListener
-import com.intellij.openapi.vcs.changes.CommitWorkflowUi
-import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -61,6 +60,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitW
     withPreferredHeight(85)
   }
 
+  override val commitMessageUi: CommitMessageUi get() = commitMessage
+
   override fun activate(): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)
@@ -88,6 +89,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitW
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
     inclusionEventDispatcher.addListener(listener, parent)
+
+  override fun confirmCommitWithEmptyMessage(): Boolean =
+    Messages.YES == Messages.showYesNoDialog(
+      message("confirmation.text.check.in.with.empty.comment"),
+      message("confirmation.title.check.in.with.empty.comment"),
+      Messages.getWarningIcon()
+    )
 
   override fun dispose() = Unit
 }

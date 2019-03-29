@@ -22,6 +22,7 @@ class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = ui.activate()
 
   override fun executeDefault(executor: CommitExecutor?) {
-    addUnversionedFiles(changeListManager.defaultChangeList)
+    if (!addUnversionedFiles(changeListManager.defaultChangeList)) return
+    checkEmptyCommitMessage()
   }
 }
