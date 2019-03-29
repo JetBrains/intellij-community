@@ -154,7 +154,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       try {
         methodReferenceExpression = (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
       }
-      catch (IncorrectOperationException e) {
+      catch (IncorrectOperationException | ClassCastException e) {
         LOG.error(callExpression.getText(), e);
         return null;
       }
