@@ -162,7 +162,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     try {
       final String output = runCondaPackagingHelper("listall");
       final Multimap<String, String> nameToVersions =
-        Multimaps.newSortedSetMultimap(new HashMap<>(), () -> new TreeSet<>(VersionComparatorUtil.COMPARATOR.reversed()));
+        Multimaps.newSortedSetMultimap(new HashMap<>(), () -> new TreeSet<>(PyPackageVersionComparator.getSTR_COMPARATOR().reversed()));
       for (String line : StringUtil.split(output, "\n")) {
         final List<String> split = StringUtil.split(line, "\t");
         if (split.size() < 2) continue;
