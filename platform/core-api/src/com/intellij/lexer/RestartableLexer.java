@@ -22,8 +22,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This interface is suitable for providing even distribution for restartable states in highlighting lexer implementation.
  * Perfect highlighting lexer should be able to restart quickly from any context.
- * Sometimes it's not enough to have only one restartable state in lexer logic. In some cases some additonal information is needed to
- * restart from non-trivial state.
+ * Sometimes it's not enough to have only one restartable state in lexer logic.
+ * Implement {@link #isRestartableState(int)} to provide several restartable states.
+ * In some cases some additonal information is needed to restart from non-trivial state.
+ * {@link #start(CharSequence, int, int, int, Iterable)} implementation helps quickly retrieve information from preceding part of the file
+ * to restore lexer properly
  * {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#documentChanged(DocumentEvent)}
  */
 public interface RestartableLexer {
@@ -43,31 +46,43 @@ public interface RestartableLexer {
   int getRestartableState();
 
   /**
-   * Packs tokenType and lexer state in int that is used in {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#mySegments
+   * Packs tokenType and lexer state in int that is used in {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#mySegments}
    *
    * @param tokenType lexer current token type
    * @param state     lexer current state
-   * @return
+   * @return packed lexer state and tokenType in data
    */
-  int packData(IElementType tokenType, int state);
+  default int packData(IElementType tokenType, int state) {
+    return ((state & 0xFFFF) << 16) | (tokenType.getIndex() & 0xffff);
+  }
 
   /**
    * Unpacks token type from segment data returned by
    * {@link com.intellij.openapi.editor.ex.util.SegmentArrayWithData#getSegmentData(int)}
    *
-   * @param data
-   * @return
+   * @param data to unpack
+   * @return element type stored in data
+   * @throws IndexOutOfBoundsException if encoded IElementType can not be found in IElementType registry
    */
-  IElementType unpackToken(int data);
+  @NotNull
+  default IElementType unpackToken(int data) {
+    return IElementType.find((short)(data & 0xffff));
+  }
 
   /**
    * Unpacks state from segment data returned by
    *
    * @param data see {@link com.intellij.openapi.editor.ex.util.SegmentArrayWithData#getSegmentData(int)}
-   * @return
+   * @return lexer state stored in data
    */
-  int unpackState(int data);
+  default int unpackState(int data) {
+    return data >> 16;
+  }
 
+  /**
+   * @param data data to check
+   * @return true if encoded state is restartable
+   */
   default boolean containsRestartableState(int data) {
     int state = unpackState(data);
     return isRestartableState(state);
@@ -91,7 +106,7 @@ public interface RestartableLexer {
    * @param startOffset  offset to start lexing from
    * @param endOffset    offset to stop lexing at
    * @param initialState state to start lexing with
-   * @param tokenInfos   preceding token infos starting form current in reverse order.
+   * @param lookBehindTokenIterable   preceding token infos starting form current in reverse order.
    */
-  void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, Iterable<TokenInfo> tokenInfos);
+  void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, Iterable<TokenInfo> lookBehindTokenIterable);
 }

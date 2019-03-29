@@ -74,15 +74,6 @@ public class SegmentArrayWithData extends SegmentArray {
     super.insert(segmentArray, startIndex);
   }
 
-
-  @NotNull
-  private long[] remove(@NotNull long[] array, int startIndex, int endIndex) {
-    if (endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
-    }
-    return array;
-  }
-
   public int getSegmentData(int index) {
     if(index < 0 || index >= mySegmentCount) {
       throw new IndexOutOfBoundsException("Wrong index: " + index);

@@ -199,7 +199,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         }
       }
 
-      //System.out.println("start offset: "+ startOffset +" state: " + initialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
@@ -268,8 +267,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
 
       startOffset = mySegments.getSegmentStart(startIndex);
-      //System.out.println("before: " +mySegments);
-      //System.out.println("startOffset: " + startOffset);
       int repaintEnd = -1;
       int insertSegmentCount = 0;
       int oldEndIndex = -1;
@@ -290,7 +287,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         int tokenEnd = myLexer.getTokenEnd();
         data = packData(myLexer.getTokenType(), lexerState);
         if(tokenStart >= newEndOffset && canRestart(lexerState)) {
-          //System.out.println("canRestart:"+lexerState);
           int shiftedTokenStart = tokenStart - e.getNewLength() + e.getOldLength();
           int index = mySegments.findSegmentIndex(shiftedTokenStart);
           if (mySegments.getSegmentStart(index) == shiftedTokenStart && mySegments.getSegmentData(index) == data) {
@@ -327,12 +323,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
       mySegments.shiftSegments(oldEndIndex, shift);
       mySegments.replace(startIndex, oldEndIndex, insertSegments);
-      //System.out.println(insertSegments);
       if (insertSegmentCount == 0 ||
           oldEndIndex == startIndex + 1 && insertSegmentCount == 1 && data == mySegments.getSegmentData(startIndex)) {
         return;
       }
-      //System.out.println("after:" +mySegments);
       myEditor.repaint(startOffset, repaintEnd);
     }
     catch (ProcessCanceledException ex) {
