@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
@@ -26,7 +25,6 @@ import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
@@ -60,7 +58,7 @@ interface CommitWorkflowListener : EventListener {
 }
 
 open class SingleChangeListCommitWorkflow(
-  val project: Project,
+  project: Project,
   val initiallyIncluded: Collection<*>,
   val initialChangeList: LocalChangeList? = null,
   val executors: List<CommitExecutor> = emptyList(),
@@ -70,7 +68,8 @@ open class SingleChangeListCommitWorkflow(
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
-) {
+) : AbstractCommitWorkflow(project) {
+
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
   val commitContext: CommitContext = CommitContext()
@@ -100,13 +99,6 @@ open class SingleChangeListCommitWorkflow(
   internal fun initCommitOptions(options: CommitOptions) {
     _commitOptions.clear()
     _commitOptions.add(options)
-  }
-
-  fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
-    if (unversionedFiles.isEmpty()) return true
-
-    FileDocumentManager.getInstance().saveAllDocuments()
-    return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
   }
 
   fun executeDefault(executor: CommitExecutor?, commitState: ChangeListCommitState) {

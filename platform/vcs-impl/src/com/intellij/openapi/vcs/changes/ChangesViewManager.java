@@ -86,6 +86,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  private ChangesViewCommitPanel myCommitPanel;
   private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
@@ -157,6 +158,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
+    if (myCommitPanel != null) Disposer.register(myContent, myCommitPanel);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -199,10 +201,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      ChangesViewCommitPanel commitPanel = new ChangesViewCommitPanel(myProject);
-      contentPanel.addToBottom(commitPanel);
+      myCommitPanel = new ChangesViewCommitPanel(myView);
+      contentPanel.addToBottom(myCommitPanel);
 
-      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(commitPanel);
+      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
