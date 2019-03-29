@@ -2,7 +2,7 @@ package com.intellij.bash.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.IntStack;
 import com.intellij.lexer.FlexLexer;
 
 %%
@@ -20,7 +20,7 @@ import com.intellij.lexer.FlexLexer;
   private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
   private void popState() { yybegin(myStack.pop());}
   private void yy_switch_state(int state) { popState(); pushState(state); }
-  private Stack<Integer> myStack = new Stack<>();
+  private IntStack myStack = new IntStack(20);
   private boolean inString;
 
   protected void onReset() { myStack.clear(); }
