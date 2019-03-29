@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
@@ -35,8 +34,6 @@ class SingleChangeListCommitWorkflowHandler(
     SingleChangeListCommitWorkflowUi.ChangeListListener,
     InclusionListener {
 
-  private val vcsConfiguration = VcsConfiguration.getInstance(project)
-
   private val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
     override fun setCommitMessage(currentDescription: String?) {
       commitMessagePolicy.defaultNameChangeListMessage = currentDescription
@@ -46,9 +43,6 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun getChangeList() = ui.getChangeList()
-
-  private fun getCommitMessage() = ui.commitMessageUi.text
-  private fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
 
@@ -140,9 +134,6 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
-
-  private fun checkEmptyCommitMessage(): Boolean =
-    getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

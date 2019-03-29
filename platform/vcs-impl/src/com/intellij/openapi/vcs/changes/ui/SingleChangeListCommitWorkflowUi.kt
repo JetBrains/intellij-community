@@ -7,11 +7,9 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.ui.TextAccessor
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
-  val commitMessageUi: CommitMessageUi
   val commitOptionsUi: CommitOptionsUi
 
   var defaultCommitActionName: String
@@ -28,22 +26,12 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
 
-  fun confirmCommitWithEmptyMessage(): Boolean
-
   fun startBeforeCommitChecks()
   fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult)
 
   interface ChangeListListener : EventListener {
     fun changeListChanged()
   }
-}
-
-//TODO Unify with CommitMessageI
-interface CommitMessageUi : TextAccessor {
-  override fun getText(): String
-  override fun setText(text: String?)
-
-  fun focus()
 }
 
 interface CommitOptionsUi {
