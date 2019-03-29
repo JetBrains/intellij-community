@@ -18,7 +18,7 @@ interface StatisticsEventLogWriter {
   fun cleanup()
 }
 
-class StatisticsEventLogFileWriter : StatisticsEventLogWriter {
+class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsEventLogWriter {
   private var fileAppender: StatisticsEventLogFileAppender? = null
 
   private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
@@ -41,7 +41,7 @@ class StatisticsEventLogFileWriter : StatisticsEventLogWriter {
     }
   }
 
-  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log")
+  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve(recorderId)
 
   override fun log(message: String) {
     eventLogger.info(message)
