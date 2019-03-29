@@ -15,14 +15,14 @@ class C {
 //in: PsiLocalVariable:array
 //exit: SEQUENTIAL PsiForStatement
 
-    public NewMethodResult newMethod(Object[] array) {
+    NewMethodResult newMethod(Object[] array) {
         for (int i = 0; i < array.length; i++) {
             System.out.println(array[i]);
         }
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

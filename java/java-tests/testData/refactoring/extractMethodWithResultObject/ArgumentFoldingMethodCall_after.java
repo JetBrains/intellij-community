@@ -14,7 +14,7 @@ class C {
 //exit: RETURN PsiMethod:foo<-void
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         if (x.isEmpty()) return new NewMethodResult((1 /* exit key */));
         x.remove(0);
         y.add(str());
@@ -22,7 +22,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
 
         public NewMethodResult(int exitKey) {

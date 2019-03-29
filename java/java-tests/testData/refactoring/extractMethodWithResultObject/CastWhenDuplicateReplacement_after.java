@@ -7,11 +7,11 @@ class Test {
 //in: PsiParameter:x
 //exit: EXPRESSION PsiMethodCallExpression:((String)x).substring(1)
 
-    public NewMethodResult newMethod(Object x) {
+    NewMethodResult newMethod(Object x) {
         return new NewMethodResult(((String)x).substring(1));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

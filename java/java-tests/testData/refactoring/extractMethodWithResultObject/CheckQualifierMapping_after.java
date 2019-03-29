@@ -14,13 +14,13 @@ class Test {
 //in: PsiLocalVariable:a
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod(String a) {
+    NewMethodResult newMethod(String a) {
         ArrayList<String> listA = new ArrayList<String>();
         listA.add(a);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

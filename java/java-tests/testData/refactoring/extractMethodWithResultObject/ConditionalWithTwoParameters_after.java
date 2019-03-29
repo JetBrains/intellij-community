@@ -15,7 +15,7 @@ class RenamedParameter {
 //in: PsiLocalVariable:b
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod(String b, String a) {
+    NewMethodResult newMethod(String b, String a) {
         if (c) {
             String t = b;
             x(t);
@@ -25,7 +25,7 @@ class RenamedParameter {
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

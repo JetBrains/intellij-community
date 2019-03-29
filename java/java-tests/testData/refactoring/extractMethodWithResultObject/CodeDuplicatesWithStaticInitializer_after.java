@@ -10,11 +10,11 @@ class C {
     }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:c
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         return new NewMethodResult(c);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private C expressionResult;
 
         public NewMethodResult(C expressionResult) {

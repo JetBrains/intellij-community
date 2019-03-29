@@ -22,7 +22,7 @@ class C {
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:true
 //exit: SEQUENTIAL PsiForeachStatement
 
-    public NewMethodResult newMethod(String b, String s) {
+    NewMethodResult newMethod(String b, String s) {
         if (b == null) {
             return new NewMethodResult((1 /* exit key */), true);
         }
@@ -32,7 +32,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */), (false /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private boolean returnResult;
 

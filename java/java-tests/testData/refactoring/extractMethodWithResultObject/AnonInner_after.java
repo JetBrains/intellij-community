@@ -15,12 +15,12 @@ class Foo {
             }//ins and outs
 //exit: SEQUENTIAL PsiMethod:actionPerformed
 
-            public NewMethodResult newMethod() {
+            NewMethodResult newMethod() {
                 setVisible( false );
                 return new NewMethodResult();
             }
 
-            public class NewMethodResult {
+            class NewMethodResult {
                 public NewMethodResult() {
                 }
             }

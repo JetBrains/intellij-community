@@ -14,7 +14,7 @@ class Conditional {
 //exit: RETURN PsiMethod:bar<-PsiReferenceExpression:n
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(String[] s) {
+    NewMethodResult newMethod(String[] s) {
         if (s != null) {
             int[] n = new int[s.length];
             for (int i = 0; i < s.length; i++) {
@@ -25,7 +25,7 @@ class Conditional {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private int[] returnResult;
 

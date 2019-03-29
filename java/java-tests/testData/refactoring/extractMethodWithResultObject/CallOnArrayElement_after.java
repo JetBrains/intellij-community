@@ -6,11 +6,11 @@ class C {
 //in: PsiParameter:vars
 //exit: EXPRESSION PsiMethodCallExpression:vars[i].length()
 
-    public NewMethodResult newMethod(String[] vars, int i) {
+    NewMethodResult newMethod(String[] vars, int i) {
         return new NewMethodResult(vars[i].length());
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int expressionResult;
 
         public NewMethodResult(int expressionResult) {

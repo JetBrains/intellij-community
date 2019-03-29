@@ -6,11 +6,11 @@ class UseBuilder {
 //in: PsiParameter:builder
 //exit: EXPRESSION PsiMethodCallExpression:builder.foo("xyz").bar(arr[0])
 
-    public NewMethodResult newMethod(Builder builder, int[] arr) {
+    NewMethodResult newMethod(Builder builder, int[] arr) {
         return new NewMethodResult(builder.foo("xyz").bar(arr[0]));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private Builder expressionResult;
 
         public NewMethodResult(Builder expressionResult) {

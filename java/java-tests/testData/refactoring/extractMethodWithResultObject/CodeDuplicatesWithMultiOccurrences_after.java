@@ -6,11 +6,11 @@ class Test {
 //in: PsiLocalVariable:f
 //exit: EXPRESSION PsiReferenceExpression:f
 
-    public NewMethodResult newMethod(String f) {
+    NewMethodResult newMethod(String f) {
         return new NewMethodResult(f);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

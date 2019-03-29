@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Test
+class Test
 {
    <T> void foo(List<? extends List<T>> tr){
        tr.add(null);
@@ -8,12 +8,12 @@ public class Test
 //in: PsiParameter:tr
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod(List<? extends List<T>> tr) {
+    NewMethodResult newMethod(List<? extends List<T>> tr) {
         tr.add(null);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

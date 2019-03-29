@@ -9,14 +9,14 @@ class C {
 //exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(int i) {
+    NewMethodResult newMethod(int i) {
         if (i < 10){
             return new NewMethodResult((1 /* exit key */));
         }
         return new NewMethodResult((-1 /* exit key */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
 
         public NewMethodResult(int exitKey) {

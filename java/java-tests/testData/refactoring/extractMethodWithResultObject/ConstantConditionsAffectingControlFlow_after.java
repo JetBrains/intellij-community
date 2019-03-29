@@ -10,13 +10,13 @@ class WillWorkTest {
 //out: PsiLocalVariable:k
 //exit: RETURN PsiMethod:opera<-PsiReferenceExpression:k
 
-    public NewMethodResult newMethod(int i) {
+    NewMethodResult newMethod(int i) {
         int k;
         if (true) k = i;
         return new NewMethodResult(k, k);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int returnResult;
         private int k;
 

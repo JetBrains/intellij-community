@@ -30,13 +30,13 @@ class C extends D {
 //in: PsiLocalVariable:i
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod(int i) {
+    NewMethodResult newMethod(int i) {
         myField = i;
         myOtherField = i;
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

@@ -19,7 +19,7 @@ class C {
 //exit: RETURN PsiMethod:test<-PsiLiteralExpression:null
 //exit: SEQUENTIAL PsiBlockStatement
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         if (foo()) {
             return new NewMethodResult((1 /* exit key */), null);
         }
@@ -29,7 +29,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private String returnResult;
 

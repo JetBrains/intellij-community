@@ -12,13 +12,13 @@ class Test {
 //in: PsiParameter:ss
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod(String[] ss, int i, String[] bb) {
+    NewMethodResult newMethod(String[] ss, int i, String[] bb) {
         System.out.println(ss[i]);
         System.out.println(bb[i]);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

@@ -4,12 +4,12 @@ class Test {
       void fe() {System.out.println("");}//ins and outs
 //exit: SEQUENTIAL PsiMethod:fe
 
-        public NewMethodResult newMethod() {
+        NewMethodResult newMethod() {
             System.out.println("");
             return new NewMethodResult();
         }
 
-        public class NewMethodResult {
+        class NewMethodResult {
             public NewMethodResult() {
             }
         }

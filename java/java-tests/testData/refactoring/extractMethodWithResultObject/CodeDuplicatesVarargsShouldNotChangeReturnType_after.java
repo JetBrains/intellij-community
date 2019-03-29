@@ -5,11 +5,11 @@ class Test {
     }//ins and outs
 //exit: EXPRESSION PsiMethodCallExpression:String.valueOf(1)
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         return new NewMethodResult(String.valueOf(1));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

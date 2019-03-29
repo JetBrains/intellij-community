@@ -9,11 +9,11 @@ class Test {
   }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:foos
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         return new NewMethodResult(foos);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String[] expressionResult;
 
         public NewMethodResult(String[] expressionResult) {

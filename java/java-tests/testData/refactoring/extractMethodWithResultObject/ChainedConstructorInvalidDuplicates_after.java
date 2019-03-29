@@ -10,12 +10,12 @@ class A {
 //in: PsiParameter:i
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod(int i) {
+    NewMethodResult newMethod(int i) {
         this.i = i;
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

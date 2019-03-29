@@ -7,12 +7,12 @@ class Test {
 //in: PsiParameter:o
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod(Object o) {
+    NewMethodResult newMethod(Object o) {
         ((A)o).bar();
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

@@ -8,11 +8,11 @@ class C {
   }//ins and outs
 //exit: RETURN PsiMethod:foo<-PsiMethodCallExpression:A.getInstance()
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         return new NewMethodResult(A.getInstance());
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private Object returnResult;
 
         public NewMethodResult(Object returnResult) {

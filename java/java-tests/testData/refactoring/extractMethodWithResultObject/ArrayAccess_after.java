@@ -9,13 +9,13 @@ class Test {
 //in: PsiParameter:ss
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod(String[] ss, int i) {
+    NewMethodResult newMethod(String[] ss, int i) {
         System.out.println(ss[i]);
         System.out.println(ss[i] + ss[i]);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

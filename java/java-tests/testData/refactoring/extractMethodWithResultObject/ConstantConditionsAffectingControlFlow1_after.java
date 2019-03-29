@@ -11,12 +11,12 @@ class Test {
 //in: PsiLocalVariable:a
 //exit: SEQUENTIAL PsiMethod:test
 
-    public NewMethodResult newMethod(int a) {
+    NewMethodResult newMethod(int a) {
         System.out.println(a);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

@@ -11,13 +11,13 @@ class X {
 //exit: CONTINUE PsiBlockStatement<-PsiContinueStatement
 //exit: SEQUENTIAL PsiDeclarationStatement
 
-    public NewMethodResult newMethod(Object o) {
+    NewMethodResult newMethod(Object o) {
         if (o == null) return new NewMethodResult((1 /* exit key */), x);
         String x = bar(o);
         return new NewMethodResult((-1 /* exit key */), x);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private String x;
 

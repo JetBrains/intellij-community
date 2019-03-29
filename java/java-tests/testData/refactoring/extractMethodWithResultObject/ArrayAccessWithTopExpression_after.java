@@ -9,12 +9,12 @@ class Test {
 //in: PsiLocalVariable:i
 //exit: SEQUENTIAL PsiClassInitializer
 
-    public NewMethodResult newMethod(double[] doubles, int i) {
+    NewMethodResult newMethod(double[] doubles, int i) {
         double progressResult = doubles[0] / i;
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

@@ -533,6 +533,7 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
     PsiClass resultClass = (PsiClass)myAnchor.getParent().addAfter(factory.createClass("NewMethodResult"), myAnchor);
+    notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     for (ResultItem resultItem : resultItems) {
       resultItem.createField(resultClass, factory);
     }
@@ -556,6 +557,7 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
     PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
+    method.getModifierList().setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     PsiParameterList parameterList = method.getParameterList();
 
     Map<PsiVariable, Pair<PsiExpression, Integer>> orderedInputs = new HashMap<>();

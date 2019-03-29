@@ -17,7 +17,7 @@ class C {
 //exit: RETURN PsiMethod:test<-PsiBinaryExpression:"B" + s
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(int n, String s) {
+    NewMethodResult newMethod(int n, String s) {
         if (n == 1) {
             return new NewMethodResult((1 /* exit key */), "A" + s);
         }
@@ -27,7 +27,7 @@ class C {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private String returnResult;
 

@@ -13,7 +13,7 @@ class Test {
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:null
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(String[] args) {
+    NewMethodResult newMethod(String[] args) {
         for(String arg : args) {
           if (arg == null) continue;
           System.out.println(arg);
@@ -22,7 +22,7 @@ class Test {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private String returnResult;
 

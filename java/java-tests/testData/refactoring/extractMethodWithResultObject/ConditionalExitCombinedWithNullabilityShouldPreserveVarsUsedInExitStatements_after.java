@@ -14,7 +14,7 @@ class X {
 //exit: RETURN PsiMethod:guessTestDataName<-PsiBinaryExpression:strings.substring(0) + testName
 //exit: SEQUENTIAL PsiForeachStatement
 
-    public NewMethodResult newMethod(String method, String testName) {
+    NewMethodResult newMethod(String method, String testName) {
         String strings = method;
         if (strings != null && !strings.isEmpty()) {
             return new NewMethodResult((1 /* exit key */), strings.substring(0) + testName);
@@ -22,7 +22,7 @@ class X {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private String returnResult;
 

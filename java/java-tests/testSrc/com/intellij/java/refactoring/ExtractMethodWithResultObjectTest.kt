@@ -3,8 +3,6 @@ package com.intellij.java.refactoring
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightUtil
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectHandler
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectProcessor
@@ -90,22 +88,22 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
 
   fun test() = doTest()
 
-  private fun doTest() {
+  private fun doTest(checkHighlighting: Boolean = true) {
     val testName = getTestName(false)
     if (testName.isEmpty()) return
 
     myFixture.configureByFile("$BASE_PATH$testName.java")
-    myFixture.checkHighlighting()
 
     performAction()
 
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.java", true)
+    if (checkHighlighting) {
+      //      myFixture.checkHighlighting()
+    }
   }
 
   private fun performAction() {
-    val editor = getEditor()
-    val project = getProject()
-    val elements: Array<PsiElement> = getSelectedElements(editor, project)
+    val elements: Array<PsiElement> = getSelectedElements()
     assertTrue("elements", elements.isNotEmpty())
 
     val processor = ExtractMethodWithResultObjectProcessor(project, editor, elements)
@@ -115,8 +113,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
     ExtractMethodWithResultObjectHandler.extractMethodWithResultObjectImpl(processor)
   }
 
-  private fun getSelectedElements(editor: Editor, project: Project): Array<PsiElement> {
-    val file = getFile()
+  private fun getSelectedElements(): Array<PsiElement> {
     val startOffset = editor.selectionModel.selectionStart
     val endOffset = editor.selectionModel.selectionEnd
 

@@ -5,12 +5,12 @@ class X {
   }//ins and outs
 //exit: SEQUENTIAL PsiMethod:foo
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         int i = myI++;
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

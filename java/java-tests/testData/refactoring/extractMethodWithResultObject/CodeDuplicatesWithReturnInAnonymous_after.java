@@ -14,7 +14,7 @@ class Test10 {
   }//ins and outs
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         new Object() {
           int get() {
             return 0;
@@ -23,7 +23,7 @@ class Test10 {
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

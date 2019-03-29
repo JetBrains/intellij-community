@@ -21,14 +21,14 @@ class Test {
     }//ins and outs
 //exit: SEQUENTIAL PsiMethod:method2
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         list1.add(null);
         // add to list2
         list2.add(true);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

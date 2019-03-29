@@ -7,12 +7,12 @@ class C {
 //in: PsiParameter:o
 //exit: RETURN PsiMethod:method<-PsiMethodCallExpression:i.toString()
 
-    public NewMethodResult newMethod(Object o) {
+    NewMethodResult newMethod(Object o) {
         Integer i = new Integer(o.hashCode());
         return new NewMethodResult(i.toString());
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String returnResult;
 
         public NewMethodResult(String returnResult) {

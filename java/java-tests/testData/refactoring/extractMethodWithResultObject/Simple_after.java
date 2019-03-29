@@ -4,12 +4,12 @@ class C {
   }//ins and outs
 //exit: SEQUENTIAL PsiClassInitializer
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         int i = 1;
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

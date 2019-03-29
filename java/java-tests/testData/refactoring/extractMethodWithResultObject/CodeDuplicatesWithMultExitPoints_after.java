@@ -8,12 +8,12 @@ class A {
 //exit: RETURN PsiMethod:foo<-PsiLiteralExpression:0
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(Object o) {
+    NewMethodResult newMethod(Object o) {
         if (o == null) return new NewMethodResult((1 /* exit key */), 0);
         return new NewMethodResult((-1 /* exit key */), (0 /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private int returnResult;
 

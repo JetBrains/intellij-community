@@ -6,12 +6,12 @@ class UseBuilder {
 //in: PsiParameter:builder
 //exit: SEQUENTIAL PsiMethod:test
 
-    public NewMethodResult newMethod(Builder builder, int[] arr) {
+    NewMethodResult newMethod(Builder builder, int[] arr) {
         builder.foo("xyz").bar(arr[0]).foo("abc");
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

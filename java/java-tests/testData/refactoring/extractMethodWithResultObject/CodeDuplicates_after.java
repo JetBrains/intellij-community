@@ -8,12 +8,12 @@ class C {
 //in: PsiLocalVariable:i
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod(int i) {
+    NewMethodResult newMethod(int i) {
         System.out.println(i);
         return new NewMethodResult();
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         public NewMethodResult() {
         }
     }

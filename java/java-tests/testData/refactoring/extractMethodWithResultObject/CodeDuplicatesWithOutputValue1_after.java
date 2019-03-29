@@ -16,13 +16,13 @@ class C {
 //out: PsiLocalVariable:l1
 //exit: SEQUENTIAL PsiExpressionStatement
 
-    public NewMethodResult newMethod(Object[] array) {
+    NewMethodResult newMethod(Object[] array) {
         List l1 = null;
         l1 = new ArrayList(Arrays.asList(array));
         return new NewMethodResult(l1);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private List l1;
 
         public NewMethodResult(List l1) {

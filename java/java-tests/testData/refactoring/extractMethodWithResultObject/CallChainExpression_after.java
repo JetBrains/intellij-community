@@ -6,11 +6,11 @@ class CallChainExpression {
     }//ins and outs
 //exit: EXPRESSION PsiReferenceExpression:A.a().b().c
 
-    public NewMethodResult newMethod() {
+    NewMethodResult newMethod() {
         return new NewMethodResult(A.a().b().c);
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private String expressionResult;
 
         public NewMethodResult(String expressionResult) {

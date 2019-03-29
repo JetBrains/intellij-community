@@ -7,12 +7,12 @@ class C {
 //in: PsiParameter:k
 //exit: SEQUENTIAL PsiMethod:foo
 
-            public NewMethodResult newMethod(K k) {
+            NewMethodResult newMethod(K k) {
                 System.out.println(k);
                 return new NewMethodResult();
             }
 
-            public class NewMethodResult {
+            class NewMethodResult {
                 public NewMethodResult() {
                 }
             }

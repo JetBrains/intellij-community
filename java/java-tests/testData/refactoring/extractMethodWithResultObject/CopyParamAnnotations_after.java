@@ -22,7 +22,7 @@ class X {
 //exit: RETURN PsiMethod:fun2<-PsiMethodCallExpression:fun1(x)
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(String b) {
+    NewMethodResult newMethod(String b) {
         if (b != null) {
           int x = 1;
             return new NewMethodResult((1 /* exit key */), fun1(x));
@@ -30,7 +30,7 @@ class X {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private X returnResult;
 

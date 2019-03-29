@@ -11,7 +11,7 @@ class Test {
 //exit: RETURN PsiMethod:foo<-PsiReferenceExpression:n
 //exit: SEQUENTIAL PsiIfStatement
 
-    public NewMethodResult newMethod(Integer[] a) {
+    NewMethodResult newMethod(Integer[] a) {
         if (a.length != 0) {
             int n = a[0] != null ? a[0] : 0;
             return new NewMethodResult((1 /* exit key */), n);
@@ -19,7 +19,7 @@ class Test {
         return new NewMethodResult((-1 /* exit key */), (null /* missing value */));
     }
 
-    public class NewMethodResult {
+    class NewMethodResult {
         private int exitKey;
         private Integer returnResult;
 
