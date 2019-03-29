@@ -1,25 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.ElementClassHint
-import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.util.ProcessingContext
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
-import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil.canBeMethodOf
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
@@ -31,7 +21,7 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
     val dependenciesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(
       psiMethod(GRADLE_API_PROJECT, "dependencies"),
       psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")
-    ))
+    )).inMethodResult(saveProjectType)
 
     val dependencyClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
     val moduleClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
@@ -44,8 +34,13 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
+    val context = ProcessingContext()
+    if (dependenciesClosure.accepts(closure, context)) {
+      val dependencyHandler = TypesUtil.createType(GRADLE_API_DEPENDENCY_HANDLER, closure)
+      val delegate = context.get(projectTypeKey)?.setType(dependencyHandler) ?: dependencyHandler
+      return DelegatesToInfo(delegate, Closure.DELEGATE_FIRST)
+    }
     val fqn = when {
-      dependenciesClosure.accepts(closure) -> GRADLE_API_DEPENDENCY_HANDLER
       dependencyClosure.accepts(closure) -> GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY
       moduleClosure.accepts(closure) -> GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY
       componentsClosure.accepts(closure) -> GRADLE_API_COMPONENT_METADATA_HANDLER
@@ -54,31 +49,5 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
       else -> return null
     }
     return DelegatesToInfo(TypesUtil.createType(fqn, closure), Closure.DELEGATE_FIRST)
-  }
-
-  override fun process(methodCallInfo: List<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
-    val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
-    val methodName = methodCallInfo.firstOrNull() ?: return true
-
-    val classHint = processor.getHint(ElementClassHint.KEY)
-    val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-    if (shouldProcessMethods && place is GrReferenceExpression && psiElement().inside(dependenciesClosure).accepts(place)) {
-      if (methodCallInfo.size == 2) {
-        val resolveScope = place.getResolveScope()
-        val psiClass = JavaPsiFacade.getInstance(place.project).findClass(GRADLE_API_DEPENDENCY_HANDLER, resolveScope) ?: return true
-        if (canBeMethodOf(methodName, psiClass)) {
-          return true
-        }
-
-        val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope)
-        val wrappedBase = GrLightMethodBuilder(place.manager, methodName).apply {
-          returnType = returnClass
-          containingClass = psiClass
-        }
-        wrappedBase.addParameter("dependencyNotation", TypesUtil.getJavaLangObject(place).createArrayType())
-        if (!processor.execute(wrappedBase, state)) return false
-      }
-    }
-    return true
   }
 }

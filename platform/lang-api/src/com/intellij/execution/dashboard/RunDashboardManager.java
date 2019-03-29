@@ -58,7 +58,7 @@ public interface RunDashboardManager {
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
 
-  void updateDashboard(boolean withSStructure);
+  void updateDashboard(boolean withStructure);
 
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 
@@ -67,9 +67,6 @@ public interface RunDashboardManager {
   void setShowConfigurations(boolean value);
 
   float getContentProportion();
-
-  @Nullable
-  RunDashboardAnimator getAnimator();
 
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 

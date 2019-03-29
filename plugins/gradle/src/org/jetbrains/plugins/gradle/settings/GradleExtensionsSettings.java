@@ -21,12 +21,11 @@ import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -76,8 +75,8 @@ public class GradleExtensionsSettings {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String projectPath = ((ModuleData)parent.getData()).getLinkedExternalProjectPath();
-        extensionMap.put(projectPath, node.getData());
+        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        extensionMap.put(gradlePath, node.getData());
       }
 
       add(rootPath, extensionMap);
@@ -88,15 +87,8 @@ public class GradleExtensionsSettings {
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
         GradleExtensionsData extensionsData = new GradleExtensionsData();
         GradleExtensions gradleExtensions = entry.getValue();
-        try {
-          File parentProjectDir = gradleExtensions.getParentProjectDir();
-          if (parentProjectDir != null) {
-            extensionsData.parent = ExternalSystemApiUtil.toCanonicalPath(parentProjectDir.getCanonicalPath());
-          }
-        }
-        catch (IOException e) {
-          LOG.warn("construction of the canonical path for the gradle project fails", e);
-        }
+        extensionsData.parent = gradleExtensions.getParentProjectPath();
+
         for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
           GradleExtension gradleExtension = new GradleExtension();
           gradleExtension.name = extension.getName();
@@ -164,19 +156,29 @@ public class GradleExtensionsSettings {
       this.projects = projects;
     }
 
+    /**
+     * Returns extensions available in the context of the gradle project related to the IDE module.
+     */
     @Nullable
     public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
-                              ExternalSystemApiUtil.getExternalProjectPath(module));
+                              GradleProjectResolverUtil.getGradlePath(module));
     }
 
+    /**
+     * Returns extensions available in the context of the specified (using gradle path notation, e.g. `:sub-project`) gradle project.
+     *
+     * @param rootProjectPath file path of the root gradle project
+     * @param gradlePath      gradle project path notation
+     * @return gradle extensions
+     */
     @Nullable
-    public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String projectPath) {
-      if (rootProjectPath == null || projectPath == null) return null;
+    public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
+      if (rootProjectPath == null || gradlePath == null) return null;
       GradleProject gradleProject = projects.get(rootProjectPath);
       if (gradleProject == null) return null;
-      return gradleProject.extensions.get(projectPath);
+      return gradleProject.extensions.get(gradlePath);
     }
   }
 

@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
 
@@ -19,7 +21,7 @@ class GradleScriptMembersContributor : NonCodeMembersContributor() {
                                       place: PsiElement,
                                       state: ResolveState) {
     if (aClass == null || !aClass.isResolvedInGradleScript()) return
-    val delegate = GradleProjectAwareType(GradleCommonClassNames.GRADLE_API_PROJECT, place.containingFile)
+    val delegate = GradleProjectAwareType(createType(GRADLE_API_PROJECT, place.containingFile), false)
     delegate.processReceiverType(processor, state, place)
   }
 }

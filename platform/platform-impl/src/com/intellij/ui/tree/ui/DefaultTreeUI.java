@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +40,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (EventQueue.isDispatchThread()) return true;
     logStackTrace("unexpected thread");
     return false;
-  }
-
-  private static int getDepth(@NotNull JTree tree, @NotNull TreePath path) {
-    int depth = path.getPathCount();
-    if (!tree.isRootVisible()) depth--;
-    if (!tree.getShowsRootHandles()) depth--;
-    return depth;
   }
 
   @NotNull
@@ -182,7 +176,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           if (bounds == null) break;
           bounds.y += insets.top;
 
-          int depth = getDepth(tree, path);
+          int depth = TreeUtil.getNodeDepth(tree, path);
           boolean leaf = isLeaf(path.getLastPathComponent());
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
@@ -226,6 +220,15 @@ public final class DefaultTreeUI extends BasicTreeUI {
   // BasicTreeUI
 
   @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    JTree tree = getTree();
+    if (tree != null && tree.isForegroundSet()) {
+      tree.setForeground(null);
+    }
+  }
+
+  @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
     ActionMap map = tree.getActionMap();
@@ -237,7 +240,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();
     if (tree == null || path == null || isLeaf(path.getLastPathComponent())) return false;
-    int depth = getDepth(tree, path);
+    int depth = TreeUtil.getNodeDepth(tree, path);
     Control.Painter painter = getPainter(tree);
     Insets insets = tree.getInsets();
     if (insets != null) mouseX -= insets.left;
@@ -250,7 +253,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return 0;
     TreePath path = getPathForRow(tree, row);
     if (path == null) return 0;
-    return getPainter(tree).getRendererOffset(control, getDepth(tree, path), isLeaf(path.getLastPathComponent()));
+    return getPainter(tree).getRendererOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
   }
 
   @Override

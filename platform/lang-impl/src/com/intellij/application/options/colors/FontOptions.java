@@ -79,7 +79,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());
-      myOverwriteCheckBox = new JCheckBox();
+      myOverwriteCheckBox = new JCheckBox(getOverwriteFontTitle() + " ");
       myOverwriteCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       myOverwriteCheckBox.addActionListener(new ActionListener() {
         @Override
@@ -88,7 +88,6 @@ public class FontOptions extends AbstractFontOptionsPanel {
         }
       });
       overwritePanel.add(myOverwriteCheckBox);
-      overwritePanel.add(new JLabel(getOverwriteFontTitle() + " "));
       overwritePanel.add(createHyperlinkLabel());
       overwritePanel.add(grayed(new JLabel(" (")));
       myBaseFontInfoLabel = grayed(new JLabel("?"));

@@ -238,7 +238,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
 
   private void showProfile(InspectionProfileModifiableModel profile) {
     final SingleInspectionProfilePanel panel = myAbstractSchemesPanel.getModel().getProfilePanel(profile);
-    if (!myAbstractSchemesPanel.getModel().getProfilePanels().contains(panel)) {
+    if (myAbstractSchemesPanel.getModel().getProfilePanels().contains(panel)) {
       myProfilePanelHolder.add(panel);
     }
     for (Component component : myProfilePanelHolder.getComponents()) {

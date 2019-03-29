@@ -126,6 +126,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
+  /**
+   * Attempts to adjust the {@code offset} in the {@code file} to point to an {@link #isIdentifierPart(PsiFile, CharSequence, int) identifier},
+   * single quote, double quote, closing bracket or parentheses by moving it back by a single character. Does nothing if there are no
+   * identifiers around, or the {@code offset} is already in one.
+   *
+   * @param file language source for the {@link #isIdentifierPart(com.intellij.psi.PsiFile, java.lang.CharSequence, int)}
+   */
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
@@ -146,6 +153,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return offset;
   }
 
+  /**
+   * @return true iff character at the offset may be a part of an identifier.
+   * @see Character#isJavaIdentifierPart(char)
+   * @see TargetElementEvaluatorEx#isIdentifierPart(com.intellij.psi.PsiFile, java.lang.CharSequence, int)
+   */
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
     if (file != null) {
       TargetElementEvaluatorEx evaluator = getElementEvaluatorsEx(file.getLanguage());

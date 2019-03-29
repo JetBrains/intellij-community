@@ -112,11 +112,17 @@ public class UrlUtilTest {
   }
 
   @Test
-  public void testDataUri() {
+  public void testDataUriBase64() {
     byte[] test = "test".getBytes(CharsetToolkit.UTF8_CHARSET);
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8;base64,dGVzdA==")).isEqualTo(test);
     // https://youtrack.jetbrains.com/issue/WEB-14581#comment=27-1014790
     assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset:utf-8;base64,dGVzdA==")).isEqualTo(test);
+  }
+
+  @Test
+  public void testDataUri() {
+    byte[] test = "Hello world!".getBytes(CharsetToolkit.UTF8_CHARSET);
+    assertThat(URLUtil.getBytesFromDataUri("data:text/plain;charset=utf-8,Hello%20world!")).isEqualTo(test);
   }
 
   private static void doUrlTest(@NotNull final String line, @Nullable final String expectedUrl) {

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
@@ -52,23 +51,17 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       val methodCall = place.children.singleOrNull()
       if (methodCall is GrMethodCallExpression) {
         val projectPath = methodCall.argumentList.expressionArguments.singleOrNull()?.reference?.canonicalText ?: return
-        if (projectPath == ":") {
-          val file = containingFile?.originalFile?.virtualFile ?: return
-          val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
-          val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, rootProjectPath) ?: return
-        }
-        else {
-          val module = ModuleManager.getInstance(place.project).findModuleByName(projectPath.trimStart(':')) ?: return
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(module) ?: return
-        }
+        val file = containingFile?.originalFile?.virtualFile ?: return
+        val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
+        val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
+        extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, projectPath) ?: return
       }
       else if (methodCall is GrReferenceExpression) {
         if (place.children[0].text == "rootProject") {
           val file = containingFile?.originalFile?.virtualFile ?: return
           val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
           val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, rootProjectPath) ?: return
+          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, ":") ?: return
         }
         else return
       }
