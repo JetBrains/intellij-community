@@ -27,17 +27,14 @@ private fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>>) =
   ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
 
 class SingleChangeListCommitWorkflowHandler(
-  internal val workflow: SingleChangeListCommitWorkflow,
-  internal val ui: SingleChangeListCommitWorkflowUi
-) : CommitWorkflowHandler,
+  override val workflow: SingleChangeListCommitWorkflow,
+  override val ui: SingleChangeListCommitWorkflowUi
+) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowListener,
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener,
-    InclusionListener,
-    CommitExecutorListener,
-    Disposable {
+    InclusionListener {
 
-  private val project get() = workflow.project
   private val vcsConfiguration = VcsConfiguration.getInstance(project)
 
   private val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
@@ -49,8 +46,6 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun getChangeList() = ui.getChangeList()
-  private fun getIncludedChanges() = ui.getIncludedChanges()
-  private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
 
   private fun getCommitMessage() = ui.commitMessageUi.text
   private fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
@@ -105,23 +100,10 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitOptions()
   }
 
-  override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
-
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.executors.find { it.id == executorId }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
-
-  override fun execute(executor: CommitExecutor) {
-    val session = executor.createCommitSession()
-
-    if (session === CommitSession.VCS_COMMIT) {
-      executeDefault(executor)
-    }
-    else {
-      executeCustom(executor, session)
-    }
-  }
 
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
@@ -131,7 +113,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun customCommitSucceeded() = ui.deactivate()
 
-  private fun executeDefault(executor: CommitExecutor?) {
+  override fun executeDefault(executor: CommitExecutor?) {
     if (!addUnversionedFiles()) return
     if (!checkEmptyCommitMessage()) return
     if (!saveCommitOptions()) return
@@ -147,7 +129,7 @@ class SingleChangeListCommitWorkflowHandler(
     e.show()
   }
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
+  override fun executeCustom(executor: CommitExecutor, session: CommitSession) {
     if (!workflow.canExecute(executor, getIncludedChanges())) return
     if (!checkEmptyCommitMessage()) return
     if (!saveCommitOptions()) return
@@ -157,8 +139,7 @@ class SingleChangeListCommitWorkflowHandler(
     refreshChanges { workflow.executeCustom(executor, session, getCommitState()) }
   }
 
-  private fun addUnversionedFiles(): Boolean =
-    workflow.addUnversionedFiles(getChangeList(), getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
+  private fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
 
   private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
@@ -228,6 +209,4 @@ class SingleChangeListCommitWorkflowHandler(
       },
       InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Commit", ModalityState.current()
     )
-
-  override fun dispose() = Unit
 }
