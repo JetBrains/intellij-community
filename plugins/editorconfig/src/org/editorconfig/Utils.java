@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class Utils {
@@ -225,5 +227,17 @@ public class Utils {
       if (file.exists()) return true;
     }
     return false;
+  }
+
+  @NotNull
+  public static List<VirtualFile> pathsToFiles(@NotNull List<String> paths) {
+    List<VirtualFile> files = ContainerUtil.newArrayList();
+    for (String path : paths) {
+      VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
+      if (file != null) {
+        files.add(file);
+      }
+    }
+    return files;
   }
 }

@@ -17,18 +17,15 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
+import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
-import org.editorconfig.core.ParserCallback;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
 
@@ -50,12 +47,13 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       final Project project = psiFile.getProject();
       if (!project.isDisposed() && Utils.isEnabled(settings)) {
         // Get editorconfig settings
-        final List<OutPair> outPairs;
         try {
-          outPairs = getEditorConfigOptions(project, psiFile, EditorConfigNavigationActionsFactory.getInstance(file));
+          final MyContext context = new MyContext(settings, psiFile);
+          processEditorConfig(project, psiFile, context);
           // Apply editorconfig settings for the current editor
-          if (applyCodeStyleSettings(new MyContext(settings, outPairs, psiFile))) {
-            settings.addDependencies(EditorConfigNavigationActionsFactory.getInstance(file).getEditorConfigFiles());
+          if (applyCodeStyleSettings(context)) {
+            settings.addDependencies(context.getEditorConfigFiles());
+            EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()).updateEditorConfigFilePaths(context.getFilePaths());
             return true;
           }
         }
@@ -151,22 +149,25 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return null;
   }
 
-  private static List<OutPair> getEditorConfigOptions(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull ParserCallback callback)
+  private static void processEditorConfig(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull MyContext context)
     throws EditorConfigException {
     String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
     final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
-    return new EditorConfig().getProperties(filePath, rootDirs, callback);
+    context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
   }
 
-  private static class MyContext {
+  private static class MyContext extends EditorConfigFilesCollector {
     private final @NotNull CodeStyleSettings mySettings;
-    private final @NotNull List<OutPair> myOptions;
+    private @Nullable List<OutPair> myOptions;
     private final @NotNull PsiFile myFile;
 
-    private MyContext(@NotNull CodeStyleSettings settings, @NotNull List<OutPair> options, @NotNull PsiFile file) {
+    private MyContext(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
       mySettings = settings;
-      myOptions = options;
       myFile = file;
+    }
+
+    public void setOptions(@NotNull List<OutPair> options) {
+      myOptions = options;
     }
 
     @NotNull
@@ -176,7 +177,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
     @NotNull
     private List<OutPair> getOptions() {
-      return myOptions;
+      return myOptions == null ? Collections.emptyList() : myOptions;
     }
 
     @NotNull
@@ -185,7 +186,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
 
     private String getTabSize() {
-      for (OutPair pair : myOptions) {
+      for (OutPair pair : getOptions()) {
         if ("tab_width".equals(pair.getKey())) {
           return pair.getVal();
         }
