@@ -318,13 +318,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
-  public RunDashboardAnimator getAnimator() {
-    if (myDashboardContent == null) return null;
-
-    return myDashboardContent.getAnimator();
-  }
-
-  @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
     return myState.configurationTypes.contains(runConfiguration.getType().getId());
   }

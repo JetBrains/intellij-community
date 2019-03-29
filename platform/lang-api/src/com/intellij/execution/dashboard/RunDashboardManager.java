@@ -68,9 +68,6 @@ public interface RunDashboardManager {
 
   float getContentProportion();
 
-  @Nullable
-  RunDashboardAnimator getAnimator();
-
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
   @NotNull

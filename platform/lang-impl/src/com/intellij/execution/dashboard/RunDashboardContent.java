@@ -43,6 +43,7 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,7 @@ import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author konstantin.aleev
@@ -84,7 +86,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
-  private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
@@ -116,6 +117,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
     mouseListener.installOn(myTree);
     RowsDnDSupport.install(myTree, myTreeModel);
+    UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
 
     final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
 
@@ -379,7 +381,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
-    myAnimator = new RunDashboardAnimatorImpl(myBuilder);
   }
 
   private JComponent createToolbar() {
@@ -476,11 +477,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;
-  }
-
-  @NotNull
-  public RunDashboardAnimator getAnimator() {
-    return myAnimator;
   }
 
   public float getContentProportion() {
