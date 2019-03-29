@@ -22,7 +22,7 @@ class FlipComparisonPredicate implements PsiElementPredicate {
     if (">".equals(sign.getText()) && expression.getROperand() instanceof PsiReferenceExpression) {
       // would get parsed as type element when flipped and reparsed
       PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiPolyadicExpression.class);
-      if (parent instanceof PsiStatement) {
+      if (parent instanceof PsiExpressionStatement) {
         return false;
       }
     }

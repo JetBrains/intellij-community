@@ -20,6 +20,16 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "    boolean b = 2 < 1;}");
   }
 
+  public void testGreater() {
+    doTest("class X {{" +
+           "  if(a+b>/*_Flip '>' to '<'*/c);" +
+           "}}",
+
+           "class X {{" +
+           "  if(c < a + b);" +
+           "}}");
+  }
+
   public void testBrokenCode() {
     doTestIntentionNotAvailable("import java.util.*;" +
                                 "class X {" +
