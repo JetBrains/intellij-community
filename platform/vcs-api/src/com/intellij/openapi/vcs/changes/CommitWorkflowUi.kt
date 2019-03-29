@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
@@ -23,6 +24,9 @@ interface CommitWorkflowUi : Disposable {
   fun addInclusionListener(listener: InclusionListener, parent: Disposable)
 
   fun confirmCommitWithEmptyMessage(): Boolean
+
+  fun startBeforeCommitChecks()
+  fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult)
 }
 
 //TODO Unify with CommitMessageI

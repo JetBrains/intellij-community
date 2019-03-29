@@ -7,9 +7,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitExecutorListener
+import com.intellij.openapi.vcs.changes.CommitMessageUi
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -24,7 +28,7 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JButton
 
-class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitWorkflowUi, BorderLayoutPanel(), DataProvider {
+class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, DataProvider {
   private val project get() = changesView.project
 
   private val executorEventDispatcher = EventDispatcher.create(CommitExecutorListener::class.java)
@@ -40,6 +44,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitW
     editorField.setPlaceholder("Commit Message")
   }
   private val commitButton = object : JButton("Commit") {
+    init {
+      isEnabled = false
+    }
+
     override fun isDefaultButton() = true
   }
 
@@ -61,6 +69,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitW
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
+
+  override var isDefaultCommitActionEnabled: Boolean
+    get() = commitButton.isEnabled
+    set(value) {
+      commitButton.isEnabled = value
+    }
 
   override fun activate(): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
@@ -96,6 +110,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : CommitW
       message("confirmation.title.check.in.with.empty.comment"),
       Messages.getWarningIcon()
     )
+
+  override fun startBeforeCommitChecks() = Unit
+  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
 
   override fun dispose() = Unit
 }

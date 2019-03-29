@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -25,12 +24,10 @@ import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
-import com.intellij.util.EventDispatcher
 import com.intellij.util.NullableFunction
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import java.util.*
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
 
@@ -49,13 +46,6 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 
 internal fun removeEllipsisSuffix(s: String) = s.removeSuffix("...").removeSuffix("\u2026")
 internal fun CommitExecutor.getPresentableText() = removeEllipsisSuffix(removeMnemonic(actionText))
-
-interface CommitWorkflowListener : EventListener {
-  fun beforeCommitChecksStarted()
-  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult)
-
-  fun customCommitSucceeded()
-}
 
 open class SingleChangeListCommitWorkflow(
   project: Project,
@@ -86,10 +76,6 @@ open class SingleChangeListCommitWorkflow(
   val commitOptions: CommitOptions get() = _commitOptions.toUnmodifiableOptions()
 
   val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
-
-  private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
-
-  fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
 
   internal fun initCommitHandlers(handlers: List<CheckinHandler>) {
     _commitHandlers.clear()
