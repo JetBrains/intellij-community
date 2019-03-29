@@ -61,9 +61,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
           }
         }
 
-        // Reset custom config value cache
-        ConfigDiscovery.getInstance().resetEasyCache();
-
         return result;
       }
 
