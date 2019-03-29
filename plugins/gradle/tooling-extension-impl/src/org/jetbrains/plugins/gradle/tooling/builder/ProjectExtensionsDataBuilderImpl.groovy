@@ -41,7 +41,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
   @Override
   Object buildAll(String modelName, Project project) {
     DefaultGradleExtensions result = new DefaultGradleExtensions()
-    result.parentProjectDir = project.parent?.projectDir
+    result.parentProjectPath = project.parent?.path
 
     for (it in project.configurations) {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
