@@ -220,6 +220,15 @@ public final class DefaultTreeUI extends BasicTreeUI {
   // BasicTreeUI
 
   @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    JTree tree = getTree();
+    if (tree != null && tree.isForegroundSet()) {
+      tree.setForeground(null);
+    }
+  }
+
+  @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
     ActionMap map = tree.getActionMap();
