@@ -112,8 +112,15 @@ public class CreateWithTemplatesDialogPanel extends JBPanel {
   private JBList<Trinity<String, Icon, String>> createTemplatesList(@NotNull List<Trinity<String, Icon, String>> templates) {
     JBList<Trinity<String, Icon, String>> list = new JBList<>(templates);
     MouseAdapter mouseListener = new MouseAdapter() {
+      // to avoid selection item under mouse when dialog appears (IDEA-209879)
+      private boolean isFirstEvent = true;
+
       @Override
       public void mouseMoved(MouseEvent e) {
+        if (isFirstEvent) {
+          isFirstEvent = false;
+          return;
+        }
         selectItem(e.getPoint());
       }
 
