@@ -34,7 +34,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testArrayReturnType() = doTest()
   fun testAvoidGenericArgumentCast() = doTest()
   fun testAvoidGenericArgumentCastLocalClass() = doTest()
-  fun testBeforeCommentAfterSelectedFragment() = doTest(false)
+  fun testBeforeCommentAfterSelectedFragment() = doTest()
   fun testBooleanExpression() = doTest()
   fun testBoxedConditionalReturn() = doTest()
   fun testBuilderChainWith2DimArrayAccess() = doTest()

@@ -12,6 +12,7 @@ class CommentAfterSelectedFragment {
 //exit: SEQUENTIAL PsiIfStatement
 
     NewMethodResult newMethod(boolean debugMode) {
+        int i = 0;
         if (debugMode) {
             i = 1;
         } /* comment */

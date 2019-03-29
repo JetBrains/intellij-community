@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.EntryStream;
@@ -38,12 +39,14 @@ public class ExtractMethodWithResultObjectProcessor {
 
   private final Project myProject;
   private final Editor myEditor;
+  private final PsiElementFactory myFactory;
   private final PsiElement[] myElements;
   private final PsiExpression myExpression;
   private final PsiElement myCodeFragmentMember;
   private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
   private final Set<PsiVariable> myOutputVariables = new HashSet<>();
   private final Map<PsiStatement, Exit> myExits = new HashMap<>();
+  private final Set<PsiVariable> myWrittenOuterVariables = new HashSet<>();
 
   // in the order the expressions appear in the original code
   private final List<Pair.NonNull<String, PsiExpression>> myParameters = new ArrayList<>();
@@ -108,6 +111,7 @@ public class ExtractMethodWithResultObjectProcessor {
     }
     myProject = project;
     myEditor = editor;
+    myFactory = JavaPsiFacade.getElementFactory(project);
 
     PsiExpression expression = null;
     if (elements[0] instanceof PsiExpression) {
@@ -439,6 +443,9 @@ public class ExtractMethodWithResultObjectProcessor {
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       if (PsiTreeUtil.isAncestor(myCodeFragmentMember, variable, true)) {
         myOutputVariables.add(variable);
+        if (!isInside(variable)) {
+          myWrittenOuterVariables.add(variable);
+        }
       }
     }
     else if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL)) {
@@ -532,8 +539,6 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private PsiClass createResultClass(List<ResultItem> resultItems) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-
     PsiElement classAnchor = myAnchor;
     while (classAnchor != null) {
       PsiElement parent = classAnchor.getParent();
@@ -544,21 +549,21 @@ public class ExtractMethodWithResultObjectProcessor {
     }
     assert classAnchor != null : "class anchor";
 
-    PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(factory.createClass("NewMethodResult"), classAnchor);
+    PsiClass resultClass = (PsiClass)classAnchor.getParent().addAfter(myFactory.createClass("NewMethodResult"), classAnchor);
     notNull(resultClass.getModifierList()).setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     for (ResultItem resultItem : resultItems) {
-      resultItem.createField(resultClass, factory);
+      resultItem.createField(resultClass, myFactory);
     }
 
-    PsiMethod constructor = (PsiMethod)resultClass.add(factory.createConstructor(notNull(resultClass.getName())));
+    PsiMethod constructor = (PsiMethod)resultClass.add(myFactory.createConstructor(notNull(resultClass.getName())));
     PsiParameterList constructorParameterList = notNull(constructor.getParameterList());
     for (ResultItem resultItem : resultItems) {
-      resultItem.createConstructorParameter(constructorParameterList, factory);
+      resultItem.createConstructorParameter(constructorParameterList, myFactory);
     }
 
     PsiCodeBlock constructorBody = notNull(constructor.getBody());
     for (ResultItem resultItem : resultItems) {
-      resultItem.createAssignmentInConstructor(constructorBody, factory);
+      resultItem.createAssignmentInConstructor(constructorBody, myFactory);
     }
 
     return resultClass;
@@ -566,9 +571,8 @@ public class ExtractMethodWithResultObjectProcessor {
 
   private void createMethod(List<ResultItem> resultItems,
                             PsiClass resultClass, Map<Exit, Integer> distinctExits) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
-    PsiMethod method = factory.createMethod("newMethod", factory.createType(resultClass), myAnchor);
+    PsiMethod method = myFactory.createMethod("newMethod", myFactory.createType(resultClass), myAnchor);
     method.getModifierList().setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     PsiTypeParameterList typeParameterList = createMethodTypeParameterList(resultItems);
     if (typeParameterList != null) {
@@ -592,7 +596,7 @@ public class ExtractMethodWithResultObjectProcessor {
         String name = notNull(variable.getName());
         myParameters.add(Pair.createNonNull(name, pair.first));
 
-        PsiParameter parameter = factory.createParameter(name, variable.getType(), method);
+        PsiParameter parameter = myFactory.createParameter(name, variable.getType(), method);
         parameter = (PsiParameter)parameterList.add(parameter);
         notNull(parameter.getModifierList()).setModifierProperty(PsiModifier.FINAL,
                                                                  variable.hasModifierProperty(PsiModifier.FINAL));
@@ -601,8 +605,10 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiCodeBlock body = method.getBody();
     assert body != null : "method body";
 
+    redeclareWrittenOuterVariables(body);
+
     if (myExpression != null) {
-      body.add(createReturnStatement(resultItems, -1, body, null, factory));
+      body.add(createReturnStatement(resultItems, -1, body, null));
       myAnchor.getParent().addAfter(method, myAnchor);
       return;
     }
@@ -653,13 +659,13 @@ public class ExtractMethodWithResultObjectProcessor {
         expression = ((PsiBreakStatement)newExitStatement).getValueExpression();
       }
 
-      PsiReturnStatement returnStatement = createReturnStatement(resultItems, exitKey, body, expression, factory);
+      PsiReturnStatement returnStatement = createReturnStatement(resultItems, exitKey, body, expression);
       assert returnStatement != null : "returnStatement ";
       newExitStatement.replace(returnStatement);
     }
 
     if (exitTypes.contains(ExitType.SEQUENTIAL)) {
-      body.add(createReturnStatement(resultItems, -1, body, null, factory));
+      body.add(createReturnStatement(resultItems, -1, body, null));
     }
 
     myAnchor.getParent().addAfter(method, myAnchor);
@@ -680,6 +686,26 @@ public class ExtractMethodWithResultObjectProcessor {
                                                                            elements.toArray(PsiElement.EMPTY_ARRAY));
     }
     return null;
+  }
+
+  private void redeclareWrittenOuterVariables(PsiCodeBlock body) throws IncorrectOperationException {
+    HashSet<PsiVariable> writtenVariables = new HashSet<>(myWrittenOuterVariables);
+    for (PsiVariable inputVariable : myInputs.values()) {
+      writtenVariables.remove(inputVariable);
+    }
+    StreamEx.of(writtenVariables)
+      .mapToEntry(v -> v.getTextOffset(), v -> v)
+      .sortedBy(e -> e.getKey())
+      .values()
+      .forEach(variable -> {
+        String name = variable.getName();
+        LOG.assertTrue(name != null, "variable name is null");
+        PsiType type = variable.getType();
+        PsiExpression initializer = myFactory // todo check if definitely assigned
+          .createExpressionFromText(type instanceof PsiPrimitiveType ? PsiTypesUtil.getDefaultValueOfType(type) : PsiKeyword.NULL, null);
+        PsiDeclarationStatement statement = myFactory.createVariableDeclarationStatement(name, type, initializer);
+        body.add(statement);
+      });
   }
 
   @NotNull
@@ -730,17 +756,16 @@ public class ExtractMethodWithResultObjectProcessor {
     return exitStatements;
   }
 
-  private static PsiReturnStatement createReturnStatement(List<ResultItem> resultItems,
-                                                          int exitKey,
-                                                          PsiCodeBlock body,
-                                                          PsiExpression expression,
-                                                          PsiElementFactory factory) {
-    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return 0;", body.getRBrace());
+  private PsiReturnStatement createReturnStatement(List<ResultItem> resultItems,
+                                                   int exitKey,
+                                                   PsiCodeBlock body,
+                                                   PsiExpression expression) {
+    PsiReturnStatement returnStatement = (PsiReturnStatement)myFactory.createStatementFromText("return 0;", body.getRBrace());
     PsiNewExpression returnExpression = (PsiNewExpression)notNull(returnStatement.getReturnValue())
-      .replace(factory.createExpressionFromText("new NewMethodResult()", returnStatement));
+      .replace(myFactory.createExpressionFromText("new NewMethodResult()", returnStatement));
     PsiExpressionList returnArgumentList = notNull(returnExpression.getArgumentList());
     for (ResultItem resultItem : resultItems) {
-      PsiExpression resultObjectArgument = resultItem.createResultObjectArgument(expression, exitKey, body, factory);
+      PsiExpression resultObjectArgument = resultItem.createResultObjectArgument(expression, exitKey, body, myFactory);
       assert resultObjectArgument != null : "resultObjectArgument";
       returnArgumentList.add(notNull(resultObjectArgument));
     }
@@ -758,8 +783,7 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private void dumpText(String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    PsiElement comment = factory.createCommentFromText("//" + text, null);
+    PsiElement comment = myFactory.createCommentFromText("//" + text, null);
     myAnchor.getParent().addAfter(comment, myAnchor);
     LOG.warn(text);
   }
