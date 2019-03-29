@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.parameter
 
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.InlayHintsCollector
 import com.intellij.codeInsight.hints.InlayModelWrapper
-import com.intellij.codeInsight.hints.ParameterHintsUpdater
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -65,15 +64,14 @@ internal class NewParameterHintsCollector<T: Any>(
   override fun apply(element: PsiElement, editor: Editor, model: InlayModelWrapper, settings: ParameterHintsSettings<T>) {
     val keeper = CaretVisualPositionKeeper(editor)
     keeper.restoreOriginalLocation(false)
-    val manager = ParameterHintsPresentationManager.getInstance()
-    val hints = hintsInRootElementArea(manager, editor)
+    val hints = hintsInRootElementArea(editor)
     val updater = NewParameterHintsUpdater(editor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate, model)
     updater.update()
 
 
   }
 
-  private fun hintsInRootElementArea(manager: ParameterHintsPresentationManager, editor: Editor): List<Inlay<*>> {
+  private fun hintsInRootElementArea(editor: Editor): List<Inlay<*>> {
     val document = editor.document
     val range = myRootElement.textRange
     var elementStart = range.startOffset
@@ -86,7 +84,11 @@ internal class NewParameterHintsCollector<T: Any>(
       --elementEnd
     }
 
-    return manager.getParameterHintsInRange(editor, elementStart, elementEnd)
+    return getParameterHintsInRange(editor, elementStart, elementEnd)
+  }
+
+  private fun getParameterHintsInRange(editor: Editor, startOffset: Int, endOffset: Int): List<Inlay<*>> {
+    return editor.inlayModel.getInlineElementsInRange<PresentationRenderer>(startOffset, endOffset, PresentationRenderer::class.java) as List<Inlay<*>>
   }
 
 
