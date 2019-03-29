@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubBase;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
@@ -60,19 +61,21 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return myNamespace == null ? null : myNamespace.getString();
   }
 
-  public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
+  public boolean matches(XmlName name) {
+    return name.getLocalName().equals(getName()) && StringUtil.notNullize(name.getNamespaceKey()).equals(getNamespaceKey());
+  }
+
+  public List<DomStub> getChildrenByName(XmlName xmlName) {
     final List<? extends Stub> stubs = getChildrenStubs();
     if (stubs.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final String s = nsKey == null ? "" : nsKey;
     final List<DomStub> result = new SmartList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
       final Stub stub = stubs.get(i);
-      if (stub instanceof DomStub && XmlUtil.getLocalName(((DomStub)stub).getName()).equals(name) &&
-          Comparing.equal(s, ((DomStub)stub).getNamespaceKey())) {
+      if (stub instanceof DomStub && matches(xmlName)) {
         result.add((DomStub)stub);
       }
     }
