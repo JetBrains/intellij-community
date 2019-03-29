@@ -5,16 +5,13 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @deprecated Use {@link org.jetbrains.concurrency.Promise}
- * @param <T>
- */
+/** @deprecated use {@link java.util.concurrent.CompletableFuture} or {@link org.jetbrains.concurrency.Promise} */
 @Deprecated
+@SuppressWarnings({"DeprecatedIsStillUsed", "LambdaUnfriendlyMethodOverload", "BoundedWildcard"})
 public class AsyncResult<T> extends ActionCallback {
   protected T myResult;
 
-  public AsyncResult() {
-  }
+  public AsyncResult() { }
 
   @NotNull
   public AsyncResult<T> setDone(T result) {
@@ -30,11 +27,7 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
-  /**
-   * @deprecated Use {@link #doWhenDone(Consumer)} (to remove in IDEA 16)
-   */
   @NotNull
-  @Deprecated
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
@@ -67,10 +60,6 @@ public class AsyncResult<T> extends ActionCallback {
     return myResult;
   }
 
-  /**
-   * @deprecated Use {@link Consumer} (to remove in IDEA 16)
-   */
-  @Deprecated
   public interface Handler<T> {
     void run(T t);
   }
