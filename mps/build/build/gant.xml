@@ -215,7 +215,6 @@
         <delete dir="${mps.folder}/bin/win"/>
         <delete file="${mps.folder}/build/resources/mps"/>
         <delete dir="${mps.folder}/build/conf"/>
-        <delete dir="${mps.folder}/plugins/cvsIntegration/lib"/>
         <delete dir="${mps.folder}/plugins/git4idea/lib"/>
         <delete dir="${mps.folder}/plugins/svn4idea/lib"/>
         <delete dir="${mps.folder}/plugins/terminal"/>
@@ -226,7 +225,6 @@
         <mkdir dir="${mps.folder}/bin/mac"/>
         <mkdir dir="${mps.folder}/bin/win"/>
         <mkdir dir="${mps.folder}/build/conf"/>
-        <mkdir dir="${mps.folder}/plugins/cvsIntegration/lib"/>
         <mkdir dir="${mps.folder}/plugins/git4idea/lib"/>
         <mkdir dir="${mps.folder}/plugins/svn4idea/lib"/>
         <mkdir dir="${mps.folder}/plugins/terminal"/>
@@ -258,8 +256,6 @@
         <copy file="${community.out}/dist.all/build/dependencies/gradle.properties" todir="${mps.folder}/build/dependencies"/>
 
         <!--Copy plugin libraries to plugin folders-->
-        <copy todir="${mps.folder}/plugins/cvsIntegration/lib">
-            <fileset dir="${community.out}/dist.all/plugins/cvsIntegration/lib"/>
         </copy>
         <copy todir="${mps.folder}/plugins/git4idea/lib">
             <fileset dir="${community.out}/dist.all/plugins/git4idea/lib"/>
