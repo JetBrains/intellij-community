@@ -38,6 +38,8 @@ import com.intellij.util.xml.stubs.model.Custom;
 import com.intellij.util.xml.stubs.model.Foo;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -120,7 +122,9 @@ public class DomStubBuilderTest extends DomStubTest {
 
     DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
     assert element != null;
-    assertEquals(3, element.getRootElement().getBars().size());
+    List<Bar> bars = element.getRootElement().getBars();
+    assertEquals(3, bars.size());
+    assertEquals("include.xml", bars.get(0).getXmlTag().getContainingFile().getName());
   }
 
   public static class TestExtender extends DomExtender<Bar> {
