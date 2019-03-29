@@ -68,20 +68,23 @@ public abstract class AbstractSyntaxAwareReader extends Reader {
       return myDelegate;
     }
 
-    int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE;
+    myDelegate = new StringReader(getBuffer().toString());
+    return myDelegate;
+  }
+
+  @NotNull
+  public final CharSequence getBuffer() {
     final StringBuilder buffer = new StringBuilder();
     try {
-      build(buffer, maxLength);
+      build(buffer, Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE);
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    String s = buffer.toString();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Resulting text: \n" + s);
+      LOG.debug("Resulting text: \n" + buffer);
     }
-    myDelegate = new StringReader(s);
-    return myDelegate;
+    return buffer;
   }
 
   protected abstract void build(@NotNull StringBuilder holder, int maxLength);
