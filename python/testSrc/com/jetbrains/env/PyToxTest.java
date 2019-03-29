@@ -462,8 +462,13 @@ public final class PyToxTest extends PyEnvTestCase {
         }
       }
 
-      configuration.getEnvs().put("PATH", StringUtil.join(roots, File.pathSeparator));
-      configuration.getEnvs().put("LD_LIBRARY_PATH", StringUtil.join(libs, File.pathSeparator));
+      final String pathes = StringUtil.join(roots, File.pathSeparator);
+      final String libraryPathes = StringUtil.join(libs, File.pathSeparator);
+      final Logger logger = Logger.getInstance(PyToxTest.class);
+      logger.warn(String.format("PATH: %s", pathes));
+      logger.warn(String.format("LD_LIBRARY_PATH: %s", libraryPathes));
+      configuration.getEnvs().put("PATH", libraryPathes);
+      configuration.getEnvs().put("LD_LIBRARY_PATH", libraryPathes);
     }
   }
 
