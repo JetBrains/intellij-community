@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
@@ -9,17 +8,14 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons;
-import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons;
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameActions;
 import com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel.CustomDecorationPath;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -30,7 +26,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 import static java.awt.Frame.MAXIMIZED_BOTH;
 import static java.awt.Frame.MAXIMIZED_VERT;
 
@@ -41,18 +36,14 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   private PropertyChangeListener myPropertyChangeListener;
   private ComponentListener myComponentListener;
-  private JMenuBar myMenuBar;
+  private JComponent productIcon;
   private JMenuBar myIdeMenu;
-  private Action myCloseAction;
-  private Action myIconifyAction;
-  private Action myRestoreAction;
-  private Action myMaximizeAction;
   private WindowListener myWindowListener;
   private Window myWindow;
   private final JRootPane myRootPane;
   private int myState;
 
-  private CustomFrameTitleButtons buttonPanes;
+  private JComponent buttonPanes;
   private final JLabel titleLabel = new JLabel();
   private final CustomDecorationPath mySelectedEditorFilePath = new CustomDecorationPath(this);
 
@@ -130,38 +121,32 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
     myWindow = SwingUtilities.getWindowAncestor(this);
     if (myWindow != null) {
-      if (myWindow instanceof Frame) {
-        setState(((Frame)myWindow).getExtendedState());
-      }
-      else {
-        setState(0);
-      }
       installListeners();
     }
     setCustomDecorationHitTestSpots();
   }
 
   private void setCustomDecorationHitTestSpots() {
+    Frame frame = getFrame();
+    if (frame == null) return;
+
     List<Rectangle> hitTestSpots = new ArrayList<>();
 
-    Rectangle iconRect = new RelativeRectangle(myMenuBar).getRectangleOn(this);
+    Rectangle iconRect = new RelativeRectangle(productIcon).getRectangleOn(this);
     Rectangle menuRect = new RelativeRectangle(myIdeMenu).getRectangleOn(this);
-    Rectangle buttonsRect = new RelativeRectangle(buttonPanes.getView()).getRectangleOn(this);
+    Rectangle buttonsRect = new RelativeRectangle(buttonPanes).getRectangleOn(this);
 
-    Frame frame = getFrame();
-    if (frame != null) {
-      int state = frame.getExtendedState();
-      if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
+    int state = frame.getExtendedState();
+    if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
 
-        menuRect.y += Math.round(menuRect.height / 3);
+      menuRect.y += Math.round(menuRect.height / 3);
 
-        iconRect.y += resizeGap;
-        iconRect.x += resizeGap;
+      iconRect.y += resizeGap;
+      iconRect.x += resizeGap;
 
-        buttonsRect.y += resizeGap;
-        buttonsRect.x += resizeGap;
-        buttonsRect.width -= resizeGap;
-      }
+      buttonsRect.y += resizeGap;
+      buttonsRect.x += resizeGap;
+      buttonsRect.width -= resizeGap;
     }
 
     hitTestSpots.add(menuRect);
@@ -187,15 +172,17 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
+
     if (decorationStyle == JRootPane.FRAME) {
       setLayout(new MigLayout("novisualpadding, fillx, ins 0, gap 0, top", menuBarGap + "[pref!]" + menuBarGap + "[][pref!]"));
 
-      createActions();
-      buttonPanes = ResizableCustomFrameTitleButtons.Companion.create(myCloseAction,
-                                                                      myRestoreAction, myIconifyAction,
-                                                                      myMaximizeAction);
-      myMenuBar = createMenuBar();
-      add(myMenuBar);
+      CustomFrameActions actions = CustomFrameActions.Companion.create(myRootPane);
+
+      buttonPanes = actions.getButtonPaneView();
+      Disposer.register(actions, this);
+
+      productIcon = actions.getProductIcon();
+      add(productIcon);
       if (myRootPane instanceof IdeRootPane) {
         myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()) {
           @Override
@@ -214,7 +201,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
       else {
         add(titleLabel, "growx, snap 2");
       }
-      add(buttonPanes.getView(), "top, wmin pref");
+      add(actions.getButtonPaneView(), "top, wmin pref");
     }
     else if (decorationStyle == JRootPane.PLAIN_DIALOG ||
              decorationStyle == JRootPane.INFORMATION_DIALOG ||
@@ -225,11 +212,13 @@ public class DarculaTitlePane extends JPanel implements Disposable {
              decorationStyle == JRootPane.WARNING_DIALOG) {
       setLayout(new MigLayout("fill, novisualpadding, ins 0, gap 0", menuBarGap + "[pref!]push[pref!]"));
 
-      createActions();
       // titleLabel.setIcon(mySystemIcon);
       add(titleLabel, "growx");
-      buttonPanes = CustomFrameTitleButtons.Companion.create(myCloseAction);
-      add(buttonPanes.getView());
+      CustomFrameActions actions = CustomFrameActions.Companion.create(myRootPane);
+
+      buttonPanes = actions.getButtonPaneView();
+      Disposer.register(actions, this);
+      add(buttonPanes);
     }
   }
 
@@ -252,178 +241,13 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         myActiveForeground = UIManager.getColor("activeCaptionText");
         break;
     }
-    //myActiveForeground = JBColor.foreground();//UIManager.getColor("activeCaptionText");
   }
 
   private void installDefaults() {
     setFont(JBUI.Fonts.label().asBold());
   }
 
-
-  protected JMenuBar createMenuBar() {
-    myMenuBar = new JMenuBar() {
-      private final ScaleContext.Cache<Icon> myIconProvider =
-        new ScaleContext.Cache<>(ctx -> ObjectUtils.notNull(AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small));
-
-      private Icon getIcon() {
-
-        if (myWindow == null) return AllIcons.Icon_small;
-
-        ScaleContext ctx = ScaleContext.create(myWindow);
-        ctx.overrideScale(USR_SCALE.of(1));
-        return myIconProvider.getOrProvide(ctx);
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return getMinimumSize();
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        Icon icon = getIcon();
-        return new Dimension(icon.getIconWidth(), icon.getIconHeight());
-      }
-
-      @Override
-      public void paint(Graphics g) {
-        getIcon().paintIcon(this, g, 0, 0);
-      }
-    };
-
-    JMenu menu = new JMenu() {
-      @Override
-      public Dimension getPreferredSize() {
-        return myMenuBar.getPreferredSize();
-      }
-    };
-    myMenuBar.add(menu);
-
-    myMenuBar.setOpaque(false);
-    menu.setFocusable(false);
-    menu.setBorderPainted(true);
-
-    if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      addMenuItems(menu);
-    }
-    return myMenuBar;
-  }
-
-  private void close() {
-    Window window = getWindow();
-
-    if (window != null) {
-      Disposer.dispose(this);
-      window.dispatchEvent(new WindowEvent(
-        window, WindowEvent.WINDOW_CLOSING));
-    }
-  }
-
-  private void iconify() {
-    Frame frame = getFrame();
-    if (frame != null) {
-      frame.setExtendedState(myState | Frame.ICONIFIED);
-    }
-  }
-
-  private void maximize() {
-    Frame frame = getFrame();
-    if (frame != null) {
-      frame.setExtendedState(myState | Frame.MAXIMIZED_BOTH);
-    }
-  }
-
-  private void restore() {
-    Frame frame = getFrame();
-
-    if (frame == null) {
-      return;
-    }
-
-    if ((myState & Frame.ICONIFIED) != 0) {
-      frame.setExtendedState(myState & ~Frame.ICONIFIED);
-    }
-    else {
-      frame.setExtendedState(myState & ~Frame.MAXIMIZED_BOTH);
-    }
-  }
-
-  private void createActions() {
-    myCloseAction = new CloseAction();
-
-    if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      myIconifyAction = new IconifyAction();
-      myRestoreAction = new RestoreAction();
-      myMaximizeAction = new MaximizeAction();
-    }
-  }
-
-  private void addMenuItems(JMenu menu) {
-    menu.add(myRestoreAction);
-    menu.add(myIconifyAction);
-    if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {
-      menu.add(myMaximizeAction);
-    }
-
-    menu.add(new JSeparator());
-
-    JMenuItem closeMenuItem = menu.add(myCloseAction);
-    closeMenuItem.setFont(getFont().deriveFont(Font.BOLD));
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    if (getFrame() != null) {
-      setState(getFrame().getExtendedState());
-    }
-    super.paintComponent(g);
-  }
-
-  private void setState(int state) {
-    setState(state, false);
-  }
-
-  private void setState(int state, boolean updateRegardless) {
-    Window wnd = getWindow();
-    titleLabel.setText(getTitle());
-
-    if (wnd != null && getWindowDecorationStyle() == JRootPane.FRAME) {
-      if (myState == state && !updateRegardless) {
-        return;
-      }
-      Frame frame = getFrame();
-
-      if (frame != null) {
-        if (frame.isResizable()) {
-          if ((state & Frame.MAXIMIZED_BOTH) != 0) {
-            myMaximizeAction.setEnabled(false);
-            myRestoreAction.setEnabled(true);
-          }
-          else {
-            myMaximizeAction.setEnabled(true);
-            myRestoreAction.setEnabled(false);
-          }
-        }
-        else {
-          myMaximizeAction.setEnabled(false);
-          myRestoreAction.setEnabled(false);
-        }
-      }
-      else {
-        // Not contained in a Frame
-        myMaximizeAction.setEnabled(false);
-        myRestoreAction.setEnabled(false);
-        myIconifyAction.setEnabled(false);
-      }
-      myCloseAction.setEnabled(true);
-      myState = state;
-    }
-
-    if (buttonPanes != null) buttonPanes.updateVisibility();
-  }
-
   private void setActive(boolean isSelected) {
-    buttonPanes.setSelected(isSelected);
     titleLabel.setForeground(isSelected ? myActiveForeground : myInactiveForeground);
     myIsActive = isSelected;
 
@@ -457,53 +281,6 @@ public class DarculaTitlePane extends JPanel implements Disposable {
       return ((Dialog)w).getTitle();
     }
     return null;
-  }
-
-  private class CloseAction extends AbstractAction {
-    CloseAction() {
-      super("Close", AllIcons.Windows.CloseSmall);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      close();
-    }
-  }
-
-
-  private class IconifyAction extends AbstractAction {
-    IconifyAction() {
-      super("Minimize", AllIcons.Windows.MinimizeSmall);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      iconify();
-    }
-  }
-
-
-  private class RestoreAction extends AbstractAction {
-    RestoreAction() {
-      super("Restore", AllIcons.Windows.RestoreSmall);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      restore();
-    }
-  }
-
-
-  private class MaximizeAction extends AbstractAction {
-    MaximizeAction() {
-      super("Maximize", AllIcons.Windows.MaximizeSmall);
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      maximize();
-    }
   }
 
   private class WindowHandler extends WindowAdapter {
