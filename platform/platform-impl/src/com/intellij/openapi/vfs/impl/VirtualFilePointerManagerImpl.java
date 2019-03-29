@@ -602,7 +602,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   synchronized int numberOfPointers() {
     int number = 0;
     for (FilePointerPartNode root : myPointers.values()) {
-      number = root.numberOfPointersUnder();
+      number += root.numberOfPointersUnder();
     }
     return number;
   }
