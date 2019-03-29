@@ -165,7 +165,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
           consumer.consume(PyCondaPackageService.getInstance().listPackageVersions(packageName));
         }
         catch (ExecutionException e) {
-          LOG.warn("Failed to fetch versions for '" + packageName + "'. " + e);
+          consumer.consume(e);
         }
       });
     }
@@ -184,7 +184,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
           consumer.consume(latestVersion);
         }
         catch (ExecutionException e) {
-          LOG.warn("Failed to fetch versions for '" + packageName + "'. " + e);
+          consumer.consume(e);
         }
       });
     }
