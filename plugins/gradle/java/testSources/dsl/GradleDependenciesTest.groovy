@@ -16,12 +16,12 @@ class GradleDependenciesTest extends GradleHighlightingBaseTest implements Resol
 
   @Override
   protected List<String> getParentCalls() {
-    return super.getParentCalls() + 'buildscript'
+    return []
   }
 
   @Test
   void dependenciesTest() {
-    importProject("")
+    importProject("apply plugin: 'java'")
     new RunAll().append {
       'dependencies delegate'()
     } append {
@@ -38,6 +38,14 @@ class GradleDependenciesTest extends GradleHighlightingBaseTest implements Resol
       'modules delegate'()
     } append {
       'modules module delegate'()
+    } append {
+      'classpath configuration'()
+    } append {
+      'compile configuration'()
+    } append {
+      'buildscript classpath configuration'()
+    } append {
+      'buildscript compile configuration'()
     } run()
   }
 
@@ -94,6 +102,36 @@ class GradleDependenciesTest extends GradleHighlightingBaseTest implements Resol
   void 'modules module delegate'() {
     doTest('dependencies { modules { module(":") { <caret> } } }') {
       closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, 1)
+    }
+  }
+
+  void 'classpath configuration'() {
+    doTest('dependencies { <caret>classpath("hi") }') {
+      resolveTest(null)
+    }
+  }
+
+  void 'compile configuration'() {
+    doTest('dependencies { <caret>compile("hi") }') {
+      methodTest(resolveTest(PsiMethod), "compile", GRADLE_API_DEPENDENCY_HANDLER)
+    }
+  }
+
+  void 'compile confiduration via property'() {
+    doTest('dependencies.<caret>testCompile("hi")') {
+      methodTest(resolveTest(PsiMethod), "testCompile", GRADLE_API_DEPENDENCY_HANDLER)
+    }
+  }
+
+  void 'buildscript classpath configuration'() {
+    doTest('buildscript { dependencies { <caret>classpath("hi") } }') {
+      methodTest(resolveTest(PsiMethod), "classpath", GRADLE_API_DEPENDENCY_HANDLER)
+    }
+  }
+
+  void 'buildscript compile configuration'() {
+    doTest('buildscript { dependencies { <caret>compile("hi") } }') {
+      resolveTest(null)
     }
   }
 }

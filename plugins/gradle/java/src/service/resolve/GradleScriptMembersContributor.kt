@@ -21,7 +21,7 @@ class GradleScriptMembersContributor : NonCodeMembersContributor() {
                                       place: PsiElement,
                                       state: ResolveState) {
     if (aClass == null || !aClass.isResolvedInGradleScript()) return
-    val delegate = GradleProjectAwareType(createType(GRADLE_API_PROJECT, place.containingFile))
+    val delegate = GradleProjectAwareType(createType(GRADLE_API_PROJECT, place.containingFile), false)
     delegate.processReceiverType(processor, state, place)
   }
 }
