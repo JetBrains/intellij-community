@@ -1295,8 +1295,8 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
-  //             (HEREDOC_CONTENT | vars)*
-  //             (HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
+  //             (HEREDOC_CONTENT)*
+  //             (HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
     if (!nextTokenIs(b, HEREDOC_MARKER_TAG)) return false;
@@ -1336,27 +1336,18 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (HEREDOC_CONTENT | vars)*
+  // (HEREDOC_CONTENT)*
   private static boolean heredoc_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_4")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!heredoc_4_0(b, l + 1)) break;
+      if (!consumeToken(b, HEREDOC_CONTENT)) break;
       if (!empty_element_parsed_guard_(b, "heredoc_4", c)) break;
     }
     return true;
   }
 
-  // HEREDOC_CONTENT | vars
-  private static boolean heredoc_4_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_4_0")) return false;
-    boolean r;
-    r = consumeToken(b, HEREDOC_CONTENT);
-    if (!r) r = vars(b, l + 1);
-    return r;
-  }
-
-  // HEREDOC_MARKER_END  | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>
+  // HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>
   private static boolean heredoc_5(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_5")) return false;
     boolean r;

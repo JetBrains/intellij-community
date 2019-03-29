@@ -6,7 +6,8 @@ BASH_FILE
           GENERIC_COMMAND_DIRECTIVE
             STRING
               PsiElement(")('"')
-              PsiElement(")(''"')
+              PsiElement(word)(''')
+              PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(int)('1234')
@@ -14,7 +15,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(")('"')
-              PsiElement(")(''"')
+              PsiElement(word)(''')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST

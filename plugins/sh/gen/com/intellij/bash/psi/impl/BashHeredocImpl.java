@@ -26,33 +26,9 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   }
 
   @Override
-  @NotNull
-  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashCommand> getCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
-  }
-
-  @Override
   @Nullable
   public BashPipeline getPipeline() {
     return findChildByClass(BashPipeline.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashVariable> getVariableList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
   }
 
   @Override

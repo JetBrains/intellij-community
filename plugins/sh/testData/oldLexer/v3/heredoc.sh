@@ -1,3 +1,13 @@
+cat <<"EOF"  ddf d
+[Unit]
+After=add-localhost.service
+EOF
+
+cat <<'EOF'  ddf d
+[Unit]
+After=add-localhost.service
+EOF
+
 cat <<END
 END
 cat <<END;

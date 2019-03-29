@@ -33,15 +33,15 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('/etc/systemd/system/')
+              PsiElement(")('"')
+              PsiElement(word)('/etc/systemd/system/')
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(word)('MAIN_SERVICE')
+                PsiElement(parameter_expansion_body)('MAIN_SERVICE')
                 PsiElement(})('}')
-              PsiElement(string_content)('.service.d')
-              PsiElement(string_end)('"')
+              PsiElement(word)('.service.d')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -52,15 +52,15 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
-              PsiElement(string_content)('/etc/systemd/system/')
+              PsiElement(")('"')
+              PsiElement(word)('/etc/systemd/system/')
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(word)('MAIN_SERVICE')
+                PsiElement(parameter_expansion_body)('MAIN_SERVICE')
                 PsiElement(})('}')
-              PsiElement(string_content)('.service.d/add-localhost.conf')
-              PsiElement(string_end)('"')
+              PsiElement(word)('.service.d/add-localhost.conf')
+              PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -135,7 +135,7 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('ACCOUNT')
+          PsiElement(word)('ACCOUNT')
           PsiElement(=)('=')
           PsiElement(int)('1000')
   PsiElement(\n)('\n')
@@ -155,21 +155,7 @@ BASH_FILE
               PsiElement(HEREDOC_MARKER_TAG)('<<')
               PsiElement(HEREDOC_MARKER_START)('EOF')
               PsiElement(\n)('\n')
-              PsiElement(HEREDOC_CONTENT)('teamcity_agent_user="')
-              PsiElement($)('$')
-              ARITHMETIC_EXPANSION
-                PsiElement((()('((')
-                ADD_EXPRESSION
-                  LITERAL_EXPRESSION
-                    PsiElement(word)('ACCOUNT')
-                  PsiElement(+)('+')
-                  LITERAL_EXPRESSION
-                    PsiElement(number)('100')
-                PsiElement()))('))')
-              PsiElement(HEREDOC_CONTENT)('"\nteamcity_agent_user="')
-              VARIABLE
-                PsiElement(var)('$ACCOUNT')
-              PsiElement(HEREDOC_CONTENT)('"\nteamcity_agent_path="/opt/buildAgent"\n')
+              PsiElement(HEREDOC_CONTENT)('teamcity_agent_user="$((ACCOUNT+100))"\nteamcity_agent_user="$ACCOUNT"\nteamcity_agent_path="/opt/buildAgent"\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# teamcity_agent_user="${ACCOUNT+100}" // todo: move me back when ready')
@@ -216,13 +202,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
-              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n')
-              PsiElement($)('$')
-              SHELL_PARAMETER_EXPANSION
-                PsiElement({)('{')
-                PsiElement(word)('THIS')
-                PsiElement(})('}')
-              PsiElement(HEREDOC_CONTENT)(' will also write to the file, with the variable contents substituted.\n')
+              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -248,13 +228,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
-              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n')
-              PsiElement($)('$')
-              SHELL_PARAMETER_EXPANSION
-                PsiElement({)('{')
-                PsiElement(word)('THIS')
-                PsiElement(})('}')
-              PsiElement(HEREDOC_CONTENT)(' will also write to the file, with the variable contents substituted.\n')
+              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('FOE')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -338,13 +312,7 @@ BASH_FILE
                   SIMPLE_COMMAND_ELEMENT
                     PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
-              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n')
-              PsiElement($)('$')
-              SHELL_PARAMETER_EXPANSION
-                PsiElement({)('{')
-                PsiElement(word)('THIS')
-                PsiElement(})('}')
-              PsiElement(HEREDOC_CONTENT)(' will also write to the file, with the variable contents substituted.\n')
+              PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('until_it_ends')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

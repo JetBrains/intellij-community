@@ -3,6 +3,7 @@ package com.intellij.bash.lexer;
 import com.intellij.psi.tree.IElementType;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
 import com.intellij.util.containers.IntStack;
+import static org.apache.commons.lang3.StringUtils.contains;
 import com.intellij.lexer.FlexLexer;
 
 %%
@@ -80,8 +81,8 @@ AssigOp = "=" | "+="
 
 EscapedRightCurly = "\\}"
 
-HeredocMarker = [^\r\n|&\\;()[] ] | {EscapedChar}
-HeredocMarkerInQuotes = {HeredocMarker}+
+HeredocMarker = [^\r\n|&\\;()[] \"'] | {EscapedChar}
+HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
 %state EXPRESSIONS
 %state PARAMETER_EXPANSION
@@ -138,19 +139,23 @@ HeredocMarkerInQuotes = {HeredocMarker}+
 }
 
 <HERE_DOC_START_MARKER> {
-  {HeredocMarkerInQuotes}               { heredocMarker = yytext(); yybegin(HERE_DOC_PIPELINE); return HEREDOC_MARKER_START; }
+  {HeredocMarkerInQuotes}               { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
+                                            heredocMarker = yytext().subSequence(1, yylength()-1);
+                                          else heredocMarker = yytext();
+                                          yybegin(HERE_DOC_PIPELINE);
+                                          return HEREDOC_MARKER_START; }
   {WhiteSpaceLineContinuation}+         { return WHITESPACE; }
 }
 
 <HERE_DOC_END_MARKER> {
-  {HeredocMarkerInQuotes}               { if (yytext().equals(heredocMarker)) { heredocMarker = ""; yybegin(YYINITIAL); return HEREDOC_MARKER_END; }
+  {HeredocMarker}+                      { if (yytext().equals(heredocMarker)) { heredocMarker = ""; yybegin(YYINITIAL); return HEREDOC_MARKER_END; }
                                           else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
   [^]                                   { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
 }
 
 <HERE_DOC_BODY> {
     {InputCharacter}*             { return HEREDOC_LINE; }
-    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
+    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
 <YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
@@ -255,7 +260,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+
     {Variable}                    { return VAR; }
 
     {Quote}                       { inString = !inString; return QUOTE; } // todo: refactor
-    {RawString}                   { if (inString) yypushback(yylength() - 1); else return RAW_STRING; }
+    {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
 <YYINITIAL, CASE_CLAUSE, CASE_PATTERN> {
