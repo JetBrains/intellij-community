@@ -14,7 +14,8 @@ class GradleProjectCallTypeCalculator : GrCallTypeCalculator {
   private val methodNames = setOf(
     "getProject",
     "getArtifacts",
-    "getTasks"
+    "getTasks",
+    "getDependencies"
   )
 
   override fun getType(receiver: PsiType?, method: PsiMethod, arguments: Arguments?, context: PsiElement): PsiType? {

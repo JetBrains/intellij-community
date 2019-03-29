@@ -8,8 +8,9 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 
 // TODO track exact project id to obtain project extension data
-class GradleProjectAwareType(
-  private val delegate: PsiClassType
+class GradleProjectAwareType (
+  private val delegate: PsiClassType,
+  val buildscript: Boolean
 ) : PsiClassType(LanguageLevel.HIGHEST) {
 
   override fun isValid(): Boolean = delegate.isValid
@@ -17,7 +18,7 @@ class GradleProjectAwareType(
   override fun resolve(): PsiClass? = delegate.resolve()
   override fun resolveGenerics(): ClassResolveResult = delegate.resolveGenerics()
   override fun getParameters(): Array<PsiType> = delegate.parameters
-  override fun rawType(): PsiClassType = GradleProjectAwareType(delegate.rawType())
+  override fun rawType(): PsiClassType = GradleProjectAwareType(delegate.rawType(), buildscript)
 
   override fun getClassName(): String = delegate.className
   override fun getCanonicalText(): String = delegate.canonicalText
@@ -27,5 +28,11 @@ class GradleProjectAwareType(
   override fun getLanguageLevel(): LanguageLevel = delegate.languageLevel
   override fun setLanguageLevel(languageLevel: LanguageLevel): PsiClassType = error("must not be called")
 
-  fun setType(delegate: PsiClassType): GradleProjectAwareType = GradleProjectAwareType(delegate)
+  fun setType(delegate: PsiClassType): GradleProjectAwareType {
+    return GradleProjectAwareType(delegate, buildscript)
+  }
+
+  fun setType(delegate: PsiClassType, buildscript: Boolean): GradleProjectAwareType {
+    return GradleProjectAwareType(delegate, buildscript)
+  }
 }
