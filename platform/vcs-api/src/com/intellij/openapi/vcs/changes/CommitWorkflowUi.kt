@@ -10,6 +10,8 @@ import java.util.*
 interface CommitWorkflowUi : Disposable {
   val commitMessageUi: CommitMessageUi
 
+  var defaultCommitActionName: String
+
   fun activate(): Boolean
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)

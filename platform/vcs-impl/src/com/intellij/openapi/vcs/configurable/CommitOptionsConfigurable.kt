@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.Companion.verticalPanel
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.Companion.getCommitHandlers
+import com.intellij.openapi.vcs.changes.ui.getDefaultCommitActionName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -48,7 +49,7 @@ class CommitOptionsConfigurable(val project: Project) : JBPanel<CommitOptionsCon
     override fun getSelectedChanges() = emptyList<Change>()
     override fun getFiles() = emptyList<File>()
 
-    override fun getCommitActionName(): String = message("commit.dialog.default.commit.operation.name")
+    override fun getCommitActionName(): String = getDefaultCommitActionName()
     override fun setCommitMessage(currentDescription: String) {}
     override fun getCommitMessage() = ""
 
