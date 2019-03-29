@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 class SimpleProviderBinding implements ProviderBinding {
   private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<>();
@@ -45,6 +46,14 @@ class SimpleProviderBinding implements ProviderBinding {
   public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
     for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(myProviderPairs)) {
       if (trinity.provider.equals(provider)) {
+        myProviderPairs.remove(trinity);
+      }
+    }
+  }
+
+  public void unregisterProvider(@NotNull final Predicate<PsiReferenceProvider> pred) {
+    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(myProviderPairs)) {
+      if (pred.test(trinity.provider)) {
         myProviderPairs.remove(trinity);
       }
     }

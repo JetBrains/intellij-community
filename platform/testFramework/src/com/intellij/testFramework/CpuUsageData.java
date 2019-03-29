@@ -101,9 +101,9 @@ public class CpuUsageData {
 
     long compStart = ourCompilationMXBean.getTotalCompilationTime();
 
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime() / 1_000_000;
     runnable.run();
-    long duration = System.currentTimeMillis() - start;
+    long duration = System.nanoTime() / 1_000_000 - start;
 
     long compTime = ourCompilationMXBean.getTotalCompilationTime() - compStart;
 

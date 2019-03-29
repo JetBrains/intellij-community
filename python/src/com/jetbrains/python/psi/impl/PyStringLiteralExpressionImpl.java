@@ -416,4 +416,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public String[][] getKnownCharacterClasses() {
     return myPropertiesProvider.getKnownCharacterClasses();
   }
+
+  @Override
+  public PsiReference findReferenceAt(int offset) {
+    return super.findReferenceAt(offset);
+  }
 }

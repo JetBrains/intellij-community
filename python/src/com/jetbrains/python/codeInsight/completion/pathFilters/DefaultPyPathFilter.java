@@ -7,6 +7,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
  * 2. Paths which contain file separator.
  * Relative paths are resolved against current folder and project root.
  */
-public class DefaultPyPathFilter implements PyPathFilter {
+public final class DefaultPyPathFilter implements PyPathFilter {
   private static final Pattern
     FILTERING_PATTERN = Pattern.compile("[/\\\\]", SystemInfo.isFileSystemCaseSensitive ? Pattern.CASE_INSENSITIVE : 0);
   private static final int STRING_LITERAL_LIMIT = 10_000;
@@ -36,7 +37,7 @@ public class DefaultPyPathFilter implements PyPathFilter {
   private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("((file)|(path))");
 
   @Override
-  public boolean test(PyStringLiteralExpression expr) {
+  public boolean test(@NotNull final PyStringLiteralExpression expr) {
     if (checkFunction(expr)) {
       return true;
     }
@@ -48,7 +49,7 @@ public class DefaultPyPathFilter implements PyPathFilter {
     return false;
   }
 
-  public static boolean checkFunction(PyStringLiteralExpression expr) {
+  public static boolean checkFunction(@NotNull final PyStringLiteralExpression expr) {
     Optional<PyCallExpression> call = getAncestorByBackwardPath(expr, PyCallExpression.class, PyArgumentList.class);
 
     return call
@@ -69,8 +70,8 @@ public class DefaultPyPathFilter implements PyPathFilter {
    * @return
    */
   @SuppressWarnings("unchecked")
-  private static <T extends PsiElement> Optional<T> getAncestorByBackwardPath(PsiElement el,
-                                                                              Class<T> topmostAncestorClass,
+  private static <T extends PsiElement> Optional<T> getAncestorByBackwardPath(@NotNull final PsiElement el,
+                                                                              @NotNull final Class<T> topmostAncestorClass,
                                                                               Class<? extends PsiElement> ... reversedAncestorsClasses) {
     PsiElement cur = el;
 

@@ -16,6 +16,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.codeInsight.PythonPathReferenceProvider.FILE_SCHEME;
+import static com.jetbrains.python.codeInsight.PythonPathReferenceProvider.FILE_SCHEME_LENGTH;
+
 public class PythonStringFileReferenceSet extends FileReferenceSet {
   private final String myRootCheckedOutsideOfproject;
 
@@ -48,9 +51,8 @@ public class PythonStringFileReferenceSet extends FileReferenceSet {
     int res = wsHead;
     res += super.skipIrrelevantStart(wsHead, decoded);
 
-    int schemeLength = "file://".length();
-    if (decoded.length() >= schemeLength && decoded.subSequence(res, schemeLength).equals("file://")) {
-      res += schemeLength;
+    if (decoded.length() >= FILE_SCHEME_LENGTH && decoded.subSequence(res, FILE_SCHEME_LENGTH).equals(FILE_SCHEME)) {
+      res += FILE_SCHEME_LENGTH;
     }
 
     return res;

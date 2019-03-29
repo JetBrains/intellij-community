@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -110,6 +111,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     myBindingsMap.get(scope).unregisterProvider(provider);
   }
 
+  public void unregisterReferenceProvider(@NotNull Class scope, @NotNull Predicate<PsiReferenceProvider> pred) {
+    myBindingsMap.get(scope).unregisterProvider(pred);
+  }
 
   private void registerNamedReferenceProvider(@NotNull String[] names,
                                               final PsiNamePatternCondition<?> nameCondition,

@@ -10,6 +10,10 @@ import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PerformanceTestInfo {
   private final ThrowableRunnable<?> test; // runnable to measure
@@ -86,8 +90,10 @@ public class PerformanceTestInfo {
     return this;
   }
 
-  public void assertTiming() {
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+  public @NotNull List<CpuUsageData> assertTiming() {
+    List<CpuUsageData> res = new ArrayList<>(attempts);
+
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return res;
     Timings.getStatistics(); // warm-up, measure
 
     if (attempts == 1) {
@@ -105,6 +111,7 @@ public class PerformanceTestInfo {
         if (setup != null) setup.run();
         PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
         data = CpuUsageData.measureCpuUsage(test);
+        res.add(data);
       }
       catch (Throwable throwable) {
         ExceptionUtil.rethrowUnchecked(throwable);
@@ -133,7 +140,7 @@ public class PerformanceTestInfo {
       }
 
       if (attempts == 0 || iterationResult == IterationResult.acceptable) {
-        if (testShouldPass) return;
+        if (testShouldPass) return res;
         throw new AssertionFailedError(logMessage);
       }
 

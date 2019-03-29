@@ -284,11 +284,12 @@ public class FileReferenceSet {
     return referencesList;
   }
 
-  protected int skipIrrelevantStart(int wsHead, CharSequence decoded) {
-    for (int i = wsHead; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) {
-      wsHead++;     // skip head white spaces
-    }
-    return wsHead;
+  protected int skipIrrelevantStart(final int wsHead, @NotNull final CharSequence decoded) {
+    int i = wsHead;
+
+    for (; i < decoded.length() && Character.isWhitespace(decoded.charAt(i)); i++) ;
+
+    return i;
   }
 
   private static int offset(int offset, LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper, TextRange valueRange) {
