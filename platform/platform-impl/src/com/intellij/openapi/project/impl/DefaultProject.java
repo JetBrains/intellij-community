@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,5 +51,6 @@ final class DefaultProject extends ProjectImpl {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Disposed DefaultProject "+this);
     }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
   }
 }
