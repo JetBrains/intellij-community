@@ -4,19 +4,24 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
-  override val ui: CommitWorkflowUi
-) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, CommitWorkflowUi>() {
+  override val ui: ChangesViewCommitWorkflowUi
+) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>() {
 
   private val changeListManager = ChangeListManager.getInstance(project)
 
   init {
     Disposer.register(ui, this)
 
+    workflow.addListener(this, this)
+
     ui.addExecutorListener(this, this)
+  }
+
+  override fun vcsesChanged() {
+    ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
   }
 
   fun activate(): Boolean = ui.activate()
@@ -25,4 +30,6 @@ class ChangesViewCommitWorkflowHandler(
     if (!addUnversionedFiles(changeListManager.defaultChangeList)) return
     checkEmptyCommitMessage()
   }
+
+  override fun customCommitSucceeded() = Unit
 }

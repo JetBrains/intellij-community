@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
   CommitWorkflowHandler,
+  CommitWorkflowListener,
   CommitExecutorListener,
   Disposable {
 
@@ -36,6 +38,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       executeCustom(executor, session)
     }
   }
+
+  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
 
   protected open fun executeDefault(executor: CommitExecutor?) = Unit
 

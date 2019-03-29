@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
@@ -25,9 +24,6 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
   fun getChangeList(): LocalChangeList
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
-
-  fun startBeforeCommitChecks()
-  fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult)
 
   interface ChangeListListener : EventListener {
     fun changeListChanged()

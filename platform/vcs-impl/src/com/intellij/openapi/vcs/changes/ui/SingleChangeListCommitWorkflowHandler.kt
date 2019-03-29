@@ -29,7 +29,6 @@ class SingleChangeListCommitWorkflowHandler(
   override val workflow: SingleChangeListCommitWorkflow,
   override val ui: SingleChangeListCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
-    CommitWorkflowListener,
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener,
     InclusionListener {
@@ -69,6 +68,8 @@ class SingleChangeListCommitWorkflowHandler(
 
   fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
 
+  override fun vcsesChanged() = Unit
+
   fun activate(): Boolean {
     workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
 
@@ -99,9 +100,8 @@ class SingleChangeListCommitWorkflowHandler(
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
 
-  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
-    ui.endBeforeCommitChecks(result)
+    super.beforeCommitChecksEnded(isDefaultCommit, result)
     if (isDefaultCommit && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
   }
 
