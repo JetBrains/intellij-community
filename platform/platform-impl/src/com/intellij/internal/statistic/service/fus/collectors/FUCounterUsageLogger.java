@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,20 +38,20 @@ public class FUCounterUsageLogger {
     return INSTANCE;
   }
 
-  private final Map<String, FeatureUsageGroup> myGroups = new HashMap<>();
+  private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
     int version = EventLogConfiguration.version;
     for (String group : GENERAL_GROUPS) {
       // platform groups which record events for all languages,
       // have the same version as a recorder to simplify further data analysis
-      register(new FeatureUsageGroup(group, version));
+      register(new EventLogGroup(group, version));
     }
 
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
       final String id = ep.getGroupId();
       if (StringUtil.isNotEmpty(id)) {
-        register(new FeatureUsageGroup(id, ep.version));
+        register(new EventLogGroup(id, ep.version));
       }
     }
 
@@ -60,12 +60,12 @@ public class FUCounterUsageLogger {
     );
   }
 
-  public void register(@NotNull FeatureUsageGroup group) {
+  public void register(@NotNull EventLogGroup group) {
     myGroups.put(group.getId(), group);
   }
 
   public void logRegisteredGroups() {
-    for (FeatureUsageGroup group : myGroups.values()) {
+    for (EventLogGroup group : myGroups.values()) {
       FeatureUsageLogger.INSTANCE.log(group, REGISTERED);
     }
   }
@@ -76,7 +76,7 @@ public class FUCounterUsageLogger {
   public void logEvent(@NotNull Project project,
                        @NotNull String groupId,
                        @NotNull String event) {
-    final FeatureUsageGroup group = findRegisteredGroupById(groupId);
+    final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
       FeatureUsageLogger.INSTANCE.log(group, event, data);
@@ -91,7 +91,7 @@ public class FUCounterUsageLogger {
                        @NotNull String groupId,
                        @NotNull String event,
                        @NotNull FeatureUsageData data) {
-    final FeatureUsageGroup group = findRegisteredGroupById(groupId);
+    final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       FeatureUsageLogger.INSTANCE.log(group, event, data.addProject(project).build());
     }
@@ -102,7 +102,7 @@ public class FUCounterUsageLogger {
    */
   public void logEvent(@NotNull String groupId,
                        @NotNull String event) {
-    final FeatureUsageGroup group = findRegisteredGroupById(groupId);
+    final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       FeatureUsageLogger.INSTANCE.log(group, event);
     }
@@ -115,14 +115,14 @@ public class FUCounterUsageLogger {
   public void logEvent(@NotNull String groupId,
                        @NotNull String event,
                        @NotNull FeatureUsageData data) {
-    final FeatureUsageGroup group = findRegisteredGroupById(groupId);
+    final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       FeatureUsageLogger.INSTANCE.log(group, event, data.build());
     }
   }
 
   @Nullable
-  private FeatureUsageGroup findRegisteredGroupById(@NotNull String groupId) {
+  private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
       LOG.warn("Cannot record event because group '" + groupId + "' is not registered.");
       return null;
