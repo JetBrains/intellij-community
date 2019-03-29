@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +26,7 @@ import java.util.List;
  */
 public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;
-  private File myParentProjectDir;
+  private String myParentProjectPath;
   @NotNull
   private final List<GradleExtension> myExtensions = new ArrayList<GradleExtension>();
   @NotNull
@@ -43,7 +42,7 @@ public class DefaultGradleExtensions implements GradleExtensions {
   }
 
   public DefaultGradleExtensions(GradleExtensions extensions) {
-    myParentProjectDir = extensions.getParentProjectDir();
+    myParentProjectPath = extensions.getParentProjectPath();
     for (GradleExtension extension : extensions.getExtensions()) {
       myExtensions.add(new DefaultGradleExtension(extension));
     }
@@ -63,12 +62,12 @@ public class DefaultGradleExtensions implements GradleExtensions {
 
   @Nullable
   @Override
-  public File getParentProjectDir() {
-    return myParentProjectDir;
+  public String getParentProjectPath() {
+    return myParentProjectPath;
   }
 
-  public void setParentProjectDir(File parentProjectDir) {
-    myParentProjectDir = parentProjectDir;
+  public void setParentProjectPath(String parentProjectPath) {
+    myParentProjectPath = parentProjectPath;
   }
 
   @NotNull
