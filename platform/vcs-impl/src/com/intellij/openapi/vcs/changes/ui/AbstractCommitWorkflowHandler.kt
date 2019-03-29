@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.*
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
@@ -13,9 +14,13 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   abstract val ui: U
 
   protected val project get() = workflow.project
+  private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   protected fun getIncludedChanges() = ui.getIncludedChanges()
   protected fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
+
+  protected fun getCommitMessage() = ui.commitMessageUi.text
+  protected fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
@@ -38,6 +43,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
     workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
+
+  protected fun checkEmptyCommitMessage(): Boolean =
+    getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
 
   override fun dispose() = Unit
 }

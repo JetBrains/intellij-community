@@ -3,9 +3,12 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.TextAccessor
 import java.util.*
 
 interface CommitWorkflowUi : Disposable {
+  val commitMessageUi: CommitMessageUi
+
   fun activate(): Boolean
 
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
@@ -18,6 +21,16 @@ interface CommitWorkflowUi : Disposable {
   fun includeIntoCommit(items: Collection<*>)
 
   fun addInclusionListener(listener: InclusionListener, parent: Disposable)
+
+  fun confirmCommitWithEmptyMessage(): Boolean
+}
+
+//TODO Unify with CommitMessageI
+interface CommitMessageUi : TextAccessor {
+  override fun getText(): String
+  override fun setText(text: String?)
+
+  fun focus()
 }
 
 interface CommitExecutorListener : EventListener {
