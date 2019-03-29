@@ -564,6 +564,9 @@ class StateMerger {
       for (Map.Entry<DfaMemoryStateImpl, Collection<DfaMemoryStateImpl>> entry : strippedToOriginals.entrySet()) {
         Collection<DfaMemoryStateImpl> merged = entry.getValue();
         if (merged.size() > 1) {
+          for (DfaMemoryStateImpl state : merged) {
+            entry.getKey().afterMerge(state);
+          }
           myRemovedStates.addAll(merged);
           myMerged.add(entry.getKey());
         }

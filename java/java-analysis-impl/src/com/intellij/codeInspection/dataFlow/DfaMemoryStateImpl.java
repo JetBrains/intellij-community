@@ -1627,6 +1627,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     mergeStacks(other);
     myCachedHash = null;
     myCachedNonTrivialEqClasses = null;
+    afterMerge(other);
+  }
+
+  /**
+   * Custom logic to be implemented by subclasses
+   * @param other
+   */
+  protected void afterMerge(DfaMemoryStateImpl other) {
+    
   }
 
   private void mergeStacks(DfaMemoryStateImpl other) {
