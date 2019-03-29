@@ -51,6 +51,12 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
+  public BashOldArithmeticExpansion getOldArithmeticExpansion() {
+    return findChildByClass(BashOldArithmeticExpansion.class);
+  }
+
+  @Override
+  @Nullable
   public BashRedirection getRedirection() {
     return findChildByClass(BashRedirection.class);
   }

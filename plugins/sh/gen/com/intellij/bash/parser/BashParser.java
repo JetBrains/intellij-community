@@ -2190,6 +2190,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                                         | conditional_command
   //                                         | command_substitution_command
   //                                         | arithmetic_expansion
+  //                                         | old_arithmetic_expansion
   static boolean simple_command_element_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "simple_command_element_inner")) return false;
     boolean r;
@@ -2201,6 +2202,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     if (!r) r = arithmetic_expansion(b, l + 1);
+    if (!r) r = old_arithmetic_expansion(b, l + 1);
     return r;
   }
 

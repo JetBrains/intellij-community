@@ -20,6 +20,9 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashHeredoc getHeredoc();
 
   @Nullable
+  BashOldArithmeticExpansion getOldArithmeticExpansion();
+
+  @Nullable
   BashRedirection getRedirection();
 
   @Nullable

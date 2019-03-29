@@ -137,6 +137,7 @@ private simple_command_element_inner ::=  assignment_command
                                         | conditional_command
                                         | command_substitution_command
                                         | arithmetic_expansion
+                                        | old_arithmetic_expansion
 
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines

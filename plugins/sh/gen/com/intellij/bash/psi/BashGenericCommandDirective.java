@@ -17,6 +17,9 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
   BashHeredoc getHeredoc();
 
   @Nullable
+  BashOldArithmeticExpansion getOldArithmeticExpansion();
+
+  @Nullable
   BashRedirection getRedirection();
 
   @Nullable

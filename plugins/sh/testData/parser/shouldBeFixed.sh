@@ -8,3 +8,5 @@ echo [foo[1]]
 
 [[ ((pwd)) ]]
 [[ ((1+1)) ]]
+
+values[indx]=1

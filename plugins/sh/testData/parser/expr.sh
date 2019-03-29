@@ -53,5 +53,3 @@ echo for $[ 0x888 + 007 ]
 
 echo "$(for x do echo -n "$sep$x"; done)"
 $(for x do echo -n "$sep$x"; done)
-
-values[indx]=1

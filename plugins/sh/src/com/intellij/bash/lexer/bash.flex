@@ -23,6 +23,7 @@ import com.intellij.lexer.FlexLexer;
   private void switchState(int state) { popState(); pushState(state); }
   private IntStack myStack = new IntStack(20);
   private boolean inString;
+  private boolean inOldArithmeticExpansion;
   private CharSequence heredocMarker;
 
   protected void onReset() { myStack.clear(); }
@@ -194,7 +195,8 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     "[[ "                         { return LEFT_DOUBLE_BRACKET; }
     " ]]"                         { return RIGHT_DOUBLE_BRACKET; }
 
-    " ]"                          { return EXPR_CONDITIONAL_RIGHT; }
+    "$["                          { inOldArithmeticExpansion = true; yybegin(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
+    " ]"                          { if (inOldArithmeticExpansion) { yypushback(1); return WHITESPACE; } else return EXPR_CONDITIONAL_RIGHT; }
     "[ "                          { return EXPR_CONDITIONAL_LEFT; }
     "&&"                          { return AND_AND; }
     "||"                          { return OR_OR; }
@@ -204,7 +206,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { return RIGHT_SQUARE; }
+    "]"                           { if (inOldArithmeticExpansion) { yybegin(YYINITIAL); return ARITH_SQUARE_RIGHT; } else return RIGHT_SQUARE; }
     ">"                           { return GT; }
     "<"                           { return LT; }
     ">="                          { return GE; }

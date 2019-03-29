@@ -336,33 +336,26 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
-          SIMPLE_COMMAND_ELEMENT
-            CONDITIONAL_COMMAND
-              PsiElement([)('[')
-              PsiErrorElement:Add space
-                <empty list>
-              PsiElement(word)('1+2')
-              PsiElement(])(']')
-              PsiErrorElement:Add space
-                <empty list>
+            OLD_ARITHMETIC_EXPANSION
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
+              ADD_EXPRESSION
+                LITERAL_EXPRESSION
+                  PsiElement(int)('1')
+                PsiElement(+)('+')
+                LITERAL_EXPRESSION
+                  PsiElement(int)('2')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            PsiElement($)('$')
-          SIMPLE_COMMAND_ELEMENT
-            CONDITIONAL_COMMAND
-              PsiElement([)('[')
-              PsiErrorElement:Add space
-                <empty list>
+        GENERIC_COMMAND_DIRECTIVE
+          OLD_ARITHMETIC_EXPANSION
+            PsiElement(ARITH_SQUARE_LEFT)('$[')
+            LITERAL_EXPRESSION
               PsiElement(int)('123')
-              PsiElement(])(']')
-              PsiErrorElement:Add space
-                <empty list>
+            PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -375,10 +368,11 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(")('"')
-              PsiElement($)('$')
-              PsiElement([)('[')
-              PsiElement(word)('1+2')
-              PsiElement(])(']')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
+              PsiElement(int)('1')
+              PsiElement(+)('+')
+              PsiElement(int)('2')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
               PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -401,18 +395,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -423,18 +416,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(>)('>')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -445,18 +437,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(>=)('>=')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -467,18 +458,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(<=)('<=')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -489,18 +479,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               EQUALITY_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(arith ==)('==')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -511,18 +500,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               EQUALITY_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(!=)('!=')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -533,14 +521,13 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               PRE_EXPRESSION
                 PsiElement(++)('++')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
@@ -552,16 +539,13 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
-              UNARY_EXPRESSION
-                PsiElement(-)('-')
-                UNARY_EXPRESSION
-                  PsiElement(-)('-')
-                  LITERAL_EXPRESSION
-                    PsiElement(number)('1')
+              PRE_EXPRESSION
+                PsiElement(--)('--')
+                LITERAL_EXPRESSION
+                  PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
@@ -573,18 +557,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               MUL_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(*)('*')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -601,12 +584,12 @@ BASH_FILE
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -618,18 +601,17 @@ BASH_FILE
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               COMPARISON_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(<)('<')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(number)('1')
+                  PsiElement(int)('1')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -644,9 +626,8 @@ BASH_FILE
             PsiElement(word)('for')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
-            PsiElement($)('$')
             OLD_ARITHMETIC_EXPANSION
-              PsiElement(ARITH_SQUARE_LEFT)('[')
+              PsiElement(ARITH_SQUARE_LEFT)('$[')
               PsiWhiteSpace(' ')
               ADD_EXPRESSION
                 LITERAL_EXPRESSION
@@ -669,7 +650,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             STRING
-              PsiElement(string_begin)('"')
+              PsiElement(")('"')
               PsiElement($)('$')
               SUBSHELL_COMMAND
                 PsiElement(()('(')
@@ -696,17 +677,17 @@ BASH_FILE
                                   PsiWhiteSpace(' ')
                                   SIMPLE_COMMAND_ELEMENT
                                     STRING
-                                      PsiElement(string_begin)('"')
+                                      PsiElement(")('"')
                                       VARIABLE
                                         PsiElement(var)('$sep')
                                       VARIABLE
                                         PsiElement(var)('$x')
-                                      PsiElement(string_end)('"')
+                                      PsiElement(")('"')
                             PsiElement(;)(';')
                           PsiWhiteSpace(' ')
                           PsiElement(done)('done')
                 PsiElement())(')')
-              PsiElement(string_end)('"')
+              PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -738,27 +719,13 @@ BASH_FILE
                               PsiWhiteSpace(' ')
                               SIMPLE_COMMAND_ELEMENT
                                 STRING
-                                  PsiElement(string_begin)('"')
+                                  PsiElement(")('"')
                                   VARIABLE
                                     PsiElement(var)('$sep')
                                   VARIABLE
                                     PsiElement(var)('$x')
-                                  PsiElement(string_end)('"')
+                                  PsiElement(")('"')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
                       PsiElement(done)('done')
             PsiElement())(')')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        ASSIGNMENT_COMMAND
-          PsiElement(assignment_word)('values')
-          ARRAY_EXPRESSION
-            PsiElement([)('[')
-            LITERAL_EXPRESSION
-              PsiElement(word)('indx')
-            PsiElement(])(']')
-          PsiElement(=)('=')
-          PsiElement(int)('1')
