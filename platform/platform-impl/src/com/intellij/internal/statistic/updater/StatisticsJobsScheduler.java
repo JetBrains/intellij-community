@@ -59,8 +59,11 @@ public class StatisticsJobsScheduler implements BaseComponent {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
-            final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService();
-            ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
+            final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
+            for (StatisticsEventLoggerProvider provider : providers) {
+              final StatisticsService statisticsService = provider.getLogStatisticsService();
+              ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
+            }
             Disposer.dispose(disposable);
           }
         }
@@ -78,7 +81,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
       for (StatisticsEventLoggerProvider provider : providers) {
         if (provider.isSendEnabled()) {
           JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-            //TODO: runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+            runStatisticsServiceWithDelay(provider.getLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
           }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, provider.getSendFrequencyMs(), TimeUnit.MILLISECONDS);
         }
       }

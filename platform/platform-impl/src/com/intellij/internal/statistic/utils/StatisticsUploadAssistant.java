@@ -17,8 +17,6 @@ package com.intellij.internal.statistic.utils;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
-import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +27,6 @@ public class StatisticsUploadAssistant {
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
 
   public static final Object LOCK = new Object();
-  private static final EventLogStatisticsService logStatisticsService = new EventLogStatisticsService();
 
   private StatisticsUploadAssistant(){}
 
@@ -73,9 +70,5 @@ public class StatisticsUploadAssistant {
 
   public static void updateSentTime() {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
-  }
-
-  public static StatisticsService getEventLogStatisticsService() {
-    return logStatisticsService;
   }
 }

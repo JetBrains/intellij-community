@@ -20,6 +20,8 @@ interface StatisticsEventLogger {
 }
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String, val version: Int, val sendFrequencyMs: Long) {
+  val logStatisticsService: EventLogStatisticsService = EventLogStatisticsService(recorderId)
+
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 

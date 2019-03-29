@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -24,6 +25,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
+  private static final String CONFIG_URL_TEMPLATE = "https://www.jetbrains.com/idea/statistics/%s/fus-lion-v3-assistant.xml";
   private static final long ACCEPTED_CACHE_AGE_MS = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS);
   private static final long DONT_REQUIRE_UPDATE_AGE_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 
@@ -31,8 +33,20 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return new EventLogExternalSettingsService();
   }
 
+  public static EventLogExternalSettingsService getInstance(@NotNull String recorderId) {
+    if (recorderId == "FUS") {
+      return new EventLogExternalSettingsService();
+    }
+    final String configUrl = String.format(CONFIG_URL_TEMPLATE, recorderId.toLowerCase(Locale.ENGLISH));
+    return new EventLogExternalSettingsService(configUrl);
+  }
+
   protected EventLogExternalSettingsService() {
     super(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl(), null);
+  }
+
+  protected EventLogExternalSettingsService(@NotNull String configUrl) {
+    super(configUrl, null);
   }
 
   @NotNull

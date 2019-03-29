@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,16 +24,23 @@ import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
-  private static final EventLogSettingsService mySettingsService = EventLogExternalSettingsService.getInstance();
   private static final int MAX_FILES_TO_SEND = 20;
+  private String myRecorder;
+  private EventLogSettingsService mySettingsService;
+
+  public EventLogStatisticsService(@NotNull String recorder) {
+    myRecorder = recorder;
+    mySettingsService = EventLogExternalSettingsService.getInstance(recorder);
+  }
 
   @Override
   public StatisticsResult send() {
-    return send(mySettingsService, new EventLogCounterResultDecorator());
+    return send(myRecorder, mySettingsService, new EventLogCounterResultDecorator());
   }
 
-  public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
-    if (FeatureUsageLogger.INSTANCE.getConfig().isSendEnabled()) {
+  public static StatisticsResult send(@NotNull String recorder, @NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
+    final StatisticsEventLoggerProvider config = StatisticsEventLoggerKt.getEventLogProvider(recorder);
+    if (!config.isSendEnabled()) {
       cleanupAllFiles();
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
@@ -60,7 +66,7 @@ public class EventLogStatisticsService implements StatisticsService {
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i);
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, FeatureUsageLogger.INSTANCE.getConfig().getRecorderId(), filter, settings.isInternal());
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {

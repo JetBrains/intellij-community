@@ -49,7 +49,7 @@ public class SendEventLogAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Send Feature Usage Event Log", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final StatisticsResult result = send(new EventLogTestSettingsService(), new EventLogTestResultDecorator());
+        final StatisticsResult result = send("FUS", new EventLogTestSettingsService(), new EventLogTestResultDecorator());
         final StatisticsResult.ResultCode code = result.getCode();
         if (code == StatisticsResult.ResultCode.SENT_WITH_ERRORS || code == StatisticsResult.ResultCode.SEND) {
           final boolean succeed = tryToOpenInScratch(project, result.getDescription());
