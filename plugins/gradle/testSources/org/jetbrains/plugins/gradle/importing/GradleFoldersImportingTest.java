@@ -184,6 +184,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createDefaultDirs();
     createProjectSubFile("settings.gradle", "include('processor')");
     createProjectSubFile("processor/build.gradle", "apply plugin:'java'");
+    createProjectSubFile("build/generated/sources/annotationProcessor/java/main/Generated.java");
     importProject("" +
                   "apply plugin: 'java'\n" +
                   "dependencies {\n" +
