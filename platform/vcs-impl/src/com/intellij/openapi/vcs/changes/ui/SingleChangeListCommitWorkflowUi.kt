@@ -4,16 +4,13 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
 
-interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider, Disposable {
+interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
   val commitMessageUi: CommitMessageUi
   val commitOptionsUi: CommitOptionsUi
 
@@ -25,19 +22,9 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider, Dis
 
   fun addDataProvider(provider: DataProvider)
 
-  fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
-
   fun refreshData()
 
   fun getChangeList(): LocalChangeList
-  fun getDisplayedChanges(): List<Change>
-  fun getIncludedChanges(): List<Change>
-  fun getDisplayedUnversionedFiles(): List<VirtualFile>
-  fun getIncludedUnversionedFiles(): List<VirtualFile>
-
-  fun includeIntoCommit(items: Collection<*>)
-
-  fun addInclusionListener(listener: InclusionListener, parent: Disposable)
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
 
@@ -63,14 +50,6 @@ interface CommitOptionsUi {
   fun setOptions(options: CommitOptions)
 
   fun setVisible(vcses: Collection<AbstractVcs<*>>)
-}
-
-interface CommitExecutorListener : EventListener {
-  fun executorCalled(executor: CommitExecutor?)
-}
-
-interface InclusionListener : EventListener {
-  fun inclusionChanged()
 }
 
 interface CommitWorkflowUiStateListener : EventListener {
