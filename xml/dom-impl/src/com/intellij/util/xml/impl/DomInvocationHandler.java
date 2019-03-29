@@ -28,6 +28,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -40,10 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
-import com.intellij.util.xml.stubs.AttributeStub;
-import com.intellij.util.xml.stubs.DomStub;
-import com.intellij.util.xml.stubs.ElementStub;
-import com.intellij.util.xml.stubs.StubParentStrategy;
+import com.intellij.util.xml.stubs.*;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +60,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl, Stub extends DomStub> extends UserDataHolderBase implements InvocationHandler, DomElement,
-                                                                                                                            SemElement {
+public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl, S extends DomStub> extends UserDataHolderBase implements InvocationHandler, DomElement,
+                                                                                                                                               SemElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -81,14 +79,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable protected Stub myStub;
+  @Nullable protected S myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  @NotNull final EvaluatedXmlName tagName,
                                  final T childDescription,
                                  final DomManagerImpl manager,
                                  boolean dynamic,
-                                 @Nullable Stub stub) {
+                                 @Nullable S stub) {
     myManager = manager;
     myParentStrategy = parentStrategy;
     myTagName = tagName;
@@ -129,7 +127,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  public Stub getStub() {
+  public S getStub() {
     return myStub;
   }
 
@@ -839,13 +837,15 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
         List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
-        return ContainerUtil.map(stubs, stub -> stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
+        List<DomElement> elements =
+          ContainerUtil.map(stubs, stub -> stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
+        return addIncludedElements(elements, xmlName);
       }
       else if (description instanceof CustomDomChildrenDescriptionImpl) {
-        List<DomStub> stubs = myStub.getChildrenStubs();
-        return ContainerUtil.mapNotNull(stubs, (NullableFunction<DomStub, DomElement>)stub -> {
-          if (stub instanceof ElementStub && stub.isCustom()) {
-            EvaluatedXmlName name = new DummyEvaluatedXmlName(stub.getName(), "");
+        List<? extends Stub> stubs = myStub.getChildrenStubs();
+        return ContainerUtil.mapNotNull(stubs, (NullableFunction<Stub, DomElement>)stub -> {
+          if (stub instanceof ElementStub && ((ElementStub)stub).isCustom()) {
+            EvaluatedXmlName name = new DummyEvaluatedXmlName(((ElementStub)stub).getName(), "");
             return new CollectionElementInvocationHandler(name, (CustomDomChildrenDescriptionImpl)description, myManager, (ElementStub)stub).getProxy();
           }
           return null;
@@ -875,6 +875,17 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       }
     }
     return Collections.unmodifiableList(elements);
+  }
+
+  private List<? extends DomElement> addIncludedElements(List<? extends DomElement> elements, XmlName xmlName) {
+    assert myStub != null;
+    List<DomElement> result = new SmartList<>(elements);
+    for (Stub stub : myStub.getChildrenStubs()) {
+      if (stub instanceof XIncludeStub) {
+        ((XIncludeStub)stub).resolve(this, result, xmlName);
+      }
+    }
+    return result;
   }
 
   private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag) {

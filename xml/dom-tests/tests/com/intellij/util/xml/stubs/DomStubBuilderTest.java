@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -62,11 +63,11 @@ public class DomStubBuilderTest extends DomStubTest {
     final ElementStub rootStub = getRootStub("foo.xml");
     assertEquals("", rootStub.getValue());
 
-    final DomStub fooStub = assertOneElement(rootStub.getChildrenStubs());
+    final Stub fooStub = assertOneElement(rootStub.getChildrenStubs());
     final ElementStub fooElementStub = assertInstanceOf(fooStub, ElementStub.class);
     assertEquals("", fooElementStub.getValue());
 
-    final DomStub idStub = ContainerUtil.getFirstItem(fooStub.getChildrenStubs());
+    final Stub idStub = ContainerUtil.getFirstItem(fooStub.getChildrenStubs());
     final ElementStub idElementStub = assertInstanceOf(idStub, ElementStub.class);
     assertEquals("foo", idElementStub.getValue());
   }
@@ -107,6 +108,7 @@ public class DomStubBuilderTest extends DomStubTest {
     myFixture.copyFileToProject("include.xml");
     doBuilderTest("inclusion.xml", "File:foo\n" +
                                    "  Element:foo\n" +
+                                   "    XInclide:href=include.xml xpointer=xpointer(/foo/*)\n" +
                                    "    Element:bar\n" +
                                    "      Attribute:string:xxx\n" +
                                    "      Attribute:int:666\n" +
@@ -118,7 +120,7 @@ public class DomStubBuilderTest extends DomStubTest {
 
     DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
     assert element != null;
-    assertEquals(2, element.getRootElement().getBars().size());
+    assertEquals(3, element.getRootElement().getBars().size());
   }
 
   public static class TestExtender extends DomExtender<Bar> {

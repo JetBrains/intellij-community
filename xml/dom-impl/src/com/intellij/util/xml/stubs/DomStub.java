@@ -17,6 +17,7 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.stubs.ObjectStubBase;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
@@ -50,10 +51,6 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     myLocalName = localName;
   }
 
-  @NotNull
-  @Override
-  public abstract List<DomStub> getChildrenStubs();
-
   public String getName() {
     return myLocalName.getString();
   }
@@ -64,7 +61,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   }
 
   public List<DomStub> getChildrenByName(final CharSequence name, @Nullable final String nsKey) {
-    final List<DomStub> stubs = getChildrenStubs();
+    final List<? extends Stub> stubs = getChildrenStubs();
     if (stubs.isEmpty()) {
       return Collections.emptyList();
     }
@@ -73,10 +70,10 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     final List<DomStub> result = new SmartList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
-      final DomStub stub = stubs.get(i);
-      if (XmlUtil.getLocalName(stub.getName()).equals(name) &&
-          Comparing.equal(s, stub.getNamespaceKey())) {
-        result.add(stub);
+      final Stub stub = stubs.get(i);
+      if (stub instanceof DomStub && XmlUtil.getLocalName(((DomStub)stub).getName()).equals(name) &&
+          Comparing.equal(s, ((DomStub)stub).getNamespaceKey())) {
+        result.add((DomStub)stub);
       }
     }
     return result;
@@ -84,16 +81,16 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   @Nullable
   public AttributeStub getAttributeStub(final XmlName name) {
-    final List<DomStub> stubs = getChildrenStubs();
+    final List<? extends Stub> stubs = getChildrenStubs();
     if (stubs.isEmpty()) {
       return null;
     }
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
-      final DomStub stub = stubs.get(i);
+      final Stub stub = stubs.get(i);
       if (stub instanceof AttributeStub &&
-          stub.getName().equals(name.getLocalName())) {
+          ((AttributeStub)stub).getName().equals(name.getLocalName())) {
         return (AttributeStub)stub;
       }
     }
@@ -102,10 +99,10 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   @Nullable
   public ElementStub getElementStub(String name, int index) {
-    List<DomStub> stubs = getChildrenStubs();
+    List<? extends Stub> stubs = getChildrenStubs();
     int i = 0;
-    for (DomStub stub : stubs) {
-      if (stub instanceof ElementStub && name.equals(stub.getName()) && i++ == index) {
+    for (Stub stub : stubs) {
+      if (stub instanceof ElementStub && name.equals(((ElementStub)stub).getName()) && i++ == index) {
         return (ElementStub)stub;
       }
     }
