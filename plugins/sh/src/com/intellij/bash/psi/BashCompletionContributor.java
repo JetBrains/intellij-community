@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +27,18 @@ public class BashCompletionContributor extends CompletionContributor implements 
     extend(CompletionType.BASIC, psiElement().inFile(instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
-        for (String keywords : suggestKeywords(parameters.getPosition())) {
+        Collection<String> kws = suggestKeywords(parameters.getPosition());
+        for (String keywords : kws) {
           result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
         }
-        result.stopHere();
+
+        String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
+        if (prefix.isEmpty() && parameters.isAutoPopup()) {
+          return;
+        }
+
+        CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
+        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, ContainerUtil.newTroveSet(kws));
       }
     });
   }
