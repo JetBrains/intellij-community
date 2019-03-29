@@ -285,7 +285,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       JBPopup popup = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(contentPanel, contentPanel.getNameField())
         .setTitle(myTitle)
-        .setResizable(true)
+        .setResizable(false)
         .setModalContext(true)
         .setFocusable(true)
         .setRequestFocus(true)
