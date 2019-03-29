@@ -60,7 +60,7 @@ public class EventLogStatisticsService implements StatisticsService {
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
         final File file = logs.get(i);
-        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter, settings.isInternal());
+        final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, FeatureUsageLogger.INSTANCE.getConfig().getRecorderId(), filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
           if (LOG.isTraceEnabled()) {
