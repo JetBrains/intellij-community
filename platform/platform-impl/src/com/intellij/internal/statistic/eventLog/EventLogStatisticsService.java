@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,12 +39,13 @@ public class EventLogStatisticsService implements StatisticsService {
 
   public static StatisticsResult send(@NotNull String recorder, @NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
     final StatisticsEventLoggerProvider config = StatisticsEventLoggerKt.getEventLogProvider(recorder);
+    final List<File> logs = config.getLogFiles();
+
     if (!config.isSendEnabled()) {
-      cleanupAllFiles();
+      cleanupAllFiles(logs);
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
-    final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
     if (logs.isEmpty()) {
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
@@ -56,7 +56,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
-      cleanupAllFiles();
+      cleanupAllFiles(logs);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
@@ -166,9 +166,8 @@ public class EventLogStatisticsService implements StatisticsService {
     return null;
   }
 
-  private static void cleanupAllFiles() {
+  private static void cleanupAllFiles(@NotNull List<File> logs) {
     try {
-      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       if (!logs.isEmpty()) {
         cleanupFiles(logs);
       }

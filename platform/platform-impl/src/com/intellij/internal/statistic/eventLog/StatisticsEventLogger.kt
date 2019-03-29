@@ -22,6 +22,8 @@ interface StatisticsEventLogger {
 abstract class StatisticsEventLoggerProvider(val recorderId: String, val version: Int, val sendFrequencyMs: Long) {
   val logStatisticsService: EventLogStatisticsService = EventLogStatisticsService(recorderId)
 
+  abstract val logger: StatisticsEventLogger
+
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 
@@ -36,21 +38,23 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String, val version
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
+
+  fun getLogFiles(): List<File> {
+    return logger.getLogFiles()
+  }
 }
 
 class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
+  override val logger = EmptyStatisticsEventLogger()
+
   override fun isRecordEnabled(): Boolean {
     return false
   }
   override fun isSendEnabled(): Boolean {
     return false
   }
-
-  override fun createLogger(): StatisticsEventLogger {
-    return EmptyStatisticsEventLogger()
-  }
-
 }
+
 class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
