@@ -387,7 +387,16 @@ public class GitRebaseProcess {
     }
     String message = commonType.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
     message += mentionSkippedCommits(skippedCommits);
-    myNotifier.notifyMinorInfo("Rebase Successful", message, new RebaseNotificationListener(skippedCommits));
+    Notification notification =
+      VcsNotifier.STANDARD_NOTIFICATION.createNotification("Rebase Successful", message, NotificationType.INFORMATION, new RebaseNotificationListener(skippedCommits));
+      notification.addAction(NotificationAction.createSimple("Undo", () -> {
+        undoRebase();
+      }));
+    myNotifier.notify(notification);
+  }
+
+  private void undoRebase() {
+
   }
 
   @Nullable

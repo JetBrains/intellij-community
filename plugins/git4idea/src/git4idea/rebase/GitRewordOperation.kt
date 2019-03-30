@@ -167,7 +167,7 @@ class GitRewordOperation(private val repository: GitRepository,
     return newCommit.id
   }
 
-  private fun checkUndoPossibility(): UndoPossibility {
+  private fun checkUndoPossibility(repository: GitRepository, headAfterRebase: String): UndoPossibility {
     repository.update()
     if (repository.currentRevision != headAfterReword) {
       return UndoPossibility.HeadMoved
@@ -208,13 +208,6 @@ class GitRewordOperation(private val repository: GitRepository,
         undo()
       }
     })
-  }
-
-  private sealed class UndoPossibility {
-    object Possible : UndoPossibility()
-    object HeadMoved : UndoPossibility()
-    class PushedToProtectedBranch(val branch: String) : UndoPossibility()
-    object Error : UndoPossibility()
   }
 
   private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
