@@ -54,13 +54,17 @@ open class SingleChangeListCommitWorkflow(
   val executors: List<CommitExecutor> = emptyList(),
   val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
   val vcsToCommit: AbstractVcs<*>? = null,
-  val affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
+  affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
 ) : AbstractCommitWorkflow(project) {
 
-  val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
+  init {
+    updateVcses(affectedVcses)
+  }
+
+  val isPartialCommitEnabled: Boolean = vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
   val commitContext: CommitContext = CommitContext()
 

@@ -69,7 +69,7 @@ class SingleChangeListCommitWorkflowHandler(
     workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
 
     ui.addInclusionListener(this, this)
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.affectedVcses)
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     initCommitMessage()
     initCommitOptions()
 
@@ -144,7 +144,7 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(CommitOptionsImpl(
-      if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.affectedVcses, workflow.additionalDataConsumer)
+      if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.additionalDataConsumer)
       else emptyMap(),
       getBeforeOptions(workflow.commitHandlers),
       getAfterOptions(workflow.commitHandlers, this)
