@@ -2,22 +2,17 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import java.util.*
 
-interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi, DataProvider {
+interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
   val commitOptionsUi: CommitOptionsUi
 
   fun deactivate()
 
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
-
-  fun addDataProvider(provider: DataProvider)
-
-  fun refreshData()
 
   fun getChangeList(): LocalChangeList
 

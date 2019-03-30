@@ -5,12 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitExecutorListener
-import com.intellij.openapi.vcs.changes.CommitMessageUi
-import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -27,9 +25,12 @@ import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JButton
+import javax.swing.JComponent
 
-class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, DataProvider {
+class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
   private val project get() = changesView.project
+
+  private val dataProviders = mutableListOf<DataProvider>()
 
   private val executorEventDispatcher = EventDispatcher.create(CommitExecutorListener::class.java)
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
@@ -91,10 +92,20 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     return true
   }
 
-  override fun getData(dataId: String) = commitMessage.getData(dataId)
+  override fun getComponent(): JComponent = this
+  override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
+
+  override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  private fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+
+  override fun addDataProvider(provider: DataProvider) {
+    dataProviders += provider
+  }
 
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
+
+  override fun refreshData() = (ChangesViewManager.getInstance(project) as ChangesViewManager).refreshImmediately()
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
