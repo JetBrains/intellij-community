@@ -16,7 +16,7 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
 
   private val browser =
     object : MultipleLocalChangeListsBrowser(project, true, true, workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled) {
-      override fun createAdditionalRollbackActions() = workflow.affectedVcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
+      override fun createAdditionalRollbackActions() = workflow.vcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
     }
 
   init {

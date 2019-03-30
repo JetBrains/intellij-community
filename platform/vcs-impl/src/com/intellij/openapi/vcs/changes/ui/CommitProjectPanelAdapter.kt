@@ -42,7 +42,7 @@ internal open class CommitProjectPanelAdapter(private val handler: SingleChangeL
   override fun getFiles(): Collection<File> = getIncludedPaths().map { it.ioFile }
   override fun getRoots(): Collection<VirtualFile> = getDisplayedPaths().mapNotNullTo(hashSetOf()) { vcsManager.getVcsRootFor(it) }
 
-  override fun vcsIsAffected(name: String): Boolean = vcsManager.checkVcsIsActive(name) && workflow.affectedVcses.any { it.name == name }
+  override fun vcsIsAffected(name: String): Boolean = vcsManager.checkVcsIsActive(name) && workflow.vcses.any { it.name == name }
   override fun getCommitActionName(): String = ui.defaultCommitActionName
 
   override fun getCommitMessage(): String = ui.commitMessageUi.text
