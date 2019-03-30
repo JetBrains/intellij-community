@@ -40,7 +40,7 @@ public class DefaultProjectTimed extends TimedReference<Project> {
 
   @NotNull
   @Override
-  public synchronized Project get() {
+  public Project get() {
     Project value = super.get();
     if (value == null) {
       value = compute();
@@ -50,7 +50,7 @@ public class DefaultProjectTimed extends TimedReference<Project> {
   }
 
   @Override
-  public synchronized void dispose() {
+  public void dispose() {
     // project must be disposed in EDT in write action
     Runnable doDispose = () -> WriteCommandAction.runWriteCommandAction(null, () -> super.dispose());
     if (ApplicationManager.getApplication().isDispatchThread()) {
