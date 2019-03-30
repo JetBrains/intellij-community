@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -26,12 +24,7 @@ class IndexLibraryManager(val project: Project) : ProjectComponent {
             if (libFile != null) {
               rootsToIndex.add(libFile)
 
-              FileBasedIndex.getInstance().requestReindex(libFile)
-              project.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
-              if (!DumbService.isDumb(project)) {
-                (FileBasedIndex.getInstance() as FileBasedIndexImpl).forceReindex(libFile)
-              }
-
+              (FileBasedIndex.getInstance() as FileBasedIndexImpl).forceReindex(libFile)
             }
           }
         }
@@ -42,7 +35,7 @@ class IndexLibraryManager(val project: Project) : ProjectComponent {
     nameSet.addAll(names)
   }
 
-  fun isNotImportedLibrary(file: VirtualFile): Boolean {
+  fun isUnusedLibrary(file: VirtualFile): Boolean {
     if (isInContentOfAnyProject(file)) {
       return false
     }

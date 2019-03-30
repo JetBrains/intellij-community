@@ -143,6 +143,15 @@ public abstract class FileBasedIndex {
                                         @Nullable final ProgressIndicator indicator,
                                         @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
+    iterateRecursively(root, processor, indicator, visitedRoots, projectFileIndex, null);
+  }
+
+  public static void iterateRecursively(@Nullable final VirtualFile root,
+                                        @NotNull final ContentIterator processor,
+                                        @Nullable final ProgressIndicator indicator,
+                                        @Nullable final Set<? super VirtualFile> visitedRoots,
+                                        @Nullable final ProjectFileIndex projectFileIndex,
+                                        @Nullable final VirtualFileFilter filter) {
     if (root == null) {
       return;
     }
@@ -169,7 +178,7 @@ public abstract class FileBasedIndex {
         if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
           return false;
         }
-        return projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file));
+        return (projectFileIndex == null || !ReadAction.compute(() -> projectFileIndex.isExcluded(file))) && (filter == null || filter.accept(file));
       }
     });
   }
