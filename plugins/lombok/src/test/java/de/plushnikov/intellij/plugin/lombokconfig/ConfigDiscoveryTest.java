@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -69,7 +71,7 @@ public class ConfigDiscoveryTest {
   public void testStringConfigPropertySameDirectory() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
+      .thenReturn(makeValue(EXPECTED_VALUE));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -80,7 +82,7 @@ public class ConfigDiscoveryTest {
   public void testStringConfigPropertySubDirectory() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList(EXPECTED_VALUE));
+      .thenReturn(makeValue(EXPECTED_VALUE));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -90,8 +92,6 @@ public class ConfigDiscoveryTest {
   @Test
   public void testStringConfigPropertySubDirectoryStopBubling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
-    when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("true"));
 
     final String property = discovery.getStringLombokConfigProperty(configKey, psiClass);
     assertNotNull(property);
@@ -102,13 +102,13 @@ public class ConfigDiscoveryTest {
   public void testMultipleStringConfigProperty() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("+a;+b"));
+      .thenReturn(makeValue("+a;+b"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("-a;+cc"));
+      .thenReturn(makeValue("-a;+cc"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.emptyList());
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("+_d;"));
+      .thenReturn(makeValue("+_d;"));
 
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);
@@ -119,13 +119,16 @@ public class ConfigDiscoveryTest {
     assertTrue(list.contains("_d"));
   }
 
+  @NotNull
+  private List<ConfigValue> makeValue(String value) {
+    return Collections.singletonList(new ConfigValue(value, false));
+  }
+
   @Test
   public void testMultipleStringConfigPropertyWithStopBubbling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
-    when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("true"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.singletonList("+_d;"));
+      .thenReturn(makeValue("+_d;"));
 
     final String[] properties = discovery.getMultipleValueLombokConfigProperty(configKey, psiClass);
     assertNotNull(properties);

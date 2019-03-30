@@ -10,7 +10,6 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import de.plushnikov.intellij.plugin.language.LombokConfigFileType;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigCleaner;
@@ -26,27 +25,29 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, String> {
+public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, ConfigValue> {
   @NonNls
-  public static final ID<ConfigIndexKey, String> NAME = ID.create("LombokConfigIndex");
+  public static final ID<ConfigIndexKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
-  private static final int INDEX_FORMAT_VERSION = 6;
+  private static final int INDEX_FORMAT_VERSION = 10;
 
   @NotNull
   @Override
-  public ID<ConfigIndexKey, String> getName() {
+  public ID<ConfigIndexKey, ConfigValue> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<ConfigIndexKey, String, FileContent> getIndexer() {
-    return new DataIndexer<ConfigIndexKey, String, FileContent>() {
+  public DataIndexer<ConfigIndexKey, ConfigValue, FileContent> getIndexer() {
+    return new DataIndexer<ConfigIndexKey, ConfigValue, FileContent>() {
       @NotNull
       @Override
-      public Map<ConfigIndexKey, String> map(@NotNull FileContent inputData) {
-        Map<ConfigIndexKey, String> result = Collections.emptyMap();
+      public Map<ConfigIndexKey, ConfigValue> map(@NotNull FileContent inputData) {
+        Map<ConfigIndexKey, ConfigValue> result = Collections.emptyMap();
 
         final VirtualFile directoryFile = inputData.getFile().getParent();
         if (null != directoryFile) {
@@ -54,10 +55,12 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
           if (null != canonicalPath) {
             final Map<String, String> configValues = extractValues((LombokConfigFile) inputData.getPsiFile());
 
-            result = new HashMap<>();
-            for (Map.Entry<String, String> entry : configValues.entrySet()) {
-              result.put(new ConfigIndexKey(canonicalPath, entry.getKey()), entry.getValue());
-            }
+            final boolean stopBubblingValue = Boolean.parseBoolean(configValues.get(ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()));
+            result = Stream.of(ConfigKey.values())
+              .map(ConfigKey::getConfigKey)
+              .collect(Collectors.toMap(
+                key -> new ConfigIndexKey(canonicalPath, key),
+                key -> new ConfigValue(configValues.get(key), stopBubblingValue)));
           }
         }
 
@@ -69,7 +72,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
         final LombokConfigCleaner[] configCleaners = LombokConfigUtil.getLombokConfigCleaners(configFile);
         for (LombokConfigCleaner configCleaner : configCleaners) {
-          final String key = LombokConfigPsiUtil.getKey(configCleaner);
+          final String key = StringUtil.toLowerCase(LombokConfigPsiUtil.getKey(configCleaner));
 
           final ConfigKey configKey = ConfigKey.fromConfigStringKey(key);
           if (null != configKey) {
@@ -79,7 +82,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
         final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties(configFile);
         for (LombokConfigProperty configProperty : configProperties) {
-          final String key = LombokConfigPsiUtil.getKey(configProperty);
+          final String key = StringUtil.toLowerCase(LombokConfigPsiUtil.getKey(configProperty));
           final String value = LombokConfigPsiUtil.getValue(configProperty);
           final String sign = LombokConfigPsiUtil.getSign(configProperty);
           if (null == sign) {
@@ -125,8 +128,24 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
 
   @NotNull
   @Override
-  public DataExternalizer<String> getValueExternalizer() {
-    return new EnumeratorStringDescriptor();
+  public DataExternalizer<ConfigValue> getValueExternalizer() {
+    return new DataExternalizer<ConfigValue>() {
+      @Override
+      public void save(@NotNull DataOutput out, ConfigValue configValue) throws IOException {
+        final boolean hasNullValue = null == configValue.getValue();
+        out.writeBoolean(hasNullValue);
+        out.writeUTF(hasNullValue ? "" : configValue.getValue());
+        out.writeBoolean(configValue.isStopBubbling());
+      }
+
+      @Override
+      public ConfigValue read(@NotNull DataInput in) throws IOException {
+        final boolean hasNullValue = in.readBoolean();
+        final String configValue = in.readUTF();
+        final boolean stopBubbling = in.readBoolean();
+        return new ConfigValue(hasNullValue ? null : configValue, stopBubbling);
+      }
+    };
   }
 
   @NotNull
