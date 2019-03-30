@@ -208,7 +208,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private String createEqualsBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean hasCanEqualMethod, Collection<MemberInfo> memberInfos) {
-    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.EQUALSANDHASHCODE_CALL_SUPER);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final String canonicalClassName = PsiTypesUtil.getClassType(psiClass).getCanonicalText();
@@ -264,7 +264,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final int PRIME_FOR_NULL = 43;
 
   private String createHashcodeBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, Collection<MemberInfo> memberInfos) {
-    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass, ConfigKey.EQUALSANDHASHCODE_CALL_SUPER);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
     final StringBuilder builder = new StringBuilder();
@@ -313,18 +313,6 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
     builder.append("return result;\n");
     return builder.toString();
-  }
-
-  private boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
-    final boolean result;
-    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
-    if (null == declaredAnnotationValue) {
-      final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.EQUALSANDHASHCODE_CALL_SUPER, psiClass);
-      result = PsiClassUtil.hasSuperClass(psiClass) && "CALL".equalsIgnoreCase(configProperty);
-    } else {
-      result = declaredAnnotationValue;
-    }
-    return result;
   }
 
   @NotNull

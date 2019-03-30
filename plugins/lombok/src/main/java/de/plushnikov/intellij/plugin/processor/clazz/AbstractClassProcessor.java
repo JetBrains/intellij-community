@@ -19,6 +19,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstru
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -158,4 +159,15 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return result;
   }
 
+  boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ConfigKey configKey) {
+    final boolean result;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredAnnotationValue) {
+      final String configProperty = configDiscovery.getStringLombokConfigProperty(configKey, psiClass);
+      result = PsiClassUtil.hasSuperClass(psiClass) && "CALL".equalsIgnoreCase(configProperty);
+    } else {
+      result = declaredAnnotationValue;
+    }
+    return result;
+  }
 }
