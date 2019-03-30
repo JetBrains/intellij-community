@@ -55,8 +55,8 @@ public final class DefaultPyPathFilter implements PyPathFilter {
     Optional<PyCallExpression> call = getAncestorByBackwardPath(expr, PyCallExpression.class, PyArgumentList.class);
 
     return call
-      .map(c -> c.getCallee() != null && DEFAULT_FUNCTIONS_TO_CHECK.contains(c.getCallee().getName()) || c.getCallee().getName() != null && FUNCTION_NAME_PATTERN.matcher(
-        c.getCallee().getName()).matches())
+      .map(c -> c.getCallee() != null && DEFAULT_FUNCTIONS_TO_CHECK.contains(c.getCallee().getName()) || (c.getCallee().getName() != null && FUNCTION_NAME_PATTERN.matcher(
+        c.getCallee().getName()).matches()))
       .orElse(false);
   }
 
