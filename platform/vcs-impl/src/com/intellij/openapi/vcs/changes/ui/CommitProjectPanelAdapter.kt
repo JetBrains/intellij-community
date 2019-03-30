@@ -15,7 +15,7 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.io.File
 import javax.swing.JComponent
 
-internal open class CommitProjectPanelAdapter(private val handler: SingleChangeListCommitWorkflowHandler) : CheckinProjectPanel {
+internal open class CommitProjectPanelAdapter(private val handler: AbstractCommitWorkflowHandler<*, *>) : CheckinProjectPanel {
   private val workflow get() = handler.workflow
   private val ui get() = handler.ui
   private val vcsManager get() = ProjectLevelVcsManager.getInstance(workflow.project)
