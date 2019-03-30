@@ -17,7 +17,7 @@ import kotlin.math.max
 
 internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile, pathsEncoder: VcsLogIndexer.PathsEncoder) :
   GitDetailsCollector<GitCompressedRecord, GitCompressedDetails>(project, root, CompressedRecordBuilder(root, pathsEncoder)) {
-  
+
   override fun createCommit(records: List<GitCompressedRecord>,
                             factory: VcsLogObjectsFactory,
                             renameLimit: GitCommitRequirements.DiffRenameLimit): GitCompressedDetails {
@@ -34,21 +34,9 @@ internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile
     return GitCompressedDetails(metadata, records.map { it.changes }, records.map { it.renames }, hasRenames)
   }
 
-  override fun createRecordsCollector(preserveOrder: Boolean,
-                                      consumer: (List<GitCompressedRecord>) -> Unit): GitLogRecordCollector<GitCompressedRecord> {
-    return if (preserveOrder)
-      object : GitLogRecordCollector<GitCompressedRecord>(project, root, consumer) {
-        override fun createEmptyCopy(r: GitCompressedRecord): GitCompressedRecord =
-          GitCompressedRecord(r.options, TIntObjectHashMap(), TIntIntHashMap(), 0, r.isSupportsRawBody)
-      }
-    else
-      object : GitLogUnorderedRecordCollector<GitCompressedRecord>(project, root, consumer) {
-        override fun getSize(r: GitCompressedRecord) = r.changes.size() + r.renames.size()
-        override fun createEmptyCopy(r: GitCompressedRecord): GitCompressedRecord =
-          GitCompressedRecord(r.options, TIntObjectHashMap(), TIntIntHashMap(), 0, r.isSupportsRawBody)
-      }
+  override fun createRecordsCollector(consumer: (List<GitCompressedRecord>) -> Unit): GitLogRecordCollector<GitCompressedRecord> {
+    return GitLogUnorderedRecordCollector(project, root, consumer)
   }
-
 }
 
 internal class CompressedRecordBuilder(private val root: VirtualFile,

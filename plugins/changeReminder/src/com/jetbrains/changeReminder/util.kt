@@ -47,8 +47,7 @@ fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Coll
 
 fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit) {
   val requirements = GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES,
-                                           diffInMergeCommits = DiffInMergeCommits.NO_DIFF,
-                                           preserveOrder = false)
+                                           diffInMergeCommits = DiffInMergeCommits.NO_DIFF)
   GitLogUtil.readFullDetailsForHashes(project, root, hashes.toList(), requirements, Consumer<GitCommit> {
     commitConsumer(it)
   })

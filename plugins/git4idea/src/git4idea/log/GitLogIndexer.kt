@@ -33,7 +33,7 @@ class GitLogIndexer(private val project: Project,
     }
 
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
-                                             DiffInMergeCommits.DIFF_TO_PARENTS, false)
+                                             DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
   }
@@ -50,7 +50,7 @@ class GitLogIndexer(private val project: Project,
 
     val renameLimit = if (fast) DiffRenameLimit.REGISTRY else DiffRenameLimit.INFINITY
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), renameLimit,
-                                             DiffInMergeCommits.DIFF_TO_PARENTS, false)
+                                             DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, fast, commitConsumer)
   }
 
