@@ -134,7 +134,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   }
 
   private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
-    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
+    final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
     final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
 
@@ -194,5 +194,17 @@ public class ToStringProcessor extends AbstractClassProcessor {
       }
     }
     return LombokPsiElementUsage.NONE;
+  }
+
+  private boolean readCallSuperAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    final boolean result;
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
+    if (null == declaredAnnotationValue) {
+      final String configProperty = configDiscovery.getStringLombokConfigProperty(ConfigKey.TOSTRING_CALL_SUPER, psiClass);
+      result = PsiClassUtil.hasSuperClass(psiClass) && "CALL".equalsIgnoreCase(configProperty);
+    } else {
+      result = declaredAnnotationValue;
+    }
+    return result;
   }
 }

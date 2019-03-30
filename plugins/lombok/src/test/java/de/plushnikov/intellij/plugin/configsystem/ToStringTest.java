@@ -35,4 +35,16 @@ public class ToStringTest extends AbstractLombokConfigSystemTestCase {
   public void testIncludeFieldNames$AnnotationOverwriteTest() throws IOException {
     doTest();
   }
+
+  public void testCallSuper$AnnotationOverwriteTest() throws IOException {
+    doTest();
+  }
+
+  public void testCallSuper$SomeTestWithSuper() throws IOException {
+    doTest();
+  }
+
+  public void testCallSuper$SomeTestWithoutSuper() throws IOException {
+    doTest();
+  }
 }

@@ -24,6 +24,7 @@ import java.util.HashSet;
 public class LombokConfigCompletionContributor extends CompletionContributor {
 
   private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey();
+  private static final String LOMBOK_TOSTRING_CALL_SUPER = ConfigKey.TOSTRING_CALL_SUPER.getConfigKey();
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = new HashSet<>(Arrays.asList(
@@ -58,7 +59,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     final Collection<String> otherOptions = new HashSet<>(Arrays.asList(
       ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.LOG_FIELDNAME.getConfigKey(),
       ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(),
-      ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey()));
+      ConfigKey.FIELD_NAME_CONSTANTS_TYPENAME.getConfigKey(), ConfigKey.TOSTRING_CALL_SUPER.getConfigKey()));
 
     final Collection<String> allOptions = new HashSet<>(booleanOptions);
     allOptions.addAll(flagUsageOptions);
@@ -81,7 +82,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
             } else if (flagUsageAllowable.contains(configPropertyKey)) {
               resultSet.addElement(LookupElementBuilder.create("ALLOW"));
               resultSet.addElement(LookupElementBuilder.create("WARNING"));
-            } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey)) {
+            } else if (LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER.equals(configPropertyKey) || LOMBOK_TOSTRING_CALL_SUPER.equals(configPropertyKey) ) {
               resultSet.addElement(LookupElementBuilder.create("CALL"));
               resultSet.addElement(LookupElementBuilder.create("SKIP"));
               resultSet.addElement(LookupElementBuilder.create("WARN"));
