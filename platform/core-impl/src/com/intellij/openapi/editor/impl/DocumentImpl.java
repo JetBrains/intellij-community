@@ -53,6 +53,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -60,8 +61,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
   private static final int STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT = 1000;
 
-  private final LockFreeCOWSortedArray<DocumentListener> myDocumentListeners =
-    new LockFreeCOWSortedArray<>(PrioritizedDocumentListener.COMPARATOR, DocumentListener.ARRAY_FACTORY);
+  private final LockFreeCOWSortedArray<DocumentListenerDisposable> myDocumentListeners =
+      new LockFreeCOWSortedArray<>(DocumentListenerDisposable.COMPARATOR, DocumentListenerDisposable.ARRAY_FACTORY);
   private final List<DocumentBulkUpdateListener> myBulkDocumentInternalListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<>(this);
   private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<>(this);
@@ -596,9 +597,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void fireMoveText(int start, int end, int newBase) {
-    for (DocumentListener listener : getListeners()) {
-      if (listener instanceof PrioritizedInternalDocumentListener) {
-        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(this, start, end, newBase);
+    for (DocumentListenerDisposable listenerDisposable : getListeners()) {
+      if (listenerDisposable.myListener instanceof PrioritizedInternalDocumentListener) {
+        ((PrioritizedInternalDocumentListener)listenerDisposable.myListener).moveTextHappened(this, start, end, newBase);
       }
     }
   }
@@ -847,10 +848,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     getLineSet(); // initialize line set to track changed lines
 
     if (!ShutDownTracker.isShutdownHookRunning()) {
-      DocumentListener[] listeners = getListeners();
-      for (int i = listeners.length - 1; i >= 0; i--) {
+      DocumentListenerDisposable[] listenerDisposables = getListeners();
+      for (int i = listenerDisposables.length - 1; i >= 0; i--) {
         try {
-          listeners[i].beforeDocumentChange(event);
+          listenerDisposables[i].myListener.beforeDocumentChange(event);
         }
         catch (Throwable e) {
           exceptions.register(e);
@@ -885,10 +886,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       setModificationStamp(newModificationStamp);
 
       if (!ShutDownTracker.isShutdownHookRunning()) {
-        DocumentListener[] listeners = getListeners();
-        for (DocumentListener listener : listeners) {
+        DocumentListenerDisposable[] listeners = getListeners();
+        for (DocumentListenerDisposable listenerDisposable : listeners) {
           try {
-            listener.documentChanged(event);
+            listenerDisposable.myListener.documentChanged(event);
           }
           catch (Throwable e) {
             exceptions.register(e);
@@ -942,39 +943,82 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
-    if (ArrayUtil.contains(listener, getListeners())) {
+    if (findListenerDisposable(listener) != null) {
       LOG.error("Already registered: " + listener);
     }
-    myDocumentListeners.add(listener);
+    myDocumentListeners.add(new DocumentListenerDisposable(listener));
   }
 
   @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
-    addDocumentListener(listener);
-    Disposer.register(parentDisposable, new DocumentListenerDisposable(myDocumentListeners, listener));
+  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
+    if (findListenerDisposable(listener) != null) {
+      LOG.error("Already registered: " + listener);
+    }
+    DocumentListenerDisposable disposable = new DocumentListenerDisposable(listener, myDocumentListeners);
+    myDocumentListeners.add(disposable);
+    Disposer.register(parentDisposable, disposable);
   }
 
-  // this contortion is for avoiding document leak when the listener is leaked
-  private static class DocumentListenerDisposable implements Disposable {
-    @NotNull private final LockFreeCOWSortedArray<? super DocumentListener> myList;
-    @NotNull private final DocumentListener myListener;
+  @Nullable
+  private DocumentListenerDisposable findListenerDisposable(@NotNull DocumentListener listener) {
+    DocumentListenerDisposable[] listenerDisposables = getListeners();
+    for (DocumentListenerDisposable disposable : listenerDisposables) {
+      if (disposable.myListener.equals(listener)) {
+        return disposable;
+      }
+    }
+    return null;
+  }
 
-    DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<? super DocumentListener> list, @NotNull DocumentListener listener) {
-      myList = list;
+  // This contortion is for avoiding listener leaks.
+  private static class DocumentListenerDisposable implements Disposable {
+    private static final DocumentListenerDisposable[] EMPTY_ARRAY = {};
+    private static final ArrayFactory<DocumentListenerDisposable> ARRAY_FACTORY =
+        count -> count == 0 ? EMPTY_ARRAY : new DocumentListenerDisposable[count];
+    private static final Comparator<DocumentListenerDisposable> COMPARATOR =
+        (d1, d2) -> PrioritizedDocumentListener.COMPARATOR.compare(d1.myListener, d2.myListener);
+
+    @NotNull private final DocumentListener myListener;
+    @Nullable private LockFreeCOWSortedArray<DocumentListenerDisposable> myContainer;
+
+    DocumentListenerDisposable(@NotNull DocumentListener listener) {
+      this(listener, null);
+    }
+
+    DocumentListenerDisposable(@NotNull DocumentListener listener, @Nullable LockFreeCOWSortedArray<DocumentListenerDisposable> container) {
       myListener = listener;
+      myContainer = container;
     }
 
     @Override
     public void dispose() {
-      myList.remove(myListener);
+      if (myContainer != null) {
+        myContainer.remove(this);
+      }
+    }
+
+    public  void disposeWithoutRemoval() {
+      if (myContainer != null) {
+        myContainer = null;
+        Disposer.dispose(this);
+      }
     }
   }
 
   @Override
   public void removeDocumentListener(@NotNull DocumentListener listener) {
-    boolean success = myDocumentListeners.remove(listener);
-    if (!success) {
-      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + Arrays.toString(getListeners()));
+    while (true) {
+      DocumentListenerDisposable listenerDisposable = findListenerDisposable(listener);
+      if (listenerDisposable == null) {
+        LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + Arrays.toString(getListeners()));
+      }
+      else if (myDocumentListeners.remove(listenerDisposable)) {
+        listenerDisposable.disposeWithoutRemoval();
+      }
+      else {
+        continue; // The disposable wrapper was removed by another thread, try to find another wrapper for an equal listener.
+      }
+      break;
     }
   }
 
@@ -1026,7 +1070,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @NotNull
-  private DocumentListener[] getListeners() {
+  private DocumentListenerDisposable[] getListeners() {
     return myDocumentListeners.getArray();
   }
 
