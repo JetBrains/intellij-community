@@ -64,8 +64,8 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
         commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
       }
-      val recordCollector = createRecordsCollector(requirements.preserveOrder, consumer)
-
+      
+      val recordCollector = createRecordsCollector(consumer)
       readRecordsFromHandler(handler, recordCollector, *commandParameters)
       recordCollector.finish()
     }
@@ -97,7 +97,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     sw.report()
   }
 
-  protected abstract fun createRecordsCollector(preserveOrder: Boolean, consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
+  protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
 
   protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory,
                                       renameLimit: GitCommitRequirements.DiffRenameLimit): C
@@ -121,16 +121,9 @@ internal class GitFullDetailsCollector(project: Project, root: VirtualFile,
     )
   }
 
-  override fun createRecordsCollector(preserveOrder: Boolean,
-                                      consumer: (List<GitLogFullRecord>) -> Unit): GitLogRecordCollector<GitLogFullRecord> {
-    return if (preserveOrder)
-      object : GitLogRecordCollector<GitLogFullRecord>(project, root, consumer) {
-        override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
-      }
-    else
-      object : GitLogUnorderedRecordCollector<GitLogFullRecord>(project, root, consumer) {
-        override fun getSize(r: GitLogFullRecord) = r.statusInfos.size
-        override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
-      }
+  override fun createRecordsCollector(consumer: (List<GitLogFullRecord>) -> Unit): GitLogRecordCollector<GitLogFullRecord> {
+    return object : GitLogRecordCollector<GitLogFullRecord>(project, root, consumer) {
+      override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
+    }
   }
 }
