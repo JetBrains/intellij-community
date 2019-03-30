@@ -516,7 +516,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @Deprecated
   @NotNull
   public Set<? extends AbstractVcs> getAffectedVcses() {
-    return isDefaultCommitEnabled() ? getWorkflowVcses() : emptySet();
+    return isDefaultCommitEnabled() ? myWorkflow.getVcses() : emptySet();
   }
 
   public boolean hasDiffs() {
@@ -703,11 +703,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   private boolean isDefaultCommitEnabled() {
     return myWorkflow.isDefaultCommitEnabled();
-  }
-
-  @NotNull
-  private Set<? extends AbstractVcs<?>> getWorkflowVcses() {
-    return myWorkflow.getAffectedVcses();
   }
 
   @NotNull
