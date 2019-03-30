@@ -18,7 +18,7 @@ public class PythonPathReferenceProvider extends PsiReferenceProvider {
   public static final String FILE_SCHEME = "file://";
   // Cache to not count every time.
   public static final int FILE_SCHEME_LENGTH = FILE_SCHEME.length();
-  public static final Pattern WIN_DRIVE_LETTER_PATTERN = Pattern.compile("^[a-z]:[/\\\\\\\\]", Pattern.CASE_INSENSITIVE);
+  public static final Pattern WIN_DRIVE_LETTER_PATTERN = Pattern.compile("^[a-z]:[/\\\\]", Pattern.CASE_INSENSITIVE);
 
   @NotNull
   @Override
