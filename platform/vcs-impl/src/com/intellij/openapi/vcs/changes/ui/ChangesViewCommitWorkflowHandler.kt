@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 
@@ -12,12 +13,15 @@ class ChangesViewCommitWorkflowHandler(
 
   private val changeListManager = ChangeListManager.getInstance(project)
 
+  override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
+
   init {
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
 
     ui.addExecutorListener(this, this)
+    ui.addDataProvider(createDataProvider())
   }
 
   override fun vcsesChanged() {

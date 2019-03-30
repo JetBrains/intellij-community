@@ -2,19 +2,24 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
 
-interface CommitWorkflowUi : Disposable {
+interface CommitWorkflowUi : DataProvider, Disposable {
   val commitMessageUi: CommitMessageUi
 
   var defaultCommitActionName: String
 
   fun activate(): Boolean
 
+  fun addDataProvider(provider: DataProvider)
+
   fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable)
+
+  fun refreshData()
 
   fun getDisplayedChanges(): List<Change>
   fun getIncludedChanges(): List<Change>

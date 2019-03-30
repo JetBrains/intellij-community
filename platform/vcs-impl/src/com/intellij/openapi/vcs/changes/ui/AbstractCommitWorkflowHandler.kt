@@ -2,11 +2,15 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
@@ -31,11 +35,22 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected val project get() = workflow.project
   private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
+  protected abstract val commitPanel: CheckinProjectPanel
+
   protected fun getIncludedChanges() = ui.getIncludedChanges()
   protected fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
+  internal fun isCommitEmpty(): Boolean = getIncludedChanges().isEmpty() && getIncludedUnversionedFiles().isEmpty()
 
   protected fun getCommitMessage() = ui.commitMessageUi.text
   protected fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
+
+  protected fun createDataProvider() = DataProvider { dataId ->
+    when {
+      COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+      Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
+      else -> null
+    }
+  }
 
   override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
