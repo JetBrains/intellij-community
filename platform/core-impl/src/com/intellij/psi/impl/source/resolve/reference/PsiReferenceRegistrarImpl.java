@@ -111,8 +111,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     myBindingsMap.get(scope).unregisterProvider(provider);
   }
 
-  public void unregisterReferenceProvider(@NotNull Class scope, @NotNull Predicate<PsiReferenceProvider> pred) {
-    myBindingsMap.get(scope).unregisterProvider(pred);
+  @NotNull
+  public List<ProviderBinding.ProviderInfo<ElementPattern>> unregisterReferenceProvider(@NotNull Class scope, @NotNull Predicate<PsiReferenceProvider> pred) {
+    return myBindingsMap.get(scope).unregisterProvider(pred);
   }
 
   private void registerNamedReferenceProvider(@NotNull String[] names,

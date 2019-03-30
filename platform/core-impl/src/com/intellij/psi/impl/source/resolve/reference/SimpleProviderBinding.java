@@ -51,11 +51,17 @@ class SimpleProviderBinding implements ProviderBinding {
     }
   }
 
-  public void unregisterProvider(@NotNull final Predicate<PsiReferenceProvider> pred) {
+  @NotNull
+  public List<ProviderInfo<ElementPattern>> unregisterProvider(@NotNull final Predicate<PsiReferenceProvider> pred) {
+    List<ProviderInfo<ElementPattern>> res = new ArrayList<>();
+
     for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(myProviderPairs)) {
       if (pred.test(trinity.provider)) {
         myProviderPairs.remove(trinity);
+        res.add(trinity);
       }
     }
+
+    return res;
   }
 }
