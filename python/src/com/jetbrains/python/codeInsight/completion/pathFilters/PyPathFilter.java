@@ -5,5 +5,8 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.function.Predicate;
 
+/**
+ * @author Artem.Malykh
+ */
 public interface PyPathFilter extends Predicate<PyStringLiteralExpression> {
 }

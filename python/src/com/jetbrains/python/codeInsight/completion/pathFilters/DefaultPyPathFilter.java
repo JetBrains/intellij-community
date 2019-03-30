@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
  *
  * 2. Paths which contain file separator.
  * Relative paths are resolved against current folder and project root.
+ *
+ * @author Artem.Malykh
  */
 public final class DefaultPyPathFilter implements PyPathFilter {
   private static final Pattern

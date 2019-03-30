@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
+/**
+ * @author Artem.Malykh
+ */
 public class PythonPathReferenceProvider extends PsiReferenceProvider {
   public static final String FILE_SCHEME = "file://";
   // Cache to not count every time.

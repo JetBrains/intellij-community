@@ -12,6 +12,9 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Artem.Malykh
+ */
 public class PyStringPathReferenceContributor extends PsiReferenceContributor {
   public static final ExtensionPointName<PyPathFilter> EP = new ExtensionPointName<>("Pythonid.stringPathFilter");
   private final PyPathFilter myFilter;

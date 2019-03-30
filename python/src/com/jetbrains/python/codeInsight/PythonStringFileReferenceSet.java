@@ -19,6 +19,9 @@ import java.util.List;
 import static com.jetbrains.python.codeInsight.PythonPathReferenceProvider.FILE_SCHEME;
 import static com.jetbrains.python.codeInsight.PythonPathReferenceProvider.FILE_SCHEME_LENGTH;
 
+/**
+ * @author Artem.Malykh
+ */
 public class PythonStringFileReferenceSet extends FileReferenceSet {
   private final String myRootCheckedOutsideOfproject;
 

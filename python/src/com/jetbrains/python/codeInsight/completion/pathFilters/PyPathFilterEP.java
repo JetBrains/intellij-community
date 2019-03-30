@@ -3,5 +3,8 @@ package com.jetbrains.python.codeInsight.completion.pathFilters;
 
 import com.intellij.lang.LanguageExtensionPoint;
 
+/**
+ * @author Artem.Malykh
+ */
 public class PyPathFilterEP extends LanguageExtensionPoint<PyPathFilter> {
 }
