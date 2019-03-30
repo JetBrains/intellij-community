@@ -61,7 +61,7 @@ intellij {
 patchPluginXml {
   version artifactVersion
   // use open until build for last release and EAP-Build
-  if (isEAP || (ideaVersion == lastReleaseVersion) || (ideaVersion == preLastReleaseVersion)) {
+  if (isEAP || (ideaVersion == lastReleaseVersion)) {
     untilBuild ""
   }
 
