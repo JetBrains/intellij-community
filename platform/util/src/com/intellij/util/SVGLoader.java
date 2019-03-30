@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.CursorManager;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.dom.AbstractDocument;
@@ -29,7 +30,10 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -246,6 +250,14 @@ public class SVGLoader {
   public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
+  }
+
+  // ideally Apache Batik should be fixed, because we don't use cursors at all
+  public static void prepareBatikInAwt() {
+    // force initialization to call WToolkit.createCustomCursor in EDT thread,
+    // otherwise when our SVG loading is performed in a pooled thread, it can lead to deadlock
+    // https://youtrack.jetbrains.com/issue/IDEA-209987
+    CursorManager.DEFAULT_CURSOR.getType();
   }
 
   private BufferedImage createImage() throws TranscoderException {
