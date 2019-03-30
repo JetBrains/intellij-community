@@ -22,11 +22,14 @@ class ChangesViewCommitWorkflowHandler(
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
+    ui.addInclusionListener(this, this)
   }
 
   override fun vcsesChanged() {
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
+
+    initCommitHandlers()
   }
 
   fun activate(): Boolean = ui.activate()

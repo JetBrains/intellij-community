@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.PairConsumer
@@ -22,8 +21,7 @@ class SingleChangeListCommitWorkflowHandler(
   override val ui: SingleChangeListCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
-    SingleChangeListCommitWorkflowUi.ChangeListListener,
-    InclusionListener {
+    SingleChangeListCommitWorkflowUi.ChangeListListener {
 
   override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
     override fun setCommitMessage(currentDescription: String?) {
@@ -37,7 +35,6 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
 
-  private val commitHandlers get() = workflow.commitHandlers
   private val commitMessagePolicy get() = workflow.commitMessagePolicy
   private val commitOptions get() = workflow.commitOptions
 
@@ -55,7 +52,7 @@ class SingleChangeListCommitWorkflowHandler(
   override fun vcsesChanged() = Unit
 
   fun activate(): Boolean {
-    workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
+    initCommitHandlers()
 
     ui.addInclusionListener(this, this)
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
@@ -71,8 +68,6 @@ class SingleChangeListCommitWorkflowHandler(
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
-
-  override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
 
   override fun changeListChanged() {
     updateCommitMessage()

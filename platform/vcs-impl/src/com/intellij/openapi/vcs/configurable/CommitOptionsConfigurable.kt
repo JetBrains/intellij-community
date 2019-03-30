@@ -8,8 +8,8 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.changes.ui.CommitOptionsPanel.Companion.verticalPanel
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.changes.ui.getDefaultCommitActionName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBPanel

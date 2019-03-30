@@ -5,12 +5,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
+import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.NullableFunction
@@ -77,5 +81,18 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     FileDocumentManager.getInstance().saveAllDocuments()
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+  }
+
+  companion object {
+    @JvmStatic
+    fun getCommitHandlerFactories(project: Project): List<BaseCheckinHandlerFactory> =
+      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(ProjectLevelVcsManager.getInstance(project).allActiveVcss)
+
+    // TODO Seems, it is better to get handlers/factories for workflow.vcses, but not allActiveVcss
+    @JvmStatic
+    fun getCommitHandlers(commitPanel: CheckinProjectPanel, commitContext: CommitContext) =
+      getCommitHandlerFactories(commitPanel.project)
+        .map { it.createHandler(commitPanel, commitContext) }
+        .filter { it != CheckinHandler.DUMMY }
   }
 }

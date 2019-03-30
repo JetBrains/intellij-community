@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
@@ -27,6 +28,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   CommitWorkflowHandler,
   CommitWorkflowListener,
   CommitExecutorListener,
+  InclusionListener,
   Disposable {
 
   abstract val workflow: W
@@ -44,6 +46,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun getCommitMessage() = ui.commitMessageUi.text
   protected fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
+  protected val commitHandlers get() = workflow.commitHandlers
+
   protected fun createDataProvider() = DataProvider { dataId ->
     when {
       COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
@@ -51,6 +55,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       else -> null
     }
   }
+
+  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
+
+  override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
 
   override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
