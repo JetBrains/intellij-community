@@ -1548,11 +1548,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     VirtualFile file = content.getVirtualFile();
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
 
-    if (project != null && IndexLibraryManager.Companion.getInstance(project).isNotImportedLibrary(file)) {
-      return;
-    }
-
-
     try {
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
       // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content

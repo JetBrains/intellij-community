@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
 
   @Override
   public List<Runnable> collectScanRootRunnables(@NotNull ContentIterator processor, ProgressIndicator indicator) {
-    return ReadAction.compute(()-> {
+    return ReadAction.compute(() -> {
       if (myProject.isDisposed()) {
         return Collections.emptyList();
       }
@@ -44,6 +45,9 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
 
       tasks.add(() -> myProjectFileIndex.iterateContent(processor, file -> !file.isDirectory() || visitedRoots.add(file)));
+
+      VirtualFileFilter filter = file -> !IndexLibraryManager.Companion.getInstance(myProject)
+        .isUnusedLibrary(file);
 
       Set<VirtualFile> contributedRoots = new LinkedHashSet<>();
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
@@ -60,7 +64,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
           tasks.add(() -> {
             if (myProject.isDisposed() || !root.isValid()) return;
-            FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, null);
+            FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, null, filter);
           });
         }
       }
@@ -76,7 +80,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
             if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
               tasks.add(() -> {
                 if (myProject.isDisposed() || !root.isValid()) return;
-                FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
+                FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex, filter);
               });
             }
           }
@@ -98,7 +102,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
                   if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
                     tasks.add(() -> {
                       if (myProject.isDisposed() || module.isDisposed() || !root.isValid()) return;
-                      FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
+                      FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex, filter);
                     });
                   }
                 }
