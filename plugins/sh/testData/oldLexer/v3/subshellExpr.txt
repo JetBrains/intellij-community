@@ -1,7 +1,7 @@
 ` ('`')
 word ('dd')
 WHITE_SPACE (' ')
-if ('if')
+word ('if')
 = ('=')
 word ('a')
 ` ('`')

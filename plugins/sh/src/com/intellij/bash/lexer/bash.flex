@@ -104,16 +104,19 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     "?"                           { return ARITH_QMARK; }
     ":"                           { return ARITH_COLON; }
 
-    "+"                           { return ARITH_PLUS; }
     "++"                          { return ARITH_PLUS_PLUS; }
-    "-"                           { return ARITH_MINUS; }
+    "+"                           { return ARITH_PLUS; }
     "--"                          { return ARITH_MINUS_MINUS; }
+    "-"                           { return ARITH_MINUS; }
     "=="                          { return ARITH_EQ; }
 
     "**"                          { return EXPONENT; }
-    "*"                           { return MULT; }
     "/"                           { return DIV; }
+    "*"                           { return MULT; }
     "%"                           { return MOD; }
+    "<<"                          { return SHIFT_LEFT; }
+    "<"                           { return LT; }
+    ">"                           { return GT; }
 
     {ArithWord}                   { return WORD; }
 
@@ -164,9 +167,8 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
 
     "case"                        { pushState(CASE_CLAUSE); return CASE; }
     "esac"                        { return ESAC; }
-    "!"                           { return BANG; }
-    "do"                          { return DO; }
     "done"                        { return DONE; }
+    "do"                          { return DO; }
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
     "fi"                          { return FI; }
@@ -182,11 +184,11 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
 
     "time"                        { return TIME; }
 
+    "&&"                          { return AND_AND; }
     "&"                           { return AMP; }
     ";"                           { return SEMI; }
     ","                           { return COMMA; }
 
-    "&&"                          { return AND_AND; }
     "||"                          { return OR_OR; }
 
     "="                           { return EQ; }
@@ -198,20 +200,22 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     "$["                          { inOldArithmeticExpansion = true; yybegin(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
     " ]"                          { if (inOldArithmeticExpansion) { yypushback(1); return WHITESPACE; } else return EXPR_CONDITIONAL_RIGHT; }
     "[ "                          { return EXPR_CONDITIONAL_LEFT; }
-    "&&"                          { return AND_AND; }
     "||"                          { return OR_OR; }
+    "${"                          {pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "$"                           { return DOLLAR; }
     "("                           { return LEFT_PAREN; }
     ")"                           { return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { if (inOldArithmeticExpansion) { yybegin(YYINITIAL); return ARITH_SQUARE_RIGHT; } else return RIGHT_SQUARE; }
-    ">"                           { return GT; }
-    "<"                           { return LT; }
+    "]"                           { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  yybegin(YYINITIAL); return ARITH_SQUARE_RIGHT; }
+                                  else return RIGHT_SQUARE; }
     ">="                          { return GE; }
     "<="                          { return LE; }
     "!="                          { return ARITH_NE; }
+    "!"                           { return BANG; }
+    ">"                           { return GT; }
+    "<"                           { return LT; }
 
 
     "<<-" |
@@ -240,9 +244,6 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
   "&>"                            { return REDIRECT_AMP_GREATER; }
 
   "<<<"                           { return REDIRECT_HERE_STRING; }
-
-  "${"                            {pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-
 
     {IntegerLiteral}              { return INT; }
     {HexIntegerLiteral}           { return HEX; }
