@@ -720,7 +720,6 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
-    <extensionPoint qualifiedName="Pythonid.pythonSdkTypeComparator" interface="com.jetbrains.python.sdk.PySdkTypeComparator"/>
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
@@ -882,11 +881,6 @@
       <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <action id="InstallMiniconda" class="com.jetbrains.python.actions.InstallCondaAction"
-            text="Install Miniconda 3...">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
 
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             text="Generate Python Spellchecker Dictionaries" internal="true">

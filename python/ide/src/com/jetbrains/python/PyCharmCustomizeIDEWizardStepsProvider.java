@@ -34,6 +34,8 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
 
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
 
-    steps.add(new PyCharmCustomizeCondaSetupStep());
+    if (PythonMinicondaLocator.isInstallerExists()) {
+      steps.add(new PyCharmCustomizeCondaSetupStep());
+    }
   }
 }

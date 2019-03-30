@@ -83,7 +83,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
 
   @Override
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
-    return new PyCharmLinuxDistributionCustomizer() {
+    return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
         iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"

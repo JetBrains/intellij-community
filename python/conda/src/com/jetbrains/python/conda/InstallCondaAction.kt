@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.actions
+package com.jetbrains.python.conda
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.actions.InstallCondaActionImpl
 import icons.PythonIcons.Python.Anaconda
 
 /**

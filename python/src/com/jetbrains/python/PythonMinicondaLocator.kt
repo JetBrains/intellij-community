@@ -19,8 +19,9 @@ object PythonMinicondaLocator {
   fun getMinicondaInstallerPath() = getMinicondaInstallerFile()?.absolutePath
 
   /**
-   * @return exists miniconda3 installer path in installation folder or not
+   * @return exists miniconda3 installer in distribution or not
    */
+  @JvmStatic
   fun isInstallerExists() = getMinicondaInstallerFile() != null
 
   private fun getMinicondaInstallerFolder() = File(PathManager.getHomePath(), "minicondaInstaller")

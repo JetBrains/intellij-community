@@ -31,9 +31,5 @@ class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer
         include(name: "skeletons-win*.zip")
       }
     }
-
-    context.ant.mkdir(dir: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
-    context.ant.get(src: "https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe",
-                    dest: "$targetDirectory/$PyCharmBuildOptions.minicondaInstallerFolderName")
   }
 }
