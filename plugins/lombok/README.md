@@ -87,7 +87,7 @@ In your `build.gradle`:
 ```groovy
 // 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.18.2"
+compile "org.projectlombok:lombok:1.18.6"
 ```
 
 ##### Maven
@@ -97,7 +97,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.18.2</version>
+		<version>1.18.6</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -106,7 +106,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.18.2" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.18.6" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
@@ -124,10 +124,12 @@ Developed By
 [**@mplushnikov** Michail Plushnikov](https://github.com/mplushnikov)
 
 **Contributors**
-- [**@akozlova** Anna Kozlova](https://github.com/akozlova)
 - [**@adamarmistead** adamarmistead](https://github.com/adamarmistead)
+- [**@akozlova** Anna Kozlova](https://github.com/akozlova)
+- [**@alanachtenberg** Alan Achtenberg](https://github.com/alanachtenberg)
 - [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
 - [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
+- [**@jeromewaibel** Jérôme Waibel](https://github.com/jeromewaibel)
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
 - [**@Lekanich** Aleksandr Lekanich](https://github.com/Lekanich)
@@ -143,7 +145,6 @@ Developed By
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@yiftizur** Yiftach Tzur](https://github.com/yiftizur)
-- [**@alanachtenberg** Alan Achtenberg](https://github.com/alanachtenberg)
 
 Supporters
 --------
@@ -155,7 +156,7 @@ YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/j
 
 License
 -------
-Copyright (c) 2011-2018 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
+Copyright (c) 2011-2019 Michail Plushnikov. See the [LICENSE](./LICENSE) file for license rights and limitations (BSD).
 
 [badge-gitter-img]:       https://badges.gitter.im/mplushnikov/lombok-intellij-plugin.svg
 [badge-gitter]:           https://gitter.im/mplushnikov/lombok-intellij-plugin
