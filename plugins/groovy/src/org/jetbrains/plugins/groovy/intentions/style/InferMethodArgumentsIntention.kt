@@ -20,10 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.OperatorExpressionConstraint
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 
 /**
@@ -77,20 +74,14 @@ internal class InferMethodArgumentsIntention : Intention() {
         method.parameters[i].setType(typeIndex[i]?.type())
       }
     }
-    val resolveSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method)
+    val resolveSession = GroovyInferenceSession(typeIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method)
     collectOuterMethodCalls(method, resolveSession)
     collectInnerMethodCalls(method, resolveSession)
-    for (typeParam in method.typeParameters) {
-      if (!typeIndex.values.contains(typeParam)) {
-        val inferenceVariable = resolveSession.getInferenceVariable(resolveSession.substituteWithInferenceVariables(typeParam.type()))
-        inferenceVariable.instantiation = typeParam.type()
-      }
-    }
     return resolveSession
   }
 
   /**
-   * Searches for method calls in [method] body and tries to infer arguments for [typeIndex] parameters.
+   * Searches for method calls in [method] body and tries to infer parameter types.
    */
   private fun collectInnerMethodCalls(method: GrMethod,
                                       resolveSession: GroovyInferenceSession) {
@@ -120,7 +111,7 @@ internal class InferMethodArgumentsIntention : Intention() {
         val call = occurrence.parent
         if (call is GrCall) {
           val methodResult = call.advancedResolve() as GroovyMethodResult
-          resolveSession.initArgumentConstraints(methodResult.candidate?.argumentMapping)
+          resolveSession.addConstraint(MethodCallConstraint(null, methodResult, method.context ?: continue))
         }
       }
     }
