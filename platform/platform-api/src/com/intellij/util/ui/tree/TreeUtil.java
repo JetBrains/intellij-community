@@ -1074,18 +1074,37 @@ public final class TreeUtil {
   }
 
   public static int getNodeRowX(@NotNull JTree tree, int row) {
-    Method method = LazyRowX.METHOD;
-    if (method == null) return -1; // system error
+    if (LazyRowX.METHOD == null) return -1; // system error
     TreePath path = tree.getPathForRow(row);
     if (path == null) return -1; // path does not exist
     int depth = getNodeDepth(tree, path);
     if (depth < 0) return -1; // root is not visible
     try {
-      return (Integer)method.invoke(tree.getUI(), row, depth);
+      return (Integer)LazyRowX.METHOD.invoke(tree.getUI(), row, depth);
     }
     catch (Exception exception) {
       LOG.error(exception);
       return -1; // unexpected
+    }
+  }
+
+  private static final class LazyLocationInExpandControl {
+    static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
+  }
+
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null) return false; // system error
+    return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
+  }
+
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
+    try {
+      return (Boolean)LazyLocationInExpandControl.METHOD.invoke(tree.getUI(), path, x, y);
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return false; // unexpected
     }
   }
 

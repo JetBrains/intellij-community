@@ -173,7 +173,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
         while (path != null) {
           Rectangle bounds = cache.getBounds(path, buffer);
-          if (bounds == null) break;
+          if (bounds == null) break; // something goes wrong
           bounds.y += insets.top;
 
           int depth = TreeUtil.getNodeDepth(tree, path);
@@ -186,10 +186,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
           Color background = getBackground(tree, path, selected);
           if (background != null) {
             g.setColor(background);
-            g.fillRect(viewportX, insets.top + bounds.y, viewportWidth, bounds.height);
+            g.fillRect(viewportX, bounds.y, viewportWidth, bounds.height);
           }
           int offset = painter.getRendererOffset(control, depth, leaf);
-          painter.paint(g, insets.left, insets.top + bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
+          painter.paint(g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
@@ -239,12 +239,17 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();
-    if (tree == null || path == null || isLeaf(path.getLastPathComponent())) return false;
-    int depth = TreeUtil.getNodeDepth(tree, path);
-    Control.Painter painter = getPainter(tree);
+    if (tree == null) return false;
+    Rectangle bounds = getPathBounds(tree, path);
+    if (bounds == null) return false;
+    bounds.x = getPainter(tree).getControlOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
+    if (bounds.x < 0) return false; // does not paint an icon to expand or collapse path
     Insets insets = tree.getInsets();
-    if (insets != null) mouseX -= insets.left;
-    return painter.getControlOffset(control, depth, false) <= mouseX && mouseX < painter.getRendererOffset(control, depth, false);
+    bounds.x += insets.left;
+    bounds.y += (bounds.height - control.getHeight()) / 2;
+    bounds.width = control.getWidth();
+    bounds.height = control.getHeight();
+    return bounds.contains(mouseX, mouseY);
   }
 
   @Override
