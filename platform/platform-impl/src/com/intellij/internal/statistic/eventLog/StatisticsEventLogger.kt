@@ -22,12 +22,12 @@ interface StatisticsEventLogger {
 abstract class StatisticsEventLoggerProvider(val recorderId: String, val version: Int, val sendFrequencyMs: Long) {
   val logStatisticsService: EventLogStatisticsService = EventLogStatisticsService(recorderId)
 
-  abstract val logger: StatisticsEventLogger
+  open val logger: StatisticsEventLogger = createDefaultLogger()
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 
-  open fun createLogger(): StatisticsEventLogger {
+  private fun createDefaultLogger(): StatisticsEventLogger {
     if (!isRecordEnabled()) {
       return EmptyStatisticsEventLogger()
     }
