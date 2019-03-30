@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.experimental.FieldNameConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Updates fields of existing inner class type in class annotated by FieldNameConstants
@@ -40,7 +42,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);
           if (typeName.equals(psiClass.getName())) {
-            if (validate(psiAnnotation, psiClass, problemBuilder)) {
+            if (validate(psiAnnotation, parentClass, problemBuilder)) {
               List<? super PsiElement> result = new ArrayList<>();
               generatePsiElements(parentClass, psiClass, psiAnnotation, result);
               return result;
@@ -54,10 +56,14 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean asEnum = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "asEnum", false);
-    if (psiClass.isEnum() != asEnum) {
-      builder.addError("@FieldNameConstants inner type already exists, but asEnum=" + asEnum + " does not match existing type");
-      return false;
+    final String typeName = FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation);
+    Optional<PsiClass> innerClass = PsiClassUtil.getInnerClassInternByName(psiClass, typeName);
+    if (innerClass.isPresent()) {
+      final boolean asEnum = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "asEnum", false);
+      if (innerClass.get().isEnum() != asEnum) {
+        builder.addError("@FieldNameConstants inner type already exists, but asEnum=" + asEnum + " does not match existing type");
+        return false;
+      }
     }
     return true;
   }
