@@ -67,14 +67,15 @@ internal class InferMethodArgumentsIntention : Intention() {
    *
    * @return [GroovyInferenceSession] which can be used for substituting types
    */
-  private fun inferTypeArguments(typeIndex: HashMap<Int, PsiTypeParameter>,
+  private fun inferTypeArguments(typeIndex: Map<Int, PsiTypeParameter>,
                                  method: GrMethod): GroovyInferenceSession {
     for (i in method.parameters.indices) {
       if (method.parameters[i].typeElement == null) {
         method.parameters[i].setType(typeIndex[i]?.type())
       }
     }
-    val resolveSession = GroovyInferenceSession(typeIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method)
+    val resolveSession = GroovyInferenceSession(typeIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
+                                                propagateVariablesToNestedSessions = true)
     collectOuterMethodCalls(method, resolveSession)
     collectInnerMethodCalls(method, resolveSession)
     return resolveSession
@@ -121,17 +122,17 @@ internal class InferMethodArgumentsIntention : Intention() {
    * Collects all parameters without explicit type and generifies them.
    */
   private fun createTypeParameters(method: GrMethod,
-                                   elementFactory: GroovyPsiElementFactory): HashMap<Int, PsiTypeParameter> {
+                                   elementFactory: GroovyPsiElementFactory): Map<Int, PsiTypeParameter> {
     val typeIndex = HashMap<Int, PsiTypeParameter>()
     if (!method.hasTypeParameters()) {
       method.addAfter(elementFactory.createTypeParameterList(), method.firstChild)
     }
-    val params = method.typeParameterList
+    val params = method.typeParameterList ?: return emptyMap()
 
     for (i in method.parameters.indices) {
       if (method.parameters[i].typeElement == null) {
         val newTypeParameter = elementFactory.createTypeParameter(produceTypeParameterName(i), PsiClassType.EMPTY_ARRAY)
-        params?.add(newTypeParameter)
+        params.add(newTypeParameter)
         typeIndex[i] = newTypeParameter
       }
     }

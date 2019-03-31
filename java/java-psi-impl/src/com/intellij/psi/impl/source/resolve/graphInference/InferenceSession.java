@@ -1894,7 +1894,6 @@ public class InferenceSession {
 
   public final void propagateVariables(@NotNull InferenceSession from) {
     myInferenceVariables.addAll(from.getInferenceVariables());
-    myInferenceSubstitution = myInferenceSubstitution.putAll(from.myInferenceSubstitution);
     myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(from.getRestoreNameSubstitution());
   }
 

@@ -17,7 +17,8 @@ class GroovyInferenceSession(
   val contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
   val skipClosureBlock: Boolean = true,
-  private val expressionPredicates: Set<ExpressionPredicate> = emptySet()
+  private val expressionPredicates: Set<ExpressionPredicate> = emptySet(),
+  private val propagateVariablesToNestedSessions: Boolean = false
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
   private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
@@ -70,7 +71,9 @@ class GroovyInferenceSession(
                          context: PsiElement,
                          result: GroovyResolveResult,
                          f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = GroovyInferenceSession(params, siteSubstitutor, context, skipClosureBlock, expressionPredicates)
+    val nestedSession = GroovyInferenceSession(params, siteSubstitutor.putAll(
+      if (propagateVariablesToNestedSessions) inferenceSubstitution else PsiSubstitutor.EMPTY), context, skipClosureBlock, expressionPredicates,
+                                               propagateVariablesToNestedSessions)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession
