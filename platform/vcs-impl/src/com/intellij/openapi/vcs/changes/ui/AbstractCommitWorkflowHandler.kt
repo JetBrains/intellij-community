@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
@@ -12,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
+import com.intellij.util.PairConsumer
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
@@ -23,6 +26,8 @@ internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>> = empt
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
     ).fixUnderscoreMnemonic()
   )
+
+private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
   CommitWorkflowHandler,
@@ -47,6 +52,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun setCommitMessage(text: String?) = ui.commitMessageUi.setText(text)
 
   protected val commitHandlers get() = workflow.commitHandlers
+  protected val commitOptions get() = workflow.commitOptions
 
   protected fun createDataProvider() = DataProvider { dataId ->
     when {
@@ -57,6 +63,13 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   }
 
   protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, workflow.commitContext))
+
+  protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
+    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.additionalDataConsumer)
+    else emptyMap(),
+    getBeforeOptions(workflow.commitHandlers),
+    getAfterOptions(workflow.commitHandlers, this)
+  )
 
   override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
 
@@ -78,15 +91,57 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
 
-  protected open fun executeDefault(executor: CommitExecutor?) = Unit
+  private fun executeDefault(executor: CommitExecutor?) {
+    if (!addUnversionedFiles()) return
+    if (!checkEmptyCommitMessage()) return
+    if (!saveCommitOptions()) return
+    saveCommitMessage(true)
+
+    refreshChanges { doExecuteDefault(executor) }
+  }
 
   protected open fun executeCustom(executor: CommitExecutor, session: CommitSession) = Unit
+
+  protected abstract fun addUnversionedFiles(): Boolean
 
   protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
     workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
 
+  protected abstract fun doExecuteDefault(executor: CommitExecutor?)
+
   protected fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
+
+  protected fun saveCommitOptions() = try {
+    commitOptions.saveState()
+    true
+  }
+  catch (ex: InputException) {
+    ex.show()
+    false
+  }
+
+  protected abstract fun saveCommitMessage(success: Boolean)
+
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, additionalData: PairConsumer<Any, Any>) =
+    vcses.sortedWith(VCS_COMPARATOR)
+      .associateWith { it.checkinEnvironment?.createAdditionalOptionsPanel(commitPanel, additionalData) }
+      .filterValues { it != null }
+      .mapValues { it.value!! }
+
+  private fun getBeforeOptions(handlers: Collection<CheckinHandler>) = handlers.mapNotNull { it.beforeCheckinConfigurationPanel }
+
+  private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable) =
+    handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(parent) }
+
+  protected fun refreshChanges(callback: () -> Unit) =
+    ChangeListManager.getInstance(project).invokeAfterUpdate(
+      {
+        ui.refreshData()
+        callback()
+      },
+      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Commit", ModalityState.current()
+    )
 
   override fun dispose() = Unit
 }

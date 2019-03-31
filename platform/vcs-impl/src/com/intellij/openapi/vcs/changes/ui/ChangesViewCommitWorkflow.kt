@@ -11,6 +11,8 @@ import com.intellij.openapi.vcs.VcsListener
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
+  override val isDefaultCommitEnabled: Boolean get() = true
+
   init {
     val connection = project.messageBus.connect()
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
