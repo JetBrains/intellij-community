@@ -34,6 +34,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -147,13 +148,28 @@ public class HgHistoryUtil {
                                                    @NotNull VirtualFile root,
                                                    @NotNull VcsLogObjectsFactory factory,
                                                    @NotNull HgFileRevision revision) {
+    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    reportedChanges.add(getStatusInfo(revision));
+
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
-    List<Hash> parentsHashes = new SmartList<>();
-    for (HgRevisionNumber parent : parents) {
-      parentsHashes.add(factory.createHash(parent.getChangeset()));
+    for (HgRevisionNumber parent : parents.stream().skip(1).collect(Collectors.toList())) {
+      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
+        .baseRevision(parent).targetRevision(vcsRevisionNumber).build(project);
+      reportedChanges.add(convertHgChanges(status.executeInCurrentThread(root)));
     }
 
+    Hash hash = factory.createHash(vcsRevisionNumber.getChangeset());
+    List<Hash> parentsHashes = ContainerUtil.map(parents, p -> factory.createHash(p.getChangeset()));
+    long time = revision.getRevisionDate().getTime();
+    VcsUser author = factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail());
+    return new VcsChangesLazilyParsedDetails(project, hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author,
+                                             vcsRevisionNumber.getCommitMessage(), author,
+                                             time, reportedChanges, new HgChangesParser(vcsRevisionNumber));
+  }
+
+  @NotNull
+  private static List<VcsFileStatusInfo> getStatusInfo(@NotNull HgFileRevision revision) {
     List<VcsFileStatusInfo> firstParentChanges = new ArrayList<>();
     for (String file : revision.getModifiedFiles()) {
       firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MODIFICATION, file, null));
@@ -167,25 +183,7 @@ public class HgHistoryUtil {
     for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
       firstParentChanges.add(new VcsFileStatusInfo(Change.Type.MOVED, copiedFile.getKey(), copiedFile.getValue()));
     }
-
-    List<List<VcsFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
-    reportedChanges.add(firstParentChanges);
-
-    for (int index = 1; index < parents.size(); index++) {
-      HgRevisionNumber parent = parents.get(index);
-      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true).baseRevision(parent)
-        .targetRevision(vcsRevisionNumber).build(project);
-      Set<HgChange> hgChanges = status.executeInCurrentThread(root);
-
-      reportedChanges.add(convertHgChanges(hgChanges));
-    }
-
-    Hash hash = factory.createHash(vcsRevisionNumber.getChangeset());
-    long time = revision.getRevisionDate().getTime();
-    VcsUser author = factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail());
-    return new VcsChangesLazilyParsedDetails(project, hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author,
-                                             vcsRevisionNumber.getCommitMessage(), author,
-                                             time, reportedChanges, new HgChangesParser(vcsRevisionNumber));
+    return firstParentChanges;
   }
 
   @NotNull
@@ -316,7 +314,8 @@ public class HgHistoryUtil {
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<? super String, ? extends CommitInfo> converter, boolean silent) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter,
+                                                               boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
