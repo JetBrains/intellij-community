@@ -185,6 +185,8 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
     "time"                        { return TIME; }
 
+    {Filedescriptor}              { return FILEDESCRIPTOR; }
+
     "&&"                          { return AND_AND; }
     "&"                           { return AMP; }
     ";"                           { return SEMI; }
@@ -247,9 +249,6 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {IntegerLiteral}              { return INT; }
     {HexIntegerLiteral}           { return HEX; }
     {OctalIntegerLiteral}         { return OCTAL; }
-
-    {Filedescriptor}              { return FILEDESCRIPTOR; }
-
 
 //    {AssignListWord}              { return WORD; }
 
