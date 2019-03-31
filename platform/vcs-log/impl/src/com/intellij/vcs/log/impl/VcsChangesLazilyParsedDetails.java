@@ -42,7 +42,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
   private static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull private final ChangesParser myChangesParser;
-  @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
+  @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
   public VcsChangesLazilyParsedDetails(@NotNull Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
                                        @NotNull VirtualFile root,
@@ -115,6 +115,11 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   @Override
   public boolean hasRenames() {
     return true;
+  }
+
+  @NotNull
+  protected Changes getChangesHolder() {
+    return myChanges.get();
   }
 
   public interface Changes {

@@ -60,7 +60,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       case NO_RENAMES:
         return false;
       case REGISTRY:
-        Changes changes = myChanges.get();
+        Changes changes = getChangesHolder();
         int estimate =
           changes instanceof UnparsedChanges ?
           getRenameLimitEstimate(((UnparsedChanges)changes).getChangesOutput()) :
