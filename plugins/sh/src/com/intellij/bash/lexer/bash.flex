@@ -31,59 +31,60 @@ import com.intellij.lexer.FlexLexer;
 
 /***** Custom user code *****/
 
-InputCharacter = [^\r\n]
-LineTerminator = \r\n | \r | \n
-LineContinuation = "\\" {LineTerminator}
-WhiteSpace=[ \t\f]
-WhiteSpaceLineContinuation={WhiteSpace} {LineContinuation}*
+InputCharacter           = [^\r\n]
+LineTerminator           = \r\n | \r | \n
+LineContinuation         = "\\" {LineTerminator}
+WhiteSpace               = [ \t\f] {LineContinuation}*
+//WhiteSpaceLineContinuation={WhiteSpace}
 
-Shebang = "#!" {InputCharacter}* {LineTerminator}?
-Comment = "#"  {InputCharacter}*
+Shebang                  = "#!" {InputCharacter}* {LineTerminator}?
+Comment                  = "#"  {InputCharacter}*
 
-EscapedChar = "\\" [^\n]
-Quote       = "\""
+EscapedChar              = "\\" [^\n]
+Quote                    = \"
 
-SingleCharacter = [^\'] | {EscapedChar}
-UnescapedCharacter = [^\']
+//SingleCharacter = [^\'] | {EscapedChar}
+//UnescapedCharacter = [^\']
 
-RawString = "'"[^"'"]*"'"
+RawString                = '[^']*'
 
-WordFirst = [\p{Letter}||\p{Digit}||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
-WordAfter = {WordFirst} | [#!] // \[\]
+WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
+WordAfter                = {WordFirst} | [#!] // \[\]
+Word                     = {WordFirst}{WordAfter}*
 
-ArithWordFirst = [a-zA-Z_@?.:] | {EscapedChar} | {LineContinuation}
+
+//ParamExpansionWordFirst  = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
+//ParamExpansionWord       = {ParamExpansionWordFirst}+
+
+//AssignListWordFirst      = [[\p{Letter}]||[0-9_/@?.*:&%\^~,]] | {EscapedChar} | {LineContinuation}
+//AssignListWordAfter      =  {AssignListWordFirst} | [#!]
+//AssignListWord           = {AssignListWordFirst}{AssignListWordAfter}*
+
+ArithWordFirst           = [a-zA-Z_@?.:] | {EscapedChar} | {LineContinuation}
+ArithWordAfter           = {ArithWordFirst} | [0-9#!]
 // No "[" | "]"
-ArithWordAfter = {ArithWordFirst} | [0-9#!]
+ArithWord                = {ArithWordFirst}{ArithWordAfter}*
 
-ParamExpansionWordFirst = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
-ParamExpansionWord = {ParamExpansionWordFirst}+
+AssignmentWord           = [[:letter:]||[_]] [[:letter:]||[0-9_]]*
+Variable                 = "$" {AssignmentWord} | "$"[@$#0-9?!*_-]
 
-AssignListWordFirst = [[\p{Letter}]||[0-9_/@?.*:&%\^~,]] | {EscapedChar} | {LineContinuation}
-AssignListWordAfter =  {AssignListWordFirst} | [#!]
-AssignListWord = {AssignListWordFirst}{AssignListWordAfter}*
+//ArithExpr                = ({ArithWord} | [0-9a-z+*-] | {Variable} )+
 
-Word = {WordFirst}{WordAfter}*
-ArithWord = {ArithWordFirst}{ArithWordAfter}*
-AssignmentWord = [[\p{Letter}]||[_]] [[\p{Letter}]||[0-9_]]*
-Variable = "$" {AssignmentWord} | "$"[@$#0-9?!*_-]
+IntegerLiteral           = [0] | ([1-9][0-9]*) // todo: fix Rule can never be matched
+HexIntegerLiteral        = "0x" [0-9a-fA-F]+
+OctalIntegerLiteral      = "0" [0-7]+
 
-ArithExpr = ({ArithWord} | [0-9a-z+*-] | {Variable} )+
+CaseFirst                = {EscapedChar} | [^|\"'$)(# \n\r\f\t\f]
+CaseAfter                = {EscapedChar} | [^|\"'$`)( \n\r\f\t\f;]
+CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 
-IntegerLiteral = [0] | ([1-9][0-9]*) // todo: fix Rule can never be matched
-HexIntegerLiteral = "0x" [0-9a-fA-F]+
-OctalIntegerLiteral = "0" [0-7]+
+Filedescriptor           = "&" {IntegerLiteral} | "&-"
+AssigOp                  = "=" | "+="
 
-CaseFirst={EscapedChar} | [^|\"'$)(# \n\r\f\t\f]
-CaseAfter={EscapedChar} | [^|\"'$`)( \n\r\f\t\f;]
-CasePattern = {CaseFirst} ({LineContinuation}? {CaseAfter})*
+EscapedRightCurly        = "\\}"
 
-Filedescriptor = "&" {IntegerLiteral} | "&-"
-AssigOp = "=" | "+="
-
-EscapedRightCurly = "\\}"
-
-HeredocMarker = [^\r\n|&\\;()[] \"'] | {EscapedChar}
-HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
+HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
+HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
 %state EXPRESSIONS
 %state PARAMETER_EXPANSION
@@ -148,7 +149,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
                                           else heredocMarker = yytext();
                                           yybegin(HERE_DOC_PIPELINE);
                                           return HEREDOC_MARKER_START; }
-  {WhiteSpaceLineContinuation}+         { return WHITESPACE; }
+  {WhiteSpace}+         { return WHITESPACE; }
 }
 
 <HERE_DOC_END_MARKER> {
@@ -234,8 +235,6 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
   "<>"                            { return REDIRECT_LESS_GREATER; }
   "<&"                            { return REDIRECT_LESS_AMP; }
   ">&"                            { return REDIRECT_GREATER_AMP; }
-  "<&"                            { return REDIRECT_LESS_AMP; }
-  ">&"                            { return REDIRECT_GREATER_AMP; }
   ">|"                            { return REDIRECT_GREATER_BAR; }
 
   "|&"                            { return PIPE_AMP; }
@@ -257,7 +256,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     {Shebang}                     { return SHEBANG; }
     {Comment}                     { return COMMENT; }
 
-    {WhiteSpaceLineContinuation}+ { return WHITESPACE; }
+    {WhiteSpace}+                 |
     {LineContinuation}+           { return WHITESPACE; }
     {LineTerminator}              { if (yystate() == HERE_DOC_PIPELINE) yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
     {Variable}                    { return VAR; }
