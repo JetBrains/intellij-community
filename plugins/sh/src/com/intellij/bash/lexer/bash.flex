@@ -252,7 +252,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
 
-    {AssignListWord}              { return WORD; }
+//    {AssignListWord}              { return WORD; }
 
     {Shebang}                     { return SHEBANG; }
     {Comment}                     { return COMMENT; }
@@ -266,7 +266,7 @@ HeredocMarkerInQuotes = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker
     {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
-<YYINITIAL, CASE_CLAUSE, CASE_PATTERN> {
+<YYINITIAL, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {Word}                        { return WORD; }
     "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
 }
