@@ -56,4 +56,7 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testUpperBoundByTypeParameter() {
+    doTest(true)
+  }
 }

@@ -3,10 +3,9 @@ package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
@@ -23,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import java.util.*
 
 
 /**
@@ -45,20 +45,47 @@ internal class InferMethodArgumentsIntention : Intention() {
     val method: GrMethod = element as GrMethod
     AddReturnTypeFix.applyFix(project, element)
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
-    val defaultTypeParameterList = method.typeParameterList?.copy()
-    val parameterIndex = createTypeParameters(method, elementFactory)
-
+    val needTypeParameters = method.hasTypeParameters()
+    val newTypeParameterList = elementFactory.createTypeParameterList()
+    method.typeParameters.forEach { newTypeParameterList.add(it.copy()) }
+    val parameterIndex = setUpNewTypeParameters(method, elementFactory)
     val resolveSession = inferTypeArguments(parameterIndex, method)
     val substitutor = resolveSession.inferSubst()
+
+    var needAdditionalTypeParameters = false
     for (parameterEntry in parameterIndex.entries) {
+      val variable = resolveSession
+        .getInferenceVariable(resolveSession.substituteWithInferenceVariables(parameterEntry.key.type))
+      if (variable.instantiation == PsiType.NULL) {
+        needAdditionalTypeParameters = true
+        newTypeParameterList.add(createBoundedTypeParameterElement(variable, elementFactory))
+      }
       parameterEntry.key.setType(substitutor.substitute(parameterEntry.value))
     }
-    if (defaultTypeParameterList == null) {
+    if (!needTypeParameters && !needAdditionalTypeParameters) {
       method.typeParameterList?.delete()
     }
     else {
-      method.typeParameterList?.replace(defaultTypeParameterList)
+      method.typeParameterList?.replace(newTypeParameterList)
     }
+  }
+
+
+  /**
+   * Creates [PsiElement] with type parameter and it's superclasses from [variable] representation.
+   * Used when [GroovyInferenceSession] fails to infer type for [variable], so type should not be reified.
+   *
+   * @param variable [InferenceVariable] that cannot be instantiated to any unambiguous type.
+   * @param factory factory for creating [PsiElement]
+   *
+   * @return [PsiElement] with necessary bound. Ready for addition in [PsiParameterList]
+   */
+  private fun createBoundedTypeParameterElement(variable: InferenceVariable, factory: GroovyPsiElementFactory): PsiElement {
+    val superTypes = variable.getBounds(InferenceBound.UPPER)
+      .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
+      .map { it as PsiClassType }
+      .toTypedArray()
+    return factory.createTypeParameter(variable.parameter.originalElement.text, superTypes)
   }
 
   /**
@@ -119,8 +146,8 @@ internal class InferMethodArgumentsIntention : Intention() {
   /**
    * Collects all parameters without explicit type and generifies them.
    */
-  private fun createTypeParameters(method: GrMethod,
-                                   elementFactory: GroovyPsiElementFactory): Map<GrParameter, PsiTypeParameter> {
+  private fun setUpNewTypeParameters(method: GrMethod,
+                                     elementFactory: GroovyPsiElementFactory): Map<GrParameter, PsiTypeParameter> {
     if (!method.hasTypeParameters()) {
       method.addAfter(elementFactory.createTypeParameterList(), method.firstChild)
     }
@@ -142,7 +169,7 @@ internal class InferMethodArgumentsIntention : Intention() {
 
   /**
    * Predicate for activating intention.
-   * @return [PsiElementPredicate], which returns true if ginev element points to method header and there are any non-typed arguments
+   * @return [PsiElementPredicate], which returns true if given element points to method header and there are any non-typed arguments
    */
   override fun getElementPredicate(): PsiElementPredicate {
     return object : PsiElementPredicate {
