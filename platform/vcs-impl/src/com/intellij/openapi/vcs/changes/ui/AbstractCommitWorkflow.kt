@@ -41,6 +41,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   val commitContext: CommitContext = CommitContext()
 
+  abstract val isDefaultCommitEnabled: Boolean
+
   // TODO Probably unify with "CommitContext"
   private val _additionalData = PseudoMap<Any, Any>()
   val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData

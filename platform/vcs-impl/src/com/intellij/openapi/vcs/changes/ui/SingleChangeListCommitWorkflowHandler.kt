@@ -1,20 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
-import com.intellij.util.PairConsumer
-
-private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: SingleChangeListCommitWorkflow,
@@ -36,7 +30,6 @@ class SingleChangeListCommitWorkflowHandler(
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
 
   private val commitMessagePolicy get() = workflow.commitMessagePolicy
-  private val commitOptions get() = workflow.commitOptions
 
   init {
     Disposer.register(ui, this)
@@ -86,16 +79,9 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun customCommitSucceeded() = ui.deactivate()
 
-  override fun executeDefault(executor: CommitExecutor?) {
-    if (!addUnversionedFiles()) return
-    if (!checkEmptyCommitMessage()) return
-    if (!saveCommitOptions()) return
-    saveCommitMessage(true)
+  override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
 
-    refreshChanges { doExecuteDefault(executor) }
-  }
-
-  private fun doExecuteDefault(executor: CommitExecutor?) = try {
+  override fun doExecuteDefault(executor: CommitExecutor?) = try {
     workflow.executeDefault(executor, getCommitState())
   }
   catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
@@ -112,8 +98,6 @@ class SingleChangeListCommitWorkflowHandler(
     refreshChanges { workflow.executeCustom(executor, session, getCommitState()) }
   }
 
-  private fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
-
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())
     setCommitMessage(commitMessagePolicy.commitMessage)
@@ -124,15 +108,10 @@ class SingleChangeListCommitWorkflowHandler(
     setCommitMessage(commitMessagePolicy.commitMessage)
   }
 
-  private fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
+  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
 
   private fun initCommitOptions() {
-    workflow.initCommitOptions(CommitOptionsImpl(
-      if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, workflow.additionalDataConsumer)
-      else emptyMap(),
-      getBeforeOptions(workflow.commitHandlers),
-      getAfterOptions(workflow.commitHandlers, this)
-    ))
+    workflow.initCommitOptions(createCommitOptions())
     ui.commitOptionsUi.setOptions(commitOptions)
 
     commitOptions.restoreState()
@@ -150,33 +129,4 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.commitOptionsUi.setVisible(vcses)
   }
-
-  private fun saveCommitOptions() = try {
-    commitOptions.saveState()
-    true
-  }
-  catch (ex: InputException) {
-    ex.show()
-    false
-  }
-
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, additionalData: PairConsumer<Any, Any>) =
-    vcses.sortedWith(VCS_COMPARATOR)
-      .associateWith { it.checkinEnvironment?.createAdditionalOptionsPanel(commitPanel, additionalData) }
-      .filterValues { it != null }
-      .mapValues { it.value!! }
-
-  private fun getBeforeOptions(handlers: Collection<CheckinHandler>) = handlers.mapNotNull { it.beforeCheckinConfigurationPanel }
-
-  private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable) =
-    handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(parent) }
-
-  private fun refreshChanges(callback: () -> Unit) =
-    ChangeListManager.getInstance(project).invokeAfterUpdate(
-      {
-        ui.refreshData()
-        callback()
-      },
-      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Commit", ModalityState.current()
-    )
 }

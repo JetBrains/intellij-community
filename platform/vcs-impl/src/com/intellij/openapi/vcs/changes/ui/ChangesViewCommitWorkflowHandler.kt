@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 
@@ -30,14 +31,17 @@ class ChangesViewCommitWorkflowHandler(
     ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
 
     initCommitHandlers()
+    workflow.initCommitOptions(createCommitOptions())
+    commitOptions.restoreState()
   }
 
   fun activate(): Boolean = ui.activate()
 
-  override fun executeDefault(executor: CommitExecutor?) {
-    if (!addUnversionedFiles(changeListManager.defaultChangeList)) return
-    checkEmptyCommitMessage()
-  }
+  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(changeListManager.defaultChangeList)
+
+  override fun doExecuteDefault(executor: CommitExecutor?) = Unit
+
+  override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
 
   override fun customCommitSucceeded() = Unit
 }
