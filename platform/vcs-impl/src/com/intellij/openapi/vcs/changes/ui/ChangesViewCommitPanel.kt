@@ -73,6 +73,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   private fun buildLayout() {
     val buttonPanel = createHorizontalPanel().apply {
       add(commitButton)
+      add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
       add(commitLegend.component)
     }.withBackground(getTreeBackground())
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)

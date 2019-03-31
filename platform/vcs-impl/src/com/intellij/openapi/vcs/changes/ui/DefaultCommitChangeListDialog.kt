@@ -22,7 +22,7 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
   init {
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
 
-    val branchComponent = CurrentBranchComponent(project, browser)
+    val branchComponent = CurrentBranchComponent(project, browser.viewer, this)
     addBorder(branchComponent, emptyRight(16))
     browserBottomPanel.add(branchComponent)
 
