@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
@@ -88,12 +89,14 @@ internal class InferMethodArgumentsIntention : Intention() {
                                       resolveSession: GroovyInferenceSession) {
     val visitor = object : GroovyRecursiveElementVisitor() {
 
+      override fun visitCallExpression(callExpression: GrCallExpression) {
+        resolveSession.addConstraint(ExpressionConstraint(null, callExpression))
+        super.visitCallExpression(callExpression)
+      }
+
       override fun visitExpression(expression: GrExpression) {
         if (expression is GrOperatorExpression) {
           resolveSession.addConstraint(OperatorExpressionConstraint(expression))
-        }
-        else {
-          resolveSession.addConstraint(ExpressionConstraint(null, expression))
         }
         super.visitExpression(expression)
       }
@@ -102,7 +105,7 @@ internal class InferMethodArgumentsIntention : Intention() {
   }
 
   /**
-   * Searches for [method] calls in file and trues to infer arguments for it
+   * Searches for [method] calls in file and tries to infer arguments for it
    */
   private fun collectOuterMethodCalls(method: GrMethod,
                                       resolveSession: GroovyInferenceSession) {
