@@ -59,11 +59,9 @@ public class StatisticsJobsScheduler implements BaseComponent {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
-            final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
-            for (StatisticsEventLoggerProvider provider : providers) {
-              final StatisticsService statisticsService = provider.getLogStatisticsService();
-              ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
-            }
+            final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider("FUS");
+            final StatisticsService statisticsService = provider.getLogStatisticsService();
+            ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             Disposer.dispose(disposable);
           }
         }
