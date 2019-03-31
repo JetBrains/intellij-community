@@ -30,7 +30,7 @@ version = artifactVersion
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-tasks.withType(JavaCompile) { 
+tasks.withType(JavaCompile) {
   options.encoding = 'UTF-8'
 //  options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
@@ -47,7 +47,7 @@ sourceSets {
 }
 
 intellij {
-  version ideaVersion 
+  version ideaVersion
   println "Building for IntelliJ version: ${version}"
 
   pluginName pluginName
@@ -160,6 +160,15 @@ clean.doFirst {
 compileJava.dependsOn generateLombokConfigLexer
 check.dependsOn jacocoTestReport
 
+test {
+  // show standard out and standard error of the test JVM(s) on the console
+  testLogging.showStandardStreams = true
+
+  // listen to events in the test execution lifecycle
+  beforeTest { descriptor ->
+    logger.lifecycle("Running test: " + descriptor)
+  }
+}
 //plugins.withType(JavaPlugin) {
 //  test {
 //    systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"

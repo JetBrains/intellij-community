@@ -14,7 +14,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
     final String testName = getTestName(true);
     loadToPsiFile("/performance/" + testName + "/lombok.config");
     final PsiFile psiFile = loadToPsiFile("/performance/" + testName + "/HugeClass.java");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> {
       type(' ');
       PsiDocumentManager.getInstance(getProject()).commitDocument(getEditor().getDocument());
       ((PsiJavaFileImpl) psiFile).getClasses()[0].getFields()[0].hasModifierProperty(PsiModifier.FINAL);

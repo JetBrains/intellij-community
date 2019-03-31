@@ -17,10 +17,6 @@ public class DiverseInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
-  public void testIssue37() {
-    doTest();
-  }
-
   public void testDataEqualsAndHashCodeOverride() {
     doTest();
   }
@@ -29,11 +25,15 @@ public class DiverseInspectionTest extends LombokInspectionTest {
     doTest();
   }
 
-  public void testValInspection() {
+  public void testIssue37() {
     doTest();
   }
 
   public void testSetterOnFinalField() {
     doTest();
   }
+
+//  public void testValInspection() {
+//    doTest();
+//  }
 }
