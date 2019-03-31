@@ -18,14 +18,19 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JButton
 import javax.swing.JComponent
+
+private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16)))
 
 class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
   private val project get() = changesView.project
@@ -51,22 +56,40 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
     override fun isDefaultButton() = true
   }
+  private val commitLegendCalculator = ChangeInfoCalculator()
+  private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
   init {
     buildLayout()
 
     changesView.setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
     commitButton.addActionListener { executorEventDispatcher.multicaster.executorCalled(null) }
+
+    addInclusionListener(object : InclusionListener {
+      override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
+    }, this)
   }
 
   private fun buildLayout() {
-    val buttonPanel = simplePanel()
-      .addToLeft(commitButton)
-      .withBackground(getTreeBackground())
+    val buttonPanel = createHorizontalPanel().apply {
+      add(commitButton)
+      add(commitLegend.component)
+    }.withBackground(getTreeBackground())
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)
 
     addToCenter(centerPanel).addToLeft(toolbar.component).withBorder(createBorder(JBColor.border(), SideBorder.TOP))
     withPreferredHeight(85)
+  }
+
+  private fun inclusionChanged() {
+    updateLegend()
+  }
+
+  private fun updateLegend() {
+    // Displayed changes and unversioned files are not actually used in legend - so we don't pass them
+    commitLegendCalculator.update(
+      includedChanges = getIncludedChanges(), includedUnversionedFilesCount = getIncludedUnversionedFiles().size)
+    commitLegend.update()
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage

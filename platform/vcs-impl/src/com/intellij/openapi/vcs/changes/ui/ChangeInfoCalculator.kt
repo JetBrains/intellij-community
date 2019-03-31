@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.changes.Change
@@ -24,10 +24,12 @@ class ChangeInfoCalculator : CommitLegendPanel.InfoCalculator {
     private set
 
   @JvmOverloads
-  fun update(displayedChanges: List<Change>,
-             includedChanges: List<Change>,
-             unversionedFilesCount: Int = 0,
-             includedUnversionedFilesCount: Int = 0) {
+  fun update(
+    displayedChanges: List<Change> = emptyList(),
+    includedChanges: List<Change> = emptyList(),
+    unversionedFilesCount: Int = 0,
+    includedUnversionedFilesCount: Int = 0
+  ) {
     myDisplayedChanges = displayedChanges
     myIncludedChanges = includedChanges
     unversioned = unversionedFilesCount
