@@ -338,7 +338,7 @@ public class GitLogProvider implements VcsLogProvider {
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
                                                                    DiffRenameLimit.GIT_CONFIG,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS, true);
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, false, commitConsumer);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, false, commitConsumer);
   }
 
   @Override
@@ -353,7 +353,7 @@ public class GitLogProvider implements VcsLogProvider {
     DiffRenameLimit renameLimit = isForIndexing ? DiffRenameLimit.REGISTRY : DiffRenameLimit.INFINITY;
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root), renameLimit,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS, false);
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, isForIndexing, commitConsumer);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, isForIndexing, commitConsumer);
   }
 
   private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {

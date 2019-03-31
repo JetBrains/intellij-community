@@ -216,17 +216,16 @@ public class GitLogUtil {
                                      @NotNull GitCommitRequirements requirements,
                                      boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
-    GitDetailsCollector.INSTANCE.readFullDetails(project, root, commitConsumer, requirements, lowPriorityProcess, parameters);
+    new GitDetailsCollector(project, root).readFullDetails(commitConsumer, requirements, lowPriorityProcess, parameters);
   }
 
   public static void readFullDetailsForHashes(@NotNull Project project,
                                               @NotNull VirtualFile root,
-                                              @NotNull GitVcs vcs,
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
                                               boolean lowPriorityProcess,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
-    GitDetailsCollector.INSTANCE.readFullDetailsForHashes(project, root, vcs, hashes, requirements, lowPriorityProcess, commitConsumer);
+    new GitDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, lowPriorityProcess, commitConsumer);
   }
 
   @NotNull
