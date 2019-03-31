@@ -90,15 +90,15 @@ public class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<HgCommit> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
-                                       @NotNull List<String> hashParameters, boolean silent)
+  public static List<VcsFullCommitDetails> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
+                                                   @NotNull List<String> hashParameters, boolean silent)
     throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
 
-    ArrayList<HgCommit> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -142,10 +142,10 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static HgCommit createDetails(@NotNull Project project,
-                                       @NotNull VirtualFile root,
-                                       @NotNull VcsLogObjectsFactory factory,
-                                       @NotNull HgFileRevision revision) {
+  public static VcsFullCommitDetails createDetails(@NotNull Project project,
+                                                   @NotNull VirtualFile root,
+                                                   @NotNull VcsLogObjectsFactory factory,
+                                                   @NotNull HgFileRevision revision) {
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     List<Hash> parentsHashes = new SmartList<>();
