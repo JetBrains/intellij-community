@@ -144,7 +144,7 @@ public class GitLogUtil {
     Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
     Consumer<GitLogRecord> recordConsumer = record -> {
-      GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
+      VcsCommitMetadata commit = createMetadata(root, record, factory);
       commits.add(commit);
       Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
       for (VcsRef ref : refsInRecord) {
@@ -324,9 +324,12 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
-                                        @NotNull VcsLogObjectsFactory factory) {
-    return createCommit(project, root, records, factory, GitCommitRequirements.DiffRenameLimit.GIT_CONFIG);
+  private static VcsCommitMetadata createMetadata(@NotNull VirtualFile root, @NotNull GitLogRecord record,
+                                                  @NotNull VcsLogObjectsFactory factory) {
+    List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
+    return factory.createCommitMetadata(factory.createHash(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
+                                        record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
+                                        record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
   }
 
   @NotNull
