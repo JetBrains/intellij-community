@@ -18,7 +18,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
-import org.zmlx.hg4idea.log.HgCommit;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;

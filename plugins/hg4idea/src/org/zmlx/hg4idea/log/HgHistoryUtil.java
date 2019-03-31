@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -179,10 +180,12 @@ public class HgHistoryUtil {
       reportedChanges.add(convertHgChanges(hgChanges));
     }
 
-    return new HgCommit(project, root, factory.createHash(vcsRevisionNumber.getChangeset()), parentsHashes,
-                        vcsRevisionNumber,
-                        factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail()), revision.getRevisionDate().getTime(),
-                        reportedChanges);
+    Hash hash = factory.createHash(vcsRevisionNumber.getChangeset());
+    long time = revision.getRevisionDate().getTime();
+    VcsUser author = factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail());
+    return new VcsChangesLazilyParsedDetails(project, hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author,
+                                             vcsRevisionNumber.getCommitMessage(), author,
+                                             time, reportedChanges, new HgChangesParser(vcsRevisionNumber));
   }
 
   @NotNull
