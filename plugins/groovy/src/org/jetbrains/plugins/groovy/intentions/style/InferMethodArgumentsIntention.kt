@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
@@ -43,15 +44,14 @@ internal class InferMethodArgumentsIntention : Intention() {
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
     AddReturnTypeFix.applyFix(project, element)
-    val methodParameters = method.parameters
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
     val defaultTypeParameterList = method.typeParameterList?.copy()
-    val typeIndex = createTypeParameters(method, elementFactory)
+    val parameterIndex = createTypeParameters(method, elementFactory)
 
-    val resolveSession = inferTypeArguments(typeIndex, method)
+    val resolveSession = inferTypeArguments(parameterIndex, method)
     val substitutor = resolveSession.inferSubst()
-    for (typeParameterEntry in typeIndex.entries) {
-      methodParameters[typeParameterEntry.key].setType(substitutor.substitute(typeParameterEntry.value))
+    for (parameterEntry in parameterIndex.entries) {
+      parameterEntry.key.setType(substitutor.substitute(parameterEntry.value))
     }
     if (defaultTypeParameterList == null) {
       method.typeParameterList?.delete()
@@ -62,20 +62,15 @@ internal class InferMethodArgumentsIntention : Intention() {
   }
 
   /**
-   * Gathers all information about type parameters passed in [typeIndex].
-   * @param typeIndex map from position in argument list to corresponding type parameter
+   * Gathers all information about type parameters passed in [parameterIndex].
+   * @param parameterIndex map from position in argument list to corresponding type parameter
    * @param method method for which argument inference is computing
    *
    * @return [GroovyInferenceSession] which can be used for substituting types
    */
-  private fun inferTypeArguments(typeIndex: Map<Int, PsiTypeParameter>,
+  private fun inferTypeArguments(parameterIndex: Map<GrParameter, PsiTypeParameter>,
                                  method: GrMethod): GroovyInferenceSession {
-    for (i in method.parameters.indices) {
-      if (method.parameters[i].typeElement == null) {
-        method.parameters[i].setType(typeIndex[i]?.type())
-      }
-    }
-    val resolveSession = GroovyInferenceSession(typeIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
+    val resolveSession = GroovyInferenceSession(parameterIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
                                                 propagateVariablesToNestedSessions = true)
     collectOuterMethodCalls(method, resolveSession)
     collectInnerMethodCalls(method, resolveSession)
@@ -125,21 +120,24 @@ internal class InferMethodArgumentsIntention : Intention() {
    * Collects all parameters without explicit type and generifies them.
    */
   private fun createTypeParameters(method: GrMethod,
-                                   elementFactory: GroovyPsiElementFactory): Map<Int, PsiTypeParameter> {
-    val typeIndex = HashMap<Int, PsiTypeParameter>()
+                                   elementFactory: GroovyPsiElementFactory): Map<GrParameter, PsiTypeParameter> {
     if (!method.hasTypeParameters()) {
       method.addAfter(elementFactory.createTypeParameterList(), method.firstChild)
     }
-    val params = method.typeParameterList ?: return emptyMap()
+    val typeParameters = method.typeParameterList ?: return emptyMap()
+    val parameterIndex = HashMap<GrParameter, PsiTypeParameter>()
 
-    for (i in method.parameters.indices) {
-      if (method.parameters[i].typeElement == null) {
-        val newTypeParameter = elementFactory.createTypeParameter(produceTypeParameterName(i), PsiClassType.EMPTY_ARRAY)
-        params.add(newTypeParameter)
-        typeIndex[i] = newTypeParameter
+    var counter = 0
+    for (param in method.parameters) {
+      if (param.typeElement == null) {
+        val newTypeParameter = elementFactory.createTypeParameter(produceTypeParameterName(counter), PsiClassType.EMPTY_ARRAY)
+        typeParameters.add(newTypeParameter)
+        parameterIndex[param] = newTypeParameter
+        param.setType(newTypeParameter.type())
+        ++counter
       }
     }
-    return typeIndex
+    return parameterIndex
   }
 
   /**
