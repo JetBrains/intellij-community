@@ -5754,13 +5754,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // reference_dot  | attribute_dot | method_reference_dot
+  // attribute_dot | method_reference_dot | reference_dot
   static boolean property_dot(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "property_dot")) return false;
     boolean r;
-    r = reference_dot(b, l + 1);
-    if (!r) r = attribute_dot(b, l + 1);
+    r = attribute_dot(b, l + 1);
     if (!r) r = method_reference_dot(b, l + 1);
+    if (!r) r = reference_dot(b, l + 1);
     return r;
   }
 
