@@ -367,11 +367,6 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void moveText(int srcStart, int srcEnd, int dstOffset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isWritable() {
     return myDelegate.isWritable();
   }
