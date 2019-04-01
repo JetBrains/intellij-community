@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import gnu.trove.TObjectIntHashMap
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction
@@ -10,21 +11,21 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 
 class TypesReachingDefinitionsInstance(
   flow: Array<out Instruction>,
-  varIndexes: TObjectIntHashMap<String>
+  varIndexes: TObjectIntHashMap<VariableDescriptor>
 ) : ReachingDefinitionsDfaInstance(flow, varIndexes) {
 
   override fun `fun`(m: DefinitionMap, instruction: Instruction) = when (instruction) {
-    is MixinTypeInstruction -> registerDef(m, instruction, instruction.variableName)
+    is MixinTypeInstruction -> registerDef(m, instruction, instruction.variableDescriptor)
     is ArgumentsInstruction -> {
-      for (variableName in instruction.variableNames) {
-        registerDef(m, instruction, variableName)
+      for (descriptor in instruction.variableDescriptors) {
+        registerDef(m, instruction, descriptor)
       }
     }
     else -> super.`fun`(m, instruction)
   }
 
-  private fun registerDef(m: DefinitionMap, instruction: Instruction, variableName: String?) {
-    val varIndex = myVarToIndexMap.get(variableName)
+  private fun registerDef(m: DefinitionMap, instruction: Instruction, descriptor: VariableDescriptor?) {
+    val varIndex = myVarToIndexMap.get(descriptor)
     if (varIndex > 0) {
       m.registerDef(instruction, varIndex)
     }
