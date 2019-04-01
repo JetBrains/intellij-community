@@ -108,6 +108,7 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
 
     WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName("Add Maven Dependency").run(() -> {
+      PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
       for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
         final MavenDomProjectModel model = trinity.first;
         MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
@@ -115,8 +116,9 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
         if (ms != null) {
           dependency.getScope().setStringValue(ms);
         }
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+        Document document = pdm.getDocument(DomUtil.getFile(model));
         if (document != null) {
+          pdm.doPostponedOperationsAndUnblockDocument(document);
           FileDocumentManager.getInstance().saveDocument(document);
         }
       }
