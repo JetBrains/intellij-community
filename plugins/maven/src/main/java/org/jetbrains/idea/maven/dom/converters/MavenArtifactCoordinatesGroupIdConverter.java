@@ -22,10 +22,12 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter implements MavenSmartConverter<String> {
   @Override
@@ -34,7 +36,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
     if (manager.hasGroupId(id.getGroupId())) return true;
 
-        // Check if artifact was found on importing.
+    // Check if artifact was found on importing.
     MavenProject mavenProject = findMavenProject(context);
     if (mavenProject != null) {
       for (MavenArtifact artifact : mavenProject.findDependencies(id.getGroupId(), id.getArtifactId())) {
@@ -48,8 +50,8 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager) {
-    return manager.getGroupIds();
+  protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
+    return searchService.findGroupCandidates(id).stream().map(s -> s.getGroupId()).collect(Collectors.toSet());
   }
 
   @Nullable
@@ -88,7 +90,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       context.commitDocument();
 
       PsiFile contextFile = context.getFile();
-      if(!(contextFile instanceof XmlFile)) return;
+      if (!(contextFile instanceof XmlFile)) return;
 
       XmlFile xmlFile = (XmlFile)contextFile;
 
@@ -109,5 +111,4 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       MavenDependencyCompletionUtil.addTypeAndClassifierAndVersion(context, dependency, item.getLookupString(), artifactId);
     }
   }
-
 }
