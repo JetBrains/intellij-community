@@ -2,16 +2,18 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
-import com.intellij.codeInspection.IntentionWrapper;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,11 +25,13 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -41,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
+  private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
   @XCollection
   public List<ModulesSet> MODULES_SETS_LOADED_TOGETHER = new ArrayList<>();
   private final AtomicClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = AtomicClearableLazyValue.create(() -> {
@@ -177,9 +182,10 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
             List<IntentionAction> fixes =
               JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
             String elementDescription = StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
+            LocalQuickFix[] quickFixes = IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
             holder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
                                               + targetModule.getName() + "'",
-                                   IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile()));
+                                   ArrayUtil.append(quickFixes, new MarkModulesAsLoadedTogetherFix(sourceModule.getName(), targetModule.getName())));
           }
         }
       }
@@ -253,7 +259,9 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         for (String line : StringUtil.splitByLines(component.getText())) {
           ModulesSet set = new ModulesSet();
           set.modules = new LinkedHashSet<>(StringUtil.split(line, ","));
-          MODULES_SETS_LOADED_TOGETHER.add(set);
+          if (!set.modules.isEmpty()) {
+            MODULES_SETS_LOADED_TOGETHER.add(set);
+          }
         }
         myModuleSetByModuleName.drop();
       }
@@ -271,5 +279,61 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   public void readSettings(@NotNull Element node) {
     super.readSettings(node);
     myModuleSetByModuleName.drop();
+  }
+
+  private static class MarkModulesAsLoadedTogetherFix implements LocalQuickFix {
+    private final String myModule1;
+    private final String myModule2;
+
+    private MarkModulesAsLoadedTogetherFix(String module1, String module2) {
+      myModule1 = module1;
+      myModule2 = module2;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return "Mark '" + myModule1 + "' and '" + myModule2 + "' modules as loaded together";
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Mark modules as loaded together";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement != null) {
+        profile.modifyToolSettings(INSPECTION_KEY, psiElement, inspection -> {
+          Map<String, ModulesSet> moduleSetByModule = inspection.myModuleSetByModuleName.getValue();
+          ModulesSet module1Set = moduleSetByModule.get(myModule1);
+          ModulesSet module2Set = moduleSetByModule.get(myModule2);
+          if (module1Set == null) {
+            if (module2Set == null) {
+              ModulesSet modulesSet = new ModulesSet();
+              modulesSet.modules.add(myModule1);
+              modulesSet.modules.add(myModule2);
+              inspection.MODULES_SETS_LOADED_TOGETHER.add(modulesSet);
+            }
+            else {
+              module2Set.modules.add(myModule1);
+            }
+          }
+          else if (module2Set == null) {
+            module1Set.modules.add(myModule2);
+          }
+          else if (module1Set != module2Set) {
+            module1Set.modules.addAll(module2Set.modules);
+            inspection.MODULES_SETS_LOADED_TOGETHER.remove(module2Set);
+          }
+          inspection.myModuleSetByModuleName.drop();
+        });
+      }
+    }
   }
 }
