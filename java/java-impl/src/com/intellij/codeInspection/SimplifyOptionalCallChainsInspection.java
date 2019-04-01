@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static com.intellij.codeInspection.util.OptionalUtil.*;
@@ -94,7 +95,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     );
     ourMapper = new CallMapper<>();
     for (ChainSimplificationCase<?> theCase : cases) {
-      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), call -> getFix(call, theCase));
+      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), theCase);
       ourMapper.register(handler);
     }
   }
@@ -231,6 +232,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return defaultExpression;
   }
 
+  /**
+   * Optional.orElse and Optional.orElseGet have similar semantics and can be handled together.
+   * This enum represents what kind of method we are handling now.
+   */
   private enum OrElseType {
     OrElse,
     OrElseGet
@@ -241,7 +246,12 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
    *
    * @param <C> context of the simplification
    */
-  private interface ChainSimplificationCase<C> {
+  private interface ChainSimplificationCase<C> extends Function<PsiMethodCallExpression, OptionalSimplificationFix> {
+    @Override
+    default OptionalSimplificationFix apply(PsiMethodCallExpression expression) {
+      return getFix(expression, this);
+    }
+
     @NotNull
     String getName(@NotNull C context);
 
