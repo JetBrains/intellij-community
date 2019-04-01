@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -27,7 +27,7 @@ public class RestartButton extends InstallButton {
 
       DialogWrapper settings = DialogWrapper.findInstance(this);
       assert settings instanceof SettingsDialog : settings;
-      ((SettingsDialog)settings).doOKAction();
+      ((SettingsDialog)settings).applyAndClose(false /* will be saved on app exit */);
 
       Application application = ApplicationManager.getApplication();
       TransactionGuard.submitTransaction(application, () -> ((ApplicationImpl)application).exit(true, false, true));
