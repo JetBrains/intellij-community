@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -87,6 +88,7 @@ import java.util.*;
 public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
+  private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -982,7 +984,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Locale locale = context.getLocale();
     if (locale == null) return false;
     String language = locale.getLanguage();
-    return ALT_GR_LANGUAGES.contains(language);
+    boolean contains = !"en".equals(language)
+                       ? ALT_GR_LANGUAGES.contains(language)
+                       : ALT_GR_COUNTRIES.contains(locale.getCountry());
+    LOG.debug("AltGr", contains ? "" : " not", " supported for ", locale);
+    return contains;
   }
 
   // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
@@ -1008,5 +1014,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     "sr", // Serbian
     "sv", // Swedish
     "tr"  // Turkish
+  ));
+  @NonNls private static final Set<String> ALT_GR_COUNTRIES = new HashSet<>(Arrays.asList(
+    "DK", // Denmark
+    "DE", // Germany
+    "FI", // Finland
+    "NL", // Netherlands
+    "SL", // Slovenia
+    "SE"  // Sweden
   ));
 }
