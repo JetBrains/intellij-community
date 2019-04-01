@@ -76,7 +76,11 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
     }
 
     return PredictionProvider(minProb = threshold)
-      .predictForgottenFiles(repository.getFilesHistory(filesSet))
+      .predictForgottenFiles(Commit(-1,
+                                    System.currentTimeMillis(),
+                                    (author ?: dataManager.currentUser[root]?.name) ?: "",
+                                    filesSet),
+                             repository.getFilesHistory(filesSet))
       .toPredictedFiles(changeListManager)
   }
 
