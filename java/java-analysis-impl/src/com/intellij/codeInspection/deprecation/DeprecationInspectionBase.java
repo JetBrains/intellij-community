@@ -234,6 +234,12 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     else {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       qualifierText = qualifierExpression == null ? "" : qualifierExpression.getText() + ".";
+
+      PsiType qualifierType = ExpressionUtils.getQualifierOrThis(call.getMethodExpression()).getType();
+      PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
+      if (qualifierClass == null) return false;
+      PsiClass suggestedClass = suggestedReplacement.getContainingClass();
+      if (suggestedClass == null || !InheritanceUtil.isInheritorOrSelf(qualifierClass, suggestedClass, true)) return false;
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initial.getProject());
