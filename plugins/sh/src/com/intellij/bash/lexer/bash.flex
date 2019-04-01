@@ -1,10 +1,11 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import static com.intellij.bash.lexer.BashTokenTypes.*;
 import com.intellij.util.containers.IntStack;
-import static org.apache.commons.lang3.StringUtils.contains;
+import com.intellij.util.containers.Stack;
 import com.intellij.lexer.FlexLexer;
+import static com.intellij.bash.lexer.BashTokenTypes.*;
+import static org.apache.commons.lang3.StringUtils.contains;
 
 %%
 
@@ -18,15 +19,20 @@ import com.intellij.lexer.FlexLexer;
 
 %{
   public _BashLexerGen() { this(null); }
-  private void pushState(int state) { myStack.push(yystate()); yybegin(state);}
-  private void popState() { yybegin(myStack.pop());}
-  private void switchState(int state) { popState(); pushState(state); }
-  private IntStack myStack = new IntStack(20);
-  private boolean inString;
-  private boolean letWithQuote;
-  private CharSequence heredocMarker;
+    private void pushState(int state) { stateStack.push(yystate()); yybegin(state);}
+    private void popState() { yybegin(stateStack.pop());}
+    private void switchState(int state) { popState(); pushState(state); }
+    private IntStack stateStack = new IntStack(20);
+    private void pushParentheses(CharSequence parentheses) { parenStack.push(parentheses); }
+    private void popParentheses() { if (!parenStack.empty()) parenStack.pop(); }
+    private boolean shouldCloseDoubleParen() { return !parenStack.empty() && parenStack.peek().equals("(("); }
+    private boolean shouldCloseSingleParen() { return !parenStack.empty() && parenStack.peek().equals("("); }
+    private Stack<CharSequence> parenStack = new Stack<>();
+    private boolean inString;
+    private boolean letWithQuote;
+    private CharSequence heredocMarker;
 
-  protected void onReset() { myStack.clear(); }
+    protected void onReset() { stateStack.clear(); }
 %}
 
 /***** Custom user code *****/
@@ -91,7 +97,9 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 %state LET_EXPRESSIONS
 %state OLD_EXPRESSIONS
 %state CONDITIONAL_EXPRESSION
+
 %state PARAMETER_EXPANSION
+
 %state CASE_CLAUSE
 %state CASE_PATTERN
 
@@ -146,10 +154,6 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     ","                           { return COMMA; }
 
     {ArithWord}                   { return WORD; }
-}
-
-<EXPRESSIONS> {
-    "))"                          { popState(); return RIGHT_DOUBLE_PAREN; }
 }
 
 <CONDITIONAL_EXPRESSION> {
@@ -237,8 +241,11 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "$["                          { pushState(OLD_EXPRESSIONS); return ARITH_SQUARE_LEFT; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-    "(("                          { pushState(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
     "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
+    "(("                          { pushState(EXPRESSIONS); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
+    "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
+                                    else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
+                                    else return RIGHT_DOUBLE_PAREN; }
     " ]]"                         { popState(); return RIGHT_DOUBLE_BRACKET; }
     " ]"                          { switch (yystate()) {
                                       case OLD_EXPRESSIONS: popState(); return ARITH_SQUARE_RIGHT;
@@ -251,8 +258,8 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "+="                          { return ADD_EQ; }
     "="                           { return EQ; }
     "$"                           { return DOLLAR; }
-    "("                           { return LEFT_PAREN; }
-    ")"                           { return RIGHT_PAREN; }
+    "("                           { pushParentheses(yytext()); return LEFT_PAREN; }
+    ")"                           { if (shouldCloseSingleParen()) { popParentheses(); } return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
