@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
@@ -53,7 +54,7 @@ fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<S
   })
 }
 
-fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { it.afterRevision?.file ?: it.beforeRevision?.file }
+fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { ChangesUtil.getFilePath(it) }
 
 fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
   val currentChange = changeListManager.getChange(it)
