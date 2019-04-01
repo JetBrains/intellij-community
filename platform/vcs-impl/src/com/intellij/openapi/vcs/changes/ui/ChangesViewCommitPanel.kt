@@ -49,11 +49,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
     editorField.setPlaceholder("Commit Message")
   }
-  private val commitButton = object : JButton(getDefaultCommitActionName()) {
-    init {
-      isEnabled = false
-    }
-
+  private val commitButton = object : JButton() {
     override fun isDefaultButton() = true
   }
   private val commitLegendCalculator = ChangeInfoCalculator()
@@ -95,9 +91,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
-  override var defaultCommitActionName: String
-    get() = commitButton.text
+  // store as a separate property - this way getter will return text with mnemonic
+  override var defaultCommitActionName: String = ""
     set(value) {
+      field = value
       commitButton.text = value
     }
 

@@ -25,15 +25,21 @@ class ChangesViewCommitWorkflowHandler(
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
+
+    updateDefaultCommitAction()
   }
 
   override fun vcsesChanged() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
-    ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
+    updateDefaultCommitAction()
 
     initCommitHandlers()
     workflow.initCommitOptions(createCommitOptions())
     commitOptions.restoreState()
+  }
+
+  private fun updateDefaultCommitAction() {
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+    ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
   }
 
   fun activate(): Boolean = ui.activate()
