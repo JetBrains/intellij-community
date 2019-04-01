@@ -59,4 +59,9 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testUpperBoundByTypeParameter() {
     doTest(true)
   }
+
+  void testInferWildcardsDependencies() {
+    doTest(true)
+  }
+
 }
