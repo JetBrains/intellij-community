@@ -19,14 +19,17 @@ import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.*
 import git4idea.history.GitLogUtil
 
-fun CheckinProjectPanel.isAmend(): Boolean {
-  if (this !is CommitChangeListDialog) return false
-  val gitCheckinOptions = this.additionalComponents
-                            .filterIsInstance(GitCheckinEnvironment.GitCheckinOptions::class.java)
-                            .firstOrNull()
-                          ?: return false
-  return gitCheckinOptions.isAmend
+private fun CheckinProjectPanel.gitCheckinOptions(): GitCheckinEnvironment.GitCheckinOptions? {
+  if (this !is CommitChangeListDialog) return null
+  return additionalComponents
+           .filterIsInstance(GitCheckinEnvironment.GitCheckinOptions::class.java)
+           .firstOrNull()
+         ?: return null
 }
+
+fun CheckinProjectPanel.isAmend(): Boolean = this.gitCheckinOptions()?.isAmend ?: false
+
+fun CheckinProjectPanel.author(): String? = this.gitCheckinOptions()?.author
 
 fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Collection<FilePath>> {
   val rootFiles = HashMap<VirtualFile, HashSet<FilePath>>()
