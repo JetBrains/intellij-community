@@ -412,10 +412,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv", "sv"
-  ));
-
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
@@ -985,6 +981,32 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (context == null) return false;
     Locale locale = context.getLocale();
     if (locale == null) return false;
-    return ALT_GR_LAYOUTS.contains(locale.getLanguage());
+    String language = locale.getLanguage();
+    return ALT_GR_LANGUAGES.contains(language);
   }
+
+  // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
+  @NonNls private static final Set<String> ALT_GR_LANGUAGES = new HashSet<>(Arrays.asList(
+    "da", // Danish
+    "de", // German
+    "es", // Spanish
+    "et", // Estonian
+    "fi", // Finnish
+    "fr", // French
+    "hr", // Croatian
+    "hu", // Hungarian
+    "it", // Italian
+    "lv", // Latvian
+    "mk", // Macedonian
+    "nl", // Dutch
+    "no", // Norwegian
+    "pl", // Polish
+    "pt", // Portuguese
+    "ro", // Romanian
+    "sk", // Slovak
+    "sl", // Slovenian
+    "sr", // Serbian
+    "sv", // Swedish
+    "tr"  // Turkish
+  ));
 }
