@@ -105,7 +105,7 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
 
   @Override
   public int getVersion() {
-    int version = 10;
+    int version = 11;
     FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
     Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
