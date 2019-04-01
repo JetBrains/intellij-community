@@ -1015,7 +1015,7 @@ property_expression ::= expression (mb_nl property_dot) <<mb_nl_group (type_argu
 private method_reference_dot ::= '.&' | '::' { consumeTokenMethod = 'consumeTokenFast' }
 private reference_dot ::= '.' | '?.' | '*.' { consumeTokenMethod = 'fast' }
 private attribute_dot ::= reference_dot mb_nl ('@') { consumeTokenMethod = 'fast' }
-private property_dot ::= reference_dot  | attribute_dot | method_reference_dot
+private property_dot ::= attribute_dot | method_reference_dot | reference_dot
 
 private after_dot ::= <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
 private qualified_reference_expression_identifiers ::= IDENTIFIER
