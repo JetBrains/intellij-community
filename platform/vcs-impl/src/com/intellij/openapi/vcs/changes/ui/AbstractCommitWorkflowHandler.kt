@@ -97,22 +97,46 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     if (!saveCommitOptions()) return
     saveCommitMessage(true)
 
-    refreshChanges { doExecuteDefault(executor) }
+    refreshChanges {
+      updateWorkflow()
+      doExecuteDefault(executor)
+    }
   }
 
-  protected open fun executeCustom(executor: CommitExecutor, session: CommitSession) = Unit
+  private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
+    if (!canExecute(executor)) return
+    if (!checkEmptyCommitMessage()) return
+    if (!saveCommitOptions()) return
+    saveCommitMessage(true)
+
+    (session as? CommitSessionContextAware)?.setContext(workflow.commitContext)
+    refreshChanges {
+      updateWorkflow()
+      doExecuteCustom(executor, session)
+    }
+  }
+
+  protected open fun updateWorkflow() = Unit
 
   protected abstract fun addUnversionedFiles(): Boolean
 
   protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
     workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
 
-  protected abstract fun doExecuteDefault(executor: CommitExecutor?)
+  private fun doExecuteDefault(executor: CommitExecutor?) = try {
+    workflow.executeDefault(executor)
+  }
+  catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
+    e.show()
+  }
 
-  protected fun checkEmptyCommitMessage(): Boolean =
+  protected abstract fun canExecute(executor: CommitExecutor): Boolean
+  protected abstract fun doExecuteCustom(executor: CommitExecutor, session: CommitSession)
+
+  private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
 
-  protected fun saveCommitOptions() = try {
+  private fun saveCommitOptions() = try {
     commitOptions.saveState()
     true
   }

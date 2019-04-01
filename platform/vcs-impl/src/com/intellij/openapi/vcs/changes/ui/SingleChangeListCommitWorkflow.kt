@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -17,7 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.Companion.moveToFailedList
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -57,20 +55,19 @@ open class SingleChangeListCommitWorkflow(
 
   val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
-  fun executeDefault(executor: CommitExecutor?, commitState: ChangeListCommitState) {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor, commitState.changeList)
-    when (beforeCommitChecksResult) {
-      CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
-      CheckinHandler.ReturnResult.CLOSE_WINDOW ->
-        moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
-      CheckinHandler.ReturnResult.CANCEL -> Unit
-    }
+  internal lateinit var commitState: ChangeListCommitState
+
+  override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = when (result) {
+    CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+    CheckinHandler.ReturnResult.CLOSE_WINDOW ->
+      moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
+    CheckinHandler.ReturnResult.CANCEL -> Unit
   }
 
   fun executeCustom(executor: CommitExecutor, session: CommitSession, commitState: ChangeListCommitState) {
     if (!configureCommitSession(executor, session, commitState.changes, commitState.commitMessage)) return
 
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor, commitState.changeList)
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor)
     when (beforeCommitChecksResult) {
       CheckinHandler.ReturnResult.COMMIT -> {
         val success = doCommitCustom(executor, session, commitState)
@@ -96,53 +93,8 @@ open class SingleChangeListCommitWorkflow(
     }
   }
 
-  private fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean,
-                                              executor: CommitExecutor?,
-                                              changeList: LocalChangeList): CheckinHandler.ReturnResult {
-    eventDispatcher.multicaster.beforeCommitChecksStarted()
-    val result = runBeforeCommitChecks(executor, changeList)
-    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
-
-    return result
-  }
-
-  private fun runBeforeCommitChecks(executor: CommitExecutor?, changeList: LocalChangeList): CheckinHandler.ReturnResult {
-    var result: CheckinHandler.ReturnResult? = null
-    val checks = Runnable {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor)
-    }
-
-    doRunBeforeCommitChecks(changeList, wrapWithCommitMetaHandlers(checks))
-
-    return result ?: CheckinHandler.ReturnResult.CANCEL
-  }
-
-  protected open fun doRunBeforeCommitChecks(changeList: LocalChangeList, checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, changeList, checks)
-
-  private fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
-    var result = block
-    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
-      val previousResult = result
-      result = Runnable {
-        LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-        metaHandler.runCheckinHandlers(previousResult)
-      }
-    }
-    return result
-  }
-
-  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
-      LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-      val result = handler.beforeCheckin(executor, additionalDataConsumer)
-      if (result != CheckinHandler.ReturnResult.COMMIT) return result
-    }
-
-    return CheckinHandler.ReturnResult.COMMIT
-  }
+  override fun doRunBeforeCommitChecks(checks: Runnable) =
+    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
 
   open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
     if (!executor.supportsPartialCommit()) {
