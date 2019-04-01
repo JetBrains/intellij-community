@@ -23,7 +23,6 @@ import com.intellij.lexer.FlexLexer;
   private void switchState(int state) { popState(); pushState(state); }
   private IntStack myStack = new IntStack(20);
   private boolean inString;
-  private boolean inOldArithmeticExpansion;
   private boolean letWithQuote;
   private CharSequence heredocMarker;
 
@@ -90,6 +89,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 %state EXPRESSIONS
 %state LET_EXPRESSION_START
 %state LET_EXPRESSIONS
+%state OLD_EXPRESSIONS
 %state CONDITIONAL_EXPRESSION
 %state PARAMETER_EXPANSION
 %state CASE_CLAUSE
@@ -102,7 +102,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 %%
 
-<EXPRESSIONS, LET_EXPRESSIONS> {
+<EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS> {
     "*="                          { return ARITH_ASS_MUL; }
     "/="                          { return ARITH_ASS_DIV; }
     "%="                          { return ARITH_ASS_MOD; }
@@ -149,7 +149,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <EXPRESSIONS> {
-    "))"                          { yybegin(YYINITIAL); return RIGHT_DOUBLE_PAREN; }
+    "))"                          { popState(); return RIGHT_DOUBLE_PAREN; }
 }
 
 <CONDITIONAL_EXPRESSION> {
@@ -210,7 +210,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
     "case"                        { pushState(CASE_CLAUSE); return CASE; }
@@ -234,14 +234,18 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
-    "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-    " ]]"                         { popState(); return RIGHT_DOUBLE_BRACKET; }
-    "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
-    " ]"                          { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  popState(); return ARITH_SQUARE_RIGHT; }
-                                    else if (yystate() == CONDITIONAL_EXPRESSION) { popState(); return EXPR_CONDITIONAL_RIGHT; }
-                                    else return RIGHT_SQUARE; }
-    "$["                          { inOldArithmeticExpansion = true; pushState(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
+    "$["                          { pushState(OLD_EXPRESSIONS); return ARITH_SQUARE_LEFT; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+    "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+    "(("                          { pushState(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
+    "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
+    " ]]"                         { popState(); return RIGHT_DOUBLE_BRACKET; }
+    " ]"                          { switch (yystate()) {
+                                      case OLD_EXPRESSIONS: popState(); return ARITH_SQUARE_RIGHT;
+                                      case CONDITIONAL_EXPRESSION: popState(); return EXPR_CONDITIONAL_RIGHT;
+                                      default: return RIGHT_SQUARE;
+                                    }
+                                  }
 
     /***** General operators *****/
     "+="                          { return ADD_EQ; }
@@ -252,7 +256,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  popState(); return ARITH_SQUARE_RIGHT; }
+    "]"                           { if (yystate() == OLD_EXPRESSIONS) { popState(); return ARITH_SQUARE_RIGHT; }
                                     return RIGHT_SQUARE; }
     "!"                           { return BANG; }
     "`"                           { return BACKQUOTE; }
@@ -303,7 +307,6 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {Word}                        { return WORD; }
-    "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
 }
 
 [^]                               { return BAD_CHARACTER; }
