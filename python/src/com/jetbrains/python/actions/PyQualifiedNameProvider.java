@@ -30,6 +30,9 @@ import java.util.Collection;
 
 
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
+
+  public static final char SEPARATOR = '.';
+
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {
     return element instanceof PyClass || element instanceof PyFunction ? element : null;
@@ -44,11 +47,11 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (element instanceof PyFunction) {
       final PyClass containingClass = ((PyFunction)element).getContainingClass();
       if (containingClass != null) {
-        return containingClass.getQualifiedName() + "#" + ((PyFunction)element).getName();
+        return containingClass.getQualifiedName() + SEPARATOR + ((PyFunction)element).getName();
       }
       else {
         return ((PyFunction)element).getQualifiedName();
-      } 
+      }
     }
     return null;
   }
@@ -64,12 +67,13 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (!functions.isEmpty()) {
       return ContainerUtil.getFirstItem(functions);
     }
-    final int sharpIdx = fqn.indexOf("#");
+    final int sharpIdx = fqn.lastIndexOf(SEPARATOR);
+
     if (sharpIdx > -1) {
-      final String className = StringUtil.getPackageName(fqn, '#');
+      final String className = StringUtil.getPackageName(fqn, SEPARATOR);
       aClass = PyClassNameIndex.findClass(className, project);
       if (aClass != null) {
-        final String memberName = StringUtil.getShortName(fqn, '#');
+        final String memberName = StringUtil.getShortName(fqn, SEPARATOR);
         final PyClass nestedClass = aClass.findNestedClass(memberName, false);
         if (nestedClass != null) return nestedClass;
         final PyFunction methodByName = aClass.findMethodByName(memberName, false, null);
