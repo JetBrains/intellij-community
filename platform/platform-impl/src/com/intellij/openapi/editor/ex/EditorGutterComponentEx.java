@@ -78,9 +78,4 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public GutterMark getGutterRenderer(final Point p) {
     return null;
   }
-
-  @NotNull
-  public abstract List<TextAnnotationGutterProvider> getTextAnnotations();
-
-  public abstract void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations);
 }
