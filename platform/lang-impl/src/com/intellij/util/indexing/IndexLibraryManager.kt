@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -14,6 +16,7 @@ class IndexLibraryManager(val project: Project) : ProjectComponent {
   val rootsToIndex = HashSet<VirtualFile>()
 
   fun updateNames(names: Collection<String>) {
+    var flag = false
     for (name in names) {
       if (!nameSet.contains(name)) {
 
@@ -23,21 +26,41 @@ class IndexLibraryManager(val project: Project) : ProjectComponent {
             val libFile = canonicalFile.findChild(name)
             if (libFile != null) {
               rootsToIndex.add(libFile)
-
-              (FileBasedIndex.getInstance() as FileBasedIndexImpl).forceReindex(libFile)
+              flag = true
             }
           }
         }
-
       }
     }
     nameSet.clear()
     nameSet.addAll(names)
+
+    if (flag) {
+      ApplicationManager.getApplication().invokeLater {
+        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, false, true)
+      }
+    }
   }
 
   fun isUnusedLibrary(file: VirtualFile): Boolean {
     if (isInContentOfAnyProject(file)) {
       return false
+    }
+
+    for (module in ModuleManager.getInstance(project).modules) {
+      val orderEntries = ModuleRootManager.getInstance(module).orderEntries
+      for (orderEntry in orderEntries) {
+        if (orderEntry is LibraryOrSdkOrderEntry) {
+          if (orderEntry.isValid()) {
+            for (root in orderEntry.getRootFiles(OrderRootType.SOURCES) +
+                         orderEntry.getRootFiles(OrderRootType.CLASSES)) {
+              if (root == file) {
+                return false
+              }
+            }
+          }
+        }
+      }
     }
 
     for (root in rootsToIndex) {
