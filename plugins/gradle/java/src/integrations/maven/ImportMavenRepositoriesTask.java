@@ -32,7 +32,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -127,7 +127,7 @@ class ImportMavenRepositoriesTask {
         .filter(index -> index.getUpdateTimestamp() == -1 &&
                          index.getFailureMessage() == null &&
                          MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl()))
-        .map(MavenIndex::getRepositoryPathOrUrl)
+        .map(MavenSearchIndex::getRepositoryPathOrUrl)
         .collect(Collectors.toList());
       MavenRepositoriesHolder.getInstance(myProject).updateNotIndexedUrls(repositoriesWithEmptyIndex);
     });

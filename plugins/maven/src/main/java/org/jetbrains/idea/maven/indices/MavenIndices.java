@@ -33,12 +33,12 @@ public class MavenIndices {
   private final MavenIndexerWrapper myIndexer;
 
   private final File myIndicesDir;
-  private final MavenIndex.IndexListener myListener;
+  private final MavenSearchIndex.IndexListener myListener;
 
   private final List<MavenIndex> myIndices = new ArrayList<>();
   private static final Object ourDirectoryLock = new Object();
 
-  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenIndex.IndexListener listener) {
+  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenSearchIndex.IndexListener listener) {
     myIndexer = indexer;
     myIndicesDir = indicesDir;
     myListener = listener;
@@ -71,7 +71,7 @@ public class MavenIndices {
   }
 
   public synchronized void close() {
-    for (MavenIndex each : myIndices) {
+    for (MavenSearchIndex each : myIndices) {
       each.close(false);
     }
     myIndices.clear();
@@ -81,7 +81,7 @@ public class MavenIndices {
     return new ArrayList<>(myIndices);
   }
 
-  public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
+  public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenSearchIndex.Kind kind) throws MavenIndexException {
     MavenIndex index = find(repositoryPathOrUrl, kind);
     if (index != null) {
       index.registerId(repositoryId);
@@ -95,7 +95,7 @@ public class MavenIndices {
   }
 
   @Nullable
-  public MavenIndex find(String repositoryPathOrUrl, MavenIndex.Kind kind) {
+  public MavenIndex find(String repositoryPathOrUrl, MavenSearchIndex.Kind kind) {
     for (MavenIndex each : myIndices) {
       if (each.isFor(kind, repositoryPathOrUrl)) return each;
     }
@@ -123,7 +123,7 @@ public class MavenIndices {
     }
   }
 
-  public static void updateOrRepair(MavenIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  public static void updateOrRepair(MavenSearchIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     index.updateOrRepair(fullUpdate, settings, progress);
   }
