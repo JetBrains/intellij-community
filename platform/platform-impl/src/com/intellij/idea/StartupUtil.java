@@ -124,9 +124,11 @@ public class StartupUtil {
       try {
         UIUtil.initDefaultLaF();
 
-        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
-        SVGLoader.prepareBatikInAwt();
-        activity.end();
+        if (!Main.isHeadless()) {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
+          SVGLoader.prepareBatikInAwt();
+          activity.end();
+        }
       }
       catch (IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException | ClassNotFoundException e) {
         throw new CompletionException(e);
