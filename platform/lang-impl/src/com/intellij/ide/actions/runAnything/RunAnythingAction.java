@@ -78,7 +78,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_RUN_ANYTHING);
 
       RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(e.getProject());
-      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
       runAnythingManager.show(text, e);
     }
