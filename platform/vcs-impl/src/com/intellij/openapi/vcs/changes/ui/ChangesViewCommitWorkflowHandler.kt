@@ -29,6 +29,8 @@ class ChangesViewCommitWorkflowHandler(
     updateDefaultCommitAction()
   }
 
+  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !isCommitEmpty()
+
   override fun vcsesChanged() {
     updateDefaultCommitAction()
 
@@ -39,10 +41,15 @@ class ChangesViewCommitWorkflowHandler(
 
   private fun updateDefaultCommitAction() {
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
-    ui.isDefaultCommitActionEnabled = workflow.vcses.isNotEmpty()
+    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 
   fun activate(): Boolean = ui.activate()
+
+  override fun inclusionChanged() {
+    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+    super.inclusionChanged()
+  }
 
   override fun addUnversionedFiles(): Boolean = addUnversionedFiles(changeListManager.defaultChangeList)
 
