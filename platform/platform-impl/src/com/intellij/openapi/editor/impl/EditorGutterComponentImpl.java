@@ -1676,12 +1676,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       else {
         TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
         if (provider != null) {
-          if (myProviderToListener.containsKey(provider)) {
-            EditorGutterAction action = myProviderToListener.get(provider);
-            if (action != null) {
-              int line = getLineNumAtPoint(e.getPoint());
-              cursor = action.getCursor(line);
-            }
+          EditorGutterAction action = myProviderToListener.get(provider);
+          if (action != null) {
+            int line = getLineNumAtPoint(e.getPoint());
+            cursor = action.getCursor(line);
           }
         }
       }
@@ -1722,13 +1720,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return;
       }
 
-      if (myProviderToListener.containsKey(provider)) {
+      EditorGutterAction action = myProviderToListener.get(provider);
+      if (action != null) {
         int line = getLineNumAtPoint(clickPoint);
 
         if (line >= 0 && line < myEditor.getDocument().getLineCount() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
-          myProviderToListener.get(provider).doAction(line);
+          action.doAction(line);
         }
-
       }
     }
   }
@@ -1879,6 +1877,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         provider.gutterClosed();
         myTextAnnotationGutters.remove(i);
         myTextAnnotationGutterSizes.remove(i);
+        myProviderToListener.remove(provider);
       }
     }
 
