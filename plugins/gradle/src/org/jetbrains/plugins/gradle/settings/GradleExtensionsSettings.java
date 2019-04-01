@@ -146,7 +146,12 @@ public class GradleExtensionsSettings {
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
-          extensionsData.configurations.put(configuration.getName(), gradleConfiguration);
+          if (gradleConfiguration.scriptClasspath) {
+            extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
+          }
+          else {
+            extensionsData.configurations.put(configuration.getName(), gradleConfiguration);
+          }
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
         extensionsData.myGradleProject = gradleProject;
@@ -211,9 +216,10 @@ public class GradleExtensionsSettings {
      */
     @Deprecated
     public List<GradleTask> tasks = Collections.emptyList();
-
     @NotNull
     public final Map<String, GradleConfiguration> configurations = new HashMap<>();
+    @NotNull
+    public final Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
     @Nullable
     public GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;

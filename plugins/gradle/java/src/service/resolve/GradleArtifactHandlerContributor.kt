@@ -33,8 +33,9 @@ class GradleArtifactHandlerContributor : NonCodeMembersContributor() {
     val manager = place.manager
     val objectVarargType = PsiEllipsisType(getJavaLangObject(place))
 
+    val configurationsMap = if (qualifierType.buildscript) data.buildScriptConfigurations else data.configurations
     // The null method name means we are in completion, and in this case all available declarations should be fed into the processor.
-    val configurations = if (methodName == null) data.configurations.values else listOf(data.configurations[methodName] ?: return)
+    val configurations = if (methodName == null) configurationsMap.values else listOf(configurationsMap[methodName] ?: return)
     for (configuration in configurations) {
       val configurationName = configuration.name ?: continue
       val method = GrLightMethodBuilder(manager, configurationName).apply {
