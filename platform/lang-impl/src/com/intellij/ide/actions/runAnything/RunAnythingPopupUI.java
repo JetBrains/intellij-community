@@ -179,6 +179,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
             myAlarm.cancelAllRequests();
 
             ApplicationManager.getApplication().invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+
+            searchFinishedHandler.run();
           }
           finally {
             result.setDone();
