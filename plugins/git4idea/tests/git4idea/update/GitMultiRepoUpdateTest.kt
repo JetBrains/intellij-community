@@ -16,7 +16,6 @@
 package git4idea.update
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
@@ -24,7 +23,6 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
 import java.io.File
 
@@ -143,10 +141,4 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
   }
 
   private fun repositories() = listOf(repository, community)
-
-  private fun assertNoErrorNotification() {
-    vcsNotifier.notifications.find { it.type == NotificationType.ERROR }?.let { notification ->
-      TestCase.fail("Error notification ${notification.content} found")
-    }
-  }
 }
