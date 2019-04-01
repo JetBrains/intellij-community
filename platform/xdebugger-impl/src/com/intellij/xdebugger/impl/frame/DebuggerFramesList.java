@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.Position;
+import java.awt.*;
 
 /**
  * @author nik
@@ -98,5 +99,13 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
   @Override
   public int getNextMatch(String prefix, int startIndex, Position.Bias bias) {
     return -1; // disable built-in search completely to avoid calling toString for every item
+  }
+
+  @Override
+  public int locationToIndex(Point location) {
+    if (location.y <= getPreferredSize().height) {
+      return super.locationToIndex(location);
+    }
+    return -1;
   }
 }
