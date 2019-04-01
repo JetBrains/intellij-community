@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitExecutorBase
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
@@ -79,24 +81,16 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun customCommitSucceeded() = ui.deactivate()
 
+  override fun updateWorkflow() {
+    workflow.commitState = getCommitState()
+  }
+
   override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
 
-  override fun doExecuteDefault(executor: CommitExecutor?) = try {
-    workflow.executeDefault(executor, getCommitState())
-  }
-  catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
-    e.show()
-  }
+  override fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession) {
-    if (!workflow.canExecute(executor, getIncludedChanges())) return
-    if (!checkEmptyCommitMessage()) return
-    if (!saveCommitOptions()) return
-    saveCommitMessage(true)
-
-    (session as? CommitSessionContextAware)?.setContext(workflow.commitContext)
-    refreshChanges { workflow.executeCustom(executor, session, getCommitState()) }
-  }
+  override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) =
+    workflow.executeCustom(executor, session, getCommitState())
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
 
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -39,7 +40,8 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun addUnversionedFiles(): Boolean = addUnversionedFiles(changeListManager.defaultChangeList)
 
-  override fun doExecuteDefault(executor: CommitExecutor?) = Unit
+  override fun canExecute(executor: CommitExecutor): Boolean = false
+  override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = Unit
 
   override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
 

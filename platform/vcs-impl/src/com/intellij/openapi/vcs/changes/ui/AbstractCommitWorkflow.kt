@@ -2,18 +2,17 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.PseudoMap
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
@@ -22,6 +21,8 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import java.util.*
+
+private val LOG = logger<AbstractCommitWorkflow>()
 
 internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
@@ -83,6 +84,58 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     FileDocumentManager.getInstance().saveAllDocuments()
     return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+  }
+
+  fun executeDefault(executor: CommitExecutor?) {
+    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor)
+    processExecuteDefaultChecksResult(beforeCommitChecksResult)
+  }
+
+  protected open fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = Unit
+
+  protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CheckinHandler.ReturnResult {
+    eventDispatcher.multicaster.beforeCommitChecksStarted()
+    val result = runBeforeCommitChecks(executor)
+    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
+
+    return result
+  }
+
+  private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
+    var result: CheckinHandler.ReturnResult? = null
+    val checks = Runnable {
+      FileDocumentManager.getInstance().saveAllDocuments()
+      result = runBeforeCommitHandlersChecks(executor)
+    }
+
+    doRunBeforeCommitChecks(wrapWithCommitMetaHandlers(checks))
+
+    return result ?: CheckinHandler.ReturnResult.CANCEL
+  }
+
+  protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
+
+  private fun wrapWithCommitMetaHandlers(block: Runnable): Runnable {
+    var result = block
+    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
+      val previousResult = result
+      result = Runnable {
+        LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
+        metaHandler.runCheckinHandlers(previousResult)
+      }
+    }
+    return result
+  }
+
+  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
+    commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
+      LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+      val result = handler.beforeCheckin(executor, additionalDataConsumer)
+      if (result != CheckinHandler.ReturnResult.COMMIT) return result
+    }
+
+    return CheckinHandler.ReturnResult.COMMIT
   }
 
   companion object {
