@@ -18,18 +18,21 @@ package com.intellij.openapi.application;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import com.sun.jna.platform.FileUtils;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -37,11 +40,25 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
+import org.jetbrains.annotations.NotNull;
 
 public class DeleteOldDirectoriesDialog extends JDialog {
   private JPanel myTopLevelPanel;
@@ -50,6 +67,7 @@ public class DeleteOldDirectoriesDialog extends JDialog {
   private AsyncProcessIcon myBusyAnimationIcon;
   private JButton myDeleteButton;
   private JButton myCancelButton;
+  private JBScrollPane myScrollPane;
 
   private List<IdeDirectoriesInfo> myDirsInfoList;
   private JCheckBox myAggregateCheckBox;
@@ -60,12 +78,17 @@ public class DeleteOldDirectoriesDialog extends JDialog {
   private SwingWorker myDeletionWorker;
 
   public DeleteOldDirectoriesDialog(List<IdeDirectoriesInfo> dirsInfoList) {
-    setLabelTexts();
+    Dimension size = JBUI.size(600, 400);
+    setBorders();
+    setLabelTexts(size);
     createTableUI(dirsInfoList);
     setLastUsedLabels();
     addListeners();
     setDialogProperties();
     runSizeCalculationWorkers();
+    setPreferredSize(size);
+    pack();
+    setLocationRelativeTo(null);
   }
 
   // This method is needed, because there is at least one component with custom-create set to true.
@@ -74,10 +97,18 @@ public class DeleteOldDirectoriesDialog extends JDialog {
     myBusyAnimationIcon.setVisible(false);
   }
 
-  private void setLabelTexts() {
+  private void setBorders() {
+    myScrollPane.setBorder(JBUI.Borders.empty());
+    myScrollPane.setViewportBorder(null);
+    myTableUIPanel.setBorder(JBUI.Borders.empty());
+  }
+
+  private void setLabelTexts(Dimension dialogSize) {
     String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+    myFoundUnusedLabel.setFont(JBUI.Fonts.label());
     myFoundUnusedLabel.setText(html(ApplicationBundle.message("label.found.unused", productName)));
-    setPreferredSize(myFoundUnusedLabel, 600, 2);
+    // -50: slop for insets (which we can't read recursively since this is called before added to hierarchy)
+    setPreferredSize(myFoundUnusedLabel, dialogSize.width - 50, 2);
   }
 
   private static String html(String text) {
@@ -98,6 +129,7 @@ public class DeleteOldDirectoriesDialog extends JDialog {
   }
 
   private void createTableUI(List<IdeDirectoriesInfo> dirsInfoList) {
+    myTableUIPanel.setFont(JBUI.Fonts.label());
     myDirsInfoList = dirsInfoList;
 
     final int size = myDirsInfoList.size();
