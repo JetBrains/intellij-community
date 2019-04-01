@@ -33,9 +33,9 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
     val manager = place.manager
     val objectVarargType = PsiEllipsisType(TypesUtil.getJavaLangObject(place))
 
-    val configurations = if (methodName == null) data.configurations.values else listOf(data.configurations[methodName] ?: return)
+    val configurationsMap = if (qualifierType.buildscript) data.buildScriptConfigurations else data.configurations
+    val configurations = if (methodName == null) configurationsMap.values else listOf(configurationsMap[methodName] ?: return)
     for (configuration in configurations) {
-      if (configuration.scriptClasspath != qualifierType.buildscript) continue
       val configurationName = configuration.name ?: continue
       val method = GrLightMethodBuilder(manager, configurationName).apply {
         methodKind = GradleArtifactHandlerContributor.ourMethodKind
