@@ -4,6 +4,7 @@ package com.intellij.java.compiler.notNullVerification;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
+import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -411,7 +412,8 @@ public abstract class NotNullVerifyingInstrumenterTest {
     Class mainClass = null;
     for (File file: files) {
       FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
-      ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
+      ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
       String className = FileUtil.getNameWithoutExtension(file.getName());
       Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
