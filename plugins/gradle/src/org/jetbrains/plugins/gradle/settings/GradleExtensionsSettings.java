@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -57,11 +58,19 @@ public class GradleExtensionsSettings {
       DataNode<ProjectData> projectDataNode = projectInfo.getExternalProjectStructure();
       if (projectDataNode == null) continue;
 
-      Collection<DataNode<GradleExtensions>> nodes = new SmartList<>();
-      for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE)) {
-        ContainerUtil.addIfNotNull(nodes, ExternalSystemApiUtil.find(moduleNode, GradleExtensionsDataService.KEY));
+      String projectPath = projectInfo.getExternalProjectPath();
+      try {
+        Collection<DataNode<GradleExtensions>> nodes = new SmartList<>();
+        for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE)) {
+          ContainerUtil.addIfNotNull(nodes, ExternalSystemApiUtil.find(moduleNode, GradleExtensionsDataService.KEY));
+        }
+        getInstance(project).add(projectPath, nodes);
       }
-      getInstance(project).add(projectInfo.getExternalProjectPath(), nodes);
+      catch (ClassCastException e) {
+        // catch deserialization issue caused by fast serializer
+        LOG.debug(e);
+        ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(projectPath);
+      }
     }
   }
 
