@@ -671,6 +671,8 @@ public class AnnotateDiffViewerAction {
       Project project = viewer.getProject();
       assert project != null;
 
+      BackgroundableActionLock actionLock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, viewer, side);
+
       return new ViewerAnnotator() {
         @NotNull
         @Override
@@ -702,7 +704,7 @@ public class AnnotateDiffViewerAction {
         @Override
         @NotNull
         public BackgroundableActionLock getBackgroundableLock() {
-          return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
+          return actionLock;
         }
       };
     }
