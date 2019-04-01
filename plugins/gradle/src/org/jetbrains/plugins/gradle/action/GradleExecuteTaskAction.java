@@ -5,7 +5,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.runAnything.RunAnythingManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -67,7 +66,6 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     if (project == null) return;
     GradleActionsUsagesCollector.trigger(project, this, e);
     RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
-    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     runAnythingManager.show(HELP_COMMAND + " ", false, e);
   }
 
