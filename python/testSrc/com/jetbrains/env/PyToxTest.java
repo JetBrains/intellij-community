@@ -445,32 +445,35 @@ public final class PyToxTest extends PyEnvTestCase {
     @Override
     protected void configurationCreatedAndWillLaunch(@NotNull PyToxConfiguration configuration) throws IOException {
       super.configurationCreatedAndWillLaunch(configuration);
+      fixPathForTox(configuration);
+    }
+  }
 
-      // To help tox with all interpreters, we add all our environments to path
-      // Envs should have binaries like "python2.7" (with version included),
-      // and tox will find em: see tox_get_python_executable @ interpreters.py
+  private static void fixPathForTox(final @NotNull PyToxConfiguration configuration) {
+    // To help tox with all interpreters, we add all our environments to path
+    // Envs should have binaries like "python2.7" (with version included),
+    // and tox will find em: see tox_get_python_executable @ interpreters.py
 
-      //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
-      final List<String> roots = new ArrayList<>();
-      final List<String> libs = new ArrayList<>();
-      for (final String root : getPythonRoots()) {
-        File bin = new File(root, "/bin/");
-        roots.add(bin.exists() ? bin.getAbsolutePath() : root);
-        File lib = new File(root, "/lib/");
-        if (lib.exists()) {
-          libs.add(lib.getAbsolutePath());
-        }
+    //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
+    final List<String> roots = new ArrayList<>();
+    final List<String> libs = new ArrayList<>();
+    for (final String root : getPythonRoots()) {
+      File bin = new File(root, "/bin/");
+      roots.add(bin.exists() ? bin.getAbsolutePath() : root);
+      File lib = new File(root, "/lib/");
+      if (lib.exists()) {
+        libs.add(lib.getAbsolutePath());
       }
+    }
 
-      final String pathes = StringUtil.join(roots, File.pathSeparator);
-      final String libraryPathes = StringUtil.join(libs, File.pathSeparator);
-      final Logger logger = Logger.getInstance(PyToxTest.class);
-      Map<String, String> envs = configuration.getEnvs();
-      envs.put("PATH", pathes);
-      envs.put("LD_LIBRARY_PATH", libraryPathes);
-      for (final String key : envs.keySet()) {
-        logger.warn(String.format("%s: %s", key, envs.get(key)));
-      }
+    final String pathes = StringUtil.join(roots, File.pathSeparator);
+    final String libraryPathes = StringUtil.join(libs, File.pathSeparator);
+    final Logger logger = Logger.getInstance(PyToxTest.class);
+    Map<String, String> envs = configuration.getEnvs();
+    envs.put("PATH", pathes);
+    envs.put("LD_LIBRARY_PATH", libraryPathes);
+    for (final String key : envs.keySet()) {
+      logger.warn(String.format("%s: %s", key, envs.get(key)));
     }
   }
 
@@ -514,6 +517,7 @@ public final class PyToxTest extends PyEnvTestCase {
       super.configurationCreatedAndWillLaunch(configuration);
       PyToxTestTools.setArguments(configuration, myArgs);
       PyToxTestTools.setRunOnlyEnvs(configuration, myEnvsToRun);
+      fixPathForTox(configuration);
     }
   }
 }
