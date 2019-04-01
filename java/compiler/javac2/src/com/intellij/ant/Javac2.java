@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ant;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -334,13 +320,13 @@ public class Javac2 extends Javac {
         int version;
         InputStream stream = new FileInputStream(classFile);
         try {
-          version = getClassFileVersion(new ClassReader(stream));
+          version = InstrumenterClassWriter.getClassFileVersion(new ClassReader(stream));
         }
         finally {
           stream.close();
         }
         AntNestedFormLoader formLoader = new AntNestedFormLoader(finder.getLoader(), myNestedFormPathList);
-        InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
+        InstrumenterClassWriter classWriter = new InstrumenterClassWriter(InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
         final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, formLoader, false, classWriter);
         codeGenerator.patchFile(classFile);
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
@@ -364,13 +350,6 @@ public class Javac2 extends Javac {
         fireError("Forms instrumentation failed for " + formFile.getAbsolutePath() + ": " + e.toString());
       }
     }
-  }
-
-  /**
-   * @return the flags for class writer
-   */
-  private static int getAsmClassWriterFlags(int version) {
-    return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
   }
 
   /**
@@ -470,10 +449,10 @@ public class Javac2 extends Javac {
           try {
             FailSafeClassReader reader = new FailSafeClassReader(inputStream);
 
-            int version = getClassFileVersion(reader);
+            int version = InstrumenterClassWriter.getClassFileVersion(reader);
 
-            if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
-              ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
+            if ((version & 0xFFFF) >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
+              ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
 
               if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNullAnnotations.split(";"))) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);
@@ -504,18 +483,6 @@ public class Javac2 extends Javac {
     }
 
     return instrumented;
-  }
-
-  private static int getClassFileVersion(ClassReader reader) {
-    final int[] classfileVersion = new int[1];
-    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        classfileVersion[0] = version;
-      }
-    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-    return classfileVersion[0];
   }
 
   private boolean shouldBeSkippedByAnnotationPattern(ClassReader reader) {
