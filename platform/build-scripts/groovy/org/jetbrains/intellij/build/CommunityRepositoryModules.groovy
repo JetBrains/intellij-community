@@ -291,8 +291,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.chunkio", "pixelprobe.jar")
-      withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
@@ -351,6 +349,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.build:manifest-merger")
       withProjectLibrary("com.android.tools.build:builder-model")
       withProjectLibrary("com.android.tools.build:builder-test-api")
+      withProjectLibrary("com.android.tools.pixelprobe:pixelprobe")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
