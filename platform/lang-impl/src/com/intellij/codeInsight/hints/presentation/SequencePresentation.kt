@@ -33,14 +33,15 @@ class SequencePresentation(private val presentations: List<InlayPresentation>) :
 
   private fun calculateOffsets(): IntArray {
     var currentOffset = 0
-    return IntArray(presentations.size) { width ->
+    return IntArray(presentations.size) { index ->
       val oldOffset = currentOffset
+      val width = presentations[index].width
       currentOffset = oldOffset + width
       oldOffset
     }
   }
 
-  override val width: Int = startOffsets.last()
+  override val width: Int = presentations.sumBy { it.width }
   override val height: Int = presentations.maxBy { it.height }!!.height
 
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
@@ -60,12 +61,26 @@ class SequencePresentation(private val presentations: List<InlayPresentation>) :
    * Note: height is not considered
    */
   override fun mouseClicked(e: MouseEvent, editorPoint: Point) {
+    handleMouse(e) {
+      it.mouseClicked(e, editorPoint)
+    }
+  }
+
+  private fun handleMouse(e: MouseEvent, action: (InlayPresentation) -> Unit) {
     val x = e.x
-    val index = startOffsets.binarySearch(x) + 1
-    val presentation = presentations[index]
-    val offset = startOffsets[index]
-    e.withTranslated(offset, 0) {
-      presentation.mouseClicked(e, editorPoint)
+    val y = e.y
+    if (x < 0 || x >= width || y < 0 || y > height) return
+    val index = startOffsets.binarySearch(x)
+    val finalIndex = if (index >= 0) {
+      index
+    } else {
+      -index - 2
+    }
+    if (finalIndex < 0 || index >= presentations.size) return
+    val presentation = presentations[finalIndex]
+    val offset = startOffsets[finalIndex]
+    e.withTranslated(-offset, 0) {
+      action(presentation)
     }
   }
 
@@ -73,19 +88,8 @@ class SequencePresentation(private val presentations: List<InlayPresentation>) :
    * Note: height is not considered
    */
   override fun mouseMoved(e: MouseEvent) {
-    // Height is not considered
-    val x = e.x
-    val index = startOffsets.binarySearch(x) + 1
-    val presentation = presentations[index]
-    if (presentationUnderCursor != presentation) {
-      if (presentationUnderCursor != null) {
-        presentationUnderCursor?.mouseExited()
-      }
-      presentationUnderCursor = presentation
-    }
-    val xOffset = startOffsets[index]
-    e.withTranslated(xOffset, 0) {
-      presentation.mouseMoved(e)
+    handleMouse(e) {
+      it.mouseMoved(e)
     }
   }
 

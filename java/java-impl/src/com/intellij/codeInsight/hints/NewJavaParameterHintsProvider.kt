@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.parameter.*
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.psi.PsiElement
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
@@ -10,8 +11,9 @@ import javax.swing.JLabel
 
 class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
   override fun getParameterHints(element: PsiElement, settings: NoSettings, factory: PresentationFactory, sink: ParameterHintsSink) {
-    if (element.text == "Hello") {
-      val info = ParameterHintInfo(factory.roundedText(" world"), element.textOffset, false, false, null, null)
+    if (element.text == "Hello" && element.children.isEmpty()) {
+      val presentation = SequencePresentation(listOf(factory.roundedText(" this "), factory.roundedText("is a world!")))
+      val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
       sink.addHint(info)
     }
   }
