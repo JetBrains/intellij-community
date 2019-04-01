@@ -24,8 +24,9 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
                                              @NotNull JsonSchemaService service,
                                              @NotNull ProblemsHolder holder,
                                              @NotNull LocalInspectionToolSession session) {
+    if (schema == null) return PsiElementVisitor.EMPTY_VISITOR;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(root, schema);
-    if (walker == null || schema == null) return PsiElementVisitor.EMPTY_VISITOR;
+    if (walker == null) return PsiElementVisitor.EMPTY_VISITOR;
     Project project = root.getProject();
     return new JsonElementVisitor() {
       @Override
