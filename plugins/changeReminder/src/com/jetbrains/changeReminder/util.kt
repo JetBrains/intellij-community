@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.intellij.vcsUtil.VcsUtil
 import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFilePath
 import git4idea.GitCommit
@@ -31,8 +30,8 @@ fun CheckinProjectPanel.isAmend(): Boolean {
 fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Collection<FilePath>> {
   val rootFiles = HashMap<VirtualFile, HashSet<FilePath>>()
 
-  this.files.forEach { file ->
-    val filePath = VcsUtil.getFilePath(file.absolutePath)
+  this.selectedChanges.forEach { file ->
+    val filePath = ChangesUtil.getFilePath(file)
     val fileVcs = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(filePath)
     if (fileVcs != null && fileVcs.vcs is GitVcs) {
       val fileRoot = fileVcs.path
