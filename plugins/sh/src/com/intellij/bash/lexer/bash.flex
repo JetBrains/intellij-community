@@ -24,6 +24,7 @@ import com.intellij.lexer.FlexLexer;
   private IntStack myStack = new IntStack(20);
   private boolean inString;
   private boolean inOldArithmeticExpansion;
+  private boolean letWithQuote;
   private CharSequence heredocMarker;
 
   protected void onReset() { myStack.clear(); }
@@ -86,7 +87,12 @@ EscapedRightCurly        = "\\}"
 HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
+//LetWithWhitespace        = let {WhiteSpace}+
+//WhitespaceWithQuote      =  {WhiteSpace}+ {Quote}{1}
+
 %state EXPRESSIONS
+%state LET_EXPRESSION_START
+%state LET_EXPRESSIONS
 %state PARAMETER_EXPANSION
 %state CASE_CLAUSE
 %state CASE_PATTERN
@@ -98,7 +104,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 %%
 
-<EXPRESSIONS> {
+<EXPRESSIONS, LET_EXPRESSIONS> {
     "~"                           { return ARITH_BITWISE_NEGATE; }
     "^"                           { return ARITH_BITWISE_XOR; }
 
@@ -120,8 +126,22 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     ">"                           { return GT; }
 
     {ArithWord}                   { return WORD; }
+}
 
+<EXPRESSIONS> {
     "))"                          { yybegin(YYINITIAL); return RIGHT_DOUBLE_PAREN; }
+}
+
+<LET_EXPRESSION_START> {
+    {WhiteSpace}+ / {Quote}       { return WHITESPACE; }
+    {WhiteSpace}+                 { yybegin(LET_EXPRESSIONS); return WHITESPACE; }
+    {Quote}                       { letWithQuote = true; yybegin(LET_EXPRESSIONS); return QUOTE; }
+}
+
+<LET_EXPRESSIONS> {
+    {WhiteSpace}+                 { if (!letWithQuote) { popState(); letWithQuote = false; } return WHITESPACE; }
+    {Quote}                       { if (letWithQuote) { popState(); letWithQuote = false; } return QUOTE; }
+    {LineTerminator}              { popState(); letWithQuote = false; return LINEFEED; }
 }
 
 <PARAMETER_EXPANSION> {
@@ -163,7 +183,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
     "case"                        { pushState(CASE_CLAUSE); return CASE; }
@@ -181,7 +201,10 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "until"                       { return UNTIL; }
     "while"                       { return WHILE; }
     "trap"                        { return TRAP; }
-    "let"                         { return LET; }
+//    {LetWithQuote}                |
+//    {LetWithWhitespace}           { pushState(EXPRESSIONS); return LET; }
+    "let"                         { pushState(LET_EXPRESSION_START); return LET; }
+//    "let" / {WhiteSpace}+         { pushState(LET_EXPRESSIONS); return LET; }
 
     "time"                        { return TIME; }
 

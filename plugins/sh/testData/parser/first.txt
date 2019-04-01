@@ -1079,7 +1079,8 @@ BASH_FILE
       PsiWhiteSpace(' ')
       ASSIGNMENT_EXPRESSION
         LITERAL_EXPRESSION
-          PsiElement(word)('indx-')
+          PsiElement(word)('indx')
+        PsiElement(-)('-')
         PsiElement(=)('=')
         LITERAL_EXPRESSION
           PsiElement(int)('1')
@@ -1092,8 +1093,12 @@ BASH_FILE
         LITERAL_EXPRESSION
           PsiElement(word)('indx')
         PsiElement(=)('=')
-        LITERAL_EXPRESSION
-          PsiElement(word)('1*1')
+        MUL_EXPRESSION
+          LITERAL_EXPRESSION
+            PsiElement(int)('1')
+          PsiElement(*)('*')
+          LITERAL_EXPRESSION
+            PsiElement(int)('1')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
