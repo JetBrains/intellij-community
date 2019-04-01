@@ -20,7 +20,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
 %{
   public _BashLexerGen() { this(null); }
     private void pushState(int state) { stateStack.push(yystate()); yybegin(state);}
-    private void popState() { yybegin(stateStack.pop());}
+    private void popState() { if (!stateStack.empty()) yybegin(stateStack.pop());}
     private void switchState(int state) { popState(); pushState(state); }
     private IntStack stateStack = new IntStack(20);
     private void pushParentheses(CharSequence parentheses) { parenStack.push(parentheses); }
@@ -92,6 +92,9 @@ EscapedRightCurly        = "\\}"
 HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
+RightDoubleBracketWithWhiteSpace = {WhiteSpace}+ "]]"  // TODO: think about the soulution ___]]
+RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
+
 %state EXPRESSIONS
 %state LET_EXPRESSION_START
 %state LET_EXPRESSIONS
@@ -159,6 +162,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 <CONDITIONAL_EXPRESSION> {
     "=="                          { return COND_OP_EQ_EQ; }
     "!="                          { return ARITH_NE; }
+    "=~"                          { return COND_OP_REGEX; }
     "<"                           { return LT; }
     ">"                           { return GT; }
 }
@@ -201,6 +205,11 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
                                     yybegin(HERE_DOC_PIPELINE);
                                     return HEREDOC_MARKER_START; }
   {WhiteSpace}+                   { return WHITESPACE; }
+  {LineTerminator}                { popState(); return LINEFEED; }
+}
+
+<HERE_DOC_PIPELINE> {
+  {LineTerminator}                { yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
 }
 
 <HERE_DOC_END_MARKER> {
@@ -246,8 +255,8 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
                                     else return RIGHT_DOUBLE_PAREN; }
-    " ]]"                         { popState(); return RIGHT_DOUBLE_BRACKET; }
-    " ]"                          { switch (yystate()) {
+    {RightDoubleBracketWithWhiteSpace} { popState(); return RIGHT_DOUBLE_BRACKET; }
+    {RightBracketWithWhiteSpace}  { switch (yystate()) {
                                       case OLD_EXPRESSIONS: popState(); return ARITH_SQUARE_RIGHT;
                                       case CONDITIONAL_EXPRESSION: popState(); return EXPR_CONDITIONAL_RIGHT;
                                       default: return RIGHT_SQUARE;
@@ -305,7 +314,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
     {WhiteSpace}+                 |
     {LineContinuation}+           { return WHITESPACE; }
-    {LineTerminator}              { if (yystate() == HERE_DOC_PIPELINE) yybegin(HERE_DOC_END_MARKER); return LINEFEED; }
+    {LineTerminator}              { return LINEFEED; }
     {Variable}                    { return VAR; }
 
     {Quote}                       { inString = !inString; return QUOTE; } // todo: refactor

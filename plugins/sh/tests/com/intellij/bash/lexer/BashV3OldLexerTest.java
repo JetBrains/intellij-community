@@ -52,10 +52,6 @@ public class BashV3OldLexerTest extends LexerTestCase {
   public void testShebang() {
     doFileTest("sh");
   }
-  
-  public void testWhitespace() {
-    doFileTest("sh");
-  }
 
   public void testIdentifier() {
     doFileTest("sh");
@@ -118,10 +114,6 @@ public class BashV3OldLexerTest extends LexerTestCase {
   }
   
   public void testWeirdStuff1() {
-    doFileTest("sh");
-  }
-  
-  public void testUnsupported() {
     doFileTest("sh");
   }
   
@@ -309,10 +301,6 @@ public class BashV3OldLexerTest extends LexerTestCase {
     doFileTest("sh");
   }
 
-  public void testIssue398() {
-    doFileTest("sh");
-  }
-
   public void testIssue426() {
     doFileTest("sh");
   }
@@ -341,10 +329,6 @@ public class BashV3OldLexerTest extends LexerTestCase {
     doFileTest("sh");
   }
   
-  public void testIssue473() {
-    doFileTest("sh");
-  }
-
   public void testIssue474() {
     doFileTest("sh");
   }
