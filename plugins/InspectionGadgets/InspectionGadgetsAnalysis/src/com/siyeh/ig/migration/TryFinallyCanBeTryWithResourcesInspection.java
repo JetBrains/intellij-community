@@ -143,16 +143,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (locals.size() == 1) {
         PsiLocalVariable variable = locals.get(0);
         PsiStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
-        if (declaration == null) return;
-        if (declaration.getParent() != tryStatement.getParent()) return;
-        List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
-        PsiJavaToken lBrace = tryBlock.getLBrace();
-        if (lBrace != null) {
-          for (int i = statements.size() - 1; i >= 0; i--) {
-            PsiStatement statement = statements.get(i);
-            tryBlock.addAfter(statement, lBrace);
-            if (statement.isValid()) {
-              statement.delete();
+        if (declaration != null)  {
+          if (declaration.getParent() == tryStatement.getParent()) {
+            List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
+            PsiJavaToken lBrace = tryBlock.getLBrace();
+            if (lBrace != null) {
+              for (int i = statements.size() - 1; i >= 0; i--) {
+                PsiStatement statement = statements.get(i);
+                tryBlock.addAfter(statement, lBrace);
+                if (statement.isValid()) {
+                  statement.delete();
+                }
+              }
             }
           }
         }
