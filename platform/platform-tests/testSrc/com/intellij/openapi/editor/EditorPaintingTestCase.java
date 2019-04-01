@@ -45,7 +45,6 @@ import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
@@ -227,18 +226,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
       super(g2d);
       myPlainFont = plainFont;
       myBoldFont = boldFont;
-    }
-
-    @Override
-    public void addRenderingHints(Map hints) {
-    }
-
-    @Override
-    public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
-    }
-
-    @Override
-    public void setRenderingHints(Map hints) {
     }
 
     @NotNull
