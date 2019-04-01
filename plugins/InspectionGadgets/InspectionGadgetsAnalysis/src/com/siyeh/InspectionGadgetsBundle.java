@@ -16,6 +16,7 @@
 package com.siyeh;
 
 import com.intellij.CommonBundle;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -29,6 +30,7 @@ import java.util.ResourceBundle;
  */
 public class InspectionGadgetsBundle {
   @NotNull
+  @Contract(pure = true)
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
