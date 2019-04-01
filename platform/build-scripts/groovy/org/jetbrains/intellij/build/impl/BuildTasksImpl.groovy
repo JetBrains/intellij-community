@@ -588,7 +588,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
-    if (!pluginModules) {
+    if (pluginModules == null) {
       return
     }
     checkModules(pluginModules, fieldName)
