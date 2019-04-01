@@ -49,10 +49,9 @@ fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<S
   val requirements = GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES,
                                            diffInMergeCommits = DiffInMergeCommits.NO_DIFF,
                                            preserveOrder = false)
-  GitLogUtil.readFullDetailsForHashes(project, root, hashes.toList(), requirements, false,
-                                      Consumer<GitCommit> {
-                                        commitConsumer(it)
-                                      })
+  GitLogUtil.readFullDetailsForHashes(project, root, hashes.toList(), requirements, Consumer<GitCommit> {
+    commitConsumer(it)
+  })
 }
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { ChangesUtil.getFilePath(it) }

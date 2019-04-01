@@ -214,9 +214,8 @@ public class GitLogUtil {
                                               @NotNull VirtualFile root,
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
-                                              boolean lowPriorityProcess,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
-    new GitDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, lowPriorityProcess, commitConsumer);
+    new GitDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
   }
 
   @NotNull

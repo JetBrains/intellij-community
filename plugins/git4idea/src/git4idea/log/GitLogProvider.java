@@ -327,7 +327,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(myRepositoryManager, root),
                                                                    DiffRenameLimit.GIT_CONFIG,
                                                                    DiffInMergeCommits.DIFF_TO_PARENTS, true);
-    GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, false, commitConsumer);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, hashes, requirements, commitConsumer);
   }
 
   static boolean shouldIncludeRootChanges(@NotNull GitRepositoryManager manager,
