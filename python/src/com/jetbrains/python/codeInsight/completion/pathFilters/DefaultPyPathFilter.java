@@ -35,8 +35,11 @@ public final class DefaultPyPathFilter implements PyPathFilter {
     "open"
   ));
 
-  /** For functions with names complying thus pattern every string will be treated as a candidate for path. */
-  private static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile("((file)|(path))");
+  /** For functions with names contaning these strings every string will be treated as a candidate for path. */
+  private static final String[] FUNCTION_NAME_PATTERN = new String[] {
+    "path",
+    "file"
+  };
 
   @Override
   public boolean test(@NotNull final PyStringLiteralExpression expr) {
@@ -55,9 +58,16 @@ public final class DefaultPyPathFilter implements PyPathFilter {
     Optional<PyCallExpression> call = getAncestorByBackwardPath(expr, PyCallExpression.class, PyArgumentList.class);
 
     return call
-      .map(c -> c.getCallee() != null && DEFAULT_FUNCTIONS_TO_CHECK.contains(c.getCallee().getName()) || (c.getCallee().getName() != null && FUNCTION_NAME_PATTERN.matcher(
-        c.getCallee().getName()).matches()))
+      .map(c -> c.getCallee() != null && DEFAULT_FUNCTIONS_TO_CHECK.contains(c.getCallee().getName()) || (c.getCallee().getName() != null &&
+                                                                                                          isProbablyFileAwaitingFunction(c.getCallee().getName())))
       .orElse(false);
+  }
+
+  public static boolean isProbablyFileAwaitingFunction(@NotNull final String name) {
+    for (String s : FUNCTION_NAME_PATTERN) {
+      if (name.contains(s)) return true;
+    }
+    return false;
   }
 
   /**
