@@ -13,7 +13,7 @@
       "align_multiline_chained_methods": false,
       "align_multiline_extends_list": false,
       "align_multiline_for": true,
-      "align_multiline_method_brackets": false,
+      "align_multiline_method_parentheses": false,
       "align_multiline_parameters": true,
       "align_multiline_parameters_in_calls": false,
       "align_multiline_parenthesized_expression": false,
