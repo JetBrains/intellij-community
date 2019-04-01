@@ -399,8 +399,9 @@ BASH_FILE
                                               PsiElement(word)('sed')
                                             PsiWhiteSpace(' ')
                                             SIMPLE_COMMAND_ELEMENT
-                                              PsiElement(word)(''s/[._-]//g')
-                                    PsiElement())('')')
+                                              STRING
+                                                PsiElement(RAW_STRING)(''s/[._-]//g'')
+                                    PsiElement())(')')
                                   PsiElement(")('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('        ')
@@ -462,8 +463,9 @@ BASH_FILE
                                             PsiElement(word)('sed')
                                           PsiWhiteSpace(' ')
                                           SIMPLE_COMMAND_ELEMENT
-                                            PsiElement(word)(''s%\.%/%g')
-                                  PsiElement())('')')
+                                            STRING
+                                              PsiElement(RAW_STRING)(''s%\.%/%g'')
+                                  PsiElement())(')')
                                 PsiElement(")('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('        ')
@@ -820,8 +822,9 @@ BASH_FILE
                         PsiElement(word)('date')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(word)(''+%Y-%m-%dT%H:%M:%S')
-              PsiElement())('')')
+                        STRING
+                          PsiElement(RAW_STRING)(''+%Y-%m-%dT%H:%M:%S'')
+              PsiElement())(')')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('Downloading')
@@ -921,8 +924,9 @@ BASH_FILE
                         PsiElement(word)('date')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(word)(''+%Y-%m-%dT%H:%M:%S')
-              PsiElement())('')')
+                        STRING
+                          PsiElement(RAW_STRING)(''+%Y-%m-%dT%H:%M:%S'')
+              PsiElement())(')')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('Downloading')
@@ -987,8 +991,9 @@ BASH_FILE
                         PsiElement(word)('date')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(word)(''+%Y-%m-%dT%H:%M:%S')
-              PsiElement())('')')
+                        STRING
+                          PsiElement(RAW_STRING)(''+%Y-%m-%dT%H:%M:%S'')
+              PsiElement())(')')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('Downloading')
@@ -1064,8 +1069,9 @@ BASH_FILE
                         PsiElement(word)('sed')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND_ELEMENT
-                        PsiElement(word)(''s%\.%/%g')
-              PsiElement())('')')
+                        STRING
+                          PsiElement(RAW_STRING)(''s%\.%/%g'')
+              PsiElement())(')')
           SIMPLE_COMMAND_ELEMENT
             STRING
               PsiElement(")('"')
@@ -1246,8 +1252,8 @@ BASH_FILE
         PsiWhiteSpace(' ')
         PsiElement(word)('sed')
         PsiWhiteSpace(' ')
-        PsiElement(word)(''s%\.%/%g')
-        PsiElement())('')')
+        PsiElement(RAW_STRING)(''s%\.%/%g'')
+        PsiElement())(')')
         PsiElement(")('"')
         PsiElement(\n)('\n')
         PsiWhiteSpace('        ')
@@ -2050,8 +2056,8 @@ BASH_FILE
         PsiWhiteSpace(' ')
         PsiElement(word)('-name')
         PsiWhiteSpace(' ')
-        PsiElement(word)(''*.java')
-        PsiWhiteSpace('' ')
+        PsiElement(RAW_STRING)(''*.java'')
+        PsiWhiteSpace(' ')
         PsiElement(|)('|')
         PsiWhiteSpace(' ')
         PsiElement(word)('sort')

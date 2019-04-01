@@ -87,12 +87,10 @@ EscapedRightCurly        = "\\}"
 HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
-//LetWithWhitespace        = let {WhiteSpace}+
-//WhitespaceWithQuote      =  {WhiteSpace}+ {Quote}{1}
-
 %state EXPRESSIONS
 %state LET_EXPRESSION_START
 %state LET_EXPRESSIONS
+%state CONDITIONAL_EXPRESSION
 %state PARAMETER_EXPANSION
 %state CASE_CLAUSE
 %state CASE_PATTERN
@@ -105,31 +103,60 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 %%
 
 <EXPRESSIONS, LET_EXPRESSIONS> {
+    "*="                          { return ARITH_ASS_MUL; }
+    "/="                          { return ARITH_ASS_DIV; }
+    "%="                          { return ARITH_ASS_MOD; }
+    "+="                          { return ARITH_ASS_PLUS; }
+    "-="                          { return ARITH_ASS_MINUS; }
+    ">>="                         { return ARITH_ASS_SHIFT_RIGHT; }
+    "<<="                         { return ARITH_ASS_SHIFT_LEFT; }
+    "&="                          { return ARITH_ASS_BIT_AND; }
+    "|="                          { return ARITH_ASS_BIT_OR; }
+    "^="                          { return ARITH_ASS_BIT_XOR; }
+    "!="                          { return ARITH_NE; }
+    "=="                          { return ARITH_EQ; }
+    ">="                          { return GE; }
+    "<="                          { return LE; }
+
+    "++"                          { return ARITH_PLUS_PLUS; }
+    "--"                          { return ARITH_MINUS_MINUS; }
+    "**"                          { return EXPONENT; }
+
+    "!"                           { return ARITH_NEGATE; }
     "~"                           { return ARITH_BITWISE_NEGATE; }
+    "+"                           { return ARITH_PLUS; }
+    "-"                           { return ARITH_MINUS; }
+    "*"                           { return MULT; }
+    "/"                           { return DIV; }
+    "%"                           { return MOD; }
+
+    "<<"                          { return SHIFT_LEFT; }
+    ">>"                          { return SHIFT_RIGHT; }
+    "<"                           { return LT; }
+    ">"                           { return GT; }
+
+    "&&"                          { return AND_AND; }
+    "||"                          { return OR_OR; }
+    "&"                           { return ARITH_BITWISE_AND; }
     "^"                           { return ARITH_BITWISE_XOR; }
+    "|"                           { return ARITH_BITWISE_OR; }
 
     "?"                           { return ARITH_QMARK; }
     ":"                           { return ARITH_COLON; }
-
-    "++"                          { return ARITH_PLUS_PLUS; }
-    "+"                           { return ARITH_PLUS; }
-    "--"                          { return ARITH_MINUS_MINUS; }
-    "-"                           { return ARITH_MINUS; }
-    "=="                          { return ARITH_EQ; }
-
-    "**"                          { return EXPONENT; }
-    "/"                           { return DIV; }
-    "*"                           { return MULT; }
-    "%"                           { return MOD; }
-    "<<"                          { return SHIFT_LEFT; }
-    "<"                           { return LT; }
-    ">"                           { return GT; }
+    ","                           { return COMMA; }
 
     {ArithWord}                   { return WORD; }
 }
 
 <EXPRESSIONS> {
     "))"                          { yybegin(YYINITIAL); return RIGHT_DOUBLE_PAREN; }
+}
+
+<CONDITIONAL_EXPRESSION> {
+    "=="                          { return COND_OP_EQ_EQ; }
+    "!="                          { return ARITH_NE; }
+    "<"                           { return LT; }
+    ">"                           { return GT; }
 }
 
 <LET_EXPRESSION_START> {
@@ -164,18 +191,18 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <HERE_DOC_START_MARKER> {
-  {HeredocMarkerInQuotes}               { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
-                                            heredocMarker = yytext().subSequence(1, yylength()-1);
-                                          else heredocMarker = yytext();
-                                          yybegin(HERE_DOC_PIPELINE);
-                                          return HEREDOC_MARKER_START; }
-  {WhiteSpace}+         { return WHITESPACE; }
+  {HeredocMarkerInQuotes}         { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
+                                      heredocMarker = yytext().subSequence(1, yylength()-1);
+                                    else heredocMarker = yytext();
+                                    yybegin(HERE_DOC_PIPELINE);
+                                    return HEREDOC_MARKER_START; }
+  {WhiteSpace}+                   { return WHITESPACE; }
 }
 
 <HERE_DOC_END_MARKER> {
-  {HeredocMarker}+                      { if (yytext().equals(heredocMarker)) { heredocMarker = ""; popState(); return HEREDOC_MARKER_END; }
-                                          else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
-  [^]                                   { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
+  {HeredocMarker}+                { if (yytext().equals(heredocMarker)) { heredocMarker = ""; popState(); return HEREDOC_MARKER_END; }
+                                    else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
+  [^]                             { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
 }
 
 <HERE_DOC_BODY> {
@@ -183,7 +210,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
     "case"                        { pushState(CASE_CLAUSE); return CASE; }
@@ -201,33 +228,24 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "until"                       { return UNTIL; }
     "while"                       { return WHILE; }
     "trap"                        { return TRAP; }
-//    {LetWithQuote}                |
-//    {LetWithWhitespace}           { pushState(EXPRESSIONS); return LET; }
     "let"                         { pushState(LET_EXPRESSION_START); return LET; }
-//    "let" / {WhiteSpace}+         { pushState(LET_EXPRESSIONS); return LET; }
-
     "time"                        { return TIME; }
 
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
-    "&&"                          { return AND_AND; }
-    "&"                           { return AMP; }
-    ";"                           { return SEMI; }
-    ","                           { return COMMA; }
-
-    "||"                          { return OR_OR; }
-
-    "="                           { return EQ; }
-    "+="                          { return ADD_EQ; }
-
-    "[[ "                         { return LEFT_DOUBLE_BRACKET; }
-    " ]]"                         { return RIGHT_DOUBLE_BRACKET; }
-
+    /***** Conditional statements *****/
+    "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+    " ]]"                         { popState(); return RIGHT_DOUBLE_BRACKET; }
+    "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
+    " ]"                          { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  popState(); return ARITH_SQUARE_RIGHT; }
+                                    else if (yystate() == CONDITIONAL_EXPRESSION) { popState(); return EXPR_CONDITIONAL_RIGHT; }
+                                    else return RIGHT_SQUARE; }
     "$["                          { inOldArithmeticExpansion = true; pushState(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
-    " ]"                          { if (inOldArithmeticExpansion) { yypushback(1); return WHITESPACE; } else return EXPR_CONDITIONAL_RIGHT; }
-    "[ "                          { return EXPR_CONDITIONAL_LEFT; }
-    "||"                          { return OR_OR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+
+    /***** General operators *****/
+    "+="                          { return ADD_EQ; }
+    "="                           { return EQ; }
     "$"                           { return DOLLAR; }
     "("                           { return LEFT_PAREN; }
     ")"                           { return RIGHT_PAREN; }
@@ -235,39 +253,35 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
     "]"                           { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  popState(); return ARITH_SQUARE_RIGHT; }
-                                    else return RIGHT_SQUARE; }
-    ">="                          { return GE; }
-    "<="                          { return LE; }
-    "!="                          { return ARITH_NE; }
+                                    return RIGHT_SQUARE; }
     "!"                           { return BANG; }
-    ">"                           { return GT; }
-    "<"                           { return LT; }
+    "`"                           { return BACKQUOTE; }
 
+    /***** Pipeline separators *****/
+    "&&"                          { return AND_AND; }
+    "||"                          { return OR_OR; }
+    "&"                           { return AMP; }
+    ";"                           { return SEMI; }
 
+    /***** Pipelines *****/
+    "|"                           { return PIPE; }
+    "|&"                          { return PIPE_AMP; }
+
+    /***** Redirections *****/
+    "<&"                          { return REDIRECT_LESS_AMP; }
+    ">&"                          { return REDIRECT_GREATER_AMP; }
+    "<>"                          { return REDIRECT_LESS_GREATER; }
+    "&>"                          { return REDIRECT_AMP_GREATER; }
+    ">|"                          { return REDIRECT_GREATER_BAR; }
+    "&>>"                         { return REDIRECT_AMP_GREATER_GREATER; }
+
+    "<<<"                         { return REDIRECT_HERE_STRING; }
     "<<-" |
     "<<"                          { if (yystate() != HERE_DOC_PIPELINE) { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }
     ">>"                          { return SHIFT_RIGHT; }
-
-
-//        "!"                           { return ARITH_NEGATE; } // todo: never match wtf?
-
-
-
-    "`"                           { return BACKQUOTE; }
-    "|"                           { return PIPE; }
-
-  "<>"                            { return REDIRECT_LESS_GREATER; }
-  "<&"                            { return REDIRECT_LESS_AMP; }
-  ">&"                            { return REDIRECT_GREATER_AMP; }
-  ">|"                            { return REDIRECT_GREATER_BAR; }
-
-  "|&"                            { return PIPE_AMP; }
-
-  "&>>"                           { return REDIRECT_AMP_GREATER_GREATER; }
-  "&>"                            { return REDIRECT_AMP_GREATER; }
-
-  "<<<"                           { return REDIRECT_HERE_STRING; }
+    ">"                           { return GT; }
+    "<"                           { return LT; }
 
     {IntegerLiteral}              { return INT; }
     {HexIntegerLiteral}           { return HEX; }
@@ -287,7 +301,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
-<YYINITIAL, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
     {Word}                        { return WORD; }
     "(("                          { yybegin(EXPRESSIONS); return LEFT_DOUBLE_PAREN; }
 }

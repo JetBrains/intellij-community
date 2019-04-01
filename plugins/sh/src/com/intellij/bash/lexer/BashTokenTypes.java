@@ -86,7 +86,7 @@ public interface BashTokenTypes extends BashTypes {
   IElementType ARITH_COLON = new BashTokenType(":");//||
   IElementType ARITH_BITWISE_XOR = new BashTokenType("^");//||
   IElementType ARITH_BITWISE_AND = new BashTokenType("&");//||
-  //fixme missing: |
+  IElementType ARITH_BITWISE_OR = new BashTokenType("|");//||
 
   //arithmetic operators: assign
   IElementType ARITH_ASS_MUL = new BashTokenType("*= arithmetic");// *=

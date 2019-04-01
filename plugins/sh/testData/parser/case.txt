@@ -1270,10 +1270,10 @@ BASH_FILE
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$enttype')
-                      PsiElement(,)(',')
+                      PsiElement(word)(',')
                       VARIABLE
                         PsiElement(var)('$name')
-                      PsiElement(,)(',')
+                      PsiElement(word)(',')
                       PsiElement($)('$')
                       SUBSHELL_COMMAND
                         PsiElement(()('(')
@@ -1318,7 +1318,7 @@ BASH_FILE
                         PsiElement(=)('=')
                         STRING
                           PsiElement(")('"')
-                          PsiElement(,)(',')
+                          PsiElement(word)(',')
                           PsiElement(")('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
