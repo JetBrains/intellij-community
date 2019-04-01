@@ -418,9 +418,11 @@ idea.fatal.error.notification=disabled
   }
 
   private void setupBundledMaven() {
+    /* Android Studio: we don't bundle any Maven dependencies.
     logFreeDiskSpace("before downloading Maven")
     buildContext.gradle.run('Setting up Bundled Maven', 'setupBundledMaven')
     logFreeDiskSpace("after downloading Maven")
+    */
   }
 
   static def unpackPty4jNative(BuildContext buildContext, String distDir, String pty4jOsSubpackageName) {
