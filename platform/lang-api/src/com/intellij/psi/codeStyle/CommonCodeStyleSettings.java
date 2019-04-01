@@ -436,6 +436,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_THROWS_KEYWORD = false;
 
   public boolean ALIGN_MULTILINE_EXTENDS_LIST = false;
+  @Property(externalName = "align_multiline_method_parentheses")
   public boolean ALIGN_MULTILINE_METHOD_BRACKETS = false;
   public boolean ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
   public boolean ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
