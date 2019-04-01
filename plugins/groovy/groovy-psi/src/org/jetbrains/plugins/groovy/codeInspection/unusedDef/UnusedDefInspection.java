@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -75,12 +76,12 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       if (instruction instanceof ReadWriteVariableInstruction) {
         final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
         if (!varInst.isWrite()) {
-          final String varName = varInst.getVariableName();
+          final VariableDescriptor descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
           e.forEachValue(reaching -> {
             reaching.forEach(defNum -> {
-              final String defName = ((ReadWriteVariableInstruction) flow[defNum]).getVariableName();
-              if (varName.equals(defName)) {
+              final VariableDescriptor defDescriptor = ((ReadWriteVariableInstruction) flow[defNum]).getDescriptor();
+              if (descriptor.equals(defDescriptor)) {
                 unusedDefs.remove(defNum);
               }
               return true;

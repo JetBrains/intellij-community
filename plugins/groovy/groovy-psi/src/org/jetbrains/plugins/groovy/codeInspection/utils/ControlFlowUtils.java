@@ -47,16 +47,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
@@ -722,8 +721,6 @@ public class ControlFlowUtils {
   }
 
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
-    String name = local.getName();
-
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
     final HashSet<Instruction> visited = new HashSet<>();
 
@@ -743,7 +740,7 @@ public class ControlFlowUtils {
 
       if (instruction instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
-        if (name.equals(rw.getVariableName())) {
+        if (createDescriptor(local).equals(rw.getDescriptor())) {
           if (rw.isWrite()) {
             result.add(rw);
             continue;
@@ -804,7 +801,7 @@ public class ControlFlowUtils {
             return;
           }
         }
-        if (!((ReadWriteVariableInstruction)instruction).getVariableName().equals(var.getName())) {
+        if (!((ReadWriteVariableInstruction)instruction).getDescriptor().equals(createDescriptor(var))) {
           return;
         }
 
