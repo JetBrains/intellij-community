@@ -84,7 +84,9 @@ public class PyCondaManagementService extends PyPackageManagementService {
       }
       return results;
     }
-    return super.reloadAllPackages();
+    else {
+      return super.reloadAllPackages();
+    }
   }
 
   @Override
