@@ -30,6 +30,9 @@ import java.util.Collection;
 
 
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
+
+  public static final String SEPARATOR = "#";
+
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {
     return element instanceof PyClass || element instanceof PyFunction ? element : null;
@@ -44,7 +47,7 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (element instanceof PyFunction) {
       final PyClass containingClass = ((PyFunction)element).getContainingClass();
       if (containingClass != null) {
-        return containingClass.getQualifiedName() + "#" + ((PyFunction)element).getName();
+        return containingClass.getQualifiedName() + SEPARATOR + ((PyFunction)element).getName();
       }
       else {
         return ((PyFunction)element).getQualifiedName();
