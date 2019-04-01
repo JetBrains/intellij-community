@@ -245,19 +245,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     presentation.setIcon(lazyIcon);
   }
 
-  private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    final String value = element.getAttributeValue(DESCRIPTION);
+  private static String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
     if (bundle != null) {
       final String key = elementType + "." + id + ".description";
-      return CommonBundle.messageOrDefault(bundle, key, value == null ? "" : value);
+      return CommonBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
     } else {
-      return value;
+      return descriptionValue;
     }
   }
 
-  private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    final String value = element.getAttributeValue(TEXT_ATTR_NAME);
-    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, value == null ? "" : value);
+  private static String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
+    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
   private static boolean checkRelativeToAction(final String relativeToActionId,
@@ -562,17 +560,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
     String projectType = element.getAttributeValue(PROJECT_TYPE);
 
+    String textValue = element.getAttributeValue(TEXT_ATTR_NAME);
+    String descriptionValue = element.getAttributeValue(DESCRIPTION);
+
     ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
       IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
-      String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
+      String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
         reportActionError(pluginId, "'text' attribute is mandatory (action ID=" + id + ";" +
                                     (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")");
       }
       Presentation presentation = new Presentation();
       presentation.setText(text);
-      presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
+      presentation.setDescription(computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue));
       return presentation;
     });
 
@@ -686,14 +687,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       Presentation presentation = group.getTemplatePresentation();
 
       // text
-      String text = loadTextForElement(element, bundle, id, GROUP_ELEMENT_NAME);
+      String text = computeActionText(bundle, id, GROUP_ELEMENT_NAME, element.getAttributeValue(TEXT_ATTR_NAME));
       // don't override value which was set in API with empty value from xml descriptor
       if (!StringUtil.isEmpty(text) || presentation.getText() == null) {
         presentation.setText(text);
       }
 
       // description
-      String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
+      String description = computeDescription(bundle, id, GROUP_ELEMENT_NAME, element.getAttributeValue(DESCRIPTION));
       // don't override value which was set in API with empty value from xml descriptor
       if (!StringUtil.isEmpty(description) || presentation.getDescription() == null) {
         presentation.setDescription(description);
