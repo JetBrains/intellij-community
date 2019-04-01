@@ -41,7 +41,9 @@ class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsE
     }
   }
 
-  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve(recorderId)
+  private fun getFUSEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log")
+  private fun getCustomEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("plugins-event-log").resolve(recorderId)
+  private fun getEventLogDir() = if (recorderId == "FUS") getFUSEventLogDir() else getCustomEventLogDir()
 
   override fun log(message: String) {
     eventLogger.info(message)
