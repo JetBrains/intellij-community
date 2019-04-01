@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.callMatcher;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -158,6 +159,38 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       return ((PsiMethodCallExpression)expression).getMethodExpression();
     }
     return null;
+  }
+
+
+  default CallMatcher withLanguageLevelAtLeast(@NotNull LanguageLevel level) {
+    return new CallMatcher() {
+      @Override
+      public Stream<String> names() {
+        return CallMatcher.this.names();
+      }
+
+      @Override
+      public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+        return CallMatcher.this.methodReferenceMatches(methodRef);
+      }
+
+      @Override
+      public boolean test(@Nullable PsiMethodCallExpression call) {
+        if (call == null || PsiUtil.getLanguageLevel(call).isAtLeast(level)) return false;
+        return CallMatcher.this.test(call);
+      }
+
+      @Override
+      public boolean methodMatches(@Nullable PsiMethod method) {
+        if (method == null || PsiUtil.getLanguageLevel(method).isAtLeast(level)) return false;
+        return CallMatcher.this.methodMatches(method);
+      }
+
+      @Override
+      public String toString() {
+        return CallMatcher.this.toString();
+      }
+    };
   }
 
   class Simple implements CallMatcher {
