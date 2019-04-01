@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class YAMLBlockMappingImpl extends YAMLMappingImpl {
+  public static final String EMPTY_MAP_MESSAGE = "YAML map without any key-value";
+
   public YAMLBlockMappingImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -27,7 +29,9 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
   @NotNull
   public YAMLKeyValue getFirstKeyValue() {
     YAMLKeyValue firstKeyValue = findChildByType(YAMLElementTypes.KEY_VALUE_PAIR);
-    assert firstKeyValue != null : "magic YAML map without any key-value";
+    if (firstKeyValue == null) {
+      throw new IllegalStateException(EMPTY_MAP_MESSAGE);
+    }
     return firstKeyValue;
   }
 
