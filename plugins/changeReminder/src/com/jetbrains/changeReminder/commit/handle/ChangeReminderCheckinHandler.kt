@@ -24,6 +24,7 @@ import com.jetbrains.changeReminder.commit.handle.ui.ChangeReminderDialog
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.predict.PredictedFile
 import com.jetbrains.changeReminder.predict.PredictionProvider
+import com.jetbrains.changeReminder.repository.Commit
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import com.jetbrains.changeReminder.stats.ChangeReminderData
 import com.jetbrains.changeReminder.stats.ChangeReminderEvent
@@ -40,7 +41,12 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
 
   private val project: Project = panel.project
   private val changeListManager = ChangeListManager.getInstance(project)
+
   private val userSettings = ServiceManager.getService(UserSettings::class.java)
+  private val threshold = userSettings.threshold
+
+  private val isAmend by lazy { panel.isAmend() }
+  private val author by lazy { panel.author() }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     return BooleanCommitOption(
@@ -53,7 +59,7 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
   }
 
 
-  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile, isAmend: Boolean, threshold: Double): List<PredictedFile> {
+  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): List<PredictedFile> {
     val repository = FilesHistoryProvider(project, root, dataGetter)
     val filesSet = files.toMutableSet()
     if (isAmend) {
@@ -74,12 +80,10 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       .toPredictedFiles(changeListManager)
   }
 
-  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>,
-                                isAmend: Boolean,
-                                threshold: Double): List<PredictedFile> =
+  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>): List<PredictedFile> =
     rootFiles.mapNotNull { (root, files) ->
       if (dataManager.index.isIndexed(root)) {
-        getPredictedFiles(files, root, isAmend, threshold)
+        getPredictedFiles(files, root)
       }
       else {
         null
@@ -94,13 +98,11 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
         return ReturnResult.COMMIT
       }
 
-      val isAmend = panel.isAmend()
-      val threshold = userSettings.threshold
       val (executionTime, predictedFiles) = measureSupplierTimeMillis {
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(
             ThrowableComputable<List<PredictedFile>, Exception> {
-              getPredictedFiles(rootFiles, isAmend, threshold)
+              getPredictedFiles(rootFiles)
             },
             "Calculating whether something should be added to this commit",
             true,
@@ -139,5 +141,4 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
       return ReturnResult.COMMIT
     }
   }
-
 }
