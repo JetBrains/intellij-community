@@ -1,5 +1,6 @@
 package org.jetbrains.yaml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -31,6 +32,7 @@ public class YAMLUtil {
     new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
 
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
+  private static final Logger LOG = Logger.getInstance(YAMLUtil.class);
 
 
   @Deprecated
@@ -307,7 +309,18 @@ public class YAMLUtil {
   
   public static int getIndentToThisElement(@NotNull PsiElement element) {
     if (element instanceof YAMLBlockMappingImpl) {
-      element = ((YAMLBlockMappingImpl)element).getFirstKeyValue();
+      try {
+        element = ((YAMLBlockMappingImpl)element).getFirstKeyValue();
+      } catch (IllegalStateException e) {
+        // Spring Boot plug-in modifies PSI-tree into invalid state
+        // This is workaround over EA-133507 IDEA-210113
+        if (!e.getMessage().equals(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE)) {
+          throw e;
+        }
+        else {
+          LOG.warn(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE);
+        }
+      }
     }
     int offset = element.getTextOffset();
 
