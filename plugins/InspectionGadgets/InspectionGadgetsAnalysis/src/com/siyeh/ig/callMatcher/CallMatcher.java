@@ -176,13 +176,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
       @Override
       public boolean test(@Nullable PsiMethodCallExpression call) {
-        if (call == null || PsiUtil.getLanguageLevel(call).isAtLeast(level)) return false;
+        if (call == null || !PsiUtil.getLanguageLevel(call).isAtLeast(level)) return false;
         return CallMatcher.this.test(call);
       }
 
       @Override
       public boolean methodMatches(@Nullable PsiMethod method) {
-        if (method == null || PsiUtil.getLanguageLevel(method).isAtLeast(level)) return false;
+        if (method == null || !PsiUtil.getLanguageLevel(method).isAtLeast(level)) return false;
         return CallMatcher.this.methodMatches(method);
       }
 
