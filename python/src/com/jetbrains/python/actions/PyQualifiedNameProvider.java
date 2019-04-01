@@ -31,7 +31,7 @@ import java.util.Collection;
 
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
 
-  public static final String SEPARATOR = "#";
+  public static final char SEPARATOR = '.';
 
   @Override
   public PsiElement adjustElementToCopy(PsiElement element) {
@@ -67,12 +67,13 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (!functions.isEmpty()) {
       return ContainerUtil.getFirstItem(functions);
     }
-    final int sharpIdx = fqn.indexOf("#");
+    final int sharpIdx = fqn.indexOf(SEPARATOR);
+
     if (sharpIdx > -1) {
-      final String className = StringUtil.getPackageName(fqn, '#');
+      final String className = StringUtil.getPackageName(fqn, SEPARATOR);
       aClass = PyClassNameIndex.findClass(className, project);
       if (aClass != null) {
-        final String memberName = StringUtil.getShortName(fqn, '#');
+        final String memberName = StringUtil.getShortName(fqn, SEPARATOR);
         final PyClass nestedClass = aClass.findNestedClass(memberName, false);
         if (nestedClass != null) return nestedClass;
         final PyFunction methodByName = aClass.findMethodByName(memberName, false, null);
