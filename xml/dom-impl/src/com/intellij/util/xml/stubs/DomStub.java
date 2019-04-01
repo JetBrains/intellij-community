@@ -75,7 +75,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = stubs.size(); i < size; i++) {
       final Stub stub = stubs.get(i);
-      if (stub instanceof DomStub && matches(xmlName)) {
+      if (stub instanceof DomStub && ((DomStub)stub).matches(xmlName)) {
         result.add((DomStub)stub);
       }
     }
