@@ -167,8 +167,14 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public void doOKAction() {
+    applyAndClose(true);
+  }
+
+  public void applyAndClose(boolean scheduleSave) {
     if (myEditor.apply()) {
-      SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
+      if (scheduleSave) {
+        SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
+      }
       super.doOKAction();
     }
   }
