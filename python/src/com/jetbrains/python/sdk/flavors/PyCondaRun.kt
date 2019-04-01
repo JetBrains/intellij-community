@@ -9,16 +9,14 @@ import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.sdk.PythonSdkType
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 
 @Throws(ExecutionException::class)
 fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
@@ -45,7 +43,10 @@ fun runCondaPython(condaPythonExecutable: String, arguments: List<String>): Proc
 private fun run(executable: String, arguments: List<String>, env: Map<String, String>?): ProcessOutput {
   val commandLine = GeneralCommandLine(executable).withParameters(arguments).withEnvironment(env)
   val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-  return CapturingProcessHandler(commandLine).runProcessWithProgressIndicator(indicator).apply {
+  val handler = CapturingProcessHandler(commandLine).apply {
+    addProcessListener(PyPackageManagerImpl.IndicatedProcessOutputListener(indicator))
+  }
+  return handler.runProcessWithProgressIndicator(indicator).apply {
     if (isCancelled) throw RunCanceledByUserException()
     checkExitCode(executable, arguments)
   }
