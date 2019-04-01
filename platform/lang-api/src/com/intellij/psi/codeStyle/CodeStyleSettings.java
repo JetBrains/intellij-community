@@ -322,19 +322,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myRepeatAnnotations.addAll(repeatAnnotations);
   }
 
-  //----------------- FUNCTIONAL EXPRESSIONS -----
-
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
-  @Deprecated
-  public boolean REPLACE_INSTANCEOF;
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCEOF_AND_CAST */
-  @Deprecated
-  public boolean REPLACE_CAST;
-  /** @deprecated Use JavaCodeStyleSettings.REPLACE_NULL_CHECK */
-  @Deprecated
-  public boolean REPLACE_NULL_CHECK = true;
-
-
   //----------------- JAVA IMPORTS (deprecated, moved to JavaCodeStyleSettings) --------------------
 
   /** @deprecated Use JavaCodeStyleSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY */
