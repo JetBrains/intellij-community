@@ -3,7 +3,7 @@
   <id>com.jetbrains.bash</id>
   <vendor email="ignatov@jetbrains.com">Sergey Ignatov</vendor>
   <depends>com.intellij.modules.lang</depends>
-  <depends>org.jetbrains.plugins.terminal</depends>
+  <depends optional="true" config-file="terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Bash</name>
   <description><![CDATA[
     <p>Bash support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>

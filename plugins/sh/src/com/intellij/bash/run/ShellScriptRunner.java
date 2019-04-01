@@ -1,0 +1,35 @@
+package com.intellij.bash.run;
+
+import com.intellij.bash.lexer.BashTokenTypes;
+import com.intellij.bash.psi.BashFile;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+
+public abstract class ShellScriptRunner {
+
+  public abstract void run(@NotNull BashFile bashFile);
+
+  public abstract boolean isAvailable(@NotNull Project project);
+
+  @Nullable
+  public static String getShebangExecutable(@NotNull BashFile bashFile) {
+    VirtualFile virtualFile = bashFile.getVirtualFile();
+    if (virtualFile != null && virtualFile.exists()) {
+      ASTNode shebang = bashFile.getNode().findChildByType(BashTokenTypes.SHEBANG);
+      String prefix = "#!";
+      if (shebang != null && shebang.getText().startsWith(prefix)) {
+        String path = shebang.getText().substring(prefix.length()).trim();
+        File file = new File(path);
+        if (file.isAbsolute() && file.canExecute()) {
+          return file.getAbsolutePath();
+        }
+      }
+    }
+    return null;
+  }
+}

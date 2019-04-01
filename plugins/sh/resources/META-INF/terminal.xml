@@ -1,0 +1,6 @@
+<idea-plugin url="https://www.jetbrains.com/idea">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.bash.run.ShellScriptRunner"
+                    serviceImplementation="com.intellij.bash.run.terminal.TerminalShellScriptRunner"/>
+  </extensions>
+</idea-plugin>
