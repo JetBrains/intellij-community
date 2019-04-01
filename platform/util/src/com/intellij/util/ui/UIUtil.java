@@ -4613,6 +4613,12 @@ public class UIUtil {
   }
 
   @NotNull
+  public static Dimension updateListRowHeight(@NotNull Dimension size) {
+    size.height = Math.max(size.height, UIManager.getInt("List.rowHeight"));
+    return size;
+  }
+
+  @NotNull
   public static Color getListBackground(boolean selected, boolean focused) {
     return !selected ? getListBackground() : getListSelectionBackground(focused);
   }

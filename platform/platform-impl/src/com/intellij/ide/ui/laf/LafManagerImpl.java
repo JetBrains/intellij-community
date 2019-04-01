@@ -557,7 +557,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
-                                           "Tree.rowHeight");
+                                           "Tree.rowHeight",
+                                           "Table.rowHeight",
+                                           "List.rowHeight");
 
     List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
                                                  "Slider.verticalSize",

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +26,7 @@ import java.awt.event.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
@@ -604,5 +606,53 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       }
       super.show(invoker, x, y);
     }
+
+    @Override
+    protected void configureList() {
+      super.configureList();
+      wrapRenderer();
+    }
+    @Override
+
+    protected PropertyChangeListener createPropertyChangeListener() {
+      PropertyChangeListener listener = super.createPropertyChangeListener();
+      return new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          listener.propertyChange(evt);
+          if ("renderer".equals(evt.getPropertyName())) {
+            wrapRenderer();
+          }
+        }
+      };
+    }
+
+    @SuppressWarnings("unchecked")
+    private void wrapRenderer() {
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
+      if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
+        list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
+      }
+    }
   }
+
+  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
+    private final ListCellRenderer<Object> myRenderer;
+
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+      myRenderer = renderer;
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      return new NonOpaquePanel((JComponent)c) {
+        @Override
+        public Dimension getPreferredSize() {
+          return UIUtil.updateListRowHeight(super.getPreferredSize());
+        }
+      };
+    }
+  }
+
 }
