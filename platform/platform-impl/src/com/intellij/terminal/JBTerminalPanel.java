@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.UIUtil;
@@ -24,6 +25,7 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
+import org.apache.log4j.Logger;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +34,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
@@ -39,6 +42,7 @@ import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
                                                               IdeEventQueue.EventDispatcher {
+  private static final Logger LOG = Logger.getLogger(JBTerminalPanel.class);
   private static final String[] ACTIONS_TO_SKIP = new String[]{
     "ActivateTerminalToolWindow",
     "ActivateMessagesToolWindow",
@@ -161,6 +165,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void handleKeyEvent(@NotNull KeyEvent e) {
+    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0)) {
+      // Workaround for https://youtrack.jetbrains.com/issue/JBR-1098
+      // sun.lwawt.macosx.CPlatformResponder.mapNsCharsToCompatibleWithJava converts 0x0003 (NSEnterCharacter) to 0x000a
+      if (e.getKeyChar() == KeyEvent.VK_ENTER && e.getKeyCode() == KeyEvent.VK_C && e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK) {
+        LOG.debug("Fixing Ctrl+C");
+        e.setKeyChar((char)3);
+      }
+    }
     myEscapeKeyListener.handleKeyEvent(e);
     super.handleKeyEvent(e);
   }
