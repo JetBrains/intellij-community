@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -523,10 +524,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testRegistrationCheck() {
+    configureLanguageAttributeTest()
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
     Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
                                                  myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
+    ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(LanguageExtensionPoint.class))))
     ModuleRootModificationUtil.addDependency(myModule, anotherModule)
     ModuleRootModificationUtil.addDependency(myModule, additionalModule)
     def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
@@ -536,6 +539,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
     def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
                                                             "../anotherModuleDir/DependencyModuleClass.java")
+    def dependencyModuleLanguageExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtension.java",
+                                                            "../anotherModuleDir/MyLanguageExtension.java")
+    def dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
+                                                            "../anotherModuleDir/MyLanguageExtensionPoint.java")
     def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
@@ -548,6 +555,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                        "META-INF/MainModulePlugin.xml")
 
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
     myFixture.configureFromExistingVirtualFile(additionalModuleClass)
@@ -557,7 +566,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting(true, false, false, dependencyModulePlugin)
     myFixture.testHighlighting(true, false, false, mainModulePlugin)
     def highlightInfos = myFixture.doHighlighting(HighlightSeverity.WARNING)
-    assertSize(2, highlightInfos)
+    assertSize(4, highlightInfos)
 
     for (info in highlightInfos) {
       def ranges = info.quickFixActionRanges

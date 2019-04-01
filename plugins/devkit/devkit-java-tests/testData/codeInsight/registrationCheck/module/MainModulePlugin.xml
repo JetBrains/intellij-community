@@ -14,6 +14,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
+    <myPlugin.lang.myExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
+    <myPlugin.lang.myOwnExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myOwnExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
     <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
   </extensions>
 

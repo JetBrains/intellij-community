@@ -20,6 +20,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -86,6 +87,13 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
   }
 
   fun checkProperXmlFileForExtension(element: Extension) {
+    if (!element.xmlTag.getAttributeValue("language").isNullOrEmpty()) {
+      val beanClass = element.extensionPoint?.beanClass?.value
+      if (beanClass != null && InheritanceUtil.isInheritor(beanClass, "com.intellij.lang.LanguageExtensionPoint")) {
+        return
+      }
+    }
+
     for (attributeDescription in element.genericInfo.attributeChildrenDescriptions) {
       val attributeName = attributeDescription.name
       if (attributeName == "forClass") continue
