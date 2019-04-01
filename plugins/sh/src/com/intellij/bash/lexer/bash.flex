@@ -37,8 +37,8 @@ LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
 //WhiteSpaceLineContinuation={WhiteSpace}
 
-Shebang                  = "#!" {InputCharacter}* {LineTerminator}?
-Comment                  = "#"  {InputCharacter}*
+Shebang                  = #\! {InputCharacter}* {LineTerminator}?
+Comment                  = # {InputCharacter}*
 
 EscapedChar              = "\\" [^\n]
 Quote                    = \"
@@ -66,12 +66,12 @@ ArithWordAfter           = {ArithWordFirst} | [0-9#!]
 ArithWord                = {ArithWordFirst}{ArithWordAfter}*
 
 AssignmentWord           = [[:letter:]||[_]] [[:letter:]||[0-9_]]*
-Variable                 = "$" {AssignmentWord} | "$"[@$#0-9?!*_-]
+Variable                 = \$ {AssignmentWord} | \$[@$#0-9?!*_-]
 
 //ArithExpr                = ({ArithWord} | [0-9a-z+*-] | {Variable} )+
 
-IntegerLiteral           = [0] | ([1-9][0-9]*) // todo: fix Rule can never be matched
-HexIntegerLiteral        = "0x" [0-9a-fA-F]+
+IntegerLiteral           = [0] | ([1-9][0-9]*) | (6[0-4]|[1-5][0-9]|[2-9]) # [[:letter:]||[:digit:]]*  // todo: fix Rule can never be matched
+HexIntegerLiteral        = "0" [xX] [0-9a-fA-F]+
 OctalIntegerLiteral      = "0" [0-7]+
 
 CaseFirst                = {EscapedChar} | [^|\"'$)(# \n\r\f\t\f]
@@ -153,7 +153,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <HERE_DOC_END_MARKER> {
-  {HeredocMarker}+                      { if (yytext().equals(heredocMarker)) { heredocMarker = ""; yybegin(YYINITIAL); return HEREDOC_MARKER_END; }
+  {HeredocMarker}+                      { if (yytext().equals(heredocMarker)) { heredocMarker = ""; popState(); return HEREDOC_MARKER_END; }
                                           else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
   [^]                                   { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
 }
@@ -200,19 +200,19 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "[[ "                         { return LEFT_DOUBLE_BRACKET; }
     " ]]"                         { return RIGHT_DOUBLE_BRACKET; }
 
-    "$["                          { inOldArithmeticExpansion = true; yybegin(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
+    "$["                          { inOldArithmeticExpansion = true; pushState(EXPRESSIONS); return ARITH_SQUARE_LEFT; }
     " ]"                          { if (inOldArithmeticExpansion) { yypushback(1); return WHITESPACE; } else return EXPR_CONDITIONAL_RIGHT; }
     "[ "                          { return EXPR_CONDITIONAL_LEFT; }
     "||"                          { return OR_OR; }
-    "${"                          {pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+    "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "$"                           { return DOLLAR; }
     "("                           { return LEFT_PAREN; }
     ")"                           { return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  yybegin(YYINITIAL); return ARITH_SQUARE_RIGHT; }
-                                  else return RIGHT_SQUARE; }
+    "]"                           { if (inOldArithmeticExpansion) { inOldArithmeticExpansion = false;  popState(); return ARITH_SQUARE_RIGHT; }
+                                    else return RIGHT_SQUARE; }
     ">="                          { return GE; }
     "<="                          { return LE; }
     "!="                          { return ARITH_NE; }
@@ -222,7 +222,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 
     "<<-" |
-    "<<"                          { if (yystate() != HERE_DOC_PIPELINE) { yybegin(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
+    "<<"                          { if (yystate() != HERE_DOC_PIPELINE) { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }
     ">>"                          { return SHIFT_RIGHT; }
 
