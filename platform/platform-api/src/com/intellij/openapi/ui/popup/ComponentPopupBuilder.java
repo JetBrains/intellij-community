@@ -152,14 +152,6 @@ public interface ComponentPopupBuilder {
 
   /**
    * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
-   *
-   *  Keep in mind that by setting KeyEventHandler it gets a responsibility to close popup in case of close request.
-   *  In common cases it looks like:
-   *
-   *  if (AbstractPopup.isCloseRequest(e) && mySpeedSearch.isNotActive()) {
-   *    myPopup.cancel(e);
-   *    return true;
-   *  }
    */
   @NotNull
   ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler);
