@@ -329,7 +329,7 @@ public class ExecutionHelper {
         process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
       }
     }
-    if (mode.withModalProgress()) {
+    if (mode.withModalProgress() || !mode.inBackGround() && ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, mode.cancelable(), myProject,
                                                                         mode.getProgressParentComponent());
     }
