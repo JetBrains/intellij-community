@@ -92,7 +92,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
       setFont(null);
     }
 
-    return result;
+    return UIUtil.updateListRowHeight(result);
   }
 
   protected abstract void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus);

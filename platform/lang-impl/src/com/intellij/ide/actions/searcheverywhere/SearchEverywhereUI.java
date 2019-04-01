@@ -43,6 +43,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -909,6 +910,13 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
 
+      component = new NonOpaquePanel((JComponent)component) {
+        @Override
+        public Dimension getPreferredSize() {
+          return UIUtil.updateListRowHeight(super.getPreferredSize());
+        }
+      };
+
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = groupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
       }
@@ -916,14 +924,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       return wrap(component, 1, 0);
     }
 
-    private Component wrap(Component cmp, int verticalGap, int hotizontalGap) {
+    private Component wrap(Component cmp, int verticalGap, int horizontalGap) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(cmp.isOpaque());
       if (cmp.isOpaque()) {
         panel.setBackground(cmp.getBackground());
       }
       panel.add(cmp, BorderLayout.CENTER);
-      panel.setBorder(JBUI.Borders.empty(verticalGap, hotizontalGap));
+      panel.setBorder(JBUI.Borders.empty(verticalGap, horizontalGap));
       return panel;
     }
   }
@@ -960,6 +968,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       setBackground(UIUtil.getListBackground(isSelected));
       return this;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return UIUtil.updateListRowHeight(super.getPreferredSize());
     }
   }
 
