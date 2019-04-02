@@ -59,7 +59,7 @@ public abstract class AbstractExternalSystemSettings<
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
-    myProjectSupplier = new ProjectSupplier(project);
+    myProjectSupplier = project.isDefault() ? ()->ProjectManager.getInstance().getDefaultProject() : ()->project;
   }
 
   @Override
@@ -257,21 +257,5 @@ public abstract class AbstractExternalSystemSettings<
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);
-  }
-
-  private static class ProjectSupplier implements Supplier<Project> {
-    private Project myProject;
-
-    public ProjectSupplier(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public Project get() {
-      if (myProject.isDefault() && myProject.isDisposed()) {
-        myProject = ProjectManager.getInstance().getDefaultProject();
-      }
-      return myProject;
-    }
   }
 }
