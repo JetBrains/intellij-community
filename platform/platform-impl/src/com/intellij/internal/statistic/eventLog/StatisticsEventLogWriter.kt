@@ -19,7 +19,7 @@ interface StatisticsEventLogWriter {
   fun cleanup()
 }
 
-class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsEventLogWriter {
+class StatisticsEventLogFileWriter(private val recorderId: String, private val maxFileSize: String) : StatisticsEventLogWriter {
   private var fileAppender: StatisticsEventLogFileAppender? = null
 
   private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
@@ -33,7 +33,7 @@ class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsE
       val dir = getEventLogDir()
       fileAppender = StatisticsEventLogFileAppender.create(pattern, dir)
       fileAppender?.let { appender ->
-        appender.setMaxFileSize("200KB")
+        appender.setMaxFileSize(maxFileSize)
         eventLogger.addAppender(appender)
       }
     }

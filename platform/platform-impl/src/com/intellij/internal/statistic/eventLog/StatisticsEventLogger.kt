@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
 private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
@@ -19,7 +20,10 @@ interface StatisticsEventLogger {
   fun cleanup()
 }
 
-abstract class StatisticsEventLoggerProvider(val recorderId: String, val version: Int, val sendFrequencyMs: Long) {
+abstract class StatisticsEventLoggerProvider(val recorderId: String,
+                                             val version: Int,
+                                             val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
+                                             val maxFileSize: String = "200KB") {
   open val logger: StatisticsEventLogger = createLogger()
 
   abstract fun isRecordEnabled() : Boolean
@@ -35,8 +39,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String, val version
     }
 
     val config = EventLogConfiguration
-    val bucket = config.bucket.toString()
-    val logger = StatisticsFileEventLogger(config.sessionId, config.build, bucket, version.toString(), StatisticsEventLogFileWriter(recorderId))
+    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize)
+    val logger = StatisticsFileEventLogger(config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
