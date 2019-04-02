@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,100 +31,66 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-
     if (element instanceof PsiCompiledElement) return false;
     if (!canModify(element)) return false;
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
     if (context instanceof PsiDeclarationStatement) {
-      return isAvailableOnDeclarationStatement((PsiDeclarationStatement)context, element);
+      return isAvailableOnDeclarationStatement((PsiDeclarationStatement)context);
     }
-
-    PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (field != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) == null && isAvailableOnField(field)) {
-      setText(CodeInsightBundle.message("intention.split.declaration.text"));
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean isAvailableOnField(PsiField field) {
-    final PsiTypeElement typeElement = field.getTypeElement();
-    if (typeElement == null) return false;
-    if (PsiTreeUtil.getParentOfType(typeElement, PsiField.class) != field) return true;
-
-    PsiElement nextField = field.getNextSibling();
-    while (nextField != null && !(nextField instanceof PsiField)) nextField = nextField.getNextSibling();
-
-    if (nextField != null && ((PsiField)nextField).getTypeElement() == typeElement) return true;
 
     return false;
   }
 
-  private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl, PsiElement element) {
+  private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl) {
     PsiElement[] declaredElements = decl.getDeclaredElements();
-    if (declaredElements.length == 0) return false;
+    if (declaredElements.length != 1) return false;
     if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
-    if (declaredElements.length == 1) {
-      PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
-      if (var.getInitializer() == null) return false;
-      if (var.getTypeElement().isInferredType() && !PsiTypesUtil.isDenotableType(var.getType(), var)) {
+    PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
+    if (var.getInitializer() == null) return false;
+    if (var.getTypeElement().isInferredType() && !PsiTypesUtil.isDenotableType(var.getType(), var)) {
+      return false;
+    }
+    PsiElement parent = decl.getParent();
+    if (parent instanceof PsiForStatement) {
+      String varName = var.getName();
+      if (varName == null) {
         return false;
-      } 
-      PsiElement parent = decl.getParent();
-      if (parent instanceof PsiForStatement) {
-        String varName = var.getName();
-        if (varName == null) {
+      }
+
+      parent = parent.getNextSibling();
+      while (parent != null) {
+        Ref<Boolean> conflictFound = new Ref<>(false);
+        parent.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitClass(PsiClass aClass) { }
+
+          @Override
+          public void visitVariable(PsiVariable variable) {
+            super.visitVariable(variable);
+            if (varName.equals(variable.getName())) {
+              conflictFound.set(true);
+              stopWalking();
+            }
+          }
+        });
+        if (conflictFound.get()) {
           return false;
         }
-
         parent = parent.getNextSibling();
-        while (parent != null) {
-          Ref<Boolean> conflictFound = new Ref<>(false);
-          parent.accept(new JavaRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitClass(PsiClass aClass) { }
-
-            @Override
-            public void visitVariable(PsiVariable variable) {
-              super.visitVariable(variable);
-              if (varName.equals(variable.getName())) {
-                conflictFound.set(true);
-                stopWalking();
-              }
-            }
-          });
-          if (conflictFound.get()) {
-            return false;
-          }
-          parent = parent.getNextSibling();
-        }
       }
-      setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
-      return true;
     }
-    else {
-      if (decl.getParent() instanceof PsiForStatement) return false;
-
-      setText(CodeInsightBundle.message("intention.split.declaration.text"));
-      return true;
-    }
+    setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
+    return true;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
     if (decl != null) {
-      invokeOnDeclarationStatement(decl, psiManager, project);
-    }
-    else {
-      PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-      if (field != null) {
-        field.normalizeDeclaration();
-      }
+      invokeOnDeclarationStatement(decl, PsiManager.getInstance(project), project);
     }
   }
 

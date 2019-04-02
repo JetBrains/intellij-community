@@ -45,16 +45,18 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod) && !(element instanceof PsiDeclarationStatement)) {
       element = element.getParent();
     }
     if (element instanceof PsiLocalVariable) {
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      element = element.getParent();
+      if (!(element instanceof PsiDeclarationStatement)) {
         return;
       }
-      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
-      final PsiElement grandParent = parent.getParent();
+    }
+    if (element instanceof PsiDeclarationStatement) {
+      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element;
+      final PsiElement grandParent = element.getParent();
       if (grandParent instanceof PsiForStatement) {
         splitMultipleDeclarationInForStatementInitialization(declarationStatement);
         return;
