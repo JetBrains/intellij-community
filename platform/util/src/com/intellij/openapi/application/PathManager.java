@@ -419,17 +419,15 @@ public class PathManager {
     Properties sysProperties = System.getProperties();
     for (String path : paths) {
       if (path != null && new File(path).exists()) {
-        try {
-          try (Reader fis = new BufferedReader(new FileReader(path))) {
-            Map<String, String> properties = FileUtil.loadProperties(fis);
-            for (Map.Entry<String, String> entry : properties.entrySet()) {
-              String key = entry.getKey();
-              if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-                log(path + ": '" + key + "' cannot be redefined");
-              }
-              else if (!sysProperties.containsKey(key)) {
-                sysProperties.setProperty(key, substituteVars(entry.getValue()));
-              }
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Reader reader = new FileReader(path)) {
+          Map<String, String> properties = FileUtil.loadProperties(reader);
+          for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(path + ": '" + key + "' cannot be redefined");
+            }
+            else if (!sysProperties.containsKey(key)) {
+              sysProperties.setProperty(key, substituteVars(entry.getValue()));
             }
           }
         }
