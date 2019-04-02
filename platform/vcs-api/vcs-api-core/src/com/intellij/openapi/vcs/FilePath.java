@@ -86,14 +86,14 @@ public interface FilePath {
 
   /**
    * @deprecated to remove in IDEA 16.
-   * Use {@code com.intellij.openapi.vfs.VfsUtil#findFileByPath} or {@code com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
+   * Use {@link com.intellij.openapi.vfs.VfsUtil#findFileByIoFile} or {@link com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
    */
   @Deprecated
   void refresh();
 
   /**
    * @deprecated to remove in IDEA 16.
-   * Use {@code com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
+   * Use {@link com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
    */
   @Deprecated
   void hardRefresh();
