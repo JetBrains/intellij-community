@@ -69,6 +69,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1490,9 +1491,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
-    final List<ApplicationListener> listeners = new ArrayList<>(myDispatcher.getListeners());
-    myDispatcher.getListeners().removeAll(listeners);
-    Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
+    ApplicationListener multicaster = myDispatcher.getMulticaster();
+    setMulticaster(new ApplicationListener() {});
+    Disposer.register(disposable, () -> setMulticaster(multicaster));
   }
 
+  private void setMulticaster(@NotNull ApplicationListener multicaster) {
+    try {
+      Field field = myDispatcher.getClass().getDeclaredField("myMulticaster");
+      field.setAccessible(true);
+      field.set(myDispatcher, multicaster);
+    }
+    catch (ReflectiveOperationException e) {
+      throw new Error(e);
+    }
+  }
 }
