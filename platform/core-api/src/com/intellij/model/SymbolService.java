@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Experimental
 public interface SymbolService {
@@ -32,5 +33,12 @@ public interface SymbolService {
         return symbol;
       }
     };
+  }
+
+  @Nullable
+  static PsiElement getPsiElement(@NotNull Symbol symbol) {
+    if (symbol instanceof PsiElement) return (PsiElement)symbol;
+    if (symbol instanceof PsiElementSymbol) return ((PsiElementSymbol)symbol).getElement();
+    return null;
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
 import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.SymbolService;
@@ -137,5 +138,11 @@ public interface PsiReference extends SymbolReference {
   default Collection<? extends SymbolResolveResult> resolveReference() {
     PsiElement resolved = resolve();
     return resolved == null ? Collections.emptyList() : Collections.singletonList(SymbolService.resolveResult(resolved));
+  }
+
+  @Override
+  default boolean references(@NotNull Symbol target) {
+    PsiElement psi = SymbolService.getPsiElement(target);
+    return psi == null ? SymbolReference.super.references(target) : isReferenceTo(psi);
   }
 }
