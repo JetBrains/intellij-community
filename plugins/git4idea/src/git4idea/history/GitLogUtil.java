@@ -71,14 +71,14 @@ public class GitLogUtil {
       options.add(REF_NAMES);
     }
 
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, options.toArray(new GitLogParser.GitLogOption[0]));
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, options.toArray(new GitLogParser.GitLogOption[0]));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");
     handler.addParameters(parameters);
     handler.endOptions();
 
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, record -> {
+    GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, record -> {
       Hash hash = HashImpl.build(record.getHash());
       List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), factory::createHash);
       commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
@@ -105,7 +105,7 @@ public class GitLogUtil {
     }
 
     GitLineHandler h = createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, COMMIT_METADATA_OPTIONS);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, COMMIT_METADATA_OPTIONS);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters(getNoWalkParameter(vcs));
@@ -156,7 +156,7 @@ public class GitLogUtil {
     try {
       GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
       GitLogParser.GitLogOption[] options = ArrayUtil.append(COMMIT_METADATA_OPTIONS, REF_NAMES);
-      GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, options);
+      GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, options);
       handler.setStdoutSuppressed(true);
       handler.addParameters(params);
       handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -165,7 +165,7 @@ public class GitLogUtil {
 
       StopWatch sw = StopWatch.start("loading commit metadata in [" + root.getName() + "]");
 
-      GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, recordConsumer);
+      GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
       Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
       handlerListener.reportErrors();
 
