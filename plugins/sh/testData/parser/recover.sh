@@ -9,7 +9,6 @@ echo for $[ 0x888 ------ 007 ]
 s-fsf+
 
 
-asd >  >fsdf
 
 
 > dddasd
@@ -18,3 +17,6 @@ asd >  >fsdf
 < adasd
 
 234 -;-
+
+
+#asd >  >fsdf # todo: redirect recover

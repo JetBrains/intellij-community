@@ -70,22 +70,6 @@ BASH_FILE
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('asd')
-          PsiWhiteSpace(' ')
-          PsiElement(>)('>')
-          PsiWhiteSpace('  ')
-          PsiErrorElement:'!', $, <string>, '@', '`', file descriptor, hex, int, number, octal, var, word or '{' expected, got '>'
-            PsiElement(>)('>')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('fsdf')
-  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -123,3 +107,7 @@ BASH_FILE
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
           PsiElement(word)('-')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#asd >  >fsdf # todo')
