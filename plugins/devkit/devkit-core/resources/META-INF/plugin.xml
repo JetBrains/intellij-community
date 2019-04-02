@@ -1,4 +1,5 @@
 <idea-plugin>
+  <!--suppress PluginXmlValidity -->
   <name>Plugin DevKit</name>
   <id>DevKit</id>
 
