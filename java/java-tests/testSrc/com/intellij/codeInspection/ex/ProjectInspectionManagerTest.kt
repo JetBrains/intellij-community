@@ -4,6 +4,8 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -24,17 +26,23 @@ class ProjectInspectionManagerTest {
     val appRule = ApplicationRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
+  @Rule
+  @JvmField
+  val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
+  val initInspectionRule = InitInspectionRule()
+
+  private fun doTest(task: suspend (Project) -> Unit) {
+    runBlocking {
+      loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.path }, task)
+    }
+  }
 
   @Test
-  fun component() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
+  fun component() {
+    doTest { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
@@ -70,21 +78,20 @@ class ProjectInspectionManagerTest {
       // test load
       file.delete()
 
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
 
-  @Test fun `do not save default project profile`() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
+  @Test
+  fun `do not save default project profile`() {
+    doTest { project ->
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
       val profileFile = inspectionDir.resolve("Project_Default.xml")
       assertThat(profileFile).doesNotExist()
@@ -103,10 +110,8 @@ class ProjectInspectionManagerTest {
   }
 
   @Test
-  fun profiles() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
+  fun profiles() {
+    doTest { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       projectInspectionProfileManager.forceLoadSchemes()
 
@@ -140,7 +145,7 @@ class ProjectInspectionManagerTest {
         </profile>
       </component>""".trimIndent())
 
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
@@ -190,4 +195,8 @@ class ProjectInspectionManagerTest {
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
   }
+}
+
+private fun refreshProjectConfigDir(project: Project) {
+  LocalFileSystem.getInstance().findFileByPath(project.stateStore.projectConfigDir!!)!!.refresh(false, true)
 }
