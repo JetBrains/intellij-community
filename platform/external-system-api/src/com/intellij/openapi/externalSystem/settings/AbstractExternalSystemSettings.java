@@ -215,7 +215,7 @@ public abstract class AbstractExternalSystemSettings<
 
   @NotNull
   public L getPublisher() {
-    return myProject.getMessageBus().syncPublisher(myChangesTopic);
+    return getProject().getMessageBus().syncPublisher(myChangesTopic);
   }
 
   protected void fillState(@NotNull State<PS> state) {
@@ -233,15 +233,16 @@ public abstract class AbstractExternalSystemSettings<
             return;
           }
 
+          Project project = getProject();
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
             for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
               AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
               ProjectSystemId externalSystemId = manager.getSystemId();
               if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
-                ExternalProjectsManager.getInstance(myProject).refreshProject(
+                ExternalProjectsManager.getInstance(project).refreshProject(
                   settings.getExternalProjectPath(),
-                  new ImportSpecBuilder(myProject, externalSystemId)
+                  new ImportSpecBuilder(project, externalSystemId)
                     .useDefaultCallback()
                     .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
                     .build()
