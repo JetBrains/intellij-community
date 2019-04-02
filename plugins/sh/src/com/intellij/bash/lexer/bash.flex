@@ -94,20 +94,17 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 RightDoubleBracketWithWhiteSpace = {WhiteSpace}+ "]]"  // TODO: think about the soulution ___]]
 RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 
-%state EXPRESSIONS
-%state LET_EXPRESSIONS
-%state OLD_EXPRESSIONS
+%state ARITHMETIC_EXPRESSION
+%state OLD_ARITHMETIC_EXPRESSION
+%state LET_EXPRESSION
 %state CONDITIONAL_EXPRESSION
-%state PARAMETER_EXPANSION
 
-%state IF_EXPRESSION
-%state SELECT_EXPRESSION
-%state UNTIL_EXPRESSION
-%state WHILE_EXPRESSION
-%state FOR_EXPRESSION
-%state STRING_EXPRESSION
-
-%state CASE_EXPRESSION
+%state IF_CONDITION
+%state SELECT_CONDITION
+%state UNTIL_CONDITION
+%state WHILE_CONDITION
+%state FOR_CONDITION
+%state CASE_CONDITION
 %state CASE_PATTERN
 
 %state HERE_DOC_START_MARKER
@@ -115,15 +112,16 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 %state HERE_DOC_PIPELINE
 %state HERE_DOC_BODY
 
+%state PARAMETER_EXPANSION
 %%
 
-<LET_EXPRESSIONS> {
+<LET_EXPRESSION> {
     "let"                         { return LET; }
     ";"                           { popState(); return SEMI; }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
 
-<EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS> {
+<ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION> {
     "*="                          { return MULT_ASSIGN; }
     "/="                          { return DIV_ASSIGN; }
     "%="                          { return MOD_ASSIGN; }
@@ -184,9 +182,9 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
   [^]                                 { popState(); }
 }
 
-<CASE_EXPRESSION> {
+<CASE_CONDITION> {
   ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
-  "in"                            { if (yystate() == CASE_EXPRESSION && !inString) pushState(CASE_PATTERN); return WORD; }
+  "in"                            { if (yystate() == CASE_CONDITION && !inString) pushState(CASE_PATTERN); return WORD; }
 }
 
 <CASE_PATTERN> {
@@ -220,49 +218,49 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
-  CASE_EXPRESSION, CASE_PATTERN, IF_EXPRESSION, SELECT_EXPRESSION, UNTIL_EXPRESSION, WHILE_EXPRESSION, FOR_EXPRESSION> {
+<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, SELECT_CONDITION, UNTIL_CONDITION, WHILE_CONDITION, FOR_CONDITION> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
-    "case"                        { if (!inString) pushState(CASE_EXPRESSION); return CASE; }
-    "esac"                        { if (yystate() == CASE_EXPRESSION && !inString) popState(); return ESAC; }
+    "case"                        { if (!inString) pushState(CASE_CONDITION); return CASE; }
+    "esac"                        { if (yystate() == CASE_CONDITION && !inString) popState(); return ESAC; }
     "done"                        { if (!inString)
                                       switch (yystate()) {
-                                              case UNTIL_EXPRESSION:
-                                              case WHILE_EXPRESSION:
-                                              case FOR_EXPRESSION:
-                                              case SELECT_EXPRESSION: popState();
+                                              case UNTIL_CONDITION:
+                                              case WHILE_CONDITION:
+                                              case FOR_CONDITION:
+                                              case SELECT_CONDITION: popState();
                                       }
                                     return DONE; }
     "do"                          { return DO; }
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
-    "fi"                          { if (yystate() == IF_EXPRESSION && !inString) popState(); return FI; }
-    "for"                         { if (!inString) pushState(FOR_EXPRESSION); return FOR; }
+    "fi"                          { if (yystate() == IF_CONDITION && !inString) popState(); return FI; }
+    "for"                         { if (!inString) pushState(FOR_CONDITION); return FOR; }
     "function"                    { return FUNCTION; }
-    "if"                          { if (!inString) pushState(IF_EXPRESSION); return IF; }
-    "select"                      { if (!inString) pushState(SELECT_EXPRESSION); return SELECT; }
+    "if"                          { if (!inString) pushState(IF_CONDITION); return IF; }
+    "select"                      { if (!inString) pushState(SELECT_CONDITION); return SELECT; }
     "then"                        { return THEN; }
-    "until"                       { if (!inString) pushState(UNTIL_EXPRESSION); return UNTIL; }
-    "while"                       { if (!inString) pushState(WHILE_EXPRESSION); return WHILE; }
+    "until"                       { if (!inString) pushState(UNTIL_CONDITION); return UNTIL; }
+    "while"                       { if (!inString) pushState(WHILE_CONDITION); return WHILE; }
     "trap"                        { return TRAP; }
-    "let"                         { pushState(LET_EXPRESSIONS); return LET; }
+    "let"                         { pushState(LET_EXPRESSION); return LET; }
     "time"                        { return TIME; }
 
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
-    "$["                          { pushState(OLD_EXPRESSIONS); return ARITH_SQUARE_LEFT; }
+    "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
     "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
-    "(("                          { pushState(EXPRESSIONS); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
+    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
                                     else return RIGHT_DOUBLE_PAREN; }
     {RightDoubleBracketWithWhiteSpace} { popState(); return RIGHT_DOUBLE_BRACKET; }
     {RightBracketWithWhiteSpace}  { switch (yystate()) {
-                                      case OLD_EXPRESSIONS: popState(); return ARITH_SQUARE_RIGHT;
+                                      case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
                                       case CONDITIONAL_EXPRESSION: popState(); return EXPR_CONDITIONAL_RIGHT;
                                       default: return RIGHT_SQUARE;
                                     }
@@ -277,7 +275,7 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { if (yystate() == OLD_EXPRESSIONS) { popState(); return ARITH_SQUARE_RIGHT; }
+    "]"                           { if (yystate() == OLD_ARITHMETIC_EXPRESSION) { popState(); return ARITH_SQUARE_RIGHT; }
                                     return RIGHT_SQUARE; }
     "!"                           { return BANG; }
     "`"                           { return BACKQUOTE; }
@@ -326,8 +324,8 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
-<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_EXPRESSION, CASE_PATTERN, IF_EXPRESSION,
-  SELECT_EXPRESSION, UNTIL_EXPRESSION, WHILE_EXPRESSION, FOR_EXPRESSION> {
+<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
+  SELECT_CONDITION, UNTIL_CONDITION, WHILE_CONDITION, FOR_CONDITION> {
     {Word}                        { return WORD; }
 }
 
