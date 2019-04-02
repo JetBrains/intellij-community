@@ -22,11 +22,11 @@ import java.io.File
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
+  private val ourLoggerProvider : StatisticsEventLoggerProvider = getEventLogProvider("FUS")
   private val ourLogger : StatisticsEventLogger
 
   init {
-    val provider = getLoggerProvider()
-    ourLogger = if (provider.isEnabled()) provider.createLogger() else EmptyStatisticsEventLogger()
+    ourLogger = if (ourLoggerProvider.isRecordEnabled()) ourLoggerProvider.createLogger() else EmptyStatisticsEventLogger()
 
     if (isEnabled()) {
       ApplicationManager.getApplication().executeOnPooledThread { initStateEventTrackers(); }
@@ -77,6 +77,10 @@ object FeatureUsageLogger {
 
   fun cleanup() {
     ourLogger.cleanup()
+  }
+
+  fun getConfig() : StatisticsEventLoggerProvider {
+    return ourLoggerProvider
   }
 
   fun isEnabled() : Boolean {
