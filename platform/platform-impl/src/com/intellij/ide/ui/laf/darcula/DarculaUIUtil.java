@@ -472,17 +472,14 @@ public class DarculaUIUtil {
            JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
   }
 
+  @Deprecated
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
-    return enabled ?
-      editable ? JBColor.namedColor("ComboBox.ArrowButton.background", JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC)) :
-                 JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
-      : UIUtil.getPanelBackground();
+    return JBUI.CurrentTheme.Arrow.backgroundColor(enabled, editable);
   }
 
+  @Deprecated
   public static Color getArrowButtonForegroundColor(boolean enabled) {
-    return enabled ?
-      JBColor.namedColor("ComboBox.ArrowButton.iconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66)) :
-      JBColor.namedColor("ComboBox.ArrowButton.disabledIconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB));
+    return JBUI.CurrentTheme.Arrow.foregroundColor(enabled);
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

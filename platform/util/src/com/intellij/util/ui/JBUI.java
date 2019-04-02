@@ -1109,6 +1109,24 @@ public class JBUI {
         return JBColor.namedColor("Link.visitedForeground", JBColor.namedColor("link.visited.foreground", new JBColor(0x800080, 0x9776a9)));
       }
     }
+
+    public static class Arrow {
+      @NotNull
+      public static Color foregroundColor(boolean enabled) {
+        return enabled ?
+               JBColor.namedColor("ComboBox.ArrowButton.iconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66)) :
+               JBColor.namedColor("ComboBox.ArrowButton.disabledIconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB));
+
+      }
+
+      @NotNull
+      public static Color backgroundColor(boolean enabled, boolean editable) {
+        return enabled ?
+               editable ? JBColor.namedColor("ComboBox.ArrowButton.background", JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC)) :
+               JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
+                       : UIUtil.getPanelBackground();
+      }
+    }
   }
 
 
