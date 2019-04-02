@@ -156,6 +156,7 @@ public class StatisticsEventLogFileAppender extends FileAppender {
         LogLog.error("Failed deleting old file " + file);
       }
     }
+    rollOver();
   }
 
     @NotNull
