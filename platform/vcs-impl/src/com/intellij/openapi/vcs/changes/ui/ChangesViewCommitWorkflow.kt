@@ -2,16 +2,25 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+
+private val LOG = logger<ChangesViewCommitWorkflow>()
+
+internal class CommitState(val changes: List<Change>, val commitMessage: String)
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
+
+  internal lateinit var commitState: CommitState
 
   init {
     val connection = project.messageBus.connect()
@@ -20,5 +29,17 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
       runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) }
     })
+  }
+
+  override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
+    if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
+  }
+
+  private fun doCommit() {
+    LOG.debug("Do actual commit")
+    val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitHandlers, additionalData)
+
+    committer.addResultHandler(DefaultCommitResultHandler(committer))
+    committer.runCommit("Commit Changes", false)
   }
 }
