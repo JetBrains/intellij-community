@@ -1294,27 +1294,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new AssignInstruction(originalExpression, arrayWriteTarget));
       int index = 0;
       for (PsiExpression initializer : initializers) {
+        DfaValue target = null;
         if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
-          DfaValue target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index));
-          addInstruction(new PushInstruction(target, null, true));
+          target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index));
         }
+        index++;
+        addInstruction(new PushInstruction(target, null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
-        if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
-          addInstruction(new AssignInstruction(initializer, null));
-        }
-        index++;
+        addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
     }
     else {
       for (PsiExpression initializer : initializers) {
+        addInstruction(new PushInstruction(null, null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
+        addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
       addInstruction(new PushInstruction(var, null, true));
