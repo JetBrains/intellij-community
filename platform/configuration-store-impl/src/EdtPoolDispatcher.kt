@@ -8,9 +8,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
@@ -30,12 +30,12 @@ internal fun createStoreEdtCoroutineContext(rules: List<InTransactionRule>): Cor
 }
 
 internal abstract class EdtTaskRule {
-  abstract fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, block: Runnable)
+  abstract fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, context: CoroutineContext, block: Runnable)
 
-  protected fun computeRunnable(nextRuleIndex: Int, rules: List<EdtTaskRule>, block: Runnable): Runnable {
+  protected fun computeRunnable(nextRuleIndex: Int, rules: List<EdtTaskRule>, context: CoroutineContext, block: Runnable): Runnable {
     return when (nextRuleIndex) {
       rules.size -> block
-      else -> Runnable { rules.get(nextRuleIndex).dispatch(rules, nextRuleIndex + 1, block) }
+      else -> Runnable { rules.get(nextRuleIndex).dispatch(rules, nextRuleIndex + 1, context, block) }
     }
   }
 }
@@ -44,11 +44,13 @@ internal abstract class EdtTaskRule {
 internal class InTransactionRule(private val disposable: Disposable) : EdtTaskRule() {
   private val transactionId = TransactionGuard.getInstance().contextTransaction
 
-  override fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, block: Runnable) {
-    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, computeRunnable(ruleIndex, rules, Runnable {
+  override fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, context: CoroutineContext, block: Runnable) {
+    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, computeRunnable(ruleIndex, rules, context, Runnable {
       if (Disposer.isDisposed(disposable)) {
-        throw CancellationException()
+        context.get(Job)?.cancel()
       }
+
+      // execute block even if cancelled - it is not user code directly, and job state will be checked
       block.run()
     }))
   }
@@ -120,7 +122,7 @@ private class EdtPoolDispatcher(private val rules: List<EdtTaskRule>) : Coroutin
     }
     else {
       val wrappedTask = Runnable {
-        rules.get(0).dispatch(rules, 1, block)
+        rules.get(0).dispatch(rules, 1, context, block)
       }
 
       if (ApplicationManager.getApplication().isDispatchThread) {

@@ -19,7 +19,9 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
@@ -29,6 +31,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermission
+import java.util.concurrent.TimeUnit
 
 internal class ProjectStoreTest {
   companion object {
@@ -211,6 +214,22 @@ internal class ProjectStoreTest {
         <component name="ValidComponent" foo="some data" />
       </project>
     """.trimIndent())
+    }
+  }
+
+  @Test
+  fun `save cancelled because project disposed`() = runBlocking {
+    withTimeout(TimeUnit.SECONDS.toMillis(10)) {
+      loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
+        it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+        it.path
+      }) { project ->
+        val testComponent = test(project as ProjectEx)
+        testComponent.state!!.value = "s"
+        launch {
+          project.stateStore.save()
+        }
+      }
     }
   }
 
