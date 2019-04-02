@@ -256,7 +256,6 @@
         <copy file="${community.out}/dist.all/build/dependencies/gradle.properties" todir="${mps.folder}/build/dependencies"/>
 
         <!--Copy plugin libraries to plugin folders-->
-        </copy>
         <copy todir="${mps.folder}/plugins/git4idea/lib">
             <fileset dir="${community.out}/dist.all/plugins/git4idea/lib"/>
         </copy>
