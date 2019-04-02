@@ -181,9 +181,9 @@ while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
 
 for_command ::= for (
-                    w (newlines in_clause? any_block | ';' newlines any_block)
+                    w (';' newlines | newlines in_clause?) any_block
                   | arithmetic_for
-                  )
+                  ) {pin(".*")="for|w"}
 private arithmetic_for ::= '((' expression? ';' expression? ';' expression? '))' [list_terminator newlines] any_block {pin=1}
 
 private in_clause ::= "in" word_list list_terminator newlines {pin=1}
