@@ -64,10 +64,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
 
         commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
       }
-      val recordCollector = if (requirements.preserveOrder)
-        GitLogRecordCollector(project, root, consumer)
-      else
-        GitLogUnorderedRecordCollector(project, root, consumer)
+      val recordCollector = createRecordsCollector(requirements.preserveOrder, consumer)
 
       readRecordsFromHandler(handler, recordCollector, *commandParameters)
       recordCollector.finish()
@@ -98,6 +95,19 @@ internal class GitDetailsCollector(private val project: Project, private val roo
     handlerListener.reportErrors()
 
     sw.report()
+  }
+
+  private fun createRecordsCollector(preserveOrder: Boolean,
+                                     consumer: (List<GitLogFullRecord>) -> Unit): GitLogRecordCollector<GitLogFullRecord> {
+    return if (preserveOrder)
+      object : GitLogRecordCollector<GitLogFullRecord>(project, root, consumer) {
+        override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
+      }
+    else
+      object : GitLogUnorderedRecordCollector<GitLogFullRecord>(project, root, consumer) {
+        override fun getSize(r: GitLogFullRecord) = r.statusInfos.size
+        override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
+      }
   }
 
   private fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory,
