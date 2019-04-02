@@ -2292,6 +2292,7 @@
                      implementationClass="com.siyeh.ig.serialization.TransientFieldNotInitializedInspection"/>
 
     <!--group.names.code.style.issues-->
+    <inspectionElementsMerger implementation="com.siyeh.ig.style.MultipleVariablesInDeclarationInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertMessageNotString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assert.message.not.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.style.AssertMessageNotStringInspection"/>
@@ -2357,14 +2358,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="MissortedModifiers" bundle="com.siyeh.InspectionGadgetsBundle" key="missorted.modifiers.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" cleanupTool="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.MissortedModifiersInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MultipleVariablesInDeclaration" shortName="MultipleDeclaration" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" suppressId="MultipleVariablesInDeclaration" shortName="MultipleVariablesInDeclaration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="multiple.declaration.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.MultipleDeclarationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="VariablesOfDifferentTypesInDeclaration" shortName="MultipleTypedDeclaration"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="multiple.typed.declaration.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.style.MultipleTypedDeclarationInspection"/>
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.MultipleVariablesInDeclarationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryConstantArrayCreationExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.constant.array.creation.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
