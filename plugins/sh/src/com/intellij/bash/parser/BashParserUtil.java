@@ -70,10 +70,6 @@ public class BashParserUtil extends GeneratedParserUtilBase {
         consumeTokenFast(b, BashTokenTypes.arithmeticEqualityOps) || consumeTokenFast(b, BashTypes.EQ);
   }
 
-  static boolean paramExpansionOp(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
-    return consumeTokenFast(b, BashTokenTypes.paramExpansionOperators);
-  }
-
   static boolean backslash(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
     return consumeTokenFast(b, "\\\n");
   }
