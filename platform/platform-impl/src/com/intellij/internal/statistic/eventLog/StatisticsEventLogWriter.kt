@@ -8,6 +8,7 @@ import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.nio.file.Paths
 
 interface StatisticsEventLogWriter {
@@ -18,7 +19,7 @@ interface StatisticsEventLogWriter {
   fun cleanup()
 }
 
-class StatisticsEventLogFileWriter : StatisticsEventLogWriter {
+class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsEventLogWriter {
   private var fileAppender: StatisticsEventLogFileAppender? = null
 
   private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
@@ -41,7 +42,15 @@ class StatisticsEventLogFileWriter : StatisticsEventLogWriter {
     }
   }
 
-  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log")
+  private fun getEventLogDir(): Path {
+    return if (recorderId == "FUS") {
+      // don't move FUS logs for backward compatibility
+      Paths.get(PathManager.getSystemPath()).resolve("event-log")
+    }
+    else {
+      Paths.get(PathManager.getSystemPath()).resolve("plugins-event-log").resolve(recorderId)
+    }
+  }
 
   override fun log(message: String) {
     eventLogger.info(message)
