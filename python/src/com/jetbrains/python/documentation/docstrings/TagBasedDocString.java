@@ -54,6 +54,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   public static String TYPE = "type";
 
   protected TagBasedDocString(@NotNull Substring docStringText, @NotNull String tagPrefix) {
+    // TODO: Seems, only start of each line is parsed
     super(docStringText);
     myTagPrefix = tagPrefix;
     final StringBuilder builder = new StringBuilder();
