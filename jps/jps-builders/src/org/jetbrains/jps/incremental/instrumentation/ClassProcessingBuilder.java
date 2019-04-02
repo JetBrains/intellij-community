@@ -53,7 +53,10 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public final ExitCode build(CompileContext context, ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+  public final ExitCode build(CompileContext context,
+                              ModuleChunk chunk,
+                              DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                              OutputConsumer outputConsumer) throws IOException {
     if (outputConsumer.getCompiledClasses().isEmpty() || !isEnabled(context, chunk)) {
       return ExitCode.NOTHING_DONE;
     }
@@ -64,7 +67,6 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
       context.processMessage(new ProgressMessage(progress + " [" + chunk.getPresentableShortName() + "]"));
     }
 
-    ExitCode exitCode = ExitCode.NOTHING_DONE;
     try {
       InstrumentationClassFinder finder = CLASS_FINDER.get(context); // try using shared finder
       if (finder == null) {
@@ -76,15 +78,13 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
         finder = createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
         CLASS_FINDER.set(context, finder);
       }
-
-      exitCode = performBuild(context, chunk, finder, outputConsumer);
+      return performBuild(context, chunk, finder, outputConsumer);
     }
     finally {
       if (shouldShowProgress) {
         context.processMessage(new ProgressMessage("")); // cleanup progress
       }
     }
-    return exitCode;
   }
 
   @Override
@@ -94,13 +94,12 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
 
   protected abstract ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer);
 
+  /* Utility methods */
 
-  // utility methods
   public static InstrumentationClassFinder createInstrumentationClassFinder(@Nullable JpsSdk<?> sdk,
                                                                             Collection<? extends File> platformCp,
                                                                             Collection<? extends File> cp,
-                                                                            final OutputConsumer outputConsumer) throws
-                                                                                                                                                                   MalformedURLException {
+                                                                            OutputConsumer outputConsumer) throws MalformedURLException {
     final URL[] platformUrls;
     int index = 0;
     if (sdk != null && JpsJavaSdkType.getJavaVersion(sdk) >= 9) {
@@ -146,5 +145,4 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
   public static int getClassFileVersion(ClassReader reader) {
     return InstrumenterClassWriter.getClassFileVersion(reader);
   }
-
 }

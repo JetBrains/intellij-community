@@ -11,21 +11,22 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 public class InstrumenterClassWriter extends ClassWriter {
   private final InstrumentationClassFinder myFinder;
 
-  public InstrumenterClassWriter(ClassReader reader, int flags, final InstrumentationClassFinder finder) {
+  public InstrumenterClassWriter(ClassReader reader, int flags, InstrumentationClassFinder finder) {
     super(reader, flags);
     myFinder = finder;
   }
 
-  public InstrumenterClassWriter(int flags, final InstrumentationClassFinder finder) {
+  public InstrumenterClassWriter(int flags, InstrumentationClassFinder finder) {
     super(flags);
     myFinder = finder;
   }
 
   @Override
-  protected String getCommonSuperClass(final String type1, final String type2) {
+  protected String getCommonSuperClass(String type1, String type2) {
     try {
-      final InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);
-      final InstrumentationClassFinder.PseudoClass cls2 = myFinder.loadClass(type2);
+      InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);
+      InstrumentationClassFinder.PseudoClass cls2 = myFinder.loadClass(type2);
+
       if (cls1.isAssignableFrom(cls2)) {
         return cls1.getName();
       }
@@ -35,14 +36,13 @@ public class InstrumenterClassWriter extends ClassWriter {
       if (cls1.isInterface() || cls2.isInterface()) {
         return "java/lang/Object";
       }
-      else {
-        InstrumentationClassFinder.PseudoClass c = cls1;
-        do {
-          c = c.getSuperClass();
-        }
-        while (!c.isAssignableFrom(cls2));
-        return c.getName();
+
+      InstrumentationClassFinder.PseudoClass c = cls1;
+      do {
+        c = c.getSuperClass();
       }
+      while (!c.isAssignableFrom(cls2));
+      return c.getName();
     }
     catch (Exception e) {
       throw new RuntimeException(e.toString(), e);

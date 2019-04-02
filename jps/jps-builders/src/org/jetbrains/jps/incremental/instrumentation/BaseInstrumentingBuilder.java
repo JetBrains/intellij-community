@@ -20,6 +20,7 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
  */
 public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder");
+
   // every instance of builder must have its own marker!
   private final Key<Boolean> IS_INSTRUMENTED_KEY = Key.create("_instrumentation_marker_" + getPresentableName());
 
@@ -49,7 +50,9 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
         if (instrumented != null) {
           compiledClass.setContent(instrumented);
-          finder.cleanCachedData(compiledClass.getClassName());
+          String className = compiledClass.getClassName();
+          assert className != null : compiledClass;
+          finder.cleanCachedData(className);
           IS_INSTRUMENTED_KEY.set(compiledClass, Boolean.TRUE);
           exitCode = ExitCode.OK;
         }
@@ -58,10 +61,11 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
         LOG.info(e);
         final String message = e.getMessage();
         if (message != null) {
-          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths())));
+          String sourcePath = ContainerUtil.getFirstItem(compiledClass.getSourceFilesPaths());
+          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message, sourcePath));
         }
         else {
-          context.processMessage(new CompilerMessage(getPresentableName(), e));
+          context.processMessage(CompilerMessage.createInternalCompilationError(getPresentableName(), e));
         }
       }
     }
@@ -76,5 +80,4 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
                                               ClassReader reader,
                                               ClassWriter writer,
                                               InstrumentationClassFinder finder);
-
 }
