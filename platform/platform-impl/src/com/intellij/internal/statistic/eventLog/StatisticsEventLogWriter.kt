@@ -22,7 +22,7 @@ interface StatisticsEventLogWriter {
 class StatisticsEventLogFileWriter(private val recorderId: String) : StatisticsEventLogWriter {
   private var fileAppender: StatisticsEventLogFileAppender? = null
 
-  private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
+  private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
 
   init {
     eventLogger.level = Level.INFO
