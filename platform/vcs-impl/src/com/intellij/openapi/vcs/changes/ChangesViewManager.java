@@ -231,11 +231,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private static void registerShortcuts(@NotNull JComponent component) {
+  private void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
+
+    if (myCommitPanel != null) myCommitPanel.setupShortcuts(component);
   }
 
   @NotNull
