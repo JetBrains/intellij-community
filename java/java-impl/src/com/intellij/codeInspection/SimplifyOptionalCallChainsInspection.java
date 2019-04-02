@@ -524,7 +524,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Remove redundant null check";
+      return "Null check can be eliminated";
     }
 
     @Nullable
@@ -663,7 +663,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return "Remove redundant null check";
+      return "Null check can be eliminated with 'ifPresent'";
     }
 
     @Nullable
