@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,5 +274,15 @@ public final class PythonImportUtils {
       return false;
     }
     return PsiTreeUtil.getParentOfType(ref_element, PyStringLiteralExpression.class, false, PyStatement.class) == null;
+  }
+
+  public static boolean hasImportsFrom(@NotNull PsiFile file, @NotNull QualifiedName qName) {
+    if (file instanceof PyFile) {
+      PyFile pyFile = (PyFile)file;
+      return StreamEx.of(pyFile.getFromImports()).map(PyFromImportStatement::getImportSourceQName)
+        .nonNull()
+        .anyMatch(qName::equals);
+    }
+    return false;
   }
 }

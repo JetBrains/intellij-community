@@ -102,9 +102,8 @@ public class PyClassNameCompletionTest extends PyTestCase {
         .filterBy(LookupElement::getLookupString, "path")
         .map(LookupElementPresentation::renderElement)
         .map(LookupElementPresentation::getTailText)
-        .distinct().nonNull().toList();
-      tails.forEach(System.out::println);
-      assertOrderedEquals(tails, " (a)", " (first.foo)", " (_second.bar)", " (sys)");
+        .limit(4).toList();
+      assertOrderedEquals(tails, null, " (first.foo)", " (sys)", " (_second.bar)"); // null for local element
     });
   }
 
