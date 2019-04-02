@@ -1,11 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import javax.swing.UIManager;
 
 final class ClassicPainter implements Control.Painter {
@@ -28,7 +32,8 @@ final class ClassicPainter implements Control.Painter {
     if (depth < 0) return -1; // do not paint row
     if (depth == 0) return 0;
     int controlWidth = control.getWidth();
-    int left = getLeftIndent(controlWidth / 2);
+    int min = controlWidth - controlWidth / 2;
+    int left = getLeftIndent(min);
     int right = getRightIndent();
     int offset = getLeafIndent(leaf);
     if (offset < 0) offset = Math.max(controlWidth, left + right);
@@ -39,8 +44,9 @@ final class ClassicPainter implements Control.Painter {
   public int getControlOffset(@NotNull Control control, int depth, boolean leaf) {
     if (depth <= 0 || leaf) return -1; // do not paint control
     int controlWidth = control.getWidth();
-    int left = getLeftIndent(controlWidth / 2);
-    int offset = left - controlWidth / 2;
+    int min = controlWidth - controlWidth / 2;
+    int left = getLeftIndent(min);
+    int offset = left - min;
     return depth > 1 ? (depth - 1) * (left + getRightIndent()) + offset : offset;
   }
 
@@ -51,10 +57,10 @@ final class ClassicPainter implements Control.Painter {
     boolean paintLines = getPaintLines();
     if (!paintLines && leaf) return; // nothing to paint
     int controlWidth = control.getWidth();
-    int left = getLeftIndent(controlWidth / 2);
-    int right = getRightIndent();
-    int indent = left + right;
-    x += left - controlWidth / 2;
+    int min = controlWidth - controlWidth / 2;
+    int left = getLeftIndent(min);
+    int indent = left + getRightIndent();
+    x += left - min;
     int controlX = !leaf && depth > 1 ? (depth - 1) * indent + x : x;
     if (paintLines && (depth != 1 || (!leaf && expanded))) {
       g.setColor(LINE_COLOR);
@@ -88,7 +94,14 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {
-    x += width / 2;
-    g.drawLine(x, y, x, y + height);
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      double dx = x + width / 2.0 - PaintUtil.devPixel(g2d);
+      LinePainter2D.paint(g2d, dx, y, dx, y + height, LinePainter2D.StrokeType.CENTERED, 1, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    else {
+      x += width / 2;
+      g.drawLine(x, y, x, y + height);
+    }
   }
 }
