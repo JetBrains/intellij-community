@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
@@ -49,8 +50,7 @@ public abstract class AbstractExternalSystemSettings<
 {
 
   @NotNull private final Topic<L> myChangesTopic;
-  
-  private Project  myProject;
+  private Supplier<Project> myProjectSupplier;
 
   @NotNull private final Map<String/* project path */, PS> myLinkedProjectsSettings = ContainerUtilRt.newHashMap();
   
@@ -59,20 +59,17 @@ public abstract class AbstractExternalSystemSettings<
 
   protected AbstractExternalSystemSettings(@NotNull Topic<L> topic, @NotNull Project project) {
     myChangesTopic = topic;
-    myProject = project;
+    myProjectSupplier = new ProjectSupplier(project);
   }
 
   @Override
   public void dispose() {
-    myProject = null;
+    myProjectSupplier = null;
   }
 
   @NotNull
   public Project getProject() {
-    if(myProject.isDefault() && myProject.isDisposed()) {
-      myProject = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myProject;
+    return myProjectSupplier.get();
   }
 
   public boolean showSelectiveImportDialogOnInitialImport() {
@@ -237,7 +234,7 @@ public abstract class AbstractExternalSystemSettings<
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
             for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
+              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(project);
               ProjectSystemId externalSystemId = manager.getSystemId();
               if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
                 ExternalProjectsManager.getInstance(project).refreshProject(
@@ -260,5 +257,21 @@ public abstract class AbstractExternalSystemSettings<
     Set<S> getLinkedExternalProjectsSettings();
 
     void setLinkedExternalProjectsSettings(Set<S> settings);
+  }
+
+  private static class ProjectSupplier implements Supplier<Project> {
+    private Project myProject;
+
+    public ProjectSupplier(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public Project get() {
+      if (myProject.isDefault() && myProject.isDisposed()) {
+        myProject = ProjectManager.getInstance().getDefaultProject();
+      }
+      return myProject;
+    }
   }
 }
