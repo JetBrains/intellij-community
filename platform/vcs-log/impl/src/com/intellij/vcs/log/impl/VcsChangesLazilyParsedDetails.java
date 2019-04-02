@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
  * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
-public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
+public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
   protected static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull private final ChangesParser myChangesParser;
@@ -79,7 +79,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }
   }
 
-  @Override
   public int size() {
     int size = 0;
     Changes changes = myChanges.get();
