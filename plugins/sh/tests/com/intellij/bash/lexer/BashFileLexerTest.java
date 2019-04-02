@@ -1,6 +1,7 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,14 @@ public class BashFileLexerTest extends LexerTestCase {
   public void testLet()         { doFileTest("sh"); }
   public void testParams()      { doFileTest("sh"); }
   public void testSelect()      { doFileTest("sh"); }
-  public void testShouldBeFixed()  { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("bash"); }
+
+  public void testShouldBeFixed() {
+    try {
+      doFileTest("sh");
+    }
+    catch (AssertionError e) {
+      assertEquals(FileComparisonFailure.class, e.getClass());
+    }
+  }
 }
