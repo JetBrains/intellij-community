@@ -180,11 +180,16 @@ public abstract class VirtualFileVisitor<T> {
       return true;
     }
 
-    if (!myFollowSymLinks || VfsUtilCore.isInvalidLink(file)) {
+    if (!myFollowSymLinks) {
       return false;
     }
 
     VirtualFile target = file.getCanonicalFile();
+    boolean isValidLink = target != null && !target.equals(file) && !VfsUtilCore.isAncestor(target, file, true);
+    if (!isValidLink) {
+      return false;
+    }
+
     List<VirtualFile> links = myVisitedTargets.get(target);
     if (links == null) {
       myVisitedTargets.put(target, ContainerUtil.newSmartList(file));
