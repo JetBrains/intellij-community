@@ -3,8 +3,8 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -28,11 +28,11 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project) {
-    logProjectStates(project, EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
+    logProjectStates(project, EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
   }
 
   public void logApplicationStates() {
-    logApplicationStates(EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
+    logApplicationStates(EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
   }
 
   public void logProjectStates(@NotNull Project project, @NotNull FUSWhitelist whitelist, boolean recordAll) {
