@@ -74,9 +74,8 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
                                    boolean allowToBeyondMaxPreferredOffset,
                                    boolean isSoftWrap) {
 
-    int wrapPosition =
-      super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset,
-                                  isSoftWrap);
+    int wrapPosition = super.calculateWrapPosition(document, project, startOffset, endOffset,
+                                                   maxPreferredOffset, allowToBeyondMaxPreferredOffset, isSoftWrap);
     if (wrapPosition < 0) return wrapPosition;
     final CharSequence text = document.getImmutableCharSequence();
     if (wrapPosition >= text.length()) return wrapPosition;
@@ -86,29 +85,28 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
     }
 
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (documentManager != null) {
-      final PsiFile psiFile = documentManager.getPsiFile(document);
-      if (psiFile != null) {
-        final PsiElement element = psiFile.findElementAt(wrapPosition);
-        final StringLiteralExpression string = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
-        if (string != null) {
-          final PyFStringFragment fragment = PsiTreeUtil.getTopmostParentOfType(element, PyFStringFragment.class);
-          if (fragment != null) {
-            return Math.max(fragment.getTextOffset(), startOffset);
-          }
+    if (documentManager.isUncommited(document)) {
+      documentManager.commitDocument(document);
+    }
+    final PsiFile psiFile = documentManager.getPsiFile(document);
+    if (psiFile != null) {
+      final PsiElement element = psiFile.findElementAt(wrapPosition);
+      final StringLiteralExpression string = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
+      if (string != null) {
+        final PyFStringFragment fragment = PsiTreeUtil.getTopmostParentOfType(element, PyFStringFragment.class);
+        if (fragment != null) {
+          return Math.max(fragment.getTextOffset(), startOffset);
+        }
 
-          if (wrapPosition > 0) {
-            char charBefore = text.charAt(wrapPosition - 1);
-            if (charBefore == '\'' || charBefore == '"') {
-              //don't wrap the first char of string literal
-              return wrapPosition + 1;
-            }
-          }
+        char charBefore = wrapPosition > 0 ? text.charAt(wrapPosition - 1) : '\0';
+        if (charBefore == '\'' || charBefore == '"') {
+          //don't wrap the first char of string literal
+          return wrapPosition + 1;
+        }
 
-          char c = text.charAt(wrapPosition);
-          if (StringUtil.isWhiteSpace(c)) {
-            return wrapPosition + 1;
-          }
+        char c = text.charAt(wrapPosition);
+        if (StringUtil.isWhiteSpace(c)) {
+          return wrapPosition + 1;
         }
       }
     }
