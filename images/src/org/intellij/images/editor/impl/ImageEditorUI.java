@@ -38,9 +38,7 @@ import com.intellij.ui.components.Magnificator;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -328,15 +326,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
-    }
-
-    @Override
-    protected void paintComponent(@NotNull Graphics g) {
-      super.paintComponent(g);
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(UIUtil.getControlColor().brighter());
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
     }
   }
 
