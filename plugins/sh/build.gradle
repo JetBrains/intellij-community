@@ -25,7 +25,6 @@ intellij {
     downloadSources Boolean.valueOf(sources)
     sameSinceUntilBuild Boolean.valueOf(isEAP)
     alternativeIdePath localIdePath
-    updateSinceUntilBuild false
     plugins 'terminal'
 }
 
