@@ -2,8 +2,8 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -343,7 +343,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
         if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("ERROR")) {
           // Interpreter failed to run
-          final String testOutput = getTestOutput(interpreterSuite.getChildren().get(0));
+          final String testOutput = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite.getChildren().get(0));
           if (testOutput.contains("InterpreterNotFound")) {
             // Skipped with out of "skip_missing_interpreters = True"
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
@@ -352,14 +352,15 @@ public final class PyToxTest extends PyEnvTestCase {
           }
           // Some other error?
           Assert
-            .assertFalse(String.format("Interpreter %s should not fail, but failed: %s", interpreterName, getTestOutput(interpreterSuite)),
+            .assertFalse(String.format("Interpreter %s should not fail, but failed: %s", interpreterName, BaseSMTRunnerTestCase
+                           .getTestOutput(interpreterSuite)),
                          expectations.myExpectedSuccess);
           continue;
         }
 
         if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("SKIP")) {
           // The only reason it may be skipped is it does not exist and skip_missing_interpreters = True
-          final String output = getTestOutput(interpreterSuite);
+          final String output = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite);
           assertThat(output)
             .describedAs("Test marked skipped but not because interpreter not found")
             .contains("InterpreterNotFound");
@@ -383,7 +384,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
         assertThat(message)
-          .describedAs(getTestOutput(interpreterSuite))
+          .describedAs(BaseSMTRunnerTestCase.getTestOutput(interpreterSuite))
           .contains(expectations.myExpectedOutput);
       }
 
@@ -411,13 +412,6 @@ public final class PyToxTest extends PyEnvTestCase {
       final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
       children.ifPresent(result::append);
       return result.toString();
-    }
-
-    @NotNull
-    private static String getTestOutput(@NotNull final SMTestProxy test) {
-      final MockPrinter p = new MockPrinter();
-      test.printOn(p);
-      return p.getAllOut();
     }
 
     @NotNull
