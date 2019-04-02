@@ -123,14 +123,6 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return branches;
   }
 
-  @Nullable
-  private static PsiLocalVariable getVariable(PsiDeclarationStatement declaration) {
-    if (declaration == null) return null;
-    PsiElement[] declaredElements = declaration.getDeclaredElements();
-    if (declaredElements.length != 1) return null;
-    return tryCast(declaredElements[0], PsiLocalVariable.class);
-  }
-
   /**
    * Before using this method make sure you are using correct version of Java.
    *
