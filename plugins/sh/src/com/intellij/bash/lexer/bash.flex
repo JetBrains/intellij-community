@@ -29,7 +29,6 @@ import static org.apache.commons.lang3.StringUtils.contains;
     private boolean shouldCloseSingleParen() { return !parenStack.empty() && parenStack.peek().equals("("); }
     private Stack<CharSequence> parenStack = new Stack<>();
     private boolean inString;
-    private boolean letWithQuote;
     private CharSequence heredocMarker;
 
     protected void onReset() { stateStack.clear(); }
@@ -96,7 +95,6 @@ RightDoubleBracketWithWhiteSpace = {WhiteSpace}+ "]]"  // TODO: think about the 
 RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 
 %state EXPRESSIONS
-%state LET_EXPRESSION_START
 %state LET_EXPRESSIONS
 %state OLD_EXPRESSIONS
 %state CONDITIONAL_EXPRESSION
@@ -112,6 +110,12 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 %state HERE_DOC_BODY
 
 %%
+
+<LET_EXPRESSIONS> {
+    "let"                         { return LET; }
+    ";"                           { popState(); return SEMI; }
+    {LineTerminator}              { popState(); return LINEFEED; }
+}
 
 <EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS> {
     "*="                          { return ARITH_ASS_MUL; }
@@ -165,18 +169,6 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     "=~"                          { return COND_OP_REGEX; }
     "<"                           { return LT; }
     ">"                           { return GT; }
-}
-
-<LET_EXPRESSION_START> {
-    {WhiteSpace}+ / {Quote}       { return WHITESPACE; }
-    {WhiteSpace}+                 { yybegin(LET_EXPRESSIONS); return WHITESPACE; }
-    {Quote}                       { letWithQuote = true; yybegin(LET_EXPRESSIONS); return QUOTE; }
-}
-
-<LET_EXPRESSIONS> {
-    {WhiteSpace}+                 { if (!letWithQuote) { popState(); letWithQuote = false; } return WHITESPACE; }
-    {Quote}                       { if (letWithQuote) { popState(); letWithQuote = false; } return QUOTE; }
-    {LineTerminator}              { popState(); letWithQuote = false; return LINEFEED; }
 }
 
 <PARAMETER_EXPANSION> {
@@ -241,7 +233,7 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     "until"                       { return UNTIL; }
     "while"                       { return WHILE; }
     "trap"                        { return TRAP; }
-    "let"                         { pushState(LET_EXPRESSION_START); return LET; }
+    "let"                         { pushState(LET_EXPRESSIONS); return LET; }
     "time"                        { return TIME; }
 
     {Filedescriptor}              { return FILEDESCRIPTOR; }
