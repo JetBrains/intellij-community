@@ -1183,12 +1183,6 @@ public class StringUtil extends StringUtilRt {
     return ExceptionUtil.getThrowableText(aThrowable);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull final String stackFrameSkipPattern) {
-    return ExceptionUtil.getThrowableText(aThrowable, stackFrameSkipPattern);
-  }
-
   @Nullable
   @Contract(pure = true)
   public static String getMessage(@NotNull Throwable e) {
