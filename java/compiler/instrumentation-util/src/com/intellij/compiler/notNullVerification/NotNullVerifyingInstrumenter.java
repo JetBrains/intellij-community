@@ -5,9 +5,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ven
@@ -337,28 +340,22 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
 
-  private void registerError(String methodName, @SuppressWarnings("SameParameterValue") String operationName, Throwable e) {
+  private void registerError(String methodName, @SuppressWarnings("SameParameterValue") String operationName, Throwable t) {
     if (myPostponedError == null) {
       // throw the first error that occurred
-      Throwable err = e.getCause();
-      if (err == null) {
-        err = e;
-      }
+      Throwable cause = t.getCause();
+      if (cause != null) t = cause;
 
-      StringBuilder message = new StringBuilder();
-      message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      String message = t.getMessage();
 
-      String errMessage = err.getMessage();
-      if (errMessage != null) {
-        message.append(errMessage);
-      }
+      StringWriter writer = new StringWriter();
+      t.printStackTrace(new PrintWriter(writer));
 
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      //noinspection ImplicitDefaultCharsetUsage
-      err.printStackTrace(new PrintStream(out));
-      message.append('\n').append(out.toString());
-
-      myPostponedError = new RuntimeException(message.toString(), err);
+      StringBuilder text = new StringBuilder();
+      text.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      if (message != null) text.append(message);
+      text.append('\n').append(writer.getBuffer());
+      myPostponedError = new RuntimeException(text.toString(), cause);
     }
     if (myIsModification) {
       processPostponedErrors();
