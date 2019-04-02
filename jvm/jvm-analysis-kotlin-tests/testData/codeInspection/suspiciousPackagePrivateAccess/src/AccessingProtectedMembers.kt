@@ -24,13 +24,40 @@ class AccessingProtectedMembersFromSubclass : ProtectedMembers() {
 
     var inner1: ProtectedMembers.StaticInner
     var inner2: StaticInner
+
+    val runnable = object : Runnable {
+      override fun run() {
+        method()
+        staticMethod()
+      }
+    }
   }
+
+  private val runnable = object : Runnable {
+    override fun run() {
+      method()
+      staticMethod()
+    }
+  }
+
+  private val obj = object : StaticInner() {}
 
   private class StaticInnerImpl1 : ProtectedMembers.StaticInner()
 
   private class StaticInnerImpl2 : StaticInner()
+
+  private inner class OwnInnerClass {
+    fun bar() {
+      method()
+      staticMethod()
+    }
+  }
 }
 
 class AccessingDefaultProtectedConstructorFromSubclass : ProtectedConstructors()
 
 class AccessingProtectedConstructorFromSubclass : ProtectedConstructors(1)
+
+val objectAccessingDefaultProtectedConstructorFromSubclass = object : ProtectedConstructors() {}
+
+val objectAccessingProtectedConstructorFromSubclass = object : ProtectedConstructors(1) {}
