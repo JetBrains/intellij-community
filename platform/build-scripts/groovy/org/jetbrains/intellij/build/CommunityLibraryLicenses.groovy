@@ -64,6 +64,8 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Manifest Merger", libraryName: "com.android.tools.build:manifest-merger",
                        license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android ninepatch Library", libraryName: "com.android.tools:ninepatch",
+                       license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Pixelprobe Library", libraryName: "com.android.tools.pixelprobe:pixelprobe",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0",

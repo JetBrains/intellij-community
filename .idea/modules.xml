@@ -359,7 +359,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model-builder/android.sdktools.java-lib-model-builder.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutinspector/android.sdktools.layoutinspector.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutinspector/android.sdktools.layoutinspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perf-logger/android.sdktools.perf-logger.iml" filepath="$PROJECT_DIR$/android/tools-base/perf-logger/android.sdktools.perf-logger.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" filepath="$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" />
