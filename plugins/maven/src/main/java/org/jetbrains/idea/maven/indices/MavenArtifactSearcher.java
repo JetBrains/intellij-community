@@ -31,13 +31,11 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
   private static List<MavenArtifactSearchResult> processResults(List<MavenDependencyCompletionItem> searchResults, String pattern) {
     Map<String, List<MavenDependencyCompletionItem>> results = new HashMap<>();
     for (MavenDependencyCompletionItem item : searchResults) {
-      if (item.getGroupId() == null || item.getArtifactId() == null || item.getVersion() == null) {
+      if (item.getGroupId() == null || item.getArtifactId() == null || item.getVersion() == null || item.getType() == MavenDependencyCompletionItem.Type.CACHED_ERROR) {
         continue;
       }
       String key = item.getGroupId() + ":" + item.getArtifactId();
-      if(!key.contains(pattern)){
-        continue;
-      }
+
       List<MavenDependencyCompletionItem> list = results.get(key);
       if (list == null) {
         list = new ArrayList<>();

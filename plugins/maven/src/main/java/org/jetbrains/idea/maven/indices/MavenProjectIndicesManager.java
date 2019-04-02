@@ -39,6 +39,7 @@ import org.jetbrains.idea.maven.onlinecompletion.IndexBasedSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.LocalCompletionSearch;
 import org.jetbrains.idea.maven.onlinecompletion.central.MavenCentralOnlineSearch;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -128,8 +129,11 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent impl
 
         while (iterator.hasNext()) {
           Pair<String, String> pair = iterator.next();
+          //todo - need stub server
           if (pair.second.contains("repo.maven.apache.org/maven2") || "central".equals(pair.first)) {
-            providers.add(new MavenCentralOnlineSearch());
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              providers.add(new MavenCentralOnlineSearch());
+            }
             iterator.remove();
           }
         }
@@ -232,7 +236,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent impl
    * @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findAllVersions or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead
    **/
   public Set<String> getVersions(String groupId, String artifactId) {
-    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null, null)).stream()
+    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream()
       .map(d -> d.getArtifactId()).collect(
         Collectors.toSet());
   }
@@ -260,12 +264,12 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent impl
 
   @Deprecated
   public boolean hasArtifactId(String groupId, String artifactId) {
-    return !getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null, null)).isEmpty();
+    return !getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null), SearchParameters.DEFAULT.withFlag(SearchParameters.Flags.FULL_RESOLVE)).isEmpty();
   }
 
   @Deprecated
   public boolean hasVersion(String groupId, String artifactId, String version) {
-    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null, null)).stream().anyMatch(
+    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
       s -> version.equals(s.getVersion())
     );
   }

@@ -67,12 +67,8 @@ public class MavenCentralOnlineSearch implements DependencyCompletionProvider {
     String param = template.getArtifactId() == null
                    ? template.getGroupId()
                    : template.getGroupId() + join(StringUtil.split(template.getArtifactId(), "-"));
-    //we cannot query with GAV for maven search
-    EnumSet<SearchParameters.Flags> newFlags = parameters.getFlags().clone();
-    newFlags.remove(ALL_VERSIONS);
-    SearchParameters newParameters = new SearchParameters(parameters.getMaxResults(), parameters.getMillisToWait(), newFlags);
-
-    String uri = createSearchUrl(param, newParameters);
+    // cause 400 :(
+    String uri = createSearchUrl(param, parameters.withoutFlag(ALL_VERSIONS));
     return convert(doRequest(uri));
   }
 

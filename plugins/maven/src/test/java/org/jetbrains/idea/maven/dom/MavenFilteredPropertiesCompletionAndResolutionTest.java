@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
-public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
+public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testBasic() throws Exception {
     createProjectSubDir("res");
 
@@ -563,6 +563,9 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   }
 
   public void testDoNotAddReferenceToDelimiterDefinition() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +

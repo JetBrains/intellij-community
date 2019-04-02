@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.onlinecompletion.model;
 
 import java.util.EnumSet;
 
+import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
+
 public class SearchParameters {
 
   public enum Flags {
@@ -13,7 +15,7 @@ public class SearchParameters {
     Flags(String desc) {}
   }
 
-  public static final SearchParameters DEFAULT = new SearchParameters(20, 500, EnumSet.noneOf(Flags.class));
+  public static final SearchParameters DEFAULT = new SearchParameters(20, 1000, EnumSet.noneOf(Flags.class));
   private final int maxResults;
   private final long millisToWait;
   private final EnumSet<Flags> myFlags;
@@ -37,4 +39,20 @@ public class SearchParameters {
   public EnumSet<Flags> getFlags() {
     return EnumSet.copyOf(myFlags);
   }
+
+  public SearchParameters withFlag(Flags flag) {
+    EnumSet<SearchParameters.Flags> newFlags = this.getFlags().clone();
+    newFlags.add(flag);
+    SearchParameters newParameters = new SearchParameters(getMaxResults(), getMillisToWait(), newFlags);
+    return newParameters;
+  }
+
+  public SearchParameters withoutFlag(Flags flag) {
+    EnumSet<SearchParameters.Flags> newFlags = this.getFlags().clone();
+    newFlags.remove(flag);
+    SearchParameters newParameters = new SearchParameters(getMaxResults(), getMillisToWait(), newFlags);
+    return newParameters;
+  }
+
+
 }

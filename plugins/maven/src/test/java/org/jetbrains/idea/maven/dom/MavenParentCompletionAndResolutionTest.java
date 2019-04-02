@@ -23,6 +23,9 @@ import com.intellij.psi.PsiElement;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testVariants() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -61,6 +64,9 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
   }
 
   public void testResolutionInsideTheProject() throws Exception {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
