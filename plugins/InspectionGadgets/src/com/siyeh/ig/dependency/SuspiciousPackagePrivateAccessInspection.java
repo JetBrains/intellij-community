@@ -228,7 +228,26 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     PsiElement sourcePsi = sourceNode.getSourcePsi();
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return false;
-    return JavaResolveUtil.canAccessProtectedMember(member, memberClass, accessObjectType, sourceClass.getJavaPsi(), member.hasModifierProperty(PsiModifier.STATIC));
+    return canAccessProtectedMember(member, memberClass, accessObjectType, member.hasModifierProperty(PsiModifier.STATIC),
+                                    sourceClass);
+  }
+
+  private static boolean canAccessProtectedMember(PsiMember member, PsiClass memberClass, PsiClass accessObjectType,
+                                                  boolean isMemberStatic, UClass sourceClass) {
+    if (JavaResolveUtil.canAccessProtectedMember(member, memberClass, accessObjectType, sourceClass.getJavaPsi(), isMemberStatic)) {
+      return true;
+    }
+    if (sourceClass instanceof UAnonymousClass && sourceClass.getJavaPsi().getContext() == null) {
+      //workaround for KT-30752: KtLightClassForAnonymousDeclaration::getContext returns null for object literal expressions in some member initializers
+      UElement uastParent = sourceClass.getUastParent();
+      if (uastParent != null) {
+        UClass parentClass = UastUtils.findContaining(uastParent.getSourcePsi(), UClass.class);
+        if (parentClass != null) {
+          return canAccessProtectedMember(member, memberClass, accessObjectType, isMemberStatic, parentClass);
+        }
+      }
+    }
+    return false;
   }
 
   private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {
