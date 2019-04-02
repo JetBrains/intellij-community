@@ -18,6 +18,8 @@ class ChangesViewCommitWorkflowHandler(
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
 
+  private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
+
   init {
     Disposer.register(ui, this)
 
@@ -52,6 +54,10 @@ class ChangesViewCommitWorkflowHandler(
   override fun inclusionChanged() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
     super.inclusionChanged()
+  }
+
+  override fun updateWorkflow() {
+    workflow.commitState = getCommitState()
   }
 
   override fun addUnversionedFiles(): Boolean = addUnversionedFiles(changeListManager.defaultChangeList)
