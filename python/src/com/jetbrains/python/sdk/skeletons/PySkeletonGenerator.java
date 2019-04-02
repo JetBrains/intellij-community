@@ -152,6 +152,10 @@ public class PySkeletonGenerator {
     List<String> commandLine = buildSkeletonGeneratorCommandLine(modname, modfilename, assemblyRefs, binaryPath, extraSyspath);
 
     final Map<String, String> extraEnv = PythonSdkType.activateVirtualEnv(binaryPath);
+    if (!extraEnv.isEmpty()) {
+      LOG.info("Extra environment variables after activation of " + binaryPath + ":\n" +
+               StringUtil.join(extraEnv.entrySet(), entry -> entry.getKey() + " = " + entry.getValue(), "\n"));
+    }
     final Map<String, String> env = new HashMap<>(!extraEnv.isEmpty() ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
     if (myPrebuilt) {
