@@ -49,6 +49,11 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     new CharsetMethodMatcher("java.nio.channels.Channels", "newReader", "java.nio.channels.ReadableByteChannel", ""),
     new CharsetMethodMatcher("java.nio.channels.Channels", "newWriter", "java.nio.channels.WritableByteChannel", ""),
     new CharsetMethodMatcher(JAVA_UTIL_PROPERTIES, "storeToXML", "java.io.OutputStream", JAVA_LANG_STRING, ""),
+    
+    // Apache IO
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.io.InputStream", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URI", ""),
+    new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URL", ""),
   };
 
   private static final Map<String, String> SUPPORTED_CHARSETS =
