@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -68,6 +69,9 @@ public abstract class AbstractExternalSystemSettings<
 
   @NotNull
   public Project getProject() {
+    if(myProject.isDefault() && myProject.isDisposed()) {
+      myProject = ProjectManager.getInstance().getDefaultProject();
+    }
     return myProject;
   }
 
