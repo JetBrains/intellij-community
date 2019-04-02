@@ -98,10 +98,16 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 %state LET_EXPRESSIONS
 %state OLD_EXPRESSIONS
 %state CONDITIONAL_EXPRESSION
-
 %state PARAMETER_EXPANSION
 
-%state CASE_CLAUSE
+%state IF_EXPRESSION
+%state SELECT_EXPRESSION
+%state UNTIL_EXPRESSION
+%state WHILE_EXPRESSION
+%state FOR_EXPRESSION
+%state STRING_EXPRESSION
+
+%state CASE_EXPRESSION
 %state CASE_PATTERN
 
 %state HERE_DOC_START_MARKER
@@ -178,10 +184,9 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
   [^]                                 { popState(); }
 }
 
-<CASE_CLAUSE> {
-  "esac"                          { popState();                 return ESAC; }
+<CASE_EXPRESSION> {
   ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
-  "in"                            { if (!inString) pushState(CASE_PATTERN);   return WORD; }
+  "in"                            { if (yystate() == CASE_EXPRESSION && !inString) pushState(CASE_PATTERN); return WORD; }
 }
 
 <CASE_PATTERN> {
@@ -215,23 +220,31 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
+  CASE_EXPRESSION, CASE_PATTERN, IF_EXPRESSION, SELECT_EXPRESSION, UNTIL_EXPRESSION, WHILE_EXPRESSION, FOR_EXPRESSION> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
 
-    "case"                        { pushState(CASE_CLAUSE); return CASE; }
-    "esac"                        { return ESAC; }
-    "done"                        { return DONE; }
+    "case"                        { if (!inString) pushState(CASE_EXPRESSION); return CASE; }
+    "esac"                        { if (yystate() == CASE_EXPRESSION && !inString) popState(); return ESAC; }
+    "done"                        { if (!inString)
+                                      switch (yystate()) {
+                                              case UNTIL_EXPRESSION:
+                                              case WHILE_EXPRESSION:
+                                              case FOR_EXPRESSION:
+                                              case SELECT_EXPRESSION: popState();
+                                      }
+                                    return DONE; }
     "do"                          { return DO; }
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
-    "fi"                          { return FI; }
-    "for"                         { return FOR; }
+    "fi"                          { if (yystate() == IF_EXPRESSION && !inString) popState(); return FI; }
+    "for"                         { if (!inString) pushState(FOR_EXPRESSION); return FOR; }
     "function"                    { return FUNCTION; }
-    "if"                          { return IF; }
-    "select"                      { return SELECT; }
+    "if"                          { if (!inString) pushState(IF_EXPRESSION); return IF; }
+    "select"                      { if (!inString) pushState(SELECT_EXPRESSION); return SELECT; }
     "then"                        { return THEN; }
-    "until"                       { return UNTIL; }
-    "while"                       { return WHILE; }
+    "until"                       { if (!inString) pushState(UNTIL_EXPRESSION); return UNTIL; }
+    "while"                       { if (!inString) pushState(WHILE_EXPRESSION); return WHILE; }
     "trap"                        { return TRAP; }
     "let"                         { pushState(LET_EXPRESSIONS); return LET; }
     "time"                        { return TIME; }
@@ -313,7 +326,8 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
-<YYINITIAL, CONDITIONAL_EXPRESSION, CASE_CLAUSE, CASE_PATTERN, HERE_DOC_PIPELINE> {
+<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_EXPRESSION, CASE_PATTERN, IF_EXPRESSION,
+  SELECT_EXPRESSION, UNTIL_EXPRESSION, WHILE_EXPRESSION, FOR_EXPRESSION> {
     {Word}                        { return WORD; }
 }
 
