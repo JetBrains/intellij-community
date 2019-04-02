@@ -48,6 +48,7 @@ import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
+import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
@@ -55,6 +56,7 @@ import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
@@ -612,32 +614,44 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    RepositorySystemSession repositorySession = maven.newRepositorySession(request);
+    SessionScope sessionScope = getComponent(SessionScope.class);
+    sessionScope.enter();
 
-    request.getProjectBuildingRequest().setRepositorySession(repositorySession);
-
-    MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
-    LegacySupport legacySupport = getComponent(LegacySupport.class);
-
-    MavenSession oldSession = legacySupport.getSession();
-
-    legacySupport.setSession(mavenSession);
-
-    // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
     try {
-      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
-        listener.afterSessionStart(mavenSession);
+      RepositorySystemSession repositorySession = maven.newRepositorySession(request);
+
+      request.getProjectBuildingRequest().setRepositorySession(repositorySession);
+
+      MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
+
+      sessionScope.seed(MavenSession.class, mavenSession);
+
+      LegacySupport legacySupport = getComponent(LegacySupport.class);
+
+      MavenSession oldSession = legacySupport.getSession();
+
+      legacySupport.setSession(mavenSession);
+
+
+      // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
+      try {
+        for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
+          listener.afterSessionStart(mavenSession);
+        }
+      }
+      catch (MavenExecutionException e) {
+        throw new RuntimeException(e);
+      }
+
+      try {
+        runnable.run();
+      }
+      finally {
+        legacySupport.setSession(oldSession);
       }
     }
-    catch (MavenExecutionException e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      runnable.run();
-    }
     finally {
-      legacySupport.setSession(oldSession);
+      sessionScope.exit();
     }
   }
 
@@ -1250,7 +1264,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       final Maven3WrapperAetherLoggerFactory loggerFactory = new Maven3WrapperAetherLoggerFactory(myConsoleWrapper);
 
       if (artifactResolver instanceof DefaultArtifactResolver) {
-          ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
+        ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
       }
 
       if (repositorySystem instanceof DefaultRepositorySystem) {
