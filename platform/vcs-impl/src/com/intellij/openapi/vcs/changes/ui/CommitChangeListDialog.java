@@ -54,6 +54,7 @@ import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitWorkflow
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.ui.JBUI.Borders.emptyLeft;
 import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
 import static java.lang.Math.max;
@@ -281,6 +282,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     getBrowser().getViewer().addSelectionListener(() -> changeDetails(getBrowser().getViewer().isModelUpdateInProgress()));
 
     initCommitActions(myWorkflow.getExecutors());
+
+    myCommitOptions.setBorder(emptyLeft(10));
 
     myBrowserBottomPanel.add(myLegend.getComponent());
     BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(getBrowser()).addToBottom(myBrowserBottomPanel);
