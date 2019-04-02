@@ -32,14 +32,22 @@ class ChangesViewCommitWorkflowHandler(
     updateDefaultCommitAction()
   }
 
+  private fun ensureCommitOptions(): CommitOptions {
+    if (!workflow.areCommitOptionsCreated) {
+      workflow.areCommitOptionsCreated = true
+
+      workflow.initCommitOptions(createCommitOptions())
+      commitOptions.restoreState()
+    }
+    return commitOptions
+  }
+
   private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !isCommitEmpty()
 
   override fun vcsesChanged() {
     updateDefaultCommitAction()
 
     initCommitHandlers()
-    workflow.initCommitOptions(createCommitOptions())
-    commitOptions.restoreState()
   }
 
   private fun updateDefaultCommitAction() {
@@ -49,7 +57,8 @@ class ChangesViewCommitWorkflowHandler(
 
   fun activate(): Boolean = ui.activate()
 
-  fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) = ui.showCommitOptions(commitOptions, isFromToolbar, dataContext)
+  fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
+    ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
@@ -64,6 +73,11 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun canExecute(executor: CommitExecutor): Boolean = false
   override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = Unit
+
+  override fun saveCommitOptions(): Boolean {
+    ensureCommitOptions()
+    return super.saveCommitOptions()
+  }
 
   override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
 
