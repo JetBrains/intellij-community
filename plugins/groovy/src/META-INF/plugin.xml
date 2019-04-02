@@ -54,7 +54,9 @@
     </extensionPoint>
     <extensionPoint name="callTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
 
     <!-- Groovy DSL extension points -->
