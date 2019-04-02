@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Key;
@@ -251,11 +252,12 @@ public class FoldingModelSupport {
   @Nullable
   protected static String getLineSeparatorDescription(@NotNull Project project, @NotNull Document document, int lineNumber) {
     return ReadAction.compute(() -> {
+      ProgressManager.checkCanceled();
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile == null) return null;
       VirtualFile virtualFile = psiFile.getVirtualFile();
 
-      if (document.getLineCount() == lineNumber) return null;
+      if (document.getLineCount() <= lineNumber) return null;
       int offset = document.getLineStartOffset(lineNumber);
 
       FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, virtualFile);
