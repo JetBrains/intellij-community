@@ -118,6 +118,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                                     cancelButton.value))
   }
 
+  @Suppress("SuspiciousPackagePrivateAccess") //todo: remove suppression when everyone update to IDEA where IDEA-210216 is fixed
   private val nextAction: Action = object : DialogWrapperAction("Next") {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
@@ -131,6 +132,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val nextButton = lazy { createJButtonForAction(nextAction) }
 
+  @Suppress("SuspiciousPackagePrivateAccess")
   private val previousAction = object : DialogWrapperAction("Previous") {
     override fun doAction(e: ActionEvent) = onPrevious()
   }
