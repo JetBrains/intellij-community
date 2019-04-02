@@ -557,8 +557,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
 
     public void invalidateNodeSizes() {
-      TreeUtil.invalidateCache(getUI());
-      repaint();
+      TreeUtil.invalidateCacheAndRepaint(getUI());
     }
   }
 
