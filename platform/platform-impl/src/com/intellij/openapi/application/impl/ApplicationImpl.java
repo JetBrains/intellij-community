@@ -75,6 +75,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -1459,13 +1460,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
            (isCommandLine() ? " (Command line)" : "");
   }
 
-  @TestOnly
-  void disableEventsUntil(@NotNull Disposable disposable) {
-    final List<ApplicationListener> listeners = new ArrayList<>(myDispatcher.getListeners());
-    myDispatcher.getListeners().removeAll(listeners);
-    Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
-  }
-
   @Nullable
   @Override
   protected String activityNamePrefix() {
@@ -1476,5 +1470,23 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
+  }
+
+  @TestOnly
+  void disableEventsUntil(@NotNull Disposable disposable) {
+    ApplicationListener multicaster = myDispatcher.getMulticaster();
+    setMulticaster(new ApplicationListener() {});
+    Disposer.register(disposable, () -> setMulticaster(multicaster));
+  }
+
+  private void setMulticaster(@NotNull ApplicationListener multicaster) {
+    try {
+      Field field = myDispatcher.getClass().getDeclaredField("myMulticaster");
+      field.setAccessible(true);
+      field.set(myDispatcher, multicaster);
+    }
+    catch (ReflectiveOperationException e) {
+      throw new Error(e);
+    }
   }
 }
