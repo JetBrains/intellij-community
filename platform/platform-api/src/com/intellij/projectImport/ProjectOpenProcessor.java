@@ -17,13 +17,14 @@ public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.projectOpenProcessor");
 
+  @NotNull
   public abstract String getName();
 
   @Nullable
   public abstract Icon getIcon();
 
   @Nullable
-  public Icon getIcon(final VirtualFile file) {
+  public Icon getIcon(@NotNull VirtualFile file) {
     return getIcon();
   }
 
@@ -46,7 +47,7 @@ public abstract class ProjectOpenProcessor {
   }
 
   @Nullable
-  public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
+  public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file) {
     return getImportProvider(file, false);
   }
 

@@ -48,7 +48,7 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
   }
 
   @Override
-  protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
+  protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
     final GradleProjectImportProvider projectImportProvider = new GradleProjectImportProvider(getBuilder());
     getBuilder().setFileToImport(file.getPath());
     getBuilder().prepare(wizardContext);

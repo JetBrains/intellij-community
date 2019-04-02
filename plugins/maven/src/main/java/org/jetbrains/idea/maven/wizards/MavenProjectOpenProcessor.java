@@ -34,7 +34,7 @@ final class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProj
   }
 
   @Override
-  public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
+  public boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
     getBuilder().setFiles(Collections.singletonList(file));
 
     if (!getBuilder().setSelectedProfiles(MavenExplicitProfiles.NONE)) return false;

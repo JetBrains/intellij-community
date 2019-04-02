@@ -304,6 +304,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return null;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return "text editor";
