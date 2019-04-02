@@ -146,7 +146,7 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
 
     @Override
     public String toString() {
-      return myDelegate.toString();
+      return "WithBeneathInfo: "+myDelegate+ " with roots beneath: "+myContentInfosBeneath;
     }
 
     @Override

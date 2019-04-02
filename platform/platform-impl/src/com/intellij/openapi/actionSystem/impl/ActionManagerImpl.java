@@ -141,7 +141,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  static AnAction convertStub(ActionStub stub) {
+  static AnAction convertStub(@NotNull ActionStub stub) {
     Object obj;
     String className = stub.getClassName();
     try {
@@ -171,7 +171,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
-  private static void processAbbreviationNode(Element e, String id) {
+  private static void processAbbreviationNode(@NotNull Element e, @NotNull String id) {
     final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
     if (!StringUtil.isEmpty(abbr)) {
       final AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
@@ -611,14 +611,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
-      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
+      if (Boolean.parseBoolean(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
           LOG.error(element.getName() + " '" + id + "' doesn't override anything");
           return;
         }
         AnAction prev = replaceAction(id, action, pluginId);
         if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
-          if (Boolean.valueOf(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
+          if (Boolean.parseBoolean(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
             ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
           }
         }
@@ -1088,16 +1088,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  public void addActionPopup(final Object menu) {
-    boolean added = myPopups.add(menu);
-    if (added && menu instanceof ActionPopupMenu) {
+  public void addActionPopup(@NotNull Object menu) {
+    myPopups.add(menu);
+    if (menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
         listener.actionPopupMenuCreated((ActionPopupMenu)menu);
       }
     }
   }
 
-  void removeActionPopup(final Object menu) {
+  void removeActionPopup(@NotNull Object menu) {
     final boolean removed = myPopups.remove(menu);
     if (removed && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
