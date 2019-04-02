@@ -2,22 +2,18 @@
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.hierarchy.HierarchyBrowserBase;
-import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -36,7 +32,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +57,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    for (SearchScopeProvider each : SearchScopeProvider.EP.getExtensions(project)) {
-      result.addAll(each.getGeneralProjectScopes());
+    for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
+      result.addAll(each.getGeneralSearchScopes(project));
     }
 
     if (ModuleUtil.hasTestSourceRoots(project)) {
@@ -204,36 +199,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
             result.add(new LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")));
           }
         }
-      }
-    }
-
-    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    if (favoritesManager != null) {
-      for (final String favorite : favoritesManager.getAvailableFavoritesListNames()) {
-        final Collection<TreeItem<Pair<AbstractUrl, String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
-        if (rootUrls.isEmpty()) continue;  // ignore unused root
-        result.add(new GlobalSearchScope(project) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return "Favorite \'" + favorite + "\'";
-          }
-
-          @Override
-          public boolean contains(@NotNull final VirtualFile file) {
-            return ReadAction.compute(() -> favoritesManager.contains(favorite, file));
-          }
-
-          @Override
-          public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-            return true;
-          }
-
-          @Override
-          public boolean isSearchInLibraries() {
-            return true;
-          }
-        });
       }
     }
 
