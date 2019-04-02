@@ -1134,6 +1134,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         dfaRight instanceof DfaVariableValue && !TypeConversionUtil.isPrimitiveWrapper(dfaRight.getType())) {
       return true;
     }
+    PsiType leftType = getPsiType(dfaLeft);
+    PsiType rightType = getPsiType(dfaRight);
+    if (TypeConversionUtil.isPrimitiveWrapper(leftType) && 
+        TypeConversionUtil.isPrimitiveWrapper(rightType) && !leftType.equals(rightType)) {
+      // Boxes of different type (e.g. Long and Integer), cannot be equal even if unboxed values are equal
+      return negated;
+    }
 
     DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
     DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
@@ -1147,6 +1154,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
     return applyRelation(unboxedLeft, unboxedRight, negated);
+  }
+
+  @Nullable
+  private static PsiType getPsiType(@NotNull DfaValue value) {
+    if (value instanceof DfaFactMapValue) {
+      TypeConstraint constraint = ((DfaFactMapValue)value).get(DfaFactType.TYPE_CONSTRAINT);
+      return constraint == null ? null : constraint.getPsiType();
+    }
+    return value.getType();
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
