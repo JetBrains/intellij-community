@@ -72,6 +72,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   @Override
+  public void flushBufferOnProcessTermination(final int exitCode) {
+    mySplitter.flush();
+  }
+
+  @Override
   public void dispose() {
     setProcessor(null);
   }
