@@ -439,7 +439,7 @@ class FeatureEventLogWhitelistFilterTest {
     if (!filtered.isEmpty()) {
       records.add(LogEventRecord(filtered))
     }
-    val expected = LogEventRecordRequest("IU", "user-id", records, false)
+    val expected = LogEventRecordRequest("recorder-id", "IU", "user-id", records, false)
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
     try {
@@ -448,7 +448,7 @@ class FeatureEventLogWhitelistFilterTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600, filter, false)
+      val actual = LogEventRecordRequest.create(log, "recorder-id", "IU", "user-id", 600, filter, false)
       assertEquals(expected, actual)
     }
     finally {
