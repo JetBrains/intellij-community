@@ -1535,7 +1535,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 210: break;
           case 93: 
-            { pushState(CASE_PATTERN);    return WORD;
+            { if (!inString) pushState(CASE_PATTERN);   return WORD;
             } 
             // fall through
           case 211: break;

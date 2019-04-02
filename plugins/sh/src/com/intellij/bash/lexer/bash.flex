@@ -181,7 +181,7 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 <CASE_CLAUSE> {
   "esac"                          { popState();                 return ESAC; }
   ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
-  "in"                            { pushState(CASE_PATTERN);    return WORD; }
+  "in"                            { if (!inString) pushState(CASE_PATTERN);   return WORD; }
 }
 
 <CASE_PATTERN> {
