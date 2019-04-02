@@ -15,9 +15,9 @@ import java.io.File
 
 
 class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
-  private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
-
   companion object {
+
+    internal val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
     private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
                                         "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
                                         "CONDA_PREFIX", "CONDA_DEFAULT_ENV")
@@ -80,7 +80,6 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
     else super.getShellProcessCommand()
   }
-
 }
 
 fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, String?>? {
@@ -89,22 +88,35 @@ fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, Strin
     val activate = findActivateInPath(sdkPath!!, shellName)
 
     return if (activate != null && activate.exists()) {
-        Pair(activate.absolutePath, null)
-    } else null
-  } else if (PythonSdkType.isConda(sdkPath)) {
+      Pair(activate.absolutePath, null)
+    }
+    else null
+  }
+  else if (PythonSdkType.isConda(sdkPath)) {
     val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
 
     if (condaExecutable != null) {
+      PyVirtualEnvReader.LOG.info("conda executable for ${sdkPath} is ${condaExecutable}")
       val activate = findActivateInPath(File(condaExecutable).path, null)
 
       if (activate != null && activate.exists()) {
+        PyVirtualEnvReader.LOG.info("activate script for $condaExecutable is $activate")
         return Pair(activate.path, condaEnvFolder(sdkPath))
       }
+      else {
+        PyVirtualEnvReader.LOG.info("activate script not found for conda executable $condaExecutable")
+      }
+    }
+    else {
+      PyVirtualEnvReader.LOG.info("Conda executable is not found for $sdkPath")
     }
   }
-
+  else {
+    PyVirtualEnvReader.LOG.info("$sdkPath is recognized as neither proper virtualenv nor conda")
+  }
   return null
 }
+
 
 private fun findActivateInPath(path: String, shellName: String?): File? {
   return if (SystemInfo.isWindows) findActivateOnWindows(path)

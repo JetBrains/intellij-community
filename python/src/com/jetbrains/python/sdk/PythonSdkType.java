@@ -64,6 +64,7 @@ import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher.SkeletonHeader;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import icons.PythonIcons;
+import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -981,9 +982,15 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-    if (reader.getActivate() != null) {
+    final Pair<String, String> activate = reader.getActivate();
+    if (activate != null) {
+      LOG.info(String.format("Activation parameters for %s: %s %s", sdkHome, activate.getFirst(), activate.getSecond()));
       try {
-        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
+        final Map<String, String> filtered = PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv());
+        if (filtered.isEmpty()) {
+          LOG.info("No known environment variables read after activation of " + sdkHome);
+        }
+        return Collections.unmodifiableMap(filtered);
       }
       catch (Exception e) {
         LOG.error("Couldn't read virtualenv variables", e);
