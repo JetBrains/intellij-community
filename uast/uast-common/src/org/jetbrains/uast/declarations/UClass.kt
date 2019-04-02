@@ -39,7 +39,8 @@ interface UClass : UDeclaration, PsiClass {
   /**
    * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
    */
-  @Deprecated("superclass could present but not be convertable to Uast, use `javaPsi.superClass`", ReplaceWith("javaPsi.superClass"))
+  @Deprecated("will return null if existing superclass is not convertable to Uast, use `javaPsi.superClass` instead",
+              ReplaceWith("javaPsi.superClass"))
   override fun getSuperClass(): UClass? {
     val superClass = javaPsi.superClass ?: return null
     return UastFacade.convertWithParent(superClass)
