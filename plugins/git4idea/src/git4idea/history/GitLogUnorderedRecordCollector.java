@@ -29,12 +29,12 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
   private static final int STATUS_LINES_THRESHOLD = 20_000;
 
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, GitLogFullRecord> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
   protected GitLogUnorderedRecordCollector(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @NotNull Consumer<List<GitLogRecord>> consumer) {
+                                           @NotNull Consumer<List<GitLogFullRecord>> consumer) {
     super(project, root, consumer);
   }
 
@@ -66,7 +66,7 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
   }
 
   @Override
-  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitLogRecord> records) {
+  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitLogFullRecord> records) {
     myHashToIncompleteRecords.put(hash, records);
     records.forEach(r -> myIncompleteStatusLinesCount += r.getStatusInfos().size());
   }

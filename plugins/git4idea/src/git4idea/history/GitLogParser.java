@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @see GitLogRecord
  */
-public class GitLogParser {
+public class GitLogParser<R extends GitLogRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
 
   // Single records begin with %x01%x01, end with %03%03. Items of commit information (hash, committer, subject, etc.) are separated by %x02%x02.
@@ -66,7 +66,7 @@ public class GitLogParser {
   @NotNull private final OptionsParser myOptionsParser;
   @NotNull private final PathsParser myPathsParser;
 
-  @NotNull private final GitLogRecordBuilder myRecordBuilder;
+  @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
 
   private final String myRecordStart;
   private final String myRecordEnd;
@@ -74,7 +74,7 @@ public class GitLogParser {
 
   private boolean myIsInBody = true;
 
-  private GitLogParser(@NotNull GitLogRecordBuilder recordBuilder,
+  private GitLogParser(@NotNull GitLogRecordBuilder<R> recordBuilder,
                        boolean supportsRawBody,
                        @NotNull NameStatus nameStatusOption,
                        @NotNull GitLogOption... options) {
@@ -92,31 +92,33 @@ public class GitLogParser {
   }
 
   public GitLogParser(@NotNull Project project,
-                      @NotNull GitLogRecordBuilder recordBuilder,
+                      @NotNull GitLogRecordBuilder<R> recordBuilder,
                       @NotNull NameStatus nameStatus,
                       @NotNull GitLogOption... options) {
     this(recordBuilder, GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project), nameStatus, options);
   }
 
-  public GitLogParser(@NotNull Project project,
-                      @NotNull NameStatus nameStatus,
-                      @NotNull GitLogOption... options) {
-    this(project, new DefaultGitLogRecordBuilder(), nameStatus, options);
-  }
-
-  public GitLogParser(@NotNull Project project,
-                      @NotNull GitLogOption... options) {
-    this(project, new DefaultGitLogRecordBuilder(), NameStatus.NONE, options);
+  @NotNull
+  public static GitLogParser<GitLogFullRecord> createDefaultParser(@NotNull Project project,
+                                                                   @NotNull NameStatus nameStatus,
+                                                                   @NotNull GitLogOption... options) {
+    return new GitLogParser<>(project, new DefaultGitLogFullRecordBuilder(), nameStatus, options);
   }
 
   @NotNull
-  public List<GitLogRecord> parse(@NotNull CharSequence output) {
-    List<GitLogRecord> result = ContainerUtil.newArrayList();
+  public static GitLogParser<GitLogRecord> createDefaultParser(@NotNull Project project,
+                                                               @NotNull GitLogOption... options) {
+    return new GitLogParser<>(project, new DefaultGitLogRecordBuilder(), NameStatus.NONE, options);
+  }
+
+  @NotNull
+  public List<R> parse(@NotNull CharSequence output) {
+    List<R> result = ContainerUtil.newArrayList();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
     for (CharSequence line : lines) {
       try {
-        GitLogRecord record = parseLine(line);
+        R record = parseLine(line);
         if (record != null) {
           result.add(record);
         }
@@ -127,15 +129,15 @@ public class GitLogParser {
       }
     }
 
-    GitLogRecord record = finish();
+    R record = finish();
     if (record != null) result.add(record);
 
     return result;
   }
 
   @Nullable
-  public GitLogRecord parseOneRecord(@NotNull CharSequence output) {
-    List<GitLogRecord> records = parse(output);
+  public R parseOneRecord(@NotNull CharSequence output) {
+    List<R> records = parse(output);
     clear();
     if (records.isEmpty()) return null;
     return ContainerUtil.getFirstItem(records);
@@ -145,7 +147,7 @@ public class GitLogParser {
    * Expects a line without separator.
    */
   @Nullable
-  public GitLogRecord parseLine(@NotNull CharSequence line) {
+  public R parseLine(@NotNull CharSequence line) {
     if (myPathsParser.expectsPaths()) {
       return parseLineWithPaths(line);
     }
@@ -153,13 +155,13 @@ public class GitLogParser {
   }
 
   @Nullable
-  private GitLogRecord parseLineWithPaths(@NotNull CharSequence line) {
+  private R parseLineWithPaths(@NotNull CharSequence line) {
     if (myIsInBody) {
       myIsInBody = !myOptionsParser.parseLine(line);
     }
     else {
       if (CharArrayUtil.regionMatches(line, 0, myRecordStart)) {
-        GitLogRecord record = createRecord();
+        R record = createRecord();
         myIsInBody = !myOptionsParser.parseLine(line);
         return record;
       }
@@ -171,7 +173,7 @@ public class GitLogParser {
   }
 
   @Nullable
-  private GitLogRecord parseLineWithoutPaths(@NotNull CharSequence line) {
+  private R parseLineWithoutPaths(@NotNull CharSequence line) {
     if (myOptionsParser.parseLine(line)) {
       return createRecord();
     }
@@ -179,17 +181,17 @@ public class GitLogParser {
   }
 
   @Nullable
-  public GitLogRecord finish() {
+  public R finish() {
     if (myOptionsParser.isEmpty()) return null;
     return createRecord();
   }
 
   @NotNull
-  private GitLogRecord createRecord() {
+  private R createRecord() {
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
-    GitLogRecord record = myRecordBuilder.build(options, mySupportsRawBody);
+    R record = myRecordBuilder.build(options, mySupportsRawBody);
     myRecordBuilder.clear();
     myIsInBody = true;
 
