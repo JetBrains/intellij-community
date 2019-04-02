@@ -93,7 +93,7 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       String message = result.message;
       String html =
           "<html>" +
-          "<p>" + StringUtil.escapeXml(message) + "</p>" +
+          "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
           "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>SC" + code + "</a>.</p>" +
           "</html>";
       holder.createAnnotation(severity(result.level), range, message, html);
