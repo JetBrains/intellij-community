@@ -304,7 +304,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         pairs = new ArrayList<>();
         int start = 0;
         int end;
-        for (end = content.indexOf(";"); end < content.length()-1; end = content.indexOf(";", end+1)) {
+        for (end = content.indexOf(";"); end < content.length(); end = content.indexOf(";", end+1)) {
           if (end == -1) {
             pairs.add(content.substring(start).replace("\\;", ";"));
             break;
@@ -317,7 +317,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       }
       for (String pair : pairs) {
         int pos = pair.indexOf('=');
-        if (pos == -1) continue;
+        if (pos <= 0) continue;
         while (pos > 0 && pair.charAt(pos - 1) == '\\') {
           pos = pair.indexOf('=', pos + 1);
         }
