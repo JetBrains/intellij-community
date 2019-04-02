@@ -122,6 +122,9 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
+    <!--This group is empty and unused, left for plugins compatibility.-->
+    <group id="Git.LogContextMenu"/>
+
     <group id="Git.FileHistory.ContextMenu">
       <reference id="Git.SelectInGitLog"/>
       <separator/>
