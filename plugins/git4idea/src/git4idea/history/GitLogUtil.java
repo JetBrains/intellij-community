@@ -210,15 +210,6 @@ public class GitLogUtil {
     new GitDetailsCollector(project, root, new InternedGitLogRecordBuilder()).readFullDetails(commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
   }
 
-  public static void readFullDetails(@NotNull Project project,
-                                     @NotNull VirtualFile root,
-                                     @NotNull Consumer<? super GitCommit> commitConsumer,
-                                     @NotNull GitCommitRequirements requirements,
-                                     boolean lowPriorityProcess,
-                                     @NotNull String... parameters) throws VcsException {
-    new GitDetailsCollector(project, root).readFullDetails(commitConsumer, requirements, lowPriorityProcess, parameters);
-  }
-
   public static void readFullDetailsForHashes(@NotNull Project project,
                                               @NotNull VirtualFile root,
                                               @NotNull List<String> hashes,
