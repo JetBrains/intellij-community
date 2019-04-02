@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -41,7 +40,7 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderL
       add(afterOptionsPanel)
     }
     val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
-    addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
+    addToCenter(optionsPane)
   }
 
   override fun setOptions(options: CommitOptions) {

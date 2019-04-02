@@ -296,6 +296,8 @@
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="ChangesView.CommitToolbar">
+      <action id="ChangesView.ShowCommitOptions" text="Show Commit Options"
+              class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
       <reference id="Vcs.MessageActionGroup"/>
     </group>
 
