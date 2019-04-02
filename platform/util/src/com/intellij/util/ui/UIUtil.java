@@ -2886,10 +2886,15 @@ public class UIUtil {
       pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent e) {
-          Font font = getLabelFont();
           // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
           // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
-          pane.setFont(font);
+
+          // The default JEditorPane's font is the label font, seems there's no need to reset it here.
+          // If the default font is overridden, more so we should not reset it.
+          // However, if the new font is not UIResource - it won't be auto-scaled.
+          // [tav] dodo: remove the next two lines in case there're no regressions
+          //Font font = getLabelFont();
+          //pane.setFont(font);
 
           // let CSS font properties inherit from the pane's font
           pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
