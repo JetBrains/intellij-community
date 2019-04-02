@@ -39,6 +39,6 @@ public class MavenArtifactSearchResult {
   }
 
   public List<MavenDependencyCompletionItem> getSearchResults(){
-    return Collections.unmodifiableList(myResults);
+    return myResults;
   }
 }

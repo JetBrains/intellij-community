@@ -116,12 +116,7 @@ public class DependencySearchService {
           return f.get(parameters.getMillisToWait(), TimeUnit.MILLISECONDS);
         }
         catch (InterruptedException | ExecutionException | TimeoutException e) {
-          if (application.isInternal()) {
-            MavenLog.LOG.error(e);
-          }
-          else {
             MavenLog.LOG.debug(e);
-          }
           return Collections.<RESULT>emptyList();
         }
       }).collect(collector);

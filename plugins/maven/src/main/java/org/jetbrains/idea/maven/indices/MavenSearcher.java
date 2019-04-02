@@ -31,7 +31,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
 
   private List<RESULT_TYPE> sort(List<RESULT_TYPE> result) {
     for (RESULT_TYPE each : result) {
-      if (each.versions.size() > 1) {
+      if (each.getSearchResults().size() > 1) {
         TreeMap<MavenVersionComparable, MavenDependencyCompletionItem> tree = new TreeMap<>(Collections.reverseOrder());
 
         for (MavenDependencyCompletionItem artifactInfo : each.getSearchResults()) {

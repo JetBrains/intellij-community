@@ -20,7 +20,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
     DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
-    List<MavenDependencyCompletionItemWithClass> items = service.findClasses(pattern, new SearchParameters(1000, 5000, EnumSet
+    List<MavenDependencyCompletionItemWithClass> items = service.findClasses(pattern, new SearchParameters(1000, 10000, EnumSet
       .of(FULL_RESOLVE, ALL_VERSIONS)));
     return processResults(items, maxResult);
   }

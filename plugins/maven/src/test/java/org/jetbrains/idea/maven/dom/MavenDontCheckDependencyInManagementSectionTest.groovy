@@ -21,6 +21,9 @@ package org.jetbrains.idea.maven.dom
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   void testHighlighting() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("""
 <groupId>test</groupId>
 <artifactId>m1</artifactId>
