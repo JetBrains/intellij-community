@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class ProjectInspectionManagerTest {
@@ -146,7 +147,8 @@ class ProjectInspectionManagerTest {
 
       refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
-      assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
+      assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(
+        HighlightDisplayLevel.ERROR)
     }
   }
 
@@ -160,7 +162,7 @@ class ProjectInspectionManagerTest {
       assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
 
-      val projectConfigDir = Paths.get((project.stateStore).projectConfigDir!!)
+      val projectConfigDir = Paths.get(project.stateStore.projectConfigDir!!)
 
       // test creation of .idea/inspectionProfiles dir, not .idea itself
       projectConfigDir.createDirectories()
@@ -184,13 +186,9 @@ class ProjectInspectionManagerTest {
           </info>
         </settings>
       </component>""")
-      profileDir.writeChild("Project_Default.xml", """<component name="InspectionProjectProfileManager">
-        <profile version="1.0">
-          <option name="myName" value="Project Default" />
-          <inspection_tool class="ActionCableChannelNotFound" enabled="false" level="WARNING" enabled_by_default="false" />
-        </profile>
-      </component>""")
-      profileDir.writeChild("idea_default_teamcity.xml", """<component name="InspectionProjectProfileManager">
+      writeDefaultProfile(profileDir)
+      profileDir.writeChild("idea_default_teamcity.xml", """
+        <component name="InspectionProjectProfileManager">
         <profile version="1.0">
           <option name="myName" value="idea.default.teamcity" />
           <inspection_tool class="AbsoluteAlignmentInUserInterface" enabled="false" level="WARNING" enabled_by_default="false">
@@ -205,6 +203,17 @@ class ProjectInspectionManagerTest {
       assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
       assertThat(profileManager.profiles.joinToString { it.name }).isEqualTo("Project Default, idea.default.teamcity")
+
+      profileDir.delete()
+      writeDefaultProfile(profileDir)
+
+      refreshProjectConfigDir(project)
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+
+      assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
+
+      project.stateStore.save()
+      assertThat(profileDir.resolve("Project_Default.xml")).isEqualTo(DEFAULT_PROJECT_PROFILE_CONTENT)
     }
   }
 
@@ -252,4 +261,16 @@ class ProjectInspectionManagerTest {
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
   }
+}
+
+private val DEFAULT_PROJECT_PROFILE_CONTENT = """
+  <component name="InspectionProjectProfileManager">
+    <profile version="1.0">
+      <option name="myName" value="Project Default" />
+      <inspection_tool class="ActionCableChannelNotFound" enabled="false" level="WARNING" enabled_by_default="false" />
+    </profile>
+  </component>""".trimIndent()
+
+private fun writeDefaultProfile(profileDir: Path) {
+  profileDir.writeChild("Project_Default.xml", DEFAULT_PROJECT_PROFILE_CONTENT)
 }
