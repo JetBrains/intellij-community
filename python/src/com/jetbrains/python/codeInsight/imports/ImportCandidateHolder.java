@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -11,13 +12,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An immutable holder of information for one auto-import candidate.
@@ -170,23 +173,46 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   int getRelevance() {
-    if (myImportElement != null) return 13;
+    final PyImportElement importElement = getImportElement();
+    final int initialRelevance = importElement != null ? 33 : 21;
     final Project project = myImportable.getProject();
+    final PsiElement element = myImportable.getElement();
     final PsiFile psiFile = myImportable.getContainingFile();
-    final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
-    if (vFile == null) return 0;
+    Sdk sdk = null;
+    VirtualFile vFile = null;
+    List<String> qNames = null;
+
+    if (importElement != null) {
+      qNames = Optional.ofNullable(importElement.getContainingImportStatement())
+        .filter(st -> st instanceof PyFromImportStatement)
+        .map(PyFromImportStatement.class::cast)
+        .map(PyFromImportStatement::getImportSourceQName)
+        .map(QualifiedName::getComponents).orElse(null);
+    }
+    if (qNames == null) {
+      qNames = myPath == null || myPath.getComponents().isEmpty() ? Collections.singletonList(myInitialName) : myPath.getComponents();
+    }
+
+    if (psiFile == null && element instanceof PsiDirectory) {
+      vFile = ((PsiDirectory)element).getVirtualFile();
+      sdk = PythonSdkType.findPythonSdk(element);
+    }
+    else if (psiFile != null) {
+      sdk = PythonSdkType.findPythonSdk(psiFile);
+      vFile = psiFile.getVirtualFile();
+    }
+
+    if (vFile == null || sdk == null) return 0;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(vFile);
-    if (myPath != null) {
-      String rootName = myPath.getComponents().isEmpty() ? myInitialName : myPath.getFirstComponent();
-      int isPrivate = StreamEx.of(myPath.getComponents()).findAny(qName -> qName.startsWith("_")).map(qname -> 2).orElse(0);
-      PsiElement element = myImportable.getElement();
-      int isFile = element instanceof PyFile ? 1 : 0;
-      if (module != null) return 12 - isPrivate - isFile;
-      else if (PyStdlibUtil.isInStdLib(rootName)) return 8 - isPrivate - isFile;
-      return 4 - isPrivate - isFile;
-    }
-    return 0;
+    final int isPrivate = StreamEx.of(qNames).findAny(qName -> qName.startsWith("_")).map(qname -> 14).orElse(8);
+    final int isFileSystemItem = element instanceof PsiFileSystemItem ? 1 : 0;
+
+    int location = 6; // third party lib, lowest location priority
+    if (module != null) location = 2;
+    else if (PythonSdkType.isStdLib(vFile, sdk)) location = 4;
+
+    return initialRelevance - isPrivate - location - isFileSystemItem;
   }
 
   @Nullable

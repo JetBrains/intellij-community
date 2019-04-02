@@ -140,7 +140,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText("path"));
       assertNotNull(candidates);
-      assertOrderedEquals(candidates, "first.path", "first.second.path()", "sys.path", "os.path", "py.path");
+      assertOrderedEquals(candidates, "path from sys", "first.path", "first.second.path()", "os.path", "py.path", "first._third.path");
       return false;
     });
   }
