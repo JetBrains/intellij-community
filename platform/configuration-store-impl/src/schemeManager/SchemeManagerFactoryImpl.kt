@@ -133,8 +133,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
     override fun createFileChangeSubscriber(): ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? {
       return { schemeManager ->
-        val startupManager = StartupManagerEx.getInstanceEx(project)
-        if (startupManager.postStartupActivityPassed()) {
+        val startupManager = if (ApplicationManager.getApplication().isUnitTestMode) null else StartupManagerEx.getInstanceEx(project)
+        if (startupManager == null || startupManager.postStartupActivityPassed()) {
           addVfsListener(schemeManager)
         }
         else {
