@@ -20,10 +20,16 @@ interface StatisticsEventLogger {
 }
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String, val version: Int, val sendFrequencyMs: Long) {
+  open val logger: StatisticsEventLogger = createLogger()
+
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 
-  open fun createLogger(): StatisticsEventLogger {
+  fun getLogFiles(): List<File> {
+    return logger.getLogFiles()
+  }
+
+  private fun createLogger(): StatisticsEventLogger {
     if (!isRecordEnabled()) {
       return EmptyStatisticsEventLogger()
     }
@@ -37,15 +43,13 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String, val version
 }
 
 class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
+  override val logger: StatisticsEventLogger = EmptyStatisticsEventLogger()
+
   override fun isRecordEnabled(): Boolean {
     return false
   }
   override fun isSendEnabled(): Boolean {
     return false
-  }
-
-  override fun createLogger(): StatisticsEventLogger {
-    return EmptyStatisticsEventLogger()
   }
 }
 

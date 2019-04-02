@@ -23,11 +23,8 @@ import java.io.File
  */
 object FeatureUsageLogger {
   private val ourLoggerProvider : StatisticsEventLoggerProvider = getEventLogProvider("FUS")
-  private val ourLogger : StatisticsEventLogger
 
   init {
-    ourLogger = if (ourLoggerProvider.isRecordEnabled()) ourLoggerProvider.createLogger() else EmptyStatisticsEventLogger()
-
     if (isEnabled()) {
       ApplicationManager.getApplication().executeOnPooledThread { initStateEventTrackers(); }
     }
@@ -37,7 +34,7 @@ object FeatureUsageLogger {
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
   fun log(group: EventLogGroup, action: String) {
-    return ourLogger.log(group, action, false)
+    return ourLoggerProvider.logger.log(group, action, false)
   }
 
   /**
@@ -45,14 +42,14 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. source and shortcut for an action.
    */
   fun log(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return ourLogger.log(group, action, data, false)
+    return ourLoggerProvider.logger.log(group, action, data, false)
   }
 
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
   fun logState(group: EventLogGroup, action: String) {
-    return ourLogger.log(group, action, true)
+    return ourLoggerProvider.logger.log(group, action, true)
   }
 
   /**
@@ -60,7 +57,7 @@ object FeatureUsageLogger {
    * Adds context information to the event, e.g. if configuration is stored on project or on IDE level.
    */
   fun logState(group: EventLogGroup, action: String, data: Map<String, Any>) {
-    return ourLogger.log(group, action, data, true)
+    return ourLoggerProvider.logger.log(group, action, data, true)
   }
 
   /**
@@ -68,15 +65,11 @@ object FeatureUsageLogger {
    * @deprecated
    */
   fun log(groupId: String, action: String) {
-    return ourLogger.log(EventLogGroup(groupId, 1), action, true)
-  }
-
-  fun getLogFiles() : List<File> {
-    return ourLogger.getLogFiles()
+    return ourLoggerProvider.logger.log(EventLogGroup(groupId, 1), action, true)
   }
 
   fun cleanup() {
-    ourLogger.cleanup()
+    ourLoggerProvider.logger.cleanup()
   }
 
   fun getConfig() : StatisticsEventLoggerProvider {
@@ -84,6 +77,6 @@ object FeatureUsageLogger {
   }
 
   fun isEnabled() : Boolean {
-    return ourLogger !is EmptyStatisticsEventLogger
+    return ourLoggerProvider.logger !is EmptyStatisticsEventLogger
   }
 }
