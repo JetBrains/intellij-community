@@ -28,22 +28,6 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Override
   public void scroll(int units) {
     myScrollOffset += units;
-    if (myLastSingRowLayout == null) return;
-    int offset = -myScrollOffset;
-    for (TabInfo info : myLastSingRowLayout.myVisibleInfos) {
-      final int length = getRequiredLength(info);
-      if (info == myTabs.getSelectedInfo()) {
-        int maxLength = myLastSingRowLayout.toFitLength - getStrategy().getMoreRectAxisSize();
-        if (offset < 0 && length < maxLength) {
-          myScrollOffset += offset;
-        }
-        else if (offset + length > maxLength) {
-          myScrollOffset += offset + length - maxLength;
-        }
-        break;
-      }
-      offset += length;
-    }
     clampScrollOffsetToBounds(myLastSingRowLayout);
   }
 
@@ -55,7 +39,10 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     return super.checkLayoutLabels(data);
   }
 
-  private void clampScrollOffsetToBounds(SingleRowPassInfo data) {
+  private void clampScrollOffsetToBounds(@Nullable SingleRowPassInfo data) {
+    if (data == null) {
+      return;
+    }
     if (data.requiredLength < data.toFitLength) {
       myScrollOffset = 0;
     }
@@ -82,6 +69,9 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private void doScrollSelectionInView(SingleRowPassInfo passInfo) {
+    if (myTabs.isMouseInsideTabsArea()) {
+      return;
+    }
     int offset = -myScrollOffset;
     for (TabInfo info : passInfo.myVisibleInfos) {
       final int length = getRequiredLength(info);
@@ -123,7 +113,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     if (data.requiredLength > data.toFitLength) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
-      if (data.position + length > data.toFitLength - moreRectSize && label.getInfo() != myTabs.getSelectedInfo()) {
+      if (data.position + length > data.toFitLength - moreRectSize) {
         final int clippedLength = getStrategy().drawPartialOverflowTabs()
                                   ? data.toFitLength - data.position - moreRectSize - 4 : 0;
         super.applyTabLayout(data, label, clippedLength, deltaToFit);
