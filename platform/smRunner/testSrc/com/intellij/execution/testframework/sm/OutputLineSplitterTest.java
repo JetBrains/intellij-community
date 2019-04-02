@@ -17,7 +17,8 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.testframework.sm.runner.OutputLineSplitter;
+import com.intellij.execution.testframework.sm.runner.EventListener;
+import com.intellij.execution.testframework.sm.runner.OutputEventSplitter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,26 +49,96 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDERR)
   );
 
-  private OutputLineSplitter mySplitter;
+  private OutputEventSplitter mySplitter;
   final Map<Key, List<String>> myOutput = new THashMap<>();
+  private Key<?> lastStdOutType = null;
+  private Key<?> lastStdErrType = null;
+
+
+  /**
+   * @return if text is TC message or not
+   */
+  private static boolean isRegularText(@NotNull final String text) {
+    if (text.startsWith(ServiceMessage.SERVICE_MESSAGE_START)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static void appendToLastListItem(@NotNull final List<String> list, @NotNull final String text) {
+    if (list.isEmpty()) {
+      list.add(text);
+    }
+    else {
+      final int lastIndex = list.size() - 1;
+      final String lastItem = list.get(lastIndex);
+      list.set(lastIndex, lastItem + text);
+    }
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    mySplitter = new OutputLineSplitter(false) {
-      @Override
-      protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
-        ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
-        synchronized (myOutput) {
-          List<String> list = myOutput.get(baseOutputType);
-          if (list == null) {
-            myOutput.put(baseOutputType, list = new ArrayList<>());
+    // Emulates real test console behavior: chunks of same types are merged.
+    final EventListener listener = (text, outputType) -> {
+      final ProcessOutputType baseOutputType = ((ProcessOutputType)outputType).getBaseOutputType();
+      synchronized (myOutput) {
+        final List<String> list = myOutput.computeIfAbsent(baseOutputType, key -> new ArrayList<>());
+        if (isRegularText(text) && !list.isEmpty()) {
+          final int lastItemIndex = list.size() - 1;
+          final String lastItem = list.get(lastItemIndex);
+          boolean differentType = false;
+          if (baseOutputType.isStdout()) {
+            differentType = lastStdOutType != outputType;
           }
-          list.add(text);
+          else if (baseOutputType.isStderr()) {
+            differentType = lastStdErrType != outputType;
+          }
+
+          if (isRegularText(lastItem) && !differentType) {
+            list.set(lastItemIndex, lastItem + text);
+            return;
+          }
         }
+        if (baseOutputType.isStdout()) {
+          lastStdOutType = outputType;
+        }
+        else if (baseOutputType.isStderr()) {
+          lastStdErrType = outputType;
+        }
+        list.add(text);
       }
     };
+    mySplitter = new OutputEventSplitter(listener);
+  }
+
+
+  public void testMessageEndFlush() {
+    final String text = "hello##";
+    mySplitter.process(text, ProcessOutputTypes.STDOUT);
+    Assert.assertEquals("Text prior to service message start prefix are flushed",
+                        ContainerUtil.newArrayList("hello"), myOutput.get(ProcessOutputTypes.STDOUT));
+    mySplitter.flush();
+    Assert.assertEquals("Incomplete service messages are flushed",
+                        ContainerUtil.newArrayList("hello##"), myOutput.get(ProcessOutputTypes.STDOUT));
+  }
+
+  public void testCharStream() {
+    final String messages = "##teamcity[start]bar\nmessage\nanothermessage##teamcity[end]fuu\n";
+    for (int step = 1; step < 20 + 1; step++) {
+      int i = 0;
+      final int stringLength = messages.length();
+      while (i < stringLength) {
+        final String substring = messages.substring(i, Math.min(i + step, stringLength));
+        mySplitter.process(substring, ProcessOutputTypes.STDOUT);
+        i += step;
+      }
+      mySplitter.flush();
+      Assert.assertArrayEquals(new String[]{"##teamcity[start]bar\n", "message\nanothermessage", "##teamcity[end]fuu\n"},
+                               myOutput.get(ProcessOutputTypes.STDOUT).toArray());
+      myOutput.clear();
+    }
   }
 
   /**
@@ -75,31 +146,40 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
    */
   public void testMessageInTheMiddleOfLine() {
     mySplitter.process("\nStarting...\n##teamcity[name1]\nDone 1\n\n##teamcity[name2]\nDone 2", ProcessOutputTypes.STDOUT);
-    mySplitter.process("##teamcity[name3]Test print##teamcity[name4]", ProcessOutputTypes.STDOUT);
+    mySplitter.process("##teamcity[name3]\nTest print##teamcity[name4]\n", ProcessOutputTypes.STDOUT);
     mySplitter.process("##teamcity[name5]\n", ProcessOutputTypes.STDOUT);
     mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
     List<String> stdout = myOutput.get(ProcessOutputTypes.STDOUT);
     Assert.assertEquals(ContainerUtil.newArrayList(
-      "\n", "Starting...\n", "##teamcity[name1]\n", "Done 1\n", "\n", "##teamcity[name2]\n", "Done 2",
-      "##teamcity[name3]Test print", "##teamcity[name4]",
+      "\nStarting...\n", "##teamcity[name1]\n", "Done 1\n\n", "##teamcity[name2]\n", "Done 2",
+      "##teamcity[name3]\n", "Test print", "##teamcity[name4]\n",
       "##teamcity[name5]\n",
       "##teamcity[name6]\n", "Info", "##teamcity[name7]\n"
     ), stdout);
-    for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
+    for (String prefix : new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
       final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
       final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
 
-      mySplitter.process(prefix, ProcessOutputTypes.SYSTEM);
-      mySplitter.process(prefix + testStarted, ProcessOutputTypes.SYSTEM);
-      mySplitter.process(testEnded, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(prefix, ProcessOutputTypes.STDOUT);
+      mySplitter.process(prefix + testStarted, ProcessOutputTypes.STDOUT);
+      mySplitter.process(testEnded, ProcessOutputTypes.STDOUT);
 
       mySplitter.flush();
 
-      final List<String> output = myOutput.get(ProcessOutputTypes.SYSTEM);
+      final List<String> output = myOutput.get(ProcessOutputTypes.STDOUT);
       final String messagePrefix = ServiceMessage.SERVICE_MESSAGE_START;
       Assert.assertThat(output, everyItem(either(startsWith(messagePrefix)).or(not(containsString(messagePrefix)))));
       Assert.assertThat(output, hasItems(testStarted, testEnded));
     }
+  }
+
+  public void testEmittingServiceMessagesPromptly() {
+    mySplitter.process("Foo ##teamcity[name1]\n##team", ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n"),
+                        myOutput.get(ProcessOutputTypes.STDOUT));
+    mySplitter.process("city[name2]\n", ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
+                        myOutput.get(ProcessOutputTypes.STDOUT));
   }
 
   public void testReadingSeveralStreams() throws Exception {
@@ -160,7 +240,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
             written.get(each).add(s);
           }
           else {
-            written.get(each).add(prefix + s);
+            appendToLastListItem(written.get(each), prefix + s);
           }
         }
       }).get();
@@ -180,7 +260,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     final AtomicBoolean isFinished = new AtomicBoolean();
     List<Future<?>> futures = new ArrayList<>();
 
-    for (final Key each : ALL_TYPES) {
+    for (final Key<?> each : ALL_TYPES) {
       futures.add(execute(() -> {
         int i = 0;
         while (!isFinished.get()) {
@@ -244,6 +324,18 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
       })
       .useLegacyScaling()
       .assertTiming();
+  }
+
+  public void testPerformanceSimple() {
+    String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
+    mySplitter = new OutputEventSplitter((text, outputType) -> {
+    });
+    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+      for (int i = 0; i < 2_000_000; i++) {
+        mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
+        mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);
+      }
+    }).assertTiming();
   }
 
   private static Future<?> execute(final Runnable runnable) {
