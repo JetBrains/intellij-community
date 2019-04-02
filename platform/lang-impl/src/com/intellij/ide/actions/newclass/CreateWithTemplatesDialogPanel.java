@@ -2,10 +2,17 @@
 package com.intellij.ide.actions.newclass;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
@@ -21,10 +28,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 
-public class CreateWithTemplatesDialogPanel extends JBPanel {
+public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposable {
 
   private final JBTextField myNameField;
   private final JList<Trinity<String, Icon, String>> myTemplatesList;
+
+  private JBPopup myErrorPopup;
+  private RelativePoint myErrorShowPoint;
 
   private Consumer<? super InputEvent> myApplyAction;
 
@@ -33,6 +43,7 @@ public class CreateWithTemplatesDialogPanel extends JBPanel {
 
     myNameField = createNameField();
     myTemplatesList = createTemplatesList(templates);
+    myErrorShowPoint = new RelativePoint(myNameField, new Point(0, myNameField.getHeight()));
 
     updateBorder(false);
 
@@ -58,12 +69,32 @@ public class CreateWithTemplatesDialogPanel extends JBPanel {
     return myTemplatesList.getSelectedValue().third;
   }
 
-  public void setError(boolean error) {
-    updateBorder(error);
+  public void setError(String error) {
+    updateBorder(error != null);
+
+    if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
+    if (error == null) return;
+
+    ComponentPopupBuilder popupBuilder = ComponentValidator.createPopupBuilder(new ValidationInfo(error, myNameField), errorHint -> {
+      Insets insets = myNameField.getInsets();
+      Dimension hintSize = errorHint.getPreferredSize();
+      Point point = new Point(0, insets.top - JBUI.scale(6) - hintSize.height);
+      myErrorShowPoint = new RelativePoint(myNameField, point);
+    });
+    popupBuilder.setCancelOnWindowDeactivation(false)
+      .setCancelOnClickOutside(true);
+
+    myErrorPopup = popupBuilder.createPopup();
+    myErrorPopup.show(myErrorShowPoint);
   }
 
   public void setApplyAction(@NotNull Consumer<? super InputEvent> applyAction) {
     myApplyAction = applyAction;
+  }
+
+  @Override
+  public void dispose() {
+    if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
   }
 
   private void updateBorder(boolean error) {
