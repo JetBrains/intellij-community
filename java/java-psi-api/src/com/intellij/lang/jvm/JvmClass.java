@@ -3,11 +3,12 @@ package com.intellij.lang.jvm;
 
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.util.JvmClassDefaults;
+import com.intellij.model.Symbol;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
+public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration, Symbol {
 
   /**
    * @return the name, or {@code null} if the class is anonymous

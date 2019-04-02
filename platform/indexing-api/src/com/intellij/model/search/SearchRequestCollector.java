@@ -29,8 +29,11 @@ public interface SearchRequestCollector {
    */
   void searchSubQuery(@NotNull Query<? extends SymbolReference> subQuery);
 
-  <Base> void searchSubQuery(@NotNull Query<? extends Base> subQuery,
-                             @NotNull Function<? super Base, Collection<? extends SymbolReference>> f);
+  //<Base> void sss(@NotNull Query<? extends Base> subQuery, @NotNull Function<? super Base, Collection<? extends Query<SymbolReference>>> postProcessor);
+
+  //<Base> void searchSubQueries(@NotNull Query<? extends Base> subQuery,
+  //                             @NotNull Function<? super Base, Collection<? extends Query<SymbolReference>>> postProcessor);
+
 
   /**
    * Orders to pass sub query results into result processor after preprocessing.<br/>

@@ -37,6 +37,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
                              method.getParameterList().isEmpty();
       needStrictSignatureSearch[0] = strictSignatureSearch && (aClass1 instanceof PsiAnonymousClass
                                                                || aClass1.hasModifierProperty(PsiModifier.FINAL)
+                                                               || method.isConstructor()
                                                                || method.hasModifierProperty(PsiModifier.STATIC)
                                                                || method.hasModifierProperty(PsiModifier.FINAL)
                                                                || method.hasModifierProperty(PsiModifier.PRIVATE));
@@ -51,6 +52,11 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
       return;
     }
 
+    if (needStrictSignatureSearch[0]) {
+      ReferencesSearch.searchOptimized(method, searchScope, false, collector, consumer);
+      return;
+    }
+
     if (isConstructor[0]) {
       new ConstructorReferencesSearchHelper(psiManager[0]).
         processConstructorReferences(consumer, method, aClass, searchScope, p.getProject(), false, strictSignatureSearch, collector);
@@ -59,11 +65,6 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     if (isValueAnnotation[0]) {
       Processor<PsiReference> refProcessor = PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(consumer);
       ReferencesSearch.search(aClass, searchScope).forEach(refProcessor);
-    }
-
-    if (needStrictSignatureSearch[0]) {
-      ReferencesSearch.searchOptimized(method, searchScope, false, collector, consumer);
-      return;
     }
 
     if (StringUtil.isEmpty(methodName[0])) {

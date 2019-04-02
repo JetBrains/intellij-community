@@ -3,6 +3,7 @@ package com.intellij.lang.jvm;
 
 import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.model.Symbol;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @see java.lang.reflect.Constructor
  * @see java.lang.reflect.Executable
  */
-public interface JvmMethod extends JvmTypeParametersOwner {
+public interface JvmMethod extends JvmTypeParametersOwner, Symbol {
 
   JvmMethod[] EMPTY_ARRAY = new JvmMethod[0];
 

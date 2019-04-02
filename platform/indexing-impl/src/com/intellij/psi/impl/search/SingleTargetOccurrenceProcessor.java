@@ -4,40 +4,41 @@ package com.intellij.psi.impl.search;
 import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
 import com.intellij.model.SymbolService;
+import com.intellij.model.search.TextOccurrence;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.ReferenceRange;
-import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
-final class SingleTargetOccurrenceProcessor implements TextOccurenceProcessor {
+final class SingleTargetOccurrenceProcessor implements Function<TextOccurrence, Collection<? extends SymbolReference>> {
 
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final Symbol myTarget;
-  private final Processor<? super SymbolReference> myProcessor;
 
-  SingleTargetOccurrenceProcessor(@NotNull Symbol target, @NotNull Processor<? super SymbolReference> processor) {
+  SingleTargetOccurrenceProcessor(@NotNull Symbol target) {
     myTarget = target;
-    myProcessor = processor;
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, int offsetInElement) {
+  public Collection<? extends SymbolReference> apply(TextOccurrence occurrence) {
+    final PsiElement element = occurrence.getElement();
+    final int offsetInElement = occurrence.getOffsetInElement();
     final Hints hints = new Hints(SymbolService.getPsiElement(myTarget), offsetInElement);
     final List<PsiReference> references = ourReferenceService.getReferences(element, hints);
-    for (PsiReference reference : references) {
+    return ContainerUtil.filter(references, reference -> {
       ProgressManager.checkCanceled();
-      if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) continue;
-      if (!reference.references(myTarget)) continue;
-      if (!myProcessor.process(reference)) return false;
-    }
-    return true;
+      if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) return false;
+      if (!reference.references(myTarget)) return false;
+      return true;
+    });
   }
 
   @Override
@@ -48,15 +49,12 @@ final class SingleTargetOccurrenceProcessor implements TextOccurenceProcessor {
     SingleTargetOccurrenceProcessor processor = (SingleTargetOccurrenceProcessor)o;
 
     if (!myTarget.equals(processor.myTarget)) return false;
-    if (!myProcessor.equals(processor.myProcessor)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myTarget.hashCode();
-    result = 31 * result + myProcessor.hashCode();
-    return result;
+    return myTarget.hashCode();
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.model.SymbolService
 import com.intellij.model.search.DefaultSymbolReferenceSearchParameters
 import com.intellij.model.search.SymbolReferenceSearch
 import com.intellij.openapi.application.QueryExecutorBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.QuerySearchRequest
 import com.intellij.psi.search.SearchRequestCollector
@@ -23,6 +24,7 @@ import com.intellij.util.Processor
 class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
+    if (!Registry.`is`("ide.symbol.reference.search")) return
     if (queryParameters is PsiToSymbolSearchRequestor.SymbolToPsiParameters) {
       // search started from SymbolReferenceSearch
       // -> PsiToSymbolSearchRequestor queries ReferenceSearch with SymbolToPsiParameters

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
 
-  private final Query<B> myBaseQuery;
+  protected final Query<B> myBaseQuery;
   private final Preprocessor<R, B> myPreprocessor;
 
   public CustomProcessorQuery(@NotNull Query<B> query, @NotNull Preprocessor<R, B> provider) {

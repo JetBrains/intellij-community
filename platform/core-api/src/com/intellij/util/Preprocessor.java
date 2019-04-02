@@ -54,4 +54,12 @@ public interface Preprocessor<Result, Base> extends Function<Processor<? super R
   static <V> Preprocessor<V, V> filtering(@NotNull Predicate<? super V> predicate) {
     return processor -> v -> !predicate.test(v) || processor.process(v);
   }
+
+  @NotNull
+  static <Result, Base> Preprocessor<Result, Base> mapping(@NotNull Function<? super Base, ? extends Result> map) {
+    return processor -> value -> {
+      Result result = map.apply(value);
+      return result == null || processor.process(result);
+    };
+  }
 }

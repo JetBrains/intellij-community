@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
+    if (Registry.is("ide.symbol.reference.search")) return;
     final PsiElement element = p.getElementToSearch();
     if (!(element instanceof PsiMethod)) {
       return;

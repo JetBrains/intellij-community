@@ -94,8 +94,6 @@
 
     <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
-    <projectService serviceInterface="com.intellij.model.search.ModelSearchHelper"
-                    serviceImplementation="com.intellij.psi.impl.search.ModelSearchHelperImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
@@ -1216,6 +1214,9 @@
 
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" order="first"/>
+
+    <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
+                    serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
 
     <projectService serviceInterface="com.intellij.model.search.SearchService"
                     serviceImplementation="com.intellij.psi.impl.search.SearchServiceImpl"/>

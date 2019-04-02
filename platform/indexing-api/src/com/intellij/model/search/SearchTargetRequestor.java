@@ -9,6 +9,9 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 /**
  * This requestor is essentially {@link SymbolReferenceSearchParameters} builder.
  */
@@ -34,7 +37,17 @@ public interface SearchTargetRequestor {
    * This method builds {@link SymbolReferenceSearchParameters search parameters}
    * and orders {@link SearchRequestCollector#searchSubQuery sub query search}.
    */
-  void search();
+  default void search() {
+    search(Preprocessor.id());
+  }
+
+  default void searchFiltering(@NotNull Predicate<? super SymbolReference> predicate) {
+    search(Preprocessor.filtering(predicate));
+  }
+
+  default void searchMapping(@NotNull Function<? super SymbolReference, ? extends SymbolReference> map) {
+    search(Preprocessor.mapping(map));
+  }
 
   /**
    * Orders to search the target. <br/>

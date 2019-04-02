@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-final class SearchWordRequest {
+public final class SearchWordRequest {
 
   final @NotNull String word;
   final @NotNull SearchScope searchScope;

@@ -3,11 +3,32 @@ package com.intellij.model.search;
 
 import com.intellij.model.Symbol;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface SearchWordRequestor {
+import java.util.Set;
+
+public interface SearchWordParameters {
+
+  @NotNull
+  Project getProject();
+
+  @NotNull
+  String getWord();
+
+  @NotNull
+  SearchScope getSearchScope();
+
+  boolean isCaseSensitive();
+
+  @Nullable
+  Symbol getTargetHint();
+
+  @NotNull
+  Set<SearchContext> getSearchContexts();
 
   /**
    * Sets search scope.<br/>
@@ -15,26 +36,26 @@ public interface SearchWordRequestor {
    */
   @Contract("_ -> this")
   @NotNull
-  SearchWordRequestor inScope(@NotNull SearchScope searchScope);
+  SearchWordParameters inScope(@NotNull SearchScope searchScope);
 
   /**
    * Restricts search scope to include only selected file types.
    */
   @Contract("_ -> this")
   @NotNull
-  SearchWordRequestor restrictScopeTo(@NotNull FileType... fileTypes);
+  SearchWordParameters restrictScopeTo(@NotNull FileType... fileTypes);
 
   @Contract("-> this")
   @NotNull
-  SearchWordRequestor caseInsensitive();
+  SearchWordParameters caseInsensitive();
 
   @Contract("_, _ -> this")
   @NotNull
-  SearchWordRequestor inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
+  SearchWordParameters inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
 
   @Contract("-> this")
   @NotNull
-  SearchWordRequestor inAllContexts();
+  SearchWordParameters inAllContexts();
 
   /**
    * Sets target hint which is used for optimizing search requests.
@@ -42,12 +63,5 @@ public interface SearchWordRequestor {
    */
   @Contract("_ -> this")
   @NotNull
-  SearchWordRequestor withTargetHint(@NotNull Symbol target);
-
-  /**
-   * Orders to search for references with word that resolve into target and pass them as is into result processor.
-   *
-   * @param target
-   */
-  void search(@NotNull Symbol target);
+  SearchWordParameters withTargetHint(@NotNull Symbol target);
 }
