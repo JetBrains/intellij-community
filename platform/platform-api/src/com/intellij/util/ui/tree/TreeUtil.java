@@ -1073,6 +1073,7 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "getRowX", int.class, int.class);
   }
 
+  @Deprecated
   public static int getNodeRowX(@NotNull JTree tree, int row) {
     if (LazyRowX.METHOD == null) return -1; // system error
     TreePath path = tree.getPathForRow(row);
@@ -1092,11 +1093,14 @@ public final class TreeUtil {
     static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
   }
 
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null) return false; // system error
     return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
   }
 
+  @Deprecated
   public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
     if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
     try {
