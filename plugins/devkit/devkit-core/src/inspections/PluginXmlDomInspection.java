@@ -389,6 +389,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     @NonNls String name = nameAttrValue.getValue();
 
+    if (name != null && StringUtil.startsWith(name, "Pythonid.") &&
+        PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
+      return true;
+    }
+
     if (StringUtil.isEmpty(name) ||
         !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
         name.toUpperCase().equals(name) || // not all uppercase
