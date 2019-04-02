@@ -243,8 +243,8 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
       int size = 0;
-      if (details instanceof VcsIndexableDetails) {
-        size = ((VcsIndexableDetails)details).size();
+      if (details instanceof VcsChangesLazilyParsedDetails) {
+        size = ((VcsChangesLazilyParsedDetails)details).size();
       }
       else {
         for (int i = 0; i < details.getParents().size(); i++) {
