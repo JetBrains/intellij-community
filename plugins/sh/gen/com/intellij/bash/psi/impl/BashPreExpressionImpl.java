@@ -33,14 +33,14 @@ public class BashPreExpressionImpl extends BashExpressionImpl implements BashPre
 
   @Override
   @Nullable
-  public PsiElement getArithMinusMinus() {
-    return findChildByType(ARITH_MINUS_MINUS);
+  public PsiElement getMinusMinus() {
+    return findChildByType(MINUS_MINUS);
   }
 
   @Override
   @Nullable
-  public PsiElement getArithPlusPlus() {
-    return findChildByType(ARITH_PLUS_PLUS);
+  public PsiElement getPlusPlus() {
+    return findChildByType(PLUS_PLUS);
   }
 
 }

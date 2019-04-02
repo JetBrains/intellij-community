@@ -10,4 +10,7 @@ public interface BashConditionalExpression extends BashBinaryExpression {
   @Nullable
   PsiElement getColon();
 
+  @NotNull
+  PsiElement getQmark();
+
 }

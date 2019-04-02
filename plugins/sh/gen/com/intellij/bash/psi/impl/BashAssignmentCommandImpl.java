@@ -69,8 +69,8 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public PsiElement getAddEq() {
-    return findChildByType(ADD_EQ);
+  public PsiElement getAssign() {
+    return findChildByType(ASSIGN);
   }
 
   @Override
@@ -93,14 +93,14 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public PsiElement getEq() {
-    return findChildByType(EQ);
+  public PsiElement getFiledescriptor() {
+    return findChildByType(FILEDESCRIPTOR);
   }
 
   @Override
   @Nullable
-  public PsiElement getFiledescriptor() {
-    return findChildByType(FILEDESCRIPTOR);
+  public PsiElement getPlusAssign() {
+    return findChildByType(PLUS_ASSIGN);
   }
 
   @Override

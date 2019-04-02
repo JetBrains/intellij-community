@@ -37,4 +37,10 @@ public class BashLogicalBitwiseNegationExpressionImpl extends BashExpressionImpl
     return findChildByType(BANG);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getBitwiseNegation() {
+    return findChildByType(BITWISE_NEGATION);
+  }
+
 }

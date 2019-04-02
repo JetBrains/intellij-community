@@ -50,33 +50,7 @@ public interface BashTokenTypes extends BashTypes {
   );
 
   //arithmetic operators: misc
-
-  IElementType ARITH_NEGATE = new BashTokenType("negation !");//||
-  IElementType ARITH_BITWISE_NEGATE = new BashTokenType("bitwise negation ~");//~
-
-  IElementType ARITH_EQ = new BashTokenType("arith ==");//==
-  IElementType ARITH_NE = new BashTokenType("!=");//!=
-  TokenSet arithmeticEqualityOps = TokenSet.create(ARITH_NE, ARITH_EQ);
-
-  //arithmetic expressiong: logic
-  IElementType ARITH_QMARK = new BashTokenType("?");//||
-  IElementType ARITH_COLON = new BashTokenType(":");//||
-  IElementType ARITH_BITWISE_XOR = new BashTokenType("^");//||
-  IElementType ARITH_BITWISE_AND = new BashTokenType("&");//||
-  IElementType ARITH_BITWISE_OR = new BashTokenType("|");//||
-
-  //arithmetic operators: assign
-  IElementType ARITH_ASS_MUL = new BashTokenType("*= arithmetic");// *=
-  IElementType ARITH_ASS_DIV = new BashTokenType("/= arithmetic");// /=
-  IElementType ARITH_ASS_MOD = new BashTokenType("%= arithmetic");// /=
-  IElementType ARITH_ASS_PLUS = new BashTokenType("+= arithmetic");// /=
-  IElementType ARITH_ASS_MINUS = new BashTokenType("-= arithmetic");// /=
-  IElementType ARITH_ASS_SHIFT_RIGHT = new BashTokenType(">>= arithmetic");// /=
-  IElementType ARITH_ASS_SHIFT_LEFT = new BashTokenType("<<= arithmetic");// /=
-  IElementType ARITH_ASS_BIT_AND = new BashTokenType("&= arithmetic");// /=
-  IElementType ARITH_ASS_BIT_OR = new BashTokenType("|= arithmetic");// /=
-  IElementType ARITH_ASS_BIT_XOR = new BashTokenType("^= arithmetic");// /=
-  //fixme missing: = ","
+  TokenSet arithmeticEqualityOps = TokenSet.create(NE, EQ);
 
   TokenSet arithLiterals = TokenSet.create(NUMBER, OCTAL, HEX);
 
@@ -90,10 +64,7 @@ public interface BashTokenTypes extends BashTypes {
 
   // test Operators
   IElementType COND_OP = new BashTokenType("cond_op");//all the test operators, e.g. -z, != ...
-  IElementType COND_OP_EQ_EQ = new BashTokenType("cond_op ==");
-  IElementType COND_OP_REGEX = new BashTokenType("cond_op =~");
-  IElementType COND_OP_NOT = new BashTokenType("cond_op !");
-  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, COND_OP_EQ_EQ, COND_OP_REGEX, COND_OP_NOT);
+  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, EQ, REGEXP);
 
   //Bash 4:
   IElementType REDIRECT_AMP_GREATER_GREATER = new BashTokenType("&>>");

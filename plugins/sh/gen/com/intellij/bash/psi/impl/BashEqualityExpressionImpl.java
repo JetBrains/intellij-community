@@ -25,4 +25,16 @@ public class BashEqualityExpressionImpl extends BashBinaryExpressionImpl impleme
     else super.accept(visitor);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getEq() {
+    return findChildByType(EQ);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getNe() {
+    return findChildByType(NE);
+  }
+
 }

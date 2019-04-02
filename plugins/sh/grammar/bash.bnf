@@ -20,6 +20,52 @@
   psiImplUtilClass="com.intellij.bash.psi.impl.BashPsiImplUtil"
 
   tokens = [
+    // Arithmetic operations
+    MULT_ASSIGN         = '*='
+    DIV_ASSIGN          = '/='
+    MOD_ASSIGN          = '%='
+    PLUS_ASSIGN         = '+='
+    MINUS_ASSIGN        = '-='
+    SHIFT_RIGHT_ASSIGN  = '>>='
+    SHIFT_LEFT_ASSIGN   = '<<='
+    BIT_AND_ASSIGN      = '&='
+    BIT_OR_ASSIGN       = '|='
+    BIT_XOR_ASSIGN      = '^='
+    NE                  = '!='
+    EQ                  = '=='
+    LE                  = '<='
+    GE                  = '>='
+
+    PLUS_PLUS           = "++"
+    MINUS_MINUS         = "--"
+    EXPONENT            = '**'
+
+    BITWISE_NEGATION    = '~'
+    BANG                = '!'
+    PLUS                = "+"
+    MINUS               = "-"
+    MULT                = '*'
+    DIV                 = '/'
+    MOD                 = '%'
+
+    SHIFT_LEFT          = '<<'
+    SHIFT_RIGHT         = '>>'
+    LT                  = '<'
+    GT                  = '>'
+
+    AND_AND             = '&&'
+    OR_OR               = '||'
+    AMP                 = '&'
+    XOR                 = '^'
+    PIPE                = '|'
+
+    QMARK               = '?'
+    COLON               = ':'
+    COMMA               = ','
+
+    //Conditional operations
+    REGEXP              = '=~'
+
     DOLLAR = '$'
     LEFT_PAREN = '('
     RIGHT_PAREN = ')'
@@ -27,7 +73,6 @@
     RIGHT_CURLY = '}'
     LEFT_SQUARE = '['
     RIGHT_SQUARE = ']'
-    BANG = '!'
     BACKQUOTE = '`'
     QUOTE = '"'
 
@@ -37,37 +82,13 @@
     RIGHT_DOUBLE_BRACKET = "]]"
 
     BACKSLASH = '\\'
-    AMP = '&'
     AT = '@'
-    COLON = ':'
-    COMMA = ','
-    EQ = '='
-    ADD_EQ = '+='
+    ASSIGN = '='
     SEMI = ';'
-    SHIFT_RIGHT = '>>'
-    LT = '<'
-    GT = '>'
-    PIPE = '|'
     PIPE_AMP = '|&' //bash 4 only, equivalent to 2>&1 |
-    AND_AND = '&&'
-    OR_OR = '||'
-
-    EXPONENT = '**'
-    MULT = '*'
-    DIV = '/'
-    MOD = '%'
-    SHIFT_LEFT = '<<'
-    SHIFT_RIGHT = '>>'
 
     LINEFEED = '\n'
     CASE_END = ';;'
-
-    LE = '<='
-    GE = '>='
-    ARITH_PLUS_PLUS = "++"
-    ARITH_PLUS = "+"
-    ARITH_MINUS_MINUS = "--"
-    ARITH_MINUS = "-"
 
     LEFT_DOUBLE_PAREN = '(('
     RIGHT_DOUBLE_PAREN = '))'

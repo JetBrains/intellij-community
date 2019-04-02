@@ -27,14 +27,68 @@ public class BashAssignmentExpressionImpl extends BashBinaryExpressionImpl imple
 
   @Override
   @Nullable
-  public PsiElement getAddEq() {
-    return findChildByType(ADD_EQ);
+  public PsiElement getAssign() {
+    return findChildByType(ASSIGN);
   }
 
   @Override
   @Nullable
-  public PsiElement getEq() {
-    return findChildByType(EQ);
+  public PsiElement getBitAndAssign() {
+    return findChildByType(BIT_AND_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getBitOrAssign() {
+    return findChildByType(BIT_OR_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getBitXorAssign() {
+    return findChildByType(BIT_XOR_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getDivAssign() {
+    return findChildByType(DIV_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getMinusAssign() {
+    return findChildByType(MINUS_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getModAssign() {
+    return findChildByType(MOD_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getMultAssign() {
+    return findChildByType(MULT_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getPlusAssign() {
+    return findChildByType(PLUS_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getShiftLeftAssign() {
+    return findChildByType(SHIFT_LEFT_ASSIGN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getShiftRightAssign() {
+    return findChildByType(SHIFT_RIGHT_ASSIGN);
   }
 
 }

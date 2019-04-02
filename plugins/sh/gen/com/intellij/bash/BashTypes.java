@@ -80,31 +80,32 @@ public interface BashTypes {
   IElementType VARIABLE = new BashCompositeElementType("VARIABLE");
   IElementType WHILE_COMMAND = new BashCompositeElementType("WHILE_COMMAND");
 
-  IElementType ADD_EQ = new BashTokenType("+=");
   IElementType AMP = new BashTokenType("&");
   IElementType AND_AND = new BashTokenType("&&");
-  IElementType ARITH_MINUS = new BashTokenType("-");
-  IElementType ARITH_MINUS_MINUS = new BashTokenType("--");
-  IElementType ARITH_PLUS = new BashTokenType("+");
-  IElementType ARITH_PLUS_PLUS = new BashTokenType("++");
   IElementType ARITH_SQUARE_LEFT = new BashTokenType("ARITH_SQUARE_LEFT");
   IElementType ARITH_SQUARE_RIGHT = new BashTokenType("ARITH_SQUARE_RIGHT");
+  IElementType ASSIGN = new BashTokenType("=");
   IElementType ASSIGNMENT_WORD = new BashTokenType("assignment_word");
   IElementType AT = new BashTokenType("@");
   IElementType BACKQUOTE = new BashTokenType("`");
   IElementType BACKSLASH = new BashTokenType("\\\\");
   IElementType BANG = new BashTokenType("!");
+  IElementType BITWISE_NEGATION = new BashTokenType("~");
+  IElementType BIT_AND_ASSIGN = new BashTokenType("&=");
+  IElementType BIT_OR_ASSIGN = new BashTokenType("|=");
+  IElementType BIT_XOR_ASSIGN = new BashTokenType("^=");
   IElementType CASE = new BashTokenType("case");
   IElementType CASE_END = new BashTokenType(";;");
   IElementType COLON = new BashTokenType(":");
   IElementType COMMA = new BashTokenType(",");
   IElementType DIV = new BashTokenType("/");
+  IElementType DIV_ASSIGN = new BashTokenType("/=");
   IElementType DO = new BashTokenType("do");
   IElementType DOLLAR = new BashTokenType("$");
   IElementType DONE = new BashTokenType("done");
   IElementType ELIF = new BashTokenType("elif");
   IElementType ELSE = new BashTokenType("else");
-  IElementType EQ = new BashTokenType("=");
+  IElementType EQ = new BashTokenType("==");
   IElementType ESAC = new BashTokenType("esac");
   IElementType EXPONENT = new BashTokenType("**");
   IElementType EXPR_CONDITIONAL_LEFT = new BashTokenType("[ ");
@@ -132,14 +133,24 @@ public interface BashTypes {
   IElementType LET = new BashTokenType("let");
   IElementType LINEFEED = new BashTokenType("\\n");
   IElementType LT = new BashTokenType("<");
+  IElementType MINUS = new BashTokenType("-");
+  IElementType MINUS_ASSIGN = new BashTokenType("-=");
+  IElementType MINUS_MINUS = new BashTokenType("--");
   IElementType MOD = new BashTokenType("%");
+  IElementType MOD_ASSIGN = new BashTokenType("%=");
   IElementType MULT = new BashTokenType("*");
+  IElementType MULT_ASSIGN = new BashTokenType("*=");
+  IElementType NE = new BashTokenType("!=");
   IElementType NUMBER = new BashTokenType("number");
   IElementType OCTAL = new BashTokenType("octal");
   IElementType OR_OR = new BashTokenType("||");
   IElementType PARAMETER_EXPANSION_BODY = new BashTokenType("parameter_expansion_body");
   IElementType PIPE = new BashTokenType("|");
   IElementType PIPE_AMP = new BashTokenType("|&");
+  IElementType PLUS = new BashTokenType("+");
+  IElementType PLUS_ASSIGN = new BashTokenType("+=");
+  IElementType PLUS_PLUS = new BashTokenType("++");
+  IElementType QMARK = new BashTokenType("?");
   IElementType QUOTE = new BashTokenType("\"");
   IElementType RAW_STRING = new BashTokenType("RAW_STRING");
   IElementType REDIRECT_GREATER_AMP = new BashTokenType(">&");
@@ -147,6 +158,7 @@ public interface BashTypes {
   IElementType REDIRECT_HERE_STRING = new BashTokenType("<<<");
   IElementType REDIRECT_LESS_AMP = new BashTokenType("<&");
   IElementType REDIRECT_LESS_GREATER = new BashTokenType("<>");
+  IElementType REGEXP = new BashTokenType("=~");
   IElementType RIGHT_CURLY = new BashTokenType("}");
   IElementType RIGHT_DOUBLE_BRACKET = new BashTokenType("]]");
   IElementType RIGHT_DOUBLE_PAREN = new BashTokenType("))");
@@ -156,7 +168,9 @@ public interface BashTypes {
   IElementType SEMI = new BashTokenType(";");
   IElementType SHEBANG = new BashTokenType("shebang");
   IElementType SHIFT_LEFT = new BashTokenType("<<");
+  IElementType SHIFT_LEFT_ASSIGN = new BashTokenType("<<=");
   IElementType SHIFT_RIGHT = new BashTokenType(">>");
+  IElementType SHIFT_RIGHT_ASSIGN = new BashTokenType(">>=");
   IElementType STRING_BEGIN = new BashTokenType("string_begin");
   IElementType STRING_CONTENT = new BashTokenType("string_content");
   IElementType STRING_END = new BashTokenType("string_end");
@@ -167,6 +181,7 @@ public interface BashTypes {
   IElementType VAR = new BashTokenType("var");
   IElementType WHILE = new BashTokenType("while");
   IElementType WORD = new BashTokenType("word");
+  IElementType XOR = new BashTokenType("^");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {

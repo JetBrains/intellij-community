@@ -11,9 +11,9 @@ public interface BashUnaryExpression extends BashExpression {
   BashExpression getExpression();
 
   @Nullable
-  PsiElement getArithMinus();
+  PsiElement getMinus();
 
   @Nullable
-  PsiElement getArithPlus();
+  PsiElement getPlus();
 
 }

@@ -1080,8 +1080,7 @@ BASH_FILE
       ASSIGNMENT_EXPRESSION
         LITERAL_EXPRESSION
           PsiElement(word)('indx')
-        PsiElement(-)('-')
-        PsiElement(=)('=')
+        PsiElement(-=)('-=')
         LITERAL_EXPRESSION
           PsiElement(int)('1')
   PsiElement(\n)('\n')

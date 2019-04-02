@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElement;
 public interface BashAddExpression extends BashBinaryExpression {
 
   @Nullable
-  PsiElement getArithMinus();
+  PsiElement getMinus();
 
   @Nullable
-  PsiElement getArithPlus();
+  PsiElement getPlus();
 
 }

@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface BashBitwiseExclusiveOrExpression extends BashBinaryExpression {
 
+  @NotNull
+  PsiElement getXor();
+
 }

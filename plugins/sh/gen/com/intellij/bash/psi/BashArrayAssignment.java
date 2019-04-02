@@ -11,6 +11,6 @@ public interface BashArrayAssignment extends BashCompositeElement {
   BashExpression getExpression();
 
   @Nullable
-  PsiElement getEq();
+  PsiElement getAssign();
 
 }

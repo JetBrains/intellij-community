@@ -13,4 +13,7 @@ public interface BashLogicalBitwiseNegationExpression extends BashExpression {
   @Nullable
   PsiElement getBang();
 
+  @Nullable
+  PsiElement getBitwiseNegation();
+
 }

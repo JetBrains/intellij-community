@@ -31,4 +31,10 @@ public class BashConditionalExpressionImpl extends BashBinaryExpressionImpl impl
     return findChildByType(COLON);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getQmark() {
+    return findNotNullChildByType(QMARK);
+  }
+
 }

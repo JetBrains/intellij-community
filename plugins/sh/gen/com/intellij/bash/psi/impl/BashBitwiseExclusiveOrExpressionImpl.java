@@ -25,4 +25,10 @@ public class BashBitwiseExclusiveOrExpressionImpl extends BashBinaryExpressionIm
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getXor() {
+    return findNotNullChildByType(XOR);
+  }
+
 }

@@ -306,7 +306,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   // '='?
   private static boolean array_assignment_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_assignment_1")) return false;
-    consumeToken(b, EQ);
+    consumeToken(b, ASSIGN);
     return true;
   }
 
@@ -346,8 +346,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "assignment_command_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, EQ);
-    if (!r) r = consumeToken(b, ADD_EQ);
+    r = consumeToken(b, ASSIGN);
+    if (!r) r = consumeToken(b, PLUS_ASSIGN);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -647,13 +647,13 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, BANG);
-    if (!r) r = consumeToken(b, "!=");
+    if (!r) r = consumeToken(b, NE);
     if (!r) r = consumeToken(b, DOLLAR);
     if (!r) r = consumeToken(b, MOD);
-    if (!r) r = consumeToken(b, "%=");
+    if (!r) r = consumeToken(b, MOD_ASSIGN);
     if (!r) r = consumeToken(b, AND_AND);
     if (!r) r = consumeToken(b, AMP);
-    if (!r) r = consumeToken(b, "&=");
+    if (!r) r = consumeToken(b, BIT_AND_ASSIGN);
     if (!r) r = consumeToken(b, "&>");
     if (!r) r = consumeToken(b, LEFT_PAREN);
     if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
@@ -661,16 +661,16 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, RIGHT_DOUBLE_PAREN);
     if (!r) r = consumeToken(b, MULT);
     if (!r) r = consumeToken(b, EXPONENT);
-    if (!r) r = consumeToken(b, "*=");
-    if (!r) r = consumeToken(b, ARITH_PLUS);
-    if (!r) r = consumeToken(b, ARITH_PLUS_PLUS);
-    if (!r) r = consumeToken(b, ADD_EQ);
+    if (!r) r = consumeToken(b, MULT_ASSIGN);
+    if (!r) r = consumeToken(b, PLUS);
+    if (!r) r = consumeToken(b, PLUS_PLUS);
+    if (!r) r = consumeToken(b, PLUS_ASSIGN);
     if (!r) r = consumeToken(b, COMMA);
-    if (!r) r = consumeToken(b, ARITH_MINUS);
-    if (!r) r = consumeToken(b, ARITH_MINUS_MINUS);
-    if (!r) r = consumeToken(b, "-=");
+    if (!r) r = consumeToken(b, MINUS);
+    if (!r) r = consumeToken(b, MINUS_MINUS);
+    if (!r) r = consumeToken(b, MINUS_ASSIGN);
     if (!r) r = consumeToken(b, DIV);
-    if (!r) r = consumeToken(b, "/=");
+    if (!r) r = consumeToken(b, DIV_ASSIGN);
     if (!r) r = consumeToken(b, COLON);
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, CASE_END);
@@ -679,34 +679,34 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, SHIFT_LEFT);
     if (!r) r = consumeToken(b, "<<-");
     if (!r) r = consumeToken(b, REDIRECT_HERE_STRING);
-    if (!r) r = consumeToken(b, "<<=");
+    if (!r) r = consumeToken(b, SHIFT_LEFT_ASSIGN);
     if (!r) r = consumeToken(b, LE);
     if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
+    if (!r) r = consumeToken(b, ASSIGN);
     if (!r) r = consumeToken(b, EQ);
-    if (!r) r = consumeToken(b, "==");
     if (!r) r = consumeToken(b, GT);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
     if (!r) r = consumeToken(b, GE);
     if (!r) r = consumeToken(b, SHIFT_RIGHT);
-    if (!r) r = consumeToken(b, ">>=");
+    if (!r) r = consumeToken(b, SHIFT_RIGHT_ASSIGN);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
-    if (!r) r = consumeToken(b, "?");
+    if (!r) r = consumeToken(b, QMARK);
     if (!r) r = consumeToken(b, AT);
     if (!r) r = consumeToken(b, LEFT_SQUARE);
     if (!r) r = consumeToken(b, LEFT_DOUBLE_BRACKET);
     if (!r) r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, RIGHT_SQUARE);
     if (!r) r = consumeToken(b, RIGHT_DOUBLE_BRACKET);
-    if (!r) r = consumeToken(b, "^");
-    if (!r) r = consumeToken(b, "^=");
+    if (!r) r = consumeToken(b, XOR);
+    if (!r) r = consumeToken(b, BIT_XOR_ASSIGN);
     if (!r) r = consumeToken(b, BACKQUOTE);
     if (!r) r = consumeToken(b, "in");
     if (!r) r = consumeToken(b, LEFT_CURLY);
     if (!r) r = consumeToken(b, PIPE);
-    if (!r) r = consumeToken(b, "|=");
+    if (!r) r = consumeToken(b, BIT_OR_ASSIGN);
     if (!r) r = consumeToken(b, OR_OR);
     if (!r) r = consumeToken(b, RIGHT_CURLY);
-    if (!r) r = consumeToken(b, "~");
+    if (!r) r = consumeToken(b, BITWISE_NEGATION);
     if (!r) r = consumeToken(b, ARITH_SQUARE_RIGHT);
     if (!r) r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
     if (!r) r = consumeToken(b, EXPR_CONDITIONAL_RIGHT);
@@ -2002,7 +2002,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = num(b, l + 1);
-    if (!r) r = consumeToken(b, ARITH_MINUS);
+    if (!r) r = consumeToken(b, MINUS);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2549,7 +2549,7 @@ public class BashParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 1);
         exit_section_(b, l, m, ASSIGNMENT_EXPRESSION, r, true, null);
       }
-      else if (g < 2 && consumeTokenSmart(b, "?")) {
+      else if (g < 2 && consumeTokenSmart(b, QMARK)) {
         r = report_error_(b, expression(b, l, 2));
         r = conditional_expression_1(b, l + 1) && r;
         exit_section_(b, l, m, CONDITIONAL_EXPRESSION, r, true, null);
@@ -2566,7 +2566,7 @@ public class BashParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 5);
         exit_section_(b, l, m, BITWISE_OR_EXPRESSION, r, true, null);
       }
-      else if (g < 6 && consumeTokenSmart(b, "^")) {
+      else if (g < 6 && consumeTokenSmart(b, XOR)) {
         r = expression(b, l, 6);
         exit_section_(b, l, m, BITWISE_EXCLUSIVE_OR_EXPRESSION, r, true, null);
       }
@@ -2620,17 +2620,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "assignment_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, EQ);
-    if (!r) r = consumeTokenSmart(b, "*=");
-    if (!r) r = consumeTokenSmart(b, "/=");
-    if (!r) r = consumeTokenSmart(b, "%=");
-    if (!r) r = consumeTokenSmart(b, ADD_EQ);
-    if (!r) r = consumeTokenSmart(b, "-=");
-    if (!r) r = consumeTokenSmart(b, "<<=");
-    if (!r) r = consumeTokenSmart(b, ">>=");
-    if (!r) r = consumeTokenSmart(b, "&=");
-    if (!r) r = consumeTokenSmart(b, "^=");
-    if (!r) r = consumeTokenSmart(b, "|=");
+    r = consumeTokenSmart(b, ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MULT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, DIV_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MOD_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, PLUS_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, MINUS_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, SHIFT_LEFT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, SHIFT_RIGHT_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_AND_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_XOR_ASSIGN);
+    if (!r) r = consumeTokenSmart(b, BIT_OR_ASSIGN);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2651,8 +2651,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "equality_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, "==");
-    if (!r) r = consumeTokenSmart(b, "!=");
+    r = consumeTokenSmart(b, EQ);
+    if (!r) r = consumeTokenSmart(b, NE);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2686,8 +2686,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "add_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, ARITH_PLUS);
-    if (!r) r = consumeTokenSmart(b, ARITH_MINUS);
+    r = consumeTokenSmart(b, PLUS);
+    if (!r) r = consumeTokenSmart(b, MINUS);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2706,6 +2706,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   public static boolean logical_bitwise_negation_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "logical_bitwise_negation_expression")) return false;
+    if (!nextTokenIsSmart(b, BANG, BITWISE_NEGATION)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
     r = logical_bitwise_negation_expression_0(b, l + 1);
@@ -2721,14 +2722,14 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, BANG);
-    if (!r) r = consumeTokenSmart(b, "~");
+    if (!r) r = consumeTokenSmart(b, BITWISE_NEGATION);
     exit_section_(b, m, null, r);
     return r;
   }
 
   public static boolean unary_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unary_expression")) return false;
-    if (!nextTokenIsSmart(b, ARITH_MINUS, ARITH_PLUS)) return false;
+    if (!nextTokenIsSmart(b, MINUS, PLUS)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
     r = unary_expression_0(b, l + 1);
@@ -2743,15 +2744,15 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "unary_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, ARITH_MINUS);
-    if (!r) r = consumeTokenSmart(b, ARITH_PLUS);
+    r = consumeTokenSmart(b, MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS);
     exit_section_(b, m, null, r);
     return r;
   }
 
   public static boolean pre_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pre_expression")) return false;
-    if (!nextTokenIsSmart(b, ARITH_MINUS_MINUS, ARITH_PLUS_PLUS)) return false;
+    if (!nextTokenIsSmart(b, MINUS_MINUS, PLUS_PLUS)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
     r = pre_expression_0(b, l + 1);
@@ -2766,8 +2767,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "pre_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, ARITH_MINUS_MINUS);
-    if (!r) r = consumeTokenSmart(b, ARITH_PLUS_PLUS);
+    r = consumeTokenSmart(b, MINUS_MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2777,8 +2778,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "post_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, ARITH_MINUS_MINUS);
-    if (!r) r = consumeTokenSmart(b, ARITH_PLUS_PLUS);
+    r = consumeTokenSmart(b, MINUS_MINUS);
+    if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
     exit_section_(b, m, null, r);
     return r;
   }

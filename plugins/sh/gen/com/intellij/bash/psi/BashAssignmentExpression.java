@@ -8,9 +8,36 @@ import com.intellij.psi.PsiElement;
 public interface BashAssignmentExpression extends BashBinaryExpression {
 
   @Nullable
-  PsiElement getAddEq();
+  PsiElement getAssign();
 
   @Nullable
-  PsiElement getEq();
+  PsiElement getBitAndAssign();
+
+  @Nullable
+  PsiElement getBitOrAssign();
+
+  @Nullable
+  PsiElement getBitXorAssign();
+
+  @Nullable
+  PsiElement getDivAssign();
+
+  @Nullable
+  PsiElement getMinusAssign();
+
+  @Nullable
+  PsiElement getModAssign();
+
+  @Nullable
+  PsiElement getMultAssign();
+
+  @Nullable
+  PsiElement getPlusAssign();
+
+  @Nullable
+  PsiElement getShiftLeftAssign();
+
+  @Nullable
+  PsiElement getShiftRightAssign();
 
 }

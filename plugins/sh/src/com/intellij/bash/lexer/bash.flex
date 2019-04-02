@@ -118,29 +118,29 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 }
 
 <EXPRESSIONS, LET_EXPRESSIONS, OLD_EXPRESSIONS> {
-    "*="                          { return ARITH_ASS_MUL; }
-    "/="                          { return ARITH_ASS_DIV; }
-    "%="                          { return ARITH_ASS_MOD; }
-    "+="                          { return ARITH_ASS_PLUS; }
-    "-="                          { return ARITH_ASS_MINUS; }
-    ">>="                         { return ARITH_ASS_SHIFT_RIGHT; }
-    "<<="                         { return ARITH_ASS_SHIFT_LEFT; }
-    "&="                          { return ARITH_ASS_BIT_AND; }
-    "|="                          { return ARITH_ASS_BIT_OR; }
-    "^="                          { return ARITH_ASS_BIT_XOR; }
-    "!="                          { return ARITH_NE; }
-    "=="                          { return ARITH_EQ; }
+    "*="                          { return MULT_ASSIGN; }
+    "/="                          { return DIV_ASSIGN; }
+    "%="                          { return MOD_ASSIGN; }
+    "+="                          { return PLUS_ASSIGN; }
+    "-="                          { return MINUS_ASSIGN; }
+    ">>="                         { return SHIFT_RIGHT_ASSIGN; }
+    "<<="                         { return SHIFT_LEFT_ASSIGN; }
+    "&="                          { return BIT_AND_ASSIGN; }
+    "|="                          { return BIT_OR_ASSIGN; }
+    "^="                          { return BIT_XOR_ASSIGN; }
+    "!="                          { return NE; }
+    "=="                          { return EQ; }
     ">="                          { return GE; }
     "<="                          { return LE; }
 
-    "++"                          { return ARITH_PLUS_PLUS; }
-    "--"                          { return ARITH_MINUS_MINUS; }
+    "++"                          { return PLUS_PLUS; }
+    "--"                          { return MINUS_MINUS; }
     "**"                          { return EXPONENT; }
 
-    "!"                           { return ARITH_NEGATE; }
-    "~"                           { return ARITH_BITWISE_NEGATE; }
-    "+"                           { return ARITH_PLUS; }
-    "-"                           { return ARITH_MINUS; }
+    "!"                           { return BANG; }
+    "~"                           { return BITWISE_NEGATION; }
+    "+"                           { return PLUS; }
+    "-"                           { return MINUS; }
     "*"                           { return MULT; }
     "/"                           { return DIV; }
     "%"                           { return MOD; }
@@ -152,21 +152,21 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 
     "&&"                          { return AND_AND; }
     "||"                          { return OR_OR; }
-    "&"                           { return ARITH_BITWISE_AND; }
-    "^"                           { return ARITH_BITWISE_XOR; }
-    "|"                           { return ARITH_BITWISE_OR; }
+    "&"                           { return AMP; }
+    "^"                           { return XOR; }
+    "|"                           { return PIPE; }
 
-    "?"                           { return ARITH_QMARK; }
-    ":"                           { return ARITH_COLON; }
+    "?"                           { return QMARK; }
+    ":"                           { return COLON; }
     ","                           { return COMMA; }
 
     {ArithWord}                   { return WORD; }
 }
 
 <CONDITIONAL_EXPRESSION> {
-    "=="                          { return COND_OP_EQ_EQ; }
-    "!="                          { return ARITH_NE; }
-    "=~"                          { return COND_OP_REGEX; }
+    "=="                          { return EQ; }
+    "!="                          { return NE; }
+    "=~"                          { return REGEXP; }
     "<"                           { return LT; }
     ">"                           { return GT; }
 }
@@ -256,8 +256,8 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
                                   }
 
     /***** General operators *****/
-    "+="                          { return ADD_EQ; }
-    "="                           { return EQ; }
+    "+="                          { return PLUS_ASSIGN; }
+    "="                           { return ASSIGN; }
     "$"                           { return DOLLAR; }
     "("                           { pushParentheses(yytext()); return LEFT_PAREN; }
     ")"                           { if (shouldCloseSingleParen()) { popParentheses(); } return RIGHT_PAREN; }

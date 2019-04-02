@@ -11,9 +11,9 @@ public interface BashPostExpression extends BashExpression {
   BashExpression getExpression();
 
   @Nullable
-  PsiElement getArithMinusMinus();
+  PsiElement getMinusMinus();
 
   @Nullable
-  PsiElement getArithPlusPlus();
+  PsiElement getPlusPlus();
 
 }

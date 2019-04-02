@@ -33,14 +33,14 @@ public class BashUnaryExpressionImpl extends BashExpressionImpl implements BashU
 
   @Override
   @Nullable
-  public PsiElement getArithMinus() {
-    return findChildByType(ARITH_MINUS);
+  public PsiElement getMinus() {
+    return findChildByType(MINUS);
   }
 
   @Override
   @Nullable
-  public PsiElement getArithPlus() {
-    return findChildByType(ARITH_PLUS);
+  public PsiElement getPlus() {
+    return findChildByType(PLUS);
   }
 
 }

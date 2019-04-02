@@ -33,8 +33,8 @@ public class BashArrayAssignmentImpl extends BashCompositeElementImpl implements
 
   @Override
   @Nullable
-  public PsiElement getEq() {
-    return findChildByType(EQ);
+  public PsiElement getAssign() {
+    return findChildByType(ASSIGN);
   }
 
 }

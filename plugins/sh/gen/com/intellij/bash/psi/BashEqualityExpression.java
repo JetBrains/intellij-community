@@ -7,4 +7,10 @@ import com.intellij.psi.PsiElement;
 
 public interface BashEqualityExpression extends BashBinaryExpression {
 
+  @Nullable
+  PsiElement getEq();
+
+  @Nullable
+  PsiElement getNe();
+
 }

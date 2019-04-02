@@ -29,7 +29,7 @@ public interface BashAssignmentCommand extends BashCommand {
   BashVariable getVariable();
 
   @Nullable
-  PsiElement getAddEq();
+  PsiElement getAssign();
 
   @Nullable
   PsiElement getAt();
@@ -41,10 +41,10 @@ public interface BashAssignmentCommand extends BashCommand {
   PsiElement getDollar();
 
   @Nullable
-  PsiElement getEq();
+  PsiElement getFiledescriptor();
 
   @Nullable
-  PsiElement getFiledescriptor();
+  PsiElement getPlusAssign();
 
   @Nullable
   PsiElement getAssignmentWord();
