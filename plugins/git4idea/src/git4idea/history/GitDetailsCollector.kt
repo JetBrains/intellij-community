@@ -117,8 +117,8 @@ internal class GitFullDetailsCollector(project: Project, root: VirtualFile,
     return GitCommit(project, HashImpl.build(record.hash), parents, record.commitTime, root, record.subject,
                      factory.createUser(record.authorName, record.authorEmail), record.fullMessage,
                      factory.createUser(record.committerName, record.committerEmail), record.authorTimeStamp,
-                     records.map { it.statusInfos },
-                     renameLimit)
+                     records.map { it.statusInfos }
+    )
   }
 
   override fun createRecordsCollector(preserveOrder: Boolean,
