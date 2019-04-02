@@ -31,6 +31,8 @@ object UpdateInstaller {
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
+  private val LOG = Logger.getInstance(UpdateChecker::class.java)
+
   private val patchesUrl: URL
     get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
 
@@ -47,8 +49,8 @@ object UpdateInstaller {
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
-      val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
-      System.out.println( "  patchName: $patchName" )
+      val patchName = "$product-$from-$to-patch$jdk-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println("  patchName: $patchName")
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -83,9 +85,11 @@ object UpdateInstaller {
         }
         indicator.checkCanceled()
       }
-      catch (e: ProcessCanceledException) { throw e }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
       catch (e: Exception) {
-        Logger.getInstance(UpdateChecker::class.java).info(e)
+        LOG.info(e)
       }
     }
 
@@ -99,7 +103,7 @@ object UpdateInstaller {
           installed = true
         }
         catch (e: Exception) {
-          Logger.getInstance(UpdateChecker::class.java).info(e)
+          LOG.info(e)
         }
       }
     }
@@ -181,7 +185,7 @@ object UpdateInstaller {
 
   private fun findLib(libName: String): File {
     val libFile = File(PathManager.getLibPath(), libName)
-    return if (libFile.exists()) libFile else throw IOException("Missing: ${libFile}")
+    return if (libFile.exists()) libFile else throw IOException("Missing: $libFile")
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
@@ -193,7 +197,9 @@ object UpdateInstaller {
     val version = try {
       releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature
     }
-    catch (e: Exception) { 0 }
+    catch (e: Exception) {
+      0
+    }
     return if (version == 11) "-jbr11" else ""
   }
 }
