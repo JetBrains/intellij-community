@@ -1875,14 +1875,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       try {
         thread.popFrames(myStackFrame);
+        getSuspendManager().popFrame(suspendContext);
       }
       catch (final EvaluateException e) {
         DebuggerInvocationUtil.swingInvokeLater(myProject,
                                                 () -> Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
         LOG.info(e);
-      }
-      finally {
-        getSuspendManager().popFrame(suspendContext);
       }
     }
   }
