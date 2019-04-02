@@ -7,18 +7,18 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.packageDependencies.ChangeListsScopesProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.SearchScopeProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
@@ -156,35 +156,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   @NotNull
   private DefaultComboBoxModel<ScopeDescriptor> createModel() {
-    final DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-
+    DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     createPredefinedScopeDescriptors(model);
 
-    final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getFilteredScopes();
-    if (!changeLists.isEmpty()) {
-      model.addElement(new ScopeSeparator("VCS Scopes"));
-      for (NamedScope changeListScope : changeLists) {
-        final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
-        addScopeDescriptor(model, new ScopeDescriptor(scope));
+    for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
+      if (StringUtil.isEmpty(each.getDisplayName())) continue;
+      List<SearchScope> scopes = each.getSearchScopes(myProject);
+      if (scopes.isEmpty()) continue;
+      model.addElement(new ScopeSeparator(each.getDisplayName()));
+      for (SearchScope scope : ContainerUtil.sorted(scopes, Comparator.comparing(SearchScope::getDisplayName))) {
+        model.addElement(new ScopeDescriptor(scope));
       }
     }
-
-    final List<ScopeDescriptor> customScopes = new ArrayList<>();
-    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
-    for (NamedScopesHolder holder : holders) {
-      final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
-      for (NamedScope scope : scopes) {
-        final GlobalSearchScope searchScope = GlobalSearchScopesCore.filterScope(myProject, scope);
-        customScopes.add(new ScopeDescriptor(searchScope));
-      }
-    }
-    if (!customScopes.isEmpty()) {
-      model.addElement(new ScopeSeparator("Custom Scopes"));
-      for (ScopeDescriptor scope : customScopes) {
-        addScopeDescriptor(model, scope);
-      }
-    }
-
     return model;
   }
 
