@@ -21,10 +21,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionAction {
@@ -63,7 +60,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       );
     }
   }
-  private static List<PsiCatchSection> findSuitableSections(List<PsiCatchSection> sections, @NotNull List<PsiClassType> exceptionTypes) {
+  private static List<PsiCatchSection> findSuitableSections(List<PsiCatchSection> sections, @NotNull List<PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
     for (PsiCatchSection section : Lists.reverse(sections)) {
       finalSections.add(section);
@@ -71,11 +68,15 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       PsiType sectionType = section.getCatchType();
       if (sectionType == null) continue;
       for (PsiType exceptionType : exceptionTypes) {
-        if (exceptionType.isAssignableFrom(exceptionType)) {
+        if (exceptionType.isAssignableFrom(sectionType)) {
           return finalSections;
           // adding type to any upper leads to compilation error
         }
       }
+    }
+    if (!isJava7OrHigher) {
+      // if we get to this point, this means, that we can't generify any catch clause, so we can't suggest a fix
+      return Collections.emptyList();
     }
     return finalSections;
   }
@@ -140,19 +141,20 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
     @Nullable
     static Context from(@NotNull PsiElement element) {
-      if (!element.isValid() || !PsiUtil.isLanguageLevel7OrHigher(element) || element instanceof PsiMethodReferenceExpression) return null;
+      if (!element.isValid() || element instanceof PsiMethodReferenceExpression) return null;
+      boolean isJava7OrHigher = PsiUtil.isLanguageLevel7OrHigher(element);
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
       List<PsiTryStatement> tryStatements = getTryStatements(element);
       List<PsiCatchSection> sections =
         tryStatements.stream()
-                     .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions).stream())
-                     .filter(catchSection -> {
-                       PsiParameter parameter = catchSection.getParameter();
-                       if (parameter == null) return false;
-                       return parameter.getTypeElement() != null;
-                     })
-                     .collect(Collectors.toList());
+          .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions, isJava7OrHigher).stream())
+          .filter(catchSection -> {
+            PsiParameter parameter = catchSection.getParameter();
+            if (parameter == null) return false;
+            return parameter.getTypeElement() != null;
+          })
+          .collect(Collectors.toList());
       if (sections.isEmpty()) return null;
       return new Context(sections, unhandledExceptions);
     }
