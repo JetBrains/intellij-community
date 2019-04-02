@@ -2,6 +2,10 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <!-- Android Studio: external annotations for our threading lint checks, to avoid modifying source code directly. -->
+    <annotation-paths>
+      <root url="file://$MODULE_DIR$/../../../base/external-annotations" />
+    </annotation-paths>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
