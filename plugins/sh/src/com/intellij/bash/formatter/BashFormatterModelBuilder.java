@@ -21,8 +21,8 @@ public class BashFormatterModelBuilder implements FormattingModelBuilder {
   }
 
   @NotNull
-  private static FormattingModel createDumbModel(@NotNull final PsiElement element) {
-    final AbstractBlock block = new AbstractBlock(element.getNode(), null, null) {
+  private static FormattingModel createDumbModel(@NotNull PsiElement element) {
+    AbstractBlock block = new AbstractBlock(element.getNode(), null, null) {
       @Override
       protected List<Block> buildChildren() {
         return EMPTY;
@@ -40,8 +40,8 @@ public class BashFormatterModelBuilder implements FormattingModelBuilder {
       }
     };
 
-    final Document document = FormattingDocumentModelImpl.createOn(element.getContainingFile()).getDocument();
-    final FormattingDocumentModel model = new FormattingDocumentModel() {
+    Document document = FormattingDocumentModelImpl.createOn(element.getContainingFile()).getDocument();
+    FormattingDocumentModel model = new FormattingDocumentModel() {
       @Override
       public int getLineNumber(int offset) {
         return document.getLineNumber(offset);

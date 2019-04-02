@@ -54,11 +54,6 @@ public interface BashTokenTypes extends BashTypes {
 
   TokenSet arithLiterals = TokenSet.create(NUMBER, OCTAL, HEX);
 
-  // Special characters
-  IElementType STRING_DATA = new BashTokenType("string data");
-  //mapped element type
-  //IElementType STRING_CONTENT = new BashTokenType("string content");
-
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);
   IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
 

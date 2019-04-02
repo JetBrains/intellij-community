@@ -4,32 +4,21 @@ import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.MergeFunction;
 import com.intellij.lexer.MergingLexerAdapterBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 
 public class BashLexer extends MergingLexerAdapterBase implements BashTokenTypes {
-  private static final MergeTuple[] TUPLES = {MergeTuple.create(TokenSet.create(HEREDOC_LINE), HEREDOC_CONTENT)}; // todo: simplify merging
   private static final MergeFunction FUNCTION = (type, lexer) -> {
-    for (MergeTuple currentTuple : TUPLES) {
-      TokenSet tokensToMerge = currentTuple.getTokensToMerge();
+    if (type != HEREDOC_LINE) return type;
 
-      if (tokensToMerge.contains(type)) {
-        IElementType current = lexer.getTokenType();
-        //merge all upcoming tokens into the target token type
-        while (tokensToMerge.contains(current)) {
-          lexer.advance();
-          current = lexer.getTokenType();
-        }
-
-        return currentTuple.getTargetType();
-      }
+    IElementType current = lexer.getTokenType();
+    while (current == HEREDOC_LINE) {
+      lexer.advance();
+      current = lexer.getTokenType();
     }
-
-    return type;
+    return HEREDOC_CONTENT;
   };
 
   public BashLexer() {
-    super(new FlexAdapter(
-        new _BashLexerGen(null) {
+    super(new FlexAdapter(new _BashLexerGen(null) {
           @Override
           public void reset(CharSequence buffer, int start, int end, int initialState) {
             onReset();
@@ -37,7 +26,6 @@ public class BashLexer extends MergingLexerAdapterBase implements BashTokenTypes
           }
         })
     );
-
   }
 
   @Override
