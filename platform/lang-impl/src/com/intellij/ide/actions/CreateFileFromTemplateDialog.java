@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
@@ -40,6 +41,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author peter
@@ -309,10 +311,15 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
           }
         }
         else {
-          contentPanel.setError(true);
+          String errorMessage = Optional.ofNullable(myInputValidator)
+            .filter(validator -> validator instanceof InputValidatorEx)
+            .map(validator -> ((InputValidatorEx)validator).getErrorText(newElementName))
+            .orElse(LangBundle.message("incorrect.name"));
+          contentPanel.setError(errorMessage);
         }
       });
 
+      Disposer.register(popup, contentPanel);
       popup.showCenteredInCurrentWindow(myProject);
     }
 
