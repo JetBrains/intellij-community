@@ -1486,7 +1486,7 @@ def dispatch():
     setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    if DISPATCH_APPROACH == DISPATCH_APPROACH_EXISTING_CONNECTION:
+    if setup.get('multiproc'):
         dispatcher = Dispatcher()
         try:
             dispatcher.connect(host, port)
