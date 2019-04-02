@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class FeatureUsageEventFileAppender extends FileAppender {
+public class StatisticsEventLogFileAppender extends FileAppender {
   protected long maxFileAge = 14 * 24 * 60 * 60 * 1000;
   protected long maxFileSize = 10 * 1024 * 1024;
 
@@ -33,12 +33,12 @@ public class FeatureUsageEventFileAppender extends FileAppender {
   private final Supplier<List<File>> myFilesProducer;
 
   @TestOnly
-  public FeatureUsageEventFileAppender(@NotNull Path path, @NotNull List<File> files) {
+  public StatisticsEventLogFileAppender(@NotNull Path path, @NotNull List<File> files) {
     myLogDirectory = path;
     myFilesProducer = () -> files;
   }
 
-  public FeatureUsageEventFileAppender(@NotNull Layout layout, @NotNull Path dir, @NotNull String filename) throws IOException {
+  public StatisticsEventLogFileAppender(@NotNull Layout layout, @NotNull Path dir, @NotNull String filename) throws IOException {
     super(layout, filename);
     myLogDirectory = dir;
     myFilesProducer = () -> {
@@ -48,9 +48,9 @@ public class FeatureUsageEventFileAppender extends FileAppender {
     cleanUpOldFiles();
   }
 
-  public static FeatureUsageEventFileAppender create(@NotNull Layout layout, @NotNull Path dir) throws IOException {
+  public static StatisticsEventLogFileAppender create(@NotNull Layout layout, @NotNull Path dir) throws IOException {
     final File file = nextFile(dir);
-    return new FeatureUsageEventFileAppender(layout, dir, file.getPath());
+    return new StatisticsEventLogFileAppender(layout, dir, file.getPath());
   }
 
   @NotNull
