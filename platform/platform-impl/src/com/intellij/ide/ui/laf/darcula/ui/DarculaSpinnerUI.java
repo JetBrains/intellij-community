@@ -240,7 +240,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           float lw = LW.getFloat();
           float bw = BW.getFloat();
 
-          g2.setColor(getArrowButtonBackgroundColor(isEnabled, true));
+          g2.setColor(JBUI.CurrentTheme.Arrow.backgroundColor(isEnabled, true));
           g2.fill(getInnerShape(lw, bw));
 
           // Paint side line
@@ -254,7 +254,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
           // Paint arrow
           g2.translate(x, y);
-          g2.setColor(getArrowButtonForegroundColor(isEnabled));
+          g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled));
           g2.fill(getArrowShape());
 
         } finally {

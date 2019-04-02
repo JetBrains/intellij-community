@@ -31,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -39,6 +40,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static Icon myDisabledIcon = null;
   private static Icon myWin10ComboDropTriangleIcon = null;
 
+  @Deprecated
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
       if (myWin10ComboDropTriangleIcon == null) {
@@ -55,6 +57,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   private boolean mySmallVariant = true;
   private String myPopupTitle;
+
+  private static final JBValue ICON_SIZE = new JBValue.Float(16);
 
   protected ComboBoxAction() {
   }
@@ -309,9 +313,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
       int width = prefSize.width
-                  + (myPresentation != null && isArrowVisible(myPresentation) ? getArrowIcon(isEnabled()).getIconWidth() : 0)
-                  + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
-                  + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0);
+                  + (myPresentation != null && isArrowVisible(myPresentation) ? ICON_SIZE.get() : 0)
+                  + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0);
 
       Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
       JBInsets.addTo(size, getMargin());
@@ -339,11 +342,28 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       if (!isArrowVisible(myPresentation)) {
         return;
       }
-      Icon icon = getArrowIcon(isEnabled());
-      int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right -
-              (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
-      icon.paintIcon(null, g, x, (getHeight() - icon.getIconHeight()) / 2);
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        int iconSize = ICON_SIZE.get();
+        int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
+        g2.translate(x, (getHeight() - iconSize)/2);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
+
+        Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        arrow.moveTo(3.5f, 6f);
+        arrow.lineTo(12.5f, 6f);
+        arrow.lineTo(8f, 11f);
+        arrow.closePath();
+
+        g2.fill(arrow);
+      }
+      finally {
+        g2.dispose();
+      }
     }
 
     protected boolean isArrowVisible(@NotNull Presentation presentation) {
