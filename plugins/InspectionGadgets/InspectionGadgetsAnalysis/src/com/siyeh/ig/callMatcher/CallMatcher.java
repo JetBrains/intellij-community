@@ -173,19 +173,19 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
 
       @Override
       public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
-        if (!filter.test(methodRef)) return false;
+        if (methodRef == null || !filter.test(methodRef)) return false;
         return CallMatcher.this.methodReferenceMatches(methodRef);
       }
 
       @Override
       public boolean test(@Nullable PsiMethodCallExpression call) {
-        if (!filter.test(call)) return false;
+        if (call == null || !filter.test(call)) return false;
         return CallMatcher.this.test(call);
       }
 
       @Override
       public boolean methodMatches(@Nullable PsiMethod method) {
-        if (!filter.test(method)) return false;
+        if (method == null || !filter.test(method)) return false;
         return CallMatcher.this.methodMatches(method);
       }
 
@@ -200,7 +200,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return call matcher, that matches element for file with given language level or higher
    */
   default CallMatcher withLanguageLevelAtLeast(@NotNull LanguageLevel level) {
-    return withContextFilter(element -> element != null && PsiUtil.getLanguageLevel(element).isAtLeast(level));
+    return withContextFilter(element -> PsiUtil.getLanguageLevel(element).isAtLeast(level));
   }
 
   class Simple implements CallMatcher {
