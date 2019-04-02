@@ -104,7 +104,7 @@ public class SendEventLogAction extends AnAction {
         myFailed.add(request);
       }
       else {
-        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", ContainerUtil.emptyList(), true));
+        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", "INVALID", ContainerUtil.emptyList(), true));
       }
     }
 
