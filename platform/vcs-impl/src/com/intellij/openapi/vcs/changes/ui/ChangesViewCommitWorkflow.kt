@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
@@ -20,6 +21,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
+  internal var areCommitOptionsCreated: Boolean = false
   internal lateinit var commitState: CommitState
 
   init {
@@ -40,6 +42,18 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitHandlers, additionalData)
 
     committer.addResultHandler(DefaultCommitResultHandler(committer))
+    committer.addResultHandler(ResultHandler(this))
     committer.runCommit("Commit Changes", false)
+  }
+
+  // TODO Looks like CommitContext should also be cleared
+  private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
+    override fun onSuccess(commitMessage: String) = clearCommitOptions()
+    override fun onFailure() = clearCommitOptions()
+
+    private fun clearCommitOptions() = runInEdt {
+      workflow.clearCommitOptions()
+      workflow.areCommitOptionsCreated = false
+    }
   }
 }

@@ -72,8 +72,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     _commitHandlers += handlers
   }
 
+  internal fun clearCommitOptions() = _commitOptions.clear()
   internal fun initCommitOptions(options: CommitOptions) {
-    _commitOptions.clear()
+    clearCommitOptions()
     _commitOptions.add(options)
   }
 

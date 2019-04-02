@@ -2,15 +2,15 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewCommitWorkflowHandler
 import com.intellij.ui.LayeredIcon
 
 private val ICON = LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown)
 
-class ShowCommitOptionsAction : DumbAwareAction() {
+class ShowCommitOptionsAction : AnAction() {
   init {
     templatePresentation.icon = ICON
   }
