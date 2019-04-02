@@ -1114,9 +1114,11 @@ public final class TreeUtil {
   }
 
   @Deprecated
-  public static void invalidateCache(@Nullable TreeUI ui) {
-    if (ui instanceof WideSelectionTreeUI) {
-      ((WideSelectionTreeUI)ui).invalidateNodeSizes();
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
+    if (ui instanceof BasicTreeUI) {
+      BasicTreeUI basic = (BasicTreeUI)ui;
+      basic.setLeftChildIndent(basic.getLeftChildIndent());
     }
   }
 

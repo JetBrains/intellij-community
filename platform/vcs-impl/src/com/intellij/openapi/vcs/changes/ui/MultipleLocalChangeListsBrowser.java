@@ -595,10 +595,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       myStateHolder.setChangelistId(changelistId);
     }
 
-    private void invalidateNodeSizes() {
-      TreeUtil.invalidateCache(getUI());
-    }
-
     private class MyStateHolder extends PartiallyExcludedFilesStateHolder<Object> {
       MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
         super(project, changelistId);
@@ -630,8 +626,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         super.updateExclusionStates();
 
         MyChangesBrowserTreeList.this.notifyInclusionListener();
-        MyChangesBrowserTreeList.this.invalidateNodeSizes();
-        MyChangesBrowserTreeList.this.repaint();
+        TreeUtil.invalidateCacheAndRepaint(MyChangesBrowserTreeList.this.getUI());
       }
     }
   }
