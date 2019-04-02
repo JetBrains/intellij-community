@@ -246,9 +246,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (bounds.x < 0) return false; // does not paint an icon to expand or collapse path
     Insets insets = tree.getInsets();
     bounds.x += insets.left;
-    bounds.y += (bounds.height - control.getHeight()) / 2;
     bounds.width = control.getWidth();
-    bounds.height = control.getHeight();
+    int height = 2 + control.getHeight();
+    if (height < bounds.height) {
+      bounds.y += (bounds.height - height) / 2;
+      bounds.height = height;
+    }
     return bounds.contains(mouseX, mouseY);
   }
 
