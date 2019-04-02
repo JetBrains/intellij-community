@@ -3,10 +3,9 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonShortcuts.CTRL_ENTER
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
@@ -82,7 +81,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     buildLayout()
 
     changesView.setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
-    commitButton.addActionListener { executorEventDispatcher.multicaster.executorCalled(null) }
+    commitButton.addActionListener { fireDefaultExecutorCalled() }
 
     addInclusionListener(object : InclusionListener {
       override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
@@ -111,6 +110,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
       includedChanges = getIncludedChanges(), includedUnversionedFilesCount = getIncludedUnversionedFiles().size)
     commitLegend.update()
   }
+
+  private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
+
+  fun setupShortcuts(component: JComponent) = DefaultCommitAction().registerCustomShortcutSet(CTRL_ENTER, component)
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
@@ -191,4 +194,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
 
   override fun dispose() = Unit
+
+  private inner class DefaultCommitAction : DumbAwareAction() {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = commitButton.isEnabled
+    }
+
+    override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
+  }
 }
