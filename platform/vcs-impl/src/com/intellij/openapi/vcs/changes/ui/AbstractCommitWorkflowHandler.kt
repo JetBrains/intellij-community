@@ -136,7 +136,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
 
-  private fun saveCommitOptions() = try {
+  protected open fun saveCommitOptions() = try {
     commitOptions.saveState()
     true
   }
