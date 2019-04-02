@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.util.DelegatingProgressIndicator
@@ -50,6 +50,8 @@ private fun unmarkCommittingDocuments(committingDocuments: Collection<Document>)
   document.putUserData<Any>(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, null)
 }
 
+// TODO "handlers" are just used here to run callbacks, but not for other commit handlers lifecycle. Looks better to remove this field
+// TODO and register corresponding event listener (that'll notify commit handlers) in commit workflow instead.
 abstract class AbstractCommitter(val project: Project,
                                  val changes: List<Change>,
                                  val commitMessage: String,
