@@ -44,7 +44,9 @@ private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionPr
   </profile>
 </component>""").digest()
 
-@State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "inspectionProfiles/profiles_settings.xml", exclusive = true))])
+const val PROFILE_DIR = "inspectionProfiles"
+
+@State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
 class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProfileManager(project.messageBus), PersistentStateComponentWithModificationTracker<Element> {
   companion object {
     @JvmStatic
@@ -68,7 +70,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager: SchemeManager<InspectionProfileImpl> = SchemeManagerFactory.getInstance(project).create("inspectionProfiles", object : InspectionProfileProcessor() {
+  override val schemeManager: SchemeManager<InspectionProfileImpl> = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
                               attributeProvider: Function<in String, String?>,

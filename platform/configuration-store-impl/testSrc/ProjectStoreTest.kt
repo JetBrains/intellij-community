@@ -11,7 +11,6 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -75,7 +74,7 @@ internal class ProjectStoreTest {
       val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
