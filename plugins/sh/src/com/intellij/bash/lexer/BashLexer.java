@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class BashLexer extends MergingLexerAdapterBase implements BashTokenTypes {
-  private static final MergeTuple[] TUPLES = {MergeTuple.create(TokenSet.create(STRING_DATA), STRING_CONTENT), MergeTuple.create(TokenSet.create(HEREDOC_LINE), HEREDOC_CONTENT)};
+  private static final MergeTuple[] TUPLES = {MergeTuple.create(TokenSet.create(HEREDOC_LINE), HEREDOC_CONTENT)}; // todo: simplify merging
   private static final MergeFunction FUNCTION = (type, lexer) -> {
     for (MergeTuple currentTuple : TUPLES) {
       TokenSet tokensToMerge = currentTuple.getTokensToMerge();
@@ -17,7 +17,6 @@ public class BashLexer extends MergingLexerAdapterBase implements BashTokenTypes
         //merge all upcoming tokens into the target token type
         while (tokensToMerge.contains(current)) {
           lexer.advance();
-
           current = lexer.getTokenType();
         }
 
