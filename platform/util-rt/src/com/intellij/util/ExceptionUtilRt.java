@@ -50,7 +50,7 @@ public class ExceptionUtilRt {
       private boolean skipping;
 
       @Override
-      public void println(final String x) {
+      public void print(String x) {
         boolean curSkipping = skipping;
         if (x != null) {
           if (!skipping && x.startsWith(skipPattern)) curSkipping = true;
@@ -64,12 +64,12 @@ public class ExceptionUtilRt {
             return;
           }
           if (x.startsWith(prefixProxy)) return;
-          super.println(x);
+          super.print(x);
         }
       }
     };
     aThrowable.printStackTrace(writer);
-    return stringWriter.getBuffer().toString();
+    return stringWriter.getBuffer().toString().trim();
   }
 
   private static String stripPackage(String x, int offset) {
