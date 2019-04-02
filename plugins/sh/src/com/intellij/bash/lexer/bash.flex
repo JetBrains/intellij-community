@@ -28,7 +28,6 @@ import static org.apache.commons.lang3.StringUtils.contains;
     private boolean shouldCloseDoubleParen() { return !parenStack.empty() && parenStack.peek().equals("(("); }
     private boolean shouldCloseSingleParen() { return !parenStack.empty() && parenStack.peek().equals("("); }
     private Stack<CharSequence> parenStack = new Stack<>();
-    private boolean inString;
     private CharSequence heredocMarker;
 
     protected void onReset() { stateStack.clear(); }
@@ -91,21 +90,17 @@ EscapedRightCurly        = "\\}"
 HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
-RightDoubleBracketWithWhiteSpace = {WhiteSpace}+ "]]"  // TODO: think about the soulution ___]]
-RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
-
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
 %state CONDITIONAL_EXPRESSION
 
 %state IF_CONDITION
-%state SELECT_CONDITION
-%state UNTIL_CONDITION
-%state WHILE_CONDITION
-%state FOR_CONDITION
+%state OTHER_CONDITIONS
 %state CASE_CONDITION
 %state CASE_PATTERN
+
+%state STRING_EXPRESSION
 
 %state HERE_DOC_START_MARKER
 %state HERE_DOC_END_MARKER
@@ -113,10 +108,17 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 %state HERE_DOC_BODY
 
 %state PARAMETER_EXPANSION
+%state COMMAND_SUBSTITUTION
 %%
+
+<STRING_EXPRESSION> {
+    {Quote}                       { popState(); return QUOTE; }
+    {RawString}                   { if (contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
+}
 
 <LET_EXPRESSION> {
     "let"                         { return LET; }
+    {Quote}                       { return QUOTE; }
     ";"                           { popState(); return SEMI; }
     {LineTerminator}              { popState(); return LINEFEED; }
 }
@@ -184,7 +186,7 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
 
 <CASE_CONDITION> {
   ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
-  "in"                            { if (yystate() == CASE_CONDITION && !inString) pushState(CASE_PATTERN); return WORD; }
+  "in"                            { if (yystate() == CASE_CONDITION) pushState(CASE_PATTERN); return WORD; }
 }
 
 <CASE_PATTERN> {
@@ -218,39 +220,35 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
-  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, SELECT_CONDITION, UNTIL_CONDITION, WHILE_CONDITION, FOR_CONDITION> {
-    {AssignmentWord} / {AssigOp}  { return WORD; }
+<YYINITIAL, CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
 
-    "case"                        { if (!inString) pushState(CASE_CONDITION); return CASE; }
-    "esac"                        { if (yystate() == CASE_CONDITION && !inString) popState(); return ESAC; }
-    "done"                        { if (!inString)
-                                      switch (yystate()) {
-                                              case UNTIL_CONDITION:
-                                              case WHILE_CONDITION:
-                                              case FOR_CONDITION:
-                                              case SELECT_CONDITION: popState();
-                                      }
-                                    return DONE; }
+    "case"                        { pushState(CASE_CONDITION); return CASE; }
+    "esac"                        { if (yystate() == CASE_CONDITION) popState(); return ESAC; }
+    "done"                        { if (yystate() == OTHER_CONDITIONS) popState(); return DONE; }
     "do"                          { return DO; }
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
-    "fi"                          { if (yystate() == IF_CONDITION && !inString) popState(); return FI; }
-    "for"                         { if (!inString) pushState(FOR_CONDITION); return FOR; }
+    "fi"                          { if (yystate() == IF_CONDITION) popState(); return FI; }
+    "for"                         { pushState(OTHER_CONDITIONS); return FOR; }
     "function"                    { return FUNCTION; }
-    "if"                          { if (!inString) pushState(IF_CONDITION); return IF; }
-    "select"                      { if (!inString) pushState(SELECT_CONDITION); return SELECT; }
+    "if"                          { pushState(IF_CONDITION); return IF; }
+    "select"                      { pushState(OTHER_CONDITIONS); return SELECT; }
     "then"                        { return THEN; }
-    "until"                       { if (!inString) pushState(UNTIL_CONDITION); return UNTIL; }
-    "while"                       { if (!inString) pushState(WHILE_CONDITION); return WHILE; }
+    "until"                       { pushState(OTHER_CONDITIONS); return UNTIL; }
+    "while"                       { pushState(OTHER_CONDITIONS); return WHILE; }
     "trap"                        { return TRAP; }
     "let"                         { pushState(LET_EXPRESSION); return LET; }
     "time"                        { return TIME; }
+}
 
+<YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
+    {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
+    "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
     "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
@@ -258,12 +256,11 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
                                     else return RIGHT_DOUBLE_PAREN; }
-    {RightDoubleBracketWithWhiteSpace} { popState(); return RIGHT_DOUBLE_BRACKET; }
-    {RightBracketWithWhiteSpace}  { switch (yystate()) {
+    {WhiteSpace}+ "]]"            { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET; }
+    {WhiteSpace}+ "]"             { switch (yystate()) {
                                       case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
                                       case CONDITIONAL_EXPRESSION: popState(); return EXPR_CONDITIONAL_RIGHT;
-                                      default: return RIGHT_SQUARE;
-                                    }
+                                      default: return RIGHT_SQUARE; }
                                   }
 
     /***** General operators *****/
@@ -271,14 +268,19 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     "="                           { return ASSIGN; }
     "$"                           { return DOLLAR; }
     "("                           { pushParentheses(yytext()); return LEFT_PAREN; }
-    ")"                           { if (shouldCloseSingleParen()) { popParentheses(); } return RIGHT_PAREN; }
+    ")"                           { if (shouldCloseSingleParen()) popParentheses();
+                                    if (yystate() == COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
     "["                           { return LEFT_SQUARE; }
-    "]"                           { if (yystate() == OLD_ARITHMETIC_EXPRESSION) { popState(); return ARITH_SQUARE_RIGHT; }
-                                    return RIGHT_SQUARE; }
+    "]"                           { switch (yystate()) {
+                                      case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
+                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE;
+                                      default: return RIGHT_SQUARE; }
+                                  }
     "!"                           { return BANG; }
-    "`"                           { return BACKQUOTE; }
+    "`"                           { if (yystate() == COMMAND_SUBSTITUTION) popState(); else pushState(COMMAND_SUBSTITUTION);
+                                  return BACKQUOTE; }
 
     /***** Pipeline separators *****/
     "&&"                          { return AND_AND; }
@@ -320,12 +322,12 @@ RightBracketWithWhiteSpace = {WhiteSpace}+ "]"
     {LineTerminator}              { return LINEFEED; }
     {Variable}                    { return VAR; }
 
-    {Quote}                       { inString = !inString; return QUOTE; } // todo: refactor
-    {RawString}                   { if (inString && contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
+    {Quote}                       { pushState(STRING_EXPRESSION); return QUOTE; }
+    {RawString}                   { return RAW_STRING; }
 }
 
-<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
-  SELECT_CONDITION, UNTIL_CONDITION, WHILE_CONDITION, FOR_CONDITION> {
+<YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
+  OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
     {Word}                        { return WORD; }
 }
 

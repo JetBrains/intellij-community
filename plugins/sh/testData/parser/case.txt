@@ -947,7 +947,7 @@ BASH_FILE
                                   PsiWhiteSpace(' ')
                                   PsiElement(word)('entry')
                                   PsiWhiteSpace(' ')
-                                  PsiElement(for)('for')
+                                  PsiElement(word)('for')
                                   PsiWhiteSpace(' ')
                                   VARIABLE
                                     PsiElement(var)('$name')
@@ -977,7 +977,7 @@ BASH_FILE
                                   PsiWhiteSpace(' ')
                                   PsiElement(word)('entry')
                                   PsiWhiteSpace(' ')
-                                  PsiElement(for)('for')
+                                  PsiElement(word)('for')
                                   PsiWhiteSpace(' ')
                                   VARIABLE
                                     PsiElement(var)('$name')
@@ -1164,7 +1164,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 PsiElement(word)('passed')
                                 PsiWhiteSpace(' ')
-                                PsiElement(for)('for')
+                                PsiElement(word)('for')
                                 PsiWhiteSpace(' ')
                                 VARIABLE
                                   PsiElement(var)('$name')
@@ -1220,7 +1220,7 @@ BASH_FILE
                                 PsiWhiteSpace(' ')
                                 PsiElement(word)('set')
                                 PsiWhiteSpace(' ')
-                                PsiElement(for)('for')
+                                PsiElement(word)('for')
                                 PsiWhiteSpace(' ')
                                 VARIABLE
                                   PsiElement(var)('$name')
@@ -1384,7 +1384,7 @@ BASH_FILE
                                   VARIABLE
                                     PsiElement(var)('$key')
                                   PsiWhiteSpace(' ')
-                                  PsiElement(for)('for')
+                                  PsiElement(word)('for')
                                   PsiWhiteSpace(' ')
                                   VARIABLE
                                     PsiElement(var)('$name')
@@ -1519,7 +1519,7 @@ BASH_FILE
                                           VARIABLE
                                             PsiElement(var)('$position')
                                           PsiWhiteSpace(' ')
-                                          PsiElement(for)('for')
+                                          PsiElement(word)('for')
                                           PsiWhiteSpace(' ')
                                           VARIABLE
                                             PsiElement(var)('$varname')
@@ -1658,7 +1658,7 @@ BASH_FILE
                                             PsiElement(")('"')
                                             PsiElement(word)('Invalid')
                                             PsiWhiteSpace(' ')
-                                            PsiElement(function)('function')
+                                            PsiElement(word)('function')
                                             PsiWhiteSpace(' ')
                                             PsiElement(word)('passed:')
                                             PsiWhiteSpace(' ')
