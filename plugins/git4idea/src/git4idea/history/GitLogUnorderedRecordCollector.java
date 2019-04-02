@@ -25,16 +25,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
+abstract class GitLogUnorderedRecordCollector<R extends GitLogRecord> extends GitLogRecordCollector<R> {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
   private static final int STATUS_LINES_THRESHOLD = 20_000;
 
-  @NotNull private final MultiMap<String, GitLogFullRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, R> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
   protected GitLogUnorderedRecordCollector(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @NotNull Consumer<List<GitLogFullRecord>> consumer) {
+                                           @NotNull Consumer<List<R>> consumer) {
     super(project, root, consumer);
   }
 
@@ -66,13 +66,15 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector {
   }
 
   @Override
-  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<GitLogFullRecord> records) {
+  protected void processIncompleteRecord(@NotNull String hash, @NotNull List<R> records) {
     myHashToIncompleteRecords.put(hash, records);
-    records.forEach(r -> myIncompleteStatusLinesCount += r.getStatusInfos().size());
+    records.forEach(r -> myIncompleteStatusLinesCount += getSize(r));
   }
 
   @Override
   public void finish() {
     processCollectedRecords(true);
   }
+
+  protected abstract int getSize(@NotNull R r);
 }
