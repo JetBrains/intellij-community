@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -16,7 +17,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,15 +38,13 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     Context context = Context.from(myErrorElement);
     if (context == null) return;
 
-    List<PsiCatchSection> catchSections = context.myCatches;
     List<PsiClassType> unhandledExceptions = context.myExceptions;
-    List<PsiCatchSection> catches =
-      ContainerUtil.filter(catchSections, s -> s.getCatchType() != null && s.getParameter() != null);
+    List<PsiCatchSection> catches = context.myCatches;
 
     setText(context.getMessage());
 
-    if (catchSections.size() == 1) {
-      PsiCatchSection selectedSection = catchSections.get(0);
+    if (catches.size() == 1) {
+      PsiCatchSection selectedSection = catches.get(0);
       addTypeToCatch(unhandledExceptions, selectedSection);
     }
     else {
@@ -64,6 +62,22 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
         catchSection -> Objects.requireNonNull(((PsiCatchSection)catchSection).getParameter()).getTextRange()
       );
     }
+  }
+  private static List<PsiCatchSection> findSuitableSections(List<PsiCatchSection> sections, @NotNull List<PsiClassType> exceptionTypes) {
+    List<PsiCatchSection> finalSections = new ArrayList<>();
+    for (PsiCatchSection section : Lists.reverse(sections)) {
+      finalSections.add(section);
+
+      PsiType sectionType = section.getCatchType();
+      if (sectionType == null) continue;
+      for (PsiType exceptionType : exceptionTypes) {
+        if (exceptionType.isAssignableFrom(exceptionType)) {
+          return finalSections;
+          // adding type to any upper leads to compilation error
+        }
+      }
+    }
+    return finalSections;
   }
 
   private static void addTypeToCatch(@NotNull List<PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
@@ -132,7 +146,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       List<PsiTryStatement> tryStatements = getTryStatements(element);
       List<PsiCatchSection> sections =
         tryStatements.stream()
-                     .flatMap(stmt -> Arrays.stream(stmt.getCatchSections()))
+                     .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions).stream())
                      .filter(catchSection -> {
                        PsiParameter parameter = catchSection.getParameter();
                        if (parameter == null) return false;

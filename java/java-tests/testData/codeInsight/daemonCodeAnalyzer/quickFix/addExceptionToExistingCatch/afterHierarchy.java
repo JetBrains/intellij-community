@@ -1,16 +1,15 @@
 // "Add exception to existing catch clause" "true"
-import java.io.IOException;
+import java.io.Exception;
 
 class A extends Exception {}
 class B extends A {}
 class C extends A {}
-
 class Test {
   public static void main(String[] args) {
     try {
-      throw new A<caret>();
+      throw new A();
     } catch (B e) {
-    } catch (C e) {
+    } catch (A e) {
     }
   }
 }
