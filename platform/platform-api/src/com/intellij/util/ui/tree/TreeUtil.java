@@ -29,6 +29,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -1109,6 +1110,13 @@ public final class TreeUtil {
     catch (Exception exception) {
       LOG.error(exception);
       return false; // unexpected
+    }
+  }
+
+  @Deprecated
+  public static void invalidateCache(@Nullable TreeUI ui) {
+    if (ui instanceof WideSelectionTreeUI) {
+      ((WideSelectionTreeUI)ui).invalidateNodeSizes();
     }
   }
 
