@@ -2,11 +2,13 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -43,13 +45,14 @@ object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
+    val edition = getEditionSuffix(product)
     val jdk = getJdkSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
-      val patchName = "$product-$from-$to-patch$jdk-${PatchInfo.OS_SUFFIX}.jar"
+      val patchName = "$product-$from-$to-patch$jdk$edition-${PatchInfo.OS_SUFFIX}.jar"
       System.out.println("  patchName: $patchName")
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
@@ -201,5 +204,16 @@ object UpdateInstaller {
       0
     }
     return if (version == 11) "-jbr11" else ""
+  }
+
+  private fun getEditionSuffix(productCode: String): String {
+    if (productCode in listOf("PC", "PY")
+        && File(PathManager.getHomePath(), "minicondaInstaller").exists()
+        && PluginId.findId("org.jetbrains.plugins.anaconda")
+          ?.let { PluginManager.getPlugin(it)?.isBundled() } == true ) {
+      LOG.info("Anaconda edition patch should be taken")
+      return "-anaconda"
+    }
+    return ""
   }
 }
