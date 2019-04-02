@@ -2,11 +2,17 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
@@ -18,19 +24,36 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.Point
 import javax.swing.JButton
 import javax.swing.JComponent
 
 private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16)))
+
+private fun JBPopup.showAbove(component: JComponent) {
+  val northWest = RelativePoint(component, Point())
+
+  addListener(object : JBPopupListener {
+    override fun beforeShown(event: LightweightWindowEvent) {
+      val popup = event.asPopup()
+      val location = northWest.screenPoint.apply { translate(0, -popup.size.height) }
+
+      popup.setLocation(location)
+    }
+  })
+  show(northWest)
+}
 
 class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
   private val project get() = changesView.project
@@ -111,6 +134,21 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
+  }
+
+  override fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext) {
+    val commitOptionsPanel = CommitOptionsPanel { defaultCommitActionName }.apply {
+      setOptions(options)
+      border = empty(0, 10)
+      MnemonicHelper.init(this)
+    }
+    val commitOptionsPopup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(commitOptionsPanel, null)
+      .setRequestFocus(true)
+      .createPopup()
+
+    if (isFromToolbar) commitOptionsPopup.showAbove(this)
+    else commitOptionsPopup.showInBestPositionFor(dataContext)
   }
 
   override fun getComponent(): JComponent = this

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -45,6 +46,8 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   fun activate(): Boolean = ui.activate()
+
+  fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) = ui.showCommitOptions(commitOptions, isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
