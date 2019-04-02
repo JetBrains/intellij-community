@@ -491,8 +491,18 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @NotNull DfaMemoryState state, @Nullable DfaValue qualifier) {
+  private static PsiMethod findSpecificMethod(PsiElement context,
+                                              @NotNull PsiMethod method,
+                                              @NotNull DfaMemoryState state,
+                                              @Nullable DfaValue qualifier) {
     if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
+    PsiExpression qualifierExpression = null;
+    if (context instanceof PsiMethodCallExpression) {
+      qualifierExpression = ((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression();
+    } else if (context instanceof PsiMethodReferenceExpression) {
+      qualifierExpression = ((PsiMethodReferenceExpression)context).getQualifierExpression();
+    }
+    if (qualifierExpression instanceof PsiSuperExpression) return method; // non-virtual call
     TypeConstraint constraint = state.getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
     PsiType type = constraint == null ? null : constraint.getPsiType();
     return MethodUtils.findSpecificMethod(method, type);
@@ -523,7 +533,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       Mutability mutable = Mutability.UNKNOWN;
       if (targetMethod != null) {
         mutable = Mutability.getMutability(targetMethod);
-        PsiMethod realMethod = findSpecificMethod(targetMethod, state, qualifierValue);
+        PsiMethod realMethod = findSpecificMethod(instruction.getContext(), targetMethod, state, qualifierValue);
         if (realMethod != targetMethod) {
           nullability = DfaPsiUtil.getElementNullability(type, realMethod);
           mutable = Mutability.getMutability(realMethod);
