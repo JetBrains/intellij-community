@@ -1630,7 +1630,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ARITH_SQUARE_LEFT expression ARITH_SQUARE_RIGHT
+  // ARITH_SQUARE_LEFT old_arithmetic_expansion_expression ARITH_SQUARE_RIGHT
   public static boolean old_arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "old_arithmetic_expansion")) return false;
     if (!nextTokenIs(b, ARITH_SQUARE_LEFT)) return false;
@@ -1638,10 +1638,32 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, OLD_ARITHMETIC_EXPANSION, null);
     r = consumeToken(b, ARITH_SQUARE_LEFT);
     p = r; // pin = 1
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, old_arithmetic_expansion_expression(b, l + 1));
     r = p && consumeToken(b, ARITH_SQUARE_RIGHT) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // expression
+  static boolean old_arithmetic_expansion_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "old_arithmetic_expansion_expression")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, old_arithmetic_expansion_expression_recover_parser_);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(ARITH_SQUARE_RIGHT)
+  static boolean old_arithmetic_expansion_expression_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "old_arithmetic_expansion_expression_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, ARITH_SQUARE_RIGHT);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2811,6 +2833,11 @@ public class BashParser implements PsiParser, LightPsiParser {
   static final Parser command_substitution_command_2_1_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_substitution_command_2_1(b, l + 1);
+    }
+  };
+  static final Parser old_arithmetic_expansion_expression_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return old_arithmetic_expansion_expression_recover(b, l + 1);
     }
   };
 }
