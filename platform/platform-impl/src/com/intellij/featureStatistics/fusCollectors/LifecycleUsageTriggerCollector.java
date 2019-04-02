@@ -117,6 +117,6 @@ public class LifecycleUsageTriggerCollector {
     } else
       throwableClass = t.getClass();
     PluginInfo throwableLocation = PluginInfoDetectorKt.getPluginInfo(throwableClass);
-    return (throwableLocation.getType().isSafeToReport()) ? throwableClass.getSimpleName() : null;
+    return (throwableLocation.isSafeToReport()) ? throwableClass.getSimpleName() : null;
   }
 }
