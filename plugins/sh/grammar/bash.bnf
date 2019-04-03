@@ -163,7 +163,7 @@ private simple_command_element_inner ::=  assignment_command
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? commands_list] newlines
             (HEREDOC_CONTENT)*
             (HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
 arithmetic_expansion ::= '((' expression '))' {pin=1}
@@ -251,8 +251,8 @@ private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') 
 list_terminator ::= '\n' | ';'
 
 commands_list ::= pipeline_command (
-                     '&&' newlines pipeline_command
-                   | '||' newlines pipeline_command
+                     '&&' newlines? pipeline_command
+                   | '||' newlines? pipeline_command
                    | '&' pipeline_command
                    | ';' pipeline_command?
                  )*

@@ -768,8 +768,8 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // pipeline_command (
-  //                      '&&' newlines pipeline_command
-  //                    | '||' newlines pipeline_command
+  //                      '&&' newlines? pipeline_command
+  //                    | '||' newlines? pipeline_command
   //                    | '&' pipeline_command
   //                    | ';' pipeline_command?
   //                  )*
@@ -785,8 +785,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   // (
-  //                      '&&' newlines pipeline_command
-  //                    | '||' newlines pipeline_command
+  //                      '&&' newlines? pipeline_command
+  //                    | '||' newlines? pipeline_command
   //                    | '&' pipeline_command
   //                    | ';' pipeline_command?
   //                  )*
@@ -800,8 +800,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // '&&' newlines pipeline_command
-  //                    | '||' newlines pipeline_command
+  // '&&' newlines? pipeline_command
+  //                    | '||' newlines? pipeline_command
   //                    | '&' pipeline_command
   //                    | ';' pipeline_command?
   private static boolean commands_list_1_0(PsiBuilder b, int l) {
@@ -816,30 +816,44 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '&&' newlines pipeline_command
+  // '&&' newlines? pipeline_command
   private static boolean commands_list_1_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, AND_AND);
     p = r; // pin = 1
-    r = r && report_error_(b, newlines(b, l + 1));
+    r = r && report_error_(b, commands_list_1_0_0_1(b, l + 1));
     r = p && pipeline_command(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // '||' newlines pipeline_command
+  // newlines?
+  private static boolean commands_list_1_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "commands_list_1_0_0_1")) return false;
+    newlines(b, l + 1);
+    return true;
+  }
+
+  // '||' newlines? pipeline_command
   private static boolean commands_list_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, OR_OR);
     p = r; // pin = 1
-    r = r && report_error_(b, newlines(b, l + 1));
+    r = r && report_error_(b, commands_list_1_0_1_1(b, l + 1));
     r = p && pipeline_command(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // newlines?
+  private static boolean commands_list_1_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "commands_list_1_0_1_1")) return false;
+    newlines(b, l + 1);
+    return true;
   }
 
   // '&' pipeline_command
@@ -1253,7 +1267,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? pipeline] newlines
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? commands_list] newlines
   //             (HEREDOC_CONTENT)*
   //             (HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
@@ -1270,20 +1284,20 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ['|'? pipeline]
+  // ['|'? commands_list]
   private static boolean heredoc_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2")) return false;
     heredoc_2_0(b, l + 1);
     return true;
   }
 
-  // '|'? pipeline
+  // '|'? commands_list
   private static boolean heredoc_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = heredoc_2_0_0(b, l + 1);
-    r = r && pipeline(b, l + 1);
+    r = r && commands_list(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

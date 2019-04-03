@@ -27,8 +27,8 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
 
   @Override
   @Nullable
-  public BashPipeline getPipeline() {
-    return findChildByClass(BashPipeline.class);
+  public BashCommandsList getCommandsList() {
+    return findChildByClass(BashCommandsList.class);
   }
 
   @Override

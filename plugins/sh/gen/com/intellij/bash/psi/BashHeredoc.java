@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface BashHeredoc extends BashCompositeElement {
 
   @Nullable
-  BashPipeline getPipeline();
+  BashCommandsList getCommandsList();
 
   @Nullable
   PsiElement getHeredocMarkerEnd();

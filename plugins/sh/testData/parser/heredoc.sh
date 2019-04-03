@@ -94,3 +94,7 @@ cat << EOF | fmt | mail -s "Warning: $account Exceeds Quota" $account
 Your disk usage is ${usage}MB but you have only been allocated
 ${MAXDISKUSAGE}MB.
 EOF
+
+cat << EOF > exp || framework_failure_
+  text example
+EOF

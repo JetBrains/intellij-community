@@ -195,12 +195,14 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(HEREDOC_MARKER_START)('EOF')
               PsiWhiteSpace(' ')
-              PIPELINE
-                GENERIC_COMMAND_DIRECTIVE
-                  REDIRECTION
-                    PsiElement(>)('>')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
@@ -221,12 +223,14 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(HEREDOC_MARKER_START)('FOE')
               PsiWhiteSpace(' ')
-              PIPELINE
-                GENERIC_COMMAND_DIRECTIVE
-                  REDIRECTION
-                    PsiElement(>>)('>>')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>>)('>>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('FOE')
@@ -247,12 +251,14 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(HEREDOC_MARKER_START)(''END_OF_FILE'')
               PsiWhiteSpace(' ')
-              PIPELINE
-                GENERIC_COMMAND_DIRECTIVE
-                  REDIRECTION
-                    PsiElement(>)('>')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, without the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('END_OF_FILE')
@@ -273,12 +279,14 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(HEREDOC_MARKER_START)(''eof'')
               PsiWhiteSpace(' ')
-              PIPELINE
-                GENERIC_COMMAND_DIRECTIVE
-                  REDIRECTION
-                    PsiElement(>>)('>>')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>>)('>>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, without the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('eof')
@@ -301,16 +309,18 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(|)('|')
               PsiWhiteSpace(' ')
-              PIPELINE
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('sudo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('tee')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('sudo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('tee')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('until_it_ends')
@@ -333,25 +343,27 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(|)('|')
               PsiWhiteSpace(' ')
-              PIPELINE
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('sudo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('-u')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('foo')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('tee')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('-a')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('/path/to/your/file')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('sudo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('-u')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('foo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('tee')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('-a')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, without the variable contents substituted.\n')
               PsiElement(HEREDOC_MARKER_END)('Screw_you_Foo')
@@ -388,12 +400,14 @@ BASH_FILE
                         PsiWhiteSpace(' ')
                         PsiElement(HEREDOC_MARKER_START)('EOF')
                         PsiWhiteSpace(' ')
-                        PIPELINE
-                          GENERIC_COMMAND_DIRECTIVE
-                            REDIRECTION
-                              PsiElement(>)('>')
-                              PsiWhiteSpace(' ')
-                              PsiElement(word)('/tmp/yourfilehere')
+                        COMMANDS_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              GENERIC_COMMAND_DIRECTIVE
+                                REDIRECTION
+                                  PsiElement(>)('>')
+                                  PsiWhiteSpace(' ')
+                                  PsiElement(word)('/tmp/yourfilehere')
                         PsiElement(\n)('\n')
                         PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n')
                         PsiElement(HEREDOC_MARKER_END)('EOF')
@@ -416,35 +430,70 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(|)('|')
               PsiWhiteSpace(' ')
-              PIPELINE
-                GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('fmt')
-                PsiWhiteSpace(' ')
-                PsiElement(|)('|')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('mail')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    PsiElement(word)('-s')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    STRING
-                      PsiElement(")('"')
-                      PsiElement(word)('Warning:')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('fmt')
+                    PsiWhiteSpace(' ')
+                    PsiElement(|)('|')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('mail')
                       PsiWhiteSpace(' ')
-                      VARIABLE
-                        PsiElement(var)('$account')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('-s')
                       PsiWhiteSpace(' ')
-                      PsiElement(word)('Exceeds')
+                      SIMPLE_COMMAND_ELEMENT
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement(word)('Warning:')
+                          PsiWhiteSpace(' ')
+                          VARIABLE
+                            PsiElement(var)('$account')
+                          PsiWhiteSpace(' ')
+                          PsiElement(word)('Exceeds')
+                          PsiWhiteSpace(' ')
+                          PsiElement(word)('Quota')
+                          PsiElement(")('"')
                       PsiWhiteSpace(' ')
-                      PsiElement(word)('Quota')
-                      PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    VARIABLE
-                      PsiElement(var)('$account')
+                      SIMPLE_COMMAND_ELEMENT
+                        VARIABLE
+                          PsiElement(var)('$account')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('Your disk usage is ${usage}MB but you have only been allocated\n${MAXDISKUSAGE}MB.\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiWhiteSpace(' ')
+              PsiElement(HEREDOC_MARKER_START)('EOF')
+              PsiWhiteSpace(' ')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('exp')
+                PsiWhiteSpace(' ')
+                PsiElement(||)('||')
+                PsiWhiteSpace(' ')
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('framework_failure_')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('  text example\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
