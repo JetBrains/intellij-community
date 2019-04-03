@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -21,6 +22,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.Arrays;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -46,21 +51,86 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
 
           final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
           if (subscription == null) return;
-          final PsiElement operand = subscription.getOperand();
-          if (operand instanceof PyReferenceExpression) {
-            final PsiElement resolvedElement = PyResolveUtil.fullResolveLocally((PyReferenceExpression)operand);
+          Optional<Pair<PyReferenceExpression, List<String>>> re = findReference(subscription);
+
+          re.ifPresent(operandAndDepth -> {
+            PyReferenceExpression operand = operandAndDepth.getFirst();
+            final PsiElement resolvedElement = PyResolveUtil.fullResolveLocally(operand);
+
             if (resolvedElement instanceof PyDictLiteralExpression) {
-              addDictLiteralKeys((PyDictLiteralExpression)resolvedElement, dictCompletion);
+              List<String> path = operandAndDepth.getSecond();
+              List<String> precedingPath = path.subList(1, path.size());
+              findNestedDict(resolvedElement, precedingPath).ifPresent(
+                nestedDict -> {
+                  if (!precedingPath.contains(null)) {
+                    addDictLiteralKeys(nestedDict, dictCompletion);
+                  }
+                }
+              );
               addAdditionalKeys(parameters.getOriginalFile(), operand, dictCompletion);
             }
             if (resolvedElement instanceof PyCallExpression) {
               addDictConstructorKeys((PyCallExpression)resolvedElement, dictCompletion);
               addAdditionalKeys(parameters.getOriginalFile(), operand, dictCompletion);
             }
-          }
+          });
         }
       }
     );
+  }
+
+  private Optional<PyDictLiteralExpression> findNestedDict(@NotNull final PsiElement dict,
+                                                           @NotNull final List<String> path) {
+    if (!(dict instanceof PyDictLiteralExpression)) {
+      return Optional.empty();
+    }
+
+    PyDictLiteralExpression typedDict = (PyDictLiteralExpression)dict;
+
+    if (path.isEmpty()) {
+      return Optional.of(typedDict);
+    }
+
+    String curLevelKey = path.get(path.size() - 1);
+
+    return Arrays.stream(typedDict.getElements()).filter(el -> el.getKey() instanceof PyStringLiteralExpression &&
+                                                               ((PyStringLiteralExpression)el.getKey()).getStringValue()
+                                                                 .equals(curLevelKey) &&
+                                                               el.getValue() != null)
+      .findAny()
+      .flatMap(el -> findNestedDict(el.getValue(), path.subList(0, path.size() - 1)));
+  }
+
+  /**
+   * Returns {@link Optional} of {@link PyReferenceExpression} and its depth in the chain of {@code getOperand} calls.
+   *
+   * @param el Element.
+   * @return {@link Optional} of {@link PyReferenceExpression} and its depth in the chain of {@code getOperand} calls.
+   */
+  @NotNull
+  private static Optional<Pair<PyReferenceExpression, List<String>>> findReference(@NotNull final PySubscriptionExpression el) {
+    List<String> indexes = new ArrayList<>();
+    PsiElement curr = el;
+
+    while (curr instanceof PySubscriptionExpression) {
+      PyExpression indexExpression = ((PySubscriptionExpression)curr).getIndexExpression();
+
+      String index = null;
+      if (indexExpression != null) {
+         index = indexExpression instanceof PyStringLiteralExpression
+                       ? ((PyStringLiteralExpression)indexExpression).getStringValue()
+                       : indexExpression.getText();
+      }
+
+      indexes.add(index);
+      curr = ((PySubscriptionExpression)curr).getOperand();
+    }
+
+    if (curr instanceof PyReferenceExpression) {
+      return Optional.of(new Pair<>((PyReferenceExpression)curr, indexes));
+    }
+
+    return Optional.empty();
   }
 
   /**
@@ -161,7 +231,8 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   /**
    * add keys from dict literal expression
    */
-  public static void addDictLiteralKeys(final PyDictLiteralExpression dict, final CompletionResultSet result) {
+  public static void addDictLiteralKeys(final PyDictLiteralExpression dict,
+                                        final CompletionResultSet result) {
     PyKeyValueExpression[] keyValues = dict.getElements();
     for (PyKeyValueExpression expression : keyValues) {
       boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(dict.getContainingFile(), expression.getTextRange().getStartOffset(),

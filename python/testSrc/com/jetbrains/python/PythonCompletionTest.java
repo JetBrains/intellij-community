@@ -1425,6 +1425,15 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
+  // PY-21079
+  public void testNestedDictKeys() {
+    final List<String> suggested = doTestByText("foo = {'k1': {'sk1' : 'item1', 'sk2' : 'item2'}, 'k2': '2'}\n" +
+                                                "bar = foo\n" +
+                                                "bar['k1']['<caret>']");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "'sk1'", "'sk2'");
+  }
+
   // PY-8302
   public void testUndeclaredFunction() {
     myFixture.configureByFile("uninitialized/fun.py");
