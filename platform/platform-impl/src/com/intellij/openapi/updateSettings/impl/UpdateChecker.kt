@@ -36,6 +36,10 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
+import com.intellij.util.analytics.logClickNotification
+import com.intellij.util.analytics.logNotificationShown
+import com.intellij.util.analytics.logUpdateDialogOpenFromNotification
+import com.intellij.util.analytics.logUpdateDialogOpenManually
 import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
@@ -392,12 +396,19 @@ object UpdateChecker {
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
 
       if (alwaysShowResults) {
+        // Android Studio: Analytics
+        logUpdateDialogOpenManually(newBuild.number.asStringWithoutProductCode());
         runnable.invoke()
       }
       else {
+        // Android Studio: Analytics
+        logNotificationShown(newBuild.number.asStringWithoutProductCode());
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
         showNotification(project, message, {
+          // Android Studio: Analytics
+          logClickNotification(newBuild.number.asStringWithoutProductCode());
+          logUpdateDialogOpenFromNotification(newBuild.number.asStringWithoutProductCode());
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
         }, NotificationUniqueType.PLATFORM)

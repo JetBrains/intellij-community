@@ -46,6 +46,7 @@ import java.util.*;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.analytics.StudioUpdateAnalyticsUtil.*;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -157,6 +158,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+          // Android Studio: Analytics
+          logClickUpdate(myNewBuild.getNumber().asStringWithoutProductCode());
           close(OK_EXIT_CODE);
           downloadPatchAndRestart();
         }
@@ -166,13 +169,22 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     List<ButtonInfo> buttons = myNewBuild.getButtons();
     for (ButtonInfo info : buttons) {
       if (!info.isDownload() || myPatches == null && myTestPatch == null) {
-        actions.add(new ButtonAction(info));
+        // Android Studio: Analytics
+        actions.add(new ButtonAction(info) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            logClickAction(info.getName(), myNewBuild.getNumber().asStringWithoutProductCode());
+            super.actionPerformed(e);
+          }
+        });
       }
     }
 
     actions.add(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
+        // Android Studio: Analytics
+        logClickIgnore(myNewBuild.getNumber().asStringWithoutProductCode());
         String build = myNewBuild.getNumber().asStringWithoutProductCode();
         UpdateSettings.getInstance().getIgnoredBuildNumbers().add(build);
         doCancelAction();
@@ -189,6 +201,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
+  // Android Studio: Analytics
+  @Override
+  public void doCancelAction() {
+    logClickLater(myNewBuild.getNumber().asStringWithoutProductCode());
+    super.doCancelAction();
+  }
+
   private void downloadPatchAndRestart() {
     boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
     if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
@@ -202,6 +221,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         try {
           if (myPatches != null) {
             List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), myForceHttps, indicator);
+            // Android Studio: Analytics
+            logDownloadSuccess(myNewBuild.getNumber().asStringWithoutProductCode());
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
           else {
@@ -210,6 +231,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
         catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
+          // Android Studio: Analytics
+          logDownloadFailure(myNewBuild.getNumber().asStringWithoutProductCode());
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
