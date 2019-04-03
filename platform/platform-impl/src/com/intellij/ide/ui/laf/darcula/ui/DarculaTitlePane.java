@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameActions;
+import com.intellij.openapi.wm.impl.customFrameDecorations.FrameBorderlessActions;
 import com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel.CustomDecorationPath;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -63,7 +63,6 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
     installSubcomponents();
     determineColors();
-    installDefaults();
 
     setOpaque(true);
     setBackground(JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground());
@@ -126,32 +125,53 @@ public class DarculaTitlePane extends JPanel implements Disposable {
     setCustomDecorationHitTestSpots();
   }
 
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+
+    uninstallListeners();
+    myWindow = null;
+  }
+
   private void setCustomDecorationHitTestSpots() {
-    Frame frame = getFrame();
-    if (frame == null) return;
+    Window window = getWindow();
+    if (window == null) return;
 
     List<Rectangle> hitTestSpots = new ArrayList<>();
 
-    Rectangle iconRect = new RelativeRectangle(productIcon).getRectangleOn(this);
-    Rectangle menuRect = new RelativeRectangle(myIdeMenu).getRectangleOn(this);
-    Rectangle buttonsRect = new RelativeRectangle(buttonPanes).getRectangleOn(this);
+    Rectangle iconRect = productIcon == null ? null : new RelativeRectangle(productIcon).getRectangleOn(this);
+    Rectangle menuRect = myIdeMenu == null ? null : new RelativeRectangle(myIdeMenu).getRectangleOn(this);
+    Rectangle buttonsRect = buttonPanes == null ? null : new RelativeRectangle(buttonPanes).getRectangleOn(this);
 
-    int state = frame.getExtendedState();
-    if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
+    Frame frame = getFrame();
+    if (frame != null) {
+      int state = frame.getExtendedState();
+      if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
 
-      menuRect.y += Math.round(menuRect.height / 3);
+        if (menuRect != null) {
+          menuRect.y += Math.round(menuRect.height / 3);
+        }
 
-      iconRect.y += resizeGap;
-      iconRect.x += resizeGap;
+        if (iconRect != null) {
+          iconRect.y += resizeGap;
+          iconRect.x += resizeGap;
+        }
 
-      buttonsRect.y += resizeGap;
-      buttonsRect.x += resizeGap;
-      buttonsRect.width -= resizeGap;
+        if (buttonsRect != null) {
+          buttonsRect.y += resizeGap;
+          buttonsRect.x += resizeGap;
+          buttonsRect.width -= resizeGap;
+        }
+      }
     }
-
+    if (menuRect != null)
     hitTestSpots.add(menuRect);
+
     hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds());
-    hitTestSpots.add(iconRect);
+    if (iconRect != null) {
+      hitTestSpots.add(iconRect);
+    }
+    if (buttonsRect != null)
     hitTestSpots.add(buttonsRect);
 
     JdkEx.setCustomDecorationHitTestSpots(myWindow, hitTestSpots);
@@ -162,21 +182,13 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
   }
 
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-
-    uninstallListeners();
-    myWindow = null;
-  }
-
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
 
     if (decorationStyle == JRootPane.FRAME) {
       setLayout(new MigLayout("novisualpadding, fillx, ins 0, gap 0, top", menuBarGap + "[pref!]" + menuBarGap + "[][pref!]"));
 
-      CustomFrameActions actions = CustomFrameActions.Companion.create(myRootPane);
+      FrameBorderlessActions actions = FrameBorderlessActions.Companion.create(myRootPane);
 
       buttonPanes = actions.getButtonPaneView();
       Disposer.register(actions, this);
@@ -202,23 +214,25 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         add(titleLabel, "growx, snap 2");
       }
       add(actions.getButtonPaneView(), "top, wmin pref");
-    }
-    else if (decorationStyle == JRootPane.PLAIN_DIALOG ||
+    } else /*if (decorationStyle == JRootPane.PLAIN_DIALOG ||
              decorationStyle == JRootPane.INFORMATION_DIALOG ||
              decorationStyle == JRootPane.ERROR_DIALOG ||
              decorationStyle == JRootPane.COLOR_CHOOSER_DIALOG ||
              decorationStyle == JRootPane.FILE_CHOOSER_DIALOG ||
              decorationStyle == JRootPane.QUESTION_DIALOG ||
-             decorationStyle == JRootPane.WARNING_DIALOG) {
-      setLayout(new MigLayout("fill, novisualpadding, ins 0, gap 0", menuBarGap + "[pref!]push[pref!]"));
+             decorationStyle == JRootPane.WARNING_DIALOG)*/ {
+      setLayout(new MigLayout("fillx, novisualpadding, ins 0, gap 0", menuBarGap + "[min!]" + menuBarGap + "[][pref!]"));
 
-      // titleLabel.setIcon(mySystemIcon);
+
+      FrameBorderlessActions actions = FrameBorderlessActions.Companion.create(myRootPane);
+      productIcon = actions.getProductIcon();
+      add(productIcon);
       add(titleLabel, "growx");
-      CustomFrameActions actions = CustomFrameActions.Companion.create(myRootPane);
+      titleLabel.setText(getTitle());
 
       buttonPanes = actions.getButtonPaneView();
       Disposer.register(actions, this);
-      add(buttonPanes);
+      add(buttonPanes, "top, wmin pref");
     }
   }
 
@@ -241,10 +255,6 @@ public class DarculaTitlePane extends JPanel implements Disposable {
         myActiveForeground = UIManager.getColor("activeCaptionText");
         break;
     }
-  }
-
-  private void installDefaults() {
-    setFont(JBUI.Fonts.label().asBold());
   }
 
   private void setActive(boolean isSelected) {

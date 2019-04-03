@@ -9,6 +9,7 @@ import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -98,6 +100,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setGlassPane(glassPane);
     glassPane.setVisible(false);
     //setUndecorated(true);
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      JdkEx.setHasCustomDecoration(this);
+    }
+
     setContentPane(myScreen.getWelcomePanel());
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
