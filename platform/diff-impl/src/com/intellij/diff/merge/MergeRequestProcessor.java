@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -187,16 +186,14 @@ public abstract class MergeRequestProcessor implements Disposable {
                                                  : ContainerUtil.packNullables(resolveAction, cancelAction);
 
     JRootPane rootPane = getRootPane();
-    JPanel buttonsPanel = new NonOpaquePanel(new GridBagLayout());
+    JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
     buttonsPanel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
 
-    GridBag bag = new GridBag();
     if (leftActions.size() > 0) {
-      buttonsPanel.add(createButtonsPanel(leftActions, rootPane), bag.next());
+      buttonsPanel.add(createButtonsPanel(leftActions, rootPane), BorderLayout.WEST);
     }
-    buttonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());
-    if (leftActions.size() > 0) {
-      buttonsPanel.add(createButtonsPanel(rightActions, rootPane), bag.next());
+    if (rightActions.size() > 0) {
+      buttonsPanel.add(createButtonsPanel(rightActions, rootPane), BorderLayout.EAST);
     }
 
     myButtonsPanel.setContent(buttonsPanel);
