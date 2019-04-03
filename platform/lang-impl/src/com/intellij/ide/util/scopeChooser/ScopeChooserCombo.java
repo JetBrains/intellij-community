@@ -15,11 +15,14 @@ import com.intellij.psi.search.SearchScopeProvider;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +80,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUI.scale(300));
-    combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
+    combo.setRenderer(new MyRenderer());
 
     rebuildModel();
 
@@ -237,16 +240,37 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
+  private static class MyRenderer extends ColoredListCellRenderer<ScopeDescriptor> {
     @Override
-    public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        setIcon(value.getIcon());
-        setText(value.getDisplayName());
-      }
+    protected void customizeCellRenderer(@NotNull JList<? extends ScopeDescriptor> list,
+                                         ScopeDescriptor value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
+      if (value == null) return;
+      setIcon(value.getIcon());
+      append(value.getDisplayName());
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends ScopeDescriptor> list,
+                                                  ScopeDescriptor value,
+                                                  int index,
+                                                  boolean selected,
+                                                  boolean hasFocus) {
       if (value instanceof ScopeSeparator) {
-        setSeparator();
+        separator.setText(value.getDisplayName());
+        return separator;
       }
+      super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+      setIpad(index == -1 ? JBUI.emptyInsets() : JBUI.insets(1, UIUtil.LARGE_VGAP + 2, 1, 0));
+      return this;
+    }
+
+    final TitledSeparator separator = new TitledSeparator();
+    {
+      separator.setBorder(new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
+      UIUtil.setNotOpaqueRecursively(separator);
     }
   }
 
