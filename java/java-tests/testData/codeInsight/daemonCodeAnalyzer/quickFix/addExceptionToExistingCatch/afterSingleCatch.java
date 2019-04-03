@@ -1,4 +1,4 @@
-// "Replace 'IndexOutOfBoundsException' with 'IOException'" "true"
+// "Add 'IOException' to catch with 'IndexOutOfBoundsException'" "true"
 import java.io.File;
 import java.io.IOException;
 
