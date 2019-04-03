@@ -18,4 +18,25 @@ public interface SearchSymbolReferenceParameters extends DumbAwareSearchParamete
 
   @NotNull
   SearchScope getEffectiveSearchScope();
+
+  interface Builder {
+
+    /**
+     * @return new query instance with adjusted search scope or this instance if passed search scope is equal to original
+     */
+    @NotNull
+    Builder inScope(@NotNull SearchScope scope);
+
+    /**
+     * @return new query instance which will ignore use scope or this instance if use scope is already ignored
+     */
+    @NotNull
+    Builder ignoreUseScope();
+
+    @NotNull
+    Builder ignoreUseScope(boolean ignore);
+
+    @NotNull
+    SymbolReferenceQuery build();
+  }
 }

@@ -86,7 +86,7 @@ internal data class SearchWordParametersImpl(
   }
 
   override fun build(): Query<out TextOccurrence> {
-    return SearchWordQueryImpl(project, this)
+    return SearchWordQueryImpl(this)
   }
 
   override fun build(target: Symbol): Query<out SymbolReference> {

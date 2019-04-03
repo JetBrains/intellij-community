@@ -4,26 +4,28 @@ package com.intellij.model.search.impl
 import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
 import com.intellij.model.SymbolService
-import com.intellij.model.search.DefaultSymbolReferenceSearchParameters
-import com.intellij.model.search.SymbolReferenceSearch
+import com.intellij.model.search.SearchService
 import com.intellij.openapi.application.QueryExecutorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.QuerySearchRequest
 import com.intellij.psi.search.SearchRequestCollector
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.search.searches.ReferencesSearch.SearchParameters
 import com.intellij.util.CustomProcessorQuery
 import com.intellij.util.PairProcessor
 import com.intellij.util.Processor
 
 /**
- * Includes [SymbolReferenceSearch] results into [ReferencesSearch] results.
+ * Includes [com.intellij.model.search.SymbolReferenceQuery] results into [ReferencesSearch] results.
  *
  * @see PsiToSymbolSearchRequestor
  */
-class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
+class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, SearchParameters>(false) {
 
-  override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
+  override fun processQuery(queryParameters: SearchParameters, consumer: Processor<in PsiReference>) {
     if (!Registry.`is`("ide.symbol.reference.search")) return
     if (queryParameters is PsiToSymbolSearchRequestor.SymbolToPsiParameters) {
       // search started from SymbolReferenceSearch
@@ -31,10 +33,10 @@ class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesS
       // -> don't query SymbolReferenceSearch again because we started from there
       return
     }
-    val modelElement = SymbolService.adaptPsiElement(queryParameters.elementToSearch)
-    val modelParameters = PsiToSymbolParameters(modelElement, queryParameters)
-    val modelQuery = SymbolReferenceSearch.search(modelParameters)
-    val psiQuery = CustomProcessorQuery(modelQuery, this::adaptProcessor)
+    val symbol = SymbolService.adaptPsiElement(queryParameters.elementToSearch)
+    val symbolParameters = PsiToSymbolParameters(symbol, queryParameters)
+    val symbolQuery = SearchService.getInstance().searchTarget(symbolParameters)
+    val psiQuery = CustomProcessorQuery(symbolQuery, this::adaptProcessor)
     queryParameters.optimizer.apply {
       val nested = SearchRequestCollector(searchSession)
       val request = QuerySearchRequest(psiQuery, nested, false, PairProcessor { ref, _ -> consumer.process(ref) })
@@ -54,12 +56,12 @@ class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesS
   }
 
   internal class PsiToSymbolParameters(
-    target: Symbol,
-    psiParameters: ReferencesSearch.SearchParameters
-  ) : DefaultSymbolReferenceSearchParameters(
-    psiParameters.project,
-    target,
-    psiParameters.scopeDeterminedByUser,
-    psiParameters.isIgnoreAccessScope
-  )
+    private val target: Symbol,
+    private val psiParameters: SearchParameters
+  ) : SearchSymbolReferenceParametersBase() {
+    override fun getProject(): Project = psiParameters.project
+    override fun getTarget(): Symbol = target
+    override fun getOriginalSearchScope(): SearchScope = psiParameters.scopeDeterminedByUser
+    override fun isIgnoreUseScope(): Boolean = psiParameters.isIgnoreAccessScope
+  }
 }

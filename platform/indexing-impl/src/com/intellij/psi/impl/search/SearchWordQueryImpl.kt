@@ -4,14 +4,10 @@ package com.intellij.psi.impl.search
 import com.intellij.model.search.SearchWordParameters
 import com.intellij.model.search.SearchWordQuery
 import com.intellij.model.search.TextOccurrence
-import com.intellij.openapi.project.Project
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 
-class SearchWordQueryImpl(
-  private val project: Project,
-  private val parameters: SearchWordParameters
-) : AbstractQuery<TextOccurrence>(), SearchWordQuery {
+class SearchWordQueryImpl(private val parameters: SearchWordParameters) : AbstractQuery<TextOccurrence>(), SearchWordQuery {
 
   override fun getParameters(): SearchWordParameters = parameters
 

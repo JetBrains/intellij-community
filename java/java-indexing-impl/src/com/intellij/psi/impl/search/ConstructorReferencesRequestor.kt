@@ -3,7 +3,9 @@ package com.intellij.psi.impl.search
 
 import com.intellij.model.PsiSymbolReference
 import com.intellij.model.SymbolReference
-import com.intellij.model.search.*
+import com.intellij.model.search.SearchRequestor
+import com.intellij.model.search.SearchService
+import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
@@ -18,19 +20,13 @@ class ConstructorReferencesRequestor : SearchRequestor {
     if (!target.isConstructor) return emptyList()
     val clazz = target.containingClass ?: return emptyList()
 
+    val service = SearchService.getInstance()
     val project = parameters.project
     val manager = PsiManager.getInstance(project)
     val scope = parameters.effectiveSearchScope
     val restrictedScope = (scope as? GlobalSearchScope)?.intersectWith(JavaFilesSearchScope(project)) ?: scope
 
-    val classQuery = SymbolReferenceSearch.search(DefaultSymbolReferenceSearchParameters(
-      parameters.project,
-      clazz,
-      restrictedScope,
-      parameters.isIgnoreUseScope
-    ))
-
-    val service = SearchService.getInstance()
+    val classQuery = service.searchTarget(project, clazz).inScope(restrictedScope).ignoreUseScope(parameters.isIgnoreUseScope).build()
 
     // search usages like "new XXX(..)"
     val newXxxQuery = service.filter(classQuery, fun(classReference: SymbolReference): Boolean {

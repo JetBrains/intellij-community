@@ -6,7 +6,7 @@
 
     <preloadingActivity implementation="com.intellij.codeInsight.completion.CompletionPreloader"/>
 
-    <searchRequestor2 implementation="com.intellij.model.search.impl.PsiToSymbolSearchRequestor" order="last"/>
+    <searchRequestor implementation="com.intellij.model.search.impl.PsiToSymbolSearchRequestor" order="last"/>
     <referencesSearch implementation="com.intellij.model.search.impl.SymbolToPsiReferenceSearcher" order="first"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
