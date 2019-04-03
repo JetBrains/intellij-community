@@ -545,7 +545,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     val iterator = schemeToInfo.entries.iterator()
     l@ for ((scheme, info) in iterator) {
-      if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme)) == scheme) {
+      if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme)) === scheme) {
         continue
       }
 
