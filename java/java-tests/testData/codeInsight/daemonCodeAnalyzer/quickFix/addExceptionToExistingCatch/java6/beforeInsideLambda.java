@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "false"
+// "Replace 'Exception' with more generic 'Exception'" "false"
 import java.util.function.Supplier;
 
 class C {

@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "false"
+// "Replace 'FileNotFoundException' with more generic 'IllegalAccessException'" "false"
 import java.io.*;
 
 

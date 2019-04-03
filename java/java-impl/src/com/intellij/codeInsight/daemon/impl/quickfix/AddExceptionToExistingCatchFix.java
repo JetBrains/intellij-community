@@ -38,8 +38,6 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     List<PsiClassType> unhandledExceptions = context.myExceptions;
     List<PsiCatchSection> catches = context.myCatches;
 
-    setText(context.getMessage());
-
     if (catches.size() == 1) {
       PsiCatchSection selectedSection = catches.get(0);
       addTypeToCatch(unhandledExceptions, selectedSection);
@@ -113,7 +111,12 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return Context.from(myErrorElement) != null;
+    Context context = Context.from(myErrorElement);
+    if (context != null) {
+      setText(context.getMessage());
+      return true;
+    }
+    return false;
   }
 
   @Nls
@@ -121,12 +124,6 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
   @Override
   public String getFamilyName() {
     return QuickFixBundle.message("add.exception.to.existing.catch.family");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
   }
 
   private static class Context {
@@ -206,6 +203,6 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       }
       return false;
     }
-    return catchType.isAssignableFrom(newException);
+    return newException.isAssignableFrom(catchType);
   }
 }

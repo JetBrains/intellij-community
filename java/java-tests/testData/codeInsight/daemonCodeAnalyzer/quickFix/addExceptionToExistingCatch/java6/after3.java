@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Replace 'E1' with more generic 'E'" "true"
 class C {
     static class E extends Exception { }
     static class E1 extends E { }
