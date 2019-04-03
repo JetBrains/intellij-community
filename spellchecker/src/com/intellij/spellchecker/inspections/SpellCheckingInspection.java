@@ -75,6 +75,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       public void visitElement(final PsiElement element) {
         if (holder.getResultCount()>1000) return;
 
+        if (element.getTextLength() > 200000) {
+          return;
+        }
+
         final ASTNode node = element.getNode();
         if (node == null) {
           return;
