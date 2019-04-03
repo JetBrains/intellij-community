@@ -35,13 +35,15 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
-    } else {
-      AbstractButton b = (AbstractButton) c;
+    }
+    else {
+      AbstractButton b = (AbstractButton)c;
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.translate(0, 0);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
         float lw = LW(g2);
         float arc = ARC.getFloat();
@@ -56,14 +58,15 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(outerRect, false);
         outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
-                                                   w - lw*2 - (i.left + i.right),
-                                                   h - lw*2 - (i.top + i.bottom),
-                                                   arc - lw, arc - lw), false);
+                                                  w - lw * 2 - (i.left + i.right),
+                                                  h - lw * 2 - (i.top + i.bottom),
+                                                  arc - lw, arc - lw), false);
         g2.setPaint(getBorderPaint(c));
         g2.fill(outline);
 
         paintContents(g2, b);
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
@@ -76,11 +79,13 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
     if (!b.isEnabled()) {
       return Gray.xF1;
-    } else if (isDefaultButton(b)) {
+    }
+    else if (isDefaultButton(b)) {
       return UIUtil.isGraphite() ?
-          new GradientPaint(0, i.top, new Color(0xb2b2b7), 0, h - (i.top + i.bottom), new Color(0x929297)) :
-          new GradientPaint(0, i.top, new Color(0x68b2fa), 0, b.getHeight() - (i.top + i.bottom), new Color(0x0e80ff));
-    } else {
+             new GradientPaint(0, i.top, new Color(0xb2b2b7), 0, h - (i.top + i.bottom), new Color(0x929297)) :
+             new GradientPaint(0, i.top, new Color(0x68b2fa), 0, b.getHeight() - (i.top + i.bottom), new Color(0x0e80ff));
+    }
+    else {
       Color backgroundColor = (Color)b.getClientProperty("JButton.backgroundColor");
       return backgroundColor != null ? backgroundColor : Gray.xFF;
     }
@@ -93,11 +98,13 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
     if (!b.isEnabled()) {
       return new GradientPaint(0, i.top, Gray.xD2, 0, h - (i.top + i.bottom), Gray.xC3);
-    } else if (isDefaultButton(b)) {
+    }
+    else if (isDefaultButton(b)) {
       return UIUtil.isGraphite() ?
-          new GradientPaint(0, i.top, new Color(0xa5a5ab), 0, h - (i.top + i.bottom), new Color(0x7d7d83)) :
-          new GradientPaint(0, i.top, new Color(0x4ba0f8), 0, h - (i.top + i.bottom), new Color(0x095eff));
-    } else {
+             new GradientPaint(0, i.top, new Color(0xa5a5ab), 0, h - (i.top + i.bottom), new Color(0x7d7d83)) :
+             new GradientPaint(0, i.top, new Color(0x4ba0f8), 0, h - (i.top + i.bottom), new Color(0x095eff));
+    }
+    else {
       Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
       return borderColor != null ? borderColor : new GradientPaint(0, i.top, Gray.xC9, 0, h - (i.top + i.bottom), Gray.xAC);
     }
@@ -108,10 +115,11 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     if (UIUtil.isHelpButton(c)) {
       Icon icon = LafIconLookup.getIcon("help");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
-    } else {
+    }
+    else {
       Insets i = c.getInsets();
       return new Dimension(getComboAction(c) != null ?
-                           prefSize.width:
+                           prefSize.width :
                            Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
                            Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
     }
@@ -127,8 +135,9 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int x = textRect.x + getTextShiftOffset();
     int y = textRect.y + metrics.getAscent() + getTextShiftOffset();
     if (isDefaultButton(c)) {
-     g.setColor(Gray.xCC);
-    } else {
+      g.setColor(Gray.xCC);
+    }
+    else {
       g.setColor(UIManager.getColor("Button.disabledText"));
     }
     UIUtilities.drawStringUnderlineCharAt(c, g, text, -1, x, y);

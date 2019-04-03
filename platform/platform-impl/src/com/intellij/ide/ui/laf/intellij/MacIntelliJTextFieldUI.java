@@ -32,7 +32,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
            UIUtil.getParentOfType(JSpinner.class, c) != null ||
            isCompact(c) ?
-            textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
+           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
   @Override

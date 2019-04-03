@@ -35,14 +35,16 @@ public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
     return new WinIntelliJPasswordFieldUI();
   }
 
-  @Override public void installListeners() {
+  @Override
+  public void installListeners() {
     super.installListeners();
     JTextComponent passwordField = getComponent();
     hoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(passwordField, HOVER_PROPERTY);
     passwordField.addMouseListener(hoverListener);
   }
 
-  @Override public void uninstallListeners() {
+  @Override
+  public void uninstallListeners() {
     super.uninstallListeners();
     JTextComponent passwordField = getComponent();
     if (hoverListener != null) {
@@ -62,10 +64,11 @@ public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
         g2.fillRect(0, 0, c.getWidth(), c.getHeight());
       }
 
-      if (c.getBorder() instanceof WinIntelliJTextBorder){
+      if (c.getBorder() instanceof WinIntelliJTextBorder) {
         WinIntelliJTextFieldUI.paintTextFieldBackground(c, g2);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

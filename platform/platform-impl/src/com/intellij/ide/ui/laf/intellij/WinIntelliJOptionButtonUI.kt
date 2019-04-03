@@ -23,7 +23,7 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
   override fun createMainButton(): MainButton = object : MainButton() {
     override fun paintNotSimple(g: Graphics2D) {
       g.clipRect(0, 0, width - outerInsets.right, height)
-//      background is painted in button ui
+      //      background is painted in button ui
 
       super.paintNotSimple(g)
     }
@@ -54,7 +54,7 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
     override fun paintNotSimple(g: Graphics2D) {
       val bw = scale(2)
       g.clipRect(outerInsets.left + bw, 0, width - (outerInsets.left + bw), height)
-//      background is painted in button ui
+      // background is painted in button ui
 
       super.paintNotSimple(g)
       paintArrow(g, this)
