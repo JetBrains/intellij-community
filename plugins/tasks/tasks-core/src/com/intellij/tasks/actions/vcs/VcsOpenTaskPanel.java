@@ -154,8 +154,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
         myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
         myUseBranch.setSelected(myTaskManager.getState().useBranch && myUseBranchCombo.getItemCount() > 0);
       }
-      myBranchFrom.setRenderer(new TaskInfoCellRenderer(myBranchFrom));
-      myUseBranchCombo.setRenderer(new TaskInfoCellRenderer(myUseBranchCombo));
+      myBranchFrom.setRenderer(new TaskInfoCellRenderer());
+      myUseBranchCombo.setRenderer(new TaskInfoCellRenderer());
       myBranchName.setText(branchName);
       new ComboboxSpeedSearch(myBranchFrom);
       new ComboboxSpeedSearch(myUseBranchCombo);
@@ -287,9 +287,6 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   }
 
   private static class TaskInfoCellRenderer extends ColoredListCellRenderer<VcsTaskHandler.TaskInfo> {
-    TaskInfoCellRenderer(ComboBox from) {
-      super(from);
-    }
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list,
