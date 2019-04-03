@@ -182,7 +182,13 @@ public class HardcodedContracts {
       if ("notNull".equals(methodName) && paramCount > 0) {
         ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
-        return Collections.singletonList(new StandardMethodContract(constraints, fail()));
+        StandardMethodContract contract = new StandardMethodContract(constraints, fail());
+        if (PsiType.VOID.equals(method.getReturnType())) {
+          return Collections.singletonList(contract);
+        }
+        else {
+          return Arrays.asList(contract, new StandardMethodContract(createConstraintArray(paramCount), returnParameter(0)));
+        }
       }
     }
     else if (isJunit(className) || isTestng(className) ||
