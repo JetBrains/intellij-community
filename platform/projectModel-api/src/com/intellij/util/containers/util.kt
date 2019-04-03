@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import gnu.trove.THashSet
@@ -190,4 +191,22 @@ inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
   return (this as java.util.Collection<E>).toArray(empty)
+}
+
+fun <T> Iterable<T>.cancellable(progress: ProgressIndicator): Iterable<T> {
+  return Iterable {
+    iterator().cancellable(progress)
+  }
+}
+
+fun <T> Iterator<T>.cancellable(progress: ProgressIndicator): Iterator<T> = object : Iterator<T> {
+  override fun hasNext(): Boolean {
+    progress.checkCanceled()
+    return this@cancellable.hasNext()
+  }
+
+  override fun next(): T {
+    progress.checkCanceled()
+    return this@cancellable.next()
+  }
 }
