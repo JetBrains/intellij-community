@@ -1,0 +1,175 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.wm.impl.customFrameDecorations.header
+
+import com.intellij.icons.AllIcons
+import com.intellij.jdkEx.JdkEx
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUIScale
+import java.awt.*
+import java.awt.event.*
+import javax.swing.*
+
+abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
+    companion object {
+        const val H_GAP = 7
+        const val MIN_HEIGHT = 24
+        val HIT_TEST_RESIZE_GAP = JBUI.scale(3);
+
+        fun create(window: Window): CustomHeader {
+            val customHeader = if (window is JFrame && window.rootPane is IdeRootPane) {
+                createFrameHeader(window)
+            } else {
+                DialogHeader(window)
+            }
+            return customHeader
+        }
+
+        fun createFrameHeader(frame: JFrame): CustomHeader {
+            val frameHeader = FrameHeader(frame)
+            return frameHeader
+        }
+    }
+
+    private var windowListener: WindowListener
+    private val myComponentListener: ComponentListener
+    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
+        ObjectUtils.notNull(
+                AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
+    }
+
+    protected var productIcon: JComponent
+    protected var myActive = false
+
+    protected val buttonPanes: CustomFrameTitleButtons by lazy {
+        createButtonsPane()
+    }
+
+    init {
+        isOpaque = true
+        background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground()
+
+
+        val ctx = JBUIScale.ScaleContext.create(window)
+        ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
+        val icon = myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
+
+        productIcon = createProductIcon(icon)
+
+        fun onClose() {
+            Disposer.dispose(this)
+        }
+
+        windowListener = object : WindowAdapter() {
+            override fun windowActivated(ev: WindowEvent?) {
+                setActive(true)
+            }
+
+            override fun windowDeactivated(ev: WindowEvent?) {
+                setActive(false)
+            }
+
+            override fun windowClosed(e: WindowEvent?) {
+                onClose()
+            }
+        }
+
+        myComponentListener = object : ComponentAdapter() {
+            override fun componentResized(e: ComponentEvent?) {
+                setCustomDecorationHitTestSpots()
+            }
+        }
+    }
+
+
+    abstract fun createButtonsPane(): CustomFrameTitleButtons
+
+    override fun addNotify() {
+        super.addNotify()
+        installListeners()
+        setCustomDecorationHitTestSpots()
+    }
+
+    override fun removeNotify() {
+        super.removeNotify()
+        uninstallListeners()
+    }
+
+    protected open fun installListeners() {
+        window.addWindowListener(windowListener)
+        window.addComponentListener(myComponentListener)
+    }
+
+    protected open fun uninstallListeners() {
+        window.removeWindowListener(windowListener)
+        window.removeComponentListener(myComponentListener)
+    }
+
+    protected fun setCustomDecorationHitTestSpots() {
+        JdkEx.setCustomDecorationHitTestSpots(window, getHitTestSpots())
+    }
+
+    abstract fun getHitTestSpots(): List<Rectangle>
+
+    protected open fun setActive(value: Boolean) {
+        myActive = value
+        buttonPanes.isSelected = value
+        buttonPanes.updateVisibility()
+    }
+
+    protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }
+
+    protected fun close() {
+        window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
+    }
+
+    override fun dispose() {
+    }
+
+    protected class CustomFrameAction(name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
+        override fun actionPerformed(e: ActionEvent) = action()
+    }
+
+    private fun createProductIcon(icon: Icon): JComponent {
+        val myMenuBar = object : JMenuBar() {
+            override fun getPreferredSize(): Dimension {
+                return minimumSize
+            }
+
+            override fun getMinimumSize(): Dimension {
+                return Dimension(icon.iconWidth, icon.iconHeight)
+            }
+
+            override fun paint(g: Graphics?) {
+                icon.paintIcon(this, g, 0, 0)
+            }
+        }
+
+        val menu = object : JMenu() {
+            override fun getPreferredSize(): Dimension {
+                return myMenuBar.preferredSize
+            }
+        }
+        myMenuBar.add(menu)
+
+        myMenuBar.isOpaque = false
+        menu.isFocusable = false
+        menu.isBorderPainted = true
+
+        addMenuItems(menu)
+
+        return myMenuBar
+    }
+
+    open fun addMenuItems(menu: JMenu) {
+        val closeMenuItem = menu.add(myCloseAction)
+        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+    }
+}
+

@@ -6,12 +6,11 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -30,10 +29,15 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AppIcon;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
@@ -937,9 +941,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void setContentPane(Container contentPane) {
-        super.setContentPane(contentPane);
-        if (contentPane != null) {
-          contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
+        Container container;
+        if (IdeFrameDecorator.isCustomDecoration() && contentPane != null) {
+          JdkEx.setHasCustomDecoration(getWindow());
+
+          CustomFrameDialogContent content = new CustomFrameDialogContent(getWindow(), contentPane);
+          container = content.getView();
+        }
+        else {
+          container = contentPane;
+        }
+
+        super.setContentPane(container);
+        if (container != null) {
+          container.addMouseMotionListener(new MouseMotionAdapter() {
+          }); // listen to mouse motino events for a11y
         }
       }
 
