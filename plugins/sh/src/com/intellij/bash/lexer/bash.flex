@@ -247,12 +247,13 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
+    "$(("                         { yypushback(2); return DOLLAR; }
+    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
     "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
-    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
                                     else return RIGHT_DOUBLE_PAREN; }
@@ -315,7 +316,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 //    {AssignListWord}              { return WORD; }
 
     {Shebang}                     { return SHEBANG; }
-    {Comment}                     { return COMMENT; }
+    {Comment}                     { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT; }
 
     {WhiteSpace}+                 |
     {LineContinuation}+           { return WHITESPACE; }
