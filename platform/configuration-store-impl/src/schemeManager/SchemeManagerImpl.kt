@@ -9,15 +9,12 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -48,8 +45,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      val roamingType: RoamingType = RoamingType.DEFAULT,
                                                      val presentableName: String? = null,
                                                      private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                     private val fileChangeSubscriber: ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
-  private val isUseVfs = fileChangeSubscriber != null
+                                                     private val fileChangeSubscriber: ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(
+  processor), SafeWriteRequestor {
+  private val isUseVfs: Boolean
+    get() = fileChangeSubscriber != null
 
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
@@ -173,7 +172,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String {
     return when {
       StringUtilRt.endsWithIgnoreCase(fileName, schemeExtension) -> schemeExtension
-      StringUtilRt.endsWithIgnoreCase(fileName, DEFAULT_EXT) -> DEFAULT_EXT
+      StringUtilRt.endsWithIgnoreCase(fileName, FileStorageCoreUtil.DEFAULT_EXT) -> FileStorageCoreUtil.DEFAULT_EXT
       isAllowAny -> PathUtil.getFileExtension(fileName.toString())!!
       else -> throw IllegalStateException("Scheme file extension $fileName is unknown, must be filtered out")
     }
@@ -260,7 +259,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   internal fun getFileName(scheme: T) = schemeToInfo.get(scheme)?.fileNameWithoutExtension
 
-  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
+  fun canRead(name: CharSequence) = (updateExtension && name.endsWith(FileStorageCoreUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   override fun save(errors: MutableList<Throwable>) {
     if (isLoadingSchemes.get()) {
@@ -566,7 +565,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String) = removeFirstScheme {processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = removeFirstScheme { processor.getSchemeKey(it) == name }
 
   override fun removeScheme(scheme: T) = removeFirstScheme { it == scheme } != null
 
@@ -594,38 +593,5 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     return null
-  }
-}
-
-internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
-  return RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
-}
-
-internal class SchemeDataHolderImpl<out T : Any, in MUTABLE_SCHEME : T>(private val processor: SchemeProcessor<T, MUTABLE_SCHEME>,
-                                                                        private val bytes: ByteArray,
-                                                                        private val externalInfo: ExternalInfo) : SchemeDataHolder<MUTABLE_SCHEME> {
-  override fun read(): Element {
-    try {
-      return JDOMUtil.load(bytes.inputStream())
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Exception) {
-      throw RuntimeException("Cannot read ${externalInfo.fileName}", e)
-    }
-  }
-
-  override fun updateDigest(scheme: MUTABLE_SCHEME) {
-    try {
-      updateDigest(processor.writeScheme(scheme) as Element)
-    }
-    catch (e: WriteExternalException) {
-      LOG.error("Cannot update digest for ${externalInfo.fileName}", e)
-    }
-  }
-
-  override fun updateDigest(data: Element?) {
-    externalInfo.digest = data?.digest() ?: ArrayUtilRt.EMPTY_BYTE_ARRAY
   }
 }
