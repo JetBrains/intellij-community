@@ -39,7 +39,7 @@ import java.util.List;
 public class ScopePanel extends JPanel {
 
   private static final Condition<ScopeDescriptor> SCOPE_FILTER =
-    (ScopeDescriptor descriptor) -> IdeBundle.message("scope.class.hierarchy").equals(descriptor.getDisplay()) ||
+    (ScopeDescriptor descriptor) -> IdeBundle.message("scope.class.hierarchy").equals(descriptor.getDisplayName()) ||
                                     !(descriptor.getScope() instanceof ModuleWithDependenciesScope); // don't show module scope
 
   private final Project myProject;
