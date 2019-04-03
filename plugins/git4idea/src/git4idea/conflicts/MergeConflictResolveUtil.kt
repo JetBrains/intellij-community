@@ -5,10 +5,8 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
-import com.intellij.diff.merge.MergeRequest
-import com.intellij.diff.merge.MergeRequestProducer
-import com.intellij.diff.merge.MergeResult
-import com.intellij.diff.merge.MergeUtil
+import com.intellij.diff.merge.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -58,32 +56,16 @@ object MergeConflictResolveUtil {
     override fun process(context: UserDataHolder, indicator: ProgressIndicator): MergeRequest {
       try {
         val resolver = resolverComputer()
-        val file = resolver.virtualFile
-
-        val resolveCallback = { result: MergeResult ->
-          val document = FileDocumentManager.getInstance().getCachedDocument(file)
-          if (document != null) FileDocumentManager.getInstance().saveDocument(document)
-
-          MergeUtil.reportProjectFileChangeIfNeeded(project, file)
-
-          if (result != MergeResult.CANCEL) {
-            runBackgroundableTask("Finishing Conflict Resolve", project, false) {
-              resolver.onConflictResolved()
-              VcsDirtyScopeManager.getInstance(project).filesDirty(listOf(file), emptyList())
-            }
-          }
-        }
 
         val mergeData = resolver.mergeData
         val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
 
         val request = runReadAction {
-          DiffRequestFactory.getInstance().createMergeRequest(project, file, byteContents,
-                                                              resolver.windowTitle, resolver.contentTitles,
-                                                              resolveCallback)
+          DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
+                                                              resolver.windowTitle, resolver.contentTitles)
         }
         MergeUtil.putRevisionInfos(request, mergeData)
-        // TODO: notify MergeRequestProcessor about conflict invalidation
+        MergeCallback.register(request, MyMergeCallback(resolver))
 
         return request
       }
@@ -128,6 +110,33 @@ object MergeConflictResolveUtil {
       panel.createActionLabel("Focus Window") { UIUtil.toFront(wrapper.window) }
       panel.createActionLabel("Cancel Resolve") { wrapper.close() }
       return panel
+    }
+  }
+
+  private class MyMergeCallback(private val resolver: GitMergeHandler.Resolver) : MergeCallback() {
+    override fun applyResult(result: MergeResult) {
+      val project = resolver.project
+      val file = resolver.virtualFile
+
+      val document = FileDocumentManager.getInstance().getCachedDocument(file)
+      if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+
+      MergeUtil.reportProjectFileChangeIfNeeded(project, file)
+
+      if (result != MergeResult.CANCEL) {
+        runBackgroundableTask("Finishing Conflict Resolve", project, false) {
+          resolver.onConflictResolved()
+          VcsDirtyScopeManager.getInstance(project).filesDirty(listOf(file), emptyList())
+        }
+      }
+    }
+
+    override fun checkIsValid(): Boolean {
+      return resolver.checkIsValid()
+    }
+
+    override fun addListener(listener: Listener, disposable: Disposable) {
+      resolver.addListener(listener, disposable)
     }
   }
 }

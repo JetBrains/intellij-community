@@ -20,6 +20,7 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
@@ -209,8 +210,9 @@ public class PatchDiffRequestFactory {
     if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
     DocumentContent resultContent = DiffContentFactory.getInstance().create(project, document, file);
-    return new ApplyPatchMergeRequest(project, resultContent, textPatch, localContent,
-                                      windowTitle, localTitle, resultTitle, patchTitle, callback);
+    ApplyPatchMergeRequest request = new ApplyPatchMergeRequest(project, resultContent, textPatch, localContent,
+                                                                windowTitle, localTitle, resultTitle, patchTitle);
+    return MergeCallback.register(request, callback);
   }
 
   @NotNull

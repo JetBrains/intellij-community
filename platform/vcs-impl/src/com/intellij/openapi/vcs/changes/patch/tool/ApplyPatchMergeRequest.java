@@ -16,13 +16,13 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +40,6 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
   @NotNull private final String myResultTitle;
   @NotNull private final String myPatchTitle;
 
-  @Nullable private final Consumer<? super MergeResult> myCallback;
-
   public ApplyPatchMergeRequest(@Nullable Project project,
                                 @NotNull DocumentContent resultContent,
                                 @NotNull AppliedTextPatch appliedPatch,
@@ -49,8 +47,7 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
                                 @Nullable String windowTitle,
                                 @NotNull String localTitle,
                                 @NotNull String resultTitle,
-                                @NotNull String patchTitle,
-                                @Nullable Consumer<? super MergeResult> callback) {
+                                @NotNull String patchTitle) {
     myProject = project;
     myResultContent = resultContent;
     myAppliedPatch = appliedPatch;
@@ -62,8 +59,6 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
     myLocalTitle = localTitle;
     myResultTitle = resultTitle;
     myPatchTitle = patchTitle;
-
-    myCallback = callback;
   }
 
   @Nullable
@@ -115,10 +110,12 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
+    MergeCallback callback = MergeCallback.getCallback(this);
+
     final CharSequence applyContent;
     switch (result) {
       case CANCEL:
-        applyContent = myOriginalContent;
+        applyContent = callback.shouldRestoreOriginalContentOnCancel() ? myOriginalContent : null;
         break;
       case LEFT:
         applyContent = myLocalContent;
@@ -136,6 +133,6 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
       WriteCommandAction.writeCommandAction(myProject).run(() -> myResultContent.getDocument().setText(applyContent));
     }
 
-    if (myCallback != null) myCallback.consume(result);
+    callback.applyResult(result);
   }
 }

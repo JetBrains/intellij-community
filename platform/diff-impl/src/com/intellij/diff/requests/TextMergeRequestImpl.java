@@ -16,13 +16,13 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,15 +38,12 @@ public class TextMergeRequestImpl extends TextMergeRequest {
   @Nullable private final String myTitle;
   @NotNull private final List<String> myTitles;
 
-  @Nullable private final Consumer<? super MergeResult> myApplyCallback;
-
   public TextMergeRequestImpl(@Nullable Project project,
                               @NotNull DocumentContent output,
                               @NotNull CharSequence originalContent,
                               @NotNull List<DocumentContent> contents,
                               @Nullable String title,
-                              @NotNull List<String> contentTitles,
-                              @Nullable Consumer<? super MergeResult> applyCallback) {
+                              @NotNull List<String> contentTitles) {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
     myProject = project;
@@ -57,8 +54,6 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myContents = contents;
     myTitles = contentTitles;
     myTitle = title;
-
-    myApplyCallback = applyCallback;
 
     onAssigned(true);
   }
@@ -89,11 +84,13 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
+    MergeCallback callback = MergeCallback.getCallback(this);
+
     try {
       final CharSequence applyContent;
       switch (result) {
         case CANCEL:
-          applyContent = myOriginalContent;
+          applyContent = callback.shouldRestoreOriginalContentOnCancel() ? myOriginalContent : null;
           break;
         case LEFT:
           CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
@@ -114,7 +111,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
         DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
       }
 
-      if (myApplyCallback != null) myApplyCallback.consume(result);
+      callback.applyResult(result);
     }
     finally {
       onAssigned(false);
