@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -97,19 +96,20 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   private static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
-    VirtualFile sdkHomeDir = StandardFileSystems.local().findFileByPath(sdkPath);
-    if (sdkHomeDir == null) {
+    final VirtualFile pyExecutable = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (pyExecutable == null) {
       return null;
     }
-    final VirtualFile bin = sdkHomeDir.getParent();
+    final VirtualFile pyExecutableDir = pyExecutable.getParent();
     String condaName = "conda";
     if (SystemInfo.isWindows) {
-      condaName = bin.findChild("envs") != null ? "conda.exe" : "conda.bat";
+      condaName = pyExecutableDir.findChild("envs") != null ? "conda.exe" : "conda.bat";
     }
-    final VirtualFile conda = bin.findChild(condaName);
+    final VirtualFile conda = pyExecutableDir.findChild(condaName);
     if (conda != null) return conda.getPath();
-    final VirtualFile condaFolder = bin.getParent();
-
+    // On Windows python.exe is directly inside base interpreter/environment directory. 
+    // On other systems executable normally resides in "bin" subdirectory.
+    final VirtualFile condaFolder = SystemInfo.isWindows ? pyExecutableDir : pyExecutableDir.getParent();
     return findExecutable(condaName, condaFolder);
   }
 
