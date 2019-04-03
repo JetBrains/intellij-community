@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -17,13 +17,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * The base class for all programming language support implementations. Specific language implementations should inherit from this class
- * and its register instance wrapped with {@link LanguageFileType} instance via {@code FileTypeManager.getInstance().registerFileType()}.
+ * The base class for all programming language support implementations.
+ * Specific language implementations should inherit from this class
+ * and its registered instance wrapped with {@link LanguageFileType} via {@link com.intellij.openapi.fileTypes.FileTypeFactory} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.<p/>
- *
- * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}
+ * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
+ * <p>
+ * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
