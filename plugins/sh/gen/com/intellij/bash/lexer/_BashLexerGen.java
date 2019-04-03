@@ -793,41 +793,43 @@ public class _BashLexerGen implements FlexLexer {
 
   /* user code: */
   public _BashLexerGen() { this(null); }
-    private static final int DOUBLE_PARENTHESES = 2;
-    private static final int PARENTHESES = 1;
+      private static final int DOUBLE_PARENTHESES = 2;
+      private static final int PARENTHESES = 1;
 
-    private CharSequence heredocMarker;
-    private IntStack stateStack = new IntStack(20);
-    private IntStack parenStack = new IntStack(20);
+      private String heredocMarker;
+      private IntStack stateStack = new IntStack(20);
+      private IntStack parenStack = new IntStack(20);
 
-    private void pushState(int state) {
-      stateStack.push(yystate());
-      yybegin(state);
-    }
-    private void popState() {
-      assert !stateStack.empty() : "States stack is empty";
-      yybegin(stateStack.pop());
-    }
+      private void pushState(int state) {
+        int currentState = yystate();
+        assert currentState != YYINITIAL || stateStack.empty() : "Can't push initial state into the not empty stack";
+        stateStack.push(currentState);
+        yybegin(state);
+      }
+      private void popState() {
+        assert !stateStack.empty() : "States stack is empty";
+        yybegin(stateStack.pop());
+      }
 
-    private void pushParentheses(int parentheses) {
-      parenStack.push(parentheses);
-    }
-    private void popParentheses() {
-      assert !parenStack.empty() : "Parentheses stack is empty";
-      parenStack.pop();
-    }
-    private boolean shouldCloseDoubleParen() {
-      return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
-    }
-    private boolean shouldCloseSingleParen() {
-      return !parenStack.empty() && parenStack.peek() == PARENTHESES;
-    }
+      private void pushParentheses(int parentheses) {
+        parenStack.push(parentheses);
+      }
+      private void popParentheses() {
+        assert !parenStack.empty() : "Parentheses stack is empty";
+        parenStack.pop();
+      }
+      private boolean shouldCloseDoubleParen() {
+        return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
+      }
+      private boolean shouldCloseSingleParen() {
+        return !parenStack.empty() && parenStack.peek() == PARENTHESES;
+      }
 
-    protected void onReset() {
-      stateStack.clear();
-      parenStack.clear();
-      heredocMarker = null;
-    }
+      protected void onReset() {
+        stateStack.clear();
+        parenStack.clear();
+        heredocMarker = null;
+      }
 
 
   /**
@@ -1271,15 +1273,15 @@ public class _BashLexerGen implements FlexLexer {
           case 155: break;
           case 39: 
             { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
-                                      heredocMarker = yytext().subSequence(1, yylength()-1);
-                                    else heredocMarker = yytext();
+                                      heredocMarker = yytext().subSequence(1, yylength()-1).toString();
+                                    else heredocMarker = yytext().toString();
                                     yybegin(HERE_DOC_PIPELINE);
                                     return HEREDOC_MARKER_START;
             } 
             // fall through
           case 156: break;
           case 40: 
-            { if (yytext().equals(heredocMarker)) { heredocMarker = ""; popState(); return HEREDOC_MARKER_END; }
+            { if (yytext().toString().equals(heredocMarker)) { heredocMarker = null; popState(); return HEREDOC_MARKER_END; }
                                     else { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
             } 
             // fall through
