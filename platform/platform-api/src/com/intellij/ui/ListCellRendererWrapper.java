@@ -34,7 +34,9 @@ import static com.intellij.openapi.util.Pair.pair;
  * is used instead of DefaultComboBoxRenderer.
  *
  * @author oleg
+ * @deprecated GTK+ LaF is obsolete
  */
+@Deprecated
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final ListCellRenderer myDefaultRenderer;
 
