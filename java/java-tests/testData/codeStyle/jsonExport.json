@@ -50,7 +50,7 @@
       "call_parameters_new_line_after_left_paren": false,
       "call_parameters_right_paren_on_new_line": false,
       "call_parameters_wrap": "on_every_item",
-      "case_statement_on_new_line": true,
+      "case_statement_on_separate_line": true,
       "catch_on_new_line": false,
       "class_annotation_wrap": "split_into_lines",
       "class_brace_style": "end_of_line",

@@ -3758,4 +3758,78 @@ public enum LevelCode {
   }
 
 
+  fun testIdea195707() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = true
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE:
+                      return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE:
+                      return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea195707_1() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = false
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE: return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE: return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
 }

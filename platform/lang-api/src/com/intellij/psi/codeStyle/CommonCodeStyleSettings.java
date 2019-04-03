@@ -394,7 +394,8 @@ public class CommonCodeStyleSettings {
   public boolean FINALLY_ON_NEW_LINE = false;
 
   public boolean INDENT_CASE_FROM_SWITCH = true;
-  
+
+  @Property(externalName = "case_statement_on_separate_line")
   public boolean CASE_STATEMENT_ON_NEW_LINE = true;
 
   /**

@@ -550,9 +550,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
-    "    case 0:\n" +
-    "      doCase0();\n" +
-    "      break;\n" +
+    "    case 0: case 1:\ndoCase0(); break;\ncase 2: case 3: return;" +
     "    default:\n" +
     "      doDefault();\n" +
     "    }\n" +
