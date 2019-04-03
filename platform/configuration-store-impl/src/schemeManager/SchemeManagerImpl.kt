@@ -327,8 +327,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     LOG.info("Remove scheme directory ${ioDirectory.fileName}")
 
-    var deleteUsingIo = !isUseVfs
-    if (!deleteUsingIo) {
+    if (isUseVfs) {
       val dir = virtualDirectory
       cachedVirtualDirectory = null
       if (dir != null) {
@@ -337,15 +336,15 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
             dir.delete(this)
           }
           catch (e: IOException) {
-            deleteUsingIo = true
             errors.add(e)
           }
         }
       }
     }
-
-    if (deleteUsingIo) {
-      errors.catch { ioDirectory.delete() }
+    else {
+      errors.catch {
+        ioDirectory.delete()
+      }
     }
   }
 
