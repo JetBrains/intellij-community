@@ -8,8 +8,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import static com.intellij.ui.RelativeFont.SMALL;
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
 
-  private final static Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<>();
+  private final static Map<NavBarItem, Map<ImageType, Map<JBUIScale.ScaleContext, BufferedImage>>> myCache = new THashMap<>();
 
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
@@ -88,9 +90,10 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
 
-    Map<ImageType, BufferedImage> cached = myCache.computeIfAbsent(item, k -> new HashMap<>());
-
-    BufferedImage image = cached.computeIfAbsent(type, k -> drawToBuffer(item, floating, toolbarVisible, selected, navbar));
+    Map<ImageType, Map<JBUIScale.ScaleContext, BufferedImage>> cached = myCache.computeIfAbsent(item, k -> new HashMap<>());
+    Map<JBUIScale.ScaleContext, BufferedImage> scaledImageCache = cached.computeIfAbsent(type, k -> new HashMap<>());
+    BufferedImage image = scaledImageCache
+      .computeIfAbsent(JBUIScale.ScaleContext.create(g), ctx -> drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar));
 
     UIUtil.drawImage(g, image, 0, 0, null);
 
@@ -102,13 +105,18 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     item.doPaintText(g, textOffset);
   }
 
-  private static BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
+  private static BufferedImage drawToBuffer(NavBarItem item,
+                                            JBUIScale.ScaleContext ctx,
+                                            boolean floating,
+                                            boolean toolbarVisible,
+                                            boolean selected,
+                                            NavBarPanel navbar) {
     int w = item.getWidth();
     int h = item.getHeight();
     int offset = (w - getDecorationOffset());
     int h2 = h / 2;
 
-    BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage result = UIUtil.createImage(ctx, w, h, BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR);
 
     Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : JBColor.WHITE;
     final Paint bg = floating ? defaultBg : null;
