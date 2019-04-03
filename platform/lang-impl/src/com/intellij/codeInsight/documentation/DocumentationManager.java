@@ -60,6 +60,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -93,13 +94,29 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final long DOC_GENERATION_TIMEOUT_MILLISECONDS = 60000;
   private static final long DOC_GENERATION_PAUSE_MILLISECONDS = 100;
 
+  private static final Class[] ACTION_CLASSES_TO_IGNORE = {
+    HintManagerImpl.ActionToIgnore.class,
+    ScrollingUtil.ScrollingAction.class,
+    SwingActionDelegate.class,
+    BaseNavigateToSourceAction.class
+  };
+  private static final String[] ACTION_IDS_TO_IGNORE = {
+    IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_UP,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP,
+    IdeActions.ACTION_EDITOR_ESCAPE
+  };
+  private static final String[] ACTION_PLACES_TO_IGNORE = {
+    ActionPlaces.JAVADOC_INPLACE_SETTINGS,
+    ActionPlaces.JAVADOC_TOOLBAR
+  };
+
   private Editor myEditor;
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private WeakReference<Component> myFocusedBeforePopup;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
-
-  private final ActionManager myActionManager;
 
   private final TargetElementUtil myTargetElementUtil;
 
@@ -206,24 +223,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public DocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
     super(project);
-    myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        JBPopup hint = getDocInfoHint();
-        if (hint != null) {
-          if (LookupManager.getActiveLookup(myEditor) != null) return; // let the lookup manage all the actions
-          if (action instanceof HintManagerImpl.ActionToIgnore) return;
-          if (action instanceof ScrollingUtil.ScrollingAction) return;
-          if (action instanceof SwingActionDelegate) return;
-          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
-          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
-          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
-          if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
-          if (action == ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
-          if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
-          if (ActionPlaces.JAVADOC_TOOLBAR.equals(event.getPlace())) return;
-          if (action instanceof BaseNavigateToSourceAction) return;
+        if (getDocInfoHint() != null &&
+            LookupManager.getActiveLookup(myEditor) == null && // let the lookup manage all the actions
+            !Conditions.instanceOf(ACTION_CLASSES_TO_IGNORE).value(action) &&
+            !ArrayUtil.contains(event.getPlace(), ACTION_PLACES_TO_IGNORE) &&
+            !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> manager.getAction(id) == action)) {
           closeDocHint();
         }
       }
