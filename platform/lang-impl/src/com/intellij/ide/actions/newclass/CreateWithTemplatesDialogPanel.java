@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ScrollingUtil;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -124,6 +126,13 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           if (myApplyAction != null) myApplyAction.consume(e);
         }
+      }
+    });
+
+    res.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        setError(null);
       }
     });
 
