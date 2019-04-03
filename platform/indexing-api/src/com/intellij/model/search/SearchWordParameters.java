@@ -5,6 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,38 +31,43 @@ public interface SearchWordParameters {
   @NotNull
   Set<SearchContext> getSearchContexts();
 
-  /**
-   * Sets search scope.<br/>
-   * If search scope is left unset then {@link SearchRequestCollector#getParameters() original} scope will be used.
-   */
-  @Contract("_ -> this")
-  @NotNull
-  SearchWordParameters inScope(@NotNull SearchScope searchScope);
+  interface Builder {
+    /**
+     * Sets search scope.<br/>
+     */
+    @Contract("_ -> new")
+    @NotNull
+    Builder inScope(@NotNull SearchScope searchScope);
 
-  /**
-   * Restricts search scope to include only selected file types.
-   */
-  @Contract("_ -> this")
-  @NotNull
-  SearchWordParameters restrictScopeTo(@NotNull FileType... fileTypes);
+    /**
+     * Restricts search scope to include only selected file types.
+     */
+    @Contract("_ -> new")
+    @NotNull
+    Builder restrictScopeTo(@NotNull FileType... fileTypes);
 
-  @Contract("-> this")
-  @NotNull
-  SearchWordParameters caseInsensitive();
+    @Contract("-> new")
+    @NotNull
+    Builder caseInsensitive();
 
-  @Contract("_, _ -> this")
-  @NotNull
-  SearchWordParameters inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
+    @Contract("_, _ -> new")
+    @NotNull
+    Builder inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
 
-  @Contract("-> this")
-  @NotNull
-  SearchWordParameters inAllContexts();
+    @Contract("-> new")
+    @NotNull
+    Builder inAllContexts();
 
-  /**
-   * Sets target hint which is used for optimizing search requests.
-   * Target is automatically set when using {@link #search(Symbol)}.
-   */
-  @Contract("_ -> this")
-  @NotNull
-  SearchWordParameters withTargetHint(@NotNull Symbol target);
+    /**
+     * Sets target hint which is used for optimizing search requests.
+     * Target is automatically set when using {@link #build(Symbol)}.
+     */
+    @Contract("_ -> new")
+    @NotNull
+    Builder withTargetHint(@NotNull Symbol target);
+
+    @Contract("-> new")
+    @NotNull
+    Query<? extends TextOccurrence> build();
+  }
 }

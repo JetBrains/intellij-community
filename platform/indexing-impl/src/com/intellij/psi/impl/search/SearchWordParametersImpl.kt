@@ -5,16 +5,19 @@ import com.intellij.model.Symbol
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchContext.*
 import com.intellij.model.search.SearchWordParameters
+import com.intellij.model.search.SearchWordParameters.Builder
+import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.Query
 import com.intellij.util.containers.toArray
 import java.util.*
 
-data class SearchWordParametersImpl constructor(
+internal data class SearchWordParametersImpl(
   private val project: Project,
   private val myWord: String,
   private val mySearchScope: SearchScope,
@@ -22,7 +25,7 @@ data class SearchWordParametersImpl constructor(
   private val myCaseInsensitive: Boolean,
   private val mySearchContexts: Set<SearchContext>?,
   private val myTargetHint: Symbol?
-) : SearchWordParameters {
+) : SearchWordParameters, Builder {
 
   constructor(project: Project, word: String) : this(project, word, GlobalSearchScope.EMPTY_SCOPE, null, true, null, null)
 
@@ -57,27 +60,31 @@ data class SearchWordParametersImpl constructor(
 
   override fun getTargetHint(): Symbol? = myTargetHint
 
-  override fun inScope(searchScope: SearchScope): SearchWordParameters {
+  override fun inScope(searchScope: SearchScope): Builder {
     return copy(mySearchScope = searchScope)
   }
 
-  override fun restrictScopeTo(vararg fileTypes: FileType): SearchWordParameters {
+  override fun restrictScopeTo(vararg fileTypes: FileType): Builder {
     return copy(myFileTypes = listOf(*fileTypes))
   }
 
-  override fun caseInsensitive(): SearchWordParameters {
+  override fun caseInsensitive(): Builder {
     return copy(myCaseInsensitive = true)
   }
 
-  override fun inContexts(context: SearchContext, vararg otherContexts: SearchContext): SearchWordParameters {
+  override fun inContexts(context: SearchContext, vararg otherContexts: SearchContext): Builder {
     return copy(mySearchContexts = EnumSet.of(context, *otherContexts))
   }
 
-  override fun inAllContexts(): SearchWordParameters {
+  override fun inAllContexts(): Builder {
     return copy(mySearchContexts = EnumSet.allOf(SearchContext::class.java))
   }
 
-  override fun withTargetHint(target: Symbol): SearchWordParameters {
+  override fun withTargetHint(target: Symbol): Builder {
     return copy(myTargetHint = target)
+  }
+
+  override fun build(): Query<out TextOccurrence> {
+    return SearchWordQueryImpl(project, this)
   }
 }

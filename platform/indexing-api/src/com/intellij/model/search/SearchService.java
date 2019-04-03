@@ -3,7 +3,6 @@ package com.intellij.model.search;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 public interface SearchService {
@@ -14,8 +13,5 @@ public interface SearchService {
   }
 
   @NotNull
-  SearchWordParameters searchWord(@NotNull String word);
-
-  @NotNull
-  Query<? extends TextOccurrence> searchWord(@NotNull SearchWordParameters parameters);
+  SearchWordParameters.Builder searchWord(@NotNull String word);
 }
