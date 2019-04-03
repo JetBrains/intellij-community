@@ -57,3 +57,21 @@ for i in $(seq 1 2 20)
 do
    echo "Welcome $i times"
 done
+
+
+
+for (( i=0; i<1; i++ ))    do
+     echo 1
+done
+
+
+for (( i=0; i<1; i++ ))
+
+do
+     echo 1
+done
+
+
+for ((i=0; i<$TOTAL_SOFTWARE_INDEXS; i++))     do
+     echo -e "aSOFTWARE_INSTALL_STATE[$i]=0" >> "$fp_target"
+done

@@ -230,63 +230,43 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression? ';' expression? ';' expression? '))' [list_terminator newlines] any_block
-  static boolean arithmetic_for(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for")) return false;
+  // '((' expression? ';' expression? ';' expression? '))'
+  static boolean arithmetic_for_clause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause")) return false;
     if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, arithmetic_for_1(b, l + 1));
+    r = r && report_error_(b, arithmetic_for_clause_1(b, l + 1));
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, arithmetic_for_3(b, l + 1)) && r;
+    r = p && report_error_(b, arithmetic_for_clause_3(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, arithmetic_for_5(b, l + 1)) && r;
-    r = p && report_error_(b, consumeToken(b, RIGHT_DOUBLE_PAREN)) && r;
-    r = p && report_error_(b, arithmetic_for_7(b, l + 1)) && r;
-    r = p && any_block(b, l + 1) && r;
+    r = p && report_error_(b, arithmetic_for_clause_5(b, l + 1)) && r;
+    r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // expression?
-  private static boolean arithmetic_for_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_1")) return false;
+  private static boolean arithmetic_for_clause_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_1")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   // expression?
-  private static boolean arithmetic_for_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_3")) return false;
+  private static boolean arithmetic_for_clause_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_3")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   // expression?
-  private static boolean arithmetic_for_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_5")) return false;
+  private static boolean arithmetic_for_clause_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_5")) return false;
     expression(b, l + 1, -1);
     return true;
-  }
-
-  // [list_terminator newlines]
-  private static boolean arithmetic_for_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_7")) return false;
-    arithmetic_for_7_0(b, l + 1);
-    return true;
-  }
-
-  // list_terminator newlines
-  private static boolean arithmetic_for_7_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_7_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = list_terminator(b, l + 1);
-    r = r && newlines(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -1153,85 +1133,58 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // for (
-  //                     w (';' newlines | newlines in_clause?) any_block
-  //                   | arithmetic_for
-  //                   )
+  // arithmetic_for_clause | in_for_clause
+  static boolean for_clause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_clause")) return false;
+    boolean r;
+    r = arithmetic_for_clause(b, l + 1);
+    if (!r) r = in_for_clause(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // for for_clause for_tail
   public static boolean for_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command")) return false;
     if (!nextTokenIs(b, FOR)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, FOR_COMMAND, null);
     r = consumeToken(b, FOR);
-    p = r; // pin = for|w
-    r = r && for_command_1(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, for_clause(b, l + 1));
+    r = p && for_tail(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // w (';' newlines | newlines in_clause?) any_block
-  //                   | arithmetic_for
-  private static boolean for_command_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1")) return false;
+  /* ********************************************************** */
+  // [list_terminator newlines] any_block
+  static boolean for_tail(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_tail")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = for_command_1_0(b, l + 1);
-    if (!r) r = arithmetic_for(b, l + 1);
+    r = for_tail_0(b, l + 1);
+    r = r && any_block(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // w (';' newlines | newlines in_clause?) any_block
-  private static boolean for_command_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1_0")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = w(b, l + 1);
-    p = r; // pin = for|w
-    r = r && report_error_(b, for_command_1_0_1(b, l + 1));
-    r = p && any_block(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+  // [list_terminator newlines]
+  private static boolean for_tail_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_tail_0")) return false;
+    for_tail_0_0(b, l + 1);
+    return true;
   }
 
-  // ';' newlines | newlines in_clause?
-  private static boolean for_command_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1_0_1")) return false;
+  // list_terminator newlines
+  private static boolean for_tail_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_tail_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = for_command_1_0_1_0(b, l + 1);
-    if (!r) r = for_command_1_0_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ';' newlines
-  private static boolean for_command_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, SEMI);
+    r = list_terminator(b, l + 1);
     r = r && newlines(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // newlines in_clause?
-  private static boolean for_command_1_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1_0_1_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && for_command_1_0_1_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // in_clause?
-  private static boolean for_command_1_0_1_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_command_1_0_1_1_1")) return false;
-    in_clause(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -1412,6 +1365,59 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // w (';' newlines | newlines in_clause?)
+  static boolean in_for_clause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_for_clause")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = w(b, l + 1);
+    p = r; // pin = 1
+    r = r && in_for_clause_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // ';' newlines | newlines in_clause?
+  private static boolean in_for_clause_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_for_clause_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = in_for_clause_1_0(b, l + 1);
+    if (!r) r = in_for_clause_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ';' newlines
+  private static boolean in_for_clause_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_for_clause_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, SEMI);
+    r = r && newlines(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // newlines in_clause?
+  private static boolean in_for_clause_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_for_clause_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = newlines(b, l + 1);
+    r = r && in_for_clause_1_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // in_clause?
+  private static boolean in_for_clause_1_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_for_clause_1_1_1")) return false;
+    in_clause(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */

@@ -22,8 +22,8 @@ public interface BashForCommand extends BashCommand {
   @NotNull
   List<BashExpression> getExpressionList();
 
-  @Nullable
-  BashListTerminator getListTerminator();
+  @NotNull
+  List<BashListTerminator> getListTerminatorList();
 
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();

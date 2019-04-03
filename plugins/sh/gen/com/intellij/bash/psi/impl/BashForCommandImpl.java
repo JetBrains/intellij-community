@@ -56,9 +56,9 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
-  @Nullable
-  public BashListTerminator getListTerminator() {
-    return findChildByClass(BashListTerminator.class);
+  @NotNull
+  public List<BashListTerminator> getListTerminatorList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashListTerminator.class);
   }
 
   @Override
