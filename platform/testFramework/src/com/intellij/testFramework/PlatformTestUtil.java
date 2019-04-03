@@ -509,17 +509,8 @@ public class PlatformTestUtil {
     return print(Arrays.asList(objects));
   }
 
-  public static String print(Collection c) {
-    StringBuilder result = new StringBuilder();
-    for (Iterator iterator = c.iterator(); iterator.hasNext();) {
-      Object each = iterator.next();
-      result.append(toString(each, null));
-      if (iterator.hasNext()) {
-        result.append("\n");
-      }
-    }
-
-    return result.toString();
+  public static String print(Collection<?> c) {
+    return c.stream().map(each -> toString(each, null)).collect(Collectors.joining("\n"));
   }
 
   public static String print(ListModel model) {
