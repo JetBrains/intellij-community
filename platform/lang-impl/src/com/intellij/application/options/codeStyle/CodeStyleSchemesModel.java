@@ -50,8 +50,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final Project myProject;
   private boolean myUiEventsEnabled = true;
 
-  private       String myOverridingStatus     = null;
-  private final Lock   myOverridingStatusLock = new ReentrantLock();
+  private @NotNull String myOverridingStatus     = "";
+  private final    Lock   myOverridingStatusLock = new ReentrantLock();
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
