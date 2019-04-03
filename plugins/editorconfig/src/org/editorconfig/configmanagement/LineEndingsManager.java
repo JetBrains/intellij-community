@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -66,7 +67,7 @@ public class LineEndingsManager implements FileDocumentManagerListener {
 
   private void applySettings(VirtualFile file) {
     if (file == null) return;
-    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
+    if (!Utils.isEnabled(CodeStyle.getSettings(myProject))) return;
 
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
