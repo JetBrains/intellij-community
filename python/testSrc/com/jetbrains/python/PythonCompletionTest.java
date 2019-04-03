@@ -1524,6 +1524,11 @@ public class PythonCompletionTest extends PyTestCase {
     assertDoesntContain(suggested, "foo");
   }
 
+  // PY-32269
+  public void testParamCompletionWithEquals() {
+    doTest();
+  }
+
 
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
