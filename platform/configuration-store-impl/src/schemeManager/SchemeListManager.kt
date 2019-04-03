@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
 import com.intellij.openapi.options.ExternalizableScheme
-import com.intellij.openapi.util.Condition
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.filterSmart
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Predicate
 
 internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
@@ -77,14 +77,14 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     schemeManager.processPendingCurrentSchemeName(scheme)
   }
 
-  fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
+  fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Predicate<T>?) {
     if (schemes.isNotEmpty()) {
       if (removeCondition == null) {
         schemes.clear()
       }
       else {
         // we must not use remove or removeAll to avoid "equals" call
-        schemesRef.set(ContainerUtil.createConcurrentList(schemes.filterSmart { !removeCondition.value(it) }))
+        schemesRef.set(ContainerUtil.createConcurrentList(schemes.filterSmart { !removeCondition.test(it) }))
       }
     }
 
