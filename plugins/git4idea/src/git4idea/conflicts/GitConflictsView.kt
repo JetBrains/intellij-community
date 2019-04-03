@@ -15,8 +15,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS
@@ -38,6 +36,7 @@ import git4idea.GitUtil
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
 import git4idea.repo.GitConflict.ConflictSide
+import git4idea.repo.GitConflictsHolder
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import java.awt.BorderLayout
@@ -102,13 +101,9 @@ class GitConflictsView(private val project: Project) : Disposable {
       }
     }.installOn(table)
 
-    ChangeListManager.getInstance(project).addChangeListListener(object : ChangeListListener {
-      override fun changeListUpdateDone() {
-        updateConflicts()
-      }
-    }, this)
-
-    project.messageBus.connect().subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateConflicts() })
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateConflicts() })
 
     updateConflicts()
   }

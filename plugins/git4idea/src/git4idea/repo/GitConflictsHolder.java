@@ -2,13 +2,17 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class GitConflictsHolder implements Disposable {
+  public static final Topic<ConflictsListener> CONFLICTS_CHANGE = Topic.create("GitConflictsHolder change", ConflictsListener.class);
+
   @NotNull private final GitRepository myRepository;
   @NotNull private final List<GitConflict> myConflicts = new ArrayList<>();
 
@@ -47,5 +51,10 @@ public class GitConflictsHolder implements Disposable {
       myConflicts.clear();
       myConflicts.addAll(map.values());
     }
+    BackgroundTaskUtil.syncPublisher(myRepository.getProject(), CONFLICTS_CHANGE).conflictsChanged(myRepository);
+  }
+
+  public interface ConflictsListener {
+    void conflictsChanged(@NotNull GitRepository repository);
   }
 }
