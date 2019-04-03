@@ -140,11 +140,6 @@ public class FormatterStarter implements ApplicationStarter {
   }
 
   private static void logArgs(@NotNull String[] args) {
-    StringBuilder sb = new StringBuilder();
-    for (String arg : args) {
-      if (sb.length() > 0) sb.append(",");
-      sb.append(arg);
-    }
-    LOG.info("Arguments: " + sb);
+    LOG.info("Arguments: " + String.join(",", args));
   }
 }
