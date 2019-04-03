@@ -298,7 +298,8 @@ public class FoldingModelSupport {
     private FoldedBlock createBlock(@NotNull Data.Block block, boolean expanded) {
       FoldRegion[] regions = new FoldRegion[myCount];
       for (int i = 0; i < myCount; i++) {
-        regions[i] = addFolding(myEditors[i], block.ranges[i].start, block.ranges[i].end, expanded);
+        LineRange range = block.ranges[i];
+        if (range != null) regions[i] = addFolding(myEditors[i], range.start, range.end, expanded);
       }
 
       boolean hasFolding = ContainerUtil.or(regions, Objects::nonNull);
@@ -542,7 +543,9 @@ public class FoldingModelSupport {
 
       Boolean state = null;
       for (int index = 0; index < myCount; index++) {
-        Boolean sideState = getCachedExpanded(block.ranges[index].start, block.ranges[index].end, index);
+        LineRange range = block.ranges[index];
+        if (range == null) continue;
+        Boolean sideState = getCachedExpanded(range.start, range.end, index);
         if (sideState == null) continue;
         if (state == null) {
           state = sideState;
@@ -657,6 +660,9 @@ public class FoldingModelSupport {
       @NotNull public final LineRange[] ranges;
       @NotNull public final String[] descriptions;
 
+      /**
+       * WARN: arrays can have nullable values (ex: when unchanged fragments in editors have different length due to ignore policy)
+       */
       private Block(@NotNull LineRange[] ranges, @NotNull String[] descriptions) {
         this.ranges = ranges;
         this.descriptions = descriptions;
