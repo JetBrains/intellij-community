@@ -1,4 +1,4 @@
-// "Replace 'C | D | B' with 'A'" "true"
+// "Replace 'C | D | B' with more generic 'A'" "true"
 import java.io.IOException;
 
 class A extends Exception {}

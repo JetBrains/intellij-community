@@ -197,7 +197,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     if (catchType instanceof PsiDisjunctionType) {
       PsiDisjunctionType disjunction = (PsiDisjunctionType)catchType;
       for (PsiType type : disjunction.getDisjunctions()) {
-        if (type.isAssignableFrom(newException)) {
+        if (newException.isAssignableFrom(type)) {
           return true;
         }
       }
