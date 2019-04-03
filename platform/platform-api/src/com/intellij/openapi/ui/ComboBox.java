@@ -20,15 +20,15 @@ import java.awt.event.*;
 import java.util.Objects;
 
 /**
- * Due to many bugs and "features" in {@code JComboBox} implementation we provide
+ * Due to many bugs and "features" in {@link JComboBox} implementation we provide
  * our own "patch". First of all it has correct preferred and minimum sizes that has sense
  * when combo box is editable. Also this implementation fixes some bugs with clicking
  * of default button. The SUN's combo box eats first "Enter" if the selected value from
  * the list and changed it. They say that combo box "commit" changes and only second
  * "Enter" clicks default button. This implementation clicks the default button
  * immediately. As the result of our patch combo box has internal wrapper for ComboBoxEditor.
- * It means that {@code getEditor} method always returns not the same value you set
- * by {@code setEditor} method. Moreover adding and removing of action listeners
+ * It means that {@link #getEditor()} method always returns not the same value you set
+ * by {@link #setEditor(ComboBoxEditor)} method. Moreover adding and removing of action listeners
  * isn't supported by the implementation of wrapper.
  *
  * @author Vladimir Kondratyev
