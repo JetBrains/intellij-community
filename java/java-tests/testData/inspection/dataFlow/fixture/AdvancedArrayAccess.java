@@ -227,7 +227,7 @@ class AdvancedArrayAccess {
   public static void main(String[] args) {
     String[] array = new String[] { null };
     change(new Object[] { array });
-    System.out.println(array[0]); // <-- Value 'array[0]' is always 'null'
+    System.out.println(array[0]); // <-- Value 'array[0]' was reported as always 'null'
   }
 
 }
