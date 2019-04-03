@@ -61,3 +61,17 @@ class AccessingProtectedConstructorFromSubclass : ProtectedConstructors(1)
 val objectAccessingDefaultProtectedConstructorFromSubclass = object : ProtectedConstructors() {}
 
 val objectAccessingProtectedConstructorFromSubclass = object : ProtectedConstructors(1) {}
+
+class AccessingProtectedMembersFromObjectLiteral {
+  fun bar1() {
+    object : ProtectedMembers() {
+      fun bar2() {
+        object : Runnable {
+          override fun run() {
+            method()
+          }
+        }
+      }
+    }
+  }
+}
