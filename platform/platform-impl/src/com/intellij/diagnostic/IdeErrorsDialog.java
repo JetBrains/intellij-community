@@ -295,7 +295,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       };
 
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new BlinkingLabel("Suggested assignee:"));
+      myAssigneePanel.add(new JBLabel("Assignee:"));
       myAssigneePanel.add(myAssigneeCombo);
     }
 
@@ -330,6 +330,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
+    if (myAssigneeVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
     accountRow.add(myCredentialsLabel, BorderLayout.EAST);
     myNoticePanel = new JPanel(new GridBagLayout());
     myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
@@ -337,11 +338,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel bottomRow = new JPanel(new BorderLayout());
     bottomRow.add(accountRow, BorderLayout.NORTH);
     bottomRow.add(myNoticePanel, BorderLayout.CENTER);
-    if (myAssigneeVisible) {
-      JPanel assigneeRow = new JPanel(new BorderLayout());
-      assigneeRow.add(myAssigneePanel, BorderLayout.EAST);
-      bottomRow.add(assigneeRow, BorderLayout.SOUTH);
-    }
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.setPreferredSize(JBUI.size(800, 400));
