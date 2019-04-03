@@ -3,10 +3,6 @@
     <pythonSdkTypeComparator implementation="com.jetbrains.python.sdk.PyPreferringCondaSdkTypeComparator"/>
   </extensions>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.pythonSdkTypeComparator" interface="com.jetbrains.python.sdk.PySdkTypeComparator"/>
-  </extensionPoints>
-
   <actions>
     <action id="InstallMiniconda" class="com.jetbrains.python.conda.InstallCondaAction"
             text="Install Miniconda 3...">
