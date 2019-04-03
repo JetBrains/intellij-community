@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @param processHandler        ProcessHandler instance wrapping underlying PtyProcess
    * @param attachToProcessOutput true if process output should be printed in the console,
    *                              false if output printing is managed externally, e.g. by testing
-   *                              console {@code com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
+   *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
    */
   protected final void attachToProcess(@NotNull ProcessHandler processHandler, boolean attachToProcessOutput) {
     if (!myAttachedToProcess.compareAndSet(false, true)) {
