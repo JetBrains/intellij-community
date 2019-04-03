@@ -8,7 +8,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,9 +87,24 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
-    public boolean STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD = true;
-    public boolean STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD = false;
-    public boolean FORCE_STICK_TO_CURRENT_WORD_WHEN_MULTI_CARET = true;
+    @Tag("caretStopOptions")
+    public static class CaretStops {
+      public boolean AT_WORD_START = false;
+      public boolean AT_WORD_END = false;
+    }
+
+    public CaretStops MOVE_TO_PREVIOUS_WORD_CARET_STOPS = new CaretStops();
+    public CaretStops MOVE_TO_NEXT_WORD_CARET_STOPS = new CaretStops();
+
+    {
+      if (SystemInfo.isWindows) {
+        MOVE_TO_NEXT_WORD_CARET_STOPS.AT_WORD_START = true;
+      }
+      else {
+        MOVE_TO_NEXT_WORD_CARET_STOPS.AT_WORD_END = true;
+      }
+      MOVE_TO_PREVIOUS_WORD_CARET_STOPS.AT_WORD_START = true;
+    }
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
@@ -655,30 +672,28 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * "Move to Previous Word" action behavior.
-   *
-   * @return true if it stops at current word start,
-   * false if it stops at previous word end.
+   * @return whether "Move Caret to Next/Previous Word" action should stop at word start.
    */
-  public boolean isStopAtCurrentWordStartOnMoveToPreviousWord() {
-    return myOptions.STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD;
-  }
-
-  public void setStopAtCurrentWordStartOnMoveToPreviousWord(boolean value) {
-    myOptions.STOP_AT_CURRENT_WORD_START_ON_MOVE_TO_PREVIOUS_WORD = value;
+  public boolean isMoveToWordCaretStopAtWordStart(boolean next) {
+    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_START;
   }
 
   /**
-   * "Move to Next Word" action behavior.
-   *
-   * @return true if it stops at current word end,
-   * false if it stops at pext word start.
+   * @return whether "Move Caret to Next/Previous Word" action should stop at word end.
    */
-  public boolean isStopAtCurrentWordEndOnMoveToNextWord() {
-    return myOptions.STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD;
+  public boolean isMoveToWordCaretStopAtWordEnd(boolean next) {
+    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_END;
   }
 
-  public void setStopAtCurrentWordEndOnMoveToNextWord(boolean value) {
-    myOptions.STOP_AT_CURRENT_WORD_END_ON_MOVE_TO_NEXT_WORD = value;
+  public void setMoveToWordCaretStopAtWordStart(boolean next, boolean value) {
+    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_START = value;
+  }
+
+  public void setMoveToWordCaretStopAtWordEnd(boolean next, boolean value) {
+    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_END = value;
   }
 }
