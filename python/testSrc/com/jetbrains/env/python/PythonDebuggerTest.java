@@ -34,6 +34,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -1903,6 +1904,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         waitForOutput("This property is deprecated!");
+      }
+    });
+  }
+
+  @Test
+  public void testCallExecWithBytesArgs() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_exec_with_bytes_args.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForOutput("pydev debugger: bytes arguments were passed to `execv` function. " +
+                      "Breakpoints won't work in the new process.\n");
       }
     });
   }

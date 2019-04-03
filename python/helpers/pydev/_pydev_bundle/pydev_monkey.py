@@ -9,6 +9,9 @@ except:
     xrange = range
 
 
+ORIGINAL_PREFIX = 'original_'
+
+
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
@@ -47,6 +50,13 @@ def _get_host_port():
 def _is_managed_arg(arg):
     if arg.endswith('pydevd.py'):
         return True
+    return False
+
+
+def _has_bytes_args(args):
+    for arg in args:
+        if isinstance(arg, bytes):
+            return True
     return False
 
 
@@ -306,9 +316,10 @@ def patch_arg_str_win(arg_str):
     log_debug("New args: %s" % arg_str)
     return arg_str
 
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
-        original_name = 'original_' + funcname
+        original_name = ORIGINAL_PREFIX + funcname
         if not hasattr(module, original_name):
             setattr(module, original_name, getattr(module, funcname))
             setattr(module, funcname, create_func(original_name))
@@ -324,6 +335,12 @@ def warn_multiproc():
             "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
 
+def warn_bytes_args(function_name):
+    log_error_once(
+            "pydev debugger: bytes arguments were passed to `%s` function. Breakpoints won't work in the new process.\n"
+            % function_name.replace(ORIGINAL_PREFIX, ''))
+
+
 def create_warn_multiproc(original_name):
 
     def new_warn_multiproc(*args):
@@ -334,6 +351,7 @@ def create_warn_multiproc(original_name):
         return getattr(os, original_name)(*args)
     return new_warn_multiproc
 
+
 def create_execl(original_name):
     def new_execl(path, *args):
         """
@@ -343,9 +361,12 @@ def create_execl(original_name):
         os.execlpe(file, arg0, arg1, ..., env)
         """
         import os
-        args = patch_args(args)
-        if is_python_args(args):
-            send_process_will_be_substituted()
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            if is_python_args(args):
+                send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
 
@@ -357,9 +378,13 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
-        if is_python_args(args):
-            send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args))
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            if is_python_args(args):
+                send_process_will_be_substituted()
+        return getattr(os, original_name)(path, args)
     return new_execv
 
 
@@ -370,9 +395,13 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
-        if is_python_args(args):
-            send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args), env)
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            if is_python_args(args):
+                send_process_will_be_substituted()
+        return getattr(os, original_name)(path, args, env)
     return new_execve
 
 
@@ -383,8 +412,11 @@ def create_spawnl(original_name):
         os.spawnlp(mode, file, arg0, arg1, ...)
         """
         import os
-        args = patch_args(args)
-        send_process_created_message()
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            send_process_created_message()
         return getattr(os, original_name)(mode, path, *args)
     return new_spawnl
 
@@ -396,8 +428,12 @@ def create_spawnv(original_name):
         os.spawnvp(mode, file, args)
         """
         import os
-        send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args))
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            send_process_created_message()
+        return getattr(os, original_name)(mode, path, args)
     return new_spawnv
 
 
@@ -408,8 +444,12 @@ def create_spawnve(original_name):
     """
     def new_spawnve(mode, path, args, env):
         import os
-        send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args), env)
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            send_process_created_message()
+        return getattr(os, original_name)(mode, path, args, env)
     return new_spawnve
 
 
@@ -419,8 +459,11 @@ def create_fork_exec(original_name):
     """
     def new_fork_exec(args, *other_args):
         import _posixsubprocess  # @UnresolvedImport
-        args = patch_args(args)
-        send_process_created_message()
+        if _has_bytes_args(args):
+            warn_bytes_args(original_name)
+        else:
+            args = patch_args(args)
+            send_process_created_message()
         return getattr(_posixsubprocess, original_name)(args, *other_args)
     return new_fork_exec
 
