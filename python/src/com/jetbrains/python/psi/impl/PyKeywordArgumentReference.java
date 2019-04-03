@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.KeywordArgumentCompletionUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +39,19 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     super(element, textRange, true);
   }
 
+  public Object[] getVariants() {
+    final List<LookupElement> ret = Lists.newArrayList();
+
+    final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyKeywordArgument element = originalElement != null ? originalElement : myElement;
+
+    KeywordArgumentCompletionUtil
+      .collectFunctionArgNames(element, ret, TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()), false);
+
+    return ret.toArray();
+  }
+
+
   @NotNull
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
@@ -47,7 +65,7 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     }
     final PyExpression callee = ((PyCallExpression)call).getCallee();
     if (callee == null) return ResolveResult.EMPTY_ARRAY;
-    final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference) callee.getReference();
+    final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference)callee.getReference();
     if (calleeReference == null) return ResolveResult.EMPTY_ARRAY;
     final ResolveResult[] calleeCandidates = calleeReference.multiResolve(incompleteCode);
     List<ResolveResult> resultList = new ArrayList<>();
