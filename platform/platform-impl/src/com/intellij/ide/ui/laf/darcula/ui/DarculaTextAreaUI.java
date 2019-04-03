@@ -25,7 +25,7 @@ import javax.swing.plaf.basic.BasicTextAreaUI;
 import javax.swing.text.*;
 import java.awt.event.KeyEvent;
 
-public class DarculaTextAreaUI extends BasicTextAreaUI{
+public class DarculaTextAreaUI extends BasicTextAreaUI {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaTextAreaUI();
@@ -52,6 +52,8 @@ public class DarculaTextAreaUI extends BasicTextAreaUI{
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new") ? new TextFieldWithPopupHandlerUI.MouseDragAwareCaret() : new TextFieldWithPopupHandlerUI.MarginAwareCaret();
+    return Registry.is("ide.text.mouse.selection.new")
+           ? new TextFieldWithPopupHandlerUI.MouseDragAwareCaret()
+           : new TextFieldWithPopupHandlerUI.MarginAwareCaret();
   }
 }

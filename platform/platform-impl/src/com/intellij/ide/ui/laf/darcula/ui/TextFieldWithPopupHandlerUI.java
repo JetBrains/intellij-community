@@ -161,8 +161,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   /**
-     * Adds listeners to the current text component and sets its variant.
-     */
+   * Adds listeners to the current text component and sets its variant.
+   */
   @Override
   protected void installListeners() {
     JTextComponent component = getComponent();
@@ -412,7 +412,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return JBUI.emptyInsets();
   }
 
-    @Override
+  @Override
   protected Rectangle getVisibleEditorRect() {
     JTextComponent c = getComponent();
     Rectangle bounds = new Rectangle(c.getSize());
@@ -529,7 +529,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }
-
     }
     updateIconsLayout(new Rectangle(getComponent().getSize())); // Effectively update margins
   }
@@ -623,7 +622,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String getTooltip() {
       String prefix = null;
-      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY ) != null) prefix = "Recent Search";
+      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = "Recent Search";
       if (getActionOnClick() != null) prefix = "Search History";
       return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
     }

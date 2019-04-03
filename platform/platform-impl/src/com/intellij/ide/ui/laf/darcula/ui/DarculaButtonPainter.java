@@ -46,7 +46,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, arc + lw, arc + lw), false);
-        border.append(new RoundRectangle2D.Float(r.x + lw*2, r.y + lw*2, r.width - lw * 4, r.height - lw * 4, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(r.x + lw * 2, r.y + lw * 2, r.width - lw * 4, r.height - lw * 4, arc, arc), false);
         g2.fill(border);
       }
 
@@ -57,7 +57,8 @@ public class DarculaButtonPainter implements Border, UIResource {
         if (c.hasFocus()) {
           if (UIUtil.isHelpButton(c)) {
             paintFocusOval(g2, (r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam);
-          } else {
+          }
+          else {
             Outline type = isDefaultButton((JComponent)c) ? Outline.defaultButton : Outline.focus;
             paintOutlineBorder(g2, r.width, r.height, arc, true, true, type);
           }
@@ -68,7 +69,8 @@ public class DarculaButtonPainter implements Border, UIResource {
 
       if (UIUtil.isHelpButton(c)) {
         g2.draw(new Ellipse2D.Float((r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam));
-      } else if (!paintComboFocus) {
+      }
+      else if (!paintComboFocus) {
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
 
@@ -77,7 +79,8 @@ public class DarculaButtonPainter implements Border, UIResource {
 
         g2.fill(border);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -89,17 +92,34 @@ public class DarculaButtonPainter implements Border, UIResource {
     JBInsets.removeFrom(r, b.getInsets());
     boolean defButton = isDefaultButton(b);
 
-    return button.isEnabled() ? borderColor != null ? borderColor :
-                                button.hasFocus() ?
-                                JBColor.namedColor(defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor",
-                                  JBColor.namedColor(defButton ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor", 0x87afda)) :
-                                new GradientPaint(0, 0,
-                                                  JBColor.namedColor(defButton ? "Button.default.startBorderColor" : "Button.startBorderColor",
-                                                    JBColor.namedColor(defButton ? "Button.darcula.outlineDefaultStartColor" : "Button.darcula.outlineStartColor", 0xbfbfbf)),
-                                                  0, r.height,
-                                                  JBColor.namedColor(defButton ? "Button.default.endBorderColor" : "Button.endBorderColor",
-                                                    JBColor.namedColor(defButton ? "Button.darcula.outlineDefaultEndColor" : "Button.darcula.outlineEndColor", 0xb8b8b8)))
-                              : JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", 0xcfcfcf));
+    if (button.isEnabled()) {
+      if (borderColor != null) {
+        return borderColor;
+      }
+      else {
+        return button.hasFocus() ?
+               JBColor.namedColor(defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor",
+                                  JBColor.namedColor(defButton
+                                                     ? "Button.darcula.defaultFocusedOutlineColor"
+                                                     : "Button.darcula.focusedOutlineColor", 0x87afda)) :
+               new GradientPaint(0, 0,
+                                 JBColor
+                                   .namedColor(
+                                     defButton ? "Button.default.startBorderColor" : "Button.startBorderColor",
+                                     JBColor.namedColor(defButton
+                                                        ? "Button.darcula.outlineDefaultStartColor"
+                                                        : "Button.darcula.outlineStartColor", 0xbfbfbf)),
+                                 0, r.height,
+                                 JBColor
+                                   .namedColor(defButton ? "Button.default.endBorderColor" : "Button.endBorderColor",
+                                               JBColor.namedColor(defButton
+                                                                  ? "Button.darcula.outlineDefaultEndColor"
+                                                                  : "Button.darcula.outlineEndColor", 0xb8b8b8)));
+      }
+    }
+    else {
+      return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", 0xcfcfcf));
+    }
   }
 
   @Override

@@ -17,7 +17,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   private static ComponentUI createDefaultWindowsRootPaneUI() {
     try {
       return (ComponentUI)Class.forName("com.sun.java.swing.plaf.windows.WindowsRootPaneUI").newInstance();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return new BasicRootPaneUI();
     }
   }

@@ -197,7 +197,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
       myMenuBar = createMenuBar();
       add(myMenuBar);
       if (myRootPane instanceof IdeRootPane) {
-        myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()){
+        myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()) {
           @Override
           public Border getBorder() {
             return JBUI.Borders.empty();
@@ -206,7 +206,7 @@ public class DarculaTitlePane extends JPanel implements Disposable {
 
         JPanel pane = new JPanel(new MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"));
         pane.setOpaque(false);
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin "+minMenuHeight);
+        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin " + minMenuHeight);
         pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore " + menuBarGap + ", gapafter " + menuBarGap);
 
         add(pane, "wmin 0, growx");

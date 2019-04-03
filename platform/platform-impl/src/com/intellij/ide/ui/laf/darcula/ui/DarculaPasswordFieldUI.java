@@ -35,11 +35,13 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installListeners();
     JTextComponent passwordField = getComponent();
     focusListener = new FocusListener() {
-      @Override public void focusGained(FocusEvent e) {
+      @Override
+      public void focusGained(FocusEvent e) {
         passwordField.repaint();
       }
 
-      @Override public void focusLost(FocusEvent e) {
+      @Override
+      public void focusLost(FocusEvent e) {
         passwordField.repaint();
       }
     };
@@ -103,7 +105,8 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
         }
 
         g2.fill(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2));
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
