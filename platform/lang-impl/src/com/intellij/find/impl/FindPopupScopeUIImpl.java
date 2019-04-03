@@ -102,7 +102,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
       @Override
       public boolean value(ScopeDescriptor descriptor) {
-        final String display = descriptor.getDisplay();
+        final String display = descriptor.getDisplayName();
         return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
       }
     });

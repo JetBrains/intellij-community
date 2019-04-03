@@ -87,7 +87,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       protected String getElementText(Object element) {
         if (element instanceof ScopeDescriptor) {
           final ScopeDescriptor descriptor = (ScopeDescriptor)element;
-          return descriptor.getDisplay();
+          return descriptor.getDisplayName();
         }
         return null;
       }
@@ -123,7 +123,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
     for (int i = 0; i < model.getSize(); i++) {
       ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
-      if (selection instanceof String && selection.equals(descriptor.getDisplay()) ||
+      if (selection instanceof String && selection.equals(descriptor.getDisplayName()) ||
           selection instanceof SearchScope && descriptor.scopeEquals((SearchScope)selection)) {
         combo.setSelectedIndex(i);
         break;
@@ -220,7 +220,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   @Nullable
   public String getSelectedScopeName() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    return item == null ? null : item.getDisplay();
+    return item == null ? null : item.getDisplayName();
   }
 
   private static class ScopeSeparator extends ScopeDescriptor {
@@ -232,7 +232,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     @Override
-    public String getDisplay() {
+    public String getDisplayName() {
       return myText;
     }
   }
@@ -241,8 +241,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     @Override
     public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
-        setIcon(value.getDisplayIcon());
-        setText(value.getDisplay());
+        setIcon(value.getIcon());
+        setText(value.getDisplayName());
       }
       if (value instanceof ScopeSeparator) {
         setSeparator();

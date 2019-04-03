@@ -1135,7 +1135,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       }
       @Override
       public boolean value(ScopeDescriptor descriptor) {
-        final String display = descriptor.getDisplay();
+        final String display = descriptor.getDisplayName();
         return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
       }
     });
