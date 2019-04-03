@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBInsets;
@@ -279,11 +280,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Rectangle r = new Rectangle(bounds);
 
+    Icon icon = null;
     Insets iPad = null;
     if (c instanceof SimpleColoredComponent) {
       SimpleColoredComponent scc = (SimpleColoredComponent)c;
       iPad = scc.getIpad();
       scc.setIpad(JBUI.emptyInsets());
+      icon = scc.getIcon();
+      if (!scc.isIconOnTheRight() && icon instanceof OffsetIcon) {
+        scc.setIcon(((OffsetIcon)icon).getIcon());
+      }
     }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
@@ -296,6 +302,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (c instanceof SimpleColoredComponent) {
       SimpleColoredComponent scc = (SimpleColoredComponent)c;
       scc.setIpad(iPad);
+      scc.setIcon(icon);
     }
   }
 
