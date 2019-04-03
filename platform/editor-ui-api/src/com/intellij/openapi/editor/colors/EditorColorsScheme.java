@@ -52,8 +52,8 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
 
   /**
    * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
-   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorFontSize()} or less than
-   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorFontSize()}
+   * more than {@link com.intellij.application.options.EditorFontsConstants#getMaxEditorFontSize()} or less than
+   * {@link com.intellij.application.options.EditorFontsConstants#getMinEditorFontSize()}
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setEditorFontSize(int fontSize);
@@ -78,8 +78,8 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
 
   /**
    * Sets line spacing. Note, that this method checks that {@code lineSpacing} is within bounds and could change it if it is
-   * more than {@code com.intellij.application.options.EditorFontsConstants.getMaxEditorLineSpacing()} or less than
-   * {@code com.intellij.application.options.EditorFontsConstants.getMinEditorLineSpacing()}
+   * more than {@link com.intellij.application.options.EditorFontsConstants#getMaxEditorLineSpacing()} or less than
+   * {@link com.intellij.application.options.EditorFontsConstants#getMinEditorLineSpacing()}
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setLineSpacing(float lineSpacing);
