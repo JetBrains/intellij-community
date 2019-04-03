@@ -143,7 +143,9 @@ class ProductModulesLayout {
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.
-   * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   * This descriptor and the plugin *.zip files can be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file
+   * to allow installing custom plugins directly from IDE. If {@link ProprietaryBuildTools#artifactsServer} is specified, {@code __BUILTIN_PLUGINS_URL__} in
+   * *ApplicationInfo.xml file will be automatically replaced by the plugin repository URL provided by the artifact server.
    *
    * @see #setPluginModulesToPublish
    * @see #setPluginPublishingSpec
