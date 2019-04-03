@@ -728,7 +728,6 @@ List<PsiExpression> builderStrInitializers = null;
         if(builderStrInitializers != null) {
           prefixJoinParts.addAll(0, builderStrInitializers);
         }
-        if (prefixJoinParts.stream().anyMatch(joinPart -> SideEffectChecker.mayHaveSideEffects(joinPart))) return null;
         if (afterLoopAppend != null && VariableAccessUtils.variableIsUsed(targetBuilder, afterLoopAppend.getArgumentList())) return null;
         List<PsiExpression> suffixJoinParts = extractJoinParts(afterLoopAppend);
         if (suffixJoinParts == null) return null;
