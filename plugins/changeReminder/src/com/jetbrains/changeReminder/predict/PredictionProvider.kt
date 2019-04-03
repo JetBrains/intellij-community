@@ -118,7 +118,8 @@ class PredictionProvider(private val minProb: Double = 0.3) {
   /**
    * Method makes a prediction about forgotten files, which are close to files from their [filesHistory].
    *
-   * @param filesHistory map from file to its previous commits
+   * @param commit commit for which system try to predict files
+   * @param filesHistory map from file from commit to its previous commits
    * @param maxPredictedFileCount maximum files to be predicted
    * @return list of forgotten files
    */
