@@ -154,11 +154,12 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
 
-    stringWriter.write("\n=== Stop: StartUp Measurement ===")
-    var string = stringWriter.toString()
-    // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
-    string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\"thread\"|\\{)"), ", $1")
-    LOG.info(string)
+    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", true)) { stringWriter.write("\n=== Stop: StartUp Measurement ===")
+      var string = stringWriter.toString()
+      // to make output more compact (quite a lot slow components) - should we write own JSON encoder? well, for now potentially slow RegExp is ok
+      string = string.replace(Regex(",\\s+(\"start\"|\"end\"|\"thread\"|\\{)"), ", $1")
+      LOG.info(string)
+    }
   }
 }
 
