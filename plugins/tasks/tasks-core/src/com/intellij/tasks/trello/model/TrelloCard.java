@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class TrelloCard extends TrelloModel {
   private final List<TrelloCommentAction> comments = ContainerUtil.emptyList();
   /**
    * This field is not part of card representation downloaded from server
-   * and set explicitly in {@code com.intellij.tasks.trello.TrelloRepository}
+   * and set explicitly in {@link com.intellij.tasks.trello.TrelloRepository}
    */
   private boolean isVisible = true;
 
