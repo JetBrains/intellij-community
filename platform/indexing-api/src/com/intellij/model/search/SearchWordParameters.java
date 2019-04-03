@@ -2,6 +2,7 @@
 package com.intellij.model.search;
 
 import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
@@ -69,5 +70,9 @@ public interface SearchWordParameters {
     @Contract("-> new")
     @NotNull
     Query<? extends TextOccurrence> build();
+
+    @Contract("_ -> new")
+    @NotNull
+    Query<? extends SymbolReference> build(@NotNull Symbol target);
   }
 }

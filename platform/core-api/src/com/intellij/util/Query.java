@@ -2,11 +2,13 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -71,6 +73,18 @@ public interface Query<Result> extends Iterable<Result> {
   @Contract(pure = true)
   default boolean anyMatch(@NotNull Predicate<? super Result> predicate) {
     return !forEach(t -> !predicate.test(t));
+  }
+
+  @Contract(value = "_->new", pure = true)
+  default <T> Query<T> flatMap(Function<? super Result, ? extends Collection<? extends T>> f) {
+    return new AbstractQuery<T>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super T> consumer) {
+        return Query.this.forEach(base -> {
+          return ContainerUtil.process(f.apply(base), consumer);
+        });
+      }
+    };
   }
 
   /**

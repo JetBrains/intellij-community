@@ -63,18 +63,12 @@ class ConstructorReferencesRequestor2 : SearchRequestor2 {
     val searchService = SearchService.getInstance(project)
 
     // search usages like "this(..)"
-    val thisWordParams = searchService.searchWord(PsiKeyword.THIS).inScope(LocalSearchScope(clazz)).withTargetHint(target)
-    val thisWordQuery = searchService.searchWord(thisWordParams)
-    val thisQuery: Query<out SymbolReference> = TransformingQuery.flatMapping(thisWordQuery,
-                                                                              SingleTargetOccurrenceProcessor(
-                                                                                target))
+    val thisQuery: Query<out SymbolReference> = searchService.searchWord(PsiKeyword.THIS).inScope(LocalSearchScope(clazz)).build(target)
 
     // search usages like "super(..)" in direct subclasses
     val inheritorsQuery = ClassInheritorsSearch.search(clazz, restrictedScope, false)
     val superQuery: Query<out SymbolReference> = LayeredQuery.mapping(inheritorsQuery) { inheritor ->
-      val superWordParams = searchService.searchWord(PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).withTargetHint(target)
-      val superWordQuery = searchService.searchWord(superWordParams)
-      TransformingQuery.flatMapping(superWordQuery, SingleTargetOccurrenceProcessor(target))
+      searchService.searchWord(PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).build(target)
     }
 
     return listOf(newXxxQuery, xxxNewQuery, thisQuery, superQuery)
