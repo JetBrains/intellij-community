@@ -23,3 +23,7 @@ internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
     LOG.error("Cannot read scheme ${file()}", e)
   }
 }
+
+internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
+  return RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+}
