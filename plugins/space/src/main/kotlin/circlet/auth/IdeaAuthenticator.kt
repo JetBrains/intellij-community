@@ -21,8 +21,7 @@ val log = KLoggers.logger("authTokenInteractive")
 suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
 
     val port = selectFreePort(10000)
-
-    val redirectUri = "http://localhost:$port/auth"
+    val codeFlow = CodeFlowConfig(config, "http://localhost:$port/auth")
 
     return suspendCoroutine { cnt ->
 
@@ -30,7 +29,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
             embeddedServer(Jetty, port, "localhost") {
                 routing {
                     get("auth") {
-                        val token = config.handleCodeFlowRedirect(call.request.uri, redirectUri)
+                        val token = codeFlow.handleCodeFlowRedirect(call.request.uri)
                         call.respondText("<script>close()</script>", io.ktor.http.ContentType("text", "html"))
                         cnt.resume(token)
                     }
@@ -38,7 +37,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
             }.start(wait = false)
         }
         catch (th: Throwable) {
-            log.error(th, "Can't start server at: $redirectUri")
+            log.error(th, "Can't start server at: ${codeFlow.redirectUri}")
             throw th
         }
 
@@ -46,7 +45,7 @@ suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfigur
             server.stop(100, 5000, TimeUnit.MILLISECONDS)
         }
 
-        val uri = URI(config.codeFlowURL(redirectUri))
+        val uri = URI(codeFlow.codeFlowURL())
         Desktop.getDesktop().browse(uri)
     }
 }
