@@ -11,77 +11,54 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.TransformingQuery
 import java.util.*
 import kotlin.experimental.xor
 
-class QueryRequest<B, R>(val query: Query<B>, val transform: Transform<B, R>) {
-  fun <T> apply(transform: Transform<R, T>): QueryRequest<B, T> {
-    return QueryRequest(query, Transform {
-      this.transform.apply(it).flatMap(transform::apply)
-    })
+class QueryRequest<B, R>(private val query: Query<B>, private val transformation: Transformation<B, R>) {
+
+  fun <T> apply(transformation: Transformation<R, T>): QueryRequest<B, T> {
+    return QueryRequest(query, this.transformation.bind(transformation))
+  }
+
+  fun process(processor: Processor<in R>): Boolean = query.forEach(processor.transform(transformation))
+}
+
+class ParamsRequest<R>(val params: SymbolReferenceSearchParameters, val transformation: Transformation<SymbolReference, R>) {
+
+  fun <T> apply(transformation: Transformation<R, T>): ParamsRequest<T> {
+    return ParamsRequest(params, this.transformation.bind(transformation))
   }
 }
 
-class ParamsRequest<R>(val params: SymbolReferenceSearchParameters, val transform: Transform<SymbolReference, R>) {
-  fun <T> apply(transform: Transform<R, T>): ParamsRequest<T> {
-    return ParamsRequest(params, Transform {
-      this.transform.apply(it).flatMap(transform::apply)
-    })
+data class WordRequest<R>(val searchWordRequest: SearchWordRequest, val transformation: Transformation<TextOccurrence, R>) {
+
+  fun <T> apply(transformation: Transformation<R, T>): WordRequest<T> {
+    return WordRequest(searchWordRequest, this.transformation.bind(transformation))
   }
 }
-
-data class WordRequest<R>(val searchWordRequest: SearchWordRequest, val transform: Transform<TextOccurrence, R>) {
-  fun <T> apply(transform: Transform<R, T>): WordRequest<T> {
-    return WordRequest(searchWordRequest, Transform {
-      this.transform.apply(it).flatMap(transform::apply)
-    })
-  }
-}
-
 
 internal class FlatRequests<T>(
-  val myQueries: Collection<Query<out T>> = emptyList(),
   val myQueryRequests: Collection<QueryRequest<*, T>> = emptyList(),
-  val myParams: Collection<SymbolReferenceSearchParameters> = emptyList(),
   val myParamsRequests: Collection<ParamsRequest<T>> = emptyList(),
-  val myWords: Collection<SearchWordRequest> = emptyList(),
   val myWordRequests: Collection<WordRequest<T>> = emptyList()
 ) {
 
-  internal fun <R> apply(transform: Transform<T, R>): FlatRequests<R> {
-    val newQueryRequests = mutableListOf<QueryRequest<*, R>>()
-    myQueries.mapTo(newQueryRequests) { QueryRequest(it, transform) }
-    myQueryRequests.mapTo(newQueryRequests) { it.apply(transform) }
-
-    require(myParams.isEmpty() || myWords.isEmpty())
-
-    val newParamsRequests = mutableListOf<ParamsRequest<R>>()
-    @Suppress("UNCHECKED_CAST")
-    myParams.mapTo(newParamsRequests) { ParamsRequest(it, transform as Transform<SymbolReference, R>) }
-    myParamsRequests.mapTo(newParamsRequests) { it.apply(transform) }
-
-    val newWordRequests = mutableListOf<WordRequest<R>>()
-    @Suppress("UNCHECKED_CAST")
-    myWords.mapTo(newWordRequests) { WordRequest(it, transform as Transform<TextOccurrence, R>) }
-    myWordRequests.mapTo(newWordRequests) { it.apply(transform) }
-
-    return FlatRequests(
-      myQueryRequests = newQueryRequests,
-      myParamsRequests = newParamsRequests,
-      myWordRequests = newWordRequests
-    )
-  }
+  internal fun <R> apply(transformation: Transformation<T, R>): FlatRequests<R> = FlatRequests(
+    myQueryRequests.map { it.apply(transformation) },
+    myParamsRequests.map { it.apply(transformation) },
+    myWordRequests.map { it.apply(transformation) }
+  )
 }
-
 
 internal fun <T> flatten(query: Query<T>): FlatRequests<T> {
   return when (query) {
     is TransformingQuery<*, *> -> flatten(query as TransformingQuery<*, T>)
-    is SymbolReferenceQuery -> flatten(query as SymbolReferenceQuery)
-    is SearchWordQuery -> FlatRequests(myWords = createRequests(query.parameters))
-    else -> FlatRequests(myQueries = listOf(query))
+    is SymbolReferenceQuery -> flatten(query)
+    is SearchWordQuery -> flatten(query)
+    else -> FlatRequests(myQueryRequests = listOf(QueryRequest(query, idTransform())))
   }
 }
 
@@ -89,10 +66,26 @@ private fun <B, R> flatten(query: TransformingQuery<B, R>): FlatRequests<R> {
   return flatten(query.baseQuery).apply(query.transform)
 }
 
-
-@Suppress("UNCHECKED_CAST")
 private fun <T> flatten(query: SymbolReferenceQuery): FlatRequests<T> {
-  return FlatRequests(myQueries = listOf(query.baseQuery), myParams = listOf(query.parameters)) as FlatRequests<T>
+  @Suppress("UNCHECKED_CAST")
+  return flattenInner(query) as FlatRequests<T>
+}
+
+private fun flattenInner(query: SymbolReferenceQuery): FlatRequests<SymbolReference> {
+  val queryRequest: QueryRequest<*, SymbolReference> = QueryRequest(query.baseQuery, idTransform())
+  val parametersRequest: ParamsRequest<SymbolReference> = ParamsRequest(query.parameters, idTransform())
+  return FlatRequests(myQueryRequests = listOf(queryRequest), myParamsRequests = listOf(parametersRequest))
+}
+
+private fun <T> flatten(query: SearchWordQuery): FlatRequests<T> {
+  @Suppress("UNCHECKED_CAST")
+  return flattenInner(query) as FlatRequests<T>
+}
+
+private fun flattenInner(query: SearchWordQuery): FlatRequests<TextOccurrence> {
+  val words: Collection<SearchWordRequest> = createRequests(query.parameters)
+  val wordRequests: Collection<WordRequest<TextOccurrence>> = words.map { WordRequest(it, idTransform()) }
+  return FlatRequests(myWordRequests = wordRequests)
 }
 
 private fun createRequests(parameters: SearchWordParameters): Collection<SearchWordRequest> {

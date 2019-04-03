@@ -31,14 +31,11 @@ import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.util.*
 import java.util.function.BinaryOperator
-import java.util.function.Function
 import java.util.stream.Stream
 import kotlin.collections.LinkedHashSet
 import kotlin.experimental.or
 
-typealias Transform<B, R> = Function<in B, out Collection<R>>
 typealias OccurrenceProcessor = Processor<in TextOccurrence>
-typealias MultiMap<K, V> = Map<K, Collection<V>>
 
 class SymbolSearchHelperImpl(private val myProject: Project,
                              private val myDumbService: DumbService,
@@ -50,7 +47,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
 
     val progress = indicatorOrEmpty
     val queue = LinkedList<ParamsRequest<out SymbolReference>>()
-    queue.offer(ParamsRequest(parameters, Transform(::listOf)))
+    queue.offer(ParamsRequest(parameters, idTransform()))
 
     val queryRequests = LinkedList<QueryRequest<*, out SymbolReference>>()
     val wordRequests = LinkedList<WordRequest<out SymbolReference>>()
@@ -74,7 +71,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     val subQueries = LinkedList<Query<out T>>()
     myDumbService.runReadActionInSmartMode {
       SearchRequestors.collectSearchRequests(request.params) {
-        subQueries.add(TransformingQuery.flatMapping(it, request.transform))
+        subQueries.add(TransformingQuery.flatMapping(it, request.transformation))
       }
     }
     return subQueries
@@ -115,7 +112,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     for (request in requests) {
       progress.checkCanceled()
       for (query in subQueries(request.params)) {
-        queriesSink(TransformingQuery.flatMapping(query, request.transform))
+        queriesSink(TransformingQuery.flatMapping(query, request.transformation))
       }
     }
     return true
@@ -132,7 +129,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     for ((request, transform) in wordRequests) {
       progress.checkCanceled()
       val map = if (request.searchScope is LocalSearchScope) locals else globals
-      map[request] = mutableSetOf(transform(processor, transform))
+      map[request] = mutableSetOf(processor.transform(transform))
     }
 
     return processGlobalRequests(progress, globals) &&
@@ -349,26 +346,9 @@ private fun <T> processQueryRequests(progress: ProgressIndicator,
                                      processor: Processor<in T>): Boolean {
   for (request in queryRequests) {
     progress.checkCanceled()
-    if (!processQueryRequest(request, processor)) return false
+    if (!request.process(processor)) return false
   }
   return true
-}
-
-private fun <T, R> processQueryRequest(request: QueryRequest<T, R>, processor: Processor<in R>): Boolean {
-  return request.query.forEach(transform(processor, request.transform))
-}
-
-private fun <B, R> transform(processor: Processor<in R>, transform: Transform<B, R>): Processor<in B> {
-  return object : Processor<B> {
-    override fun process(t: B): Boolean {
-      for (value in transform.apply(t)) {
-        if (!processor.process(value)) {
-          return false
-        }
-      }
-      return true
-    }
-  }
 }
 
 private val LOG = Logger.getInstance(SymbolSearchHelper::class.java)
