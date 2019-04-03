@@ -63,6 +63,11 @@ public class PyFillParagraphTest extends PyTestCase {
     doTestWithMargin(80);
   }
 
+  // PY-26422
+  public void testFString() {
+    doTestWithMargin(20);
+  }
+
   private void doTest() {
     doTestWithMargin(120);
   }
