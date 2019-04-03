@@ -17,8 +17,7 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
   private static final JBValue STRIPE_INDENT = new JBValue.Float(1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
-  public static ComponentUI createUI(JComponent c )
-  {
+  public static ComponentUI createUI(JComponent c) {
     return new DarculaSeparatorUI();
   }
 
@@ -29,7 +28,7 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
       s.setForeground(JBColor.namedColor(getColorResourceName(), new JBColor(Gray.xCD, Gray.x51)));
     }
 
-    LookAndFeel.installProperty( s, "opaque", Boolean.FALSE);
+    LookAndFeel.installProperty(s, "opaque", Boolean.FALSE);
   }
 
   @Override
@@ -46,7 +45,7 @@ public class DarculaSeparatorUI extends BasicSeparatorUI {
   }
 
   @Override
-  public Dimension getPreferredSize(JComponent c){
+  public Dimension getPreferredSize(JComponent c) {
     return ((JSeparator)c).getOrientation() == SwingConstants.VERTICAL ?
            JBUI.size(3, 0) : JBUI.size(0, 3);
   }

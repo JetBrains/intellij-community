@@ -13,8 +13,7 @@ public class DarculaMenuSeparatorUI extends DarculaSeparatorUI {
   private static final JBValue STRIPE_INDENT = new JBValue.UIInteger("PopupMenuSeparator.stripeIndent", 1);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
-  public static ComponentUI createUI(JComponent c )
-  {
+  public static ComponentUI createUI(JComponent c) {
     return new DarculaMenuSeparatorUI();
   }
 
@@ -34,8 +33,10 @@ public class DarculaMenuSeparatorUI extends DarculaSeparatorUI {
   }
 
   @Override
-  public Dimension getPreferredSize(JComponent c){
-    return ((JSeparator)c).getOrientation() == SwingConstants.VERTICAL ?
-           new Dimension(SEPARATOR_HEIGHT.get(), 0) : new Dimension(0, SEPARATOR_HEIGHT.get()); // height is prescaled, so use Dimension here.
+  public Dimension getPreferredSize(JComponent c) {
+    return ((JSeparator)c).getOrientation() == SwingConstants.VERTICAL
+           ?
+           new Dimension(SEPARATOR_HEIGHT.get(), 0)
+           : new Dimension(0, SEPARATOR_HEIGHT.get()); // height is prescaled, so use Dimension here.
   }
 }

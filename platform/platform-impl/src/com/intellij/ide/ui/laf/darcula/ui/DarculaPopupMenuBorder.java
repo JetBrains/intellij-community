@@ -38,7 +38,8 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
     try {
       g2.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
       g2.fill(getBorderShape(c, new Rectangle(x, y, width, height)));
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -62,7 +63,8 @@ public class DarculaPopupMenuBorder extends AbstractBorder implements UIResource
   public Insets getBorderInsets(Component c) {
     if (isComboPopup(c)) {
       return JBUI.insets(1, 2).asUIResource();
-    } else {
+    }
+    else {
       return JBUI.insets("PopupMenu.borderInsets", DEFAULT_INSETS).asUIResource();
     }
   }
