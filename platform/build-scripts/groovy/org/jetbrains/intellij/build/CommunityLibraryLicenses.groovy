@@ -34,6 +34,8 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Apk Analyzer", libraryName: "com.android.tools.apkparser:apkanalyzer", license: "Apache 2.0",
                        url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Apk Binary Resources", libraryName: "com.android.tools.apkparser:binary-resources", license: "Apache 2.0",
+                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Baksmali", libraryName: "baksmali", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder", attachedTo: "intellij.android.core", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Builder Model", libraryName: "com.android.tools.build:builder-model", license: "Apache 2.0",
