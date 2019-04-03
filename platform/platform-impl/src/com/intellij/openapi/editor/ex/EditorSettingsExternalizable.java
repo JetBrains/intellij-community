@@ -91,6 +91,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static class CaretStops {
       public boolean AT_WORD_START = false;
       public boolean AT_WORD_END = false;
+      public boolean AT_LINE_START = SystemInfo.isWindows;
+      public boolean AT_LINE_END = SystemInfo.isWindows;
     }
 
     public CaretStops MOVE_TO_PREVIOUS_WORD_CARET_STOPS = new CaretStops();
@@ -695,5 +697,31 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setCaretStopAtWordEnd(boolean next, boolean value) {
     (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
           : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_END = value;
+  }
+
+  /**
+   * @return whether "Move Caret to Next/Previous Word" action should stop at line start.
+   */
+  public boolean isCaretStopAtLineStart(boolean next) {
+    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_START;
+  }
+
+  /**
+   * @return whether "Move Caret to Next/Previous Word" action should stop at line end.
+   */
+  public boolean isCaretStopAtLineEnd(boolean next) {
+    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_END;
+  }
+
+  public void setCaretStopAtLineStart(boolean next, boolean value) {
+    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_START = value;
+  }
+
+  public void setCaretStopAtLineEnd(boolean next, boolean value) {
+    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
+          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_END = value;
   }
 }
