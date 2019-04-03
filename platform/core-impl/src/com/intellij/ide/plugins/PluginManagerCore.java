@@ -121,7 +121,11 @@ public class PluginManagerCore {
   private static final List<Runnable> ourDisabledPluginsListeners = new CopyOnWriteArrayList<>();
 
   /**
-   * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
+   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins(StartupProgress)}
+   * if you need to get loaded plugins only.
+   *
+   * <p>
+   * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
   @NotNull
   public static IdeaPluginDescriptor[] getPlugins() {
