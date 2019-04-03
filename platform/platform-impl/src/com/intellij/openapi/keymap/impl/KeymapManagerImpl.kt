@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -17,14 +17,13 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Conditions
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
+import java.util.function.Predicate
 
 internal const val KEYMAPS_DIR_PATH = "keymaps"
 
@@ -69,7 +68,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     ourKeymapManagerInitialized = true
 
     if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
-      CtrlYActionChooser.askAboutShortcut();
+      CtrlYActionChooser.askAboutShortcut()
     }
   }
 
@@ -85,9 +84,11 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     var ourKeymapManagerInitialized: Boolean = false
   }
 
-  override fun getAllKeymaps(): Array<Keymap> = getKeymaps(Conditions.alwaysTrue<Keymap>()).toTypedArray()
+  override fun getAllKeymaps(): Array<Keymap> = getKeymaps(null).toTypedArray()
 
-  fun getKeymaps(additionalFilter: Condition<Keymap>): List<Keymap> = schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && additionalFilter.value(it)  }
+  fun getKeymaps(additionalFilter: Predicate<Keymap>?): List<Keymap> {
+    return schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && (additionalFilter == null || additionalFilter.test(it)) }
+  }
 
   override fun getKeymap(name: String): Keymap? = schemeManager.findSchemeByName(name)
 
@@ -124,7 +125,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   override fun getSchemeManager(): SchemeManager<Keymap> = schemeManager
 
-  fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Condition<Keymap>?) {
+  fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Predicate<Keymap>?) {
     schemeManager.setSchemes(keymaps, active, removeCondition)
     fireActiveKeymapChanged(active)
   }

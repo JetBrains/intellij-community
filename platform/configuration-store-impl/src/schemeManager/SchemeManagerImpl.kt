@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -37,6 +36,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
+import java.util.function.Predicate
 
 class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      processor: SchemeProcessor<T, MUTABLE_SCHEME>,
@@ -536,7 +536,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       return result
     }
 
-  override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) = schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
+  override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Predicate<T>?) {
+    schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
+  }
 
   internal fun retainExternalInfo() {
     if (schemeToInfo.isEmpty()) {
