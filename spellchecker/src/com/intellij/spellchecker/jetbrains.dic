@@ -198,7 +198,7 @@ elseif
 elsif
 endian
 endif
-endofunctor 
+endofunctor
 endregion
 enum
 enums
@@ -242,6 +242,7 @@ functors
 fxml
 gbps
 gdata
+gdpr
 gemfire
 generification
 generified
@@ -935,4 +936,4 @@ yaml
 youtube
 zend
 zerofill
-zygomorphism  
+zygomorphism
