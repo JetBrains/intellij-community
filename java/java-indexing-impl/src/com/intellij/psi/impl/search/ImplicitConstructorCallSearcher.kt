@@ -3,7 +3,7 @@ package com.intellij.psi.impl.search
 
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.model.SymbolReference
-import com.intellij.model.search.SymbolReferenceSearchParameters
+import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UnfairTextRange
@@ -13,9 +13,9 @@ import com.intellij.psi.impl.light.LightMemberReference
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.util.Processor
 
-class ImplicitConstructorCallSearcher : QueryExecutorBase<SymbolReference, SymbolReferenceSearchParameters>(true) {
+class ImplicitConstructorCallSearcher : QueryExecutorBase<SymbolReference, SearchSymbolReferenceParameters>(true) {
 
-  override fun processQuery(queryParameters: SymbolReferenceSearchParameters, consumer: Processor<in SymbolReference>) {
+  override fun processQuery(queryParameters: SearchSymbolReferenceParameters, consumer: Processor<in SymbolReference>) {
     if (!Registry.`is`("ide.symbol.reference.search")) return
     val target = queryParameters.target as? PsiMethod ?: return
     if (!target.isConstructor) return

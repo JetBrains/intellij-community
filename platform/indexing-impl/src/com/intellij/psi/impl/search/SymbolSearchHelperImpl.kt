@@ -4,7 +4,7 @@ package com.intellij.psi.impl.search
 import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
 import com.intellij.model.search.SearchScopeOptimizer
-import com.intellij.model.search.SymbolReferenceSearchParameters
+import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.model.search.SymbolSearchHelper
 import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.diagnostic.Logger
@@ -42,7 +42,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
                              helper: PsiSearchHelper) : SymbolSearchHelper {
   private val myHelper: PsiSearchHelperImpl = helper as PsiSearchHelperImpl
 
-  override fun runSearch(parameters: SymbolReferenceSearchParameters, processor: Processor<in SymbolReference>): Boolean {
+  override fun runSearch(parameters: SearchSymbolReferenceParameters, processor: Processor<in SymbolReference>): Boolean {
     return runSearch(paramsQueries(parameters), processor)
   }
 
@@ -116,7 +116,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     return Result.Ok(subQueries)
   }
 
-  private fun paramsQueries(parameters: SymbolReferenceSearchParameters): Collection<Query<out SymbolReference>> {
+  private fun paramsQueries(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
     val subQueries = LinkedList<Query<out SymbolReference>>()
     myDumbService.runReadActionInSmartMode {
       SearchRequestors.collectSearchRequests(parameters) {

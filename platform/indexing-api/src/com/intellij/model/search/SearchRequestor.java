@@ -20,5 +20,5 @@ import java.util.Collection;
 public interface SearchRequestor {
 
   @NotNull
-  Collection<? extends Query<? extends SymbolReference>> collectSearchRequests(@NotNull SymbolReferenceSearchParameters parameters);
+  Collection<? extends Query<? extends SymbolReference>> collectSearchRequests(@NotNull SearchSymbolReferenceParameters parameters);
 }

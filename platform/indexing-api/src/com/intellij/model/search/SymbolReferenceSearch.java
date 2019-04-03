@@ -8,7 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ExtensibleQueryFactory;
 import org.jetbrains.annotations.NotNull;
 
-public final class SymbolReferenceSearch extends ExtensibleQueryFactory<SymbolReference, SymbolReferenceSearchParameters> {
+public final class SymbolReferenceSearch extends ExtensibleQueryFactory<SymbolReference, SearchSymbolReferenceParameters> {
 
   static final SymbolReferenceSearch INSTANCE = new SymbolReferenceSearch();
 
@@ -20,7 +20,7 @@ public final class SymbolReferenceSearch extends ExtensibleQueryFactory<SymbolRe
   }
 
   @NotNull
-  public static SymbolReferenceQuery search(@NotNull SymbolReferenceSearchParameters parameters) {
+  public static SymbolReferenceQuery search(@NotNull SearchSymbolReferenceParameters parameters) {
     return new SymbolReferenceQueryImpl(parameters);
   }
 }

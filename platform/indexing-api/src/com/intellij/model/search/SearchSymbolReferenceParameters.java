@@ -6,12 +6,7 @@ import com.intellij.openapi.application.DumbAwareSearchParameters;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public interface SymbolReferenceSearchParameters extends DumbAwareSearchParameters {
-
-  //@Override
-  //default boolean isQueryValid() {
-  //  return getTarget().isValid();
-  //}
+public interface SearchSymbolReferenceParameters extends DumbAwareSearchParameters {
 
   @NotNull
   Symbol getTarget();

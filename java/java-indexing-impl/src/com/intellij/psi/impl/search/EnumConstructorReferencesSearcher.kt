@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.search
 
 import com.intellij.model.SymbolReference
-import com.intellij.model.search.SymbolReferenceSearchParameters
+import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiEnumConstant
@@ -10,9 +10,9 @@ import com.intellij.psi.PsiMethod
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 
-class EnumConstructorReferencesSearcher : QueryExecutor<SymbolReference, SymbolReferenceSearchParameters> {
+class EnumConstructorReferencesSearcher : QueryExecutor<SymbolReference, SearchSymbolReferenceParameters> {
 
-  override fun execute(queryParameters: SymbolReferenceSearchParameters, consumer: Processor<in SymbolReference>): Boolean {
+  override fun execute(queryParameters: SearchSymbolReferenceParameters, consumer: Processor<in SymbolReference>): Boolean {
     if (!Registry.`is`("ide.symbol.reference.search")) return true
     val method = queryParameters.target as? PsiMethod ?: return true
     return DumbService.getInstance(queryParameters.project).runReadActionInSmartMode<Boolean> {

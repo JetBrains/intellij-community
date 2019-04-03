@@ -44,7 +44,7 @@ class SubqueryRequest<B, I, R>(val queryRequest: QueryRequest<B, I>, val subquer
   }
 }
 
-class ParamsRequest<R>(val params: SymbolReferenceSearchParameters, val transformation: Transformation<SymbolReference, R>) {
+class ParamsRequest<R>(val params: SearchSymbolReferenceParameters, val transformation: Transformation<SymbolReference, R>) {
 
   fun <T> apply(transformation: Transformation<R, T>): ParamsRequest<T> {
     return ParamsRequest(params, this.transformation.bind(transformation))

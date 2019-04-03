@@ -14,5 +14,5 @@ public interface SymbolSearchHelper {
     return ServiceManager.getService(project, SymbolSearchHelper.class);
   }
 
-  boolean runSearch(@NotNull SymbolReferenceSearchParameters parameters, @NotNull Processor<? super SymbolReference> processor);
+  boolean runSearch(@NotNull SearchSymbolReferenceParameters parameters, @NotNull Processor<? super SymbolReference> processor);
 }

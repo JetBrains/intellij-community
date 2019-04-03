@@ -11,7 +11,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultSymbolReferenceSearchParameters implements SymbolReferenceSearchParameters {
+public class DefaultSymbolReferenceSearchParameters implements SearchSymbolReferenceParameters {
 
   private final Project myProject;
   private final Symbol myTarget;

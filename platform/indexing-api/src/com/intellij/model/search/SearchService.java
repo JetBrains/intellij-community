@@ -16,6 +16,8 @@ public interface SearchService {
     return ServiceManager.getService(SearchService.class);
   }
 
+
+
   @NotNull
   SearchWordParameters.Builder searchWord(@NotNull Project project, @NotNull String word);
 

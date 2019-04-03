@@ -13,7 +13,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * This requestor is essentially {@link SymbolReferenceSearchParameters} builder.
+ * This requestor is essentially {@link SearchSymbolReferenceParameters} builder.
  */
 public interface SearchTargetRequestor {
 
@@ -34,7 +34,7 @@ public interface SearchTargetRequestor {
 
   /**
    * Orders to search the target. <br/>
-   * This method builds {@link SymbolReferenceSearchParameters search parameters}
+   * This method builds {@link SearchSymbolReferenceParameters search parameters}
    * and orders {@link SearchRequestCollector#searchSubQuery sub query search}.
    */
   default void search() {
@@ -51,7 +51,7 @@ public interface SearchTargetRequestor {
 
   /**
    * Orders to search the target. <br/>
-   * This method builds {@link SymbolReferenceSearchParameters search parameters}
+   * This method builds {@link SearchSymbolReferenceParameters search parameters}
    * and orders {@link SearchRequestCollector#searchSubQuery(Query, Preprocessor) sub query search} with preprocessor.
    */
   void search(@NotNull Preprocessor<SymbolReference, SymbolReference> preprocessor);

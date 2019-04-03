@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 final class SymbolReferenceQueryImpl extends AbstractQuery<SymbolReference> implements SymbolReferenceQuery {
 
-  private final SymbolReferenceSearchParameters myParameters;
+  private final SearchSymbolReferenceParameters myParameters;
 
-  SymbolReferenceQueryImpl(@NotNull SymbolReferenceSearchParameters parameters) {
+  SymbolReferenceQueryImpl(@NotNull SearchSymbolReferenceParameters parameters) {
     myParameters = parameters;
   }
 
@@ -26,7 +26,7 @@ final class SymbolReferenceQueryImpl extends AbstractQuery<SymbolReference> impl
   @Override
   @Contract(pure = true)
   @NotNull
-  public SymbolReferenceSearchParameters getParameters() {
+  public SearchSymbolReferenceParameters getParameters() {
     return myParameters;
   }
 

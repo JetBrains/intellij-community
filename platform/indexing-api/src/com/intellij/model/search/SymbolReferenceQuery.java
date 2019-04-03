@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface SymbolReferenceQuery extends Query<SymbolReference> {
 
   @NotNull
-  SymbolReferenceSearchParameters getParameters();
+  SearchSymbolReferenceParameters getParameters();
 
   @NotNull
   Query<SymbolReference> getBaseQuery();

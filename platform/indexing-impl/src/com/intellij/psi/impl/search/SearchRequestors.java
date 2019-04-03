@@ -3,7 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.model.SymbolReference;
 import com.intellij.model.search.SearchRequestor;
-import com.intellij.model.search.SymbolReferenceSearchParameters;
+import com.intellij.model.search.SearchSymbolReferenceParameters;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
@@ -16,7 +16,7 @@ final class SearchRequestors {
 
   private SearchRequestors() {}
 
-  static void collectSearchRequests(@NotNull SymbolReferenceSearchParameters parameters,
+  static void collectSearchRequests(@NotNull SearchSymbolReferenceParameters parameters,
                                     @NotNull Processor<? super Query<? extends SymbolReference>> querySink) {
     for (SearchRequestor requestor : EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();

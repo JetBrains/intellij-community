@@ -4,7 +4,7 @@ package com.intellij.model.search.impl
 import com.intellij.model.SymbolReference
 import com.intellij.model.SymbolService
 import com.intellij.model.search.SearchRequestor
-import com.intellij.model.search.SymbolReferenceSearchParameters
+import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Query
@@ -16,7 +16,7 @@ import com.intellij.util.Query
  */
 class PsiToSymbolSearchRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(parameters: SymbolReferenceSearchParameters): Collection<Query<out SymbolReference>> {
+  override fun collectSearchRequests(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
     if (parameters is SymbolToPsiReferenceSearcher.PsiToSymbolParameters) {
       // search started from ReferencesSearch
       // -> SymbolToPsiReferenceSearcher queries SymbolReferenceSearch with PsiToSymbolParameters
@@ -30,7 +30,7 @@ class PsiToSymbolSearchRequestor : SearchRequestor {
 
   internal class SymbolToPsiParameters(
     target: PsiElement,
-    parameters: SymbolReferenceSearchParameters
+    parameters: SearchSymbolReferenceParameters
   ) : ReferencesSearch.SearchParameters(
     target,
     parameters.originalSearchScope,

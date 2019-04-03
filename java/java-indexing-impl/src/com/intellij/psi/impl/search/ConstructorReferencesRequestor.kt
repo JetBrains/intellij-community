@@ -13,7 +13,7 @@ import com.intellij.util.Query
 
 class ConstructorReferencesRequestor : SearchRequestor {
 
-  override fun collectSearchRequests(parameters: SymbolReferenceSearchParameters): Collection<Query<out SymbolReference>> {
+  override fun collectSearchRequests(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
     val target = parameters.target as? PsiMethod ?: return emptyList()
     if (!target.isConstructor) return emptyList()
     val clazz = target.containingClass ?: return emptyList()
