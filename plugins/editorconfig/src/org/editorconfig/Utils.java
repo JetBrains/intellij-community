@@ -223,8 +223,7 @@ public class Utils {
 
   private static boolean containsEditorConfig(@NotNull File dir) {
     if (dir.exists() && dir.isDirectory()) {
-      File file = new File(dir.getPath() + File.separator + ".editorconfig");
-      if (file.exists()) return true;
+      if (FileUtil.exists(dir.getPath() + File.separator + ".editorconfig")) return true;
     }
     return false;
   }
