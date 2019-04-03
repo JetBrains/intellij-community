@@ -96,20 +96,20 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   private static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
-    VirtualFile sdkHomeDir = StandardFileSystems.local().findFileByPath(sdkPath);
-    if (sdkHomeDir == null) {
+    VirtualFile pyExecutable = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (pyExecutable == null) {
       LOG.info("VirtualFile for " + sdkPath + " not found");
       return null;
     }
-    final VirtualFile bin = sdkHomeDir.getParent();
+    final VirtualFile pyExecutableDir = pyExecutable.getParent();
     String condaName = "conda";
     if (SystemInfo.isWindows) {
-      condaName = bin.findChild("envs") != null ? "conda.exe" : "conda.bat";
+      condaName = pyExecutableDir.findChild("envs") != null ? "conda.exe" : "conda.bat";
     }
-    final VirtualFile conda = bin.findChild(condaName);
+    final VirtualFile conda = pyExecutableDir.findChild(condaName);
     if (conda != null) return conda.getPath();
-    final VirtualFile condaFolder = bin.getParent();
-
+    // On Windows python.exe is directly inside base interpeter/environment directory
+    final VirtualFile condaFolder = SystemInfo.isWindows ? pyExecutableDir : pyExecutableDir.getParent();
     return findExecutable(condaName, condaFolder);
   }
 
