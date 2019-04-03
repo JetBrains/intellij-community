@@ -6,7 +6,7 @@ import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -331,7 +331,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       val dir = virtualDirectory
       cachedVirtualDirectory = null
       if (dir != null) {
-        runUndoTransparentWriteAction {
+        runNonUndoableWriteAction(dir) {
           try {
             dir.delete(this)
           }
@@ -411,7 +411,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           if (oldFile != null) {
             // VFS doesn't allow to rename to existing file, so, check it
             if (dir.findChild(fileName) == null) {
-              runUndoTransparentWriteAction { oldFile.rename(this, fileName) }
+              runNonUndoableWriteAction(oldFile) {
+                oldFile.rename(this, fileName)
+              }
               file = oldFile
             }
             else {
@@ -424,7 +426,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           file = dir.getOrCreateChild(fileName, this)
         }
 
-        runUndoTransparentWriteAction {
+        runNonUndoableWriteAction(file) {
           file.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
@@ -511,9 +513,11 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       virtualDirectory?.let { virtualDir ->
         val childrenToDelete = virtualDir.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
-          runUndoTransparentWriteAction {
-            childrenToDelete.forEach { file ->
-              errors.catch { file.delete(this) }
+          runWriteAction {
+            for (file in childrenToDelete) {
+              runNonUndoableAction(file) {
+                errors.catch { file.delete(this) }
+              }
             }
           }
         }

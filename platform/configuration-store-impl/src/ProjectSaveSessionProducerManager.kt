@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
@@ -21,7 +21,7 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
     }
 
     val saveResult = withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
-      runUndoTransparentWriteAction {
+      runWriteAction {
         val r = SaveResult()
         saveSessions(extraSessions, r)
         saveSessions(saveSessions, r)
@@ -55,7 +55,7 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     withContext(storeEdtCoroutineContext) {
-      runUndoTransparentWriteAction {
+      runWriteAction {
         val r = SaveResult()
         for (entry in oldList) {
           executeSave(entry.session, r)
