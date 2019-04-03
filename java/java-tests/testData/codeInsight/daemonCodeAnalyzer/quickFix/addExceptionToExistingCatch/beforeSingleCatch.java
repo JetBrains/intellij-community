@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Replace 'IndexOutOfBoundsException' with 'IOException'" "true"
 import java.io.File;
 
 class Test {

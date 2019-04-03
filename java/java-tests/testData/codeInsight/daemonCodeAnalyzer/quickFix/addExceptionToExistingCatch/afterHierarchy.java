@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Replace 'C' with more generic 'A'" "true"
 import java.io.Exception;
 
 class A extends Exception {}
