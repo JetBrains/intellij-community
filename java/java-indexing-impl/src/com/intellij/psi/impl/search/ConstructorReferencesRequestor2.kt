@@ -50,7 +50,7 @@ class ConstructorReferencesRequestor2 : SearchRequestor2 {
       fun(classReference: SymbolReference): SymbolReference? {
         if (classReference is PsiSymbolReference) {
           val parent = classReference.element.parent
-          if (parent is PsiMethodReferenceExpression
+          if (parent is PsiMethodReferenceExpression // todo check PSI before resolving class target
               && parent.referenceNameElement is PsiKeyword
               && parent.isReferenceTo(target)) {
             return parent
