@@ -40,7 +40,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   private static Icon myDisabledIcon = null;
   private static Icon myWin10ComboDropTriangleIcon = null;
 
-  @Deprecated
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
       if (myWin10ComboDropTriangleIcon == null) {
@@ -313,7 +312,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
       int width = prefSize.width
-                  + (myPresentation != null && isArrowVisible(myPresentation) ? ICON_SIZE.get() : 0)
+                  + (myPresentation != null && isArrowVisible(myPresentation) ?
+                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUI.scale(6): ICON_SIZE.get()) : 0)
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0);
 
       Dimension size = new Dimension(width, isSmallVariant() ? JBUI.scale(24) : Math.max(JBUI.scale(24), prefSize.height));
@@ -343,26 +343,36 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         return;
       }
 
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        int iconSize = ICON_SIZE.get();
-        int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
-        g2.translate(x, (getHeight() - iconSize)/2);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-        g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
-
-        Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        arrow.moveTo(3.5f, 6f);
-        arrow.lineTo(12.5f, 6f);
-        arrow.lineTo(8f, 11f);
-        arrow.closePath();
-
-        g2.fill(arrow);
+      if (UIUtil.isUnderWin10LookAndFeel()) {
+        Icon icon = getArrowIcon(isEnabled());
+        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUI.scale(3);
+        int y = (getHeight() - icon.getIconHeight()) / 2;
+        icon.paintIcon(null, g, x, y);
       }
-      finally {
-        g2.dispose();
+      else {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          int iconSize = ICON_SIZE.get();
+          int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
+          int y = (getHeight() - iconSize)/2;
+
+          g2.translate(x, y);
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+          g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
+
+          Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          arrow.moveTo(JBUI.scale(3.5f), JBUI.scale(6f));
+          arrow.lineTo(JBUI.scale(12.5f), JBUI.scale(6f));
+          arrow.lineTo(JBUI.scale(8f), JBUI.scale(11f));
+          arrow.closePath();
+
+          g2.fill(arrow);
+        }
+        finally {
+          g2.dispose();
+        }
       }
     }
 
