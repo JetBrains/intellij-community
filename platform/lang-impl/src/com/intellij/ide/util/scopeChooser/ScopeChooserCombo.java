@@ -2,6 +2,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -158,12 +159,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     createPredefinedScopeDescriptors(model);
 
+    Comparator<SearchScope> comparator = (o1, o2) -> {
+      int w1 = o1 instanceof WeighedItem ? ((WeighedItem)o1).getWeight() : -1;
+      int w2 = o2 instanceof WeighedItem ? ((WeighedItem)o2).getWeight() : -1;
+      if (w1 == w2) return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
+      return w2 - w1;
+    };
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
       if (StringUtil.isEmpty(each.getDisplayName())) continue;
       List<SearchScope> scopes = each.getSearchScopes(myProject);
       if (scopes.isEmpty()) continue;
       model.addElement(new ScopeSeparator(each.getDisplayName()));
-      for (SearchScope scope : ContainerUtil.sorted(scopes, Comparator.comparing(SearchScope::getDisplayName))) {
+      for (SearchScope scope : ContainerUtil.sorted(scopes, comparator)) {
         model.addElement(new ScopeDescriptor(scope));
       }
     }
