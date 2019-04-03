@@ -18,20 +18,18 @@ import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
+import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.util.regex.Pattern
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
-
-private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
 
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
   get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor())
@@ -66,7 +64,7 @@ fun Link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit)
 
 @JvmOverloads
 fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
-  val matcher = HREF_PATTERN.matcher(note)
+  val matcher = URLUtil.HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
     return Label(note)
   }
