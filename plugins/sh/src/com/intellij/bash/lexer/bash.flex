@@ -19,18 +19,41 @@ import static org.apache.commons.lang3.StringUtils.contains;
 
 %{
   public _BashLexerGen() { this(null); }
-    private void pushState(int state) { stateStack.push(yystate()); yybegin(state);}
-    private void popState() { if (!stateStack.empty()) yybegin(stateStack.pop());}
-    private void switchState(int state) { popState(); pushState(state); }
-    private IntStack stateStack = new IntStack(20);
-    private void pushParentheses(CharSequence parentheses) { parenStack.push(parentheses); }
-    private void popParentheses() { if (!parenStack.empty()) parenStack.pop(); }
-    private boolean shouldCloseDoubleParen() { return !parenStack.empty() && parenStack.peek().equals("(("); }
-    private boolean shouldCloseSingleParen() { return !parenStack.empty() && parenStack.peek().equals("("); }
-    private Stack<CharSequence> parenStack = new Stack<>();
-    private CharSequence heredocMarker;
+    private static final int DOUBLE_PARENTHESES = 2;
+    private static final int PARENTHESES = 1;
 
-    protected void onReset() { stateStack.clear(); }
+    private CharSequence heredocMarker;
+    private IntStack stateStack = new IntStack(20);
+    private IntStack parenStack = new IntStack(20);
+
+    private void pushState(int state) {
+      stateStack.push(yystate());
+      yybegin(state);
+    }
+    private void popState() {
+      assert !stateStack.empty() : "States stack is empty";
+      yybegin(stateStack.pop());
+    }
+
+    private void pushParentheses(int parentheses) {
+      parenStack.push(parentheses);
+    }
+    private void popParentheses() {
+      assert !parenStack.empty() : "Parentheses stack is empty";
+      parenStack.pop();
+    }
+    private boolean shouldCloseDoubleParen() {
+      return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
+    }
+    private boolean shouldCloseSingleParen() {
+      return !parenStack.empty() && parenStack.peek() == PARENTHESES;
+    }
+
+    protected void onReset() {
+      stateStack.clear();
+      parenStack.clear();
+      heredocMarker = null;
+    }
 %}
 
 /***** Custom user code *****/
@@ -248,7 +271,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
     /***** Conditional statements *****/
     "$(("                         { yypushback(2); return DOLLAR; }
-    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(yytext()); return LEFT_DOUBLE_PAREN; }
+    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES); return LEFT_DOUBLE_PAREN; }
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
@@ -268,7 +291,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "+="                          { return PLUS_ASSIGN; }
     "="                           { return ASSIGN; }
     "$"                           { return DOLLAR; }
-    "("                           { pushParentheses(yytext()); return LEFT_PAREN; }
+    "("                           { pushParentheses(PARENTHESES); return LEFT_PAREN; }
     ")"                           { if (shouldCloseSingleParen()) popParentheses();
                                     if (yystate() == COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
