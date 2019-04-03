@@ -9,7 +9,6 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTitlePane;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.BalloonLayout;
@@ -69,7 +69,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
   private boolean myFullScreen;
 
-  private DarculaTitlePane myCustomFrameTitlePane;
+  private CustomHeader myCustomFrameTitlePane;
+  private boolean myDecoratedMenu = false;
 
   IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, final IdeFrame frame) {
     if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
@@ -95,13 +96,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     IdeMenuBar menu = new IdeMenuBar(actionManager, dataManager);
+    myDecoratedMenu = IdeFrameDecorator.isCustomDecoration() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
-    }
-    else {
+    } else {
       if (isDecoratedMenu()) {
-        myCustomFrameTitlePane = new DarculaTitlePane(this);
+        myCustomFrameTitlePane = CustomHeader.Companion.createFrameHeader((JFrame) frame);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
@@ -496,6 +497,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   }
 
   private boolean isDecoratedMenu() {
-    return IdeFrameDecorator.isCustomDecoration();
+    return IdeFrameDecorator.isCustomDecoration() && myDecoratedMenu;
   }
 }

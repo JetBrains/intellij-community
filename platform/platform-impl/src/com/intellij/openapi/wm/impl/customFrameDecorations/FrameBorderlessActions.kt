@@ -17,20 +17,13 @@ import javax.swing.*
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
-class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
+class FrameBorderlessActions private constructor(var root: JRootPane) : Disposable {
   companion object {
-    fun createSimple(root: JRootPane): CustomFrameActions = CustomFrameActions(root).apply {
-      buttonPanes = CustomFrameTitleButtons.create(myCloseAction)
-      init()
-    }
-
-    fun create(root: JRootPane) = CustomFrameActions(root).apply {
-      if (root.windowDecorationStyle == JRootPane.FRAME) {
+    fun create(root: JRootPane) = FrameBorderlessActions(root).apply {
         buttonPanes = ResizableCustomFrameTitleButtons.create(myCloseAction,
                                                               myRestoreAction, myIconifyAction,
                                                               myMaximizeAction)
 
-      }
 
       init()
     }
@@ -45,7 +38,21 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
   private val myRestoreAction: Action = CustomFrameAction("Restore", AllIcons.Windows.RestoreSmall) { restore() }
   private val myMaximizeAction: Action = CustomFrameAction("Maximize", AllIcons.Windows.MaximizeSmall) { maximize() }
 
-  private var frame: Frame? = null
+  private var windows: Window? = null
+
+  private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
+    ObjectUtils.notNull(
+      AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
+  }
+
+  private val icon: Icon
+    get() {
+      windows ?: return AllIcons.Icon_small
+
+      val ctx = JBUIScale.ScaleContext.create(windows)
+      ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
+      return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
+    }
 
   private val myWindowListener = object : WindowAdapter() {
     override fun windowActivated(e: WindowEvent?) {
@@ -83,19 +90,22 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
 
   private fun updateAncestor() {
     val windowAncestor = SwingUtilities.getWindowAncestor(buttonPanes.getView())
-    if (!Objects.equals(windowAncestor, frame)) {
-      frame?.removeWindowListener(myWindowListener)
+    if (!Objects.equals(windowAncestor, windows)) {
+      windows?.removeWindowListener(myWindowListener)
     }
-    if (windowAncestor is Frame) frame = windowAncestor
+    windows = windowAncestor
+
+    windowAncestor?.let {
+      windowAncestor.addWindowListener(myWindowListener)
+      Disposer.register(this, Disposable { windowAncestor.removeWindowListener(myWindowListener) })
+    }
+
+    if (windowAncestor is Frame) {
+      setExtendedState(windowAncestor.extendedState)
+    }
     else {
-      frame = null
-      return
+      updateActions(windowAncestor)
     }
-
-    windowAncestor.addWindowListener(myWindowListener)
-    Disposer.register(this, Disposable { windowAncestor.removeWindowListener(myWindowListener) })
-
-    setExtendedState(windowAncestor.extendedState)
   }
 
   override fun dispose() {
@@ -103,8 +113,8 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
   }
 
   private fun close() {
-    Disposer.dispose(this)
-    frame?.dispatchEvent(WindowEvent(frame, WindowEvent.WINDOW_CLOSING))
+//    Disposer.dispose(this)
+    windows?.dispatchEvent(WindowEvent(windows, WindowEvent.WINDOW_CLOSING))
   }
 
   private fun iconify() {
@@ -125,17 +135,32 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
   }
 
   private fun setExtendedState(state: Int) {
-
     if (myState == state) {
       return
     }
 
-    myState = state
+    if (windows is Frame) {
+      val frame = windows as Frame
+      myState = state
+      frame.extendedState = state
+      updateActions(frame)
+    } else {
+      updateActions(windows)
+    }
+  }
 
-    val fm = frame ?: return
+  private fun updateActions(window: Window?) {
+    myMaximizeAction.isEnabled = false
+    myRestoreAction.isEnabled = false
+    myIconifyAction.isEnabled = false
 
-    fm.extendedState = state
-    if (fm.isResizable) {
+    myCloseAction.isEnabled = true
+    buttonPanes.updateVisibility()
+  }
+
+  private fun updateActions(frame: Frame) {
+    val state = myState
+    if (frame.isResizable) {
       if (state and Frame.MAXIMIZED_BOTH != 0) {
         myMaximizeAction.isEnabled = false
         myRestoreAction.isEnabled = true
@@ -149,28 +174,13 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
       myMaximizeAction.isEnabled = false
       myRestoreAction.isEnabled = false
     }
-
+    myIconifyAction.isEnabled = true
     myCloseAction.isEnabled = true
-    myState = state
     buttonPanes.updateVisibility()
   }
 
   private fun createProductIcon(): JComponent {
     val myMenuBar = object : JMenuBar() {
-      private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
-        ObjectUtils.notNull(
-          AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
-      }
-
-      private val icon: Icon
-        get() {
-          if (frame == null) return AllIcons.Icon_small
-
-          val ctx = JBUIScale.ScaleContext.create(frame)
-          ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
-          return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
-        }
-
       override fun getPreferredSize(): Dimension {
         return minimumSize
       }
@@ -213,6 +223,7 @@ class CustomFrameActions private constructor(var root: JRootPane) : Disposable {
     val closeMenuItem = menu.add(myCloseAction)
     closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
   }
+
 }
 
 private class CustomFrameAction(name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
