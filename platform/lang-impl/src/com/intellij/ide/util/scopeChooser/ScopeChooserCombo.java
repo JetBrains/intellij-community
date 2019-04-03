@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.Comparator;
 import java.util.List;
 
@@ -33,21 +33,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Project myProject;
   private boolean mySuggestSearchInLibs;
   private boolean myPrevSearchFiles;
-  private NamedScopeManager myNamedScopeManager;
-  private DependencyValidationManager myValidationManager;
   private boolean myCurrentSelection = true;
   private boolean myUsageView = true;
-  private Condition<ScopeDescriptor> myScopeFilter;
+  private Condition<? super ScopeDescriptor> myScopeFilter;
   private boolean myShowEmptyScopes;
   private BrowseListener myBrowseListener = null;
 
   public ScopeChooserCombo() {
-    super(new IgnoringComboBox(){
-      @Override
-      protected boolean isIgnored(Object item) {
-        return item instanceof ScopeSeparator;
-      }
-    });
+    super(new MyComboBox());
   }
 
   public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, String preselect) {
@@ -67,7 +60,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                    final boolean suggestSearchInLibs,
                    final boolean prevSearchWholeFiles,
                    final Object selection,
-                   @Nullable Condition<ScopeDescriptor> scopeFilter) {
+                   @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
@@ -78,13 +71,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       selectItem(selectedScope);
     };
     myScopeFilter = scopeFilter;
-    myNamedScopeManager = NamedScopeManager.getInstance(project);
-    myNamedScopeManager.addScopeListener(scopeListener, this);
-    myValidationManager = DependencyValidationManager.getInstance(project);
-    myValidationManager.addScopeListener(scopeListener, this);
-    addActionListener(createScopeChooserListener());
+    NamedScopeManager.getInstance(project).addScopeListener(scopeListener, this);
+    DependencyValidationManager.getInstance(project).addScopeListener(scopeListener, this);
+    addActionListener(this::handleScopeChooserAction);
 
-    final ComboBox<ScopeDescriptor> combo = (ComboBox<ScopeDescriptor>)getComboBox();
+    ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUI.scale(300));
     combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
 
@@ -101,6 +92,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         return null;
       }
     };
+  }
+
+  @Override
+  public ComboBox<ScopeDescriptor> getComboBox() {
+    //noinspection unchecked
+    return (ComboBox<ScopeDescriptor>)super.getComboBox();
   }
 
   public void setBrowseListener(BrowseListener browseListener) {
@@ -134,20 +131,19 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  private ActionListener createScopeChooserListener() {
-    return e -> {
-      final String selection = getSelectedScopeName();
-      if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
-      final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
-      if (dlg.isOK()){
-        rebuildModel();
-        final NamedScope namedScope = dlg.getSelectedScope();
-        if (namedScope != null) {
-          selectItem(namedScope.getName());
-        }
+  /** @noinspection unused*/
+  private void handleScopeChooserAction(ActionEvent ignore) {
+    String selection = getSelectedScopeName();
+    if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
+    EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
+    if (dlg.isOK()){
+      rebuildModel();
+      NamedScope namedScope = dlg.getSelectedScope();
+      if (namedScope != null) {
+        selectItem(namedScope.getName());
       }
-      if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
-    };
+    }
+    if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
 
   private void rebuildModel() {
@@ -217,16 +213,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   @Nullable
   public SearchScope getSelectedScope() {
-    final JComboBox combo = getComboBox();
-    int idx = combo.getSelectedIndex();
-    return idx < 0 ? null : ((ScopeDescriptor)combo.getSelectedItem()).getScope();
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    return item == null ? null : item.getScope();
   }
 
   @Nullable
   public String getSelectedScopeName() {
-    final JComboBox combo = getComboBox();
-    int idx = combo.getSelectedIndex();
-    return idx < 0 ? null : ((ScopeDescriptor)combo.getSelectedItem()).getDisplay();
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    return item == null ? null : item.getDisplay();
   }
 
   private static class ScopeSeparator extends ScopeDescriptor {
@@ -259,5 +253,23 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   public interface BrowseListener {
     void onBeforeBrowseStarted();
     void onAfterBrowseFinished();
+  }
+
+  private static class MyComboBox extends ComboBox {
+
+    @Override
+    public void setSelectedItem(Object item) {
+      if (!(item instanceof ScopeSeparator)) {
+        super.setSelectedItem(item);
+      }
+    }
+
+    @Override
+    public void setSelectedIndex(final int anIndex) {
+      Object item = getItemAt(anIndex);
+      if (!(item instanceof ScopeSeparator)) {
+        super.setSelectedIndex(anIndex);
+      }
+    }
   }
 }
