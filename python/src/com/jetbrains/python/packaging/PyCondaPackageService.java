@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -99,6 +98,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   private static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
     VirtualFile sdkHomeDir = StandardFileSystems.local().findFileByPath(sdkPath);
     if (sdkHomeDir == null) {
+      LOG.info("VirtualFile for " + sdkPath + " not found");
       return null;
     }
     final VirtualFile bin = sdkHomeDir.getParent();
@@ -151,8 +151,20 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
           if (executableFile != null) {
             return executableFile;
           }
+          else {
+            LOG.info("Normalized system-dependent path not found for executable " + directoryPath);
+          }
+        }
+        else {
+          LOG.info("File " + condaName + " not found in " + binFolder);
         }
       }
+      else {
+        LOG.info("bin directory of Conda not found in " + condaFolder.getPath());
+      }
+    }
+    else {
+      LOG.info("Conda folder not found");
     }
     return null;
   }

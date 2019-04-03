@@ -869,7 +869,10 @@ public final class PythonSdkType extends SdkType {
   public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
     File binPath = new File(homeDirectory);
     File binDir = binPath.getParentFile();
-    if (binDir == null) return null;
+    if (binDir == null) {
+      LOG.info("Parent directory for " + homeDirectory + " doesn't exist");
+      return null;
+    }
     File runner = new File(binDir, name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
     runner = new File(new File(binDir, "Scripts"), name);
@@ -893,6 +896,7 @@ public final class PythonSdkType extends SdkType {
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
     runner = new File(new File(new File("/usr", "local"), "bin"), name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    LOG.info("None of patterns for getExecutablePath() matched");
     return null;
   }
 
