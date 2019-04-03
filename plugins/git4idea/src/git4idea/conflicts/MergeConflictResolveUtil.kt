@@ -5,10 +5,8 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
-import com.intellij.diff.merge.MergeRequest
-import com.intellij.diff.merge.MergeRequestProducer
-import com.intellij.diff.merge.MergeResult
-import com.intellij.diff.merge.MergeUtil
+import com.intellij.diff.merge.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -56,18 +54,16 @@ object MergeConflictResolveUtil {
     override fun process(context: UserDataHolder, indicator: ProgressIndicator): MergeRequest {
       try {
         val resolver = resolverComputer()
-        val file = resolver.virtualFile
 
         val mergeData = resolver.mergeData
         val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-        val resolveCallback = MyMergeCallback(resolver)
 
         val request = runReadAction {
-          DiffRequestFactory.getInstance().createMergeRequest(project, file, byteContents,
-                                                              resolver.windowTitle, resolver.contentTitles,
-                                                              resolveCallback)
+          DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
+                                                              resolver.windowTitle, resolver.contentTitles)
         }
         MergeUtil.putRevisionInfos(request, mergeData)
+        MergeCallback.register(request, MyMergeCallback(resolver))
         return request
       }
       catch (e: Throwable) {
@@ -99,8 +95,8 @@ object MergeConflictResolveUtil {
     return true
   }
 
-  private class MyMergeCallback(private val resolver: GitMergeHandler.Resolver) : Consumer<MergeResult> {
-    override fun consume(result: MergeResult) {
+  private class MyMergeCallback(private val resolver: GitMergeHandler.Resolver) : MergeCallback() {
+    override fun applyResult(result: MergeResult) {
       val project = resolver.project
       val file = resolver.virtualFile
 
@@ -114,6 +110,14 @@ object MergeConflictResolveUtil {
           resolver.onConflictResolved(result)
         }
       }
+    }
+
+    override fun checkIsValid(): Boolean {
+      return resolver.checkIsValid()
+    }
+
+    override fun addListener(listener: Listener, disposable: Disposable) {
+      resolver.addListener(listener, disposable)
     }
   }
 

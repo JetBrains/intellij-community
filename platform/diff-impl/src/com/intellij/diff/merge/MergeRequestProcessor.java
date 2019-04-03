@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +64,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   @NotNull private final Wrapper myContentPanel;
   @NotNull private final Wrapper myToolbarPanel;
   @NotNull private final Wrapper myToolbarStatusPanel;
+  @NotNull private final Wrapper myNotificationPanel;
   @NotNull private final Wrapper myButtonsPanel;
 
   @Nullable private MergeRequest myRequest;
@@ -83,11 +86,14 @@ public abstract class MergeRequestProcessor implements Disposable {
     myToolbarPanel = new Wrapper();
     myToolbarPanel.setFocusable(true);
     myToolbarStatusPanel = new Wrapper();
+    myNotificationPanel = new Wrapper();
     myButtonsPanel = new Wrapper();
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel).addToRight(myToolbarStatusPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel)
+      .addToRight(myToolbarStatusPanel)
+      .addToBottom(myNotificationPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -110,6 +116,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     myRequest = request;
     myViewer = createViewerFor(request);
     initViewer();
+    installCallbackListener(myRequest);
   }
 
   @CalledInAwt
@@ -125,6 +132,7 @@ public abstract class MergeRequestProcessor implements Disposable {
           () -> {
             myRequest = mergeRequest;
             swapViewer(createViewerFor(mergeRequest));
+            installCallbackListener(myRequest);
           },
           modality);
       }
@@ -265,6 +273,34 @@ public abstract class MergeRequestProcessor implements Disposable {
   private void setTitle(@Nullable String title) {
     if (title == null) title = "Merge";
     setWindowTitle(title);
+  }
+
+  private void installCallbackListener(@NotNull MergeRequest request) {
+    MergeCallback callback = MergeCallback.getCallback(request);
+    callback.addListener(new MergeCallback.Listener() {
+      @Override
+      public void fireConflictInvalid() {
+        showInvalidRequestNotification();
+      }
+    }, this);
+
+    if (!callback.checkIsValid()) {
+      showInvalidRequestNotification();
+    }
+  }
+
+  private void showInvalidRequestNotification() {
+    if (!myNotificationPanel.isNull()) return;
+
+    EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+    notification.setText("Conflict is not valid and no longer can be resolved.");
+    notification.createActionLabel("Abort Resolve", () -> {
+      applyRequestResult(MergeResult.CANCEL);
+      closeDialog();
+    });
+    myNotificationPanel.setContent(notification);
+    myMainPanel.validate();
+    myMainPanel.repaint();
   }
 
   @Override

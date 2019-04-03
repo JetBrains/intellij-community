@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts;
 
+import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -17,6 +19,9 @@ import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
 import git4idea.repo.GitConflict.Status;
+import git4idea.repo.GitConflictsHolder;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,6 +106,8 @@ public class GitMergeHandler {
     @NotNull private final String myWindowTitle;
     @NotNull private final List<String> myContentTitles;
 
+    private volatile boolean myIsValid = true;
+
     private Resolver(@NotNull Project project,
                      @NotNull GitConflict conflict,
                      @NotNull VirtualFile file,
@@ -152,6 +159,25 @@ public class GitMergeHandler {
     @NotNull
     public List<String> getContentTitles() {
       return myContentTitles;
+    }
+
+    public boolean checkIsValid() {
+      if (myIsValid) {
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myConflict.getRoot());
+        if (repository == null) return true;
+        myIsValid = repository.getConflictsHolder().findConflict(myConflict.getFilePath()) != null;
+      }
+      return myIsValid;
+    }
+
+    public void addListener(@NotNull MergeCallback.Listener listener, @NotNull Disposable disposable) {
+      myProject.getMessageBus().connect(disposable).subscribe(GitConflictsHolder.CONFLICTS_CHANGE, (repo) -> {
+        if (myIsValid && myConflict.getRoot().equals(repo.getRoot())) {
+          if (!checkIsValid()) {
+            listener.fireConflictInvalid();
+          }
+        }
+      });
     }
   }
 }

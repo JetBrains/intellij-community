@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -33,6 +35,13 @@ public class GitConflictsHolder implements Disposable {
   public void dispose() {
     synchronized (LOCK) {
       myConflicts.clear();
+    }
+  }
+
+  @Nullable
+  public GitConflict findConflict(@NotNull FilePath path) {
+    synchronized (LOCK) {
+      return ContainerUtil.find(myConflicts, it -> it.getFilePath().equals(path));
     }
   }
 
