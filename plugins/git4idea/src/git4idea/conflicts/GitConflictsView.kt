@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -155,7 +154,7 @@ class GitConflictsView(private val project: Project) : Disposable {
   }
 
   private fun showMergeWindow() {
-    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toMutableList()
+    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toList()
     if (conflicts.isEmpty()) return
 
     val reversed = HashSet(reversedRoots)
@@ -231,9 +230,6 @@ class GitConflictsView(private val project: Project) : Disposable {
       }
       return null
     }
-  }
-  companion object {
-    private val LOG = Logger.getInstance(GitConflictsView::class.java)
   }
 }
 

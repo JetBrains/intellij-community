@@ -10,7 +10,6 @@ import com.intellij.diff.merge.MergeRequestProducer
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -33,7 +32,6 @@ import java.awt.event.WindowEvent
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
-  private val LOG = Logger.getInstance(MergeConflictResolveUtil::class.java)
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
   @JvmStatic
