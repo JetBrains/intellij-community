@@ -43,6 +43,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowExtendedUnicodeCharacter;
     private boolean allowOneHexCharEscape;
     private boolean allowMysqlBracketExpressions;
+    private boolean allowPcreBackReferences;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
     private boolean whitespaceInClass;
@@ -63,6 +64,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowPosixBracketExpressions = capabilities.contains(POSIX_BRACKET_EXPRESSIONS);
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
       this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
+      this.allowPcreBackReferences = capabilities.contains(PCRE_BACK_REFERENCES);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
@@ -152,6 +154,9 @@ TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
 
+/* 999 back references should be enough for everybody */
+BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
+
 %%
 
 {ESCAPE} "Q"         { yypushstate(QUOTED); return RegExpTT.QUOTE_BEGIN; }
@@ -193,9 +198,10 @@ HEX_CHAR=[0-9a-fA-F]
 
 {ESCAPE} {XML_CLASS}         { if (xmlSchemaMode) return RegExpTT.CHAR_CLASS; else return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
+{ESCAPE} "g" {LBRACE} "-"{0,1} {BACK_REFERENCES_GROUP} {RBRACE} { return allowPcreBackReferences ? RegExpTT.BACKREF : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+{ESCAPE} "g" {BACK_REFERENCES_GROUP} { return allowPcreBackReferences ? RegExpTT.BACKREF : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 
-/* 999 back references should be enough for everybody */
-{ESCAPE} [1-9][0-9]{0,2}      { String text = yytext().toString().substring(1);
+{ESCAPE} {BACK_REFERENCES_GROUP}      { String text = yytext().toString().substring(1);
                                 if (allowOctalNoLeadingZero) {
                                   if (Integer.parseInt(text) <= capturingGroupCount && yystate() != CLASS2) return RegExpTT.BACKREF;
                                   int i = 0;
