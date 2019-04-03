@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.BooleanGetter;
@@ -179,7 +180,16 @@ public abstract class MergeRequestProcessor implements Disposable {
     Action resolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
     Action cancelAction = myViewer.getResolveAction(MergeResult.CANCEL);
 
-    if (resolveAction != null) resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+    if (resolveAction != null) {
+      resolveAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
+
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          resolveAction.actionPerformed(null);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, getRootPane(), this);
+    }
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
     List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
