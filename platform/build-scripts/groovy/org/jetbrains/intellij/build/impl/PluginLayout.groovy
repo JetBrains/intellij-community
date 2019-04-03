@@ -42,7 +42,7 @@ class PluginLayout extends BaseLayout {
    * Creates the plugin layout description. The default plugin layout is composed of a jar with name {@code mainModuleName}.jar containing
    * production output of {@code mainModuleName} module, resources_en.jar containing translatable resources from {@code mainModuleName},
    * and the module libraries of {@code mainModuleName} with scopes 'Compile' and 'Runtime' placed under 'lib' directory in a directory
-   * with name {@code mainModuleName}. In you need to include additional resources or modules into the plugin layout specify them in
+   * with name {@code mainModuleName}. If you need to include additional resources or modules into the plugin layout specify them in
    * {@code body} parameter. If you don't need to change the default layout there is no need to call this method at all, it's enough to
    * specify the plugin module in {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundledPluginModules/pluginModulesToPublish} list.
    *
