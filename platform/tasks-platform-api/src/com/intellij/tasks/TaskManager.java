@@ -103,12 +103,18 @@ public abstract class TaskManager {
 
   public abstract void removeTask(@NotNull LocalTask task);
 
-  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
+  /**
+   * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
+   */
+  @Deprecated
   public abstract void addTaskListener(TaskListener listener);
 
   public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);
 
-  @Deprecated // use {@code com.intellij.tasks.TaskManager.addTaskListener(com.intellij.tasks.TaskListener, com.intellij.openapi.Disposable)}
+  /**
+   * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
+   */
+  @Deprecated
   public abstract void removeTaskListener(TaskListener listener);
   // repositories management
 
