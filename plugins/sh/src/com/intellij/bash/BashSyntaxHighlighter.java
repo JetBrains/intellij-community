@@ -62,13 +62,6 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey VAR_DEF = TextAttributesKey.createTextAttributesKey("BASH.VAR_DEF", VAR_USE);
 
-  @NotNull
-  public Lexer getHighlightingLexer() {
-    return new BashLexer();
-  }
-
-  private static final Map<IElementType, TextAttributesKey> attributes1 = new HashMap<>();
-
   private static final TokenSet parenthesisSet = TokenSet.create(BashTokenTypes.LEFT_PAREN, BashTokenTypes.RIGHT_PAREN);
   private static final TokenSet bracesSet = TokenSet.create(BashTokenTypes.LEFT_CURLY, BashTokenTypes.RIGHT_CURLY);
   private static final TokenSet bracketSet = TokenSet.create(BashTokenTypes.LEFT_SQUARE, BashTokenTypes.RIGHT_SQUARE);
@@ -76,39 +69,36 @@ public class BashSyntaxHighlighter extends SyntaxHighlighterBase {
   private static final TokenSet lineCommentSet = TokenSet.create(BashTokenTypes.COMMENT);
   private static final TokenSet shebangSet = TokenSet.create(BashTokenTypes.SHEBANG);
   private static final TokenSet backquoteSet = TokenSet.create(BashTokenTypes.BACKQUOTE);
-
   private static final TokenSet badCharacterSet = TokenSet.create(BashTokenTypes.BAD_CHARACTER);
 
+  private static final Map<IElementType, TextAttributesKey> map = new HashMap<>();
+
   static {
-    fillMap(attributes1, BashTokenTypes.keywords, KEYWORD);
-    fillMap(attributes1, BashTokenTypes.internalCommands, INTERNAL_COMMAND);
-
-//    fillMap(attributes1, BINARY_DATA, BashTokenTypes.BINARY_DATA); // todo
-
-    fillMap(attributes1, backquoteSet, BACKQUOTE);
-
-    fillMap(attributes1, lineCommentSet, LINE_COMMENT);
-
-    fillMap(attributes1, shebangSet, SHEBANG_COMMENT);
-
-    fillMap(attributes1, RAW_STRING, BashTokenTypes.RAW_STRING);
-
-    fillMap(attributes1, VAR_USE, BashTokenTypes.VAR);
-
-    fillMap(attributes1, parenthesisSet, PAREN);
-    fillMap(attributes1, bracesSet, BRACE);
-    fillMap(attributes1, bracketSet, BRACKET);
-    fillMap(attributes1, numberSet, NUMBER);
-
-    fillMap(attributes1, redirectionSet, REDIRECTION);
-    fillMap(attributes1, conditionalOperators, CONDITIONAL);
-
-    fillMap(attributes1, badCharacterSet, HighlighterColors.BAD_CHARACTER);
+//    fillMap(map, BINARY_DATA, BashTokenTypes.BINARY_DATA); // todo
+    fillMap(map, BashTokenTypes.keywords, KEYWORD);
+    fillMap(map, BashTokenTypes.internalCommands, INTERNAL_COMMAND);
+    fillMap(map, backquoteSet, BACKQUOTE);
+    fillMap(map, lineCommentSet, LINE_COMMENT);
+    fillMap(map, shebangSet, SHEBANG_COMMENT);
+    fillMap(map, RAW_STRING, BashTokenTypes.RAW_STRING);
+    fillMap(map, VAR_USE, BashTokenTypes.VAR);
+    fillMap(map, parenthesisSet, PAREN);
+    fillMap(map, bracesSet, BRACE);
+    fillMap(map, bracketSet, BRACKET);
+    fillMap(map, numberSet, NUMBER);
+    fillMap(map, redirectionSet, REDIRECTION);
+    fillMap(map, conditionalOperators, CONDITIONAL);
+    fillMap(map, badCharacterSet, HighlighterColors.BAD_CHARACTER);
   }
 
   @NotNull
   public TextAttributesKey[] getTokenHighlights(final IElementType tokenType) {
-    return pack(attributes1.get(tokenType));
+    return pack(map.get(tokenType));
+  }
+
+  @NotNull
+  public Lexer getHighlightingLexer() {
+    return new BashLexer();
   }
 }
 

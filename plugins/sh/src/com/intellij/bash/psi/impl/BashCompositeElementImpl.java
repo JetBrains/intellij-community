@@ -28,7 +28,7 @@ public class BashCompositeElementImpl extends ASTWrapperPsiElement implements Ba
     return processDeclarations(this, processor, state, lastParent, place);
   }
 
-  static boolean processDeclarations(@NotNull PsiElement element, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+  private static boolean processDeclarations(@NotNull PsiElement element, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     return processor.execute(element, state) && ResolveUtil.processChildren(element, processor, state, lastParent, place);
   }
 
