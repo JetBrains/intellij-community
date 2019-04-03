@@ -133,6 +133,12 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   @CalledInAwt
   public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request) {
-    new MergeWindow(project, request).show();
+    new MergeWindow.ForRequest(project, request, DiffDialogHints.MODAL).show();
+  }
+
+  @Override
+  @CalledInAwt
+  public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer requestProducer, @NotNull DiffDialogHints hints) {
+    new MergeWindow.ForProducer(project, requestProducer, hints).show();
   }
 }

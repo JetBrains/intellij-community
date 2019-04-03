@@ -15,7 +15,6 @@
  */
 package git4idea.status;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +34,8 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.repo.GitConflict;
+import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -54,28 +55,31 @@ import java.util.*;
  * @author Kirill Likhodedov
  */
 class GitChangesCollector {
-  private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
   @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myVcsRoot;
-
-  @NotNull private final VcsDirtyScope myDirtyScope;
+  @NotNull private final Git myGit;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-
+  @NotNull private final VcsDirtyScope myDirtyScope;
   @NotNull private final GitRepository myRepository;
+  @NotNull private final VirtualFile myVcsRoot;
+
   private final Collection<Change> myChanges = new HashSet<>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
-  @NotNull private final Git myGit;
+  private final Collection<GitConflict> myConflicts = new HashSet<>();
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
   @NotNull
-  static GitChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                                     @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                                     @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
+  static GitChangesCollector collect(@NotNull Project project,
+                                     @NotNull Git git,
+                                     @NotNull ChangeListManager changeListManager,
+                                     @NotNull ProjectLevelVcsManager vcsManager,
+                                     @NotNull AbstractVcs vcs,
+                                     @NotNull VcsDirtyScope dirtyScope,
+                                     @NotNull GitRepository repository) throws VcsException {
     return new GitChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, repository);
   }
 
@@ -89,17 +93,25 @@ class GitChangesCollector {
     return myChanges;
   }
 
-  private GitChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
-                              @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
-                              @NotNull VcsDirtyScope dirtyScope, @NotNull GitRepository repository) throws VcsException {
+  Collection<GitConflict> getConflicts() {
+    return myConflicts;
+  }
+
+  private GitChangesCollector(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull ChangeListManager changeListManager,
+                              @NotNull ProjectLevelVcsManager vcsManager,
+                              @NotNull AbstractVcs vcs,
+                              @NotNull VcsDirtyScope dirtyScope,
+                              @NotNull GitRepository repository) throws VcsException {
     myProject = project;
+    myGit = git;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
     myVcs = vcs;
     myDirtyScope = dirtyScope;
-    myVcsRoot = repository.getRoot();
-    myGit = git;
     myRepository = repository;
+    myVcsRoot = repository.getRoot();
 
     Collection<FilePath> dirtyPaths = dirtyPaths();
     if (!dirtyPaths.isEmpty()) {
@@ -236,7 +248,7 @@ class GitChangesCollector {
           } else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
           } else if (yStatus == 'U') {
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -263,7 +275,7 @@ class GitChangesCollector {
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
           } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
           }  else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -273,21 +285,22 @@ class GitChangesCollector {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
           } else if (yStatus == 'U') { // DU - unmerged, deleted by us
-            reportConflict(filepath, head);
+            reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
           } else if (yStatus == 'D') { // DD - unmerged, both deleted
-            // TODO
-            // currently not displaying, because "both deleted" conflicts can't be handled by our conflict resolver.
-            // see IDEA-63156
+            reportConflict(filepath, head, Status.DELETED, Status.DELETED);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D' || yStatus == 'T') {
-            // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - unmerged, added by them
-            reportConflict(filepath, head);
-          } else {
+          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'T') { // UU - unmerged, both modified; UA - unmerged, added by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'D') { // UD - unmerged, deleted by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -379,10 +392,15 @@ class GitChangesCollector {
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportConflict(FilePath filepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
-    ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
-    reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
+  private void reportConflict(FilePath filepath, VcsRevisionNumber head, Status oursStatus, Status theirsStatus) {
+    myConflicts.add(new GitConflict(myVcsRoot, filepath, oursStatus, theirsStatus));
+
+    // TODO: currently not displaying "both deleted" conflicts, because they can't be handled by GitMergeProvider (see IDEA-63156)
+    if (oursStatus != Status.DELETED || theirsStatus != Status.DELETED) {
+      ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+      ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
+      reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
+    }
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {

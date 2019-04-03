@@ -43,7 +43,6 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -80,6 +79,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
   @NotNull private final MyThreesideViewer myViewer;
 
+  private final Action myCancelResolveAction;
+  private final Action myLeftResolveAction;
+  private final Action myRightResolveAction;
+  private final Action myAcceptResolveAction;
+
   public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
     myMergeContext = context;
     myMergeRequest = request;
@@ -91,6 +95,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
     myViewer = new MyThreesideViewer(diffContext, diffRequest);
+
+    myCancelResolveAction = myViewer.getResolveAction(MergeResult.CANCEL);
+    myLeftResolveAction = myViewer.getResolveAction(MergeResult.LEFT);
+    myRightResolveAction = myViewer.getResolveAction(MergeResult.RIGHT);
+    myAcceptResolveAction = myViewer.getResolveAction(MergeResult.RESOLVED);
   }
 
   @NotNull
@@ -145,7 +154,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   @Nullable
   @Override
   public Action getResolveAction(@NotNull MergeResult result) {
-    return myViewer.getResolveAction(result);
+    switch (result) {
+      case CANCEL:
+        return myCancelResolveAction;
+      case LEFT:
+        return myLeftResolveAction;
+      case RIGHT:
+        return myRightResolveAction;
+      case RESOLVED:
+        return myAcceptResolveAction;
+      default:
+        return null;
+    }
   }
 
   @Override
@@ -383,34 +403,25 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       // This is made to reduce unwanted modifications before rediff is finished.
       // It could happen between this init() EDT chunk and invokeLater().
       getEditor().setViewer(true);
+      myLoadingPanel.startLoading();
+      myAcceptResolveAction.setEnabled(false);
 
-      // we need invokeLater() here because viewer is partially-initialized (ex: there are no toolbar or status panel)
-      // user can see this state while we're showing progress indicator, so we want let init() to finish.
-      ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(new Task.Modal(getProject(), "Computing Differences...", true) {
-        private Runnable myCallback;
+      BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          myCallback = doPerformRediff(indicator);
+        Runnable callback;
+        try {
+          callback = doPerformRediff(indicator);
         }
-
-        @Override
-        public void onCancel() {
-          myMergeContext.finishMerge(MergeResult.CANCEL);
+        catch (ProcessCanceledException e) {
+          callback = () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
-
-        @Override
-        public void onThrowable(@NotNull Throwable error) {
-          LOG.error(error);
-          myMergeContext.finishMerge(MergeResult.CANCEL);
+        catch (Throwable e) {
+          LOG.error(e);
+          callback = () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
-
-        @Override
-        public void onSuccess() {
-          if (isDisposed()) return;
-          myCallback.run();
-        }
-      }));
+        ApplicationManager.getApplication().invokeLater(callback);
+      });
     }
 
     @NotNull
@@ -453,6 +464,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private void apply(@NotNull List<MergeLineFragment> fragments,
                        @NotNull List<MergeConflictType> conflictTypes,
                        @NotNull IgnorePolicy ignorePolicy) {
+      if (isDisposed()) return;
+
       clearDiffPresentation();
       resetChangeCounters();
 
@@ -481,6 +494,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myStatusPanel.update();
 
       getEditor().setViewer(false);
+      myLoadingPanel.stopLoading();
+      myAcceptResolveAction.setEnabled(true);
 
       myInnerDiffWorker.onEverythingChanged();
       myInitialRediffFinished = true;
@@ -676,7 +691,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
           String message = DiffBundle.message("merge.all.changes.processed.message.text");
           DiffUtil.showSuccessPopup(message, point, this, () -> {
-            if (isDisposed()) return;
+            if (isDisposed() || myLoadingPanel.isLoading()) return;
             destroyChangedBlocks();
             myMergeContext.finishMerge(MergeResult.RESOLVED);
           });
