@@ -103,7 +103,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   private JBTextField  mySoftWrapFileMasks;
   private JLabel       mySoftWrapFileMasksHint;
 
-  private JComboBox<EditorCaretMovementOptions.WordBoundary> myWordMoveBehaviorComboBox;
+  private JComboBox<EditorCaretMovementOptions.WordBoundary> myWordBoundaryCaretStopComboBox;
+  private JComboBox<EditorCaretMovementOptions.LineBoundary> myLineBoundaryCaretStopComboBox;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
@@ -150,11 +151,13 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
       }
     });
 
-    myWordMoveBehaviorComboBox.addItem(EditorCaretMovementOptions.WordBoundary.STICK_TO_WORD_BOUNDARIES);
-    myWordMoveBehaviorComboBox.addItem(EditorCaretMovementOptions.WordBoundary.JUMP_TO_WORD_START);
-    myWordMoveBehaviorComboBox.addItem(EditorCaretMovementOptions.WordBoundary.JUMP_TO_WORD_END);
-    myWordMoveBehaviorComboBox.addItem(EditorCaretMovementOptions.WordBoundary.JUMP_TO_NEIGHBORING_WORD);
-    myWordMoveBehaviorComboBox.addItem(EditorCaretMovementOptions.WordBoundary.STOP_AT_ALL_WORD_BOUNDARIES);
+    for (EditorCaretMovementOptions.WordBoundary item : EditorCaretMovementOptions.WordBoundary.values()) {
+      myWordBoundaryCaretStopComboBox.addItem(item);
+    }
+
+    for (EditorCaretMovementOptions.LineBoundary item : EditorCaretMovementOptions.LineBoundary.values()) {
+      myLineBoundaryCaretStopComboBox.addItem(item);
+    }
 
     initQuickDocProcessing();
     initSoftWrapsSettingsProcessing();
@@ -173,7 +176,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     myCbSmoothScrolling.setSelected(editorSettings.isSmoothScrolling());
 
     // Caret Movement
-    myWordMoveBehaviorComboBox.setSelectedItem(EditorCaretMovementOptions.WordBoundary.forEditorSettings(editorSettings));
+    myWordBoundaryCaretStopComboBox.setSelectedItem(EditorCaretMovementOptions.WordBoundary.forEditorSettings(editorSettings));
+    myLineBoundaryCaretStopComboBox.setSelectedItem(EditorCaretMovementOptions.LineBoundary.forEditorSettings(editorSettings));
 
     // Brace highlighting
 
@@ -266,7 +270,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
 
     // Caret Movement
-    getCaretMovementOptions(myWordMoveBehaviorComboBox).apply(editorSettings);
+    getCaretMovementOptions(myWordBoundaryCaretStopComboBox).applyWordBoundarySettings(editorSettings);
+    getCaretMovementOptions(myLineBoundaryCaretStopComboBox).applyLineBoundarySettings(editorSettings);
 
     // Brace Highlighting
 
@@ -441,7 +446,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     boolean isModified = isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
 
     // Caret Movement
-    isModified |= getCaretMovementOptions(myWordMoveBehaviorComboBox).isModified(editorSettings);
+    isModified |= getCaretMovementOptions(myWordBoundaryCaretStopComboBox).areWordBoundarySettingsModified(editorSettings);
+    isModified |= getCaretMovementOptions(myLineBoundaryCaretStopComboBox).areLineBoundarySettingsModified(editorSettings);
 
     // Brace highlighting
     isModified |= isModified(myCbHighlightBraces, codeInsightSettings.HIGHLIGHT_BRACES);
