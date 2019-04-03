@@ -11,11 +11,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.LayeredQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.TransformingQuery
 import java.util.*
-import kotlin.experimental.xor
+import java.util.function.Function
+
+typealias Subqueries<B, R> = Function<in B, out Collection<Query<out R>>>
 
 class QueryRequest<B, R>(private val query: Query<B>, private val transformation: Transformation<B, R>) {
 
@@ -23,7 +26,23 @@ class QueryRequest<B, R>(private val query: Query<B>, private val transformation
     return QueryRequest(query, this.transformation.bind(transformation))
   }
 
+  fun <T> layer(subqueries: Subqueries<R, T>): SubqueryRequest<B, *, T> {
+    return SubqueryRequest(this, subqueries)
+  }
+
   fun process(processor: Processor<in R>): Boolean = query.forEach(processor.transform(transformation))
+}
+
+class SubqueryRequest<B, I, R>(val queryRequest: QueryRequest<B, I>, val subqueries: Subqueries<I, R>) {
+
+  fun <T> apply(transformation: Transformation<R, T>): SubqueryRequest<B, *, T> = TODO()
+
+  fun run(consumer: (Query<out R>) -> Unit) {
+    queryRequest.process(Processor {
+      subqueries.apply(it).forEach(consumer)
+      true
+    })
+  }
 }
 
 class ParamsRequest<R>(val params: SymbolReferenceSearchParameters, val transformation: Transformation<SymbolReference, R>) {
@@ -43,23 +62,38 @@ data class WordRequest<R>(val searchWordRequest: SearchWordRequest, val transfor
 internal class FlatRequests<T>(
   val myQueryRequests: Collection<QueryRequest<*, T>> = emptyList(),
   val myParamsRequests: Collection<ParamsRequest<T>> = emptyList(),
-  val myWordRequests: Collection<WordRequest<T>> = emptyList()
+  val myWordRequests: Collection<WordRequest<T>> = emptyList(),
+  val mySubQueryRequests: Collection<SubqueryRequest<*, *, T>> = emptyList()
 ) {
 
   internal fun <R> apply(transformation: Transformation<T, R>): FlatRequests<R> = FlatRequests(
     myQueryRequests.map { it.apply(transformation) },
     myParamsRequests.map { it.apply(transformation) },
-    myWordRequests.map { it.apply(transformation) }
+    myWordRequests.map { it.apply(transformation) },
+    mySubQueryRequests.map { it.apply(transformation) }
   )
+
+  internal fun <R> layer(subqueries: Subqueries<T, R>): FlatRequests<R> {
+    return FlatRequests(
+      mySubQueryRequests = myQueryRequests.map { it.layer(subqueries) }
+    )
+  }
 }
 
 internal fun <T> flatten(query: Query<T>): FlatRequests<T> {
   return when (query) {
+    is LayeredQuery<*, *> -> flatten(query as LayeredQuery<*, T>)
     is TransformingQuery<*, *> -> flatten(query as TransformingQuery<*, T>)
     is SymbolReferenceQuery -> flatten(query)
     is SearchWordQuery -> flatten(query)
     else -> FlatRequests(myQueryRequests = listOf(QueryRequest(query, idTransform())))
   }
+}
+
+private fun <B, R> flatten(query: LayeredQuery<B, R>): FlatRequests<R> {
+  val flatBase: FlatRequests<B> = flatten(query.baseQuery)
+  val subqueries: Subqueries<B, R> = query.subqueries
+  return flatBase.layer(subqueries)
 }
 
 private fun <B, R> flatten(query: TransformingQuery<B, R>): FlatRequests<R> {
@@ -104,10 +138,9 @@ private fun createRequests(parameters: SearchWordParameters): Collection<SearchW
     val project = parameters.project
     val restrictedCodeUsageSearchScope = getRestrictedScope(project, targetHint)
     if (restrictedCodeUsageSearchScope != null) {
-      val nonCodeContextMask = contextMask xor IN_CODE.mask
       val codeScope = searchScope.intersectWith(restrictedCodeUsageSearchScope)
       val codeRequest = SearchWordRequest(word, codeScope, caseSensitive, IN_CODE.mask, null)
-      val nonCodeRequest = SearchWordRequest(word, searchScope, caseSensitive, nonCodeContextMask, null)
+      val nonCodeRequest = SearchWordRequest(word, searchScope, caseSensitive, mask(contexts - IN_CODE), null)
       return Arrays.asList(codeRequest, nonCodeRequest)
     }
   }

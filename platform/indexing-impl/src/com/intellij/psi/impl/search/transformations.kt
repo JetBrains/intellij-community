@@ -11,7 +11,10 @@ import java.util.function.Function
  */
 typealias Transformation<B, R> = Function<in B, out Collection<R>>
 
-private val idTransformation: Transformation<Any, Any> = Transformation(::listOf)
+private val idTransformation: Transformation<Any, Any> = object : Function<Any, Collection<Any>> {
+  override fun apply(t: Any): Collection<Any> = listOf(t)
+  override fun toString(): String = "ID"
+}
 
 @Suppress("UNCHECKED_CAST")
 fun <R> idTransform(): Transformation<R, R> = idTransformation as Transformation<R, R>

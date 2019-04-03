@@ -25,6 +25,7 @@ import com.intellij.util.Processors.cancelableCollectProcessor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
 import com.intellij.util.TransformingQuery
+import com.intellij.util.containers.cancellable
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.StringSearcher
 import gnu.trove.THashMap
@@ -43,41 +44,78 @@ class SymbolSearchHelperImpl(private val myProject: Project,
   private val myHelper: PsiSearchHelperImpl = helper as PsiSearchHelperImpl
 
   override fun runSearch(parameters: SymbolReferenceSearchParameters, processor: Processor<in SymbolReference>): Boolean {
-    //    return runQueries(subQueries(parameters), processor)
+    return runSearch(paramsQueries(parameters), processor)
+  }
 
+  private fun runSearch(queries: Collection<Query<out SymbolReference>>, processor: Processor<in SymbolReference>): Boolean {
     val progress = indicatorOrEmpty
-    val queue = LinkedList<ParamsRequest<out SymbolReference>>()
-    queue.offer(ParamsRequest(parameters, idTransform()))
+    var currentQueries = queries
+    while (currentQueries.isNotEmpty()) {
+      progress.checkCanceled()
+      val layer = buildLayer(progress, currentQueries)
+      val layerResult = runLayer(progress, layer, processor)
+      when (layerResult) {
+        is Result.Ok -> currentQueries = layerResult.subqueries
+        is Result.Stop -> return false
+      }
+    }
+    return true
+  }
+
+  private class Layer<T>(
+    val queryRequests: Collection<QueryRequest<*, out T>>,
+    val wordRequests: Collection<WordRequest<out T>>,
+    val subqueryRequests: Collection<SubqueryRequest<*, *, out T>>
+  )
+
+  private fun buildLayer(progress: ProgressIndicator, queries: Collection<Query<out SymbolReference>>): Layer<out SymbolReference> {
+    val queue = LinkedList<Query<out SymbolReference>>()
+    queue.addAll(queries)
 
     val queryRequests = LinkedList<QueryRequest<*, out SymbolReference>>()
     val wordRequests = LinkedList<WordRequest<out SymbolReference>>()
+    val subqueryRequests = LinkedList<SubqueryRequest<*, *, out SymbolReference>>()
+
     while (queue.isNotEmpty()) {
       progress.checkCanceled()
-      val paramsRequest = queue.remove()
-      for (query in subQueries(paramsRequest)) {
-        progress.checkCanceled()
-        val requests = flatten(query)
-        queryRequests.addAll(requests.myQueryRequests)
-        wordRequests.addAll(requests.myWordRequests)
-        queue.addAll(requests.myParamsRequests)
+      val query = queue.remove()
+      val flatRequests = flatten(query)
+      queryRequests.addAll(flatRequests.myQueryRequests)
+      wordRequests.addAll(flatRequests.myWordRequests)
+      subqueryRequests.addAll(flatRequests.mySubQueryRequests)
+      for (paramsRequest in flatRequests.myParamsRequests.cancellable(progress)) {
+        val paramsQueries = paramsQueries(paramsRequest.params)
+        for (paramsQuery in paramsQueries.cancellable(progress)) {
+          queue.offer(TransformingQuery.flatMapping(paramsQuery, paramsRequest.transformation))
+        }
       }
     }
 
-    return processQueryRequests(progress, queryRequests, processor) &&
-           processWordRequests(progress, wordRequests, processor)
+    return Layer(queryRequests, wordRequests, subqueryRequests)
   }
 
-  private fun <T> subQueries(request: ParamsRequest<T>): Collection<Query<out T>> {
-    val subQueries = LinkedList<Query<out T>>()
-    myDumbService.runReadActionInSmartMode {
-      SearchRequestors.collectSearchRequests(request.params) {
-        subQueries.add(TransformingQuery.flatMapping(it, request.transformation))
-      }
+  private sealed class Result<out T> {
+    object Stop : Result<Nothing>()
+    class Ok<T>(val subqueries: Collection<Query<out T>>) : Result<T>()
+  }
+
+  private fun <T> runLayer(progress: ProgressIndicator, layer: Layer<T>, processor: Processor<in T>): Result<T> {
+    if (!processQueryRequests(progress, layer.queryRequests, processor)) {
+      return Result.Stop
     }
-    return subQueries
+
+    if (!processWordRequests(progress, layer.wordRequests, processor)) {
+      return Result.Stop
+    }
+
+    val subQueries = SmartList<Query<out T>>()
+    runSubqueryRequests(layer.subqueryRequests.cancellable(progress)) {
+      subQueries.add(it)
+    }
+    return Result.Ok(subQueries)
   }
 
-  private fun subQueries(parameters: SymbolReferenceSearchParameters): Collection<Query<out SymbolReference>> {
+  private fun paramsQueries(parameters: SymbolReferenceSearchParameters): Collection<Query<out SymbolReference>> {
     val subQueries = LinkedList<Query<out SymbolReference>>()
     myDumbService.runReadActionInSmartMode {
       SearchRequestors.collectSearchRequests(parameters) {
@@ -85,37 +123,6 @@ class SymbolSearchHelperImpl(private val myProject: Project,
       }
     }
     return subQueries
-  }
-
-  private fun <T> runQueries(queries: Collection<Query<out T>>, processor: Processor<in T>): Boolean {
-    val progress = indicatorOrEmpty
-
-
-    val queue = LinkedList<Query<out T>>()
-    queue.addAll(queries)
-
-    while (queue.isNotEmpty()) {
-      progress.checkCanceled()
-      val query = queue.remove()
-      val requests = flatten(query)
-      if (!processQueryRequests(progress, requests.myQueryRequests, processor)) return false
-      if (!processWordRequests(progress, requests.myWordRequests, processor)) return false
-      if (!processParamRequests(progress, requests.myParamsRequests) { queue.add(it) }) return false
-    }
-
-    return true
-  }
-
-  private fun <T> processParamRequests(progress: ProgressIndicator,
-                                       requests: Collection<ParamsRequest<out T>>,
-                                       queriesSink: (Query<out T>) -> Unit): Boolean {
-    for (request in requests) {
-      progress.checkCanceled()
-      for (query in subQueries(request.params)) {
-        queriesSink(TransformingQuery.flatMapping(query, request.transformation))
-      }
-    }
-    return true
   }
 
   private fun <T> processWordRequests(progress: ProgressIndicator,
@@ -129,6 +136,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     for ((request, transform) in wordRequests) {
       progress.checkCanceled()
       val map = if (request.searchScope is LocalSearchScope) locals else globals
+      require(request !in map)
       map[request] = mutableSetOf(processor.transform(transform))
     }
 
@@ -347,6 +355,13 @@ private fun <T> processQueryRequests(progress: ProgressIndicator,
   for (request in queryRequests) {
     progress.checkCanceled()
     if (!request.process(processor)) return false
+  }
+  return true
+}
+
+private fun <T> runSubqueryRequests(queryRequests: Iterable<SubqueryRequest<*, *, out T>>, consumer: (Query<out T>) -> Unit): Boolean {
+  for (request in queryRequests) {
+    request.run(consumer)
   }
   return true
 }

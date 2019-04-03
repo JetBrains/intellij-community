@@ -12,12 +12,22 @@ import static java.util.Collections.emptyList;
 public class LayeredQuery<B, R> extends AbstractQuery<R> {
 
   protected final Query<B> myBaseQuery;
-  private final Function<? super B, ? extends Collection<? extends Query<? extends R>>> myTransform;
+  private final Function<? super B, ? extends Collection<? extends Query<? extends R>>> mySubqueries;
 
   public LayeredQuery(@NotNull Query<B> query,
-                      @NotNull Function<? super B, ? extends Collection<? extends Query<? extends R>>> transform) {
+                      @NotNull Function<? super B, ? extends Collection<? extends Query<? extends R>>> subqueries) {
     myBaseQuery = query;
-    myTransform = transform;
+    mySubqueries = subqueries;
+  }
+
+  @NotNull
+  public Query<B> getBaseQuery() {
+    return myBaseQuery;
+  }
+
+  @NotNull
+  public Function<? super B, ? extends Collection<? extends Query<? extends R>>> getSubqueries() {
+    return mySubqueries;
   }
 
   @Override
@@ -25,7 +35,7 @@ public class LayeredQuery<B, R> extends AbstractQuery<R> {
     return myBaseQuery.forEach(new Processor<B>() {
       @Override
       public boolean process(B b) {
-        for (Query<? extends R> subQuery : myTransform.apply(b)) {
+        for (Query<? extends R> subQuery : mySubqueries.apply(b)) {
           if (!subQuery.forEach(consumer)) {
             return false;
           }
@@ -43,7 +53,7 @@ public class LayeredQuery<B, R> extends AbstractQuery<R> {
     LayeredQuery<?, ?> query = (LayeredQuery<?, ?>)o;
 
     if (!myBaseQuery.equals(query.myBaseQuery)) return false;
-    if (!myTransform.equals(query.myTransform)) return false;
+    if (!mySubqueries.equals(query.mySubqueries)) return false;
 
     return true;
   }
@@ -51,19 +61,20 @@ public class LayeredQuery<B, R> extends AbstractQuery<R> {
   @Override
   public int hashCode() {
     int result = myBaseQuery.hashCode();
-    result = 31 * result + myTransform.hashCode();
+    result = 31 * result + mySubqueries.hashCode();
     return result;
   }
 
-  public static <B, R> Query<? extends R> mapping(Query<? extends B> query, Function<? super B, ? extends Query<? extends R>> transform) {
+  public static <B, R> Query<? extends R> mapping(Query<? extends B> query,
+                                                  Function<? super B, ? extends Query<? extends R>> subqueries) {
     return new LayeredQuery<>(query, it -> {
-      Query<? extends R> r = transform.apply(it);
+      Query<? extends R> r = subqueries.apply(it);
       return r == null ? emptyList() : Collections.singletonList(r);
     });
   }
 
   public static <B, R> Query<? extends R> flatMapping(Query<? extends B> query,
-                                                      Function<? super B, ? extends Collection<? extends R>> transform) {
-    return new LayeredQuery<>(query, it -> Collections.singletonList(new CollectionQuery<>(transform.apply(it))));
+                                                      Function<? super B, ? extends Collection<? extends R>> subqueries) {
+    return new LayeredQuery<>(query, it -> Collections.singletonList(new CollectionQuery<>(subqueries.apply(it))));
   }
 }
