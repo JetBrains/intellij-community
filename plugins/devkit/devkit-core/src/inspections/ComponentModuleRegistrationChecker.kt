@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -90,6 +91,13 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
     if (!element.xmlTag.getAttributeValue("language").isNullOrEmpty()) {
       val beanClass = element.extensionPoint?.beanClass?.value
       if (beanClass != null && InheritanceUtil.isInheritor(beanClass, "com.intellij.lang.LanguageExtensionPoint")) {
+        return
+      }
+    }
+
+    if (!element.xmlTag.getAttributeValue("filetype").isNullOrEmpty()) {
+      val beanClass = element.extensionPoint?.beanClass?.value
+      if (beanClass != null && InheritanceUtil.isInheritor(beanClass, "com.intellij.openapi.fileTypes.FileTypeExtensionPoint")) {
         return
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -543,6 +543,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                             "../anotherModuleDir/MyLanguageExtension.java")
     def dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
                                                             "../anotherModuleDir/MyLanguageExtensionPoint.java")
+    def dependencyModuleFileTypeExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtension.java",
+                                                            "../anotherModuleDir/MyFileTypeExtension.java")
+    def dependencyModuleFileTypeExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtensionPoint.java",
+                                                            "../anotherModuleDir/MyFileTypeExtensionPoint.java")
     def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
                                                                   "../anotherModuleDir/DependencyModuleClassWithEpName.java")
     def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
@@ -557,6 +561,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
     myFixture.configureFromExistingVirtualFile(additionalModuleClass)
