@@ -35,4 +35,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testRecover()       { doTest(true); }
   public void testGit()           { doTest(true); }
   public void testGaudi()         { doTest(true); }
+  public void testPipeline()      { doTest(true); }
 }

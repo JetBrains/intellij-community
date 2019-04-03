@@ -770,7 +770,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   // pipeline_command (
   //                      '&&' newlines? pipeline_command
   //                    | '||' newlines? pipeline_command
-  //                    | '&' pipeline_command
+  //                    | '&' pipeline_command?
   //                    | ';' pipeline_command?
   //                  )*
   public static boolean commands_list(PsiBuilder b, int l) {
@@ -787,7 +787,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   // (
   //                      '&&' newlines? pipeline_command
   //                    | '||' newlines? pipeline_command
-  //                    | '&' pipeline_command
+  //                    | '&' pipeline_command?
   //                    | ';' pipeline_command?
   //                  )*
   private static boolean commands_list_1(PsiBuilder b, int l) {
@@ -802,7 +802,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   // '&&' newlines? pipeline_command
   //                    | '||' newlines? pipeline_command
-  //                    | '&' pipeline_command
+  //                    | '&' pipeline_command?
   //                    | ';' pipeline_command?
   private static boolean commands_list_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0")) return false;
@@ -856,16 +856,23 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // '&' pipeline_command
+  // '&' pipeline_command?
   private static boolean commands_list_1_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_2")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, AMP);
     p = r; // pin = 1
-    r = r && pipeline_command(b, l + 1);
+    r = r && commands_list_1_0_2_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // pipeline_command?
+  private static boolean commands_list_1_0_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "commands_list_1_0_2_1")) return false;
+    pipeline_command(b, l + 1);
+    return true;
   }
 
   // ';' pipeline_command?

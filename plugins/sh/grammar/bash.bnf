@@ -253,7 +253,7 @@ list_terminator ::= '\n' | ';'
 commands_list ::= pipeline_command (
                      '&&' newlines? pipeline_command
                    | '||' newlines? pipeline_command
-                   | '&' pipeline_command
+                   | '&' pipeline_command?
                    | ';' pipeline_command?
                  )*
 
