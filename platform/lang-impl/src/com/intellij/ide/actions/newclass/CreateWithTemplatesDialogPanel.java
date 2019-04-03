@@ -28,6 +28,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+
 public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposable {
 
   private final JBTextField myNameField;
@@ -44,8 +46,6 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
     myNameField = createNameField();
     myTemplatesList = createTemplatesList(templates);
     myErrorShowPoint = new RelativePoint(myNameField, new Point(0, myNameField.getHeight()));
-
-    updateBorder(false);
 
     ScrollingUtil.installMoveUpAction(myTemplatesList, myNameField);
     ScrollingUtil.installMoveDownAction(myTemplatesList, myNameField);
@@ -70,7 +70,7 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
   }
 
   public void setError(String error) {
-    updateBorder(error != null);
+    myNameField.putClientProperty("JComponent.outline", error != null ? "error" : null);
 
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
     if (error == null) return;
@@ -80,8 +80,7 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
       Dimension hintSize = errorHint.getPreferredSize();
       Point point = new Point(0, insets.top - JBUI.scale(6) - hintSize.height);
       myErrorShowPoint = new RelativePoint(myNameField, point);
-    });
-    popupBuilder.setCancelOnWindowDeactivation(false)
+    }).setCancelOnWindowDeactivation(false)
       .setCancelOnClickOutside(true);
 
     myErrorPopup = popupBuilder.createPopup();
@@ -97,22 +96,6 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
   }
 
-  private void updateBorder(boolean error) {
-    JBColor borderColor = JBColor.namedColor(
-      "TextField.borderColor",
-      JBColor.namedColor("Component.borderColor", new JBColor(0xbdbdbd, 0x646464))
-    );
-    Border border = JBUI.Borders.customLine(borderColor, 1, 0, 1, 0);
-
-    if (error) {
-      Color errorColor = JBUI.CurrentTheme.Validator.errorBorderColor();
-      Border errorBorder = JBUI.Borders.customLine(errorColor, 1);
-      border = JBUI.Borders.merge(border, errorBorder, false);
-    }
-
-    myNameField.setBorder(border);
-  }
-
   @NotNull
   private JBTextField createNameField() {
     JBTextField res = new JBTextField();
@@ -124,6 +107,14 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
     res.setMinimumSize(minSize);
     res.setPreferredSize(prefSize);
     res.setColumns(30);
+
+    JBColor borderColor = JBColor.namedColor(
+      "TextField.borderColor",
+      JBColor.namedColor("Component.borderColor", new JBColor(0xbdbdbd, 0x646464))
+    );
+    Border border = JBUI.Borders.customLine(borderColor, 1, 0, 1, 0);
+    Border errorBorder = new ErrorBorder(res.getBorder());
+    res.setBorder(JBUI.Borders.merge(border, errorBorder, false));
 
     res.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>) field -> field.getText().isEmpty());
     res.getEmptyText().setText(IdeBundle.message("action.create.new.class.name.field"));
@@ -217,4 +208,34 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
       }
     };
 
+  private static class ErrorBorder implements Border {
+    private final Border errorDelegateBorder;
+
+    private ErrorBorder(Border delegate) {errorDelegateBorder = delegate;}
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (checkError(c)) {
+        errorDelegateBorder.paintBorder(c, g, x, y, width, height);
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBUI.emptyInsets();
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
+    }
+
+    private static boolean checkError(Component c) {
+      Object outlineObj = ((JComponent)c).getClientProperty("JComponent.outline");
+      if (outlineObj == null) return false;
+
+      Outline outline = outlineObj instanceof Outline ? (Outline) outlineObj : Outline.valueOf(outlineObj.toString());
+      return outline == Outline.error || outline == Outline.warning;
+    }
+  }
 }
