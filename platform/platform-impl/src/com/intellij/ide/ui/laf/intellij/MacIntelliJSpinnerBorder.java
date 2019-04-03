@@ -30,7 +30,8 @@ public class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
     return DarculaSpinnerBorder.isFocused(c);
   }
 
-  @Override Area getButtonBounds(Component c) {
+  @Override
+  Area getButtonBounds(Component c) {
     Rectangle bounds = null;
     if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI) {
       MacIntelliJSpinnerUI ui = (MacIntelliJSpinnerUI)((JSpinner)c).getUI();
@@ -39,7 +40,8 @@ public class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
     return bounds != null ? new Area(bounds) : new Area();
   }
 
-  @Override boolean isRound(Component c) {
+  @Override
+  boolean isRound(Component c) {
     return true;
   }
 }

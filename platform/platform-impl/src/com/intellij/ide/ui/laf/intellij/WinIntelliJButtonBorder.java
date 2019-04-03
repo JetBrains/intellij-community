@@ -45,7 +45,8 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
       }
 
       g2.fill(border);
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -57,10 +58,12 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     if (bm.isPressed()) {
       return focusedBorderColor != null ?
              focusedBorderColor : UIManager.getColor("Button.intellij.native.pressedBorderColor");
-    } else if (b.hasFocus() || bm.isRollover() || DarculaButtonUI.isDefaultButton(b)) {
+    }
+    else if (b.hasFocus() || bm.isRollover() || DarculaButtonUI.isDefaultButton(b)) {
       return focusedBorderColor != null ?
              focusedBorderColor : UIManager.getColor("Button.intellij.native.focusedBorderColor");
-    } else {
+    }
+    else {
       Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
       return borderColor != null ? borderColor : UIManager.getColor("Button.intellij.native.borderColor");
     }

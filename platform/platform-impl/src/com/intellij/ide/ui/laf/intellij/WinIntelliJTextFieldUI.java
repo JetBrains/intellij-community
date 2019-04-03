@@ -79,10 +79,12 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
       if (c.getBorder() instanceof WinIntelliJTextBorder) {
         paintTextFieldBackground(c, g2);
-      } else if (c.isOpaque()) {
+      }
+      else if (c.isOpaque()) {
         super.paintBackground(g);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
