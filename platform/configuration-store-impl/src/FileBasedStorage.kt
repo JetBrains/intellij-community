@@ -5,7 +5,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
@@ -282,7 +281,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
     })
   }
 
-  runUndoTransparentWriteAction {
+  runNonUndoableAction(file) {
     file.getOutputStream(requestor).use { output ->
       if (prependXmlProlog) {
         output.write(XML_PROLOG)
@@ -335,7 +334,7 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
 }
 
 internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
-  runUndoTransparentWriteAction { virtualFile.delete(requestor) }
+  runNonUndoableAction(virtualFile) { virtualFile.delete(requestor) }
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")

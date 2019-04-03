@@ -2,7 +2,6 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
@@ -294,7 +293,7 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
 }
 
 internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runUndoTransparentWriteAction { createChildData(requestor, fileName) }
+  return findChild(fileName) ?: runNonUndoableWriteAction(this) { createChildData(requestor, fileName) }
 }
 
 internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {

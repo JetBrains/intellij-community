@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
@@ -200,12 +200,14 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun deleteFiles(dir: VirtualFile) {
-      runUndoTransparentWriteAction {
+      runWriteAction {
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
             if (file.isWritable) {
-              file.delete(this)
+              runNonUndoableAction(file) {
+                file.delete(this)
+              }
             }
             else {
               throw ReadOnlyModificationException(file, null)
