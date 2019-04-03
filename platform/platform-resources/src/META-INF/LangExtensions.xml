@@ -1218,8 +1218,8 @@
     <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
 
-    <projectService serviceInterface="com.intellij.model.search.SearchService"
-                    serviceImplementation="com.intellij.psi.impl.search.SearchServiceImpl"/>
+    <projectService serviceInterface="com.intellij.model.search.ProjectSearchService"
+                    serviceImplementation="com.intellij.psi.impl.search.ProjectSearchServiceImpl"/>
   </extensions>
 </idea-plugin>
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,12 +34,7 @@ public final class TransformingQuery<B, R> extends AbstractQuery<R> {
     return myBaseQuery.forEach(new Processor<B>() {
       @Override
       public boolean process(B b) {
-        for (R transformed : myTransform.apply(b)) {
-          if (!consumer.process(transformed)) {
-            return false;
-          }
-        }
-        return true;
+        return ContainerUtil.process(myTransform.apply(b), consumer);
       }
     });
   }

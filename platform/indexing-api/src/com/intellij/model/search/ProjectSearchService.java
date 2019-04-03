@@ -5,11 +5,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public interface SearchService {
+public interface ProjectSearchService {
 
   @NotNull
-  static SearchService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SearchService.class);
+  static ProjectSearchService getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ProjectSearchService.class);
   }
 
   @NotNull

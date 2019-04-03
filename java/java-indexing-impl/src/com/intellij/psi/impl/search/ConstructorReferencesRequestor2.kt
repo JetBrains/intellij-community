@@ -60,7 +60,7 @@ class ConstructorReferencesRequestor2 : SearchRequestor2 {
       }
     )
 
-    val searchService = SearchService.getInstance(project)
+    val searchService = ProjectSearchService.getInstance(project)
 
     // search usages like "this(..)"
     val thisQuery: Query<out SymbolReference> = searchService.searchWord(PsiKeyword.THIS).inScope(LocalSearchScope(clazz)).build(target)
