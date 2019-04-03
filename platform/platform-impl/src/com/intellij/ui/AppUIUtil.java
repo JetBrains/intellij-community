@@ -89,10 +89,12 @@ public class AppUIUtil {
       ScaleContext ctx = ScaleContext.create(window);
 
       if (SystemInfo.isUnix) {
-        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, appInfo.getBigIconUrl()));
+        @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
+        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
       }
 
-      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, appInfo.getIconUrl()));
+      @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
+      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
 
       if (SystemInfo.isWindows) {
         ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
@@ -155,10 +157,9 @@ public class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
-  public static void invokeOnEdt(Runnable runnable, @Nullable Condition expired) {
+  public static void invokeOnEdt(Runnable runnable, @Nullable Condition<?> expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      //noinspection unchecked
       if (expired == null || !expired.value(null)) {
         runnable.run();
       }
