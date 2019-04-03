@@ -14,9 +14,6 @@ import org.jdom.Element
 internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
   companion object {
 
-    private const val ITN_LOGIN = "ITN_LOGIN"
-    private const val ITN_PASSWORD_CRYPT = "ITN_PASSWORD_CRYPT"
-
     @JvmStatic
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
@@ -40,27 +37,28 @@ internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
     return myState?.let { XmlSerializer.serialize(it) }
   }
 
-  override fun loadState(state: Element) {
-    loadOldState(state)
-    myState = XmlSerializer.deserialize(state, State::class.java)
+  override fun loadState(element: Element) {
+    loadOldState(element)
+    myState = XmlSerializer.deserialize(element, State::class.java)
   }
 
   private fun loadOldState(element: Element) {
-    val options = element.getChildren("option")
+    val state = XmlSerializer.deserialize(element, OldState::class.java)
 
-    fun getOptionValue(name: String): String? =
-      options.find { it.getAttributeValue("name") == name }?.getAttributeValue("value")
-
-    val login = getOptionValue(ITN_LOGIN)
-    val password = getOptionValue(ITN_PASSWORD_CRYPT)
-
-    if (!login.isNullOrEmpty() || !password.isNullOrEmpty()) {
-      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, login), Credentials(login, password?.decodeBase64()))
+    if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
+      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
     }
   }
 
-  internal data class State(var developers: List<Developer>, var timestamp: Long) {
+  private data class State(var developers: List<Developer>, var timestamp: Long) {
+    @Suppress("unused")
     private constructor(): this(emptyList(), 0) // need for xml serialization
+  }
+
+  @Suppress("PropertyName")
+  private class OldState {
+    var ITN_LOGIN: String? = null
+    var ITN_PASSWORD_CRYPT: String? = null
   }
 }
 
