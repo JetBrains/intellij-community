@@ -63,7 +63,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
   }
 
   private class Layer<T>(
-    val queryRequests: Collection<QueryRequest<*, out T>>,
+    val queryRequests: Map<Query<*>, Collection<Transformation<*, T>>>,
     val wordRequests: Collection<WordRequest<out T>>,
     val subqueryRequests: Collection<SubqueryRequest<*, *, out T>>
   )
@@ -72,7 +72,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     val queue = LinkedList<Query<out SymbolReference>>()
     queue.addAll(queries)
 
-    val queryRequests = LinkedList<QueryRequest<*, out SymbolReference>>()
+    val queryRequests = THashMap<Query<*>, MutableCollection<Transformation<*, SymbolReference>>>()
     val wordRequests = LinkedList<WordRequest<out SymbolReference>>()
     val subqueryRequests = LinkedList<SubqueryRequest<*, *, out SymbolReference>>()
 
@@ -80,7 +80,9 @@ class SymbolSearchHelperImpl(private val myProject: Project,
       progress.checkCanceled()
       val query = queue.remove()
       val flatRequests = flatten(query)
-      queryRequests.addAll(flatRequests.myQueryRequests)
+      for (queryRequest in flatRequests.myQueryRequests) {
+        queryRequests.getOrPut(queryRequest.query) { SmartList() }.add(queryRequest.transformation)
+      }
       wordRequests.addAll(flatRequests.myWordRequests)
       subqueryRequests.addAll(flatRequests.mySubQueryRequests)
       for (paramsRequest in flatRequests.myParamsRequests.cancellable(progress)) {
@@ -350,13 +352,28 @@ private fun intersectNullable(scope1: SearchScope?, scope2: SearchScope?): Searc
 
 
 private fun <T> processQueryRequests(progress: ProgressIndicator,
-                                     queryRequests: Iterable<QueryRequest<*, out T>>,
+                                     queryRequests: Map<Query<*>, Collection<Transformation<*, T>>>,
                                      processor: Processor<in T>): Boolean {
-  for (request in queryRequests) {
+
+  for ((query, transforms) in queryRequests) {
     progress.checkCanceled()
-    if (!request.process(processor)) return false
+    @Suppress("UNCHECKED_CAST")
+    if (!runQuery(query as Query<Any>, transforms as Collection<Transformation<Any, T>>, processor)) return false
   }
   return true
+}
+
+private fun <B, R> runQuery(query: Query<B>, transformations: Collection<Transformation<B, R>>, processor: Processor<in R>): Boolean {
+  return query.forEach(fun(baseValue: B): Boolean {
+    for (transformation in transformations) {
+      for (resultValue in transformation.apply(baseValue)) {
+        if (!processor.process(resultValue)) {
+          return false
+        }
+      }
+    }
+    return true
+  })
 }
 
 private fun <T> runSubqueryRequests(queryRequests: Iterable<SubqueryRequest<*, *, out T>>, consumer: (Query<out T>) -> Unit): Boolean {

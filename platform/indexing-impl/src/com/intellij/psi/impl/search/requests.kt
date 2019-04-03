@@ -20,7 +20,7 @@ import java.util.function.Function
 
 typealias Subqueries<B, R> = Function<in B, out Collection<Query<out R>>>
 
-class QueryRequest<B, R>(private val query: Query<B>, private val transformation: Transformation<B, R>) {
+class QueryRequest<B, R>(val query: Query<B>, val transformation: Transformation<B, R>) {
 
   fun <T> apply(transformation: Transformation<R, T>): QueryRequest<B, T> {
     return QueryRequest(query, this.transformation.bind(transformation))
@@ -74,6 +74,9 @@ internal class FlatRequests<T>(
   )
 
   internal fun <R> layer(subqueries: Subqueries<T, R>): FlatRequests<R> {
+    require(myParamsRequests.isEmpty())
+    require(myWordRequests.isEmpty())
+    require(mySubQueryRequests.isEmpty())
     return FlatRequests(
       mySubQueryRequests = myQueryRequests.map { it.layer(subqueries) }
     )
