@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -565,6 +566,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                             "../anotherModuleDir/MyLanguageExtension.java")
     def dependencyModuleLanguageExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyLanguageExtensionPoint.java",
                                                             "../anotherModuleDir/MyLanguageExtensionPoint.java")
+    def dependencyModuleFileTypeExtensionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtension.java",
+                                                            "../anotherModuleDir/MyFileTypeExtension.java")
+    def dependencyModuleFileTypeExtensionPointClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/MyFileTypeExtensionPoint.java",
+                                                            "../anotherModuleDir/MyFileTypeExtensionPoint.java")
     def dependencyModuleActionClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleAction.java",
                                                             "../anotherModuleDir/DependencyModuleAction.java")
     def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
@@ -581,6 +586,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleLanguageExtensionPointClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleFileTypeExtensionPointClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleActionClass)
     myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)

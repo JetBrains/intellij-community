@@ -15,6 +15,10 @@
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
     <myPlugin.lang.myExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
     <myPlugin.lang.myOwnExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
+
+    <myPlugin.filetype.myExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
+    <myPlugin.filetype.myOwnExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
+
   </extensions>
 
   <actions>
