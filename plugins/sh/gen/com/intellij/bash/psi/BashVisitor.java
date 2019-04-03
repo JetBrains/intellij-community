@@ -126,6 +126,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitForClause(@NotNull BashForClause o) {
+    visitCompositeElement(o);
+  }
+
   public void visitForCommand(@NotNull BashForCommand o) {
     visitCommand(o);
   }

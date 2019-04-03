@@ -657,7 +657,8 @@ BASH_FILE
                       FOR_COMMAND
                         PsiElement(for)('for')
                         PsiWhiteSpace(' ')
-                        PsiElement(word)('x')
+                        FOR_CLAUSE
+                          PsiElement(word)('x')
                         PsiWhiteSpace(' ')
                         DO_BLOCK
                           PsiElement(do)('do')
@@ -699,7 +700,8 @@ BASH_FILE
                   FOR_COMMAND
                     PsiElement(for)('for')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('x')
+                    FOR_CLAUSE
+                      PsiElement(word)('x')
                     PsiWhiteSpace(' ')
                     DO_BLOCK
                       PsiElement(do)('do')

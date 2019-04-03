@@ -278,17 +278,18 @@ BASH_FILE
         FOR_COMMAND
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          PsiElement(word)('FILE')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('in')
-          PsiWhiteSpace(' ')
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('distrs[*]')
-            PsiElement(})('}')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+          FOR_CLAUSE
+            PsiElement(word)('FILE')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('distrs[*]')
+              PsiElement(})('}')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST

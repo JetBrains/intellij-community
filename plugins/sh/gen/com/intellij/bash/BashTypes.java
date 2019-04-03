@@ -39,6 +39,7 @@ public interface BashTypes {
   IElementType EQUALITY_EXPRESSION = new BashCompositeElementType("EQUALITY_EXPRESSION");
   IElementType EXPRESSION = new BashCompositeElementType("EXPRESSION");
   IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
+  IElementType FOR_CLAUSE = new BashCompositeElementType("FOR_CLAUSE");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
   IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
   IElementType GENERIC_COMMAND_DIRECTIVE = new BashCompositeElementType("GENERIC_COMMAND_DIRECTIVE");
@@ -269,6 +270,9 @@ public interface BashTypes {
       }
       else if (type == EXP_EXPRESSION) {
         return new BashExpExpressionImpl(node);
+      }
+      else if (type == FOR_CLAUSE) {
+        return new BashForClauseImpl(node);
       }
       else if (type == FOR_COMMAND) {
         return new BashForCommandImpl(node);

@@ -1327,15 +1327,16 @@ BASH_FILE
                   FOR_COMMAND
                     PsiElement(for)('for')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('key')
-                    PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
-                    PsiWhiteSpace(' ')
-                    VARIABLE
-                      PsiElement(var)('$keys')
-                    PsiWhiteSpace(' ')
-                    LIST_TERMINATOR
-                      PsiElement(;)(';')
+                    FOR_CLAUSE
+                      PsiElement(word)('key')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('in')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$keys')
+                      PsiWhiteSpace(' ')
+                      LIST_TERMINATOR
+                        PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     DO_BLOCK
                       PsiElement(do)('do')

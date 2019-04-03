@@ -2624,29 +2624,30 @@ BASH_FILE
                             FOR_COMMAND
                               PsiElement(for)('for')
                               PsiWhiteSpace(' ')
-                              PsiElement(word)('D1')
-                              PsiWhiteSpace(' ')
-                              PsiElement(word)('in')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$RESOURCES_DIR')
-                                PsiElement(")('"')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$RUN_ONLY_RESOURCES_DIR')
-                                PsiElement(")('"')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
-                                PsiElement(")('"')
-                              LIST_TERMINATOR
-                                PsiElement(;)(';')
+                              FOR_CLAUSE
+                                PsiElement(word)('D1')
+                                PsiWhiteSpace(' ')
+                                PsiElement(word)('in')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$RESOURCES_DIR')
+                                  PsiElement(")('"')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$RUN_ONLY_RESOURCES_DIR')
+                                  PsiElement(")('"')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
+                                  PsiElement(")('"')
+                                LIST_TERMINATOR
+                                  PsiElement(;)(';')
                               PsiWhiteSpace(' ')
                               DO_BLOCK
                                 PsiElement(do)('do')
@@ -2658,29 +2659,30 @@ BASH_FILE
                                       FOR_COMMAND
                                         PsiElement(for)('for')
                                         PsiWhiteSpace(' ')
-                                        PsiElement(word)('D2')
-                                        PsiWhiteSpace(' ')
-                                        PsiElement(word)('in')
-                                        PsiWhiteSpace(' ')
-                                        STRING
-                                          PsiElement(")('"')
-                                          VARIABLE
-                                            PsiElement(var)('$RESOURCES_DIR')
-                                          PsiElement(")('"')
-                                        PsiWhiteSpace(' ')
-                                        STRING
-                                          PsiElement(")('"')
-                                          VARIABLE
-                                            PsiElement(var)('$RUN_ONLY_RESOURCES_DIR')
-                                          PsiElement(")('"')
-                                        PsiWhiteSpace(' ')
-                                        STRING
-                                          PsiElement(")('"')
-                                          VARIABLE
-                                            PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
-                                          PsiElement(")('"')
-                                        LIST_TERMINATOR
-                                          PsiElement(;)(';')
+                                        FOR_CLAUSE
+                                          PsiElement(word)('D2')
+                                          PsiWhiteSpace(' ')
+                                          PsiElement(word)('in')
+                                          PsiWhiteSpace(' ')
+                                          STRING
+                                            PsiElement(")('"')
+                                            VARIABLE
+                                              PsiElement(var)('$RESOURCES_DIR')
+                                            PsiElement(")('"')
+                                          PsiWhiteSpace(' ')
+                                          STRING
+                                            PsiElement(")('"')
+                                            VARIABLE
+                                              PsiElement(var)('$RUN_ONLY_RESOURCES_DIR')
+                                            PsiElement(")('"')
+                                          PsiWhiteSpace(' ')
+                                          STRING
+                                            PsiElement(")('"')
+                                            VARIABLE
+                                              PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
+                                            PsiElement(")('"')
+                                          LIST_TERMINATOR
+                                            PsiElement(;)(';')
                                         PsiWhiteSpace(' ')
                                         DO_BLOCK
                                           PsiElement(do)('do')
@@ -3142,23 +3144,24 @@ BASH_FILE
                             FOR_COMMAND
                               PsiElement(for)('for')
                               PsiWhiteSpace(' ')
-                              PsiElement(word)('D')
-                              PsiWhiteSpace(' ')
-                              PsiElement(word)('in')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$RESOURCES_DIR')
-                                PsiElement(")('"')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
-                                PsiElement(")('"')
-                              LIST_TERMINATOR
-                                PsiElement(;)(';')
+                              FOR_CLAUSE
+                                PsiElement(word)('D')
+                                PsiWhiteSpace(' ')
+                                PsiElement(word)('in')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$RESOURCES_DIR')
+                                  PsiElement(")('"')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$COMPILE_ONLY_RESOURCES_DIR')
+                                  PsiElement(")('"')
+                                LIST_TERMINATOR
+                                  PsiElement(;)(';')
                               PsiWhiteSpace(' ')
                               DO_BLOCK
                                 PsiElement(do)('do')

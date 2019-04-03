@@ -74,6 +74,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == EXPRESSION) {
       r = expression(b, 0, -1);
     }
+    else if (t == FOR_CLAUSE) {
+      r = for_clause(b, 0);
+    }
     else if (t == FOR_COMMAND) {
       r = for_command(b, 0);
     }
@@ -1134,11 +1137,13 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // arithmetic_for_clause | in_for_clause
-  static boolean for_clause(PsiBuilder b, int l) {
+  public static boolean for_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_clause")) return false;
     boolean r;
+    Marker m = enter_section_(b, l, _NONE_, FOR_CLAUSE, "<for clause>");
     r = arithmetic_for_clause(b, l + 1);
     if (!r) r = in_for_clause(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

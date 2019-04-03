@@ -26,69 +26,21 @@ public class BashForCommandImpl extends BashCommandImpl implements BashForComman
   }
 
   @Override
-  @NotNull
-  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashBashExpansion> getBashExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
-  }
-
-  @Override
   @Nullable
   public BashBlock getBlock() {
     return findChildByClass(BashBlock.class);
   }
 
   @Override
-  @NotNull
-  public List<BashCommand> getCommandList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashExpression> getExpressionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashExpression.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashListTerminator> getListTerminatorList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashListTerminator.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashString> getStringList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
-  }
-
-  @Override
-  @NotNull
-  public List<BashVariable> getVariableList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
+  @Nullable
+  public BashForClause getForClause() {
+    return findChildByClass(BashForClause.class);
   }
 
   @Override
   @Nullable
-  public PsiElement getLeftDoubleParen() {
-    return findChildByType(LEFT_DOUBLE_PAREN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightDoubleParen() {
-    return findChildByType(RIGHT_DOUBLE_PAREN);
+  public BashListTerminator getListTerminator() {
+    return findChildByClass(BashListTerminator.class);
   }
 
   @Override

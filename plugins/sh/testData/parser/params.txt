@@ -632,17 +632,18 @@ BASH_FILE
         FOR_COMMAND
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          PsiElement(word)('PKG')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('in')
-          PsiWhiteSpace(' ')
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('HOMEBREW_PACKAGES[@]')
-            PsiElement(})('}')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+          FOR_CLAUSE
+            PsiElement(word)('PKG')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('HOMEBREW_PACKAGES[@]')
+              PsiElement(})('}')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -692,17 +693,18 @@ BASH_FILE
         FOR_COMMAND
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          PsiElement(word)('component')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('in')
-          PsiWhiteSpace(' ')
-          PsiElement($)('$')
-          SHELL_PARAMETER_EXPANSION
-            PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('distrs[*]')
-            PsiElement(})('}')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+          FOR_CLAUSE
+            PsiElement(word)('component')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('distrs[*]')
+              PsiElement(})('}')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -758,20 +760,21 @@ BASH_FILE
         FOR_COMMAND
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          PsiElement(word)('i')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('in')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(")('"')
-            PsiElement($)('$')
-            SHELL_PARAMETER_EXPANSION
-              PsiElement({)('{')
-              PsiElement(parameter_expansion_body)('commands[@]')
-              PsiElement(})('}')
-            PsiElement(")('"')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+          FOR_CLAUSE
+            PsiElement(word)('i')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(")('"')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(parameter_expansion_body)('commands[@]')
+                PsiElement(})('}')
+              PsiElement(")('"')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')

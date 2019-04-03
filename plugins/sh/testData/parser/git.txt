@@ -5,14 +5,15 @@ BASH_FILE
         FOR_COMMAND
           PsiElement(for)('for')
           PsiWhiteSpace(' ')
-          PsiElement(word)('repo')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('in')
-          PsiWhiteSpace(' ')
-          VARIABLE
-            PsiElement(var)('$REPOS')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+          FOR_CLAUSE
+            PsiElement(word)('repo')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$REPOS')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
