@@ -90,6 +90,6 @@ internal data class SearchWordParametersImpl(
   }
 
   override fun build(target: Symbol): Query<out SymbolReference> {
-    return withTargetHint(target).build().flatMap(SingleTargetOccurrenceProcessor(target))
+    return TransformingQuery.flatMapping(withTargetHint(target).build(), SingleTargetOccurrenceProcessor(target))
   }
 }

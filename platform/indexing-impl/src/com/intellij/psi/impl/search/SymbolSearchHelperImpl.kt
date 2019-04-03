@@ -24,7 +24,6 @@ import com.intellij.util.Processor
 import com.intellij.util.Processors.cancelableCollectProcessor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
-import com.intellij.util.TransformingQuery
 import com.intellij.util.containers.cancellable
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.StringSearcher

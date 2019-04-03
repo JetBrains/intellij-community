@@ -1215,11 +1215,10 @@
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" order="first"/>
 
+    <applicationService serviceInterface="com.intellij.model.search.SearchService"
+                        serviceImplementation="com.intellij.psi.impl.search.SearchServiceImpl"/>
     <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
-
-    <projectService serviceInterface="com.intellij.model.search.ProjectSearchService"
-                    serviceImplementation="com.intellij.psi.impl.search.ProjectSearchServiceImpl"/>
   </extensions>
 </idea-plugin>
 

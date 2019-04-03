@@ -10,7 +10,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.LayeredQuery
 import com.intellij.util.Query
-import com.intellij.util.TransformingQuery
 
 @Suppress("Duplicates")
 class ConstructorReferencesRequestor2 : SearchRequestor2 {
@@ -32,43 +31,37 @@ class ConstructorReferencesRequestor2 : SearchRequestor2 {
       parameters.isIgnoreUseScope
     ))
 
+    val service = SearchService.getInstance()
+
     // search usages like "new XXX(..)"
-    val newXxxQuery: Query<out SymbolReference> = TransformingQuery.filtering(
-      classQuery,
-      fun(classReference: SymbolReference): Boolean {
-        if (classReference !is PsiSymbolReference) return false
-        val parent = classReference.element.parent
-        val newExpression = (if (parent is PsiAnonymousClass) parent.parent else parent) as? PsiNewExpression ?: return false
-        val constructor = newExpression.resolveConstructor() ?: return false
-        return manager.areElementsEquivalent(target, constructor)
-      }
-    )
+    val newXxxQuery = service.filter(classQuery, fun(classReference: SymbolReference): Boolean {
+      if (classReference !is PsiSymbolReference) return false
+      val parent = classReference.element.parent
+      val newExpression = (if (parent is PsiAnonymousClass) parent.parent else parent) as? PsiNewExpression ?: return false
+      val constructor = newExpression.resolveConstructor() ?: return false
+      return manager.areElementsEquivalent(target, constructor)
+    })
 
     // search usages like "XXX::new"
-    val xxxNewQuery: Query<out SymbolReference> = TransformingQuery.mapping(
-      classQuery,
-      fun(classReference: SymbolReference): SymbolReference? {
-        if (classReference is PsiSymbolReference) {
-          val parent = classReference.element.parent
-          if (parent is PsiMethodReferenceExpression // todo check PSI before resolving class target
-              && parent.referenceNameElement is PsiKeyword
-              && parent.isReferenceTo(target)) {
-            return parent
-          }
+    val xxxNewQuery: Query<out SymbolReference> = service.map(classQuery, fun(classReference: SymbolReference): SymbolReference? {
+      if (classReference is PsiSymbolReference) {
+        val parent = classReference.element.parent
+        if (parent is PsiMethodReferenceExpression // todo check PSI before resolving class target
+            && parent.referenceNameElement is PsiKeyword
+            && parent.isReferenceTo(target)) {
+          return parent
         }
-        return null
       }
-    )
-
-    val searchService = ProjectSearchService.getInstance(project)
+      return null
+    })
 
     // search usages like "this(..)"
-    val thisQuery: Query<out SymbolReference> = searchService.searchWord(PsiKeyword.THIS).inScope(LocalSearchScope(clazz)).build(target)
+    val thisQuery = service.searchWord(project, PsiKeyword.THIS).inScope(LocalSearchScope(clazz)).build(target)
 
     // search usages like "super(..)" in direct subclasses
     val inheritorsQuery = ClassInheritorsSearch.search(clazz, restrictedScope, false)
-    val superQuery: Query<out SymbolReference> = LayeredQuery.mapping(inheritorsQuery) { inheritor ->
-      searchService.searchWord(PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).build(target)
+    val superQuery = LayeredQuery.mapping(inheritorsQuery) { inheritor ->
+      service.searchWord(project, PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).build(target)
     }
 
     return listOf(newXxxQuery, xxxNewQuery, thisQuery, superQuery)
