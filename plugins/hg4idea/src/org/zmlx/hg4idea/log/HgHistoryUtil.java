@@ -154,9 +154,7 @@ public class HgHistoryUtil {
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     for (HgRevisionNumber parent : parents.stream().skip(1).collect(Collectors.toList())) {
-      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
-        .baseRevision(parent).targetRevision(vcsRevisionNumber).build(project);
-      reportedChanges.add(convertHgChanges(status.executeInCurrentThread(root)));
+      reportedChanges.add(getChangesFromParent(project, root, vcsRevisionNumber, parent));
     }
 
     Hash hash = factory.createHash(vcsRevisionNumber.getChangeset());
@@ -166,6 +164,14 @@ public class HgHistoryUtil {
     return new VcsChangesLazilyParsedDetails(project, hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author,
                                              vcsRevisionNumber.getCommitMessage(), author,
                                              time, reportedChanges, new HgChangesParser(vcsRevisionNumber));
+  }
+
+  @NotNull
+  protected static List<VcsFileStatusInfo> getChangesFromParent(@NotNull Project project, @NotNull VirtualFile root,
+                                                                @NotNull HgRevisionNumber commit, @NotNull HgRevisionNumber parent) {
+    HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true)
+      .baseRevision(parent).targetRevision(commit).build(project);
+    return convertHgChanges(status.executeInCurrentThread(root));
   }
 
   @NotNull
