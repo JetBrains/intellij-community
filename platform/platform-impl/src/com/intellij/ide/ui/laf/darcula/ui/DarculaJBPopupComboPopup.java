@@ -71,7 +71,8 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       @Override
       public String getTextFor(T value) {
         Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
-        return component instanceof SimpleColoredComponent ?
+        return component instanceof TitledSeparator ? "" :
+               component instanceof SimpleColoredComponent ?
                ((SimpleColoredComponent)component).getCharSequence(false).toString() : String.valueOf(value);
       }
 
