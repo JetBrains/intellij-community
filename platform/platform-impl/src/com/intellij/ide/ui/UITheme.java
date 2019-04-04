@@ -428,13 +428,15 @@ public class UITheme {
     }
 
     PaletteScope getScopeByURL(URL url) {
-      String path = url.toString();
-      String file = path.substring(path.lastIndexOf('/') + 1);
+      if (url != null) {
+        String path = url.toString();
+        String file = path.substring(path.lastIndexOf('/') + 1);
 
-      if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
-        if (file.startsWith("check")) return checkBoxes;
-        if (file.startsWith("radio")) return radioButtons;
-        return null;
+        if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
+          if (file.startsWith("check")) return checkBoxes;
+          if (file.startsWith("radio")) return radioButtons;
+          return null;
+        }
       }
       return ui;
     }
