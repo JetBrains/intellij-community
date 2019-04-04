@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitCommit
 import git4idea.config.GitVersion
+import git4idea.history.GitCommitRequirements.*
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -63,7 +64,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.addCommit("Rename fileToRename.txt")
 
     GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES),
+                               GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES),
                                false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
@@ -72,15 +73,15 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun `test readFullDetails without fullMergeDiff`() {
-    `run test for merge diff`(false)
+    `run test for merge diff`(DiffInMergeCommits.NO_DIFF)
   }
 
   @Throws(Exception::class)
   fun `test readFullDetails with fullMergeDiff`() {
-    `run test for merge diff`(true)
+    `run test for merge diff`(DiffInMergeCommits.DIFF_TO_PARENTS)
   }
 
-  private fun `run test for merge diff`(withMergeDiff: Boolean) {
+  private fun `run test for merge diff`(mergeCommitChanges: GitCommitRequirements.DiffInMergeCommits) {
     repo.checkoutNew("testBranch")
     touch("fileToMerge1.txt", "content")
     repo.addCommit("Add fileToMerge1.txt")
@@ -94,10 +95,10 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
     GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details),
-                               GitCommitRequirements(diffToParentsInMerges = withMergeDiff), false)
+                               GitCommitRequirements(diffInMergeCommits = mergeCommitChanges), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
     assertNotNull(lastCommit)
-    TestCase.assertEquals(withMergeDiff, !lastCommit!!.getChanges(0).isEmpty())
+    TestCase.assertEquals(mergeCommitChanges, !lastCommit!!.getChanges(0).isEmpty())
   }
 }

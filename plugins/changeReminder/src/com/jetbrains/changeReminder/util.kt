@@ -16,6 +16,7 @@ import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitCommitRequirements
+import git4idea.history.GitCommitRequirements.*
 import git4idea.history.GitLogUtil
 
 fun CheckinProjectPanel.isAmend(): Boolean {
@@ -45,7 +46,8 @@ fun CheckinProjectPanel.getGitRootFiles(project: Project): Map<VirtualFile, Coll
 }
 
 fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<String>, commitConsumer: (GitCommit) -> Unit) {
-  val requirements = GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES,
+  val requirements = GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES,
+                                           diffInMergeCommits = DiffInMergeCommits.NO_DIFF,
                                            preserveOrder = false)
   GitLogUtil.readFullDetailsForHashes(project, root, GitVcs.getInstance(project), hashes.toList(),
                                       requirements, false, Consumer<GitCommit> {
