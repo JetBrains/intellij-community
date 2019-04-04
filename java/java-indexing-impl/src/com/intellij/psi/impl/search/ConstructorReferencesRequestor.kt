@@ -28,7 +28,7 @@ class ConstructorReferencesRequestor : SearchRequestor {
     val classQuery = service.searchTarget(project, clazz).inScope(restrictedScope).ignoreUseScope(parameters.isIgnoreUseScope).build()
 
     // search usages like "new XXX(..)"
-    val newXxxQuery = service.filter(classQuery, fun(classReference: SymbolReference): Boolean {
+    val newXxxQuery = classQuery.filter(fun(classReference: SymbolReference): Boolean {
       if (classReference !is PsiSymbolReference) return false
       val parent = classReference.element.parent
       val newExpression = (if (parent is PsiAnonymousClass) parent.parent else parent) as? PsiNewExpression ?: return false
@@ -37,7 +37,7 @@ class ConstructorReferencesRequestor : SearchRequestor {
     })
 
     // search usages like "XXX::new"
-    val xxxNewQuery: Query<out SymbolReference> = service.map(classQuery, fun(classReference: SymbolReference): SymbolReference? {
+    val xxxNewQuery: Query<SymbolReference> = classQuery.map(fun(classReference: SymbolReference): SymbolReference? {
       if (classReference is PsiSymbolReference) {
         val parent = classReference.element.parent
         if (parent is PsiMethodReferenceExpression // todo check PSI before resolving class target
@@ -54,7 +54,7 @@ class ConstructorReferencesRequestor : SearchRequestor {
 
     // search usages like "super(..)" in direct subclasses
     val inheritorsQuery = ClassInheritorsSearch.search(clazz, restrictedScope, false)
-    val superQuery = service.mapSubquery(inheritorsQuery) { inheritor ->
+    val superQuery = inheritorsQuery.flatMap { inheritor ->
       service.searchWord(project, PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).build(target)
     }
 

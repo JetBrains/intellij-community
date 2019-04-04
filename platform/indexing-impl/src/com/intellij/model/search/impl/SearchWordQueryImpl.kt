@@ -12,13 +12,12 @@ import com.intellij.psi.impl.search.idTransform
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
-import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import java.util.*
 
 internal class SearchWordQueryImpl(
   private val myParameters: SearchWordParameters
-) : AbstractQuery<TextOccurrence>(), DecomposableQuery<TextOccurrence> {
+) : AbstractDecomposableQuery<TextOccurrence>() {
 
   override fun processResults(consumer: Processor<in TextOccurrence>): Boolean {
     TODO()
@@ -50,7 +49,7 @@ private fun createRequests(parameters: SearchWordParameters): Collection<SearchW
       val codeScope = searchScope.intersectWith(restrictedCodeUsageSearchScope)
       val codeRequest = SearchWordRequest(word, codeScope, caseSensitive, SearchContext.IN_CODE.mask, null)
       val nonCodeRequest = SearchWordRequest(word, searchScope, caseSensitive,
-                                                                            mask(contexts - SearchContext.IN_CODE), null)
+                                             mask(contexts - SearchContext.IN_CODE), null)
       return Arrays.asList(codeRequest, nonCodeRequest)
     }
   }

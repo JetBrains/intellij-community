@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 /**
  * {@code Processor<Result> -> Processor<Base>}
  */
-public interface Preprocessor<Result, Base> extends Function<Processor<? super Result>, Processor<? super Base>> {
+public interface PostProcessor<Result, Base> extends Function<Processor<? super Result>, Processor<? super Base>> {
 
   /**
    * @return {@link Base base} processor that processes and feeds elements into {@link Result result} processor
@@ -24,8 +24,8 @@ public interface Preprocessor<Result, Base> extends Function<Processor<? super R
    * Note that no casts are required because {@link Base} is a subtype of {@link Result}
    */
   @NotNull
-  static <Result, Base extends Result> Preprocessor<Result, Base> id() {
-    return IdPreprocessor.getInstance();
+  static <Result, Base extends Result> PostProcessor<Result, Base> id() {
+    return IdPostProcessor.getInstance();
   }
 
   /**
@@ -36,27 +36,27 @@ public interface Preprocessor<Result, Base> extends Function<Processor<? super R
    * @param <B> base type
    */
   @NotNull
-  static <R, I, B> Preprocessor<R, B> andThen(@NotNull Preprocessor<? extends R, ? super I> before,
-                                              @NotNull Preprocessor<? extends I, ? super B> after) {
-    Preprocessor<?, ?> id = id();
+  static <R, I, B> PostProcessor<R, B> andThen(@NotNull PostProcessor<? extends R, ? super I> before,
+                                               @NotNull PostProcessor<? extends I, ? super B> after) {
+    PostProcessor<?, ?> id = id();
     if (before == id) {
       //noinspection unchecked
-      return (Preprocessor<R, B>)after;
+      return (PostProcessor<R, B>)after;
     }
     else if (after == id) {
       //noinspection unchecked
-      return (Preprocessor<R, B>)before;
+      return (PostProcessor<R, B>)before;
     }
     return v -> after.apply(before.apply(v));
   }
 
   @NotNull
-  static <V> Preprocessor<V, V> filtering(@NotNull Predicate<? super V> predicate) {
+  static <V> PostProcessor<V, V> filtering(@NotNull Predicate<? super V> predicate) {
     return processor -> v -> !predicate.test(v) || processor.process(v);
   }
 
   @NotNull
-  static <Result, Base> Preprocessor<Result, Base> mapping(@NotNull Function<? super Base, ? extends Result> map) {
+  static <Result, Base> PostProcessor<Result, Base> mapping(@NotNull Function<? super Base, ? extends Result> map) {
     return processor -> value -> {
       Result result = map.apply(value);
       return result == null || processor.process(result);

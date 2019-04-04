@@ -5,17 +5,17 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Preprocessor that doesn't pre-process anything, i.e. returns original processor.
+ * PostProcessor that doesn't process anything, i.e. returns original processor.
  */
-final class IdPreprocessor<R, B extends R> implements Preprocessor<R, B> {
+final class IdPostProcessor<R, B extends R> implements PostProcessor<R, B> {
 
-  private static final Preprocessor<?, ?> INSTANCE = new IdPreprocessor();
+  private static final PostProcessor<?, ?> INSTANCE = new IdPostProcessor();
 
   @Contract(pure = true)
   @NotNull
-  static <R, B extends R> Preprocessor<R, B> getInstance() {
+  static <R, B extends R> PostProcessor<R, B> getInstance() {
     //noinspection unchecked
-    return (Preprocessor<R, B>)INSTANCE;
+    return (PostProcessor<R, B>)INSTANCE;
   }
 
   @NotNull

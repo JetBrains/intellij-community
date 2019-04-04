@@ -2,7 +2,6 @@
 package com.intellij.model.search.impl
 
 import com.intellij.psi.impl.search.Transformation
-import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.containers.ContainerUtil
@@ -10,7 +9,7 @@ import com.intellij.util.containers.ContainerUtil
 internal class TransformingQuery<B, R>(
   val baseQuery: Query<B>,
   private val transformation: Transformation<B, R>
-) : AbstractQuery<R>(), DecomposableQuery<R> {
+) : AbstractDecomposableQuery<R>() {
 
   override fun processResults(consumer: Processor<in R>): Boolean {
     return baseQuery.forEach(Processor { b ->

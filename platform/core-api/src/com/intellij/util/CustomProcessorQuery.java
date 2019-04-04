@@ -5,17 +5,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
 
-  protected final Query<B> myBaseQuery;
-  private final Preprocessor<R, B> myPreprocessor;
+  protected final Query<? extends B> myBaseQuery;
+  private final PostProcessor<R, B> myPostProcessor;
 
-  public CustomProcessorQuery(@NotNull Query<B> query, @NotNull Preprocessor<R, B> provider) {
+  public CustomProcessorQuery(@NotNull Query<? extends B> query, @NotNull PostProcessor<R, B> provider) {
     myBaseQuery = query;
-    myPreprocessor = provider;
+    myPostProcessor = provider;
   }
 
   @Override
   protected boolean processResults(@NotNull Processor<? super R> consumer) {
-    return myBaseQuery.forEach(myPreprocessor.apply(consumer));
+    return myBaseQuery.forEach(myPostProcessor.apply(consumer));
   }
 
   @Override
@@ -26,7 +26,7 @@ public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
     CustomProcessorQuery<?, ?> query = (CustomProcessorQuery<?, ?>)o;
 
     if (!myBaseQuery.equals(query.myBaseQuery)) return false;
-    if (!myPreprocessor.equals(query.myPreprocessor)) return false;
+    if (!myPostProcessor.equals(query.myPostProcessor)) return false;
 
     return true;
   }
@@ -34,7 +34,7 @@ public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
   @Override
   public int hashCode() {
     int result = myBaseQuery.hashCode();
-    result = 31 * result + myPreprocessor.hashCode();
+    result = 31 * result + myPostProcessor.hashCode();
     return result;
   }
 }

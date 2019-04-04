@@ -8,10 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 public interface SearchService {
 
   @NotNull
@@ -27,20 +23,4 @@ public interface SearchService {
 
   @NotNull
   SearchWordParameters.Builder searchWord(@NotNull Project project, @NotNull String word);
-
-  @NotNull
-  <B, R> Query<? extends R> map(@NotNull Query<? extends B> base,
-                                @NotNull Function<? super B, ? extends R> transformation);
-
-  @NotNull
-  <R> Query<? extends R> filter(@NotNull Query<? extends R> base,
-                                @NotNull Predicate<? super R> predicate);
-
-  @NotNull
-  <B, R> Query<? extends R> mapSubqueries(@NotNull Query<? extends B> base,
-                                          @NotNull Function<? super B, ? extends Collection<? extends Query<? extends R>>> subqueries);
-
-  @NotNull
-  <B, R> Query<? extends R> mapSubquery(@NotNull Query<? extends B> base,
-                                        @NotNull Function<? super B, ? extends Query<? extends R>> subquery);
 }

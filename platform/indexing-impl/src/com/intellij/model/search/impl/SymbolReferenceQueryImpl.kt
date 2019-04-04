@@ -5,13 +5,12 @@ import com.intellij.model.SymbolReference
 import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.model.search.SymbolSearchHelper
 import com.intellij.psi.impl.search.idTransform
-import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 
 internal class SymbolReferenceQueryImpl(
   private val myParameters: SearchSymbolReferenceParameters
-) : AbstractQuery<SymbolReference>(), DecomposableQuery<SymbolReference> {
+) : AbstractDecomposableQuery<SymbolReference>() {
 
   private val myBaseQuery: Query<out SymbolReference> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     SymbolReferenceSearch.createQuery(myParameters)
