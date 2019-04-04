@@ -18,12 +18,12 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 /**
@@ -163,7 +163,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   @Override
   @NotNull
   public Iterator<E> iterator() {
-    return new DisposableWrapperListIterator<>(myWrappedList, 0);
+    return new DisposableWrapperListIterator(0);
   }
 
   @Override
@@ -234,13 +234,13 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
   @Override
   @NotNull
   public ListIterator<E> listIterator() {
-    return new DisposableWrapperListIterator<>(myWrappedList, 0);
+    return new DisposableWrapperListIterator(0);
   }
 
   @Override
   @NotNull
   public ListIterator<E> listIterator(int index) {
-    return new DisposableWrapperListIterator<>(myWrappedList, index);
+    return new DisposableWrapperListIterator(index);
   }
 
   @Override
@@ -251,13 +251,13 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
 
   @NotNull
   private DisposableWrapper<E> createDisposableWrapper(E element, @NotNull Disposable parentDisposable) {
-    DisposableWrapper<E> disposableWrapper = new DisposableWrapper<>(element, myWrappedList);
+    DisposableWrapper<E> disposableWrapper = new DisposableWrapper<>(element, true);
     Disposer.register(parentDisposable, disposableWrapper);
     return disposableWrapper;
   }
 
   @NotNull
-  private static <T> Collection<DisposableWrapper<T>> wrapAll(@NotNull Collection<? extends T> collection) {
+  private <T> Collection<DisposableWrapper<T>> wrapAll(@NotNull Collection<? extends T> collection) {
     if (collection.isEmpty()) {
       return Collections.emptyList();
     }
@@ -278,35 +278,31 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
     return unwrapped;
   }
 
-  private static class DisposableWrapper<T> implements Disposable {
-    private static final AtomicFieldUpdater<DisposableWrapper, Integer> UNIQUENESS_UPDATER =
-        AtomicFieldUpdater.forIntFieldIn(DisposableWrapper.class);
-
-    @NotNull private final T delegate;
-    @Nullable private Collection<DisposableWrapper<T>> myContainer;
-    @SuppressWarnings("unused") // Set using UNIQUENESS_UPDATER.
-    private volatile int myIsUnique; // A boolean value encoded using 0 for false and 1 for true.
+  private class DisposableWrapper<T> extends AtomicBoolean implements Disposable {
+    @NotNull
+    private final T delegate;
+    private boolean removeFromContainer;
 
     DisposableWrapper(@NotNull T obj) {
-      this(obj, null);
+      this(obj, false);
     }
 
-    DisposableWrapper(@NotNull T obj, @Nullable Collection<DisposableWrapper<T>> container) {
-      this.delegate = obj;
-      this.myContainer = container;
+    DisposableWrapper(@NotNull T delegate, boolean removeFromContainer) {
+      this.delegate = delegate;
+      this.removeFromContainer = removeFromContainer;
     }
 
     @Override
     public void dispose() {
-      if (myContainer != null) {
+      if (removeFromContainer) {
         makeUnique(); // Make sure that exactly this wrapper is removed.
-        myContainer.remove(this);
+        myWrappedList.remove(this);
       }
     }
 
     void disposeWithoutRemoval() {
-      if (myContainer != null) {
-        myContainer = null;
+      if (removeFromContainer) {
+        removeFromContainer = false;
         Disposer.dispose(this);
       }
     }
@@ -317,11 +313,11 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
      * @return true if the object's state changed as a result of the method call
      */
     boolean makeUnique() {
-      return UNIQUENESS_UPDATER.compareAndSetInt(this, 0, 1);
+      return compareAndSet( false, true);
     }
 
     private boolean isUnique() {
-      return myIsUnique != 0;
+      return get();
     }
 
     @Override
@@ -342,12 +338,12 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
     }
   }
 
-  private static class DisposableWrapperListIterator<T> implements ListIterator<T> {
-    @NotNull private final ListIterator<DisposableWrapper<T>> myDelegate;
-    @Nullable private DisposableWrapper<T> myLastReturned;
+  private class DisposableWrapperListIterator implements ListIterator<E> {
+    @NotNull private final ListIterator<DisposableWrapper<E>> myDelegate;
+    @Nullable private DisposableWrapper<E> myLastReturned;
 
-    DisposableWrapperListIterator(@NotNull List<DisposableWrapper<T>> list, int initialCursor) {
-      myDelegate = list.listIterator(initialCursor);
+    DisposableWrapperListIterator(int initialCursor) {
+      myDelegate = myWrappedList.listIterator(initialCursor);
     }
 
     @Override
@@ -356,7 +352,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
     }
 
     @Override
-    public T next() {
+    public E next() {
       myLastReturned = myDelegate.next();
       return myLastReturned.delegate;
     }
@@ -367,7 +363,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
     }
 
     @Override
-    public T previous() {
+    public E previous() {
       myLastReturned = myDelegate.previous();
       return myLastReturned.delegate;
     }
@@ -396,12 +392,12 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
     }
 
     @Override
-    public void set(T element) {
+    public void set(E element) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void add(T element) {
+    public void add(E element) {
       throw new UnsupportedOperationException();
     }
 
