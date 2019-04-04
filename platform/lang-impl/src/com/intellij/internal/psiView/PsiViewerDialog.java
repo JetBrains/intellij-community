@@ -220,7 +220,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @NotNull
   private JBTabs createTabPanel(@NotNull Project project) {
-    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, this);
+    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, getDisposable());
     tabs.getPresentation().setAlphabeticalMode(false).setSupportsCompression(false);
     return tabs;
   }
