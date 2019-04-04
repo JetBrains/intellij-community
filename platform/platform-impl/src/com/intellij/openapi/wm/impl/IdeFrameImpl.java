@@ -145,8 +145,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    if (IdeFrameDecorator.isCustomDecoration()) JdkEx.setHasCustomDecoration(this);
-
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
       protected Component getDefaultComponentImpl(Container focusCycleRoot) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUIScale
 import java.awt.*
@@ -23,18 +24,14 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         val HIT_TEST_RESIZE_GAP = JBUI.scale(3);
 
         fun create(window: Window): CustomHeader {
-            val customHeader = if (window is JFrame && window.rootPane is IdeRootPane) {
+            return if (window is JFrame && window.rootPane is IdeRootPane) {
                 createFrameHeader(window)
             } else {
                 DialogHeader(window)
             }
-            return customHeader
         }
 
-        fun createFrameHeader(frame: JFrame): CustomHeader {
-            val frameHeader = FrameHeader(frame)
-            return frameHeader
-        }
+        fun createFrameHeader(frame: JFrame): CustomHeader = FrameHeader(frame)
     }
 
     private var windowListener: WindowListener
@@ -44,8 +41,19 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
                 AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
     }
 
-    protected var productIcon: JComponent
     protected var myActive = false
+
+    private val icon: Icon
+        get() {
+            val ctx = JBUIScale.ScaleContext.create(window)
+            ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
+            return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
+        }
+
+
+    protected val productIcon: JComponent by lazy {
+        createProductIcon()
+    }
 
     protected val buttonPanes: CustomFrameTitleButtons by lazy {
         createButtonsPane()
@@ -54,13 +62,6 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     init {
         isOpaque = true
         background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground()
-
-
-        val ctx = JBUIScale.ScaleContext.create(window)
-        ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
-        val icon = myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
-
-        productIcon = createProductIcon(icon)
 
         fun onClose() {
             Disposer.dispose(this)
@@ -87,13 +88,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
     }
 
-
     abstract fun createButtonsPane(): CustomFrameTitleButtons
 
     override fun addNotify() {
         super.addNotify()
         installListeners()
-        setCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
@@ -136,7 +135,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         override fun actionPerformed(e: ActionEvent) = action()
     }
 
-    private fun createProductIcon(icon: Icon): JComponent {
+    private fun createProductIcon(): JComponent {
         val myMenuBar = object : JMenuBar() {
             override fun getPreferredSize(): Dimension {
                 return minimumSize

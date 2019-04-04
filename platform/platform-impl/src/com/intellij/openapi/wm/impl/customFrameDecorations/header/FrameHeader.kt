@@ -3,11 +3,8 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel.CustomDecorationPath
@@ -18,24 +15,26 @@ import java.awt.*
 import java.awt.Frame.MAXIMIZED_BOTH
 import java.awt.Frame.MAXIMIZED_VERT
 import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
-import java.awt.event.WindowListener
+import java.awt.event.WindowStateListener
 import java.util.ArrayList
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
     private val myRestoreAction: Action = CustomFrameAction("Restore", AllIcons.Windows.RestoreSmall) { restore() }
     private val myMaximizeAction: Action = CustomFrameAction("Maximize", AllIcons.Windows.MaximizeSmall) { maximize() }
 
-    private var windowListener: WindowListener
+    private var windowStateListener: WindowStateListener
+    private var changeListener: ChangeListener
     private val mySelectedEditorFilePath: CustomDecorationPath
     private val myIdeMenu: IdeMenuBar
-    private var myState = -100
+    private var myState = 0
 
     init {
-        windowListener = object : WindowAdapter() {
+        windowStateListener = object : WindowAdapter() {
             override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
                 updateActions()
             }
@@ -49,6 +48,10 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
                 return JBUI.Borders.empty()
             }
         }
+
+        changeListener = ChangeListener {
+            setCustomDecorationHitTestSpots()
+        }
         mySelectedEditorFilePath = CustomDecorationPath(this)
 
         val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
@@ -58,9 +61,6 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
 
         add(pane, "wmin 0, growx")
         add(buttonPanes.getView(), "top, wmin pref")
-
-        myState = frame.extendedState
-        updateActions()
     }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = ResizableCustomFrameTitleButtons.create(myCloseAction,
@@ -68,43 +68,42 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
 
 
     override fun installListeners() {
-        frame.addWindowListener(windowListener)
+        frame.addWindowStateListener(windowStateListener)
+        myIdeMenu.selectionModel.addChangeListener(changeListener)
+        super.installListeners()
     }
 
     override fun uninstallListeners() {
-        frame.removeWindowListener(windowListener)
+        frame.removeWindowStateListener(windowStateListener)
+        myIdeMenu.selectionModel.removeChangeListener(changeListener)
+        super.uninstallListeners()
     }
 
     private fun iconify() {
-        setExtendedState(myState or Frame.ICONIFIED)
+        frame.extendedState = myState or Frame.ICONIFIED
     }
 
     private fun maximize() {
-        setExtendedState(myState or Frame.MAXIMIZED_BOTH)
+        frame.extendedState = myState or Frame.MAXIMIZED_BOTH
     }
 
     private fun restore() {
         if (myState and Frame.ICONIFIED != 0) {
-            setExtendedState(myState and Frame.ICONIFIED.inv())
+            frame.extendedState = myState and Frame.ICONIFIED.inv()
         } else {
-            setExtendedState(myState and Frame.MAXIMIZED_BOTH.inv())
+            frame.extendedState = myState and Frame.MAXIMIZED_BOTH.inv()
         }
     }
 
-    private fun setExtendedState(state: Int) {
-        if (myState == state) {
-            return
-        }
-
-        myState = state
-        frame.extendedState = state
+    override fun addNotify() {
+        super.addNotify()
         updateActions()
     }
 
     private fun updateActions() {
-        val state = myState
+        myState = frame.extendedState
         if (frame.isResizable) {
-            if (state and Frame.MAXIMIZED_BOTH != 0) {
+            if (myState and Frame.MAXIMIZED_BOTH != 0) {
                 myMaximizeAction.isEnabled = false
                 myRestoreAction.isEnabled = true
             } else {
@@ -119,6 +118,7 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         myCloseAction.isEnabled = true
 
         buttonPanes.updateVisibility()
+        setCustomDecorationHitTestSpots()
     }
 
     override fun addMenuItems(menu: JMenu) {
@@ -142,15 +142,12 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         val buttonsRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
 
         val state = frame.extendedState
+        iconRect.width = (iconRect.width * 1.5).toInt()
+
         if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
 
-            if (menuRect != null) {
+            if (menuRect != null /*&& !myIdeMenu.isSelected*/) {
                 menuRect.y += Math.round((menuRect.height / 3).toFloat())
-            }
-
-            if (iconRect != null) {
-                iconRect.y += HIT_TEST_RESIZE_GAP
-                iconRect.x += HIT_TEST_RESIZE_GAP
             }
 
             if (buttonsRect != null) {
@@ -158,15 +155,13 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
                 buttonsRect.x += HIT_TEST_RESIZE_GAP
                 buttonsRect.width -= HIT_TEST_RESIZE_GAP
             }
-            hitTestSpots.add(menuRect)
-
-            hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
-            hitTestSpots.add(iconRect)
-
-            hitTestSpots.add(buttonsRect)
-
         }
 
+        hitTestSpots.add(menuRect)
+
+        hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
+        hitTestSpots.add(iconRect)
+        hitTestSpots.add(buttonsRect)
         return hitTestSpots
     }
 }

@@ -14,10 +14,11 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     private val titleLabel = JLabel()
 
     init {
-        layout = MigLayout("novisualpadding, ins 0, fillx, gap 0, baseline", "", "$H_GAP[]$H_GAP[][pref!]")
+        layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "$H_GAP[min!]$H_GAP[][pref!]", "")
         titleLabel.text = getTitle()
+
         add(productIcon)
-        add(titleLabel, "wmin 0, growx")
+        add(titleLabel, "wmin 0, left")
         add(buttonPanes.getView(), "top, wmin pref")
 
         minimumSize = Dimension(minimumSize.width, MIN_HEIGHT)
@@ -46,6 +47,11 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
         return myDefaultActiveForeground
     }
 
+    override fun addNotify() {
+        super.addNotify()
+        titleLabel.text = getTitle()
+    }
+
     private fun getTitle(): String? {
         when (window) {
             is Frame -> return window.title
@@ -57,8 +63,13 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     override fun getHitTestSpots(): List<Rectangle> {
         val hitTestSpots = ArrayList<Rectangle>()
 
-        hitTestSpots.add(RelativeRectangle(productIcon).getRectangleOn(this))
+        val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
+        iconRect.width = (iconRect.width * 1.5).toInt()
+
+        hitTestSpots.add(iconRect)
         hitTestSpots.add(RelativeRectangle(buttonPanes.getView()).getRectangleOn(this))
+
+
         return hitTestSpots
     }
 }
