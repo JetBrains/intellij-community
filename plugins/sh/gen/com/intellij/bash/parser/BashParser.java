@@ -1304,7 +1304,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? commands_list] newlines
-  //             (HEREDOC_CONTENT)*
+  //             HEREDOC_CONTENT*
   //             (HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
@@ -1345,7 +1345,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (HEREDOC_CONTENT)*
+  // HEREDOC_CONTENT*
   private static boolean heredoc_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_4")) return false;
     while (true) {
