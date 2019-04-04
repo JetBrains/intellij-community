@@ -1216,7 +1216,7 @@
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" order="first"/>
 
     <applicationService serviceInterface="com.intellij.model.search.SearchService"
-                        serviceImplementation="com.intellij.psi.impl.search.SearchServiceImpl"/>
+                        serviceImplementation="com.intellij.model.search.impl.SearchServiceImpl"/>
     <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
   </extensions>

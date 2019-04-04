@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.search
+package com.intellij.model.search.impl
 
 import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
@@ -90,6 +90,6 @@ internal data class SearchWordParametersImpl(
   }
 
   override fun build(target: Symbol): Query<out SymbolReference> {
-    return TransformingQuery.flatMapping(withTargetHint(target).build(), SingleTargetOccurrenceProcessor(target))
+    return TransformingQuery(withTargetHint(target).build(), SingleTargetOccurrenceProcessor(target))
   }
 }

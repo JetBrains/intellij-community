@@ -3,10 +3,8 @@ package com.intellij.psi.impl.search
 
 import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
-import com.intellij.model.search.SearchScopeOptimizer
-import com.intellij.model.search.SearchSymbolReferenceParameters
-import com.intellij.model.search.SymbolSearchHelper
-import com.intellij.model.search.TextOccurrence
+import com.intellij.model.search.*
+import com.intellij.model.search.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
@@ -78,7 +76,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
     while (queue.isNotEmpty()) {
       progress.checkCanceled()
       val query = queue.remove()
-      val flatRequests = flatten(query)
+      val flatRequests = decompose(query)
       for (queryRequest in flatRequests.myQueryRequests) {
         queryRequests.getOrPut(queryRequest.query) { SmartList() }.add(queryRequest.transformation)
       }
@@ -87,7 +85,7 @@ class SymbolSearchHelperImpl(private val myProject: Project,
       for (paramsRequest in flatRequests.myParamsRequests.cancellable(progress)) {
         val paramsQueries = paramsQueries(paramsRequest.params)
         for (paramsQuery in paramsQueries.cancellable(progress)) {
-          queue.offer(TransformingQuery.flatMapping(paramsQuery, paramsRequest.transformation))
+          queue.offer(TransformingQuery(paramsQuery, paramsRequest.transformation))
         }
       }
     }

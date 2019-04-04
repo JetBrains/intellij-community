@@ -9,11 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Query
 
-/**
- * Includes [ReferencesSearch] results into [com.intellij.model.search.SymbolReferenceSearch] results.
- *
- * @see SymbolToPsiReferenceSearcher
- */
 class PsiToSymbolSearchRequestor : SearchRequestor {
 
   override fun collectSearchRequests(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {

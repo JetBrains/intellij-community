@@ -10,7 +10,6 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
-import com.intellij.util.LayeredQuery
 import com.intellij.util.Query
 
 class ConstructorReferencesRequestor : SearchRequestor {
@@ -55,7 +54,7 @@ class ConstructorReferencesRequestor : SearchRequestor {
 
     // search usages like "super(..)" in direct subclasses
     val inheritorsQuery = ClassInheritorsSearch.search(clazz, restrictedScope, false)
-    val superQuery = LayeredQuery.mapping(inheritorsQuery) { inheritor ->
+    val superQuery = service.mapSubquery(inheritorsQuery) { inheritor ->
       service.searchWord(project, PsiKeyword.SUPER).inScope(LocalSearchScope(inheritor)).build(target)
     }
 

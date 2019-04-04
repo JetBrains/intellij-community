@@ -4,6 +4,7 @@ package com.intellij.psi.impl.search
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import java.util.function.Function
+import java.util.function.Predicate
 
 /**
  * @param B base type
@@ -33,5 +34,17 @@ fun <B, I, R> Transformation<B, I>.bind(other: Transformation<I, R>): Transforma
 fun <B, R> Processor<in R>.transform(transformation: Transformation<B, R>): Processor<in B> {
   return Processor { t ->
     ContainerUtil.process(transformation.apply(t), this)
+  }
+}
+
+fun <R> filtering(predicate: Predicate<in R>): Transformation<in R, out R> {
+  return Transformation {
+    if (predicate.test(it)) listOf(it) else emptyList()
+  }
+}
+
+fun <B, R> mapping(f: Function<in B, out R?>): Transformation<in B, out R> {
+  return Transformation {
+    f.apply(it)?.let(::listOf) ?: emptyList()
   }
 }

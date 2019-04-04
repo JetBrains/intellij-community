@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o.
-package com.intellij.psi.impl.search
+package com.intellij.model.search.impl
 
 import com.intellij.model.Symbol
+import com.intellij.model.SymbolReference
 import com.intellij.model.search.SearchSymbolReferenceParameters.Builder
-import com.intellij.model.search.SymbolReferenceQuery
-import com.intellij.model.search.impl.SymbolReferenceQueryImpl
 import com.intellij.model.search.impl.SearchSymbolReferenceParametersBase
+import com.intellij.model.search.impl.SymbolReferenceQueryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.Query
 
 data class SearchSymbolReferenceParametersImpl(
   private val myProject: Project,
@@ -35,7 +36,7 @@ data class SearchSymbolReferenceParametersImpl(
 
   override fun ignoreUseScope(ignore: Boolean): Builder = copy(myIgnoreUseScope = ignore)
 
-  override fun build(): SymbolReferenceQuery {
+  override fun build(): Query<out SymbolReference> {
     return SymbolReferenceQueryImpl(this)
   }
 }

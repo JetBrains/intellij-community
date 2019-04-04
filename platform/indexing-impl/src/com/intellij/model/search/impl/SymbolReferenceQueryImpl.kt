@@ -3,24 +3,27 @@ package com.intellij.model.search.impl
 
 import com.intellij.model.SymbolReference
 import com.intellij.model.search.SearchSymbolReferenceParameters
-import com.intellij.model.search.SymbolReferenceQuery
 import com.intellij.model.search.SymbolSearchHelper
+import com.intellij.psi.impl.search.idTransform
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
-import org.jetbrains.annotations.Contract
 
-class SymbolReferenceQueryImpl(
+internal class SymbolReferenceQueryImpl(
   private val myParameters: SearchSymbolReferenceParameters
-) : AbstractQuery<SymbolReference>(), SymbolReferenceQuery {
+) : AbstractQuery<SymbolReference>(), DecomposableQuery<SymbolReference> {
 
-  override fun processResults(consumer: Processor<in SymbolReference>): Boolean {
-    return baseQuery.forEach(consumer) && SymbolSearchHelper.getInstance(myParameters.project).runSearch(myParameters, consumer)
+  private val myBaseQuery: Query<out SymbolReference> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    SymbolReferenceSearch.createQuery(myParameters)
   }
 
-  @Contract(pure = true)
-  override fun getParameters(): SearchSymbolReferenceParameters = myParameters
+  override fun processResults(consumer: Processor<in SymbolReference>): Boolean {
+    return myBaseQuery.forEach(consumer) && SymbolSearchHelper.getInstance(myParameters.project).runSearch(myParameters, consumer)
+  }
 
-  @Contract(pure = true)
-  override fun getBaseQuery(): Query<SymbolReference> = SymbolReferenceSearch.createQuery(myParameters)
+  override fun decompose(): FlatRequests<SymbolReference> {
+    val queryRequest: QueryRequest<*, SymbolReference> = QueryRequest(myBaseQuery, idTransform())
+    val parametersRequest: ParamsRequest<SymbolReference> = ParamsRequest(myParameters, idTransform())
+    return FlatRequests(myQueryRequests = listOf(queryRequest), myParamsRequests = listOf(parametersRequest))
+  }
 }

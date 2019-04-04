@@ -12,17 +12,11 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.QuerySearchRequest
 import com.intellij.psi.search.SearchRequestCollector
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch.SearchParameters
 import com.intellij.util.CustomProcessorQuery
 import com.intellij.util.PairProcessor
 import com.intellij.util.Processor
 
-/**
- * Includes [com.intellij.model.search.SymbolReferenceQuery] results into [ReferencesSearch] results.
- *
- * @see PsiToSymbolSearchRequestor
- */
 class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, SearchParameters>(false) {
 
   override fun processQuery(queryParameters: SearchParameters, consumer: Processor<in PsiReference>) {

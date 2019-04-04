@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.search;
+package com.intellij.model.search.impl;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
@@ -39,22 +39,5 @@ final class SingleTargetOccurrenceProcessor implements Function<TextOccurrence, 
       if (!reference.references(myTarget)) return false;
       return true;
     });
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    SingleTargetOccurrenceProcessor processor = (SingleTargetOccurrenceProcessor)o;
-
-    if (!myTarget.equals(processor.myTarget)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myTarget.hashCode();
   }
 }
