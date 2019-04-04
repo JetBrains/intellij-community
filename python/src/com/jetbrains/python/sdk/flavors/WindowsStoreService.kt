@@ -8,6 +8,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * Powershell may not exist under PATH, so we first look for it in well-known location
+ */
+private fun findPowerShell(): VirtualFile? {
+  val fs = LocalFileSystem.getInstance()
+  val winDir = System.getenv("WINDIR") ?: return null
+  val winDirFile = fs.findFileByPath(winDir) ?: return null
+  return winDirFile.findFileByRelativePath("/System32/WindowsPowerShell/v1.0/powershell.exe")
+}
 
 /**
  * On Win10 uses `Get-AppxPackage` cmdlet to fetch installation location of package by name.
@@ -22,11 +31,11 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
   val logger = Logger.getFactory().getLoggerInstance("findPackage")
 
   assert(packageName.isNotBlank() && packageName.matches(alphaNumeric)) { "Only alphanumeric packages are supported" }
-  val command = "powershell.exe -Command \"Get-AppxPackage | Where-Object {\$_.Name -like '*$packageName*'} | Select-Object {\$_.InstallLocation} | Format-List\""
-
+  val powershell = findPowerShell()?.path ?: "powershell.exe"
+  val command = "\"Get-AppxPackage | Where-Object {\$_.Name -like '*$packageName*'} | Select-Object {\$_.InstallLocation} | Format-List\""
   val process: Process
   try {
-    process = Runtime.getRuntime().exec(command)
+    process = Runtime.getRuntime().exec(arrayOf(powershell, "-Command", command))
   }
   catch (e: IOException) {
     logger.warn(e)
