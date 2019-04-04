@@ -226,6 +226,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new IntroduceVariableHandler());
   }
 
+  public void testCaseLabelRuleSingle() {
+    doTest(new IntroduceVariableHandler());
+  }
+
+  public void testCaseLabelRuleExpression() {
+    doTest(new IntroduceVariableHandler());
+  }
+
   public void testCaseLabelEnum() {
     try {
       doTest(new MockIntroduceVariableHandler("temp", true, false, false, ""));
