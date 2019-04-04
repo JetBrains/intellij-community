@@ -573,7 +573,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun removeScheme(name: String) = removeFirstScheme { processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T) = removeFirstScheme { it == scheme } != null
+  override fun removeScheme(scheme: T) = removeFirstScheme { it === scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
