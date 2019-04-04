@@ -160,6 +160,11 @@ public class StartupUtil {
       activity.end();
     }));
 
+    if (!newConfigFolder) {
+      installPluginUpdates();
+      runPreAppClass(log);
+    }
+
     addInitUiTasks(futures, executorService, log, initLafTask);
 
     if (isParallelExecution) {
@@ -171,8 +176,6 @@ public class StartupUtil {
       futures.clear();
     }
 
-    runPreAppClass(log);
-
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
       Path newConfigDir = Paths.get(PathManager.getConfigPath());
@@ -181,9 +184,6 @@ public class StartupUtil {
         ConfigImportHelper.importConfigsTo(newConfigDir, log);
       });
       appStarter.importFinished(newConfigDir);
-    }
-    else {
-      installPluginUpdates();
     }
 
     if (!Main.isHeadless()) {
