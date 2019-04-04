@@ -151,6 +151,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Semaphore semaphore = new Semaphore(0);
+        //to avoid eating events and make semaphore being released we use 'this' here instead of "update"
         myQueue.queue(Update.create(this, () -> semaphore.release()));
         myQueue.flush();
 
