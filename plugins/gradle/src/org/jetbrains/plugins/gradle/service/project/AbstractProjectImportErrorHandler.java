@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
@@ -37,8 +36,7 @@ public abstract class AbstractProjectImportErrorHandler {
   public static final String EMPTY_LINE = "\n\n";
 
   @Nullable
-  public abstract ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                               @NotNull Throwable error,
+  public abstract ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                                @NotNull String projectPath,
                                                                @Nullable String buildFilePath);
 

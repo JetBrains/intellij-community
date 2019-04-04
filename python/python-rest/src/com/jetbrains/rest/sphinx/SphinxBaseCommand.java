@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.sphinx;
 
 import com.google.common.collect.Lists;
@@ -15,7 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelper;
@@ -130,7 +130,7 @@ public class SphinxBaseCommand {
 
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
-      final String runnerName = "sphinx-quickstart" + (SystemInfoRt.isWindows ? ".exe" : "");
+      final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
       String executablePath = PythonSdkType.getExecutablePath(sdkHomePath, runnerName);
       if (executablePath != null) {
         cmd.setExePath(executablePath);

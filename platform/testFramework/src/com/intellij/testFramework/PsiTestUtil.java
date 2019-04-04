@@ -15,9 +15,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -161,10 +161,7 @@ public class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        if (entry instanceof ContentEntryImpl) {
-          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
-        }
-
+        Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
         return entry;
       }
     }
@@ -320,7 +317,7 @@ public class PsiTestUtil {
         }
       });
       WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+        LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
         LibraryTable.ModifiableModel model = table.getModifiableModel();
         model.removeLibrary(library);
         model.commit();
@@ -361,7 +358,7 @@ public class PsiTestUtil {
                                            @NotNull List<? extends VirtualFile> classesRoots,
                                            @NotNull List<? extends VirtualFile> sourceRoots,
                                            @NotNull List<? extends VirtualFile> javaDocs) {
-    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
+    LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
     return WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
@@ -499,16 +496,6 @@ public class PsiTestUtil {
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
                                   @NotNull VirtualFile... roots) {
-    return modifyJdkRoots(sdk, sdkModificator -> {
-      for (VirtualFile root : roots) {
-        sdkModificator.addRoot(root, rootType);
-      }
-    });
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
       clone = (Sdk)sdk.clone();
@@ -517,7 +504,9 @@ public class PsiTestUtil {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
-    modifier.accept(sdkModificator);
+    for (VirtualFile root : roots) {
+      sdkModificator.addRoot(root, rootType);
+    }
     sdkModificator.commitChanges();
     return clone;
   }

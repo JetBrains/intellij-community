@@ -7,12 +7,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -46,42 +44,20 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  private StructureTreeModel(@NotNull Structure structure, boolean background, @NotNull Disposable parentDisposable) {
+  private StructureTreeModel(@NotNull Structure structure, boolean background) {
     this.structure = structure;
     description = format(structure.toString());
     invoker = background
               ? new Invoker.BackgroundThread(this)
               : new Invoker.EDT(this);
-    Disposer.register(parentDisposable, this);
   }
 
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public StructureTreeModel(@NotNull Structure structure) {
-    this(structure, Disposer.newDisposable());
+    this(structure, true);
   }
 
-  /**
-   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Comparator, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator) {
-    this(structure, comparator, Disposer.newDisposable());
-  }
-
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parentDisposable) {
-    this(structure, true, parentDisposable);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor> comparator,
-                            @NotNull Disposable parentDisposable) {
-    this(structure, parentDisposable);
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
+    this(structure);
     this.comparator = wrapToNodeComparator(comparator);
   }
 
@@ -362,6 +338,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return object instanceof Node && child instanceof Node ? ((Node)object).getIndex((TreeNode)child) : -1;
   }
 
+  @Override
+  public void valueForPathChanged(TreePath path, Object value) {
+  }
+
   private boolean isValid(@NotNull Node node) {
     return isValid(structure, node.getElement());
   }
@@ -436,7 +416,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return list;
   }
 
-  private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
+  private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
     private final LeafState leafState;
     private final int hashCode;
@@ -578,12 +558,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     @Override
     public int getIndex(@NotNull TreeNode child) {
       return child instanceof Node && isNodeChild(child) ? getChildren().indexOf(child) : -1;
-    }
-
-    @NotNull
-    @Override
-    public LeafState getLeafState() {
-      return leafState;
     }
   }
 

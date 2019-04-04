@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -78,7 +78,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       if (step instanceof ProjectTypeStep) {
         assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
         List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(4, steps.size());
+        assertEquals(5, steps.size());
         final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
         assertInstanceOf(projectBuilder, GradleModuleBuilder.class);
         ((GradleModuleBuilder)projectBuilder).setName(projectName);
@@ -119,7 +119,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     Module childModule = createModuleFromTemplate("Gradle", null, project, step -> {
       if (step instanceof ProjectTypeStep) {
         List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(4, steps.size());
+        assertEquals(5, steps.size());
       }
       else if (step instanceof GradleModuleWizardStep) {
         SelectExternalProjectDialog projectDialog = new SelectExternalProjectDialog(GradleConstants.SYSTEM_ID, project, null);
@@ -184,7 +184,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots);
     if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
     }
     WriteAction.runAndWait(() -> {
       Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);

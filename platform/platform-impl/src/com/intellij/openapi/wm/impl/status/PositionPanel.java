@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
@@ -31,8 +30,6 @@ import java.beans.PropertyChangeListener;
 public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
              CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
-
-  public static final Key<Object> DISABLE_FOR_EDITOR = new Key<>("positionPanel.disableForEditor");
 
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
@@ -84,7 +81,7 @@ public class PositionPanel extends EditorBasedWidget
 
   @Override
   public String getTooltipText() {
-    return UIBundle.message("go.to.line.command.name");
+    return UIBundle.message("go.to.line.command.double.click");
   }
 
   @Override
@@ -177,7 +174,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   private void updatePosition(final Editor editor) {
-    if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) {
+    if (editor == null) {
       myText = "";
     }
     else {

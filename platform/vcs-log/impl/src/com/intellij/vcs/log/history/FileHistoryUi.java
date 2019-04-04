@@ -4,7 +4,6 @@ package com.intellij.vcs.log.history;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -97,15 +96,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull
   public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
     return path.getPath() + (revision == null ? "" : revision.asString());
-  }
-
-  @Override
-  public void setVisiblePack(@NotNull VisiblePack pack) {
-    super.setVisiblePack(pack);
-
-    if (pack.canRequestMore()) {
-      requestMore(EmptyRunnable.INSTANCE);
-    }
   }
 
   public boolean hasDiffPreview() {

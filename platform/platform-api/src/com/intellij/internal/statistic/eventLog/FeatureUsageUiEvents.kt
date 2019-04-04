@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.options.Configurable
 
 fun getUiEventLogger(): FeatureUsageUiEvents {
   if (ApplicationManager.getApplication() != null) {
@@ -14,11 +13,11 @@ fun getUiEventLogger(): FeatureUsageUiEvents {
 }
 
 interface FeatureUsageUiEvents {
-  fun logSelectConfigurable(configurable: Configurable)
+  fun logSelectConfigurable(name: String, context: Class<*>)
 
-  fun logApplyConfigurable(configurable: Configurable)
+  fun logApplyConfigurable(name: String, context: Class<*>)
 
-  fun logResetConfigurable(configurable: Configurable)
+  fun logResetConfigurable(name: String, context: Class<*>)
 
   fun logShowDialog(name: String, context: Class<*>)
 
@@ -26,13 +25,13 @@ interface FeatureUsageUiEvents {
 }
 
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
-  override fun logSelectConfigurable(configurable: Configurable) {
+  override fun logSelectConfigurable(name: String, context: Class<*>) {
   }
 
-  override fun logApplyConfigurable(configurable: Configurable) {
+  override fun logApplyConfigurable(name: String, context: Class<*>) {
   }
 
-  override fun logResetConfigurable(configurable: Configurable) {
+  override fun logResetConfigurable(name: String, context: Class<*>) {
   }
 
   override fun logShowDialog(name: String, context: Class<*>) {

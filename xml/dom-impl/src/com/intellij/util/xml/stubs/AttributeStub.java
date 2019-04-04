@@ -51,7 +51,7 @@ public class AttributeStub extends DomStub {
 
   @Override
   public ObjectStubSerializer getStubType() {
-    return DomElementTypeHolder.AttributeStub;
+    return AttributeStubSerializer.INSTANCE;
   }
 
   @Override

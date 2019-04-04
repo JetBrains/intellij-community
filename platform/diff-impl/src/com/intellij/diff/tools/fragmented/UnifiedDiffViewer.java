@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
@@ -97,7 +97,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(myEditor, myEditor));
     UnifiedContentPanel contentPanel = new UnifiedContentPanel(titles, myEditor);
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
@@ -343,7 +343,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   private Runnable apply(@NotNull final CombinedEditorData data,
-                         @NotNull final List<? extends ChangedBlock> blocks,
+                         @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor1,
                          @NotNull final LineNumberConvertor convertor2,
                          @Nullable final FoldingModelSupport.Data foldingState,
@@ -693,7 +693,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @CalledWithWriteLock
-    protected abstract void apply(@NotNull List<? extends UnifiedDiffChange> changes);
+    protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
@@ -706,7 +706,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
-    protected void apply(@NotNull List<? extends UnifiedDiffChange> changes) {
+    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
       for (UnifiedDiffChange change : changes) {
         replaceChange(change, myModifiedSide.other());
       }
@@ -723,7 +723,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
-    protected void apply(@NotNull List<? extends UnifiedDiffChange> changes) {
+    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
       for (UnifiedDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
       }
@@ -897,10 +897,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return pair.second.select(navigatable1, navigatable2);
   }
 
-  public boolean isContentGood() {
-    return myPanel.isGoodContent() && myChangedBlockData != null;
-  }
-
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
   }
@@ -983,11 +979,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   //
 
   private class ChangedLinesIterator extends BufferedLineIterator {
-    @NotNull private final List<? extends UnifiedDiffChange> myChanges;
+    @NotNull private final List<UnifiedDiffChange> myChanges;
 
     private int myIndex = 0;
 
-    private ChangedLinesIterator(@NotNull List<? extends UnifiedDiffChange> changes) {
+    private ChangedLinesIterator(@NotNull List<UnifiedDiffChange> changes) {
       myChanges = changes;
       init();
     }
@@ -1282,7 +1278,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Nullable
-    public Data createState(@Nullable List<? extends LineRange> changedLines,
+    public Data createState(@Nullable List<LineRange> changedLines,
                             @NotNull Settings settings,
                             @NotNull Document document,
                             @NotNull LineNumberConvertor lineConvertor,

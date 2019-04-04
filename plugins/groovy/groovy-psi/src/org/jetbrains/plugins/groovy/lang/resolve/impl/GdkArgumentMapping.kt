@@ -5,7 +5,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 class GdkArgumentMapping(
   method: PsiMethod,
@@ -29,8 +32,4 @@ class GdkArgumentMapping(
     }
 
   override fun applicability(substitutor: PsiSubstitutor, erase: Boolean): Applicability = original.applicability(substitutor, erase)
-
-  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
-    return original.highlightingApplicabilities(substitutor)
-  }
 }

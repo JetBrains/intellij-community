@@ -1,0 +1,3 @@
+PsiJavaFile:RawLiteral0.java
+  PsiLiteralExpression:`.`
+    PsiJavaToken:RAW_STRING_LITERAL('`.`')

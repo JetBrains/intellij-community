@@ -85,7 +85,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private XStandaloneVariablesView mySplitView;
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
-  @Nullable private String mySdkHomePath;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -108,7 +107,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       if (sdkFlavor != null) {
         languageLevel = sdkFlavor.getLanguageLevel(sdk);
       }
-      mySdkHomePath = sdk.getHomePath();
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
@@ -513,10 +511,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  @Nullable
-  public String getSdkHomePath() {
-    return mySdkHomePath;
-  }
 
   @Override
   public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {

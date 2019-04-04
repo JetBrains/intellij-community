@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -17,7 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -89,12 +103,12 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   public static String[] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
-    if (tag == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (tag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     @NonNls String tagName = tag.getName();
     if (tag.getDescriptor() instanceof HtmlElementDescriptorImpl) {
-      name = StringUtil.toLowerCase(name);
-      tagName = StringUtil.toLowerCase(tagName);
+      name = name.toLowerCase();
+      tagName = tagName.toLowerCase();
     }
 
     final String namespace = tag.getNamespace();
@@ -143,11 +157,11 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       }
       else if ("itemprop".equals(name) && !DumbService.isDumb(attribute.getProject())) {
         XmlTag scopeTag = findScopeTag(tag);
-        return scopeTag != null ? findItemProperties(scopeTag) : ArrayUtilRt.EMPTY_STRING_ARRAY;
+        return scopeTag != null ? findItemProperties(scopeTag) : ArrayUtil.EMPTY_STRING_ARRAY;
       }
     }
 
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   private static String[] findItemProperties(@NotNull XmlTag tag) {
@@ -162,8 +176,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
           result.addAll(extractProperties((PsiFile)target, StringUtil.unquoteString(reference.getCanonicalText())));
         }
       }
-      return ArrayUtilRt.toStringArray(result);
+      return ArrayUtil.toStringArray(result);
     }
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

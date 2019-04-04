@@ -1,6 +1,6 @@
 /*
-Value is always true (a == a; line#7)
-  Comparison arguments are the same (==; line#7)
+Value is always true (a == a)
+  Comparison arguments are the same (==)
  */
 class Test {
   void test(int a) {

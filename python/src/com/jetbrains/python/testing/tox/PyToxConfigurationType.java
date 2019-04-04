@@ -29,12 +29,12 @@ public final class PyToxConfigurationType implements ConfigurationType {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "tox";
+    return ID;
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "tox runner";
+    return "Tox runner";
   }
 
   @Override

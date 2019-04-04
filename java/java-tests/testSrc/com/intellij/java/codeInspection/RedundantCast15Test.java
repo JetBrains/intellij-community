@@ -35,8 +35,6 @@ public class RedundantCast15Test extends LightCodeInsightFixtureTestCase {
   public void testInference3() { doTest(); }
 
   public void testNullInVarargsParameter() { doTest(); }
-  public void testSingleArgForVarargsParameter() { doTest(); }
-  public void testSwitchSelector() { doTest(); }
 
   public void testWrapperToPrimitiveCast() { doTest(); }
 
@@ -57,7 +55,6 @@ public class RedundantCast15Test extends LightCodeInsightFixtureTestCase {
   public void testForEachValueIDEA126166() { doTest();}
   public void testCaseThrowable() { doTest();}
   public void testSafeTempVarName() { doTest();}
-  public void testBinaryComparison() { doTest();}
 
   public void testTypeParameterAccessChecksJava7() {
     doTest();

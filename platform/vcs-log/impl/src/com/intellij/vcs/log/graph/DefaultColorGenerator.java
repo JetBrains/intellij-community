@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph;
 
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.paint.ColorGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,7 +13,7 @@ import java.util.Map;
  */
 public class DefaultColorGenerator implements ColorGenerator {
 
-  private static final Map<Integer, JBColor> ourColorMap = new HashMap<>();
+  private static final Map<Integer, JBColor> ourColorMap = ContainerUtil.newHashMap();
 
   static {
     ourColorMap.put(GraphColorManagerImpl.DEFAULT_COLOR, JBColor.BLACK);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
@@ -61,7 +60,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
-    if (withMediator && SystemInfoRt.isWindows && MEDIATOR_KEY.get(commandLine) == null) {
+    if (withMediator && SystemInfo.isWindows && MEDIATOR_KEY.get(commandLine) == null) {
       boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine, showConsole);
       MEDIATOR_KEY.set(commandLine, mediatorInjected);
     }
@@ -89,10 +88,10 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    */
   private boolean canKillProcessSoftly() {
     if (processCanBeKilledByOS(myProcess)) {
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         return myMediatedProcess || myShouldKillProcessSoftlyWithWinP;
       }
-      else if (SystemInfoRt.isUnix) {
+      else if (SystemInfo.isUnix) {
         // 'kill -SIGINT <pid>' will be executed
         return true;
       }
@@ -146,7 +145,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (myMediatedProcess) {
         return RunnerMediator.destroyProcess(myProcess, true);
       }
@@ -167,7 +166,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
         }
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
     }
     return false;

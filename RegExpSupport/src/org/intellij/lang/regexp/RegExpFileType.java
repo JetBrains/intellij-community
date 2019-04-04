@@ -27,13 +27,17 @@ import javax.swing.*;
 public class RegExpFileType extends LanguageFileType {
     public static final RegExpFileType INSTANCE = new RegExpFileType();
 
+    private final Icon myIcon;
+
     private RegExpFileType() {
         super(RegExpLanguage.INSTANCE);
+        myIcon = AllIcons.FileTypes.Regexp;
     }
 
     public RegExpFileType(@NotNull Language language) {
         super(language);
         if (!(language.getBaseLanguage() instanceof RegExpLanguage)) throw new AssertionError();
+        myIcon =  null;
     }
 
     @Override
@@ -59,6 +63,6 @@ public class RegExpFileType extends LanguageFileType {
     @Override
     @Nullable
     public Icon getIcon() {
-        return getLanguage() == RegExpLanguage.INSTANCE ? AllIcons.FileTypes.Regexp : null;
+        return myIcon;
     }
 }

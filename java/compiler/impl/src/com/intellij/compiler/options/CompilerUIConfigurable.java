@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
@@ -22,10 +22,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,7 +129,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
     }
 
-    Map<Setting, Collection<JComponent>> controls = new HashMap<>();
+    Map<Setting, Collection<JComponent>> controls = ContainerUtilRt.newHashMap();
     controls.put(Setting.RESOURCE_PATTERNS, ContainerUtilRt.newArrayList(myResourcePatternsLabel, myResourcePatternsField, myPatternLegendLabel));
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.singleton(myCbClearOutputDirectory));
     controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.singleton(myAssertNotNullPanel));
@@ -331,6 +331,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myResourcePatternsField = new RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myResourcePatternsField.setDialogCaption("Resource patterns");
     myHeapSizeField = new JTextField();
-    myHeapSizeField.setPreferredSize(new Dimension(JBUIScale.scale(50), myHeapSizeField.getPreferredSize().height));
+    myHeapSizeField.setPreferredSize(new Dimension(JBUI.scale(50), myHeapSizeField.getPreferredSize().height));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -32,14 +31,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.commit.CommitMessageUi;
-import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -47,15 +44,13 @@ import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
-
-  private static final EditorCustomization BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION = editor -> editor.setBackgroundColor(null);
-
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
@@ -90,15 +85,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     }
 
     setBorder(createEmptyBorder());
-
-    fixEditorBackgroundOnColorSchemeChange(project);
-  }
-
-  private void fixEditorBackgroundOnColorSchemeChange(@NotNull Project project) {
-    project.getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
-      Editor editor = myEditorField.getEditor();
-      if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
-    });
   }
 
   @NotNull
@@ -145,7 +131,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @NotNull
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
-    Set<EditorCustomization> features = new HashSet<>();
+    Set<EditorCustomization> features = newHashSet();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
@@ -157,7 +143,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    features.add(BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION);
+    features.add(editor -> editor.setBackgroundColor(null)); // use background from set color scheme
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));
@@ -195,20 +181,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return myEditorField;
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getComment();
-  }
-
-  @Override
   public void setText(@Nullable String initialMessage) {
     myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
-  }
-
-  @Override
-  public void focus() {
-    requestFocusInMessage();
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("MayBeConstant")
 
 package com.intellij.codeInsight.daemon.impl
@@ -15,6 +15,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.keymap.KeymapManager
@@ -26,9 +27,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.*
+import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.Html
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.RoundRectangle2D
@@ -124,9 +127,9 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     buttons.border = JBUI.Borders.empty()
     buttons.isOpaque = false
 
-    val runFixAction = { event: InputEvent? ->
+    val runFixAction = Runnable {
       hint.hide()
-      tooltipAction.execute(editor, event)
+      tooltipAction.execute(editor)
     }
 
     val shortcutRunActionText = KeymapUtil.getShortcutsText(runActionCustomShortcutSet.shortcuts)
@@ -139,7 +142,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(5, 8, 5, 4))
     buttons.add(createKeymapHint(shortcutRunActionText), gridBag.next().insets(0, 4, 0, 12))
 
-    val showAllFixes = { _: InputEvent? ->
+    val showAllFixes = Runnable {
       hint.hide()
       tooltipAction.showAllActions(editor)
     }
@@ -149,7 +152,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        runFixAction(e.inputEvent)
+        runFixAction.run()
       }
 
       init {
@@ -159,7 +162,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        showAllFixes(e.inputEvent)
+        showAllFixes.run()
       }
 
       init {
@@ -310,7 +313,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", e.inputEvent, this::class.java)
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", this::class.java)
       reloader.reload(state)
     }
 
@@ -324,7 +327,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 }
 
 
-fun createActionLabel(text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
+fun createActionLabel(text: String, action: Runnable, background: Color): HyperlinkLabel {
   val label = object : HyperlinkLabel(text, background) {
     override fun getTextOffset(): Int {
       return 0
@@ -333,7 +336,7 @@ fun createActionLabel(text: String, action: (InputEvent?) -> Unit, background: C
   label.border = JBUI.Borders.empty()
   label.addHyperlinkListener(object : HyperlinkAdapter() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
-      action(e.inputEvent)
+      action.run()
     }
   })
   val toolTipFont = getActionFont()
@@ -352,7 +355,7 @@ private fun getActionFont(): Font? {
   if (toolTipFont == null || SystemInfo.isWindows) return toolTipFont
 
   //if font was changed from default we dont have a good heuristic to customize it
-  if (JBFont.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
+  if (JBUI.Fonts.label() != toolTipFont || UISettings.instance.overrideLafFonts) return toolTipFont
 
   if (SystemInfo.isMac) {
     return toolTipFont.deriveFont(toolTipFont.size - 1f)

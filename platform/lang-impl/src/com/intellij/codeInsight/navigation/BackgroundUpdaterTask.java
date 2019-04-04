@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.*;
 
 public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
@@ -110,8 +112,9 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
 
     if (myCanceled) return false;
 
-    if (myPopup.isDisposed()) return false;
-    ModalityState modalityState = ModalityState.stateForComponent(myPopup.getContent());
+    final JComponent content = myPopup.getContent();
+    if ((myPopup instanceof AbstractPopup && content == null) || myPopup.isDisposed()) return false;
+    ModalityState modalityState = content == null ? null : ModalityState.stateForComponent(content);
 
     synchronized (lock) {
       if (myData.contains(element)) return true;
@@ -136,7 +139,8 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
     }
 
     if (myCanceled) return false;
-    if (myPopup.isDisposed()) return false;
+    final JComponent content = myPopup.getContent();
+    if (content == null || myPopup.isDisposed()) return false;
 
     synchronized (lock) {
       if (!myData.add(element)) return true;
@@ -145,7 +149,7 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
     myAlarm.addRequest(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    }, 200, ModalityState.stateForComponent(content));
     return true;
   }
 

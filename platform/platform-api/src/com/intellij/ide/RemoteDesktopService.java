@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 
 public abstract class RemoteDesktopService {
   private static volatile RemoteDesktopService ourInstance;
@@ -17,7 +17,7 @@ public abstract class RemoteDesktopService {
   }
 
   public static boolean isRemoteSession() {
-    if (!SystemInfoRt.isWindows) return false;
+    if (!SystemInfo.isWindows) return false;
     if (ApplicationManager.getApplication() == null) return false;
     RemoteDesktopService instance = getInstance();
     return instance != null && instance.isRemoteDesktopConnected();

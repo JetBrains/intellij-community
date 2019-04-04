@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @NotNull
   private final Map<QualifiedName, QualifiedName> mySuperClasses;
+  private final List<String> mySubscriptedSuperClassesText;
 
   @Nullable
   private final QualifiedName myMetaClass;
@@ -40,9 +42,31 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @Nullable
   private final PyCustomClassStub myCustomStub;
 
+  /**
+   * @deprecated Use {@link PyClassStubImpl#PyClassStubImpl(String, StubElement, Map, List, QualifiedName, List, String, IStubElementType, PyCustomClassStub)} instead.
+   * This constructor will be removed in 2019.2.
+   */
+  @Deprecated
   public PyClassStubImpl(@Nullable String name,
                          @Nullable StubElement parentStub,
                          @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @NotNull List<String> subscriptedSuperClassesText,
+                         @Nullable QualifiedName metaClass,
+                         @Nullable List<String> slots,
+                         @Nullable String docString,
+                         @NotNull IStubElementType stubElementType) {
+    this(name, parentStub, superClasses, subscriptedSuperClassesText, Collections.emptyList(), metaClass, slots, docString, stubElementType, null);
+  }
+
+  /**
+   * @deprecated Use {@link PyClassStubImpl#PyClassStubImpl(String, StubElement, Map, List, QualifiedName, List, String, IStubElementType, PyCustomClassStub)} instead.
+   * This constructor will be removed in 2019.2.
+   */
+  @Deprecated
+  public PyClassStubImpl(@Nullable String name,
+                         @Nullable StubElement parentStub,
+                         @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @NotNull List<String> subscriptedSuperClassesText,
                          @NotNull List<String> superClassesText,
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
@@ -52,11 +76,24 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
+    mySubscriptedSuperClassesText = subscriptedSuperClassesText;
     mySuperClassesText = superClassesText;
     myMetaClass = metaClass;
     mySlots = slots;
     myDocString = docString;
     myCustomStub = customStub;
+  }
+
+  public PyClassStubImpl(@Nullable String name,
+                         @Nullable StubElement parentStub,
+                         @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @NotNull List<String> superClassesText,
+                         @Nullable QualifiedName metaClass,
+                         @Nullable List<String> slots,
+                         @Nullable String docString,
+                         @NotNull IStubElementType stubElementType,
+                         @Nullable PyCustomClassStub customStub) {
+    this(name, parentStub, superClasses, Collections.emptyList(), superClassesText, metaClass, slots, docString, stubElementType, customStub);
   }
 
   @Override
@@ -69,6 +106,12 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @NotNull
   public Map<QualifiedName, QualifiedName> getSuperClasses() {
     return mySuperClasses;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getSubscriptedSuperClasses() {
+    return mySubscriptedSuperClassesText;
   }
 
   @Nullable

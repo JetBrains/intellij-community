@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ConfigurationUtil;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
@@ -33,14 +35,13 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestPackage extends TestObject {
-  protected static final Function<Location<?>, String> CLASS_NAME_FUNCTION = location -> {
-    if (location instanceof MethodLocation) {
-      PsiClass containingClass = ((MethodLocation)location).getContainingClass();
+  protected static final Function<PsiMember, String> CLASS_NAME_FUNCTION = member -> {
+    if (member instanceof PsiMethod) {
+      PsiClass containingClass = member.getContainingClass();
       if (containingClass == null) return null;
-      return ClassUtil.getJVMClassName(containingClass) + "," + ((MethodLocation)location).getPsiElement().getName();
+      return ClassUtil.getJVMClassName(containingClass) + "," + member.getName();
     }
-    PsiElement psiElement = location.getPsiElement();
-    return psiElement instanceof PsiClass ? ClassUtil.getJVMClassName((PsiClass)psiElement) : null;
+    return member instanceof PsiClass ? ClassUtil.getJVMClassName((PsiClass)member) : null;
   };
 
   public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -59,7 +60,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final Set<Location<?>> myClasses = new LinkedHashSet<>();
+      private final Set<PsiMember> myClasses = new LinkedHashSet<>();
 
       @Override
       protected void search() {
@@ -97,25 +98,23 @@ public class TestPackage extends TestObject {
     };
   }
 
-  protected boolean filterOutputByDirectoryForJunit5(final Set<Location<?>> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(final Set<PsiMember> classNames) {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? packageName.isEmpty() ? ".*" : packageName + "\\..*" : "";
   }
 
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException { }
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException { }
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException {
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
       collectClassesRecursively(classFilter, acceptClassCondition, classes);
     }
     else {
-      LinkedHashSet<PsiClass> psiClasses = new LinkedHashSet<>();
-      ConfigurationUtil.findAllTestClasses(classFilter, module, psiClasses);
-      psiClasses.stream().map(PsiLocation::fromPsiElement).forEach(classes::add);
+      ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
     }
   }
 
@@ -131,7 +130,7 @@ public class TestPackage extends TestObject {
 
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<Location<?>> classes) throws CantRunException {
+                                           Set<? super PsiClass> classes) throws CantRunException {
     PsiPackage aPackage = getPackage(getConfiguration().getPersistentData());
     if (aPackage != null) {
       GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
@@ -142,7 +141,7 @@ public class TestPackage extends TestObject {
   private static void collectClassesRecursively(PsiPackage aPackage,
                                                 GlobalSearchScope scope,
                                                 Condition<? super PsiClass> acceptAsTest,
-                                                Set<Location<?>> classes) {
+                                                Set<? super PsiClass> classes) {
     PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
     for (PsiPackage psiPackage : psiPackages) {
       collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
@@ -153,14 +152,12 @@ public class TestPackage extends TestObject {
     }
   }
 
-  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<Location<?>> classes) {
+  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<? super PsiClass> classes) {
     if (Registry.is("junit4.accept.inner.classes", true)) {
-      classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses)
-        .withRoot(aClass).filter(acceptAsTest).map(psiClass -> PsiLocation.fromPsiElement(psiClass))
-        .toList()));
+      classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));
     }
     else if (acceptAsTest.value(aClass)) {
-      classes.add(PsiLocation.fromPsiElement(aClass));
+      classes.add(aClass);
     }
   }
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -86,7 +87,7 @@ public class CodeInsightTestUtil {
   @TestOnly
   public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
     String extension = FileUtilRt.getExtension(file);
-    file = FileUtilRt.getNameWithoutExtension(file);
+    file = FileUtil.getNameWithoutExtension(file);
     if (extension.isEmpty()) extension = "xml";
     doIntentionTest(fixture, actionText, file + "." + extension, file + "_after." + extension);
   }
@@ -117,7 +118,7 @@ public class CodeInsightTestUtil {
       }
     });
   }
-
+  
   public static void doWordSelectionTestOnDirectory(@NotNull final CodeInsightTestFixture fixture,
                                                     @TestDataFile @NotNull final String directoryName,
                                                     @NotNull final String filesExtension) {
@@ -220,7 +221,7 @@ public class CodeInsightTestUtil {
 
   public static void doActionTest(AnAction action, String file, CodeInsightTestFixture fixture) {
     String extension = FileUtilRt.getExtension(file);
-    String name = FileUtilRt.getNameWithoutExtension(file);
+    String name = FileUtil.getNameWithoutExtension(file);
     fixture.configureByFile(file);
     fixture.testAction(action);
     fixture.checkResultByFile(name + "_after." + extension);

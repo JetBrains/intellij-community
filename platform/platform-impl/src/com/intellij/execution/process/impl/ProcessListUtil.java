@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.execution.process.impl;
 
@@ -9,17 +23,17 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,7 +53,7 @@ public class ProcessListUtil {
   @NotNull
   private static List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       result = getProcessListUsingWinNativeHelper();
       if (result != null) return result;
       LOG.info("Cannot get process list via " + WIN_PROCESS_LIST_HELPER_FILENAME + ", fallback to wmic");
@@ -53,8 +67,8 @@ public class ProcessListUtil {
 
       LOG.error("Cannot get process list via wmic and tasklist");
     }
-    else if (SystemInfoRt.isUnix) {
-      if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isUnix) {
+      if (SystemInfo.isMac) {
         result = getProcessListOnMac();
       }
       else {
@@ -65,7 +79,7 @@ public class ProcessListUtil {
       LOG.error("Cannot get process list");
     }
     else {
-      LOG.error("Cannot get process list, unexpected platform: " + SystemInfoRt.OS_NAME);
+      LOG.error("Cannot get process list, unexpected platform: " + SystemInfo.OS_NAME);
     }
     return Collections.emptyList();
   }
@@ -111,7 +125,7 @@ public class ProcessListUtil {
       List<String> cmdline;
       try (FileInputStream stream = new FileInputStream(new File(each, "cmdline"))) {
         //noinspection SSBasedInspection - no better candidate for system encoding anyways
-        String cmdlineString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
+        String cmdlineString = new String(FileUtil.loadBytes(stream));
         cmdline = StringUtil.split(cmdlineString, "\0");
       }
       catch (IOException e) {
@@ -206,7 +220,7 @@ public class ProcessListUtil {
 
   @Nullable
   private static List<MacProcessInfo> doParseMacOutput(String output) {
-    List<MacProcessInfo> result = new ArrayList<>();
+    List<MacProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -320,7 +334,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseWMICOutput(@NotNull String output) {
-    List<ProcessInfo> result = new ArrayList<>();
+    List<ProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -369,7 +383,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
-    List<ProcessInfo> result = new ArrayList<>();
+    List<ProcessInfo> result = ContainerUtil.newArrayList();
 
     CSVReader reader = new CSVReader(new StringReader(output));
     try {

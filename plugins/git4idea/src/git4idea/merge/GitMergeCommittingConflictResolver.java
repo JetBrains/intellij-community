@@ -37,7 +37,7 @@ public class GitMergeCommittingConflictResolver extends GitConflictResolver {
                                             @NotNull Collection<VirtualFile> mergingRoots,
                                             @NotNull Params params,
                                             boolean refreshAfterCommit) {
-    super(project, mergingRoots, params);
+    super(project, git, mergingRoots, params);
     myMerger = merger;
     myMergingRoots = mergingRoots;
     myRefreshAfterCommit = refreshAfterCommit;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -64,21 +64,22 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.SystemProperties.getUserHome;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
 
 public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME =
-    SystemInfoRt.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
+    SystemInfo.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
 
   public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
-    () -> SystemInfoRt.isWindows
+    () -> SystemInfo.isWindows
           ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
           : Paths.get(getUserHome(), ".subversion"));
   public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
-    () -> SystemInfoRt.isWindows
+    () -> SystemInfo.isWindows
           ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 
@@ -137,7 +138,7 @@ public class SvnUtil {
                                                       @NotNull VirtualFile file,
                                                       @NotNull SvnWCRootCrawler callback,
                                                       @Nullable ProgressIndicator progress) {
-    Set<VirtualFile> result = new HashSet<>();
+    Set<VirtualFile> result = newHashSet();
     // TODO: Actually it is not OK to call getParent() if file is invalid.
     VirtualFile parent = !file.isDirectory() || !file.isValid() ? file.getParent() : file;
 
@@ -229,7 +230,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
-      String[] failedFiles = ArrayUtilRt.toStringArray(failedLocks);
+      String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
       List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
@@ -292,7 +293,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
-      String[] failedFiles = ArrayUtilRt.toStringArray(failedUnlocks);
+      String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
       List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {

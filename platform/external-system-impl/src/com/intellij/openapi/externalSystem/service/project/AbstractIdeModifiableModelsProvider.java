@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.Facet;
@@ -36,7 +50,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -123,7 +137,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public Module newModule(@NotNull final String filePath, final String moduleTypeId) {
     Module module = getModifiableModuleModel().newModule(filePath, moduleTypeId);
-    final String moduleName = FileUtilRt.getNameWithoutExtension(new File(filePath).getName());
+    final String moduleName = FileUtil.getNameWithoutExtension(new File(filePath));
     if (!module.getName().equals(moduleName)) {
       try {
         getModifiableModuleModel().renameModule(module, moduleName);
@@ -307,7 +321,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       @NotNull
       @Override
       public Collection<Module> getNodes() {
-        return Arrays.asList(getModules());
+        return ContainerUtil.list(getModules());
       }
 
       @NotNull
@@ -572,7 +586,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     removedModules.removeAll(newModules);
 
 
-    Map<String, String> toSubstitute = new HashMap<>();
+    Map<String, String> toSubstitute = ContainerUtil.newHashMap();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager: ExternalSystemApiUtil.getAllManagers()) {
       final Collection<ExternalProjectInfo> projectsData =
         ProjectDataManager.getInstance().getExternalProjectsData(myProject, manager.getSystemId());

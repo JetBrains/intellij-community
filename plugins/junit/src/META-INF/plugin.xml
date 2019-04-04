@@ -28,7 +28,6 @@
         </ul>
       ]]>
    </description>
-  <depends>com.intellij.modules.java</depends>
   <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer implementation="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer"/>

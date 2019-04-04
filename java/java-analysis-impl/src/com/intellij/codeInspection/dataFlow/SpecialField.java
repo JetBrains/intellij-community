@@ -217,9 +217,6 @@ public enum SpecialField implements VariableDescriptor {
   abstract boolean isMyAccessor(PsiMember accessor);
 
   public String getPresentationText(@NotNull DfaValue value, @Nullable PsiType type) {
-    if (value.getFactory() != null && getDefaultValue(value.getFactory(), false) == value) {
-      return "";
-    }
     return value.toString();
   }
 
@@ -357,10 +354,8 @@ public enum SpecialField implements VariableDescriptor {
    * @param type a qualifier type
    * @return a special field; null if no special field is available for given type
    */
-  @Contract("null -> null")
   @Nullable
   public static SpecialField fromQualifierType(PsiType type) {
-    if (type == null) return null;
     for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;

@@ -18,15 +18,15 @@ import java.util.Set;
 
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
+  private PsiType myT;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {
-    super(type);
     myExpression = expression;
+    myT = type;
   }
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    PsiType myT = getCurrentType();
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
 
       PsiType exprType = myExpression.getType();
@@ -64,7 +64,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     if (myExpression instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)myExpression).getExpression();
-      if (expression != null && !InferenceSession.ignoreLambdaConstraintTree(expression)) {
+      if (expression != null) {
         constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
         return true;
       }
@@ -72,23 +72,19 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
     if (myExpression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)myExpression).getThenExpression();
-      if (thenExpression != null && !InferenceSession.ignoreLambdaConstraintTree(thenExpression)) {
+      if (thenExpression != null) {
         constraints.add(new ExpressionCompatibilityConstraint(thenExpression, myT));
       }
 
       final PsiExpression elseExpression = ((PsiConditionalExpression)myExpression).getElseExpression();
-      if (elseExpression != null && !InferenceSession.ignoreLambdaConstraintTree(elseExpression)) {
+      if (elseExpression != null) {
         constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT));
       }
       return true;
     }
 
     if (myExpression instanceof PsiSwitchExpression) {
-      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> {
-        if (!InferenceSession.ignoreLambdaConstraintTree(expression)) {
-          constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
-        }
-      });
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
       return true;
     }
 
@@ -103,11 +99,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         for (Pair<InferenceVariable[], PsiClassType> pair : callSession.myIncorporationPhase.getCaptures()) {
           session.myIncorporationPhase.addCapture(pair.first, pair.second);
         }
-        final MethodCandidateInfo currentMethod = session.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
-        final JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)myExpression);
-        if (resolveResult instanceof MethodCandidateInfo && callSession.isErased()) {
-          ((MethodCandidateInfo)resolveResult).setErased();
-        }
+        callSession.setUncheckedInContext();
       }
       return true;
     }
@@ -135,11 +127,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
-      final MethodCandidateInfo currentMethod = session.getCurrentMethod(argumentList);
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
       PsiType returnType = null;
       PsiTypeParameter[] typeParams = null;
-      final JavaResolveResult resolveResult = currentMethod != null ? null : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)expression);
-      PsiMethod method = currentMethod != null ? currentMethod.getElement() :
+      final JavaResolveResult resolveResult = candidateProperties != null ? null : PsiDiamondType
+        .getDiamondsAwareResolveResult((PsiCall)expression);
+      PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() :
                          resolveResult instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resolveResult).getElement() :
                          null;
 
@@ -162,13 +155,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
 
       if (typeParams != null) {
-        PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(currentMethod, resolveResult, method);
-        InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression, session.getInferencePolicy());
+        PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
+        final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
         callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
           final PsiParameter[] parameters = method.getParameterList().getParameters();
-          callSession.initExpressionConstraints(parameters, args, method, InferenceSession.chooseVarargsMode(currentMethod, resolveResult));
+          callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
+            .chooseVarargsMode(candidateProperties, resolveResult));
         }
         if (callSession.repeatInferencePhases()) {
 
@@ -225,6 +219,16 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   @Override
   public PsiExpression getExpression() {
     return myExpression;
+  }
+
+  @Override
+  public PsiType getT() {
+    return myT;
+  }
+
+  @Override
+  protected void setT(PsiType t) {
+    myT = t;
   }
 
   @Override

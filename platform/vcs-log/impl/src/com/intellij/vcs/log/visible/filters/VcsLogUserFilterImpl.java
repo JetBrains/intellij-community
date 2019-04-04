@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,9 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class VcsLogUserFilterImpl implements VcsLogUserFilter {
@@ -48,7 +50,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @Override
   @NotNull
   public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
-    Set<VcsUser> result = new HashSet<>();
+    Set<VcsUser> result = ContainerUtil.newHashSet();
     for (String user : myUsers) {
       result.addAll(getUsers(root, user));
     }
@@ -57,7 +59,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
   @NotNull
   private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
-    Set<VcsUser> users = new HashSet<>();
+    Set<VcsUser> users = ContainerUtil.newHashSet();
     if (ME.equals(name)) {
       VcsUser vcsUser = myData.get(root);
       if (vcsUser != null) {
@@ -103,7 +105,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   }
 
   private Set<VcsUser> getUsers(@NotNull String name) {
-    Set<VcsUser> result = new HashSet<>();
+    Set<VcsUser> result = ContainerUtil.newHashSet();
 
     result.addAll(myAllUsersByNames.get(VcsUserUtil.getNameInStandardForm(name)));
     result.addAll(myAllUsersByEmails.get(VcsUserUtil.getNameInStandardForm(name)));
@@ -120,21 +122,5 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   @Override
   public String toString() {
     return "author: " + StringUtil.join(myUsers, ", ");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    VcsLogUserFilterImpl filter = (VcsLogUserFilterImpl)o;
-    return myUsers.equals(filter.myUsers) &&
-           myData.equals(filter.myData) &&
-           myAllUsersByNames.equals(filter.myAllUsersByNames) &&
-           myAllUsersByEmails.equals(filter.myAllUsersByEmails);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myUsers, myData, myAllUsersByNames, myAllUsersByEmails);
   }
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
@@ -120,7 +120,7 @@ public class ToolkitBugsProcessor {
 
     @Override
     public boolean isActual() {
-      return SystemInfoRt.isMac;
+      return SystemInfo.isMac;
     }
 
     @Override
@@ -147,7 +147,7 @@ public class ToolkitBugsProcessor {
 
     @Override
     public boolean isActual() {
-      return SystemInfoRt.isMac;
+      return SystemInfo.isMac;
     }
 
     @Override

@@ -96,15 +96,11 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
     addArtifactsData(project, defaultExternalProject)
 
-    final Map<String, DefaultExternalProject> childProjects = new HashMap<String, DefaultExternalProject>(project.getChildProjects().size())
+    final Map<String, ExternalProject> childProjects = new HashMap<String, ExternalProject>(project.getChildProjects().size())
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
       final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), cache, tasksFactory, sourceSetFinder)
-      if (externalProjectChild instanceof DefaultExternalProject) {
-        childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
-      }
-      else if (externalProjectChild instanceof ExternalProject) {
-        // convert from proxy to our model class
-        childProjects.put(projectEntry.getKey(), new DefaultExternalProject((ExternalProject)externalProjectChild))
+      if (externalProjectChild instanceof ExternalProject) {
+        childProjects.put(projectEntry.getKey(), (ExternalProject)externalProjectChild)
       }
     }
     defaultExternalProject.setChildProjects(childProjects)
@@ -150,7 +146,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, DefaultExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
+  static Map<String, ExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
     def result = [:] as Map<String, DefaultExternalTask>
 
     tasksFactory.getTasks(project).each { Task task ->
@@ -255,7 +251,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalSourceSet.artifacts = [jarTask.archivePath]
       }
 
-      def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
+      def sources = [:] as Map<ExternalSystemSourceType, ExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs

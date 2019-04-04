@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
@@ -11,14 +12,12 @@ import org.jetbrains.annotations.NotNull;
 public class ServiceViewToolWindowFactory implements ToolWindowFactory, Condition<Project>, DumbAware {
   @Override
   public boolean value(Project project) {
-    return ServiceModel.getContributors().length > 0;
+    return Registry.is("ide.service.view");
   }
 
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
-    // Init manager to check availability on background thread.
-    ServiceViewManager.getInstance(project);
-    return false;
+    return Registry.is("ide.service.view") && ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).hasServices();
   }
 
   @Override

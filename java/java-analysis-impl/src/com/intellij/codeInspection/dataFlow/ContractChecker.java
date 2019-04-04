@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -17,7 +17,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author peter
@@ -27,9 +30,9 @@ class ContractChecker {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
-    private final Set<PsiElement> myViolations = new HashSet<>();
-    private final Set<PsiElement> myNonViolations = new HashSet<>();
-    private final Set<PsiElement> myFailures = new HashSet<>();
+    private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
+    private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
+    private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
     private boolean myMayReturnNormally = false;
 
     ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
@@ -87,7 +90,7 @@ class ContractChecker {
     }
 
     private Map<PsiElement, String> getErrors() {
-      HashMap<PsiElement, String> errors = new HashMap<>();
+      HashMap<PsiElement, String> errors = ContainerUtil.newHashMap();
       for (PsiElement element : myViolations) {
         if (!myNonViolations.contains(element)) {
           errors.put(element, "Contract clause '" + myContract + "' is violated");

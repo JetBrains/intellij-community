@@ -27,6 +27,7 @@ import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.HashMap;
@@ -63,6 +64,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+    GradleActionsUsagesCollector.trigger(project, this, e);
     RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
     runAnythingManager.show(HELP_COMMAND + " ", false, e);
   }

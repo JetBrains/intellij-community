@@ -97,6 +97,9 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                                      instantiatedClass.getQualifiedName());
       myHolder.registerProblem(elementToHighlight, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
     }
+    else {
+      checkTargetDeprecated(sourceNode, instantiatedClass);
+    }
   }
 
   @Override

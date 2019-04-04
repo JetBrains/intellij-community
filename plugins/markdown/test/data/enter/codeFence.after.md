@@ -1,4 +1,0 @@
-```html
-abc
-<caret>
-```

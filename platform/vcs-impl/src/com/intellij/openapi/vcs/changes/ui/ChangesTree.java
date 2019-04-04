@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -24,10 +23,11 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.ui.*;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -56,6 +56,8 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
+import static com.intellij.util.ArrayUtil.toStringArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
@@ -63,8 +65,7 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
-  private boolean myShowCheckboxes;
-  @Nullable private ClickListener myCheckBoxClickHandler;
+  private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
@@ -105,9 +106,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
-    new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
-    showCheckboxesChanged();
-
+    if (myShowCheckboxes) {
+      new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+    }
     installEnterKeyHandler();
     installDoubleClickHandler();
     installTreeLinkHandler(nodeRenderer);
@@ -118,36 +119,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
-  }
-
-  /**
-   * There is special logic for {@link DnDAware} components in
-   * {@link IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
-   * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
-   *
-   * So we add "checkbox mouse clicks" handling as a listener.
-   */
-  private ClickListener installCheckBoxClickHandler() {
-    ClickListener handler = new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (myShowCheckboxes && isEnabled()) {
-          int row = getRowForLocation(event.getX(), event.getY());
-          if (row >= 0) {
-            final Rectangle baseRect = getRowBounds(row);
-            baseRect.setSize(myCheckboxWidth, baseRect.height);
-            if (baseRect.contains(event.getPoint())) {
-              setSelectionRow(row);
-              toggleChanges(getSelectedUserObjects());
-            }
-          }
-        }
-        return false;
-      }
-    };
-    handler.installOn(this);
-
-    return handler;
   }
 
   protected void installEnterKeyHandler() {
@@ -236,8 +207,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
 
     if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
-      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? ArrayUtilRt.EMPTY_STRING_ARRAY
-                                                                                     : DEFAULT_GROUPING_KEYS);
+      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? EMPTY_STRING_ARRAY : DEFAULT_GROUPING_KEYS);
       properties.unsetValue(FLATTEN_OPTION_KEY);
     }
   }
@@ -296,11 +266,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return getGroupingSupport().getGrouping();
   }
 
-  @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
   public boolean isShowFlatten() {
     return !myGroupingSupport.isDirectory();
   }
@@ -309,28 +274,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myShowCheckboxes;
   }
 
-  public void setShowCheckboxes(boolean value) {
-    boolean oldValue = myShowCheckboxes;
-    myShowCheckboxes = value;
-
-    if (oldValue != value) {
-      showCheckboxesChanged();
-    }
-  }
-
-  private void showCheckboxesChanged() {
-    if (isShowCheckboxes()) {
-      myCheckBoxClickHandler = installCheckBoxClickHandler();
-    }
-    else if (myCheckBoxClickHandler != null) {
-      myCheckBoxClickHandler.uninstall(this);
-      myCheckBoxClickHandler = null;
-    }
-    repaint();
-  }
-
   private void changeGrouping() {
-    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, ArrayUtilRt.toStringArray(getGroupingSupport().getGroupingKeys()));
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(getGroupingSupport().getGroupingKeys()));
 
     List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();
@@ -382,12 +327,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected void resetTreeState() {
-    // expanding lots of nodes is a slow operation (and result is not very useful)
-    if (hasAtLeastNodes(this, 30000)) {
-      TreeUtil.collapseAll(this, 1);
-      return;
-    }
-
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
@@ -419,10 +358,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       setSelectionRow(selectedTreeRow);
     }
     TreeUtil.showRowCentered(this, selectedTreeRow, false);
-  }
-
-  private static boolean hasAtLeastNodes(@NotNull Tree tree, int nodeNumber) {
-    return TreeUtil.treeTraverser(tree).traverse().take(nodeNumber).size() >= nodeNumber;
   }
 
   public void selectFile(@Nullable VirtualFile toSelect) {
@@ -510,19 +445,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     repaint();
   }
 
-  public void clearInclusion() {
-    myIncludedChanges.clear();
-    notifyInclusionListener();
-    repaint();
-  }
-
-  public void retainInclusion(@NotNull Collection<?> changes) {
-    if (myIncludedChanges.retainAll(changes)) {
-      notifyInclusionListener();
-      repaint();
-    }
-  }
-
   public void includeChange(final Object change) {
     includeChanges(Collections.singleton(change));
   }
@@ -558,10 +480,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     else {
       excludeChanges(changes);
     }
-  }
-
-  public boolean isInclusionEmpty() {
-    return myIncludedChanges.isEmpty();
   }
 
   public boolean isIncluded(final Object change) {
@@ -640,7 +558,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
 
-      add(myCheckBox, BorderLayout.WEST);
+      if (myShowCheckboxes) {
+        add(myCheckBox, BorderLayout.WEST);
+      }
+
       add(myTextRenderer, BorderLayout.CENTER);
       setOpaque(false);
     }
@@ -655,24 +576,25 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                   boolean hasFocus) {
 
       setBackground(null);
+      myCheckBox.setBackground(null);
+      myCheckBox.setOpaque(false);
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);
       myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-      myCheckBox.setBackground(null);
-      myCheckBox.setOpaque(false);
-      myCheckBox.setVisible(myShowCheckboxes);
-      if (myCheckBox.isVisible()) {
+      if (myShowCheckboxes) {
         State state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setState(state);
 
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
-      }
-      revalidate();
+        revalidate();
 
-      return this;
+        return this;
+      }
+      else {
+        return myTextRenderer;
+      }
     }
 
     @Override
@@ -731,11 +653,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(isShowCheckboxes());
-    }
-
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getSelectedUserObjects();
@@ -805,6 +722,24 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
     return ChangesUtil.findValidParentAccurately(filePath);
+  }
+
+  @Override
+  protected void processMouseEvent(MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+      if (myShowCheckboxes && isEnabled() && !e.isPopupTrigger()) {
+        int row = getRowForLocation(e.getX(), e.getY());
+        if (row >= 0) {
+          final Rectangle baseRect = getRowBounds(row);
+          baseRect.setSize(myCheckboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) {
+            setSelectionRow(row);
+            toggleChanges(getSelectedUserObjects());
+          }
+        }
+      }
+    }
+    super.processMouseEvent(e);
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
@@ -129,7 +128,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (getContainingClass() != null) {
       return PlatformIcons.METHOD_ICON;
     }
-    return AllIcons.Nodes.Function;
+    return PythonIcons.Python.Function;
   }
 
   @Override

@@ -5,20 +5,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+//TODO remove field myFileId and inline this class when we will advance StubUpdatingIndex version
 class IndexedStubs {
-  @NotNull
-  private final byte[] myStubTreeHash;
+  private final int myFileId;
   @NotNull
   private final Map<StubIndexKey, Map<Object, StubIdList>> myStubIndicesValueMap;
 
-  IndexedStubs(@NotNull byte[] stubTreeHash, @NotNull Map<StubIndexKey, Map<Object, StubIdList>> map) {
-    myStubTreeHash = stubTreeHash;
+  IndexedStubs(int id,
+               @NotNull
+                 Map<StubIndexKey, Map<Object, StubIdList>> map) {
+    myFileId = id;
     myStubIndicesValueMap = map;
   }
 
-  @NotNull
-  byte[] getStubTreeHash() {
-    return myStubTreeHash;
+  int getFileId() {
+    return myFileId;
   }
 
   @NotNull

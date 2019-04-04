@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.OpenFileAction;
-import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.List;
+import java.util.EnumSet;
 
 public class CreateEditorConfigAction extends AnAction implements DumbAware {
   private final static Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
@@ -52,11 +51,7 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
           final VirtualFile dirVFile = dir.getVirtualFile();
           File outputFile = getOutputFile(dirVFile);
           if (!outputFile.exists()) {
-            if (export(outputFile, project, settings,
-                       dialog.isRoot(),
-                       dialog.isCommentProperties(),
-                       dialog.getLanguages(),
-                       dialog.getPropertyKinds())) {
+            if (export(outputFile, project, settings, dialog.getPropertyKinds())) {
               VirtualFile outputVFile = VfsUtil.findFileByIoFile(outputFile, true);
               if (outputVFile != null) {
                 OpenFileAction.openFile(outputVFile, project);
@@ -112,16 +107,11 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
   private static boolean export(@NotNull File outputFile,
                                 @NotNull Project project,
                                 @NotNull CodeStyleSettings settings,
-                                boolean isRoot,
-                                boolean commentOutProperties,
-                                @NotNull List<Language> languages,
                                 @NotNull EditorConfigPropertyKind... propertyKinds) {
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       try (
         EditorConfigSettingsWriter settingsWriter =
-          new EditorConfigSettingsWriter(project, outputStream, settings, isRoot, commentOutProperties)
-            .forLanguages(languages)
-            .forPropertyKinds(propertyKinds)) {
+          new EditorConfigSettingsWriter(project, outputStream, settings).forPropertyKinds(propertyKinds)) {
         settingsWriter.writeSettings();
         return true;
       }

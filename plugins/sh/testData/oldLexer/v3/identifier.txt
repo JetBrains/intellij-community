@@ -1,7 +1,0 @@
-word ('a')
-\n ('\n')
-word ('ab')
-\n ('\n')
-word ('abc123')
-\n ('\n')
-word ('ABC_123')

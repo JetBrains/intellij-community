@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.PathUtil;
@@ -17,8 +17,8 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CanonicalPathMapTest {
-  private static final String DIR_ROOT = SystemInfoRt.isWindows ? "c:\\parent\\root" : "/parent/root";
-  private static final String FILE_ROOT = SystemInfoRt.isWindows ? "c:\\parent\\root.txt" : "/parent/root.txt";
+  private static final String DIR_ROOT = SystemInfo.isWindows ? "c:\\parent\\root" : "/parent/root";
+  private static final String FILE_ROOT = SystemInfo.isWindows ? "c:\\parent\\root.txt" : "/parent/root.txt";
   private static final String CHILD_DIR = File.separator + "child_dir";
   private static final String CHILD_FILE = File.separator + "child.txt";
 

@@ -5,7 +5,7 @@ package com.intellij.uiDesigner.snapShooter;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.accessibility.AccessibleContext;
@@ -116,7 +116,7 @@ public class SnapShooterDaemon implements Runnable {
                                                                getChildText(child));
       result.add(rc.toProtocolString());
     }
-    return ArrayUtilRt.toStringArray(result);
+    return ArrayUtil.toStringArray(result);
   }
 
   private static String getLayoutManagerClass(final Component component) {

@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,13 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  private static boolean packageSearchIgnore(){
-    return true;
-  }
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -60,7 +55,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariantsInclude(myProjectPom, "junit:junit:3.8.1", "jmock:jmock:1.0.0", "test:project:1");
+    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
   }
 
   public void testArtifactIdCompletion() {
@@ -75,7 +70,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "junit:junit:3.8.1");
+    assertCompletionVariants(myProjectPom, "junit");
   }
 
   public void testDoNotCompleteArtifactIdOnUnknownGroup() {
@@ -124,11 +119,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom); // should not throw
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testAddingLocalProjectsIntoCompletion() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -226,11 +217,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting(m);
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testChangingExistingProjects() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -308,7 +295,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariants(myProjectPom, "project-group:m1:1");
+    assertCompletionVariants(myProjectPom, "m1");
 
     createModulePom("m1", "");
     importProjectsWithErrors(myProjectPom, m);
@@ -346,7 +333,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariantsInclude(myProjectPom, "project-group:m1:1");
+    assertCompletionVariantsInclude(myProjectPom, "m1");
 
     myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> m.delete(null));
@@ -1076,7 +1063,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jmock:jmock:1.0.0");
+    assertCompletionVariants(myProjectPom, "jmock");
   }
 
   public void testDoNotHighlightUnknownExclusions() {

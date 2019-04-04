@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -23,16 +23,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 import javafx.application.Platform;
@@ -63,6 +62,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -118,14 +118,14 @@ public class TipUIUtil {
         ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
                                 ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
 
-        InputStream tipStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", tip.fileName);
-        if (tipStream == null) {
+        URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
+        if (url == null) {
           return getCantReadText(tip);
         }
-        text.append(ResourceUtil.loadText(tipStream));
+        text.append(ResourceUtil.loadText(url));
         updateImages(text, tipLoader, "", component);
-        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
-        cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
+        URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
+        cssText = cssResource != null ? new String(readBytes(cssResource), StandardCharsets.UTF_8) : "";
       }
 
       updateShortcuts(text);
@@ -223,13 +223,13 @@ public class TipUIUtil {
                 float k = 2f;
                 if (UIUtil.isJreHiDPI(component)) {
                   // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
-                  k = JBUIScale.sysScale(component);
+                  k = JBUI.sysScale(component);
                 }
                 w /= k;
                 h /= k;
               }
               // round the user scale for better quality
-              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
+              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUI.scale(1f));
               w = userScale * w;
               h = userScale * h;
               if (fallbackUpscale) {
@@ -342,7 +342,7 @@ public class TipUIUtil {
         }
       );
       URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      HTMLEditorKit kit = new JBHtmlEditorKit(false) {
+      HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support
         private ViewFactory createViewFactory() {
@@ -436,7 +436,7 @@ public class TipUIUtil {
 
                         @Override
                         public float getPreferredSpan(int axis) {
-                          return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null)) / JBUIScale.sysScale();
+                          return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null))/ JBUI.sysScale();
                         }
                       };
                   }

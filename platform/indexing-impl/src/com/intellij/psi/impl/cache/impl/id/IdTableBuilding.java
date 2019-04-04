@@ -69,12 +69,7 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof CustomSyntaxTableFileType) {
-      return new ScanningIdIndexer() {
-        @Override
-        protected WordsScanner createScanner() {
-          return createCustomFileTypeScanner(((CustomSyntaxTableFileType)fileType).getSyntaxTable());
-        }
-      };
+      return createDefaultIndexer(createCustomFileTypeScanner(((CustomSyntaxTableFileType)fileType).getSyntaxTable()));
     }
 
     return null;

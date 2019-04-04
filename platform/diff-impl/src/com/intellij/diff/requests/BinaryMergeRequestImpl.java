@@ -19,9 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.BinaryMergeRequest;
-import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +47,16 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   @Nullable private final String myTitle;
   @NotNull private final List<String> myTitles;
 
+  @Nullable private final Consumer<? super MergeResult> myApplyCallback;
+
   public BinaryMergeRequestImpl(@Nullable Project project,
                                 @NotNull FileContent file,
                                 @NotNull byte[] originalContent,
                                 @NotNull List<DiffContent> contents,
                                 @NotNull List<byte[]> byteContents,
                                 @Nullable String title,
-                                @NotNull List<String> contentTitles) {
+                                @NotNull List<String> contentTitles,
+                                @Nullable Consumer<? super MergeResult> applyCallback) {
     assert byteContents.size() == 3;
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
@@ -67,6 +69,8 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
     myContents = contents;
     myTitle = title;
     myTitles = contentTitles;
+
+    myApplyCallback = applyCallback;
 
     onAssigned(true);
   }
@@ -107,7 +111,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
       final byte[] applyContent;
       switch (result) {
         case CANCEL:
-          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+          applyContent = myOriginalContent;
           break;
         case LEFT:
           applyContent = ThreeSide.LEFT.select(myByteContents);
@@ -136,7 +140,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
         });
       }
 
-      MergeCallback.getCallback(this).applyResult(result);
+      if (myApplyCallback != null) myApplyCallback.consume(result);
     }
     finally {
       onAssigned(false);

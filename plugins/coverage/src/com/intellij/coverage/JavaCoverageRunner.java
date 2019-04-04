@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -115,7 +115,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
   protected static File createTempFile() throws IOException {
     File tempFile = FileUtil.createTempFile("coverage", "args");
-    if (!SystemInfoRt.isWindows && tempFile.getAbsolutePath().contains(" ")) {
+    if (!SystemInfo.isWindows && tempFile.getAbsolutePath().contains(" ")) {
       tempFile = FileUtil.createTempFile(new File(PathManager.getSystemPath(), "coverage"), "coverage", "args", true);
       if (tempFile.getAbsolutePath().contains(" ")) {
         final String userDefined = System.getProperty(JAVA_COVERAGE_AGENT_AGENT_PATH);

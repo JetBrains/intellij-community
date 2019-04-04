@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +19,7 @@ import java.io.File;
  * @author Vladimir Kondratyev
  */
 public class RefCardAction extends AnAction implements DumbAware {
-  private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfoRt.isMac
-                                                                                      ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
+  private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -49,7 +48,7 @@ public class RefCardAction extends AnAction implements DumbAware {
 
   private static String getKeymapUrl() {
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    return SystemInfoRt.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
+    return SystemInfo.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
   }
 
   @NotNull

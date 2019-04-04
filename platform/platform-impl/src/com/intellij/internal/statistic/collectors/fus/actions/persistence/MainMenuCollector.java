@@ -28,7 +28,27 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class MainMenuCollector {
+@State(
+  name = "MainMenuCollector",
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
+    @Storage(value = "statistics.main_menu.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
+)
+public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
+
+  private final State myState = new State();
+
+  @Nullable
+  @Override
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(@NotNull State state) {
+  }
+
   public void record(@NotNull AnAction action) {
     try {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());

@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.filters.Filter;
@@ -8,7 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -47,7 +46,7 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null) {
-      if (SystemInfoRt.isWindows && path.matches("/[A-Z]:/.+")) {
+      if (SystemInfo.isWindows && path.matches("/[A-Z]:/.+")) {
         file = LocalFileSystem.getInstance().findFileByPath(path.substring(1));
       }
       if (file == null) return null;

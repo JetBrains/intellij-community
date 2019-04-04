@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result, PsiElement position) {
     PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement) || PsiTreeUtil.getParentOfType(parent, PsiImportStatementBase.class) != null) {
+    if (!(parent instanceof PsiJavaCodeReferenceElement) || parent.getParent() instanceof PsiImportStatementBase) {
       return;
     }
     PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();

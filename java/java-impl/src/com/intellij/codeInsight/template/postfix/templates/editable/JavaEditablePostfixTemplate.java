@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -20,7 +20,10 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class JavaEditablePostfixTemplate
   extends EditablePostfixTemplateWithMultipleExpressions<JavaPostfixTemplateExpressionCondition> {
@@ -81,7 +84,7 @@ public class JavaEditablePostfixTemplate
     }
     else {
       PsiFile file = context.getContainingFile();
-      expressions = new ArrayList<>(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
+      expressions = ContainerUtil.newArrayList(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
     }
 
 

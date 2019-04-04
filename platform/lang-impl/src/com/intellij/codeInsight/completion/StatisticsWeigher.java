@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
@@ -13,7 +27,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +47,7 @@ public class StatisticsWeigher extends CompletionWeigher {
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
     private final CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = ContainerUtil.newIdentityHashMap();
-    private final Set<String> myStringsWithWeights = new THashSet<>();
+    private final Set<String> myStringsWithWeights = ContainerUtil.newTroveSet();
     private final Set<LookupElement> myNoStats = ContainerUtil.newIdentityTroveSet();
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
@@ -66,7 +79,7 @@ public class StatisticsWeigher extends CompletionWeigher {
       return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
     }
 
-    private static Iterable<LookupElement> withoutInitial(Iterable<LookupElement> allItems, List<? extends LookupElement> initial) {
+    private static Iterable<LookupElement> withoutInitial(Iterable<LookupElement> allItems, List<LookupElement> initial) {
       Set<LookupElement> initialSet = ContainerUtil.newIdentityTroveSet(initial);
       return JBIterable.from(allItems).filter(element -> !initialSet.contains(element));
     }
@@ -84,7 +97,7 @@ public class StatisticsWeigher extends CompletionWeigher {
       return initialList;
     }
 
-    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<? extends LookupElement> source) {
+    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source) {
       MultiMap<String, LookupElement> byName = MultiMap.create();
       List<LookupElement> noStats = new ArrayList<>();
       for (LookupElement element : source) {
@@ -106,7 +119,7 @@ public class StatisticsWeigher extends CompletionWeigher {
       return map;
     }
 
-    private int getMaxWeight(List<? extends LookupElement> group) {
+    private int getMaxWeight(List<LookupElement> group) {
       int max = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < group.size(); i++) {
@@ -140,7 +153,7 @@ public class StatisticsWeigher extends CompletionWeigher {
     @NotNull
     @Override
     public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
-      return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
+      return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement)));
     }
 
     @Override

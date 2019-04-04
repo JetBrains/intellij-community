@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
@@ -90,9 +89,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     TextFieldWithAutoCompletion.installCompletion(document, project,
                                                   new TaskAutoCompletionListProvider(project),
                                                   false);
-    CommitMessage commitMessage = new CommitMessage(project);
-    Disposer.register(getTestRootDisposable(), commitMessage);
-    document.putUserData(CommitMessage.DATA_KEY, commitMessage);
+    document.putUserData(CommitMessage.DATA_KEY, new CommitMessage(project));
   }
 
   private TestRepository configureRepository(LocalTaskImpl... tasks) {

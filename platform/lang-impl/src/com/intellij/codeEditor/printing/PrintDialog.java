@@ -1,4 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +8,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -231,7 +232,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createOrientationPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.orientation.group")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.orientation.group"), true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -257,7 +258,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createStylePanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.style.group")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.style.group"), true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -283,7 +284,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createWrappingPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.wrapping.group")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.wrapping.group"), true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -309,7 +310,7 @@ class PrintDialog extends DialogWrapper {
 
   private JPanel createMarginsPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.margins.group")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeEditorBundle.message("print.margins.group"), true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -402,7 +403,7 @@ class PrintDialog extends DialogWrapper {
                                         JComboBox<PrintSettings.Placement> linePlacementCombo,
                                         JComboBox<PrintSettings.Alignment> lineAlignmentCombo) {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(name));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(name, true));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.gridy = 0;
@@ -560,7 +561,7 @@ class PrintDialog extends DialogWrapper {
     printSettings.PORTRAIT_LAYOUT = myRbPortrait.isSelected();
 
     printSettings.FONT_NAME = myFontNameCombo.getFontName();
-    printSettings.FONT_SIZE = ObjectUtils.notNull((Integer)myFontSizeCombo.getSelectedItem(), printSettings.FONT_SIZE);
+    printSettings.FONT_SIZE = (Integer)Objects.requireNonNull(myFontSizeCombo.getSelectedItem());
 
     printSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
 
@@ -599,8 +600,7 @@ class PrintDialog extends DialogWrapper {
     printSettings.FOOTER_HEADER_PLACEMENT2 = (PrintSettings.Placement)myLinePlacementCombo2.getSelectedItem();
 
     printSettings.FOOTER_HEADER_FONT_NAME = myFooterFontNameCombo.getFontName();
-    printSettings.FOOTER_HEADER_FONT_SIZE =
-      ObjectUtils.notNull((Integer)myFooterFontSizeCombo.getSelectedItem(), printSettings.FOOTER_HEADER_FONT_SIZE);
+    printSettings.FOOTER_HEADER_FONT_SIZE = (Integer)Objects.requireNonNull(myFooterFontSizeCombo.getSelectedItem());
   }
 
   @NotNull

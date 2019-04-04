@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -100,7 +100,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
 
 
     if (extractInterfacesDeep) {
-      extractSuperInterfaces(subclass, filter, result, new HashSet<>());
+      extractSuperInterfaces(subclass, filter, result, ContainerUtil.newHashSet());
     }
     else {
       PsiClass[] interfaces = subclass.getInterfaces();

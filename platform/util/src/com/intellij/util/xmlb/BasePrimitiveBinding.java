@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-abstract class BasePrimitiveBinding implements NestedBinding {
-  protected final MutableAccessor myAccessor;
+abstract class BasePrimitiveBinding extends Binding {
   protected final String myName;
 
   @Nullable
@@ -21,17 +21,11 @@ abstract class BasePrimitiveBinding implements NestedBinding {
   protected Binding myBinding;
 
   protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
-    myAccessor = accessor;
+    super(accessor);
 
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
     //noinspection unchecked
     myConverter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
-  }
-
-  @NotNull
-  @Override
-  public MutableAccessor getAccessor() {
-    return myAccessor;
   }
 
   @Override
@@ -62,6 +56,16 @@ abstract class BasePrimitiveBinding implements NestedBinding {
 
   @Nullable
   protected final Converter<Object> getConverter() {
+    //Converter<Object> converter = myConverter;
+    //if (converter == null && o instanceof Converter) {
+    //  try {
+    //    //noinspection unchecked
+    //    converter = (Converter<Object>)o;
+    //  }
+    //  catch (Exception e) {
+    //    LOG.warn(e);
+    //  }
+    //}
     return myConverter;
   }
 }

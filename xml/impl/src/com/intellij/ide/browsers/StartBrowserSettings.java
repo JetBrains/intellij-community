@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.base.CharMatcher;
-import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -65,14 +67,14 @@ public class StartBrowserSettings {
     Element state = parent.getChild("browser");
     StartBrowserSettings settings = new StartBrowserSettings();
     if (state != null) {
-      XmlSerializer.deserializeInto(state, settings);
+      XmlSerializer.deserializeInto(settings, state);
     }
     return settings;
   }
 
   public void writeExternal(@NotNull Element parent) {
-    Element state = XmlSerializer.serialize(this);
-    if (state != null) {
+    Element state = XmlSerializer.serialize(this, new SkipDefaultValuesSerializationFilters());
+    if (!JDOMUtil.isEmpty(state)) {
       parent.addContent(state);
     }
   }

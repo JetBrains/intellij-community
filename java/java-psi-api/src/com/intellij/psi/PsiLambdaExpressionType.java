@@ -70,14 +70,4 @@ public class PsiLambdaExpressionType extends PsiType {
   public PsiLambdaExpression getExpression() {
     return myExpression;
   }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj == this || obj instanceof PsiLambdaExpressionType && myExpression.equals(((PsiLambdaExpressionType)obj).myExpression);
-  }
-
-  @Override
-  public int hashCode() {
-    return myExpression.hashCode();
-  }
 }

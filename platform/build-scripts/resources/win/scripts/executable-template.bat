@@ -59,14 +59,19 @@ IF NOT EXIST "%JAVA_EXE%" (
 SET JRE=%JDK%
 IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
 IF EXIST "%JRE%\lib\amd64" (
-  SET BITS=64
+	SET BITS=64
 ) ELSE (
-  IF EXIST "%JRE%\lib\jrt-fs.jar" SET BITS=64
+	FOR /F "eol=# usebackq delims=" %%i IN ("%JRE%\release") do (
+		ECHO.%%i | findstr /C:"1.8" 1>nul
+		IF ERRORLEVEL 1 SET BITS=64
+		goto :jvmOptions
+	)
 )
 
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.
 :: ---------------------------------------------------------------------
+:jvmOptions
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
 :: explicit

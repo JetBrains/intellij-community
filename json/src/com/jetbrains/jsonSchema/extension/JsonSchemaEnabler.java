@@ -28,8 +28,4 @@ public interface JsonSchemaEnabler {
   default boolean shouldShowSwitcherWidget(VirtualFile file) {
     return true;
   }
-
-  default boolean canBeSchemaFile(VirtualFile file) {
-    return false;
-  }
 }

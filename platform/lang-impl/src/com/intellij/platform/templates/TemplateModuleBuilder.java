@@ -3,7 +3,6 @@ package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -164,6 +163,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(@NotNull Module module) {
+    for (RunConfiguration configuration : RunManager.getInstance(module.getProject()).getAllConfigurationsList()) {
+      if (configuration instanceof ModuleBasedConfiguration) {
+        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
+      }
+    }
+
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (WizardInputField field : myAdditionalFields) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
@@ -182,13 +187,6 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
 
     model.commit();
-
-    RunManager runManager = RunManager.getInstance(module.getProject());
-    for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
-      if (configuration instanceof ModuleBasedConfiguration) {
-        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
-      }
-    }
   }
 
   private static void applyProjectDefaults(@NotNull Project project) {
@@ -196,9 +194,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
     EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
 
-    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
     RunManagerImpl.getInstanceImpl(defaultProject).copyTemplatesToProjectFromTemplate(project);
-    RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
   }
 
   @Nullable

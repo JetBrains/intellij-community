@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
@@ -40,7 +40,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfoRt.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
@@ -148,7 +148,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super Comp> accessor) {
+                                      TextComponentAccessor<Comp> accessor) {
     addActionListener(new BrowseFolderActionListener<>(title, description, this, project, fileChooserDescriptor, accessor));
   }
 
@@ -160,7 +160,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
+                                      TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
   }
 

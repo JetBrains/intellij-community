@@ -33,7 +33,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
   @Override
   public PsiType getType() {
     if (PsiPolyExpressionUtil.isPolyExpression(this) &&
-        !MethodCandidateInfo.isOverloadCheck(PsiUtil.skipParenthesizedExprUp(getParent()))) {
+        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(getParent()))) {
       return InferenceSession.getTargetType(this);
     }
 

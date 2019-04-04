@@ -3,7 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
@@ -33,7 +34,7 @@ public class PermanentInstallationID {
     final String oldValue = appInfo.isVendorJetBrains()? oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null) : null; // compatibility with previous versions
 
     final String companyName = appInfo.getShortCompanyName();
-    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : StringUtil.toLowerCase(companyName));
+    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : companyName.toLowerCase(Locale.US));
 
     String installationId = prefs.get(INSTALLATION_ID_KEY, null);
     if (StringUtil.isEmptyOrSpaces(installationId)) {
@@ -46,7 +47,7 @@ public class PermanentInstallationID {
     }
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       installationId = syncWithSharedFile("PermanentUserId", installationId, prefs, INSTALLATION_ID_KEY);
     }
 

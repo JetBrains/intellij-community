@@ -25,7 +25,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract val askedBeforeProperty: String
 
-  abstract val doForCurrentProjectProperty: String?
+  abstract val doForCurrentProjectProperty: String
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
@@ -40,14 +40,6 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
 
   abstract fun rememberForAllProjects()
-
-  protected open val viewFilesDialogTitle: String? = null
-  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
-
-  protected open fun rememberForCurrentProject() {
-    setForCurrentProject(true)
-  }
 
   init {
     Disposer.register(parentDisposable, this)
@@ -87,7 +79,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   @Synchronized
-  protected fun removeFiles(filesToRemove: Collection<VirtualFile>) {
+  private fun removeFiles(filesToRemove: Collection<VirtualFile>) {
     files.removeAll(filesToRemove)
   }
 
@@ -100,7 +92,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   @Synchronized
-  protected fun acquireValidFiles(): List<VirtualFile> {
+  private fun acquireValidFiles(): List<VirtualFile> {
     files.removeAll { !it.isValid }
     return files.toList()
   }
@@ -118,8 +110,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
     val allFiles = acquireValidFiles()
     if (allFiles.isNotEmpty()) {
       with(SelectFilesDialog.init(project, allFiles, null, null, true, true,
-                                  viewFilesDialogOkActionName, viewFilesDialogCancelActionName)) {
-        title = viewFilesDialogTitle
+                                  CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText())) {
         selectedFiles = allFiles
         if (showAndGet()) {
           val userSelectedFiles = selectedFiles
@@ -135,7 +126,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    projectProperties.setValue(doForCurrentProjectProperty, true)
     projectProperties.setValue(askedBeforeProperty, true)
     expireNotification()
     clearFiles()
@@ -143,7 +134,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    projectProperties.setValue(doForCurrentProjectProperty, true)
     projectProperties.setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
@@ -151,30 +142,22 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   private fun muteAction() = NotificationAction.create(muteActionText) { _, notification ->
-    setForCurrentProject(false)
+    projectProperties.setValue(doForCurrentProjectProperty, false)
     projectProperties.setValue(askedBeforeProperty, true)
     notification.expire()
   }
 
-  protected fun notificationNotPresent() =
+  private fun notificationNotPresent() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.isExpired ?: true
     }
 
-  protected fun expireNotification() =
+  private fun expireNotification() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
 
-  private fun setForCurrentProject(value: Boolean) =
-    doForCurrentProjectProperty?.let { projectProperties.setValue(it, value) }
+  private fun notAskedBefore() = !projectProperties.getBoolean(askedBeforeProperty, false)
 
-  private fun getForCurrentProject() =
-    doForCurrentProjectProperty?.let { projectProperties.getBoolean(it, false) } ?: false
-
-  private fun notAskedBefore() = !wasAskedBefore()
-
-  protected fun wasAskedBefore() = projectProperties.getBoolean(askedBeforeProperty, false)
-
-  protected open fun needDoForCurrentProject() = getForCurrentProject()
+  protected open fun needDoForCurrentProject() = projectProperties.getBoolean(doForCurrentProjectProperty, false)
 }

@@ -28,13 +28,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
-  private PsiType myT;
-
-  protected InputOutputConstraintFormula(PsiType t) {
-    myT = t;
-  }
 
   public abstract PsiExpression getExpression();
+  protected abstract PsiType getT();
+  protected abstract void setT(PsiType t);
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
   protected abstract void collectReturnTypeVariables(InferenceSession session,
                                                      PsiExpression psiExpression,
@@ -43,7 +40,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
     final PsiExpression psiExpression = getExpression();
-    final PsiType type = myT;
+    final PsiType type = getT();
     if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
@@ -114,7 +111,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   @Nullable
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
     final HashSet<InferenceVariable> mentionedVariables = new HashSet<>();
-    session.collectDependencies(myT, mentionedVariables);
+    session.collectDependencies(getT(), mentionedVariables);
     if (inputVariables != null) {
       mentionedVariables.removeAll(inputVariables);
     }
@@ -123,15 +120,14 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Override
   public void apply(PsiSubstitutor substitutor, boolean cache) {
-    myT = substitutor.substitute(myT);
-  }
-
-  public PsiType getCurrentType() {
-    return myT;
+    setT(substitutor.substitute(getT()));
+    if (cache) {
+      LambdaUtil.getFunctionalTypeMap().put(getExpression(), getT());
+    }
   }
 
   @Override
   public String toString() {
-    return getExpression().getText() + " -> " + myT.getPresentableText();
+    return getExpression().getText() + " -> " + getT().getPresentableText();
   }
 }

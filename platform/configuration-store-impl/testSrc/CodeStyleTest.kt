@@ -37,22 +37,10 @@ internal class CodeStyleTest {
       <codeStyleSettings language="CoffeeScript">
         <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
       </codeStyleSettings>
-      <codeStyleSettings language="DB2">
-        <option name="KEEP_LINE_BREAKS" value="false" />
-      </codeStyleSettings>
-      <codeStyleSettings language="Derby">
-        <option name="KEEP_LINE_BREAKS" value="false" />
-      </codeStyleSettings>
       <codeStyleSettings language="Gherkin">
         <indentOptions>
           <option name="USE_TAB_CHARACTER" value="true" />
         </indentOptions>
-      </codeStyleSettings>
-      <codeStyleSettings language="H2">
-        <option name="KEEP_LINE_BREAKS" value="false" />
-      </codeStyleSettings>
-      <codeStyleSettings language="HSQLDB">
-        <option name="KEEP_LINE_BREAKS" value="false" />
       </codeStyleSettings>
       <codeStyleSettings language="MySQL">
         <option name="KEEP_LINE_BREAKS" value="false" />
@@ -64,12 +52,6 @@ internal class CodeStyleTest {
         <option name="KEEP_LINE_BREAKS" value="false" />
       </codeStyleSettings>
       <codeStyleSettings language="SQL">
-        <option name="KEEP_LINE_BREAKS" value="false" />
-      </codeStyleSettings>
-      <codeStyleSettings language="SQLite">
-        <option name="KEEP_LINE_BREAKS" value="false" />
-      </codeStyleSettings>
-      <codeStyleSettings language="Sybase">
         <option name="KEEP_LINE_BREAKS" value="false" />
       </codeStyleSettings>
       <codeStyleSettings language="TSQL">
@@ -135,22 +117,10 @@ internal class CodeStyleTest {
         <codeStyleSettings language="CoffeeScript">
           <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
         </codeStyleSettings>
-        <codeStyleSettings language="DB2">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-        </codeStyleSettings>
-        <codeStyleSettings language="Derby">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-        </codeStyleSettings>
         <codeStyleSettings language="Gherkin">
           <indentOptions>
             <option name="USE_TAB_CHARACTER" value="true" />
           </indentOptions>
-        </codeStyleSettings>
-        <codeStyleSettings language="H2">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-        </codeStyleSettings>
-        <codeStyleSettings language="HSQLDB">
-          <option name="KEEP_LINE_BREAKS" value="false" />
         </codeStyleSettings>
         <codeStyleSettings language="MySQL">
           <option name="KEEP_LINE_BREAKS" value="false" />
@@ -162,12 +132,6 @@ internal class CodeStyleTest {
           <option name="KEEP_LINE_BREAKS" value="false" />
         </codeStyleSettings>
         <codeStyleSettings language="SQL">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-        </codeStyleSettings>
-        <codeStyleSettings language="SQLite">
-          <option name="KEEP_LINE_BREAKS" value="false" />
-        </codeStyleSettings>
-        <codeStyleSettings language="Sybase">
           <option name="KEEP_LINE_BREAKS" value="false" />
         </codeStyleSettings>
         <codeStyleSettings language="TSQL">

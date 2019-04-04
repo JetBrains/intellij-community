@@ -102,10 +102,8 @@ public class RunConfigurationNode extends ExternalSystemNode {
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     ExternalProjectsView projectsView = getExternalProjectsView();
     String place = projectsView instanceof Component ? ((Component)projectsView).getName() : "unknown";
-
     ExternalSystemActionsCollector.trigger(myProject, projectsView.getSystemId(),
-                                           ExternalSystemActionsCollector.ActionId.ExecuteExternalSystemRunConfigurationAction,
-                                           place, false, null);
+                                           "ExecuteExternalSystemRunConfigurationAction", place, false);
     ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     RunManager.getInstance(mySettings.getConfiguration().getProject()).setSelectedConfiguration(mySettings);
   }

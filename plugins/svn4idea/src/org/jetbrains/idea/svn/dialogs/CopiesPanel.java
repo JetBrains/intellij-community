@@ -25,6 +25,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -291,7 +292,7 @@ public class CopiesPanel {
 
   @NotNull
   private List<WorkingCopyFormat> getSupportedFormats() {
-    List<WorkingCopyFormat> result = new ArrayList<>();
+    List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
     ClientFactory factory = myVcs.getFactory();
 
     try {

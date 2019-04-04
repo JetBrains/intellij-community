@@ -4,7 +4,6 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,27 +59,27 @@ public class HexRenderer extends NodeRendererImpl {
   static void appendHexValue(@NotNull PrimitiveValue value, StringBuilder buf) {
     if (value instanceof CharValue) {
       long longValue = value.longValue();
-      buf.append("0x").append(StringUtil.toUpperCase(Long.toHexString(longValue)));
+      buf.append("0x").append(Long.toHexString(longValue).toUpperCase());
     }
     else if (value instanceof ByteValue) {
-      String strValue = StringUtil.toUpperCase(Integer.toHexString(value.byteValue()));
+      String strValue = Integer.toHexString(value.byteValue()).toUpperCase();
       if (strValue.length() > 2) {
         strValue = strValue.substring(strValue.length() - 2);
       }
       buf.append("0x").append(strValue);
     }
     else if (value instanceof ShortValue) {
-      String strValue = StringUtil.toUpperCase(Integer.toHexString(value.shortValue()));
+      String strValue = Integer.toHexString(value.shortValue()).toUpperCase();
       if (strValue.length() > 4) {
         strValue = strValue.substring(strValue.length() - 4);
       }
       buf.append("0x").append(strValue);
     }
     else if (value instanceof IntegerValue) {
-      buf.append("0x").append(StringUtil.toUpperCase(Integer.toHexString(value.intValue())));
+      buf.append("0x").append(Integer.toHexString(value.intValue()).toUpperCase());
     }
     else if (value instanceof LongValue) {
-      buf.append("0x").append(StringUtil.toUpperCase(Long.toHexString(value.longValue())));
+      buf.append("0x").append(Long.toHexString(value.longValue()).toUpperCase());
     }
     else {
       LOG.assertTrue(false);

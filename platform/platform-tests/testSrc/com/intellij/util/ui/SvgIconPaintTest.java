@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
 import org.junit.BeforeClass;
@@ -19,7 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
@@ -38,7 +37,7 @@ public class SvgIconPaintTest {
 
   @Test
   public void test() throws MalformedURLException {
-    JBUIScale.setUserScaleFactor((float)2);
+    JBUI.setUserScaleFactor(2);
     overrideJreHiDPIEnabled(false);
 
     CachedImageIcon icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL());

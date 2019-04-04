@@ -79,6 +79,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private void smartUpdate() {
     if (myLivePreview == null) return;
+    myLivePreview.inSmartUpdate();
     FindModel findModel = mySearchResults.getFindModel();
     if (findModel != null) {
       updateInBackground(findModel, false);
@@ -103,6 +104,10 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
     myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
+  }
+
+  public int getUserActivityDelay() {
+    return myUserActivityDelay;
   }
 
   public void setUserActivityDelay(int userActivityDelay) {
@@ -159,6 +164,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
                                           replacement,
                                           true,
                                           new ArrayList<>());
+    myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
   }

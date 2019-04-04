@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -18,7 +18,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -108,7 +107,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
         @Override
         public void windowClosing(final WindowEvent e) {
           if (ProjectManager.getInstance().getOpenProjects().length == 0) {
-            ApplicationManager.getApplication().exit();
+            ApplicationManagerEx.getApplicationEx().exit();
           }
           else {
             frame.dispose();
@@ -147,17 +146,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
-    showNow(null);
-  }
-
-  public static void showNow(@Nullable Runnable beforeSetVisible) {
-    if (ourInstance != null) {
-      assert beforeSetVisible == null;
-      return;
-    }
-
     IdeFrame frame = null;
-    for (WelcomeFrameProvider provider : EP.getIterable()) {
+    for (WelcomeFrameProvider provider : EP.getExtensionList()) {
       frame = provider.createFrame();
       if (frame != null) {
         break;
@@ -167,17 +157,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     if (frame == null) {
       frame = new WelcomeFrame();
     }
-
-    if (beforeSetVisible != null) {
-      beforeSetVisible.run();
-    }
-
     ((JFrame)frame).setVisible(true);
     IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ourInstance = frame;
-    if (SystemInfoRt.isMac) {
-      ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
-    }
+    ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
   }
 
   public static void showIfNoProjectOpened() {

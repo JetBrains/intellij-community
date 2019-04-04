@@ -6,13 +6,12 @@ import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -379,7 +378,7 @@ public class LightToolWindow extends JPanel {
   private class MyViewModeAction extends ToolWindowViewModeAction {
     private MyViewModeAction(@NotNull ViewMode mode) {
       super(mode);
-      ActionUtil.copyFrom(this, mode.getActionID());
+      copyFrom(ActionManager.getInstance().getAction(mode.getActionID()));
     }
 
     @Nullable
@@ -408,7 +407,7 @@ public class LightToolWindow extends JPanel {
           return LightToolWindow.this.isActive();
         }
       };
-      button.setHoveringEnabled(!SystemInfoRt.isMac);
+      button.setHoveringEnabled(!SystemInfo.isMac);
       setContent(button);
 
       Icon icon = presentation.getIcon();

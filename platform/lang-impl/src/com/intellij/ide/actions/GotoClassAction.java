@@ -35,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,34 +49,21 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     Project project = e.getProject();
     if (project == null) return;
 
-    boolean dumb = DumbService.isDumb(project);
-    if (Registry.is("new.search.everywhere")) {
-      if (!dumb || new ClassSearchEverywhereContributor(project, null).isDumbAware()) {
+    if (!DumbService.getInstance(project).isDumb()) {
+      if (Registry.is("new.search.everywhere")) {
         showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e, true, true);
-      }
-      else {
-        invokeGoToFile(project, e);
+      } else {
+        super.actionPerformed(e);
       }
     }
     else {
-      if (!dumb) {
-        super.actionPerformed(e);
-      }
-      else {
-        invokeGoToFile(project, e);
-      }
+      String message = IdeBundle.message("go.to.class.dumb.mode.message", GotoClassPresentationUpdater.getActionTitle());
+      DumbService.getInstance(project).showDumbModeNotification(message);
+      AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
+      InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
+      Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+      ActionManager.getInstance().tryToExecute(action, event, component, e.getPlace(), true);
     }
-  }
-
-  static void invokeGoToFile(@NotNull Project project, @NotNull AnActionEvent e) {
-    String actionTitle = StringUtil.trimEnd(ObjectUtils.notNull(
-      e.getPresentation().getText(), GotoClassPresentationUpdater.getActionTitle()), "...");
-    String message = IdeBundle.message("go.to.class.dumb.mode.message", actionTitle);
-    DumbService.getInstance(project).showDumbModeNotification(message);
-    AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
-    InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    ActionManager.getInstance().tryToExecute(action, event, component, e.getPlace(), true);
   }
 
   @Override

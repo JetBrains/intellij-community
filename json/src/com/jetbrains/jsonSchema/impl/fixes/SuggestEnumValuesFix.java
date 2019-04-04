@@ -18,8 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -54,19 +52,13 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
     PsiElement element = myQuickFixAdapter.adjustValue(initialElement);
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
     boolean whitespaceBefore = false;
-    PsiElement prevPrev = null;
-    PsiElement prev = element.getPrevSibling();
-    if (prev instanceof PsiWhiteSpace) {
+    if (element.getPrevSibling() instanceof PsiWhiteSpace) {
       whitespaceBefore = true;
-      prevPrev = prev.getPrevSibling();
     }
-    boolean shouldAddWhitespace = myQuickFixAdapter.fixWhitespaceBefore(initialElement, element);
     WriteAction.run(() -> element.delete());
     EditorEx editor = EditorUtil.getEditorEx(fileEditor);
     assert editor != null;
-    // this is a workaround for buggy formatters such as in YAML - it removes the whitespace after ':' when deleting the value
-    shouldAddWhitespace |= prevPrev != null && PsiUtilCore.getElementType(prevPrev.getNextSibling()) != TokenType.WHITE_SPACE;
-    if (shouldAddWhitespace && whitespaceBefore) {
+    if (myQuickFixAdapter.fixWhitespaceBefore(initialElement, element) && whitespaceBefore) {
       WriteAction.run(() -> {
         int offset = editor.getCaretModel().getOffset();
         editor.getDocument().insertString(offset, " ");

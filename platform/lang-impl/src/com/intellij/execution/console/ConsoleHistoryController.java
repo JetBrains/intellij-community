@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,15 +33,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,14 +49,15 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.*;
 
 /**
  * @author gregsh
  */
-public class ConsoleHistoryController implements Disposable {
+public class ConsoleHistoryController {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
@@ -89,10 +90,6 @@ public class ConsoleHistoryController implements Disposable {
   @TestOnly
   public void setModel(@NotNull ConsoleHistoryModel model){
     myHelper = new ModelHelper(myHelper.myRootType, myHelper.myId, model);
-  }
-
-  @Override
-  public void dispose() {
   }
 
   //@Nullable
@@ -137,12 +134,13 @@ public class ConsoleHistoryController implements Disposable {
 
   public void install() {
     MessageBusConnection busConnection = myConsole.getProject().getMessageBus().connect(myConsole);
-    busConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-      @Override
-      public void duringSave(@NotNull Project project) {
-        ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
-      }
-    });
+    busConnection
+      .subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
+        @Override
+        public void duringSave(@NotNull Project project) {
+          ApplicationManager.getApplication().invokeAndWait(() -> saveHistory());
+        }
+      });
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
@@ -155,8 +153,7 @@ public class ConsoleHistoryController implements Disposable {
     ConsoleHistoryController original = ourControllers.put(myConsole, this);
     LOG.assertTrue(original == null,
                    "History controller already installed for: " + myConsole.getTitle());
-    Disposer.register(myConsole, this);
-    Disposer.register(this, new Disposable() {
+    Disposer.register(myConsole, new Disposable() {
       @Override
       public void dispose() {
         ConsoleHistoryController controller = getController(myConsole);
@@ -196,9 +193,9 @@ public class ConsoleHistoryController implements Disposable {
    * @return true if some text has been loaded; otherwise false
    */
   public boolean loadHistory(String id) {
-    CharSequence prev = myHelper.getContent();
+    String prev = myHelper.getContent();
     boolean result = myHelper.loadHistory(id);
-    CharSequence userValue = myHelper.getContent();
+    String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
       setConsoleText(new Entry(userValue, -1), false, false);
     }
@@ -238,7 +235,7 @@ public class ConsoleHistoryController implements Disposable {
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = ObjectUtils.chooseNotNull(command.getText(), "");
+      String text = StringUtil.notNullize(command.getText());
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -264,7 +261,7 @@ public class ConsoleHistoryController implements Disposable {
     });
   }
 
-  protected int insertTextMultiline(CharSequence text, Editor editor, Document document) {
+  protected int insertTextMultiline(String text, Editor editor, Document document) {
     TextRange selection = EditorUtil.getSelectionInAnyMode(editor);
 
     int start = document.getLineStartOffset(document.getLineNumber(selection.getStartOffset()));
@@ -402,11 +399,11 @@ public class ConsoleHistoryController implements Disposable {
     }
   }
 
-  public static final class ModelHelper implements SafeWriteRequestor {
+  public static class ModelHelper {
     private final ConsoleRootType myRootType;
     private final String myId;
     private final ConsoleHistoryModel myModel;
-    private CharSequence myContent;
+    private String myContent;
 
     public ModelHelper(ConsoleRootType rootType, String id, ConsoleHistoryModel model) {
       myRootType = rootType;
@@ -426,29 +423,18 @@ public class ConsoleHistoryController implements Disposable {
       return myId;
     }
 
-    public CharSequence getContent() {
+    public String getContent() {
       return myContent;
-    }
-
-    @Nullable
-    File getFile(String id) {
-      if (myRootType.isHidden()) return null;
-      String rootPath = ScratchFileService.getInstance().getRootPath(HistoryRootType.getInstance());
-      return new File(FileUtil.toSystemDependentName(rootPath + "/" + getHistoryName(myRootType, id)));
-    }
-
-    @NotNull
-    Charset getCharset() {
-      return EncodingRegistry.getInstance().getDefaultCharset();
     }
 
     public boolean loadHistory(String id) {
       try {
-        File file = getFile(id);
-        if (file == null || !file.exists()) {
+        VirtualFile file = myRootType.isHidden() ? null :
+                           HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, id), ScratchFileService.Option.existing_only);
+        if (file == null) {
           return false;
         }
-        String[] split = FileUtil.loadFile(file, getCharset()).split(myRootType.getEntrySeparator());
+        String[] split = FileUtil.loadFile(VfsUtilCore.virtualToIoFile(file), file.getCharset()).split(myRootType.getEntrySeparator());
         getModel().resetEntries(Arrays.asList(split));
         return true;
       }
@@ -458,22 +444,20 @@ public class ConsoleHistoryController implements Disposable {
     }
 
     private void saveHistory() {
-      if (getModel().isEmpty()) return;
-      File file = getFile(myId);
-      if (file == null) return;
-      File dir = file.getParentFile();
-      if (dir == null || dir.exists() && !dir.isDirectory() || !dir.exists() && !dir.mkdirs()) {
-        LOG.error("Unable to create " + file.getPath());
-        return;
-      }
-      try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), getCharset()))) {
-        boolean first = true;
-        for (String entry : getModel().getEntries()) {
-          if (first) first = false;
-          else out.write(myRootType.getEntrySeparator());
-          out.write(entry);
-        }
-        out.flush();
+      try {
+        if (getModel().isEmpty()) return;
+        WriteAction.run(() -> {
+          VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
+          try (Writer out = new OutputStreamWriter(new SafeFileOutputStream(VfsUtilCore.virtualToIoFile(file)), file.getCharset())) {
+            boolean first = true;
+            for (String entry : getModel().getEntries()) {
+              if (first) first = false;
+              else out.write(myRootType.getEntrySeparator());
+              out.write(entry);
+            }
+            out.flush();
+          }
+        });
       }
       catch (Exception ex) {
         LOG.error(ex);

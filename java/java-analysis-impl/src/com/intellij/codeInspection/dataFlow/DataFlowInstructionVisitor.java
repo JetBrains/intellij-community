@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -30,7 +29,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
-  private final Set<TypeCastInstruction> myCCEInstructions = new HashSet<>();
+  private final Set<TypeCastInstruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
@@ -354,7 +353,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     @NotNull
     @Override
     public String toString() {
-      return StringUtil.toLowerCase(name());
+      return name().toLowerCase(Locale.ENGLISH);
     }
 
     public Object value() {

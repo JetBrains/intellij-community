@@ -32,7 +32,8 @@ class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_8 // older mock JREs are missing some bits
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    LightCodeInsightFixtureTestCase.JAVA_8 // older mock JREs are missing some bits
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
 
@@ -46,7 +47,6 @@ class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
 
   fun testNewInstance() = doTest(true)
   fun testBugs() = doTest(true)
-  fun testClassArray() = doTest(true)
 
 
   private fun doTest(checkExists: Boolean = false) {

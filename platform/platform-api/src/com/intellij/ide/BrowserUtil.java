@@ -8,8 +8,6 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +20,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +37,7 @@ public class BrowserUtil {
   private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
-    return ourExternalPrefix.matcher(StringUtil.toLowerCase(url)).find();
+    return ourExternalPrefix.matcher(url.toLowerCase(Locale.ENGLISH)).find();
   }
 
   public static String getDocURL(String url) {
@@ -88,14 +87,14 @@ public class BrowserUtil {
     if (new File(browserPathOrName).isFile()) {
       return Collections.singletonList(browserPathOrName);
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       List<String> command = newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
       if (newWindowIfPossible) {
         command.add("-n");
       }
       return command;
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
     }
     else {
@@ -109,13 +108,13 @@ public class BrowserUtil {
 
   @NotNull
   public static String getDefaultAlternativeBrowserPath() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       return "open";
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       return "/usr/bin/firefox";
     }
     else {

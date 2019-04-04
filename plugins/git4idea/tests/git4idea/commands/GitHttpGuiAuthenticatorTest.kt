@@ -11,7 +11,6 @@ import git4idea.commands.GitHttpGuiAuthenticator.PasswordSafeProvider.makeKey
 import git4idea.remote.GitRememberedInputs
 import git4idea.test.GitPlatformTest
 import git4idea.test.TestDialogHandler
-import java.io.File
 import javax.swing.UIManager
 
 class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
@@ -90,8 +89,7 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   fun `test single dialog shown`() {
     registerDialogHandler(true)
 
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
+    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), GitPassthroughAuthenticationGate.instance,
                                                 GitAuthenticationMode.FULL)
     authenticator.askUsername(TEST_URL)
     assertTrue(dialogShown)
@@ -113,8 +111,7 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
   }
 
   private fun runAuthenticator(assumeCorrect: Boolean): GitHttpGuiAuthenticator {
-    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), File(""),
-                                                GitPassthroughAuthenticationGate.instance,
+    val authenticator = GitHttpGuiAuthenticator(project, listOf(TEST_URL), GitPassthroughAuthenticationGate.instance,
                                                 GitAuthenticationMode.FULL)
     val username = authenticator.askUsername(TEST_URL)
     val password = authenticator.askPassword(TEST_URL)

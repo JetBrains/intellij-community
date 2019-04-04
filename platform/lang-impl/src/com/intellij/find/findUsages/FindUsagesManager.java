@@ -110,15 +110,15 @@ public class FindUsagesManager {
     myLastSearchInFileData = null;
   }
 
-  public boolean findNextUsageInFile(@NotNull Editor editor) {
+  public boolean findNextUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.AFTER_CARET);
   }
 
-  public boolean findPreviousUsageInFile(@NotNull Editor editor) {
+  public boolean findPreviousUsageInFile(@NotNull FileEditor editor) {
     return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
   }
 
-  private boolean findUsageInFile(@NotNull Editor editor, @NotNull FileSearchScope direction) {
+  private boolean findUsageInFile(@NotNull FileEditor editor, @NotNull FileSearchScope direction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myLastSearchInFileData == null) return false;
@@ -132,13 +132,14 @@ public class FindUsagesManager {
         return false;
     }
 
-    Document document = editor.getDocument();
+    TextEditor textEditor = (TextEditor)editor;
+    Document document = textEditor.getEditor().getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return false;
 
     final FindUsagesHandler handler = getFindUsagesHandler(primaryElements[0], false);
     if (handler == null) return false;
-    findUsagesInEditor(primaryElements, secondaryElements, handler, psiFile, direction, myLastSearchInFileData.myOptions, editor);
+    findUsagesInEditor(primaryElements, secondaryElements, handler, psiFile, direction, myLastSearchInFileData.myOptions, textEditor);
     return true;
   }
 
@@ -225,7 +226,7 @@ public class FindUsagesManager {
   private void startFindUsages(@NotNull FindUsagesOptions findUsagesOptions,
                                @NotNull FindUsagesHandler handler,
                                PsiFile scopeFile,
-                               FileEditor fileEditor) {
+                               FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean singleFile = scopeFile != null;
 
@@ -235,11 +236,10 @@ public class FindUsagesManager {
     checkNotNull(primaryElements, handler, "getPrimaryElements()");
     PsiElement[] secondaryElements = handler.getSecondaryElements();
     checkNotNull(secondaryElements, handler, "getSecondaryElements()");
-    if (singleFile && fileEditor instanceof TextEditor) {
-      Editor editor = ((TextEditor)fileEditor).getEditor();
+    if (singleFile && editor instanceof TextEditor) {
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(primaryElements, secondaryElements, handler, scopeFile, FileSearchScope.FROM_START, findUsagesOptions.clone(),
-                         editor);
+                         (TextEditor)editor);
     }
     else {
       boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
@@ -456,7 +456,7 @@ public class FindUsagesManager {
                                   @NotNull PsiFile scopeFile,
                                   @NotNull FileSearchScope direction,
                                   @NotNull final FindUsagesOptions findUsagesOptions,
-                                  @NotNull Editor editor) {
+                                  @NotNull TextEditor fileEditor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     initLastSearchElement(findUsagesOptions, primaryElements, secondaryElements);
 
@@ -467,30 +467,33 @@ public class FindUsagesManager {
     final UsageSearcher usageSearcher = createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, scopeFile);
     AtomicBoolean usagesWereFound = new AtomicBoolean();
 
-    int startOffset = editor.getCaretModel().getOffset();
+    TextEditorLocation location = (TextEditorLocation)fileEditor.getCurrentLocation();
+    // can't navigate in exotic file editors which don't support current location
+    if (location == null) return;
+    int startOffset = fileEditor.getEditor().logicalPositionToOffset(location.getPosition());
 
     new Task.Backgroundable(myProject, FindBundle.message("find.progress.searching.message", "editor")){
       private Usage myUsage;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myUsage = findSiblingUsage(usageSearcher, direction, startOffset, usagesWereFound, editor);
+        myUsage = findSiblingUsage(usageSearcher, direction, startOffset, usagesWereFound, fileEditor);
       }
 
       @Override
       public void onFinished() {
-        if (FindUsagesManager.this.myProject.isDisposed() || editor.isDisposed()) return;
+        if (FindUsagesManager.this.myProject.isDisposed() || !fileEditor.isValid()) return;
         if (myUsage != null) {
           myUsage.navigate(true);
           myUsage.selectInEditor();
         }
         else if (!usagesWereFound.get()) {
           String message = getNoUsagesFoundMessage(primaryElements[0]) + " in " + scopeFile.getName();
-          showEditorHint(message, editor);
+          showHintOrStatusBarMessage(message, fileEditor);
         }
         else {
-          editor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
-          showEditorHint(getSearchAgainMessage(primaryElements[0], direction), editor);
+          fileEditor.putUserData(KEY_START_USAGE_AGAIN, VALUE_START_USAGE_AGAIN);
+          showHintOrStatusBarMessage(getSearchAgainMessage(primaryElements[0], direction), fileEditor);
         }
       }
     }.queue();
@@ -533,12 +536,22 @@ public class FindUsagesManager {
     return message;
   }
 
+  private void showHintOrStatusBarMessage(@NotNull String message, FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      TextEditor textEditor = (TextEditor)fileEditor;
+      showEditorHint(message, textEditor.getEditor());
+    }
+    else {
+      StatusBar.Info.set(message, myProject);
+    }
+  }
+
   private static Usage findSiblingUsage(@NotNull final UsageSearcher usageSearcher,
                                         @NotNull FileSearchScope dir,
                                         int startOffset,
                                         @NotNull final AtomicBoolean usagesWereFound,
-                                        @NotNull Editor editor) {
-    if (editor.getUserData(KEY_START_USAGE_AGAIN) != null) {
+                                        @NotNull FileEditor fileEditor) {
+    if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
       dir = dir == FileSearchScope.AFTER_CARET ? FileSearchScope.FROM_START : FileSearchScope.FROM_END;
     }
 
@@ -581,7 +594,7 @@ public class FindUsagesManager {
       return true;
     });
 
-    editor.putUserData(KEY_START_USAGE_AGAIN, null);
+    fileEditor.putUserData(KEY_START_USAGE_AGAIN, null);
 
     return foundUsage.get();
   }

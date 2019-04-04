@@ -2,13 +2,14 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -30,25 +31,30 @@ import java.util.function.Supplier;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
+  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
   private boolean myAlphabeticalModeChanged = false;
   @Nullable
-  private Supplier<? extends Color> myEmptySpaceColorCallback;
+  private Supplier<Color> myEmptySpaceColorCallback;
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
-    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        resetTabsCache();
-        relayout(true, false);
-      });
-    });
+    Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
+
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          resetTabsCache();
+          relayout(true, false);
+        });
+      }
+    }, parent);
     setSupportsCompression(true);
   }
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
@@ -88,7 +94,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public boolean useBoldLabels() {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.boldEditorTabs");
+    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override
@@ -155,7 +161,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
     if (myAlphabeticalModeChanged) {
       return super.isAlphabeticalMode();
     }
-    return UISettings.getInstance().getSortTabsAlphabetically();
+    return Registry.is(TABS_ALPHABETICAL_KEY);
   }
 
   @Override
@@ -165,8 +171,12 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
+  public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
     myEmptySpaceColorCallback = callback;
+  }
+
+  public static void setEditorTabsAlphabeticalMode(boolean on) {
+    Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
   }
 
   @Override

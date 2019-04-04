@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -17,10 +17,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -226,7 +226,7 @@ public class PushLog extends JPanel implements DataProvider {
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setMinimumSize(new Dimension(JBUIScale.scale(200), myChangesBrowser.getPreferredSize().height));
+    myChangesBrowser.setMinimumSize(new Dimension(JBUI.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
     JBSplitter splitter = new JBSplitter(SPLITTER_PROPORTION, 0.7f);
@@ -258,7 +258,7 @@ public class PushLog extends JPanel implements DataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
-    myTree.setMinimumSize(new Dimension(JBUIScale.scale(400), myTree.getPreferredSize().height));
+    myTree.setMinimumSize(new Dimension(JBUI.scale(400), myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
     myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
@@ -324,7 +324,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
+  private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -343,8 +343,8 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
-    List<Change> changes = new ArrayList<>();
+  private static List<Change> collectChanges(@NotNull List<CommitNode> commitNodes) {
+    List<Change> changes = ContainerUtil.newArrayList();
     for (CommitNode node : commitNodes) {
       changes.addAll(node.getUserObject().getChanges());
     }
@@ -353,7 +353,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
-    List<T> nodes = new ArrayList<>();
+    List<T> nodes = ContainerUtil.newArrayList();
     if (node.getChildCount() < 1) {
       return nodes;
     }
@@ -376,7 +376,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static List<Integer> getSortedRows(@NotNull int[] rows) {
-    List<Integer> sorted = new ArrayList<>();
+    List<Integer> sorted = ContainerUtil.newArrayList();
     for (int row : rows) {
       sorted.add(row);
     }
@@ -431,7 +431,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
-    List<DefaultMutableTreeNode> nodes = new ArrayList<>();
+    List<DefaultMutableTreeNode> nodes = ContainerUtil.newArrayList();
     for (Integer row : rows) {
       TreePath path = myTree.getPathForRow(row);
       Object pathComponent = path == null ? null : path.getLastPathComponent();

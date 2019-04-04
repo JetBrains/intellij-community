@@ -1,1 +1,0 @@
-! time echo a |& cat -

@@ -219,8 +219,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     ProcessHandler processHandler = processStarter.start(myConfig, commandLine);
 
     // attach extensions
-    PythonRunConfigurationExtensionsManager.Companion.getInstance()
-      .attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
     return processHandler;
   }
@@ -401,34 +400,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonSdkFlavor.setupEncodingEnvs(envs, charset);
   }
 
-  public static void buildPythonPath(@NotNull Project project,
-                                     @NotNull GeneralCommandLine commandLine,
-                                     @NotNull PythonRunParams config,
-                                     boolean isDebug) {
-    Module module = getModule(project, config);
-    buildPythonPath(module, commandLine, config.getSdkHome(), config.isPassParentEnvs(), config.shouldAddContentRoots(),
-                    config.shouldAddSourceRoots(), isDebug);
-  }
-
-  public static void buildPythonPath(@Nullable Module module,
-                                     @NotNull GeneralCommandLine commandLine,
-                                     @Nullable String sdkHome,
-                                     boolean passParentEnvs,
-                                     boolean shouldAddContentRoots,
-                                     boolean shouldAddSourceRoots,
-                                     boolean isDebug) {
-    Sdk pythonSdk = PythonSdkType.findSdkByPath(sdkHome);
+  private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config, boolean isDebug) {
+    Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList();
       pathList.addAll(getAddedPaths(pythonSdk));
-      pathList.addAll(collectPythonPath(module, sdkHome, shouldAddContentRoots, shouldAddSourceRoots, isDebug));
-      initPythonPath(commandLine, passParentEnvs, pathList, sdkHome);
+      pathList.addAll(collectPythonPath(project, config, isDebug));
+      initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());
     }
   }
 
-  public static void initPythonPath(@NotNull GeneralCommandLine commandLine,
+  public static void initPythonPath(GeneralCommandLine commandLine,
                                     boolean passParentEnvs,
-                                    @NotNull List<String> pathList,
+                                    List<String> pathList,
                                     final String interpreterPath) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
     if (flavor != null) {
@@ -439,8 +423,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  @NotNull
-  public static List<String> getAddedPaths(@NotNull Sdk pythonSdk) {
+  public static List<String> getAddedPaths(Sdk pythonSdk) {
     List<String> pathList = new ArrayList<>();
     final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
@@ -479,18 +462,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @VisibleForTesting
   public static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
     final Module module = getModule(project, config);
-    return collectPythonPath(module, config.getSdkHome(), config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug);
-  }
+    final HashSet<String> pythonPath =
+      Sets.newLinkedHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
 
-  @NotNull
-  public static Collection<String> collectPythonPath(@Nullable Module module,
-                                                     @Nullable String sdkHome,
-                                                     boolean shouldAddContentRoots,
-                                                     boolean shouldAddSourceRoots,
-                                                     boolean isDebug) {
-    final HashSet<String> pythonPath = Sets.newLinkedHashSet(collectPythonPath(module, shouldAddContentRoots, shouldAddSourceRoots));
-
-    if (isDebug && PythonSdkFlavor.getFlavor(sdkHome) instanceof JythonSdkFlavor) {
+    if (isDebug && PythonSdkFlavor.getFlavor(config.getSdkHome()) instanceof JythonSdkFlavor) {
       //that fixes Jython problem changing sys.argv on execfile, see PY-8164
       pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));
       pythonPath.add(PythonHelpersLocator.getHelperPath("pydev"));

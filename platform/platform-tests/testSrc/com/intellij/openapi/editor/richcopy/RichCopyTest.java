@@ -1,10 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
 import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -16,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 
 public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
   private static final String PLATFORM_SPECIFIC_PLACEHOLDER = "___PLATFORM_SPECIFIC___";
@@ -44,7 +57,7 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
     assertMatches("HTML contents differs", expectedHtml, actualHtml);
 
     assertTrue(contents.isDataFlavorSupported(RtfTransferableData.FLAVOR));
-    String expectedRtf = getFileContents(getTestName(false) + ".rtf" + (SystemInfoRt.isMac ? ".mac" : ""));
+    String expectedRtf = getFileContents(getTestName(false) + ".rtf" + (SystemInfo.isMac ? ".mac" : ""));
     String actualRtf = readFully((InputStream)contents.getTransferData(RtfTransferableData.FLAVOR));
     assertMatches("RTF contents differs", expectedRtf, actualRtf);
   }
@@ -74,7 +87,7 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   private static String readFully(InputStream inputStream) throws IOException {
-    return new String(FileUtilRt.loadBytes(inputStream), StandardCharsets.UTF_8);
+    return new String(FileUtilRt.loadBytes(inputStream));
   }
 
   private static String readFully(Reader reader) throws IOException {

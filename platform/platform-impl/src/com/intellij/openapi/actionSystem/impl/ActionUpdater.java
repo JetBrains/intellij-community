@@ -202,9 +202,6 @@ class ActionUpdater {
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
-    if (group instanceof ActionGroupStub) {
-      throw new IllegalStateException("Trying to expand non-unstubbed group");
-    }
     ProgressManager.checkCanceled();
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
@@ -273,7 +270,7 @@ class ActionUpdater {
     return presentation != null ? presentation : ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action));
   }
 
-  private static List<AnAction> removeUnnecessarySeparators(List<? extends AnAction> visible) {
+  private static List<AnAction> removeUnnecessarySeparators(List<AnAction> visible) {
     List<AnAction> result = new ArrayList<>();
     for (AnAction child : visible) {
       if (child instanceof Separator) {

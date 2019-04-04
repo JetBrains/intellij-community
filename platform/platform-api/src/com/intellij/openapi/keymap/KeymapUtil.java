@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.keymap;
 
 import com.intellij.icons.AllIcons;
@@ -7,7 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -43,13 +57,6 @@ public class KeymapUtil {
   private static RegistryValue ourTooltipKeysProperty;
 
   private KeymapUtil() {
-  }
-
-  @NotNull
-  public static String getShortcutText(@NotNull String actionId) {
-    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
-    if (shortcut == null) return "<no shortcut>";
-    return getShortcutText(shortcut);
   }
 
   @NotNull
@@ -154,7 +161,7 @@ public class KeymapUtil {
   @NotNull
   public static String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return MacKeymapUtil.getKeyStrokeText(accelerator);
     }
     String acceleratorText = "";
@@ -182,14 +189,14 @@ public class KeymapUtil {
       case KeyEvent.VK_EQUALS:         return "=";
     }
 
-    String result = SystemInfoRt.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
     // [vova] this is dirty fix for bug #35092
     return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
   }
 
   @NotNull
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       //try {
       //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
       //  Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);

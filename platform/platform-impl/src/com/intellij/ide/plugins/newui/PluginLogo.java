@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.*;
@@ -12,9 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
@@ -23,12 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -42,20 +39,21 @@ public class PluginLogo {
   private static final String CACHE_DIR = "imageCache";
   private static final String PLUGIN_ICON = "pluginIcon.svg";
   private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
-  private static final int PLUGIN_ICON_SIZE = 40;
-  private static final int PLUGIN_ICON_SIZE_SCALED = 80;
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
   private static PluginLogoIconProvider Default;
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
   static {
-    if (!GraphicsEnvironment.isHeadless()) {
-      LafManager.getInstance().addLafManagerListener(_0 -> {
-        Default = null;
-        HiDPIPluginLogoIcon.clearCache();
-      });
-    }
+    LafManager.getInstance().addLafManagerListener(_0 -> {
+      Default = null;
+      HiDPIPluginLogoIcon.clearCache();
+    });
+  }
+
+  @NotNull
+  public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, int width, int height) {
+    return null;
   }
 
   @NotNull
@@ -87,8 +85,8 @@ public class PluginLogo {
   @NotNull
   private static PluginLogoIconProvider getDefault() {
     if (Default == null) {
-      Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
-                                        AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
+      Default = new PluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
+                                   AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
     }
     return Default;
   }
@@ -153,7 +151,7 @@ public class PluginLogo {
         }
 
         File[] files = libFile.listFiles();
-        if (ArrayUtil.isEmpty(files)) {
+        if (files == null || files.length == 0) {
           putIcon(idPlugin, lazyIcon, null, null);
           return;
         }
@@ -169,7 +167,6 @@ public class PluginLogo {
       }
       else {
         tryLoadJarIcons(idPlugin, lazyIcon, path, true);
-        return;
       }
       putIcon(idPlugin, lazyIcon, null, null);
       return;
@@ -194,7 +191,7 @@ public class PluginLogo {
       downloadFile(idPlugin, darkFile, "&theme=DARCULA");
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
 
     if (ApplicationManager.getApplication().isDisposed()) {
@@ -215,8 +212,8 @@ public class PluginLogo {
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {
-    PluginLogoIconProvider light = tryLoadIcon(path, true);
-    PluginLogoIconProvider dark = tryLoadIcon(path, false);
+    PluginLogoIconProvider light = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON));
+    PluginLogoIconProvider dark = tryLoadIcon(new File(path, PluginManagerCore.META_INF + PLUGIN_ICON_DARK));
 
     if (light != null || dark != null) {
       putIcon(idPlugin, lazyIcon, light, dark);
@@ -230,19 +227,19 @@ public class PluginLogo {
                                          @NotNull LazyPluginLogoIcon lazyIcon,
                                          @NotNull File path,
                                          boolean put) {
-    if (!FileUtilRt.isJarOrZip(path) || !path.exists()) {
+    if (!FileUtil.isJarOrZip(path) || !path.exists()) {
       return false;
     }
     try (ZipFile zipFile = new ZipFile(path)) {
-      PluginLogoIconProvider light = tryLoadIcon(zipFile, true);
-      PluginLogoIconProvider dark = tryLoadIcon(zipFile, false);
+      PluginLogoIconProvider light = tryLoadIcon(zipFile, PLUGIN_ICON);
+      PluginLogoIconProvider dark = tryLoadIcon(zipFile, PLUGIN_ICON_DARK);
       if (put || light != null || dark != null) {
         putIcon(idPlugin, lazyIcon, light, dark);
         return true;
       }
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
     return false;
   }
@@ -255,12 +252,18 @@ public class PluginLogo {
     try {
       Url url = Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
-      HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null);
+
+      HttpRequests.request(url).forceHttps(PluginManagerConfigurableNew.forceHttps()).productNameAsUserAgent()
+        .connect(request -> {
+          request.getConnection();
+          request.saveToFile(file, null);
+          return null;
+        });
     }
     catch (HttpRequests.HttpStatusException ignore) {
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
   }
 
@@ -281,45 +284,27 @@ public class PluginLogo {
   }
 
   @Nullable
-  private static PluginLogoIconProvider tryLoadIcon(@NotNull File dirFile, boolean light) {
-    return tryLoadIcon(new File(dirFile, getIconFileName(light)));
-  }
-
-  @Nullable
   private static PluginLogoIconProvider tryLoadIcon(@NotNull File iconFile) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     return iconFile.exists() && iconFile.length() > 0 ? loadFileIcon(() -> new FileInputStream(iconFile)) : null;
   }
 
   @Nullable
-  private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, boolean light) {
-    ZipEntry iconEntry = zipFile.getEntry(getIconFileName(light));
+  private static PluginLogoIconProvider tryLoadIcon(@NotNull ZipFile zipFile, @NotNull String name) {
+    ZipEntry iconEntry = zipFile.getEntry(PluginManagerCore.META_INF + name);
     return iconEntry == null ? null : loadFileIcon(() -> zipFile.getInputStream(iconEntry));
   }
 
-  @NotNull
-  public static String getIconFileName(boolean light) {
-    return PluginManagerCore.META_INF + (light ? PLUGIN_ICON : PLUGIN_ICON_DARK);
-  }
-
-  public static int height() {
-    return PLUGIN_ICON_SIZE;
-  }
-
-  public static int width() {
-    return PLUGIN_ICON_SIZE;
-  }
-
   @Nullable
-  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
     try {
-      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
-      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
+      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 40, 40);
+      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 80, 80);
 
       return new HiDPIPluginLogoIcon(logo40, logo80);
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.error(e);
       return null;
     }
   }

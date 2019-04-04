@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <rect width="1.5" height="8" x="2" y="4" fill="#AFB1B3"/>
-    <rect width="1.5" height="8" x="6.5" y="4" fill="#AFB1B3"/>
-    <rect width="5" height="1.5" x="3" y="7" fill="#AFB1B3"/>
-    <path fill="#AFB1B3" d="M13,10 L15,10 L12,13 L9,10 L11,10 L11,3 L13,3 L13,10 Z" transform="matrix(1 0 0 -1 0 16)"/>
-  </g>
-</svg>

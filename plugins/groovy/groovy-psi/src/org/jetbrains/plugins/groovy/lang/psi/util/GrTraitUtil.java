@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
@@ -63,7 +65,7 @@ public class GrTraitUtil {
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      List<PsiClass> result = new ArrayList<>();
+      List<PsiClass> result = ContainerUtil.newArrayList();
       InheritanceUtil.processSupers(trait, true, clazz -> {
         if (isTrait(clazz)) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, "groovy.transform.SelfType");
@@ -114,7 +116,7 @@ public class GrTraitUtil {
   @NotNull
   public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      final Collection<PsiMethod> result = new ArrayList<>();
+      final Collection<PsiMethod> result = ContainerUtil.newArrayList();
       doCollectCompiledTraitMethods(trait, result);
       return CachedValueProvider.Result.create(result, trait);
     });
@@ -170,7 +172,7 @@ public class GrTraitUtil {
     final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
     if (traitTypeParameters.length == 0) return ID_MAPPER;
 
-    final Map<String, PsiTypeParameter> substitutionMap = new THashMap<>();
+    final Map<String, PsiTypeParameter> substitutionMap = ContainerUtil.newTroveMap();
     for (PsiTypeParameter parameter : traitTypeParameters) {
       substitutionMap.put(parameter.getName(), parameter);
     }
@@ -206,7 +208,7 @@ public class GrTraitUtil {
   @NotNull
   public static Collection<GrField> getCompiledTraitFields(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
-      final Collection<GrField> result = new ArrayList<>();
+      final Collection<GrField> result = ContainerUtil.newArrayList();
       doCollectCompiledTraitFields(trait, result);
       return CachedValueProvider.Result.create(result, trait);
     });

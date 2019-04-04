@@ -40,6 +40,10 @@
 
   <application-components>
     <component>
+      <interface-class>com.intellij.openapi.vfs.jrt.JrtFileSystem</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
@@ -59,6 +63,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.hints.MethodChainHintsPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.lang.java.JavaModuleRenameListener</implementation-class>
@@ -87,7 +94,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
-      <headless-implementation-class/>
     </component>
 
   </project-components>
@@ -199,8 +205,8 @@
     <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"/>
 
     <!-- both EP implementation classes requires constructor injection (our plugins fixed, but 3rd-party not) -->
-    <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider" registerInPicoContainer="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder" registerInPicoContainer="true"/>
+    <extensionPoint name="projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider" registerInPicoContainer="true"/>
+    <extensionPoint name="projectImportBuilder" interface="com.intellij.projectImport.ProjectImportBuilder" registerInPicoContainer="true"/>
     <extensionPoint qualifiedName="com.intellij.projectStructureDetector" interface="com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector"/>
 
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"
@@ -302,10 +308,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.AnnotationHintsPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
-
-    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager"/>
@@ -315,6 +317,7 @@
     <applicationService serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.JavaRefactoringActionHandlerFactoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementRenderer"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassArrayConverter"
                         serviceImplementation="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
@@ -419,8 +422,6 @@
     <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
-
-    <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
@@ -549,6 +550,8 @@
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
 
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
+
+    <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
     <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
 
@@ -881,6 +884,7 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
+    <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
@@ -1100,6 +1104,7 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider" id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title" bundle="messages.JavadocBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.MethodChainHintsConfigurable"/>
     <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaNextParameterHandler"/>
@@ -1132,8 +1137,7 @@
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="UAST" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.ExternalAnnotationLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.InferredAnnotationsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider"/>
     <codeInsight.gotoSuper language="SPI" implementationClass="com.intellij.spi.SPIGotoSuperHandler"/>
     <codeInsight.gotoSuper language="JAVA" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <codeInsight.delegateMethods language="JAVA" implementationClass="com.intellij.codeInsight.generation.GenerateDelegateHandler"/>
@@ -1144,7 +1148,6 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.MethodChainsInlayProvider"/>
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
@@ -1174,7 +1177,6 @@
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
-    <inspectionElementsMerger implementation="com.intellij.codeInspection.ExplicitArrayFillingInspectionMerger"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
@@ -1413,14 +1415,9 @@
                      displayName="Loop can be replaced with Collection.removeIf()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.ExplicitArrayFillingInspection"
                      displayName="Explicit array filling"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ManualMinMaxCalculation"
-                     groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.ManualMinMaxCalculationInspection"
-                     displayName="Manual min/max calculation"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -1820,6 +1817,11 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.ToggleSourceInferredAnnotations</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>ToggleSourceInferredAnnotations</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.MakeAnnotationExternal</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>MakeAnnotationExternal</descriptionDirectoryName>
@@ -1905,8 +1907,6 @@
     <applicationInitializedListener implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent$Initializer"/>
     <java.externalAnnotation.locationProvider
         implementation="com.intellij.codeInsight.externalAnnotation.location.JBBundledAnnotationsProvider"/>
-    <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
-    <registryKey key="ide.java.show.bundled.runtime" defaultValue="false" description="Enables using bundled JetBrains Runtime for execution"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

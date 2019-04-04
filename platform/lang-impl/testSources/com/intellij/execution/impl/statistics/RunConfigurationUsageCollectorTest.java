@@ -3,23 +3,23 @@ package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.FirstBaseTestConfigurationFactory;
-import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryLocalTestConfigurationFactory;
-import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.MultiFactoryRemoteTestConfigurationFactory;
 import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.SecondBaseTestConfigurationFactory;
-import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static java.lang.String.valueOf;
+
 public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
-  private static void doTest(@NotNull List<? extends RunnerAndConfigurationSettings> configurations,
-                             @NotNull Set<? extends TestUsageDescriptor> expected, boolean withTemporary) {
+  private static void doTest(@NotNull List<RunnerAndConfigurationSettings> configurations,
+                             @NotNull Set<TestUsageDescriptor> expected, boolean withTemporary) {
     final Project project = getProject();
     final RunManager manager = RunManager.getInstance(project);
     try {
@@ -28,8 +28,12 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       }
 
       final RunConfigurationTypeUsagesCollector collector = new RunConfigurationTypeUsagesCollector();
+      final TemporaryRunConfigurationTypeUsagesCollector temporaryCollector = new TemporaryRunConfigurationTypeUsagesCollector();
 
-      final Set<MetricEvent> usages = collector.getMetrics(project);
+      Set<UsageDescriptor> temporaryUsages = temporaryCollector.getUsages(project);
+      assertTrue(temporaryUsages.isEmpty());
+
+      Set<UsageDescriptor> usages = collector.getUsages(project);
       assertEquals(expected.size(), usages.size());
       assertEquals(expected, toTestUsageDescriptor(usages));
 
@@ -38,16 +42,12 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
           configuration.setTemporary(true);
         }
 
-        final Set<TestUsageDescriptor> temporaryExpected = new HashSet<>();
-        for (TestUsageDescriptor descriptor : expected) {
-          final FeatureUsageData data = descriptor.myData.copy().addData("temporary", true);
-          temporaryExpected.add(new TestUsageDescriptor(descriptor.myKey, data));
-        }
+        temporaryUsages = temporaryCollector.getUsages(project);
+        assertEquals(expected.size(), temporaryUsages.size());
+        assertEquals(expected, toTestUsageDescriptor(temporaryUsages));
 
-        final Set<MetricEvent> temporaryUsages = collector.getMetrics(project);
-        assertEquals(temporaryExpected.size(), temporaryUsages.size());
-        final Set<TestUsageDescriptor> actual = toTestUsageDescriptor(temporaryUsages);
-        assertEquals(temporaryExpected, actual);
+        usages = collector.getUsages(project);
+        assertTrue(usages.isEmpty());
       }
     }
     finally {
@@ -329,48 +329,20 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
     doTest(configurations, expected, true);
   }
 
-  public void testRunConfigurationWithLocalFactory() {
-    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<>();
-    final RunManager instance = RunManager.getInstance(getProject());
-    final MultiFactoryLocalTestConfigurationFactory factory = MultiFactoryLocalTestConfigurationFactory.INSTANCE;
-    configurations.add(createByFactory(instance, factory, 1, false, false, false, true));
-
-    final Set<TestUsageDescriptor> expected = new HashSet<>();
-    expected.add(new TestUsageDescriptor(
-      "MultiFactoryTestRunConfigurationType", 1,
-      create(false, false, false, true).addData("factory", "Local"))
-    );
-    doTest(configurations, expected, true);
-  }
-
-  public void testRunConfigurationWithRemoteFactory() {
-    final List<RunnerAndConfigurationSettings> configurations = new ArrayList<>();
-    final RunManager instance = RunManager.getInstance(getProject());
-    final MultiFactoryRemoteTestConfigurationFactory factory = MultiFactoryRemoteTestConfigurationFactory.INSTANCE;
-    configurations.add(createByFactory(instance, factory, 1, false, false, false, true));
-
-    final Set<TestUsageDescriptor> expected = new HashSet<>();
-    expected.add(new TestUsageDescriptor(
-      "MultiFactoryTestRunConfigurationType", 1,
-      create(false, false, false, true).addData("factory", "Remote"))
-    );
-    doTest(configurations, expected, true);
-  }
-
   @NotNull
   private static FeatureUsageData create(boolean isShared, boolean isEditBeforeRun, boolean isActivate, boolean isParallel) {
     return new FeatureUsageData().
+      addData("plugin_type", "PLATFORM").
       addData("edit_before_run", isEditBeforeRun).
       addData("activate_before_run", isActivate).
       addData("shared", isShared).
-      addData("parallel", isParallel).
-      addData("temporary", false);
+      addData("parallel", isParallel);
   }
 
   @NotNull
-  private static Set<TestUsageDescriptor> toTestUsageDescriptor(@NotNull Set<MetricEvent> descriptors) {
+  private static Set<TestUsageDescriptor> toTestUsageDescriptor(@NotNull Set<UsageDescriptor> descriptors) {
     final Set<TestUsageDescriptor> result = new HashSet<>();
-    for (MetricEvent descriptor : descriptors) {
+    for (UsageDescriptor descriptor : descriptors) {
       result.add(new TestUsageDescriptor(descriptor));
     }
     return result;
@@ -378,20 +350,19 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
   private static class TestUsageDescriptor {
     private final String myKey;
+    private final int myValue;
     private final FeatureUsageData myData;
 
     private TestUsageDescriptor(@NotNull String key, int value, @NotNull FeatureUsageData data) {
-      this(key, data.addData("count", value));
-    }
-
-    private TestUsageDescriptor(@NotNull String key, @NotNull FeatureUsageData data) {
       myKey = key;
       myData = data;
+      myValue = value;
     }
 
-    private TestUsageDescriptor(@NotNull MetricEvent descriptor) {
-      myKey = descriptor.getEventId();
+    private TestUsageDescriptor(@NotNull UsageDescriptor descriptor) {
+      myKey = descriptor.getKey();
       myData = descriptor.getData();
+      myValue = descriptor.getValue();
     }
 
     @Override
@@ -400,38 +371,36 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       if (o == null || getClass() != o.getClass()) return false;
       TestUsageDescriptor that = (TestUsageDescriptor)o;
 
-      return Objects.equals(myKey, that.myKey) &&
+      return myValue == that.myValue &&
+             Objects.equals(myKey, that.myKey) &&
              Objects.equals(myData, that.myData);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKey, myData);
+      return Objects.hash(myKey, myValue, myData);
     }
 
     @Override
     public String toString() {
-      return "'" + myKey + "' " + myData.build();
+      return "'" + myKey + "' " + myData.build() + " : " + myValue;
     }
   }
 
   private static RunnerAndConfigurationSettings createFirst(@NotNull RunManager manager, int index,
                                                             boolean isShared, boolean isEditBeforeRun,
                                                             boolean isActivate, boolean isParallel) {
-    return createByFactory(manager, FirstBaseTestConfigurationFactory.INSTANCE, index, isShared, isEditBeforeRun, isActivate, isParallel);
-
+    return configure(manager.createConfiguration("Test_" + index, FirstBaseTestConfigurationFactory.INSTANCE),
+                     isShared, isEditBeforeRun, isActivate, isParallel
+    );
   }
 
   private static RunnerAndConfigurationSettings createSecond(@NotNull RunManager manager, int index,
                                                              boolean isShared, boolean isEditBeforeRun,
                                                              boolean isActivate, boolean isParallel) {
-    return createByFactory(manager, SecondBaseTestConfigurationFactory.INSTANCE, index, isShared, isEditBeforeRun, isActivate, isParallel);
-  }
-
-  private static RunnerAndConfigurationSettings createByFactory(@NotNull RunManager manager, @NotNull ConfigurationFactory factory,
-                                                                int index, boolean isShared, boolean isEditBeforeRun,
-                                                                boolean isActivate, boolean isParallel) {
-    return configure(manager.createConfiguration("Test_" + index, factory), isShared, isEditBeforeRun, isActivate, isParallel);
+    return configure(manager.createConfiguration("Test_" + index, SecondBaseTestConfigurationFactory.INSTANCE),
+                     isShared, isEditBeforeRun, isActivate, isParallel
+    );
   }
 
   @NotNull

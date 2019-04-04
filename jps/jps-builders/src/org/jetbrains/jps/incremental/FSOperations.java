@@ -90,6 +90,14 @@ public class FSOperations {
     }
   }
 
+  /**
+   * @deprecated use markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file)
+   */
+  @Deprecated
+  public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
+    markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
+  }
+
   public static void markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
@@ -106,6 +114,14 @@ public class FSOperations {
     }
   }
 
+  /**
+   * @deprecated use markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter)
+   */
+  @Deprecated
+  public static void markDirty(CompileContext context, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
+    markDirty(context, CompilationRound.NEXT, chunk, filter);
+  }
+
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       markDirty(context, round, target, filter);
@@ -115,6 +131,14 @@ public class FSOperations {
   public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     markDirtyFiles(context, target, round, pd.timestamps.getStorage(), true, null, filter);
+  }
+
+  /**
+   * @deprecated use markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, FileFilter filter)
+   */
+  @Deprecated
+  public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
+    markDirtyRecursively(context, CompilationRound.NEXT, chunk);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {
@@ -191,7 +215,7 @@ public class FSOperations {
                              final CompilationRound round,
                              Timestamps timestamps,
                              boolean forceMarkDirty,
-                             @Nullable Set<? super File> currentFiles,
+                             @Nullable THashSet<File> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
     boolean completelyMarkedDirty = true;
     for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
@@ -223,7 +247,7 @@ public class FSOperations {
                                              final File file,
                                              @NotNull final Timestamps tsStorage,
                                              final boolean forceDirty,
-                                             @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
@@ -286,12 +310,12 @@ public class FSOperations {
   }
 
   private static boolean traverseRecursivelyIO(CompileContext context,
-                                               final BuildRootDescriptor rd,
-                                               final CompilationRound round,
-                                               final File file,
-                                               @NotNull final Timestamps tsStorage,
-                                               final boolean forceDirty,
-                                               @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
+                                             final BuildRootDescriptor rd,
+                                             final CompilationRound round,
+                                             final File file,
+                                             @NotNull final Timestamps tsStorage,
+                                             final boolean forceDirty,
+                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
     BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final File[] children = file.listFiles();
     if (children != null) { // is directory

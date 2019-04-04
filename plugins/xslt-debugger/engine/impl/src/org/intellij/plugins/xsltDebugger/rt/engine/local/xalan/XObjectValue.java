@@ -13,7 +13,6 @@ import javax.xml.transform.SourceLocator;
 import javax.xml.transform.TransformerException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Locale;
 
 class XObjectValue implements Value {
   private String myTypeString;
@@ -73,7 +72,7 @@ class XObjectValue implements Value {
 
   public Type getType() {
     try {
-      return XPathType.valueOf(myTypeString.toUpperCase(Locale.ENGLISH));
+      return XPathType.valueOf(myTypeString.toUpperCase());
     } catch (IllegalArgumentException e) {
       return new ObjectType(myTypeString);
     }

@@ -689,7 +689,7 @@ public class CFGBuilder {
     }
     // Unknown function
     flushFields();
-    myAnalyzer.addConditionalErrorThrow();
+    myAnalyzer.addConditionalRuntimeThrow();
     PsiType functionalInterfaceType = functionalExpression.getType();
     myAnalyzer.addMethodThrows(LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType), null);
     PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);

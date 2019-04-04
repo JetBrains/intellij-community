@@ -95,7 +95,7 @@ class GitRewordAction : GitCommitEditingAction() {
             "", error, NotificationType.ERROR, null)
           VcsNotifier.getInstance(project).notify(notification)
         }
-      }, "Loading Commit Message...", true, project)
+      }, "Loading Commit Message", true, project)
     return commitData
   }
 
@@ -114,8 +114,6 @@ class GitRewordAction : GitCommitEditingAction() {
     val commitEditor = createCommitEditor()
 
     init {
-      Disposer.register(disposable, commitEditor)
-
       init()
       isModal = false
       title = "Reword Commit"

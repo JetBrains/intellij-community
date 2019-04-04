@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,11 +9,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -121,11 +122,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Nullable
   @Override
   public Element getState() {
-    Element state = XmlSerializer.serialize(this);
-    if (state == null) {
-      state = new Element("state");
-    }
-
+    Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
     if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
@@ -141,7 +138,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   @Override
   public void loadState(@NotNull Element state) {
-    XmlSerializer.deserializeInto(state, this);
+    XmlSerializer.deserializeInto(this, state);
 
     List<Element> steppingFiltersElement = state.getChildren("filter");
     if (steppingFiltersElement.isEmpty()) {
@@ -340,7 +337,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   @Transient
   public int getTransport() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       return SOCKET_TRANSPORT;
     }
     return DEBUGGER_TRANSPORT;

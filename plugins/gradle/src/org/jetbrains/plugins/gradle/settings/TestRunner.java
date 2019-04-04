@@ -5,5 +5,5 @@ package org.jetbrains.plugins.gradle.settings;
  * @author Vladislav.Soroka
  */
 public enum TestRunner {
-  GRADLE, PLATFORM, CHOOSE_PER_TEST
+  PLATFORM, GRADLE, CHOOSE_PER_TEST
 }

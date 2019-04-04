@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
@@ -352,6 +353,7 @@ public class JdkUtil {
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
       if (isUrlClassloader(vmParameters)) {
         classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
+        classpath.add(PathUtil.getJarPathForClass(PathManager.class));
         classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
         classpath.add(PathUtil.getJarPathForClass(THashMap.class));
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources

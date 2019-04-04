@@ -92,7 +92,12 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
         myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
       }
+      Map<FileNameMatcher, FileType> removedMappings = myManager.getExtensionMap().getRemovedMappings(myTempPatternsTable, myTempFileTypes);
       myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+      for (FileNameMatcher matcher : removedMappings.keySet()) {
+        myManager.getRemovedMappings().put(matcher, Pair.create(removedMappings.get(matcher), true));
+      }
+
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
   }
@@ -291,6 +296,21 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     return null;
   }
 
+  @Nullable
+  public FileType addNewPattern(FileType type, String pattern) {
+    FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
+    final FileType existing = findExistingFileType(matcher);
+    if (existing != null) {
+      return existing;
+    }
+
+    myTempPatternsTable.addAssociation(matcher, type);
+    myPatterns.addPatternAndSelect(pattern);
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myPatternsList, true));
+
+    return null;
+  }
+
   private void removePattern() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
@@ -308,19 +328,19 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
   }
 
   public static class RecognizedFileTypes extends JPanel {
-    private final JList<FileType> myFileTypesList;
+    private final JList myFileTypesList;
     private final MySpeedSearch mySpeedSearch;
     private FileTypeConfigurable myController;
 
     public RecognizedFileTypes() {
       super(new BorderLayout());
 
-      myFileTypesList = new JBList<>(new DefaultListModel<>());
+      myFileTypesList = new JBList(new DefaultListModel());
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myFileTypesList.setCellRenderer(new FileTypeRenderer(() -> {
         ArrayList<FileType> result = new ArrayList<>();
         for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
-          result.add(myFileTypesList.getModel().getElementAt(i));
+          result.add((FileType)myFileTypesList.getModel().getElementAt(i));
         }
         return result;
       }));
@@ -428,7 +448,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     }
 
     public FileType getSelectedFileType() {
-      return myFileTypesList.getSelectedValue();
+      return (FileType)myFileTypesList.getSelectedValue();
     }
 
     public JComponent getComponent() {
@@ -436,7 +456,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     }
 
     public void setFileTypes(FileType[] types) {
-      DefaultListModel<FileType> listModel = (DefaultListModel<FileType>)myFileTypesList.getModel();
+      DefaultListModel listModel = (DefaultListModel)myFileTypesList.getModel();
       listModel.clear();
       for (FileType type : types) {
         if (type != FileTypes.UNKNOWN) {
@@ -457,12 +477,12 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
   }
 
   public static class PatternsPanel extends JPanel {
-    private final JBList<String> myPatternsList;
+    private final JBList myPatternsList;
     private FileTypeConfigurable myController;
 
     public PatternsPanel() {
       super(new BorderLayout());
-      myPatternsList = new JBList<>(new DefaultListModel<>());
+      myPatternsList = new JBList(new DefaultListModel());
       myPatternsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myPatternsList.setCellRenderer(new ExtensionRenderer());
       myPatternsList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
@@ -487,8 +507,8 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       myPatternsList.clearSelection();
     }
 
-    private DefaultListModel<String> getListModel() {
-      return (DefaultListModel<String>)myPatternsList.getModel();
+    private DefaultListModel getListModel() {
+      return (DefaultListModel)myPatternsList.getModel();
     }
 
     public void addPattern(String pattern) {
@@ -499,30 +519,37 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
       ScrollingUtil.ensureSelectionExists(myPatternsList);
     }
 
+    public void addPatternAndSelect(String pattern) {
+      addPattern(pattern);
+      ScrollingUtil.selectItem(myPatternsList, getListModel().getSize() - 1);
+    }
+
     public void select(final String pattern) {
       for (int i = 0; i < myPatternsList.getItemsCount(); i++) {
-        final String at = myPatternsList.getModel().getElementAt(i);
-        final FileNameMatcher matcher = FileTypeManager.parseFromString(at);
-        if (matcher.acceptsCharSequence(pattern)) {
-          ScrollingUtil.selectItem(myPatternsList, i);
-          return;
+        final Object at = myPatternsList.getModel().getElementAt(i);
+        if (at instanceof String) {
+          final FileNameMatcher matcher = FileTypeManager.parseFromString((String)at);
+          if (FileNameMatcherEx.acceptsCharSequence(matcher, pattern)) {
+            ScrollingUtil.selectItem(myPatternsList, i);
+            return;
+          }
         }
       }
     }
 
     public String removeSelected() {
-      String selectedValue = myPatternsList.getSelectedValue();
+      Object selectedValue = myPatternsList.getSelectedValue();
       if (selectedValue == null) return null;
       ListUtil.removeSelectedItems(myPatternsList);
-      return selectedValue;
+      return (String)selectedValue;
     }
 
     public String getDefaultExtension() {
-      return getListModel().getElementAt(0);
+      return (String)getListModel().getElementAt(0);
     }
 
     public String getSelectedItem() {
-      return myPatternsList.getSelectedValue();
+      return (String)myPatternsList.getSelectedValue();
     }
   }
 

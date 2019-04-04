@@ -31,13 +31,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.DialogManager;
 import git4idea.GitProtectedBranchesKt;
-import git4idea.GitRevisionNumber;
 import git4idea.branch.GitRebaseParams;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -66,6 +63,7 @@ import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static git4idea.GitUtil.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -142,7 +140,7 @@ public class GitRebaseProcess {
     LOG.info("Started rebase");
     LOG.debug("Started rebase with the following spec: " + myRebaseSpec);
 
-    Map<GitRepository, GitRebaseStatus> statuses = new LinkedHashMap<>(myRebaseSpec.getStatuses());
+    Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
@@ -232,7 +230,7 @@ public class GitRebaseProcess {
     String repoName = getShortRepositoryName(repository);
     LOG.info("Rebasing root " + repoName + ", mode: " + notNull(customMode, "standard"));
 
-    Collection<GitRebaseUtils.CommitInfo> skippedCommits = new ArrayList<>();
+    Collection<GitRebaseUtils.CommitInfo> skippedCommits = newArrayList();
     MultiMap<GitRepository, GitRebaseUtils.CommitInfo> allSkippedCommits = getSkippedCommits(alreadyRebased);
     boolean retryWhenDirty = false;
 
@@ -417,7 +415,7 @@ public class GitRebaseProcess {
   private ResolveConflictResult showConflictResolver(@NotNull GitRepository conflicting, boolean calledFromNotification) {
     GitConflictResolver.Params params = new GitConflictResolver
       .Params(myProject)
-      .setMergeDialogCustomizer(createDialogCustomizer(conflicting, myRebaseSpec))
+      .setMergeDialogCustomizer(new GitRebaseMergeDialogCustomizer(conflicting, myRebaseSpec))
       .setReverse(true);
     RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, conflicting, params, calledFromNotification);
     boolean allResolved = conflictResolver.merge();
@@ -426,77 +424,60 @@ public class GitRebaseProcess {
     return ResolveConflictResult.UNRESOLVED_REMAIN;
   }
 
-  @NotNull
-  private static MergeDialogCustomizer createDialogCustomizer(@NotNull GitRepository repository, @NotNull GitRebaseSpec rebaseSpec) {
-    GitRebaseParams rebaseParams = rebaseSpec.getParams();
-    if (rebaseParams != null) {
-      String currentBranchAtTheStartOfRebase = rebaseSpec.getInitialBranchNames().get(repository);
-      String upstream = rebaseParams.getUpstream();
-      if (upstream.equals(HEAD)) {
+  private static class GitRebaseMergeDialogCustomizer extends MergeDialogCustomizer {
+
+    @Nullable private String myRebasingBranch;
+    @Nullable private String myBaseBranch;
+    private boolean myOntoBranch;
+
+    private GitRebaseMergeDialogCustomizer(@NotNull GitRepository repository, @NotNull GitRebaseSpec rebaseSpec) {
+      GitRebaseParams rebaseParams = rebaseSpec.getParams();
+      if (rebaseParams != null) {
+        String currentBranchAtTheStartOfRebase = rebaseSpec.getInitialBranchNames().get(repository);
+        String upstream = rebaseParams.getUpstream();
+        if (upstream.equals(HEAD)) {
           /* this is to overcome a hack: passing HEAD into `git rebase HEAD branch`
              to avoid passing branch names for different repositories */
-        upstream = currentBranchAtTheStartOfRebase;
-      }
-      String branch = rebaseParams.getBranch();
-      if (branch == null) {
-        branch = currentBranchAtTheStartOfRebase;
-      }
+          upstream = currentBranchAtTheStartOfRebase;
+        }
+        String branch = rebaseParams.getBranch();
+        if (branch == null) {
+          branch = currentBranchAtTheStartOfRebase;
+        }
 
-      if (upstream != null && branch != null) {
-        return new GitRebaseMergeDialogCustomizer(upstream, branch);
-      }
-    }
-    return new MergeDialogCustomizer();
-  }
-
-  private static class GitRebaseMergeDialogCustomizer extends MergeDialogCustomizer {
-    @NotNull private final String myRebasingBranch;
-    @NotNull private final String myBasePresentable;
-    @Nullable private final String myBaseBranch;
-    @Nullable private final Hash myBaseHash;
-
-    private GitRebaseMergeDialogCustomizer(@NotNull String upstream, @NotNull String branch) {
-      myRebasingBranch = branch;
-      if (upstream.matches("[a-fA-F0-9]{40}")) {
-        myBasePresentable = VcsLogUtil.getShortHash(upstream);
-        myBaseBranch = null;
-        myBaseHash = HashImpl.build(upstream);
-      }
-      else {
-        myBasePresentable = upstream;
+        myRebasingBranch = branch;
         myBaseBranch = upstream;
-        myBaseHash = null;
+        myOntoBranch = !myBaseBranch.matches("[a-fA-F0-9]{40}");
+        if (!myOntoBranch) myBaseBranch = VcsLogUtil.getShortHash(myBaseBranch);
       }
     }
 
     @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-      return GitDefaultMergeDialogCustomizerKt.getDescriptionForRebase(myRebasingBranch, myBaseBranch, myBaseHash);
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getMultipleFileMergeDescription(files);
+      return GitDefaultMergeDialogCustomizerKt.getDescriptionForRebase(myRebasingBranch, myBaseBranch, myOntoBranch);
     }
 
     @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getLeftPanelTitle(file);
       return GitDefaultMergeDialogCustomizerKt.getDefaultLeftPanelTitleForBranch(myRebasingBranch);
     }
 
     @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
-      Hash hash = myBaseHash;
-      if (hash == null) {
-        GitRevisionNumber gitRevisionNumber = tryCast(revisionNumber, GitRevisionNumber.class);
-        hash = gitRevisionNumber != null ? HashImpl.build(gitRevisionNumber.asString()) : null;
-      }
-      return GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, hash);
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getRightPanelTitle(file, revisionNumber);
+      return GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, revisionNumber, myOntoBranch);
     }
 
     @Nullable
     @Override
     public List<String> getColumnNames() {
-      return asList(GitMergeProvider.calcColumnName(false, myRebasingBranch),
-                    GitMergeProvider.calcColumnName(true, myBasePresentable));
+      if (myRebasingBranch == null || myBaseBranch == null) return null;
+      return asList(GitMergeProvider.calcColumnName(false, myRebasingBranch), GitMergeProvider.calcColumnName(true, myBaseBranch));
     }
   }
 
@@ -571,7 +552,7 @@ public class GitRebaseProcess {
 
   @NotNull
   private static Map<GitRepository, GitSuccessfulRebase> getSuccessfulRepositories(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
-    Map<GitRepository, GitSuccessfulRebase> map = new LinkedHashMap<>();
+    Map<GitRepository, GitSuccessfulRebase> map = newLinkedHashMap();
     for (GitRepository repository : statuses.keySet()) {
       GitRebaseStatus status = statuses.get(repository);
       if (status instanceof GitSuccessfulRebase) map.put(repository, (GitSuccessfulRebase)status);
@@ -636,7 +617,7 @@ public class GitRebaseProcess {
                            @NotNull Git git,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
-      super(project, singleton(repository.getRoot()), params);
+      super(project, git, singleton(repository.getRoot()), params);
       myCalledFromNotification = calledFromNotification;
     }
 

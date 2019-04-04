@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
+public class SyntheticBlock extends AbstractSyntheticBlock implements Block, ReadOnlyBlockContainer {
   private final List<Block> mySubBlocks;
   private final Indent myChildIndent;
 

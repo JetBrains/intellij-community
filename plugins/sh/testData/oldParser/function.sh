@@ -1,3 +1,0 @@
-doIt() {
-export PATH= "a"
-}

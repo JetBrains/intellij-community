@@ -1,4 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -13,7 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +28,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -262,7 +264,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @NotNull
   public String decode(@NotNull String text) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       text = Normalizer.normalize(text, Normalizer.Form.NFC);
     }
 
@@ -292,7 +294,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     if (completion != null) {
       return completion.getFileReferenceCompletionVariants(this);
     }
-    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   /**

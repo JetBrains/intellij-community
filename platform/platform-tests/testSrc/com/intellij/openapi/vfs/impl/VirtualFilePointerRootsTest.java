@@ -20,8 +20,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,9 +32,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@RunFirst
-@SkipSlowTestLocally
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class VirtualFilePointerRootsTest extends PlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
@@ -111,7 +110,7 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
     VirtualFile dir2 = WriteAction.compute(() -> root.createChildDirectory(this, "dir2"));
 
     PsiTestUtil.addSourceRoot(getModule(), dir1);
-    PsiTestUtil.addLibrary(getModule(), "myLib", "", new String[]{dir2.getPath()}, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    PsiTestUtil.addLibrary(getModule(), "myLib", "", new String[]{dir2.getPath()}, ArrayUtil.EMPTY_STRING_ARRAY);
     assertSourceIs(dir1);
     assertLibIs(dir2);
 

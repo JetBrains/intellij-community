@@ -1,78 +1,77 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public final class JetBrainsProtocolHandler {
+public class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final String FRAGMENT_PARAM_NAME = "__fragment";
-
   private static String ourMainParameter = null;
   private static String ourCommand = null;
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
-  private static Map<String, String> ourParameters = Collections.emptyMap();
+  private static final Map<String, String> ourParameters = new HashMap<>(0);
   private static boolean initialized = false;
 
-  public static void processJetBrainsLauncherParameters(@NotNull String url) {
+  public static void processJetBrainsLauncherParameters(String url) {
     System.setProperty(JetBrainsProtocolHandler.class.getName(), url);
-
-    // parse without protocol, otherwise first path component will be considered as host
-    URI uri = URI.create(url.substring(PROTOCOL.length()));
-
-    String path = uri.getPath();
-    List<String> urlParts = StringUtil.split(path, "/");
-    // expect at least platform prefix and command name
+    url = url.substring(PROTOCOL.length());
+    List<String> urlParts = StringUtil.split(url, "/");
     if (urlParts.size() < 2) {
-      //noinspection UseOfSystemOutOrSystemErr
       System.err.print("Wrong URL: " + PROTOCOL + url);
       return;
     }
-
+    String platformPrefix = urlParts.get(0);
+    ourMainParameter = null;
+    ourParameters.clear();
     ourCommand = urlParts.get(1);
-    ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
-    Map<String, String> parameters = new THashMap<>();
-    computeParameters(uri.getRawQuery(), parameters);
-    parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
-    ourParameters = Collections.unmodifiableMap(parameters);
+    if (urlParts.size() > 2) {
+      url = url.substring(platformPrefix.length() + 1 + ourCommand.length() + 1);
+      List<String> strings = StringUtil.split(url, "?");
+      ourMainParameter = strings.get(0);
+
+      if (strings.size() > 1) {
+        List<String> keyValues = StringUtil.split(StringUtil.join(ContainerUtil.subList(strings, 1), "?"), "&");
+        for (String keyValue : keyValues) {
+          if (keyValue.contains("=")) {
+            int ind = keyValue.indexOf('=');
+            String key = keyValue.substring(0, ind);
+            String value = keyValue.substring(ind + 1);
+            if (REQUIRED_PLUGINS_KEY.equals(key)) {
+              System.setProperty(key, value);
+            } else {
+              ourParameters.put(key, value);
+            }
+          } else {
+            ourParameters.put(keyValue, "");
+          }
+        }
+      }
+    }
+
     initialized = true;
-  }
-
-  // well, Netty cannot be added as dependency and so, QueryStringDecoder cannot be used
-  private static void computeParameters(@NotNull String rawQuery, @SuppressWarnings("SameParameterValue") @NotNull Map<String, String> parameters) {
-    if (StringUtilRt.isEmpty(rawQuery)) {
-      return;
-    }
-
-    for (String keyValue : StringUtil.split(rawQuery, "&")) {
-      if (keyValue.contains("=")) {
-        int ind = keyValue.indexOf('=');
-        String key = URLUtil.unescapePercentSequences(keyValue, 0, ind).toString();
-        String value = URLUtil.unescapePercentSequences(keyValue, ind + 1, keyValue.length()).toString();
-        if (REQUIRED_PLUGINS_KEY.equals(key)) {
-          System.setProperty(key, value);
-        }
-        else {
-          parameters.put(key, value);
-        }
-      }
-      else {
-        parameters.put(keyValue, "");
-      }
-    }
   }
 
   @Nullable
@@ -103,9 +102,8 @@ public final class JetBrainsProtocolHandler {
     ourCommand = null;
   }
 
-  @NotNull
   public static Map<String, String> getParameters() {
     init();
-    return ourParameters;
+    return Collections.unmodifiableMap(ourParameters);
   }
 }

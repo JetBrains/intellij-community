@@ -110,7 +110,7 @@ class MacDmgBuilder {
     def jreManager = buildContext.bundledJreManager
     String suffix = "-no-jdk", javaExePath = null
     if (secondJreArchive != null) {
-      suffix = ""
+      suffix = "-jbr${jreManager.getSecondJreVersion()}"
       javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
     }
     else if (jreArchivePath != null) {
@@ -193,9 +193,6 @@ class MacDmgBuilder {
       }
       ftpAction("put", false, "777") {
         ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-          include(name: "entitlements.xml")
-          include(name: "sign.sh")
-          include(name: "notarize.sh")
           include(name: "signapp.sh")
         }
       }
@@ -206,9 +203,7 @@ class MacDmgBuilder {
                            macHostProperties.userName,
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
-                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           "no" // set to 'yes' to enable notarization
-      ]
+                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help")]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -92,7 +91,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * not applicable to this run configuration producer.
    */
   @Nullable
-  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
@@ -105,13 +104,6 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       LOG.error(getConfigurationFactory() + " produced wrong type", e);
       return null;
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      return null;
-    }
     return new ConfigurationFromContextImpl(this, settings, ref.get());
   }
 
@@ -122,21 +114,19 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context       contains the information about a location in the source code.
    * @param sourceElement a reference to the source element for the run configuration (by default contains the element at caret,
    *                      can be updated by the producer to point to a higher-level element in the tree).
+   *
    * @return true if the context is applicable to this run configuration producer, false if the context is not applicable and the
    * configuration should be discarded.
    */
-  protected abstract boolean setupConfigurationFromContext(@NotNull T configuration,
-                                                           @NotNull ConfigurationContext context,
-                                                           @NotNull Ref<PsiElement> sourceElement);
+  protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
 
   /**
    * Checks if the specified configuration was created from the specified context.
-   *
    * @param configuration a configuration instance.
    * @param context       contains the information about a location in the source code.
    * @return true if this configuration was created from the specified context, false otherwise.
    */
-  public abstract boolean isConfigurationFromContext(@NotNull T configuration, @NotNull ConfigurationContext context);
+  public abstract boolean isConfigurationFromContext(T configuration, ConfigurationContext context);
 
   /**
    * When two configurations are created from the same context by two different producers, checks if the configuration created by
@@ -188,7 +178,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return a configuration (new or existing) matching the context, or null if the context is not applicable to this producer.
    */
   @Nullable
-  public ConfigurationFromContext findOrCreateConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public ConfigurationFromContext findOrCreateConfigurationFromContext(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
@@ -205,7 +195,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       // replace with existing configuration if any
       RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
       if (settings == null) {
-        RunManager.getInstance(context.getProject()).setUniqueNameIfNeeded(fromContext.getConfiguration());
+        RunManager.getInstance(context.getProject()).setUniqueNameIfNeed(fromContext.getConfiguration());
       }
       else {
         fromContext.setConfigurationSettings(settings);
@@ -222,7 +212,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return an existing configuration matching the context, or null if no such configuration is found.
    */
   @Nullable
-  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull ConfigurationContext context) {
+  public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
     final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {

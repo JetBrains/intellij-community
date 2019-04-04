@@ -76,7 +76,7 @@ class ExitContext {
     }
   }
 
-  void registerReturnValue(PsiExpression value, List<? super String> replacements) {
+  void registerReturnValue(PsiExpression value, List<String> replacements) {
     myReturnVariableUsed = true;
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myReturnVariableDefaultValue, value)) {
       replacements.add(0, myReturnVariable + "=" + value.getText() + ";");
@@ -122,6 +122,8 @@ class ExitContext {
         // Keep final when possible to respect code style setting "generate local variables as 'final'"
         requireNonNull(var.getModifierList()).setModifierProperty(PsiModifier.FINAL, false);
       }
+      PsiJavaToken end = requireNonNull(myBlock.getRBrace());
+      myBlock.addBefore(myFactory.createStatementFromText("return " + myReturnVariable + ";", myBlock), end);
       return var;
     }
     return null;

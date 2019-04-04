@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -219,11 +219,12 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
 
       CommentTracker ct = new CommentTracker();
       // Should not reach here if getRExpression is null: isInitializedWithSameExpression would return false
-      field.setInitializer(ct.markUnchanged(assignment.getRExpression()));
+      PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
+      field.setInitializer(ct.markUnchanged(initializer));
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comments != null) {
-        PsiCodeBlock block = factory.createCodeBlockFromText("{" + comments + "}", assignment);
+        PsiCodeBlock block = factory.createCodeBlockFromText("{" + comments + "}", initializer);
         for(PsiElement child : block.getChildren()) {
           if(child instanceof PsiComment || child instanceof PsiWhiteSpace) {
             field.getParent().addBefore(child, field);

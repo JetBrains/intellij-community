@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.settingsSummary.ProblemType;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
@@ -76,7 +76,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static File createZip(@Nullable StringBuilder troubleshooting) throws IOException {
-    String productName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getLowercaseProductName());
+    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName().toLowerCase(Locale.US);
     File zippedLogsFile = FileUtil.createTempFile(productName + "-logs-" + getDate(), ".zip");
 
     try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {

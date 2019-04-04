@@ -25,7 +25,8 @@ public class AddClientPropertyDialog extends DialogWrapper {
     super(project, false);
     init();
     setTitle(UIDesignerBundle.message("client.property.add.title"));
-    myGroupPanel.setBorder(IdeBorderFactory.createTitledBorder(UIDesignerBundle.message("client.properties.type.header")));
+    myGroupPanel.setBorder(IdeBorderFactory.createTitledBorder(UIDesignerBundle.message("client.properties.type.header"),
+                                                               true));
   }
 
   @Override

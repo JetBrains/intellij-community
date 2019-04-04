@@ -1,8 +1,0 @@
-{
-  '@id':0,
-  someParameter:foo,
-  intList:[
-    42,
-    21
-  ]
-}

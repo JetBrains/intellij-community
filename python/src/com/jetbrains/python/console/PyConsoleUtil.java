@@ -253,10 +253,7 @@ public class PyConsoleUtil {
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {
     final AnAction printAction = ActionManager.getInstance().getAction("Print");
-    return new DumbAwareAction() {
-      {
-        ActionUtil.copyFrom(this, "Print");
-      }
+    final DumbAwareAction newPrintAction = new DumbAwareAction() {
       @Override
       public void update(@NotNull AnActionEvent e) {
         printAction.update(createActionEvent(e, consoleView));
@@ -267,6 +264,8 @@ public class PyConsoleUtil {
         printAction.actionPerformed(createActionEvent(e, consoleView));
       }
     };
+    newPrintAction.copyFrom(printAction);
+    return newPrintAction;
   }
 }
 

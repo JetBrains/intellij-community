@@ -50,6 +50,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
                                                          private val editorsProvider: XDebuggerEditorsProvider,
                                                          private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
                                                          protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
+  protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
   @Volatile protected var isForceStep: Boolean = false

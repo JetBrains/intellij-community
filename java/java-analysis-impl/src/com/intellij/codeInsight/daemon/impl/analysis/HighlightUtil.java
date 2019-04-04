@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -32,7 +32,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -1010,9 +1009,9 @@ public class HighlightUtil extends HighlightUtilBase {
       return null;
     }
 
-    boolean isInt = ElementType.INTEGER_LITERALS.contains(type);
-    boolean isFP = ElementType.REAL_LITERALS.contains(type);
-    String text = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
+    boolean isInt = PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type);
+    boolean isFP = PsiLiteralExpressionImpl.REAL_LITERALS.contains(type);
+    String text = isInt || isFP ? literal.getText().toLowerCase() : literal.getText();
     Object value = expression.getValue();
 
     if (file != null) {
@@ -1180,7 +1179,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
-    String[] parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
+    String[] parts = ArrayUtil.EMPTY_STRING_ARRAY;
 
     if (isInt) {
       int start = 0;
@@ -1242,7 +1241,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   static Set<PsiClassType> collectUnhandledExceptions(@NotNull final PsiTryStatement statement) {
-    final Set<PsiClassType> thrownTypes = new java.util.HashSet<>();
+    final Set<PsiClassType> thrownTypes = ContainerUtil.newHashSet();
 
     final PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock != null) {
@@ -1339,7 +1338,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
     thrownTypes.add(PsiType.getJavaLangError(manager, parameterResolveScope));
     thrownTypes.add(PsiType.getJavaLangRuntimeException(manager, parameterResolveScope));
-    final Collection<HighlightInfo> result = new ArrayList<>();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isMultiCatch = parameterTypeElements.size() > 1;
@@ -2454,7 +2453,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static Collection<HighlightInfo> checkCatchTypeIsDisjoint(@NotNull final PsiParameter parameter) {
     if (!(parameter.getType() instanceof PsiDisjunctionType)) return null;
 
-    final Collection<HighlightInfo> result = new ArrayList<>();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     for (int i = 0, size = typeElements.size(); i < size; i++) {
       final PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(typeElements.get(i).getType());
@@ -2494,7 +2493,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isInMultiCatch = typeElements.size() > 1;
-    final Collection<HighlightInfo> result = new ArrayList<>();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     for (PsiTypeElement typeElement : typeElements) {
       final PsiClass catchClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
@@ -2877,8 +2876,8 @@ public class HighlightUtil extends HighlightUtilBase {
         if (moduleAccessProblem) {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
-        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope());
+        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiMember) {
+          HighlightFixUtil.registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameWrongRefFix((PsiReferenceExpression)ref));
           }
@@ -3096,7 +3095,6 @@ public class HighlightUtil extends HighlightUtilBase {
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
     ENHANCED_SWITCH(LanguageLevel.JDK_12_PREVIEW, "feature.enhanced.switch"),
     SWITCH_EXPRESSION(LanguageLevel.JDK_12_PREVIEW, "feature.switch.expressions"),
-    TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
     RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
 
     private final LanguageLevel level;

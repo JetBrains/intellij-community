@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse;
 
@@ -15,12 +15,12 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import java.nio.file.Paths;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-public class EclipseEmlTest extends JavaProjectTestCase {
+public class EclipseEmlTest extends IdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -79,7 +79,7 @@ public class EclipseEmlTest extends JavaProjectTestCase {
   private static void replaceRoot(String path, final String child, final Project project) throws IOException, JDOMException {
     final File emlFile = new File(path, child);
     String fileText = FileUtil.loadFile(emlFile).replaceAll("\\$ROOT\\$", project.getBasePath());
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
     JDOMUtil.write(JDOMUtil.load(fileText), emlFile, "\n");

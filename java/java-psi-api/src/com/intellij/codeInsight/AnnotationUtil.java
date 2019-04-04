@@ -20,7 +20,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * @author max
@@ -105,7 +104,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName) && isApplicableToDeclaration(annotation, list)) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
         if (result == null) {
           result = new SmartList<>();
         }
@@ -113,17 +112,6 @@ public class AnnotationUtil {
       }
     }
     return result;
-  }
-
-  private static boolean isApplicableToDeclaration(PsiAnnotation annotation, PsiModifierList list) {
-    PsiAnnotation.TargetType[] allTargets = AnnotationTargetUtil.getTargetsForLocation(list);
-    if (allTargets.length == 0) return true;
-                                
-    PsiAnnotation.TargetType[] nonTypeUse = Stream
-      .of(allTargets)
-      .filter(t -> t != PsiAnnotation.TargetType.TYPE_USE)
-      .toArray(PsiAnnotation.TargetType[]::new);
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
   @Nullable
@@ -188,7 +176,7 @@ public class AnnotationUtil {
   @NotNull
   public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
     return CachedValuesManager.getCachedValue(element, () -> {
-      Set<PsiModifierListOwner> result = new LinkedHashSet<>();
+      Set<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
       if (element instanceof PsiMethod) {
         collectSuperMethods(result, ((PsiMethod)element).getHierarchicalMethodSignature(), element,
                             JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());
@@ -304,14 +292,6 @@ public class AnnotationUtil {
       PsiType type = null;
       if (listOwner instanceof PsiMethod) {
         type = ((PsiMethod)listOwner).getReturnType();
-      }
-      else if (listOwner instanceof PsiParameter &&
-               listOwner.getParent() instanceof PsiParameterList &&
-               listOwner.getParent().getParent() instanceof PsiLambdaExpression) {        
-        if (((PsiParameter)listOwner).getTypeElement() != null) {
-          // Avoid lambda parameter type inference: anyway it doesn't have any explicit annotations
-          type = ((PsiParameter)listOwner).getType();
-        }
       }
       else if (listOwner instanceof PsiVariable) {
         type = ((PsiVariable)listOwner).getType();

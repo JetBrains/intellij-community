@@ -3,13 +3,11 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Service
-public final class RunnerRegistry {
+public class RunnerRegistry {
   @NotNull
   public static RunnerRegistry getInstance() {
     return ServiceManager.getService(RunnerRegistry.class);

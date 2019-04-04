@@ -2,7 +2,9 @@
 package org.jetbrains.idea.maven.indices;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+
+import java.util.List;
 
 public class MavenClassSearchResult extends MavenArtifactSearchResult {
   @Deprecated
@@ -12,7 +14,7 @@ public class MavenClassSearchResult extends MavenArtifactSearchResult {
   /* @deprecated  use getPackageName */
   public String packageName;
 
-  public MavenClassSearchResult(@NotNull MavenRepositoryArtifactInfo results, String className, String packageName) {
+  public MavenClassSearchResult(@NotNull List<MavenDependencyCompletionItem> results, String className, String packageName) {
     super(results);
     this.className = className;
     this.packageName = packageName;

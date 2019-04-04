@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath.psi;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 @SuppressWarnings({"UnusedDeclaration"})
 public enum NodeType {
     NODE,
@@ -30,6 +28,6 @@ public enum NodeType {
     PROCESSING_INSTRUCTION;
 
     public String getType() {
-        return StringUtil.toLowerCase(name()).replace('_', '-');
+        return name().toLowerCase().replace('_', '-');
     }
 }

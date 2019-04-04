@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ide.IdeTooltip;
@@ -7,10 +21,9 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -121,9 +134,8 @@ public class GraphTableController {
       return;
     }
 
-    Cursor cursorToSet = answer.getCursorToSet();
-    if (cursorToSet != null) {
-      myTable.setCursor(UIUtil.cursorIfNotDefault(cursorToSet));
+    if (answer.getCursorToSet() != null) {
+      myTable.setCursor(answer.getCursorToSet());
     }
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
@@ -261,7 +273,7 @@ public class GraphTableController {
           // user may have clicked just outside of the border
           // in that case, c is not the column we are looking for
           int c2 =
-            myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUIScale.scale(BORDER_THICKNESS), e.getPoint().y));
+            myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUI.scale(BORDER_THICKNESS), e.getPoint().y));
           int column2 = myTable.convertColumnIndexToModel(c2);
           if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) &&
               ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
@@ -285,12 +297,12 @@ public class GraphTableController {
     }
 
     public boolean isOnLeftBorder(@NotNull MouseEvent e, int column) {
-      return Math.abs(getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
+      return Math.abs(getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     public boolean isOnRightBorder(@NotNull MouseEvent e, int column) {
       return Math.abs(getColumnLeftXCoordinate(column) +
-                      myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
+                      myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     @Override
@@ -334,8 +346,8 @@ public class GraphTableController {
     }
 
     private void restoreCursor(int newCursorType) {
-      if (myTable.getCursor().getType() == newCursorType) {
-        myTable.setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
+      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(myLastCursor);
         myLastCursor = null;
       }
     }

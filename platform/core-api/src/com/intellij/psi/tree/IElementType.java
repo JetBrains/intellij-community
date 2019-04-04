@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.tree;
 
-import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -91,10 +90,6 @@ public class IElementType {
    */
   public IElementType(@NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
-
-    if (!(this instanceof IFileElementType)) {
-      LoadingPhase.assertAtLeast(LoadingPhase.FRAME_SHOWN);
-    }
   }
 
 

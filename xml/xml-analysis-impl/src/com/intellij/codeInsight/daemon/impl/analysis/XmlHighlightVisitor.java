@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -463,7 +462,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       if (value instanceof XmlAttributeValue) {
         PsiElement parent = value.getParent();
         if (parent instanceof XmlAttribute) {
-          String name = StringUtil.toLowerCase(((XmlAttribute)parent).getName());
+          String name = ((XmlAttribute)parent).getName().toLowerCase();
           if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && name.endsWith("stylename")) {
             type = HighlightInfoType.WARNING;
           }
@@ -614,7 +613,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     String unquotedValue = value.getValue();
 
     if (tag instanceof HtmlTag) {
-      unquotedValue = StringUtil.toLowerCase(unquotedValue);
+      unquotedValue = unquotedValue.toLowerCase();
     }
 
     return unquotedValue;

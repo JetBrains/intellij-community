@@ -26,10 +26,12 @@ import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
@@ -87,7 +89,7 @@ public class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsiElemen
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     StringUtil.repeatSymbol(buffer, ' ', indentLevel);
-    buffer.append(StringUtil.toLowerCase(getRole().toString())).append(' ').append(getPackageName());
+    buffer.append(getRole().toString().toLowerCase(Locale.US)).append(' ').append(getPackageName());
     List<String> targets = getStub().getTargets();
     if (!targets.isEmpty()) {
       buffer.append(" to ");

@@ -2,19 +2,18 @@
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
-public final class TestData extends AbstractExternalEntityData {
+public class TestData extends AbstractExternalEntityData {
+
   private final @NotNull String testName;
   private final @NotNull String testTaskName;
   private final @NotNull String cleanTestTaskName;
   private final @NotNull Set<String> sourceFolders;
 
-  @PropertyMapping({"owner", "testName", "testTaskName", "cleanTestTaskName", "sourceFolders"})
   public TestData(
     @NotNull ProjectSystemId owner,
     @NotNull String testName,

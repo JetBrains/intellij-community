@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ui.Gray;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
@@ -29,8 +28,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   static final JBValue ARC = new JBValue.Float(6);
 
   static float LW(Graphics2D g2) {
-    float f = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
-    return JBUIScale.scale(f);
+    return JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
   }
 
   @Override

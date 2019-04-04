@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -23,18 +22,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
@@ -52,8 +46,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -332,13 +324,13 @@ public class AboutPopup {
       GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
-      Font labelFont = JBFont.label();
-      if (SystemInfoRt.isWindows) {
+      Font labelFont = JBUI.Fonts.label();
+      if (SystemInfo.isWindows) {
         labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
       int startFontSize = 14;
-      for (int labelSize = JBUIScale.scale(startFontSize); labelSize != JBUIScale.scale(6); labelSize -= 1) {
+      for (int labelSize = JBUI.scale(startFontSize); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
         myImage.paintIcon(this, g2, 0, 0);
@@ -363,7 +355,7 @@ public class AboutPopup {
 
       if (appInfo instanceof ApplicationInfoImpl) {
         g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
@@ -424,7 +416,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + getExtraInfo();
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
     }
 
     private class TextRenderer {
@@ -450,12 +442,12 @@ public class AboutPopup {
         this.h = h;
         this.g2 = g2;
 
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }
 
-      public void render(int indentX, int indentY, List<? extends AboutBoxLine> lines) throws OverflowException {
+      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -626,24 +618,6 @@ public class AboutPopup {
     }
   }
 
-  @NotNull
-  private static String getExtraInfo() {
-    return SystemInfo.getOsNameAndVersion() + "\n" +
-
-           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
-             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
-
-           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
-
-           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
-
-           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
-             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
-
-           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
-             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
-  }
-
   public static class PopupPanel extends JPanel {
 
     private InfoSurface myInfoSurface;
@@ -722,7 +696,7 @@ public class AboutPopup {
 
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), JBUIScale.scale(5)));
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
 
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         viewer.setFocusable(true);
@@ -737,7 +711,7 @@ public class AboutPopup {
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(14) + "pt;}");
 
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
@@ -761,7 +735,7 @@ public class AboutPopup {
 
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-          matcher.appendReplacement(sb, JBUIScale.scale(Integer.parseInt(matcher.group(1))) + "px");
+          matcher.appendReplacement(sb, JBUI.scale(Integer.parseInt(matcher.group(1))) + "px");
         }
         matcher.appendTail(sb);
 
@@ -773,7 +747,7 @@ public class AboutPopup {
     dialog.setTitle(String.format("Third-Party Software Used by %s %s",
                                   ApplicationNamesInfo.getInstance().getFullProductName(),
                                   ApplicationInfo.getInstance().getFullVersion()));
-    dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
+    dialog.setSize(JBUI.scale(750), JBUI.scale(650));
     dialog.show();
   }
 }

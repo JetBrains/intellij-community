@@ -22,7 +22,6 @@ import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Implements a connection to a pserver. See the cvs documents for more
@@ -221,7 +220,7 @@ public final class PServerConnection
 
   private static void writeLn(final OutputStream outputStream, final String line) throws IOException {
     final String line1 = line + "\n";
-    outputStream.write(line1.getBytes(StandardCharsets.UTF_8));
+    outputStream.write(line1.getBytes());
   }
 
   private void createSocket() throws IOException {

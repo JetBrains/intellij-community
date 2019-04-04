@@ -9,7 +9,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -19,9 +18,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -182,8 +180,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private static void reload(@NotNull final VirtualFile virtualFile) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      ((FileDocumentManagerImpl)documentManager)
-        .contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+      ((VirtualFileListener)documentManager)
+        .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
     });
   }
 
@@ -461,7 +459,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       case NEVER:
         return false;
       case WINDOWS_ONLY:
-        return SystemInfoRt.isWindows;
+        return SystemInfo.isWindows;
       default:
         throw new IllegalStateException(myBOMForNewUTF8Files.toString());
     }

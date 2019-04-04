@@ -33,7 +33,10 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -285,10 +288,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   private void ensureCheckCanceledCalled(@NotNull ProgressIndicator indicator) {
     myFlag = false;
     JobScheduler.getScheduler().schedule(() -> myFlag = true, 100, TimeUnit.MILLISECONDS);
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    final long start = System.currentTimeMillis();
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        while (!t.timedOut()) {
+        while (System.currentTimeMillis() - start < 10000) {
           ProgressManager.checkCanceled();
         }
       }, indicator);
@@ -728,10 +731,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void test_runInReadActionWithWriteActionPriority_DoesNotHang() throws Exception {
     AtomicBoolean finished = new AtomicBoolean();
     Runnable action = () -> {
-      TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+      long start = System.currentTimeMillis();
       while (!finished.get()) {
         ProgressManager.checkCanceled();
-        if (t.timedOut()) {
+        if (System.currentTimeMillis() - start > 10_000) {
           finished.set(true);
           throw new AssertionError("Too long without cancellation");
         }
@@ -763,10 +766,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     waitForFutures(futures);
   }
 
-  private static void waitForFutures(List<? extends Future<?>> futures)
+  private static void waitForFutures(List<Future<?>> futures)
     throws InterruptedException, ExecutionException, TimeoutException {
-    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
-    while (!t.timedOut() && !futures.stream().allMatch(Future::isDone)) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 10_000 && !futures.stream().allMatch(Future::isDone)) {
       UIUtil.dispatchAllInvocationEvents();
       TimeoutUtil.sleep(10);
     }
@@ -779,7 +782,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testDuringProgressManagerExecuteNonCancelableSectionTheIndicatorIsCancelableShouldReturnFalse() {
     MyAbstractProgressIndicator progress = new MyAbstractProgressIndicator();
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      assertFalse(progress.isCanceled());
+      assertTrue(!progress.isCanceled());
       assertTrue(progress.isCancelable());
       try {
         ProgressManager.getInstance().executeNonCancelableSection(()->{

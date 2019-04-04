@@ -2,15 +2,13 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
@@ -35,28 +33,27 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.project.ProjectStoreOwner;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.*;
 
 import javax.swing.*;
 import java.util.List;
 
-public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
+public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
-  @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
@@ -64,12 +61,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private String myName;
   private final boolean myLight;
   static boolean ourClassesAreLoaded;
-  private final String creationTrace;
-
-  private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
-    //noinspection CodeBlock2Expr
-    return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
-  });
 
   /**
    * @param filePath System-independent path
@@ -78,31 +69,19 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
-
-    getPicoContainer().registerComponentInstance(Project.class, this);
-
-    getStateStore().setPath(filePath);
-
-    myName = projectName;
-    // light project may be changed later during test, so we need to remember its initial state
-    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
-  }
-
-  static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  // default project constructor
-  ProjectImpl() {
-    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
-
-    putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
     }
 
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
+    getPicoContainer().registerComponentInstance(Project.class, this);
 
-    myName = TEMPLATE_PROJECT_NAME;
-    myLight = false;
+    if (!isDefault()) {
+      getStateStore().setPath(filePath);
+    }
+
+    myName = projectName;
+    // light project may be changed later during test, so we need to remember its initial state
+    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
 
   @Override
@@ -147,20 +126,55 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
     super.bootstrapPicoContainer(name);
+    final MutablePicoContainer picoContainer = getPicoContainer();
 
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
+    final ProjectStoreClassProvider projectStoreClassProvider =
+      (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
+
+    picoContainer.registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
+    picoContainer.registerComponent(new ComponentAdapter() {
+      private ComponentAdapter myDelegate;
+
+      @NotNull
+      private ComponentAdapter getDelegate() {
+        if (myDelegate == null) {
+          Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
+          myDelegate = new CachingConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
+        }
+        return myDelegate;
+      }
+
+      @Override
+      public Object getComponentKey() {
+        return IComponentStore.class;
+      }
+
+      @Override
+      public Class getComponentImplementation() {
+        return getDelegate().getComponentImplementation();
+      }
+
+      @Override
+      public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+        return getDelegate().getComponentInstance(container);
+      }
+
+      @Override
+      public void verify(final PicoContainer container) throws PicoIntrospectionException {
+        getDelegate().verify(container);
+      }
+
+      @Override
+      public void accept(final PicoVisitor visitor) {
+        visitor.visitComponentAdapter(this);
+        getDelegate().accept(visitor);
+      }
+    });
   }
 
-  // do not call for default project
   @NotNull
-  private IProjectStore getStateStore() {
-    return (IProjectStore)getComponentStore();
-  }
-
-  @Override
-  @NotNull
-  public IComponentStore getComponentStore() {
-    return myComponentStore.getValue();
+  IProjectStore getStateStore() {
+    return ProjectKt.getStateStore(this);
   }
 
   @Override
@@ -188,23 +202,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Nullable
   @Override
   public @SystemIndependent String getProjectFilePath() {
-    return getStateStore().getProjectFilePath();
+    return isDefault() ? null : getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
   @Override
   @Nullable
   public @SystemIndependent String getBasePath() {
-    return getStateStore().getProjectBasePath();
+    return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -218,6 +232,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public @SystemDependent String getPresentableUrl() {
+    if (isDefault()) {
+      return null;
+    }
+
     IProjectStore store = getStateStore();
     return PathUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
@@ -231,14 +249,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       str = getName();
     }
 
-    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    String workspaceFilePath = getStateStore().getWorkspaceFilePath();
+    String workspaceFilePath = isDefault() ? null : getStateStore().getWorkspaceFilePath();
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
@@ -246,18 +264,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    String activityNamePrefix = activityNamePrefix();
-    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
+    ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    registerComponents(PluginManagerCore.getLoadedPlugins());
-    if (activity != null) {
-      activity.end();
-    }
+    //noinspection CodeBlock2Expr
+    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    } : null);
 
-    init(progressIndicator, application.isUnitTestMode() ? () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this) : null);
-
-    if (!application.isHeadlessEnvironment()) {
+    if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
     }
     if (myName == null) {
@@ -316,7 +330,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    Application application = ApplicationManager.getApplication();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
@@ -362,13 +376,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + getPresentableUrl() + "'") +
+                         : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
+           (isDefault() ? " (Default)" : "") +
            " " + myName;
-  }
-
-  @TestOnly
-  public String getCreationTrace() {
-    return creationTrace;
   }
 
   @Nullable

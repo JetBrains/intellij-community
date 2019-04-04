@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
@@ -12,6 +14,7 @@ import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -83,17 +86,17 @@ public class YamlBooleanType extends YamlEnumType {
     }
 
     public String[] toArray() {
-      return ArrayUtilRt.toStringArray(myResult);
+      return ArrayUtil.toStringArray(myResult);
     }
 
     @NotNull
     protected static String lower(@NotNull String text) {
-      return StringUtil.toLowerCase(text);
+      return text.toLowerCase(Locale.ENGLISH);
     }
 
     @NotNull
     protected static String CAPS(@NotNull String text) {
-      return StringUtil.toUpperCase(text);
+      return text.toUpperCase(Locale.ENGLISH);
     }
 
     @NotNull

@@ -6,6 +6,8 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.ConstructorInjectionAdapter;
+import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -24,9 +26,7 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -249,22 +249,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return array.length == 0 ? array : array.clone();
   }
 
-  @Override
-  public void forEachExtensionSafe(Consumer<T> extensionConsumer) {
-    for (T t : this) {
-      if (t == null) break;
-      try {
-        extensionConsumer.accept(t);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-  }
-
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
@@ -288,32 +272,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     return result.iterator();
-  }
-
-  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
-    assertBeforeProcessing();
-    CHECK_CANCELED.run();
-
-    List<ExtensionComponentAdapter> adapters = myAdapters;
-    int size = adapters.size();
-    if (size == 0) {
-      return;
-    }
-
-    LoadingOrder.sort(adapters);
-
-    LOG.assertTrue(myListeners.length == 0);
-
-    int currentIndex = 0;
-    do {
-      ExtensionComponentAdapter adapter = adapters.get(currentIndex++);
-      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null);
-      if (extension == null) {
-        break;
-      }
-      consumer.accept(extension, adapter.getPluginDescriptor());
-    }
-    while (currentIndex < size);
   }
 
   @NotNull
@@ -861,6 +819,27 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer));
+    }
+  }
+
+  @NotNull
+  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                             @NotNull Element extensionElement,
+                                                             boolean isNeedToDeserialize,
+                                                             @NotNull PluginDescriptor pluginDescriptor,
+                                                             boolean isConstructorInjectionSupported,
+                                                             boolean isUsePicoComponentAdapter) {
+    String orderId = extensionElement.getAttributeValue("id");
+    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    Element effectiveElement = isNeedToDeserialize ? extensionElement : null;
+    if (isUsePicoComponentAdapter) {
+      return new ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
+    else if (isConstructorInjectionSupported) {
+      return new SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
+    else {
+      return new XmlExtensionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
     }
   }
 

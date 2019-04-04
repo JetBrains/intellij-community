@@ -9,7 +9,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -30,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static com.intellij.psi.util.CachedValueProvider.Result.create;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
@@ -173,7 +174,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private static final Function<GrClosableBlock, PsiType> ourTypesCalculator =
-    block -> GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
+    (NullableFunction<GrClosableBlock, PsiType>)block -> GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
 
   @Override
   @Nullable

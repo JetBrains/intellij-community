@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,30 +13,32 @@ import java.util.Map;
  * terms over than IntelliJ (e.g. maven, gradle, eclipse etc).
  * <p/>
  * This class serves as an id of a system which defines project structure, i.e. it might be any external system or the ide itself.
+ * 
+ * @author Denis Zhdanov
  */
-public final class ProjectSystemId implements Serializable {
-  private static final long serialVersionUID = 2L;
-  private static final Map<String, ProjectSystemId> ourExistingIds = ContainerUtil.newConcurrentMap();
+public class ProjectSystemId implements Serializable {
 
+  private static final long serialVersionUID = 1L;
+  private static final Map<String, ProjectSystemId> ourExistingIds = ContainerUtil.newConcurrentMap();
+  
   @NotNull public static final ProjectSystemId IDE = new ProjectSystemId("IDE");
 
-  @NotNull private final String id;
-  @NotNull private final String readableName;
+  @NotNull private final String myId;
+  @NotNull private final String myReadableName;
 
   public ProjectSystemId(@NotNull String id) {
-    this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
+    this(id, StringUtil.capitalize(id.toLowerCase()));
   }
 
-  @PropertyMapping({"id", "readableName"})
   public ProjectSystemId(@NotNull String id, @NotNull String readableName) {
-    this.id = id;
-    this.readableName = readableName;
-    ourExistingIds.putIfAbsent(id, this);
+    myId = id;
+    myReadableName = readableName;
+    ourExistingIds.put(id, this);
   }
 
   @Override
   public int hashCode() {
-    return id.hashCode();
+    return myId.hashCode();
   }
 
   @Override
@@ -48,28 +48,22 @@ public final class ProjectSystemId implements Serializable {
 
     ProjectSystemId owner = (ProjectSystemId)o;
 
-    return id.equals(owner.id);
+    return myId.equals(owner.myId);
   }
 
   @NotNull
   public String getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getReadableName() {
-    return readableName;
+    return myReadableName;
   }
-
+  
   @Override
   public String toString() {
-    return id;
-  }
-
-  @NotNull
-  public ProjectSystemId intern() {
-    ProjectSystemId current = ourExistingIds.putIfAbsent(this.id, this);
-    return current == null ? this : current;
+    return myId;
   }
 
   @Nullable
@@ -78,11 +72,10 @@ public final class ProjectSystemId implements Serializable {
   }
 
   private Object readResolve() {
-    ProjectSystemId cached = ourExistingIds.get(id);
+    ProjectSystemId cached = ourExistingIds.get(myId);
     if (cached != null) {
       return cached;
-    }
-    else {
+    } else {
       return this;
     }
   }

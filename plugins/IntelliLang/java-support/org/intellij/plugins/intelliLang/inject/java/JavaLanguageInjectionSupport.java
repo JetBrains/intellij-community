@@ -45,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
@@ -103,7 +102,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
     PsiFile containingFile = host.getContainingFile();
     boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);
@@ -253,15 +252,12 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
-    final PsiElement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class, PsiField.class);
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class);
     if (!addAnnotation && statement == null) return false;
 
     Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
     if (!configuration.isSourceModificationAllowed()) {
-      String fixText = addAnnotation ?
-                       IntelliLangBundle.message("intelliLang.suggest.insert.annotation") :
-                       IntelliLangBundle.message("intelliLang.suggest.insert.comment");
-      InjectLanguageAction.addFixer(host, annotationFixer, fixText);
+      host.putUserData(InjectLanguageAction.FIX_KEY, annotationFixer);
       return false;
     }
 

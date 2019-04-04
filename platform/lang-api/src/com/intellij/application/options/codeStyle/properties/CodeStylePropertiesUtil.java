@@ -14,7 +14,7 @@ public class CodeStylePropertiesUtil {
   private CodeStylePropertiesUtil() {}
 
   public static void collectMappers(@NotNull CodeStyleSettings settings,
-                                    @NotNull Consumer<? super AbstractCodeStylePropertyMapper> collector) {
+                                    @NotNull Consumer<AbstractCodeStylePropertyMapper> collector) {
     for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
       if (provider.supportsExternalFormats()) {
         collector.accept(provider.getPropertyMapper(settings));

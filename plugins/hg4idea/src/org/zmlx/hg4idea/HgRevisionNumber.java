@@ -42,7 +42,6 @@ public class HgRevisionNumber implements VcsRevisionNumber {
       return NULL.compareTo(o);
     }
 
-    @NotNull
     @Override
     public String asString() {
       return NULL.asString();
@@ -128,7 +127,6 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return isWorkingVersion;
   }
 
-  @NotNull
   @Override
   public String asString() {
     if (revision.isEmpty()) {

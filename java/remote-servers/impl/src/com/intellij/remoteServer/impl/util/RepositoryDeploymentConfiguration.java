@@ -17,9 +17,7 @@ package com.intellij.remoteServer.impl.util;
 
 /**
  * @author michael.golubev
- * @deprecated this interface isn't used by the platform anymore
  */
-@Deprecated
 public interface RepositoryDeploymentConfiguration {
 
   String getRepositoryPath();

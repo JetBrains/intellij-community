@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -34,7 +35,6 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -56,8 +56,6 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.ui.components.JBOptionButton.getDefaultShowPopupShortcut;
-import static com.intellij.ui.components.JBOptionButton.getDefaultTooltip;
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 
@@ -132,6 +130,7 @@ public abstract class DialogWrapper {
   public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private static final String NO_AUTO_RESIZE = "NoAutoResizeAndFit";
+  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
   protected final @NotNull Disposable myDisposable = new Disposable() {
     @Override
@@ -484,7 +483,7 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
@@ -547,7 +546,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static List<Action> flattenOptionsActions(@NotNull List<? extends Action> actions) {
+  private static List<Action> flattenOptionsActions(@NotNull List<Action> actions) {
     List<Action> newActions = new ArrayList<>();
     for (Action action : actions) {
       newActions.add(action);
@@ -576,7 +575,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private List<JButton> createButtons(@NotNull List<? extends Action> actions) {
+  private List<JButton> createButtons(@NotNull List<Action> actions) {
     List<JButton> buttons = new ArrayList<>();
     for (Action action : actions) {
       buttons.add(createJButtonForAction(action));
@@ -585,8 +584,8 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
-                                  @NotNull List<? extends JButton> rightSideButtons,
+  private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
+                                  @NotNull List<JButton> rightSideButtons,
                                   boolean addHelpToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -608,7 +607,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBInsets.create(0, 8) : JBUI.emptyInsets();
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -677,15 +676,10 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
-  private static final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
 
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
-    return layoutButtonsPanel(buttons);
-  }
-
-  @NotNull
-  public static JPanel layoutButtonsPanel(@NotNull List<? extends JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
@@ -695,8 +689,7 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
-          .scale(8);
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
         buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
@@ -734,26 +727,6 @@ public abstract class DialogWrapper {
    * @see DialogWrapper#DEFAULT_ACTION
    */
   protected JButton createJButtonForAction(Action action) {
-    JButton button = createJButtonForAction(action, getRootPane());
-
-    int mnemonic = button.getMnemonic();
-    final Object name = action.getValue(Action.NAME);
-    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
-      myYesAction = action;
-    }
-    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
-      myNoAction = action;
-    }
-
-    if (action.getValue(FOCUSED_ACTION) != null) {
-      myPreferredFocusedComponent = button;
-    }
-
-    return button;
-  }
-
-  @NotNull
-  public static JButton createJButtonForAction(@NotNull Action action, @Nullable JRootPane rootPane) {
     JButton button;
     if (action instanceof OptionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
       button = createJOptionsButton((OptionAction)action);
@@ -762,7 +735,7 @@ public abstract class DialogWrapper {
       button = new JButton(action);
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
@@ -776,10 +749,22 @@ public abstract class DialogWrapper {
     }
     button.setMnemonic(mnemonic);
 
+    final Object name = action.getValue(Action.NAME);
+    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
+      myYesAction = action;
+    }
+    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
+      myNoAction = action;
+    }
+
     if (action.getValue(DEFAULT_ACTION) != null) {
-      if (rootPane != null) {
-        rootPane.setDefaultButton(button);
+      if (!myPeer.isHeadless()) {
+        getRootPane().setDefaultButton(button);
       }
+    }
+
+    if (action.getValue(FOCUSED_ACTION) != null) {
+      myPreferredFocusedComponent = button;
     }
 
     return button;
@@ -788,7 +773,8 @@ public abstract class DialogWrapper {
   @NotNull
   private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOptionTooltipText(getDefaultTooltip());
+    String tooltip = String.format("Show drop-down menu (%s)", KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE));
+    optionButton.setOptionTooltipText(tooltip);
     optionButton.setOkToProcessDefaultMnemonics(false);
     return optionButton;
   }
@@ -1174,7 +1160,7 @@ public abstract class DialogWrapper {
     if (myPreferredFocusedComponentFromPanel != null) {
       return myPreferredFocusedComponentFromPanel;
     }
-    return SystemInfoRt.isMac ? myPreferredFocusedComponent : null;
+    return SystemInfo.isMac ? myPreferredFocusedComponent : null;
   }
 
   /**
@@ -1284,8 +1270,9 @@ public abstract class DialogWrapper {
     //};
     myPeer.setContentPane(root);
 
+    final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
     AnAction toggleShowOptions = DumbAwareAction.create(e -> expandNextOptionButton());
-    toggleShowOptions.registerCustomShortcutSet(getDefaultShowPopupShortcut(), root, myDisposable);
+    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {
@@ -1339,7 +1326,7 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
@@ -2038,7 +2025,7 @@ public abstract class DialogWrapper {
     private Border createErrorTextBorder() {
       Border border = createContentPaneBorder();
       Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
-      Insets baseInsets = JBInsets.create(16, 13);
+      Insets baseInsets = JBUI.insets(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
       return new EmptyBorder(baseInsets.top,
@@ -2103,11 +2090,6 @@ public abstract class DialogWrapper {
 
   public boolean isDisposed() {
     return myDisposed;
-  }
-
-  public void disposeIfNeeded() {
-    if (isDisposed()) return;
-    Disposer.dispose(getDisposable());
   }
 
   /**

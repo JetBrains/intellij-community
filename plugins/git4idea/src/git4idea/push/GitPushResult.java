@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.history.Label;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import git4idea.repo.GitRepository;
-import git4idea.update.HashRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +32,15 @@ public class GitPushResult {
   @NotNull private final UpdatedFiles myUpdatedFiles;
   @Nullable private final Label myBeforeUpdateLabel;
   @Nullable private final Label myAfterUpdateLabel;
-  @NotNull private final Map<GitRepository, HashRange> myUpdatedRanges;
 
   GitPushResult(@NotNull Map<GitRepository, GitPushRepoResult> results,
                 @NotNull UpdatedFiles files,
                 @Nullable Label beforeUpdateLabel,
-                @Nullable Label afterUpdateLabel,
-                @NotNull Map<GitRepository, HashRange> ranges) {
+                @Nullable Label afterUpdateLabel) {
     myResults = results;
     myUpdatedFiles = files;
     myBeforeUpdateLabel = beforeUpdateLabel;
     myAfterUpdateLabel = afterUpdateLabel;
-    myUpdatedRanges = ranges;
   }
 
   @NotNull
@@ -65,10 +61,5 @@ public class GitPushResult {
   @Nullable
   public Label getAfterUpdateLabel() {
     return myAfterUpdateLabel;
-  }
-
-  @NotNull
-  public Map<GitRepository, HashRange> getUpdatedRanges() {
-    return myUpdatedRanges;
   }
 }

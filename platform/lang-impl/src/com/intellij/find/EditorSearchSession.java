@@ -185,7 +185,7 @@ public class EditorSearchSession implements SearchSession,
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       initLivePreview();
     }
-    updateMultiLineStateIfNeeded();
+    updateMultiLineStateIfNeed();
 
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
@@ -198,10 +198,6 @@ public class EditorSearchSession implements SearchSession,
         }
       }
     }, myDisposable);
-  }
-
-  public Editor getEditor() {
-    return myEditor;
   }
 
   @Nullable
@@ -310,10 +306,10 @@ public class EditorSearchSession implements SearchSession,
     else {
       nothingToSearchFor(true);
     }
-    updateMultiLineStateIfNeeded();
+    updateMultiLineStateIfNeed();
   }
 
-  private void updateMultiLineStateIfNeeded() {
+  private void updateMultiLineStateIfNeed() {
     myFindModel.setMultiline(myComponent.getSearchTextComponent().getText().contains("\n") ||
                              myComponent.getReplaceTextComponent().getText().contains("\n"));
   }
@@ -322,7 +318,7 @@ public class EditorSearchSession implements SearchSession,
   public void replaceFieldDocumentChanged() {
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     myFindModel.setStringToReplace(myComponent.getReplaceTextComponent().getText());
-    updateMultiLineStateIfNeeded();
+    updateMultiLineStateIfNeed();
   }
 
   @Override

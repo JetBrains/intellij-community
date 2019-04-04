@@ -21,6 +21,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -64,7 +65,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
 
-  Map<ColorKey, Color> myColorsMap = new HashMap<>();
+  Map<ColorKey, Color> myColorsMap = ContainerUtilRt.newHashMap();
   Map<String, TextAttributes> myAttributesMap = new THashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";

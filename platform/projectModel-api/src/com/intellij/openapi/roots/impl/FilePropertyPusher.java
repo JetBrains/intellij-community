@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,19 +33,7 @@ import java.io.IOException;
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
-  default void initExtra(@NotNull Project project, @NotNull MessageBus bus) { }
-
-  /**
-   * @deprecated
-   * use {@link FilePropertyPusher#initExtra(Project, MessageBus)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @SuppressWarnings("unused")
-  default void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-    initExtra(project, bus);
-  }
-
+  void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater);
   @NotNull
   Key<T> getFileDataKey();
   boolean pushDirectoriesOnly();
@@ -69,9 +56,6 @@ public interface FilePropertyPusher<T> {
 
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("unused")
   interface Engine {
     void pushAll();
     void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);

@@ -119,13 +119,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public final Self withRoots(@Nullable T... roots) {
-    return newInstance(myMeta.withRoots(JBIterable.of(roots)));
-  }
-
-  @NotNull
-  public final Self withRoots(@Nullable Iterable<? extends T> roots) {
-    return newInstance(myMeta.withRoots(roots != null ? roots : JBIterable.empty()));
+  public final Self withRoots(@NotNull Iterable<? extends T> roots) {
+    return newInstance(myMeta.withRoots(roots));
   }
 
   @NotNull

@@ -18,19 +18,15 @@ package com.intellij.vcsUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -41,7 +37,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
-import com.intellij.util.ThrowableConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -404,47 +399,21 @@ public class VcsUtil {
     });
   }
 
-  /**
-   * @deprecated Use {@link ProgressManager#runProcessWithProgressSynchronously(ThrowableComputable, String, boolean, Project)}
-   * and other run methods from the ProgressManager.
-   */
-  @Deprecated
-  public static boolean runVcsProcessWithProgress(@NotNull VcsRunnable runnable,
-                                                  @NotNull String progressTitle,
-                                                  boolean canBeCanceled,
-                                                  @Nullable Project project) throws VcsException {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      final Ref<VcsException> ex = new Ref<>();
-      boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        try {
-          runnable.run();
-        }
-        catch (VcsException e) {
-          ex.set(e);
-        }
-      }, progressTitle, canBeCanceled, project);
-      if (!ex.isNull()) {
-        throw ex.get();
-      }
-      return result;
-    }
-    else {
-      runnable.run();
-      return true;
-    }
-  }
-
-  public static <T> T computeWithModalProgress(@Nullable Project project,
-                                               @NotNull String title,
-                                               boolean canBeCancelled,
-                                               @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends VcsException> computable)
+  public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
     throws VcsException {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, VcsException>(project, title, canBeCancelled) {
-      @Override
-      protected T compute(@NotNull ProgressIndicator indicator) throws VcsException {
-        return computable.convert(indicator);
+    final Ref<VcsException> ex = new Ref<>();
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        runnable.run();
       }
-    });
+      catch (VcsException e) {
+        ex.set(e);
+      }
+    }, progressTitle, canBeCanceled, project);
+    if (!ex.isNull()) {
+      throw ex.get();
+    }
+    return result;
   }
 
   @Deprecated

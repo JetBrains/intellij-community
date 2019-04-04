@@ -21,11 +21,4 @@ public class Main {
     map.forEach(otherMap::putIfAbsent);
   }
 
-  class X implements Map<String, String> {
-    class Y {
-      void test() {
-        forEach((k, v) -> System.out.println(k + "-" + v));
-      }
-    }
-  }
 }

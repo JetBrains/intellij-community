@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
@@ -73,8 +72,8 @@ public class GradleBuildSrcProjectsResolver {
     ProjectData mainBuildProjectData = mainBuildProjectDataNode.getData();
     String projectPath = mainBuildProjectData.getLinkedExternalProjectPath();
 
-    Map<String, String> includedBuildsPaths = new HashMap<>();
-    Map<String, String> buildNames = new HashMap<>();
+    Map<String, String> includedBuildsPaths = ContainerUtil.newHashMap();
+    Map<String, String> buildNames = ContainerUtil.newHashMap();
     buildNames.put(projectPath, mainBuildProjectData.getExternalName());
     DataNode<CompositeBuildData> compositeBuildData = find(mainBuildProjectDataNode, CompositeBuildData.KEY);
     if (compositeBuildData != null) {
@@ -88,7 +87,7 @@ public class GradleBuildSrcProjectsResolver {
     }
 
     MultiMap<String, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap = MultiMap.createSmart();
-    Map<String, ModuleData> includedModulesPaths = new HashMap<>();
+    Map<String, ModuleData> includedModulesPaths = ContainerUtil.newHashMap();
     for (DataNode<ModuleData> moduleDataNode : findAll(mainBuildProjectDataNode, ProjectKeys.MODULE)) {
       String path = moduleDataNode.getData().getLinkedExternalProjectPath();
       includedModulesPaths.put(path, moduleDataNode.getData());
@@ -187,7 +186,7 @@ public class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
 
-    Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
+    Map<String, DataNode<? extends ModuleData>> buildSrcModules = ContainerUtil.newHashMap();
 
     boolean modulePerSourceSet = buildSrcResolverCtx.isResolveModulePerSourceSet();
     DataNode<? extends ModuleData> buildSrcModuleNode = null;
@@ -231,8 +230,8 @@ public class GradleBuildSrcProjectsResolver {
       }
     }
     if (buildSrcModuleNode != null) {
-      Set<String> buildSrcRuntimeSourcesPaths = new THashSet<>();
-      Set<String> buildSrcRuntimeClassesPaths = new THashSet<>();
+      Set<String> buildSrcRuntimeSourcesPaths = ContainerUtil.newHashSet();
+      Set<String> buildSrcRuntimeClassesPaths = ContainerUtil.newHashSet();
 
       addSourcePaths(buildSrcRuntimeSourcesPaths, buildSrcModuleNode);
 
@@ -259,10 +258,11 @@ public class GradleBuildSrcProjectsResolver {
       if (!buildSrcRuntimeSourcesPaths.isEmpty() || !buildSrcRuntimeClassesPaths.isEmpty()) {
         buildClasspathNodes.forEach(classpathNode -> {
           BuildScriptClasspathData data = classpathNode.getData();
-          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>(data.getClasspathEntries());
+          List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = ContainerUtil.newArrayList();
+          classpathEntries.addAll(data.getClasspathEntries());
           classpathEntries.add(new BuildScriptClasspathData.ClasspathEntry(
-            new THashSet<>(buildSrcRuntimeClassesPaths),
-            new THashSet<>(buildSrcRuntimeSourcesPaths),
+            new HashSet<>(buildSrcRuntimeClassesPaths),
+            new HashSet<>(buildSrcRuntimeSourcesPaths),
             Collections.emptySet()
           ));
           BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);

@@ -10,7 +10,11 @@ import org.jetbrains.annotations.CalledInAwt
 class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile() {
   override fun getName(): String = request.title ?: super.getName()
 
-  override fun createProcessor(project: Project): DiffRequestProcessor = MyDiffRequestProcessor(project, request)
+  override fun createProcessorAsync(project: Project): Builder {
+    return Builder.create {
+      MyDiffRequestProcessor(project, request)
+    }
+  }
 
   private class MyDiffRequestProcessor(
     project: Project?,

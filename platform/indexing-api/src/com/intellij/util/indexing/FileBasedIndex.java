@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @see FileBasedIndexExtension
- * @author dmitrylomov
+ * Author: dmitrylomov
  */
 public abstract class FileBasedIndex {
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
@@ -50,7 +49,7 @@ public abstract class FileBasedIndex {
   }
 
   /**
-   * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
+   * @return the file which the current thread is indexing right now, or null if current thread isn't indexing.
    */
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
@@ -87,7 +86,7 @@ public abstract class FileBasedIndex {
                                                                     @NotNull GlobalSearchScope filter);
 
   /**
-   * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
+   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all
    */
   public abstract <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
@@ -96,7 +95,7 @@ public abstract class FileBasedIndex {
                                                @NotNull GlobalSearchScope filter);
 
   /**
-   * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
+   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all
    */
   public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
                                                @NotNull K dataKey,
@@ -114,8 +113,8 @@ public abstract class FileBasedIndex {
                                                                @NotNull Processor<? super VirtualFile> processor);
 
   /**
-   * It is guaranteed to return data which is up-to-date within the given project.
-   * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist.
+   * @param project it is guaranteed to return data which is up-to-date withing the project
+   *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
   @NotNull
   public abstract <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
@@ -124,7 +123,6 @@ public abstract class FileBasedIndex {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
@@ -139,7 +137,7 @@ public abstract class FileBasedIndex {
                                                  @NotNull GlobalSearchScope filter);
 
   /**
-   * It is guaranteed to return data which is up-to-date within the given project.
+   * @param project it is guaranteed to return data which is up-to-date withing the project
    */
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
@@ -196,7 +194,7 @@ public abstract class FileBasedIndex {
     /**
      * @param value a value to process
      * @param file the file the value came from
-     * @return {@code false} if no further processing is needed, {@code true} otherwise
+     * @return false if no further processing is needed, true otherwise
      */
     boolean process(@NotNull VirtualFile file, V value);
   }
@@ -206,9 +204,6 @@ public abstract class FileBasedIndex {
     boolean acceptInput(@NotNull VirtualFile file);
   }
 
-  /**
-   * @see DefaultFileTypeSpecificInputFilter
-   */
   public interface FileTypeSpecificInputFilter extends InputFilter {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }

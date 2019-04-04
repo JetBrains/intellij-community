@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -47,12 +47,6 @@ public class AnnotationsHighlightUtil {
   @Nullable
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
                                           RefCountHolder refCountHolder) {
-    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
-    if (annotation == null) return null;
-    PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
-    if (annotationNameReferenceElement == null) return null;
-    PsiElement annotationClass = annotationNameReferenceElement.resolve();
-    if (!(annotationClass instanceof PsiClass && ((PsiClass)annotationClass).isAnnotationType())) return null;
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
@@ -62,10 +56,9 @@ public class AnnotationsHighlightUtil {
     if (method == null) {
       if (pair.getName() != null) {
         final String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());
-        final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
-          .range(ref.getElement(), ref.getRangeInElement())
-          .descriptionAndTooltip(description)
-          .create();
+        PsiElement element = ref.getElement();
+        final HighlightInfo highlightInfo =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(element).descriptionAndTooltip(description).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair));
         return highlightInfo;
       }
@@ -204,10 +197,7 @@ public class AnnotationsHighlightUtil {
       if (metaAnno == null) {
         String explanation = JavaErrorMessages.message("annotation.non.repeatable", annotationType.getQualifiedName());
         String description = JavaErrorMessages.message("annotation.duplicate.explained", explanation);
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCollapseAnnotationsFix(annotationToCheck));
-        return info;
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
 
       String explanation = doCheckRepeatableAnnotation(metaAnno);

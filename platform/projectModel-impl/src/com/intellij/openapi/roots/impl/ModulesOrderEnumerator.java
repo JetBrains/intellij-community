@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,7 +30,6 @@ import java.util.List;
 /**
  * @author nik
  */
-@ApiStatus.Internal
 public class ModulesOrderEnumerator extends OrderEnumeratorBase {
   private final Collection<? extends Module> myModules;
 

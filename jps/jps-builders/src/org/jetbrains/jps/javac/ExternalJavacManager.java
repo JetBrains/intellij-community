@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -31,7 +31,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -122,12 +122,12 @@ public class ExternalJavacManager extends ProcessAdapter {
                            int heapSize,
                            List<String> vmOptions,
                            List<String> options,
-                           Collection<? extends File> platformCp,
-                           Collection<? extends File> classpath,
-                           Collection<? extends File> upgradeModulePath,
-                           Collection<? extends File> modulePath,
-                           Collection<? extends File> sourcePath,
-                           Collection<? extends File> files,
+                           Collection<File> platformCp,
+                           Collection<File> classpath,
+                           Collection<File> upgradeModulePath,
+                           Collection<File> modulePath,
+                           Collection<File> sourcePath,
+                           Collection<File> files,
                            Map<File, Set<File>> outs,
                            DiagnosticOutputConsumer diagnosticSink,
                            OutputFileConsumer outputSink,
@@ -146,7 +146,7 @@ public class ExternalJavacManager extends ProcessAdapter {
                                           List<String> vmOptions,
                                           List<String> options,
                                           CompilationPaths paths,
-                                          Collection<? extends File> files,
+                                          Collection<File> files,
                                           Map<File, Set<File>> outs,
                                           DiagnosticOutputConsumer diagnosticSink,
                                           OutputFileConsumer outputSink,
@@ -431,8 +431,8 @@ public class ExternalJavacManager extends ProcessAdapter {
     return new ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive);
   }
 
-  private static void appendParam(List<? super String> cmdLine, String parameter) {
-    if (SystemInfoRt.isWindows) {
+  private static void appendParam(List<String> cmdLine, String parameter) {
+    if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }
@@ -443,7 +443,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     cmdLine.add(parameter);
   }
 
-  private static void copyProperty(List<? super String> cmdLine, String name) {
+  private static void copyProperty(List<String> cmdLine, String name) {
     String value = System.getProperty(name);
     if (value != null) {
       appendParam(cmdLine, "-D" + name + '=' + value);
@@ -639,7 +639,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       myHandler = handler;
       myDone.down();
     }
-
+    
     @NotNull
     public UUID getId() {
       return myId;

@@ -69,6 +69,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.REFACTORING_NAME;
@@ -336,7 +337,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
                   for (String completionVariant : info.names) {
                     final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
-                    result.addElement(element.withLookupString(StringUtil.toLowerCase(completionVariant)));
+                    result.addElement(element.withLookupString(completionVariant.toLowerCase(Locale.ENGLISH)));
                   }
                 }
               }

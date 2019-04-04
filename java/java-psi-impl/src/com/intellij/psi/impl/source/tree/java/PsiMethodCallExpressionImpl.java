@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -26,8 +27,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
@@ -157,19 +156,18 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       else {
         parentArgList = null;
       }
-      final boolean genericParentOverloadResolution = parentArgList != null && 
-                                                      MethodCandidateInfo.isOverloadCheck(parentArgList) &&
-                                                      Arrays.stream(parentArgList.getExpressions())
-                                                        .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-                                                        .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
+      final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(parentArgList);
+      final boolean genericMethodCall = properties != null && properties.getInfo().isToInferApplicability();
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
         final JavaResolveResult candidateInfo = results[i];
 
-        PsiElement element = candidateInfo.getElement();
-        if (genericParentOverloadResolution && element != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)element)) {
-          LOG.error("poly expression evaluation during overload resolution, processing " + results.length + " results");
+        if (genericMethodCall && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
+          if (callParent instanceof PsiAssignmentExpression) {
+            return null;
+          }
+          LOG.error("poly expression evaluation during overload resolution");
         }
 
         final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel);
@@ -230,7 +228,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       return TypeConversionUtil.erasure(ret);
     }
 
-    if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isErased()) {
+    if (InferenceSession.wasUncheckedConversionPerformed(call)) {
       // 18.5.2
       // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
       // while the return type and thrown types are given by the erasure of m's type (without applying theta').

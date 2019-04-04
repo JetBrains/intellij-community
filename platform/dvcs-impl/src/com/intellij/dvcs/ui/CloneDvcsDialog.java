@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -7,7 +7,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
-import com.intellij.dvcs.repo.ClonePathProvider;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBOptionButton;
@@ -50,9 +51,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.file.*;
 import java.util.List;
 import java.util.*;
@@ -178,6 +181,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void initComponents(@Nullable String defaultUrl) {
+    String parentDirectory = getRememberedInputs().getCloneParentDir();
+
     myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
     myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
                                                               myRepositoryUrlComboboxModel.getItems(),
@@ -199,7 +204,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
-        myDirectoryField.trySetChildPath(defaultDirectoryPath(myRepositoryUrlField.getText().trim()));
+        myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
       }
     });
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
@@ -215,7 +220,9 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setHideIgnored(false);
-    myDirectoryField = new MyTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(myProject, getRememberedInputs()));
+    myDirectoryField = new MyTextFieldWithBrowseButton(StringUtil.isEmptyOrSpaces(parentDirectory)
+                                                       ? ProjectUtil.getBaseDir()
+                                                       : parentDirectory);
     myDirectoryField.addBrowseFolderListener(DvcsBundle.getString("clone.destination.directory.browser.title"),
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
@@ -510,6 +517,16 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     rememberedInputs.setCloneParentDir(getParentDirectory());
   }
 
+  @NotNull
+  private static String safeUrlDecode(@NotNull String encoded) {
+    try {
+      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
+    }
+    catch (Exception e) {
+      return encoded;
+    }
+  }
+
   /**
    * Get default name for checked out directory
    *
@@ -517,8 +534,30 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    * @return a default repository name
    */
   @NotNull
-  private String defaultDirectoryPath(@NotNull final String url) {
-    return StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(myProject, url), myVcsDirectoryName);
+  private String defaultDirectoryName(@NotNull final String url) {
+    return stripSuffix(safeUrlDecode(getLastPathFragment(url)));
+  }
+
+  @NotNull
+  private String stripSuffix(@NotNull String directoryName) {
+    return directoryName.endsWith(myVcsDirectoryName)
+           ? directoryName.substring(0, directoryName.length() - myVcsDirectoryName.length())
+           : directoryName;
+  }
+
+  @NotNull
+  private static String getLastPathFragment(@NotNull final String url) {
+    // Suppose it's a URL
+    int i = url.lastIndexOf('/');
+
+    // No? Maybe win-style path?
+    if (i == -1 && File.separatorChar != '/') i = url.lastIndexOf(File.separatorChar);
+
+    if (i < 0) return "";
+
+    if (i == url.length() - 1) return getLastPathFragment(url.substring(0, i));
+
+    return url.substring(i + 1);
   }
 
   @Nullable
@@ -618,7 +657,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         }
         else {
           myButton.setAction(null);
-          myButton.setOptions((Action[])null);
+          myButton.setOptions(null);
           myPanel.setVisible(false);
         }
       }

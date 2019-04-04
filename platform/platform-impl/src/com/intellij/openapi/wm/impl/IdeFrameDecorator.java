@@ -1,17 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +53,10 @@ public abstract class IdeFrameDecorator implements Disposable {
 
   @Nullable
   public static IdeFrameDecorator decorate(@NotNull IdeFrameImpl frame) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode());
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       return new WinMainFrameDecorator(frame);
     }
     else if (SystemInfo.isXWindow) {
@@ -73,7 +86,11 @@ public abstract class IdeFrameDecorator implements Disposable {
 
     @Override
     public boolean isInFullScreen() {
-      return UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN);
+      if (myFrame == null) return false;
+
+      Rectangle frameBounds = myFrame.getBounds();
+      GraphicsDevice device = ScreenUtil.getScreenDevice(frameBounds);
+      return device != null && device.getDefaultConfiguration().getBounds().equals(frameBounds) && myFrame.isUndecorated();
     }
 
     @Override
@@ -172,10 +189,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecoration() {
-    return SystemInfoRt.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
   }
 
   public static boolean isCustomDecorationActive() {
-    return Registry.is("ide.win.frame.decoration");
+    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && Boolean.getBoolean("idea.is.internal"));
   }
 }

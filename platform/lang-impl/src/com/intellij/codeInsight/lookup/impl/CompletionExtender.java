@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.Rectangle;
 import java.awt.event.*;
 
 /**
@@ -73,5 +74,16 @@ public class CompletionExtender extends ListExpandableItemsHandler {
   @Override
   protected boolean isPopup() {
     return false;
+  }
+
+  @Override
+  protected Rectangle getVisibleRect(Integer key) {
+    try {
+      Rectangle bounds = myComponent.getCellBounds(key, key);
+      if (bounds != null) return bounds;
+    }
+    catch (IndexOutOfBoundsException ignored) {
+    }
+    return super.getVisibleRect(key);
   }
 }

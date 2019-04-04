@@ -31,7 +31,7 @@ import java.util.*
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
@@ -56,7 +56,15 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
     val file = fileContent.file
 
-    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
+    val contentLength =
+      if (file.fileType.isBinary) {
+        -1
+      }
+      else {
+        fileContent.psiFileForPsiDependentIndex.textLength
+      }
+
+    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
@@ -96,7 +104,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       stringEnumeratorFile.delete()
     }
 
-    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
+    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile)
 
     val map = HashMap<HashCode, Int>()
 
@@ -109,7 +117,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
+      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"))
 
       try {
         fromStorage.processKeysWithExistingMapping { key ->
@@ -122,7 +130,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           val bytes = BufferExposingByteArrayOutputStream()
           newSerializationManager.serialize(stub, bytes)
 
-          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null)
+          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null, value.byteContentLength,
+                                               value.charContentLength)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
@@ -131,7 +140,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 
-              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null)
+              val newStubTree2 = SerializedStubTree(bytes2.internalBuffer, bytes2.size(), null, value.byteContentLength,
+                                                    value.charContentLength)
 
               TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
             }

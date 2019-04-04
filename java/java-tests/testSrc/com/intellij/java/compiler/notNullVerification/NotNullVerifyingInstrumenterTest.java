@@ -7,13 +7,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -51,25 +50,24 @@ public abstract class NotNullVerifyingInstrumenterTest {
   public static class MembersTargetTest extends NotNullVerifyingInstrumenterTest { }
 
   @TestDirectory("types")
-  public static class TypesTargetTest extends WithTypeUse { }
+  public static class TypesTargetTest extends NotNullVerifyingInstrumenterTest { }
 
   @TestDirectory("mixed")
-  public static class MixedTargetTest extends WithTypeUse { }
+  public static class MixedTargetTest extends NotNullVerifyingInstrumenterTest { }
 
   private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
 
   private static class AnnotationCompiler extends ExternalResource {
-    File classes;
+    private File classes;
 
     @Override
     public Statement apply(Statement base, Description description) {
       TestDirectory annotation = description.getAnnotation(TestDirectory.class);
       if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
-      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value());
-      File[] annotations = source.listFiles();
-      if (annotations == null || annotations.length == 0) throw new IllegalArgumentException("Cannot find annotations at " + source);
+      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
+      if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
       classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
-      for (File file : annotations) IdeaTestUtil.compileFile(file, classes);
+      IdeaTestUtil.compileFile(source, classes);
       return super.apply(base, description);
     }
 
@@ -290,23 +288,6 @@ public abstract class NotNullVerifyingInstrumenterTest {
     assertEquals(1, returnType.getAnnotatedReturnType().getAnnotations().length);
   }
 
-  public static abstract class WithTypeUse extends NotNullVerifyingInstrumenterTest {
-    @Test
-    public void testTypeUseAndMemberAnnotationsOnArrays() throws Exception {
-      Class<?> test = prepareTest();
-      Object instance = test.newInstance();
-
-      Object[] singleNullArg = {null};
-      verifyCallThrowsException("Argument 0 for @NotNull parameter of TypeUseAndMemberAnnotationsOnArrays.notNullArray must not be null",
-                                instance, test.getMethod("notNullArray", String[].class), singleNullArg);
-      test.getMethod("nullableArray", String[].class).invoke(instance, singleNullArg);
-
-      verifyCallThrowsException("@NotNull method TypeUseAndMemberAnnotationsOnArrays.notNullReturn must not return null",
-                                instance, test.getMethod("notNullReturn"));
-      assertNull(test.getMethod("nullableReturn").invoke(instance));
-    }
-  }
-
   @Test
   public void testMalformedBytecode() throws Exception {
     Class<?> testClass = prepareTest();
@@ -417,7 +398,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     File classesDir = tempDir.newFolder("output");
     List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
-    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtilRt.toStringArray(args));
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
     File[] files = classesDir.listFiles();
     assertNotNull(files);
@@ -430,7 +411,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-      String className = FileUtilRt.getNameWithoutExtension(file.getName());
+      String className = FileUtil.getNameWithoutExtension(file.getName());
       Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
       if (className.equals(testName)) {
         mainClass = aClass;

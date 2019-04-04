@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
@@ -7,15 +21,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +42,7 @@ import java.util.*;
  * Author: dmitrylomov
  */
 class StubSerializationHelper {
-  private static final Logger LOG = Logger.getInstance(StubSerializationHelper.class);
-
-  private final PersistentStringEnumerator myNameStorage;
+  private final AbstractStringEnumerator myNameStorage;
 
   private final TIntObjectHashMap<String> myIdToName = new TIntObjectHashMap<>();
   private final TObjectIntHashMap<String> myNameToId = new TObjectIntHashMap<>();
@@ -37,12 +51,8 @@ class StubSerializationHelper {
   private final ConcurrentIntObjectMap<ObjectStubSerializer> myIdToSerializer = ContainerUtil.createConcurrentIntObjectMap();
   private final Map<ObjectStubSerializer, Integer> mySerializerToId = ContainerUtil.newConcurrentMap();
 
-  private final boolean myUnmodifiable;
-  private final RecentStringInterner myStringInterner;
-
-  StubSerializationHelper(@NotNull PersistentStringEnumerator nameStorage, boolean unmodifiable, @NotNull Disposable parentDisposable) {
+  StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
-    myUnmodifiable = unmodifiable;
     myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
@@ -58,17 +68,7 @@ class StubSerializationHelper {
       return;
     }
 
-    int id;
-    if (myUnmodifiable) {
-      id = myNameStorage.tryEnumerate(name);
-      if (id == 0) {
-        LOG.info("serialized " + name + " is ignored in unmodifiable stub serialization manager");
-        return;
-      }
-    }
-    else {
-      id = myNameStorage.enumerate(name);
-    }
+    int id = myNameStorage.enumerate(name);
     myIdToName.put(id, name);
     myNameToId.put(name, id);
   }
@@ -81,37 +81,32 @@ class StubSerializationHelper {
     }
   }
 
-  private ObjectStubSerializer<Stub, Stub> writeSerializerId(Stub stub, @NotNull DataOutput stream, IntEnumerator serializerLocalEnumerator)
+  private ObjectStubSerializer<Stub, Stub> writeSerializerId(Stub stub, @NotNull DataOutput stream)
     throws IOException {
     ObjectStubSerializer<Stub, Stub> serializer = StubSerializationUtil.getSerializer(stub);
-    DataInputOutputUtil.writeINT(stream, serializerLocalEnumerator.enumerate(getClassId(serializer)));
+    DataInputOutputUtil.writeINT(stream, getClassId(serializer));
     return serializer;
   }
 
-  private void serializeSelf(Stub stub,
-                             @NotNull StubOutputStream stream,
-                             IntEnumerator serializerLocalEnumerator) throws IOException {
+  private void serializeSelf(Stub stub, @NotNull StubOutputStream stream) throws IOException {
     if (((ObjectStubBase)stub).isDangling()) {
       stream.writeByte(0);
     }
-    writeSerializerId(stub, stream, serializerLocalEnumerator).serialize(stub, stream);
+    writeSerializerId(stub, stream).serialize(stub, stream);
   }
 
-  private void serializeChildren(@NotNull Stub parent,
-                                 @NotNull StubOutputStream stream,
-                                 IntEnumerator serializerLocalEnumerator) throws IOException {
+  private void serializeChildren(@NotNull Stub parent, @NotNull StubOutputStream stream) throws IOException {
     final List<? extends Stub> children = parent.getChildrenStubs();
     DataInputOutputUtil.writeINT(stream, children.size());
     for (Stub child : children) {
-      serializeSelf(child, stream, serializerLocalEnumerator);
-      serializeChildren(child, stream, serializerLocalEnumerator);
+      serializeSelf(child, stream);
+      serializeChildren(child, stream);
     }
   }
 
   void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
-    IntEnumerator selializerIdLocalEnumerator = new IntEnumerator();
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
     boolean doDefaultSerialization = true;
 
@@ -123,18 +118,21 @@ class StubSerializationHelper {
         doDefaultSerialization = false;
         DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
         for (PsiFileStub root : roots) {
-          serializeRoot(stubOutputStream, root, storage, selializerIdLocalEnumerator);
+          serializeRoot(stubOutputStream, root, storage);
         }
       }
     }
 
     if (doDefaultSerialization) {
       DataInputOutputUtil.writeINT(stubOutputStream, 1);
-      serializeRoot(stubOutputStream, rootStub, storage, selializerIdLocalEnumerator);
+      serializeRoot(stubOutputStream, rootStub, storage);
     }
     DataOutputStream resultStream = new DataOutputStream(stream);
-    selializerIdLocalEnumerator.dump(resultStream);
-    storage.write(resultStream);
+    DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    for(String s:storage.myStrings) {
+      IOUtil.writeUTFFast(buffer, resultStream, s);
+    }
     resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
@@ -151,25 +149,34 @@ class StubSerializationHelper {
     return idValue;
   }
 
+  private final RecentStringInterner myStringInterner;
   private static final ThreadLocal<ObjectStubSerializer> ourRootStubSerializer = new ThreadLocal<>();
 
   @NotNull
   Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
-    IntEnumerator serializerLocalEnumerator = IntEnumerator.read(inputStream);
-    readEnumeratedStrings(storage, inputStream);
+    final int numberOfStrings = DataInputOutputUtil.readINT(inputStream);
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    storage.myStrings.ensureCapacity(numberOfStrings);
+
+    int i = 0;
+    while(i < numberOfStrings) {
+      String s = myStringInterner.get(IOUtil.readUTFFast(buffer, inputStream));
+      storage.myStrings.add(s);
+      ++i;
+    }
 
     final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
     if (stubFilesCount <= 0) {
       Logger.getInstance(getClass()).error("Incorrect stub files count during deserialization:"+stubFilesCount);
     }
 
-    Stub baseStub = deserializeRoot(inputStream, storage, serializerLocalEnumerator);
-    final List<PsiFileStub> stubs = new ArrayList<>(stubFilesCount);
+    Stub baseStub = deserializeRoot(storage, inputStream);
+    final List<PsiFileStub> stubs = ContainerUtil.newArrayListWithCapacity(stubFilesCount);
     if (baseStub instanceof PsiFileStub) stubs.add((PsiFileStub)baseStub);
     for (int j = 1; j < stubFilesCount; j++) {
-      Stub deserialize = deserializeRoot(inputStream, storage, serializerLocalEnumerator);
+      Stub deserialize = deserializeRoot(storage, inputStream);
       if (deserialize instanceof PsiFileStub) {
         final PsiFileStub fileStub = (PsiFileStub)deserialize;
         stubs.add(fileStub);
@@ -187,17 +194,15 @@ class StubSerializationHelper {
     return baseStub;
   }
 
-  private Stub deserializeRoot(StubInputStream inputStream,
-                               FileLocalStringEnumerator storage,
-                               IntEnumerator serializerLocalEnumerator) throws IOException, SerializerNotFoundException {
-    ObjectStubSerializer<?, Stub> serializer = getClassById(DataInputOutputUtil.readINT(inputStream), null, serializerLocalEnumerator);
+  private Stub deserializeRoot(FileLocalStringEnumerator storage, StubInputStream inputStream) throws IOException, SerializerNotFoundException {
+    ObjectStubSerializer<?, Stub> serializer = getClassById(DataInputOutputUtil.readINT(inputStream), null);
     ourRootStubSerializer.set(serializer);
     try {
       Stub stub = serializer.deserialize(inputStream, null);
       if (stub instanceof StubBase) {
-        deserializeStubList((StubBase)stub, serializer, inputStream, storage, serializerLocalEnumerator);
+        deserializeStubList(storage, inputStream, (StubBase)stub, serializer);
       } else {
-        deserializeChildren(inputStream, stub, serializerLocalEnumerator);
+        deserializeChildren(inputStream, stub);
       }
       return stub;
     }
@@ -206,27 +211,20 @@ class StubSerializationHelper {
     }
   }
 
-  private void serializeRoot(StubOutputStream out,
-                             Stub root,
-                             AbstractStringEnumerator storage,
-                             IntEnumerator serializerLocalEnumerator) throws IOException {
-    serializeSelf(root, out, serializerLocalEnumerator);
+  private void serializeRoot(StubOutputStream out, Stub root, AbstractStringEnumerator storage) throws IOException {
+    serializeSelf(root, out);
     if (root instanceof StubBase) {
       StubList stubList = ((StubBase)root).myStubList;
       if (root != stubList.get(0)) {
         throw new IllegalArgumentException("Serialization is supported only for root stubs");
       }
-      serializeStubList(stubList, out, storage, serializerLocalEnumerator);
+      serializeStubList(out, storage, stubList);
     } else {
-      serializeChildren(root, out, serializerLocalEnumerator);
+      serializeChildren(root, out);
     }
   }
 
-  private void deserializeStubList(StubBase<?> root,
-                                   ObjectStubSerializer rootType,
-                                   StubInputStream inputStream,
-                                   FileLocalStringEnumerator storage,
-                                   IntEnumerator serializerLocalEnumerator)
+  private void deserializeStubList(FileLocalStringEnumerator storage, StubInputStream inputStream, StubBase<?> root, ObjectStubSerializer rootType)
     throws IOException, SerializerNotFoundException {
     int stubCount = DataInputOutputUtil.readINT(inputStream);
     LazyStubList stubList = new LazyStubList(stubCount, root, rootType);
@@ -245,7 +243,7 @@ class StubSerializationHelper {
 
         allStarts.set(start);
 
-        addStub(parentIndex, index, start, (IElementType)getClassById(serializerId, null, serializerLocalEnumerator));
+        addStub(parentIndex, index, start, (IElementType)getClassById(serializerId, null));
         deserializeChildren(index);
       }
 
@@ -272,10 +270,7 @@ class StubSerializationHelper {
     stubList.setStubData(new LazyStubData(storage, parentsAndStarts, serializedStubs, allStarts));
   }
 
-  private void serializeStubList(StubList stubList,
-                                 DataOutput out,
-                                 AbstractStringEnumerator storage,
-                                 IntEnumerator serializerLocalEnumerator) throws IOException {
+  private void serializeStubList(DataOutput out, AbstractStringEnumerator storage, StubList stubList) throws IOException {
     if (!stubList.isChildrenLayoutOptimal()) {
       throw new IllegalArgumentException("Manually assembled stubs should be normalized before serialization, consider wrapping them into StubTree");
     }
@@ -288,7 +283,7 @@ class StubSerializationHelper {
 
     for (int i = 1; i < stubList.size(); i++) {
       StubBase<?> stub = stubList.get(i);
-      ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out, serializerLocalEnumerator);
+      ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out);
       DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
       DataInputOutputUtil.writeINT(out, stubList.getChildrenCount(stub.id));
     }
@@ -305,7 +300,7 @@ class StubSerializationHelper {
     if (stub.isDangling()) {
       stubOut.writeByte(0);
     }
-    return tempBuffer.size() == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : tempBuffer.toByteArray();
+    return tempBuffer.size() == 0 ? ArrayUtil.EMPTY_BYTE_ARRAY : tempBuffer.toByteArray();
   }
 
   private static class ByteArrayInterner {
@@ -338,7 +333,7 @@ class StubSerializationHelper {
 
   private byte[] readByteArray(StubInputStream inputStream) throws IOException {
     int length = DataInputOutputUtil.readINT(inputStream);
-    if (length == 0) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
 
     byte[] array = new byte[length];
     int read = inputStream.read(array);
@@ -358,8 +353,7 @@ class StubSerializationHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private ObjectStubSerializer<?, Stub> getClassById(int localId, @Nullable Stub parentStub, IntEnumerator enumerator) throws SerializerNotFoundException {
-    int id = enumerator.valueOf(localId);
+  private ObjectStubSerializer<?, Stub> getClassById(int id, @Nullable Stub parentStub) throws SerializerNotFoundException {
     ObjectStubSerializer<?, Stub> serializer = myIdToSerializer.get(id);
     if (serializer == null) {
       myIdToSerializer.put(id, serializer = instantiateSerializer(id, parentStub));
@@ -393,9 +387,7 @@ class StubSerializationHelper {
     return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
   }
 
-  private void deserializeChildren(StubInputStream stream,
-                                   Stub parent,
-                                   IntEnumerator serializerLocalEnumerator) throws IOException, SerializerNotFoundException {
+  private void deserializeChildren(StubInputStream stream, Stub parent) throws IOException, SerializerNotFoundException {
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {
       boolean dangling = false;
@@ -405,24 +397,11 @@ class StubSerializationHelper {
         id = DataInputOutputUtil.readINT(stream);
       }
 
-      Stub child = getClassById(id, parent, serializerLocalEnumerator).deserialize(stream, parent);
+      Stub child = getClassById(id, parent).deserialize(stream, parent);
       if (dangling) {
         ((ObjectStubBase) child).markDangling();
       }
-      deserializeChildren(stream, child, serializerLocalEnumerator);
-    }
-  }
-
-  private void readEnumeratedStrings(FileLocalStringEnumerator enumerator, @NotNull DataInputStream stream) throws IOException {
-    final int numberOfStrings = DataInputOutputUtil.readINT(stream);
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    enumerator.myStrings.ensureCapacity(numberOfStrings);
-
-    int i = 0;
-    while(i < numberOfStrings) {
-      String s = intern(IOUtil.readUTFFast(buffer, stream));
-      enumerator.myStrings.add(s);
-      ++i;
+      deserializeChildren(stream, child);
     }
   }
 
@@ -450,15 +429,6 @@ class StubSerializationHelper {
     public String valueOf(int idx) {
       if (idx == 0) return null;
       return myStrings.get(idx - 1);
-    }
-
-    private void write(@NotNull DataOutputStream stream) throws IOException {
-      assert myEnumerates != null;
-      DataInputOutputUtil.writeINT(stream, myStrings.size());
-      byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-      for(String s: myStrings) {
-        IOUtil.writeUTFFast(buffer, stream, s);
-      }
     }
 
     @Override

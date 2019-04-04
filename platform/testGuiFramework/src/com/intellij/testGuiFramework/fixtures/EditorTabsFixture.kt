@@ -8,7 +8,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.tabs.JBEditorTabsBase
-import com.intellij.ui.tabs.newImpl.TabLabel
+import com.intellij.ui.tabs.impl.TabLabel
 import org.fest.swing.core.Robot
 import org.fest.swing.timing.Timeout
 import java.awt.Container

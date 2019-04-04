@@ -94,9 +94,9 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   private class MyFilteringIterator extends FilteringIterator<RangeHighlighterEx, RangeHighlighterEx>
     implements MarkupIterator<RangeHighlighterEx> {
-    private final MarkupIterator<? extends RangeHighlighterEx> myDelegate;
+    private final MarkupIterator<RangeHighlighterEx> myDelegate;
 
-    MyFilteringIterator(@NotNull MarkupIterator<? extends RangeHighlighterEx> delegate) {
+    MyFilteringIterator(@NotNull MarkupIterator<RangeHighlighterEx> delegate) {
       super(delegate, IS_AVAILABLE);
       myDelegate = delegate;
     }
@@ -178,7 +178,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
                                                                    TextAttributes textAttributes,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   Consumer<RangeHighlighterEx> changeAttributesAction) {
     return myDelegate.addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, targetArea, isPersistent,
                                                              changeAttributesAction);
   }
@@ -190,7 +190,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
-                                      @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                      @NotNull Consumer<RangeHighlighterEx> changeAttributesAction) {
     myDelegate.changeAttributesInBatch(highlighter, changeAttributesAction);
   }
 

@@ -2,9 +2,8 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.apache.log4j.Level
 import org.apache.log4j.LogManager
 
@@ -15,64 +14,53 @@ import org.apache.log4j.LogManager
 class DebugLogManager {
   enum class DebugLogLevel { DEBUG, TRACE }
 
-  data class Category(val category: String, val level: DebugLogLevel)
-
   private val properties = PropertiesComponent.getInstance()
 
-  companion object {
-    @JvmStatic
-    fun getInstance(): DebugLogManager = ApplicationManager.getApplication().getComponent(DebugLogManager::class.java)
-  }
-
   init {
-    val categories = mutableListOf<Category>()
-    categories.addAll(getSavedCategories())
-    // add categories from system properties (e.g. for tests on CI server)
-    categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
-    categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
+    val categories =
+      getSavedCategories() +
+      // add categories from system properties (e.g. for tests on CI server)
+      fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG) +
+      fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE)
+
     applyCategories(categories)
   }
 
-  fun getSavedCategories(): List<Category> {
-    return ContainerUtil.concat(fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG),
-                                fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE))
-  }
+  fun getSavedCategories(): List<Pair<String, DebugLogLevel>> =
+    fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
+    fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE)
 
-  fun clearCategories(categories: List<Category>) {
+  fun clearCategories(categories: List<Pair<String, DebugLogLevel>>) {
     categories.forEach {
-      LogManager.getLogger(it.category)?.level = null
+      LogManager.getLogger(it.first)?.level = null
     }
   }
 
-  fun applyCategories(categories: List<Category>) {
+  fun applyCategories(categories: List<Pair<String, DebugLogLevel>>) {
     applyCategories(categories, DebugLogLevel.DEBUG, Level.DEBUG)
     applyCategories(categories, DebugLogLevel.TRACE, Level.TRACE)
   }
 
-  private fun applyCategories(categories: List<Category>, level: DebugLogLevel, log4jLevel: Level) {
-    val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
+  private fun applyCategories(categories: List<Pair<String, DebugLogLevel>>, level: DebugLogLevel, log4jLevel: Level) {
+    val filtered = categories.filter { it.second == level }.map { it.first }
     filtered.forEach {
       LogManager.getLogger(it)?.level = log4jLevel
     }
-    if (filtered.isNotEmpty()) {
+    if (!filtered.isEmpty()) {
       LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")
     }
   }
 
-  fun saveCategories(categories: List<Category>) {
+  fun saveCategories(categories: List<Pair<String, DebugLogLevel>>) {
     properties.setValue(LOG_DEBUG_CATEGORIES, toString(categories, DebugLogLevel.DEBUG), null)
     properties.setValue(LOG_TRACE_CATEGORIES, toString(categories, DebugLogLevel.TRACE), null)
   }
 
-  private fun fromString(text: String?, level: DebugLogLevel): List<Category> {
-    return when {
-      text != null -> text.lineSequence().mapNotNull { if (it.isBlank()) null else Category(it, level) }.toList()
-      else -> emptyList()
-    }
-  }
+  private fun fromString(text: String?, level: DebugLogLevel) =
+    if (text != null) StringUtil.splitByLines(text, true).map { it to level }.toList() else emptyList()
 
-  private fun toString(categories: List<Category>, level: DebugLogLevel): String? {
-    val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
+  private fun toString(categories: List<Pair<String, DebugLogLevel>>, level: DebugLogLevel): String? {
+    val filtered = categories.filter { it.second == level }.map { it.first }
     return if (filtered.isNotEmpty()) filtered.joinToString("\n") else null
   }
 }

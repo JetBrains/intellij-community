@@ -1081,6 +1081,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           return false;
         }
       }
+      PsiAnnotation[] firstAnnotations = localVariable1.getAnnotations();
+      if (firstAnnotations.length != localVariable2.getAnnotations().length || firstAnnotations.length != 0) return false;
       PsiType firstType = localVariable1.getType();
       if (!firstType.equals(localVariable2.getType())) return false;
       String firstName = localVariable1.getName();

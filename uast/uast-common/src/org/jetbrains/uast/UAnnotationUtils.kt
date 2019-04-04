@@ -73,10 +73,8 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
 fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
 
   fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
-    if (uElement !is UExpression) return null
     val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-    val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
-    return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
+    return uAnnotation to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
   }
 
   tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {

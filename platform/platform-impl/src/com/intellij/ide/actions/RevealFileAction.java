@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class RevealFileAction extends DumbAwareAction {
 
   @NotNull
   public static String getActionName() {
-    return SystemInfoRt.isMac ? "Reveal in Finder" : "Show in " + ShowFilePathAction.getFileManagerName();
+    return SystemInfo.isMac ? "Reveal in Finder" : "Show in " + ShowFilePathAction.getFileManagerName();
   }
 
   @Override

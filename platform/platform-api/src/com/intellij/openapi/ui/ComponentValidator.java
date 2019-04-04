@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -9,10 +9,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -54,10 +52,10 @@ public class ComponentValidator {
   public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
 
   private final Disposable parentDisposable;
-  private Supplier<? extends ValidationInfo> validator;
-  private Supplier<? extends ValidationInfo> focusValidator;
+  private Supplier<ValidationInfo> validator;
+  private Supplier<ValidationInfo> focusValidator;
 
-  private Function<? super JComponent, ? extends JComponent> outlineProvider = Function.identity();
+  private Function<JComponent, JComponent> outlineProvider = Function.identity();
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
@@ -76,7 +74,7 @@ public class ComponentValidator {
 
    // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
   @Deprecated
-  public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
+  public ComponentValidator withValidator(@NotNull Consumer<ComponentValidator> validator) {
     this.validator = () -> {
       validator.accept(this);
       return validationInfo;
@@ -84,12 +82,12 @@ public class ComponentValidator {
     return this;
   }
 
-  public ComponentValidator withValidator(@NotNull Supplier<? extends ValidationInfo> validator) {
+  public ComponentValidator withValidator(@NotNull Supplier<ValidationInfo> validator) {
     this.validator = validator;
     return this;
   }
 
-  public ComponentValidator withFocusValidator(@NotNull Supplier<? extends ValidationInfo> focusValidator) {
+  public ComponentValidator withFocusValidator(@NotNull Supplier<ValidationInfo> focusValidator) {
     this.focusValidator = focusValidator;
     return this;
   }
@@ -99,7 +97,7 @@ public class ComponentValidator {
     return this;
   }
 
-  public ComponentValidator withOutlineProvider(@NotNull Function<? super JComponent, ? extends JComponent> outlineProvider) {
+  public ComponentValidator withOutlineProvider(@NotNull Function<JComponent, JComponent> outlineProvider) {
     this.outlineProvider = outlineProvider;
     return this;
   }
@@ -125,7 +123,7 @@ public class ComponentValidator {
     };
 
     PropertyChangeListener ancestorListener = e -> {
-      Window w = (Window)ComponentUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
+      Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
       if (w != null) {
         if (e.getNewValue() != null) {
           w.addComponentListener(componentListener);
@@ -135,7 +133,7 @@ public class ComponentValidator {
       }
     };
 
-    Window w = (Window)ComponentUtil.findParentByCondition(component, v -> v instanceof Window);
+    Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
     if (w != null) {
       w.addComponentListener(componentListener);
     } else {
@@ -236,7 +234,7 @@ public class ComponentValidator {
   }
 
   @NotNull
-  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
+  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
     String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
@@ -298,7 +296,7 @@ public class ComponentValidator {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
-      Point point = new Point(JBUIScale.scale(40), i.top - JBUIScale.scale(6) - popupSize.height);
+      Point point = new Point(JBUI.scale(40), i.top - JBUI.scale(6) - popupSize.height);
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);

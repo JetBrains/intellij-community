@@ -60,7 +60,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files) {
+  public OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
@@ -132,7 +132,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  private static OperationStatus createResultStatus(@NotNull Collection<? extends VirtualFile> files) {
+  private static OperationStatus createResultStatus(@NotNull Collection<VirtualFile> files) {
     List<VirtualFile> readOnlyFiles = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.exists()) {
@@ -146,7 +146,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   @NotNull
-  private List<FileInfo> createFileInfos(@NotNull Collection<? extends VirtualFile> files) {
+  private List<FileInfo> createFileInfos(@NotNull Collection<VirtualFile> files) {
     List<FileInfo> fileInfos = new ArrayList<>();
     for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && file.isInLocalFileSystem()) {
@@ -227,7 +227,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
           return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          return CommonBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
+          return CommonBundle.message("failed.to.make.file.writeable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
       }
       throw new RuntimeException("No readonly files");

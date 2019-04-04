@@ -1,10 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -154,7 +168,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   private int scale(int value) {
-    value = JBUIScale.scale(value);
+    value = JBUI.scale(value);
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (UIUtil.getComponentStyle(myScrollBar)) {
       case LARGE:
@@ -286,9 +300,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
           if (alignment == Alignment.BOTTOM) bounds.y += offset;
         }
       }
-      boolean animate = !myTrack.bounds.equals(bounds); // animate thumb on resize
-      if (animate) myTrack.bounds.setBounds(bounds);
-      updateThumbBounds(animate);
+      myTrack.bounds.setBounds(bounds);
+      updateThumbBounds();
       paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
@@ -302,7 +315,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
   }
 
-  private void updateThumbBounds(boolean animate) {
+  private void updateThumbBounds() {
     int value = 0;
     int min = myScrollBar.getMinimum();
     int max = myScrollBar.getMaximum();
@@ -321,7 +334,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int maxY = myTrack.bounds.y + myTrack.bounds.height - height;
         int y = (value < max - extent) ? convert(myTrack.bounds.height - height, value - min, range - extent) : maxY;
         myThumb.bounds.setBounds(myTrack.bounds.x, adjust(y, myTrack.bounds.y, maxY), myTrack.bounds.width, height);
-        animate |= myOldValue != value; // animate thumb on move
+        if (myOldValue != value) onThumbMove();
       }
     }
     else {
@@ -336,11 +349,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
         int x = (value < max - extent) ? convert(myTrack.bounds.width - width, value - min, range - extent) : maxX;
         if (!myScrollBar.getComponentOrientation().isLeftToRight()) x = myTrack.bounds.x - x + maxX;
         myThumb.bounds.setBounds(adjust(x, myTrack.bounds.x, maxX), myTrack.bounds.y, width, myTrack.bounds.height);
-        animate |= myOldValue != value; // animate thumb on move
+        if (myOldValue != value) onThumbMove();
       }
     }
     myOldValue = value;
-    if (animate) onThumbMove();
   }
 
   private int getValue() {
@@ -525,7 +537,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
     @Override
     public void stateChanged(ChangeEvent event) {
-      updateThumbBounds(false);
+      updateThumbBounds();
       // TODO: update mouse
       isValueCached = false;
       repaint();

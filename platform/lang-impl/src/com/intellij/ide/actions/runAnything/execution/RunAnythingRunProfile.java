@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.runAnything.RunAnythingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +47,7 @@ public class RunAnythingRunProfile implements RunProfile {
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.Actions.Run_anything;
+    return RunAnythingUtil.UNDEFINED_COMMAND_ICON;
   }
+
 }

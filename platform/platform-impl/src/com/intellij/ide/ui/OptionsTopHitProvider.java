@@ -3,7 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter;
+import com.intellij.diagnostic.StartUpPerformanceReporter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -23,17 +22,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -56,41 +53,31 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
 
   @NotNull
-  private static Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
-                                                                @Nullable Project project,
-                                                                @Nullable PluginDescriptor pluginDescriptor) {
+  private static Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider, @Nullable Project project) {
     ComponentManager manager = project == null || provider instanceof ApplicationLevelProvider ? ApplicationManager.getApplication() : project;
-    if (manager == null || manager.isDisposed()) {
-      return Collections.emptyList();
-    }
+    if (manager == null || manager.isDisposed()) return Collections.emptyList();
 
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
-    if (cache == null) {
-      cache = new CachedOptions(manager);
-    }
+    if (cache == null) cache = new CachedOptions(manager);
 
     Class<?> clazz = provider.getClass();
-    Collection<OptionDescription> result = cache.map.get(clazz);
-    if (result != null) {
+    return cache.map.computeIfAbsent(clazz, type -> {
+      long startTime = StartUpMeasurer.getCurrentTime();
+      Collection<OptionDescription> result;
+      if (provider instanceof ProjectLevelProvider) {
+        //noinspection ConstantConditions
+        result = ((ProjectLevelProvider)provider).getOptions(project);
+      }
+      else if (provider instanceof ApplicationLevelProvider) {
+        result = ((ApplicationLevelProvider)provider).getOptions();
+      }
+      else {
+        result = ((OptionsTopHitProvider)provider).getOptions(project);
+      }
+      (project == null ? ParallelActivity.APP_OPTIONS_TOP_HIT_PROVIDER : ParallelActivity.PROJECT_OPTIONS_TOP_HIT_PROVIDER)
+        .record(startTime, clazz);
       return result;
-    }
-
-    long startTime = StartUpMeasurer.getCurrentTime();
-    if (provider instanceof ProjectLevelProvider) {
-      //noinspection ConstantConditions
-      result = ((ProjectLevelProvider)provider).getOptions(project);
-    }
-    else if (provider instanceof ApplicationLevelProvider) {
-      result = ((ApplicationLevelProvider)provider).getOptions();
-    }
-    else {
-      result = ((OptionsTopHitProvider)provider).getOptions(project);
-    }
-    (project == null ? ParallelActivity.APP_OPTIONS_TOP_HIT_PROVIDER : ParallelActivity.PROJECT_OPTIONS_TOP_HIT_PROVIDER)
-      .record(startTime, clazz, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
-
-    Collection<OptionDescription> prevValue = cache.map.putIfAbsent(clazz, result);
-    return prevValue == null ? result : prevValue;
+    });
   }
 
   @Override
@@ -116,7 +103,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @NotNull Consumer<Object> collector,
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
-      pattern = pattern.startsWith(" ") ? pattern.trim() : StringUtil.toLowerCase(pattern.substring(id.length()).trim());
+      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim().toLowerCase(Locale.ENGLISH);
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
     }
@@ -126,7 +113,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                                           @NotNull MinusculeMatcher matcher,
                                                           @NotNull Consumer<Object> collector,
                                                           @Nullable Project project) {
-    for (OptionDescription option : getCachedOptions(provider, project, null)) {
+    for (OptionDescription option : getCachedOptions(provider, project)) {
       if (matcher.matches(option.getOption())) {
         collector.accept(option);
       }
@@ -171,7 +158,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   private static final class CachedOptions implements Disposable {
     private static final Key<CachedOptions> KEY = Key.create("cached top hits");
-    private final ConcurrentMap<Class<?>, Collection<OptionDescription>> map = ContainerUtil.newConcurrentMap();
+    private final Map<Class<?>, Collection<OptionDescription>> map = new ConcurrentHashMap<>();
     private final ComponentManager manager;
 
     private CachedOptions(ComponentManager manager) {
@@ -186,7 +173,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       map.values().forEach(CachedOptions::dispose);
     }
 
-    private static void dispose(Collection<? extends OptionDescription> options) {
+    private static void dispose(Collection<OptionDescription> options) {
       if (options != null) options.forEach(CachedOptions::dispose);
     }
 
@@ -235,40 +222,39 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     @Override
     public void runActivity(@NotNull Project project) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> cacheAll(null, project)); // for given project
+      cacheAll(null, project); // for given project
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
-      Application app = ApplicationManager.getApplication();
-      if (app == null || app.isUnitTestMode()) {
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isUnitTestMode()) {
         return;
       }
 
       long millis = System.currentTimeMillis();
       String name = project == null ? "application" : "project";
-      Deque<Pair<ConfigurableOptionsTopHitProvider, PluginDescriptor>> edtProviders = new ArrayDeque<>();
-      SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
+      Deque<ConfigurableOptionsTopHitProvider> edtProviders = new ArrayDeque<>();
+      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensionList()) {
         if (provider instanceof ConfigurableOptionsTopHitProvider) {
           // process on EDT, because it creates a Swing components
           // do not process all in one unified invokeLater to ensure that EDT is not blocked for a long time
-          edtProviders.add(new Pair<>((ConfigurableOptionsTopHitProvider)provider, pluginDescriptor));
+          edtProviders.add((ConfigurableOptionsTopHitProvider)provider);
         }
         else if (provider instanceof OptionsSearchTopHitProvider) {
           if (project != null && provider instanceof ApplicationLevelProvider) {
-            return;
+            continue;
           }
 
-          cache((OptionsSearchTopHitProvider)provider, indicator, project, pluginDescriptor);
+          cache((OptionsSearchTopHitProvider)provider, indicator, project);
         }
-      });
+      }
 
       if (project != null) {
-        PROJECT_LEVEL_EP.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-          if (indicator != null) {
-            indicator.checkCanceled();
+        for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
+          if (indicator != null && indicator.isCanceled()) {
+            getCachedOptions(provider, project);
           }
-          getCachedOptions(provider, project, pluginDescriptor);
-        });
+        }
       }
 
       scheduleEdtTasks(edtProviders, indicator, project);
@@ -277,7 +263,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       LOG.info(delta + " ms spent to cache options in " + name);
     }
 
-    private static void scheduleEdtTasks(@NotNull Deque<Pair<ConfigurableOptionsTopHitProvider, PluginDescriptor>> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+    private static void scheduleEdtTasks(@NotNull Deque<ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
       if (edtProviders.isEmpty()) {
         if (project != null) {
           StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);
@@ -289,8 +275,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        Pair<ConfigurableOptionsTopHitProvider, PluginDescriptor> providerAndPluginDescriptor = edtProviders.pollFirst();
-        if (providerAndPluginDescriptor != null && cache(providerAndPluginDescriptor.first, indicator, project, providerAndPluginDescriptor.second)) {
+        ConfigurableOptionsTopHitProvider provider = edtProviders.poll();
+        if (provider != null && cache(provider, indicator, project)) {
           scheduleEdtTasks(edtProviders, indicator, project);
         }
       }, ObjectUtils.chooseNotNull(project, ApplicationManager.getApplication()).getDisposed());
@@ -299,7 +285,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     /**
      * returns false if disposed or cancelled
      */
-    private static boolean cache(@NotNull OptionsSearchTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project, @Nullable PluginDescriptor pluginDescriptor) {
+    private static boolean cache(@NotNull OptionsSearchTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
       // if application is closed
       if (indicator != null && indicator.isCanceled()) {
         return false;
@@ -310,7 +296,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
         return false;
       }
 
-      getCachedOptions(provider, project, pluginDescriptor);
+      getCachedOptions(provider, project);
       return true;
     }
   }

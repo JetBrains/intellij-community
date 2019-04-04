@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
@@ -13,7 +12,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -22,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -118,6 +118,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final KeymapManagerEx myKeymapManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
   private MyTimer myTimer;
   private int myRegisteredActionsCount;
@@ -129,65 +130,42 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl() {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager) {
+    myKeymapManager = (KeymapManagerEx)keymapManager;
+
     registerPluginActions();
     messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
   static AnAction convertStub(@NotNull ActionStub stub) {
-    AnAction anAction = instantiate(stub.getClassName(), stub.getLoader(), stub.getPluginId(), AnAction.class);
-    if (anAction == null) return null;
-
-    stub.initAction(anAction);
-    updateIconFromStub(stub, anAction);
-    return anAction;
-  }
-
-  @Nullable
-  private static <T> T instantiate(String stubClassName, ClassLoader classLoader, PluginId pluginId, Class<T> expectedClass) {
     Object obj;
+    String className = stub.getClassName();
     try {
-      Class<?> aClass = Class.forName(stubClassName, true, classLoader);
-      if (expectedClass == ActionGroup.class) {
-        obj = new CachingConstructorInjectionComponentAdapter(stubClassName, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
-      }
-      else {
-        obj = ReflectionUtil.newInstance(aClass);
-      }
+      Class<?> aClass = Class.forName(className, true, stub.getLoader());
+      obj = ReflectionUtil.newInstance(aClass);
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
-      LOG.error(new PluginException(e, pluginId));
+      LOG.error(new PluginException(e, stub.getPluginId()));
       return null;
     }
 
-    if (!expectedClass.isInstance(obj)) {
-      LOG.error(new PluginException("class with name '" +
-                                    stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; got " + obj, pluginId));
+    if (!(obj instanceof AnAction)) {
+      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
       return null;
     }
-    //noinspection unchecked
-    return (T) obj;
-  }
 
-  private static void updateIconFromStub(@NotNull ActionStubBase stub, AnAction anAction) {
+    AnAction anAction = (AnAction)obj;
+    stub.initAction(anAction);
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
       Class<? extends AnAction> actionClass = anAction.getClass();
       setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
-  }
-
-  @Nullable
-  static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub) {
-    ActionGroup group = instantiate(stub.getActionClass(), stub.getClassLoader(), stub.getPluginId(), ActionGroup.class);
-    if (group == null) return null;
-    stub.initGroup(group);
-    updateIconFromStub(stub, group);
-    return group;
+    return anAction;
   }
 
   private static void processAbbreviationNode(@NotNull Element e, @NotNull String id) {
@@ -314,7 +292,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId, @NotNull KeymapManager keymapManager) {
+  private void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
     if (keystrokeString == null || keystrokeString.trim().isEmpty()) {
       reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
@@ -334,7 +312,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
-    Keymap keymap = keymapManager.getKeymap(keymapName);
+    Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
       reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
@@ -457,19 +435,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, KeymapManagerEx.getInstanceEx());
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myKeymapManager);
   }
 
   private void registerPluginActions() {
-    final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : plugins) {
       final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
-        long startTime = StartUpMeasurer.getCurrentTime();
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
         }
-        StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
       }
     }
   }
@@ -485,11 +461,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     AnAction action;
     synchronized (myLock) {
       action = myId2Action.get(id);
-      if (canReturnStub || !(action instanceof ActionStubBase)) {
+      if (canReturnStub || !(action instanceof ActionStub)) {
         return action;
       }
     }
-    AnAction converted = action instanceof ActionStub ? convertStub((ActionStub)action) : convertGroupStub((ActionGroupStub) action);
+    AnAction converted = convertStub((ActionStub)action);
     if (converted == null) {
       unregisterAction(id);
       return null;
@@ -497,15 +473,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     synchronized (myLock) {
       action = myId2Action.get(id);
-      if (action instanceof ActionStubBase) {
-        action = replaceStub((ActionStubBase)action, converted);
+      if (action instanceof ActionStub) {
+        action = replaceStub((ActionStub)action, converted);
       }
       return action;
     }
   }
 
   @NotNull
-  private AnAction replaceStub(@NotNull ActionStubBase stub, AnAction anAction) {
+  private AnAction replaceStub(@NotNull ActionStub stub, AnAction anAction) {
     LOG.assertTrue(myAction2Id.containsKey(stub));
     myAction2Id.remove(stub);
 
@@ -517,13 +493,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     myAction2Id.put(anAction, stub.getId());
 
-    return addToMap(stub.getId(), anAction, stub.getPluginId(), stub instanceof ActionStub ? ((ActionStub) stub).getProjectType() : null);
+    return addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType());
   }
 
   @Override
   public String getId(@NotNull AnAction action) {
-    if (action instanceof ActionStubBase) {
-      return ((ActionStubBase) action).getId();
+    if (action instanceof ActionStub) {
+      return ((ActionStub) action).getId();
     }
     synchronized (myLock) {
       return myAction2Id.get(action);
@@ -540,7 +516,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           idList.add(id);
         }
       }
-      return ArrayUtilRt.toStringArray(idList);
+      return ArrayUtil.toStringArray(idList);
     }
   }
 
@@ -573,7 +549,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     // read ID and register loaded action
     String id = obtainActionId(element, className);
-    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
+    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
     }
@@ -598,17 +574,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return presentation;
     });
 
-    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     // process all links and key bindings if any
     for (Element e : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
         processAddToGroupNode(stub, e, pluginId, isSecondary(e));
       }
       else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processKeyboardShortcutNode(e, id, pluginId, keymapManager);
+        processKeyboardShortcutNode(e, id, pluginId);
       }
       else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processMouseShortcutNode(e, id, pluginId, keymapManager);
+        processMouseShortcutNode(e, id, pluginId);
       }
       else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
         processAbbreviationNode(e, id);
@@ -619,7 +594,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-      keymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
     }
 
     registerOrReplaceActionInner(element, id, stub, pluginId);
@@ -631,10 +606,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return StringUtil.isEmpty(id) ? StringUtil.getShortName(className) : id;
   }
 
-  private void registerOrReplaceActionInner(@NotNull Element element,
-                                            @NotNull String id,
-                                            @NotNull AnAction action,
-                                            @Nullable PluginId pluginId) {
+  private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
       if (Boolean.parseBoolean(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
@@ -651,7 +623,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       else {
         registerAction(id, action, pluginId, element.getAttributeValue(PROJECT_TYPE));
       }
-      ((ActionsCollectorImpl)ActionsCollector.getInstance()).onActionLoadedFromXml(action, id, pluginId);
     }
   }
 
@@ -670,20 +641,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
                   : DefaultActionGroup.class.getName();
     }
     try {
-      String id = element.getAttributeValue(ID_ATTR_NAME);
-      if (id != null && id.isEmpty()) {
-        reportActionError(pluginId, "ID of the group cannot be an empty string");
-        return null;
-      }
-
       ActionGroup group;
       boolean customClass = false;
       if (DefaultActionGroup.class.getName().equals(className)) {
         group = new DefaultActionGroup();
       } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
         group = new DefaultCompactActionGroup();
-      }
-      else if (id == null) {
+      } else {
         Class aClass = Class.forName(className, true, loader);
         Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
@@ -701,12 +665,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         customClass = true;
         group = (ActionGroup)obj;
       }
-      else {
-        group = new ActionGroupStub(id, className, loader, pluginId);
-        customClass = true;
-      }
       // read ID and register loaded group
-      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
+      String id = element.getAttributeValue(ID_ATTR_NAME);
+      if (id != null && id.isEmpty()) {
+        reportActionError(pluginId, "ID of the group cannot be an empty string");
+        return null;
+      }
+      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
       }
@@ -733,21 +698,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
 
       // icon
-      String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
-      if (group instanceof ActionGroupStub) {
-        ((ActionGroupStub) group).setIconPath(iconPath);
-      }
-      else {
-        setIcon(iconPath, className, loader, presentation, pluginId);
-      }
-
+      setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
       // popup
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
       if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-        KeymapManagerEx.getInstanceEx().bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
       }
 
       // process all group's children. There are other groups, actions, references and links
@@ -861,7 +819,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
       reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                  " but was " + (parentGroup != null ? parentGroup.getClass() : "[null]"));
+                                  " but was " + parentGroup.getClass());
       return null;
     }
     return parentGroup;
@@ -912,10 +870,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     unregisterAction(id);
   }
 
-  private static void processKeyboardShortcutNode(Element element,
-                                                  String actionId,
-                                                  PluginId pluginId,
-                                                  @NotNull KeymapManagerEx keymapManager) {
+  private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
       reportActionError(pluginId, "\"first-keystroke\" attribute must be specified for action with id=" + actionId);
@@ -942,7 +897,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
-    Keymap keymap = keymapManager.getKeymap(keymapName);
+    Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
       reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
@@ -1038,7 +993,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (pluginId != null && !(action instanceof ActionGroup)){
         myPlugin2Id.putValue(pluginId, actionId);
       }
-      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
+      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }
   }
 

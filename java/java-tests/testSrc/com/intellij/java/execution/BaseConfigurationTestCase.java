@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
+public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   private final List<Module> myModulesToDispose = new ArrayList<>();
 
   @Override

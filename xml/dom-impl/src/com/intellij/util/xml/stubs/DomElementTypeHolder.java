@@ -15,17 +15,17 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.SerializationManager;
 
 /**
  * @author Dmitry Avdeev
  */
-public interface DomElementTypeHolder {
-  ObjectStubSerializer ElementStubSerializer = new ElementStubSerializer();
+public class DomElementTypeHolder {
 
-  ObjectStubSerializer AttributeStub = new AttributeStubSerializer();
-
-  ObjectStubSerializer FileStubSerializer = new FileStubSerializer();
-
-  ObjectStubSerializer XIncludeStub = new XIncludeStub.XIncludeStubSerializer();
+  static {
+    SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(FileStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(XIncludeStub.ourSerializer);
+  }
 }

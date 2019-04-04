@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -21,10 +21,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
@@ -124,7 +128,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
     @Override
     public int getAdditionalWidth() {
-      return JBUIScale.scale(12) + AllIcons.General.ArrowDown.getIconWidth();
+      return JBUI.scale(12) + AllIcons.General.ArrowDown.getIconWidth();
     }
   };
   private final Project myProject;
@@ -182,7 +186,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   }
 
   void reset() {
-    List<Item> rows = new ArrayList<>();
+    List<Item> rows = ContainerUtil.newArrayList();
     for (String s : CodeInsightSettings.getInstance().EXCLUDED_PACKAGES) {
       rows.add(new Item(s, ExclusionScope.IDE));
     }
@@ -195,12 +199,12 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   }
 
   void apply() {
-    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ArrayUtilRt.toStringArray(getExcludedPackages(ExclusionScope.IDE));
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ArrayUtil.toStringArray(getExcludedPackages(ExclusionScope.IDE));
     JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames = getExcludedPackages(ExclusionScope.Project);
   }
 
   private List<String> getExcludedPackages(ExclusionScope scope) {
-    List<String> result = new ArrayList<>();
+    List<String> result = ContainerUtil.newArrayList();
     for (Item pair : getTableView().getListTableModel().getItems()) {
       if (scope == pair.scope) {
         result.add(pair.exclude);

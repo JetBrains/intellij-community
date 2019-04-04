@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -31,11 +32,13 @@ import java.util.List;
 import java.util.Set;
 
 public class CheckedExceptionCompatibilityConstraint extends InputOutputConstraintFormula {
+  private static final Logger LOG = Logger.getInstance(CheckedExceptionCompatibilityConstraint.class);
   private final PsiExpression myExpression;
+  private PsiType myT;
 
   public CheckedExceptionCompatibilityConstraint(PsiExpression expression, PsiType t) {
-    super(t);
     myExpression = expression;
+    myT = t;
   }
 
   @Override
@@ -43,7 +46,6 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       return true;
     }
-    PsiType myT = getCurrentType();
     if (myExpression instanceof PsiParenthesizedExpression) {
       constraints.add(new CheckedExceptionCompatibilityConstraint(((PsiParenthesizedExpression)myExpression).getExpression(), myT));
       return true;
@@ -108,7 +110,9 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
       final PsiElement body = myExpression instanceof PsiLambdaExpression ? ((PsiLambdaExpression)myExpression).getBody() : myExpression;
       if (body != null) {
         final List<PsiClassType> exceptions =  ExceptionUtil.getUnhandledExceptions(new PsiElement[] {body});
-        thrownTypes.addAll(ContainerUtil.filter(exceptions, type -> !ExceptionUtil.isUncheckedException(type)));
+        if (exceptions != null) {
+          thrownTypes.addAll(ContainerUtil.filter(exceptions, type -> !ExceptionUtil.isUncheckedException(type)));
+        }
       }
 
       if (expectedNonProperThrownTypes.isEmpty()) {
@@ -154,6 +158,16 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   @Override
   public PsiExpression getExpression() {
     return myExpression;
+  }
+
+  @Override
+  protected PsiType getT() {
+    return myT;
+  }
+
+  @Override
+  protected void setT(PsiType t) {
+    myT = t;
   }
 
   @Override

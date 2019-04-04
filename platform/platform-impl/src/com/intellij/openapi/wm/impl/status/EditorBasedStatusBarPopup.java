@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
@@ -49,8 +49,12 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   public EditorBasedStatusBarPopup(@NotNull Project project) {
     super(project);
     update = new Alarm(this);
-    myComponent = new TextPanel.WithIconAndArrows();
-    myComponent.setVisible(false);
+    myComponent = new TextPanel.WithIconAndArrows() {
+      @Override
+      protected boolean shouldPaintArrows() {
+        return actionEnabled;
+      }
+    };
 
     new ClickListener() {
       @Override
@@ -228,8 +232,15 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       String widgetText = state.text;
       String toolTipText = state.toolTip;
-      myComponent.setEnabled(actionEnabled);
-      myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
+      if (actionEnabled) {
+        myComponent.setForeground(UIUtil.getActiveTextColor());
+        myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
+      }
+      else {
+        myComponent.setForeground(UIUtil.getInactiveTextColor());
+        myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
+      }
+
       myComponent.setIcon(state.icon);
       myComponent.setToolTipText(toolTipText);
       myComponent.setText(widgetText);

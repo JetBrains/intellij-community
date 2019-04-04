@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
@@ -6,12 +6,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -201,7 +200,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         g.drawLine(0, 0, getWidth(), 0);
       }
     };
-    footerPanel.setBorder(JBUI.Borders.empty(4, 4, 4, SystemInfoRt.isMac ? 20 : 4));
+    footerPanel.setBorder(JBUI.Borders.empty(4, 4, 4, SystemInfo.isMac ? 20 : 4));
     footerPanel.add(myPathLabel);
 
     Runnable itemCallback = () -> IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> chooseItems(false));
@@ -246,7 +245,6 @@ public class MasterDetailPopupBuilder implements MasterController {
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {
-          @NotNull
           @Override
           public JComponent getComponent() {
             return done;
@@ -299,7 +297,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
   @Override
   public ItemWrapper[] getSelectedItems() {
-    Object[] values = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    Object[] values = ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (myChooserComponent instanceof JList) {
       //noinspection deprecation
       values = ((JList)myChooserComponent).getSelectedValues();

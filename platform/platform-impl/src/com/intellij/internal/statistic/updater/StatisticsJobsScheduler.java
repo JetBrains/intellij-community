@@ -8,9 +8,9 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -69,19 +69,6 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     runEventLogStatisticsService();
     runStatesLogging();
     runLegacyDataCleanupService();
-    runSensitiveDataValidatorUpdater();
-  }
-
-  private static void runSensitiveDataValidatorUpdater() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(
-      () -> {
-        final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
-        for (StatisticsEventLoggerProvider provider : providers) {
-          if (provider.isRecordEnabled()) {
-            SensitiveDataValidator.getInstance(provider.getRecorderId()).update();
-          }
-        }
-      }, 3, 180, TimeUnit.MINUTES);
   }
 
   private static void runEventLogStatisticsService() {
@@ -128,6 +115,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static void runLegacyDataCleanupService() {
     JobScheduler.getScheduler().schedule(() -> {
       FUStatisticsPersistence.clearLegacyStates();
+      LegacyApplicationUsageTriggers.cleanup();
     }, 1, TimeUnit.MINUTES);
   }
 

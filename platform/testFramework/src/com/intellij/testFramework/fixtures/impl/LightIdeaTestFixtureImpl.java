@@ -5,10 +5,8 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -27,8 +25,6 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   private final LightProjectDescriptor myProjectDescriptor;
   private SdkLeakTracker myOldSdks;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  private Project myProject;
-  private Module myModule;
 
   public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -39,9 +35,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
-    myProject = setup.getFirst();
-    myModule = setup.getSecond();
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
@@ -53,9 +47,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   @Override
   public void tearDown() {
     Project project = getProject();
-    if (project != null) {
-      CodeStyle.dropTemporarySettings(project);
-    }
+    CodeStyle.dropTemporarySettings(project);
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -72,8 +64,6 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> {
-        myProject = null;
-        myModule = null;
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
         }
@@ -86,18 +76,14 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
         }
       })
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
-      .append(() -> {
-        if (ApplicationManager.getApplication() != null) {
-          PersistentFS.getInstance().clearIdCache();
-        }
-      })
+      .append(() -> PersistentFS.getInstance().clearIdCache())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
       .run();
   }
 
   @Override
   public Project getProject() {
-    return myProject;
+    return LightPlatformTestCase.getProject();
   }
 
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
@@ -107,6 +93,6 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
   @Override
   public Module getModule() {
-    return myModule;
+    return LightPlatformTestCase.getModule();
   }
 }

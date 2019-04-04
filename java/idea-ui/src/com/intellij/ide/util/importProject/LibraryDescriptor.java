@@ -44,11 +44,11 @@ public class LibraryDescriptor {
     return Collections.unmodifiableCollection(myJars);
   }
   
-  public void addJars(Collection<? extends File> jars) {
+  public void addJars(Collection<File> jars) {
     myJars.addAll(jars);
   }
   
-  public void removeJars(Collection<? extends File> jars) {
+  public void removeJars(Collection<File> jars) {
     myJars.removeAll(jars);
   }
 

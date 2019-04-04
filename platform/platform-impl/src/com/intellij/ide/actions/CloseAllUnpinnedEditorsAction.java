@@ -66,7 +66,7 @@ public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
             hasUnpinned = true;
           }
         }
-        if ((hasPinned || !event.isFromContextMenu()) && hasUnpinned) {
+        if (/*hasPinned && */hasUnpinned) {
           return true;
         }
       }

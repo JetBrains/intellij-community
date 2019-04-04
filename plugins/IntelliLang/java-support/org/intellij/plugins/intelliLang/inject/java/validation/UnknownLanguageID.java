@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -23,9 +24,34 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.pattern.PatternValidator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnknownLanguageID extends LocalInspectionTool {
+
+  @Override
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  public String getGroupDisplayName() {
+    return PatternValidator.LANGUAGE_INJECTION;
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return "Unknown Language ID";
+  }
 
   @Override
   @NotNull
@@ -60,4 +86,10 @@ public class UnknownLanguageID extends LocalInspectionTool {
     };
   }
 
+  @Override
+  @NotNull
+  @NonNls
+  public String getShortName() {
+    return "UnknownLanguage";
+  }
 }

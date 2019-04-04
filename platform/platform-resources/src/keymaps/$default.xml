@@ -298,9 +298,6 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control E"/>
   </action>
-  <action id="SwitcherRecentEditedChangedToggleCheckBox">
-    <keyboard-shortcut first-keystroke="control E"/>
-  </action>
   <action id="RecentChangedFiles"/>
   <action id="RecentLocations">
     <keyboard-shortcut first-keystroke="control shift E"/>
@@ -1008,9 +1005,6 @@
   </action>
   <action id="VcsShowPrevChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
-  </action>
-  <action id="Vcs.ToggleAmendCommitMode">
-    <keyboard-shortcut first-keystroke="control alt M"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>

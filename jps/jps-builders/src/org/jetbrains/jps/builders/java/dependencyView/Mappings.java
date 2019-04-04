@@ -170,7 +170,7 @@ public class Mappings {
     }
   }
 
-  private void compensateRemovedContent(final @NotNull Collection<? extends File> compiled, final @NotNull Collection<? extends File> compiledWithErrors) {
+  private void compensateRemovedContent(final @NotNull Collection<File> compiled, final @NotNull Collection<File> compiledWithErrors) {
     for (final File file : compiled) {
       if (!compiledWithErrors.contains(file) && !mySourceFileToClasses.containsKey(file)) {
         mySourceFileToClasses.put(file, new HashSet<>());
@@ -334,7 +334,7 @@ public class Mappings {
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -427,7 +427,7 @@ public class Mappings {
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new TIntHashSet();
         visitedClasses.add(fromClass.name);
@@ -456,7 +456,7 @@ public class Mappings {
       }
     }
 
-    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<? super Pair<FieldRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+    void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new TIntHashSet();
         visitedClasses.add(fromClass.name);
@@ -609,13 +609,7 @@ public class Mappings {
       }
     }
 
-    void affectSubclasses(final int className,
-                          final Collection<? super File> affectedFiles,
-                          final Collection<? super UsageRepr.Usage> affectedUsages,
-                          final TIntHashSet dependants,
-                          final boolean usages,
-                          final Collection<? extends File> alreadyCompiledFiles,
-                          TIntHashSet visitedClasses) {
+    void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages, final Collection<File> alreadyCompiledFiles, TIntHashSet visitedClasses) {
       debug("Affecting subclasses of class: ", className);
 
       final Collection<File> allSources = myClassToSourceFile.get(className);
@@ -663,7 +657,7 @@ public class Mappings {
       }
     }
 
-    void affectFieldUsages(final FieldRepr field, final TIntHashSet classes, final UsageRepr.Usage rootUsage, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectFieldUsages(final FieldRepr field, final TIntHashSet classes, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
       classes.forEach(p -> {
@@ -677,7 +671,7 @@ public class Mappings {
       });
     }
 
-    void affectStaticMemberImportUsages(final int memberName, int ownerName, final TIntHashSet classes, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectStaticMemberImportUsages(final int memberName, int ownerName, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       debug("Affect static member import usage referenced of class ", ownerName);
       affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, ownerName));
 
@@ -692,7 +686,7 @@ public class Mappings {
       });
     }
 
-    void affectStaticMemberOnDemandUsages(int ownerClass, final TIntHashSet classes, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectStaticMemberOnDemandUsages(int ownerClass, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       debug("Affect static member on-demand import usage referenced of class ", ownerClass);
       affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, ownerClass));
       
@@ -707,7 +701,7 @@ public class Mappings {
       });
     }
 
-    void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<? super UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+    void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
       if (subclasses != null) {
         subclasses.forEach(p -> {
@@ -726,7 +720,7 @@ public class Mappings {
       }
     }
 
-    void affectModule(ModuleRepr m, final Collection<? super File> affectedFiles) {
+    void affectModule(ModuleRepr m, final Collection<File> affectedFiles) {
       Collection<File> depFiles = myMappings != null? myMappings.myClassToSourceFile.get(m.name) : null;
       if (depFiles == null) {
         depFiles = myClassToSourceFile.get(m.name);
@@ -829,11 +823,7 @@ public class Mappings {
     }
   }
 
-  void affectAll(final int className,
-                 @NotNull final File sourceFile,
-                 final Collection<? super File> affectedFiles,
-                 final Collection<? extends File> alreadyCompiledFiles,
-                 @Nullable final DependentFilesFilter filter) {
+  void affectAll(final int className, @NotNull final File sourceFile, final Collection<File> affectedFiles, final Collection<File> alreadyCompiledFiles, @Nullable final DependentFilesFilter filter) {
     final TIntHashSet dependants = myClassToClassDependency.get(className);
     if (dependants != null) {
       dependants.forEach(depClass -> {
@@ -896,11 +886,7 @@ public class Mappings {
     return acc;
   }
 
-  private boolean incrementalDecision(final int owner,
-                                      final Proto member,
-                                      final Collection<? super File> affectedFiles,
-                                      final Collection<? extends File> currentlyCompiled,
-                                      @Nullable final DependentFilesFilter filter) {
+  private boolean incrementalDecision(final int owner, final Proto member, final Collection<File> affectedFiles, final Collection<File> currentlyCompiled, @Nullable final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util();
 
@@ -975,10 +961,10 @@ public class Mappings {
     private static final int DESPERATE_MASK = Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
-    final Collection<? extends File> myFilesToCompile;
-    final Collection<? extends File> myCompiledFiles;
-    final Collection<? extends File> myCompiledWithErrors;
-    final Collection<? super File> myAffectedFiles;
+    final Collection<File> myFilesToCompile;
+    final Collection<File> myCompiledFiles;
+    final Collection<File> myCompiledWithErrors;
+    final Collection<File> myAffectedFiles;
     @Nullable
     final DependentFilesFilter myFilter;
     @Nullable final Callbacks.ConstantAffectionResolver myConstantSearch;
@@ -997,9 +983,9 @@ public class Mappings {
         final int owner;
         final FieldRepr field;
         @Nullable
-        final Future<? extends Callbacks.ConstantAffection> affection;
+        final Future<Callbacks.ConstantAffection> affection;
 
-        private Triple(final int owner, final FieldRepr field, @Nullable final Future<? extends Callbacks.ConstantAffection> affection) {
+        private Triple(final int owner, final FieldRepr field, @Nullable final Future<Callbacks.ConstantAffection> affection) {
           this.owner = owner;
           this.field = field;
           this.affection = affection;
@@ -1030,7 +1016,7 @@ public class Mappings {
         myQueue.add(new Triple(ownerClass, changedField, future));
       }
 
-      boolean doWork(@NotNull final Collection<? super File> affectedFiles) {
+      boolean doWork(@NotNull final Collection<File> affectedFiles) {
         if (!myQueue.isEmpty()) {
           debug("Starting delayed works.");
 
@@ -1129,7 +1115,7 @@ public class Mappings {
       delta.myIsRebuild = true;
     }
 
-    private Differential(final Mappings delta, final Collection<String> removed, final Collection<? extends File> filesToCompile) {
+    private Differential(final Mappings delta, final Collection<String> removed, final Collection<File> filesToCompile) {
       delta.myRemovedFiles = removed;
 
       this.myDelta = delta;
@@ -1149,10 +1135,10 @@ public class Mappings {
 
     private Differential(final Mappings delta,
                          final Collection<String> removed,
-                         final Collection<? extends File> filesToCompile,
-                         final Collection<? extends File> compiledWithErrors,
-                         final Collection<? extends File> compiledFiles,
-                         final Collection<? super File> affectedFiles,
+                         final Collection<File> filesToCompile,
+                         final Collection<File> compiledWithErrors,
+                         final Collection<File> compiledFiles,
+                         final Collection<File> affectedFiles,
                          @NotNull final DependentFilesFilter filter,
                          @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
       delta.myRemovedFiles = removed;
@@ -2542,23 +2528,23 @@ public class Mappings {
 
   public void differentiateOnNonIncrementalMake(final Mappings delta,
                                                 final Collection<String> removed,
-                                                final Collection<? extends File> filesToCompile) {
+                                                final Collection<File> filesToCompile) {
     new Differential(delta, removed, filesToCompile).differentiate();
   }
 
   public boolean differentiateOnIncrementalMake
     (final Mappings delta,
      final Collection<String> removed,
-     final Collection<? extends File> filesToCompile,
-     final Collection<? extends File> compiledWithErrors,
-     final Collection<? extends File> compiledFiles,
-     final Collection<? super File> affectedFiles,
+     final Collection<File> filesToCompile,
+     final Collection<File> compiledWithErrors,
+     final Collection<File> compiledFiles,
+     final Collection<File> affectedFiles,
      @NotNull final DependentFilesFilter filter,
      @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
     return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
   }
 
-  private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
+  private void cleanupBackDependency(final int className, @Nullable Set<UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
       final ClassFileRepr repr = getReprByName(null, className);
 
@@ -2574,7 +2560,7 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final Mappings delta, @NotNull final ClassFileRepr cr, File sourceFile, final Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
+  private void cleanupRemovedClass(final Mappings delta, @NotNull final ClassFileRepr cr, File sourceFile, final Set<UsageRepr.Usage> usages, final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
     // it is safe to cleanup class information if it is mapped to non-existing files only

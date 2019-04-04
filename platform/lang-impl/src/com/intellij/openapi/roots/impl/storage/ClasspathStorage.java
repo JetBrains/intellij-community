@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl.ModuleRootManagerState;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -191,7 +191,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeeded(@NotNull Set<? super String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<? super String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     getStorageDataRef().set(false);
@@ -225,7 +225,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     storageRef = FileUtil.toSystemIndependentName(storageRef);
-    if (SystemInfoRt.isWindows ? FileUtil.isAbsolutePlatformIndependent(storageRef) : FileUtil.isUnixAbsolutePath(storageRef)) {
+    if (SystemInfo.isWindows ? FileUtil.isAbsolutePlatformIndependent(storageRef) : FileUtil.isUnixAbsolutePath(storageRef)) {
       return storageRef;
     }
     else {

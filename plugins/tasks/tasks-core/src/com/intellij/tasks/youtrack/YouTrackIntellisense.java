@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +66,7 @@ public class YouTrackIntellisense {
   }
 
   private static final Map<Pair<String, Integer>, Response> ourCache =
-    Collections.synchronizedMap(new SizeLimitedCache<>(CACHE_SIZE));
+    Collections.synchronizedMap(new SizeLimitedCache<Pair<String, Integer>, Response>(CACHE_SIZE));
 
   @NotNull
   private static TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {

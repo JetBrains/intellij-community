@@ -237,11 +237,6 @@ public class HgStatusCommand {
   }
 
   @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo) {
-    return getFiles(repo, (Collection<FilePath>)null);
-  }
-
-  @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
     return getFiles(repo, files != null ? ObjectsConvertor.vf2fp(files): null);
   }

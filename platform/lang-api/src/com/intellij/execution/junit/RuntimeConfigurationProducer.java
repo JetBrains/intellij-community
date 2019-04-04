@@ -59,7 +59,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
           result.myConfiguration = configuration;
         }
         else {
-          runManager.setUniqueNameIfNeeded(result.myConfiguration);
+          runManager.setUniqueNameIfNeed(result.myConfiguration);
         }
       }
     }
@@ -101,7 +101,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
-                                                                 @NotNull final List<? extends RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull final List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     assert isClone;
     return null;

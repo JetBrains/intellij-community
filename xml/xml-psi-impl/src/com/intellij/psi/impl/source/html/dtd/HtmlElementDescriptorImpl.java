@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -70,7 +69,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {
     String name = element.getName();
-    if (!myCaseSensitive) name = StringUtil.toLowerCase(name);
+    if (!myCaseSensitive) name = name.toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, element);
     if (xmlElementDescriptor == null && "html".equals(getName())) {
@@ -130,7 +129,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    String caseSensitiveAttributeName =  !myCaseSensitive ? StringUtil.toLowerCase(attributeName) : attributeName;
+    String caseSensitiveAttributeName =  !myCaseSensitive ? attributeName.toLowerCase() : attributeName;
     XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(caseSensitiveAttributeName, context);
     if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
     

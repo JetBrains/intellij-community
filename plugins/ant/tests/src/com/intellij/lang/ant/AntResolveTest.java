@@ -1,10 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.lang.ant;
 
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.dom.AntDomMacrodefAttribute;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -129,19 +143,19 @@ public class AntResolveTest extends ResolveTestCase {
   }
 
   public void testEnvPropertyW() throws Exception {
-    if (SystemInfoRt.isWindows) doPropertyTestExpectReferenceUnresolved();
+    if (SystemInfo.isWindows) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvPropertyU() throws Exception {
-    if (SystemInfoRt.isUnix) doPropertyTestExpectReferenceUnresolved();
+    if (SystemInfo.isUnix) doPropertyTestExpectReferenceUnresolved();
   }
 
   public void testEnvProperty1W() throws Exception {
-    if (SystemInfoRt.isWindows) doPropertyTest();
+    if (SystemInfo.isWindows) doPropertyTest();
   }
 
   public void testEnvProperty1U() throws Exception {
-    if (SystemInfoRt.isUnix) doPropertyTest();
+    if (SystemInfo.isUnix) doPropertyTest();
   }
 
   public void testNonExistingEnvProperty() throws Exception {
@@ -212,7 +226,7 @@ public class AntResolveTest extends ResolveTestCase {
   public void testBuildNumber() throws Exception {
     doPropertyTest();
   }
-
+  
   public void testPropertyInMacrodefParam() throws Exception {
     PsiReference ref = configure();
     final PsiElement result = ref.resolve();
@@ -233,24 +247,24 @@ public class AntResolveTest extends ResolveTestCase {
 
     final PsiFile importing = refImporting.getElement().getContainingFile();
     assertTrue(importing instanceof XmlFile);
-
+    
     final VirtualFile vFile = importing.getVirtualFile();
     assertTrue(vFile != null);
-
+    
     final PsiReference refImported = configureByFile("PropertyAntFileImported.ant", vFile.getParent());
-
+    
     final PsiFile imported = refImported.getElement().getContainingFile();
     assertTrue(imported instanceof XmlFile);
-
+    
     final VirtualFile importedVFile = imported.getVirtualFile();
     assertTrue(importedVFile != null);
-
+    
     AntConfigurationBase.getInstance(getProject()).setContextFile((XmlFile)imported, (XmlFile)importing);
-
+                                    
     assertTrue(refImported.resolve() != null);
     assertTrue(refImporting.resolve() != null);
   }
-
+  
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();

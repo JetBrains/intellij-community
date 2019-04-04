@@ -17,13 +17,14 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.execution.dashboard.RunDashboardManager.RunDashboardService;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,16 +56,15 @@ public class UngroupConfigurationsActions extends AnAction {
 
   private static void doActionPerformed(Project project, GroupingNode node) {
     String groupName = node.getGroup().getName();
-    List<RunDashboardService> services =
+    List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> dashboardConfigurations =
       RunDashboardManager.getInstance(project).getRunConfigurations();
 
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     runManager.fireBeginUpdate();
     try {
-      for (RunDashboardService service : services) {
-        RunnerAndConfigurationSettings settings = service.getSettings();
-        if (groupName.equals(settings.getFolderName())) {
-          settings.setFolderName(null);
+      for (Pair<RunnerAndConfigurationSettings, RunContentDescriptor> configuration : dashboardConfigurations) {
+        if (groupName.equals(configuration.first.getFolderName())) {
+          configuration.first.setFolderName(null);
         }
       }
     }

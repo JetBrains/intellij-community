@@ -49,7 +49,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     public List<Change> parseStatusInfo(@NotNull Project project,
                                         @NotNull VcsShortCommitDetails commit,
                                         @NotNull List<VcsFileStatusInfo> changes,
-                                        int parentIndex) {
+                                        int parentIndex) throws VcsException {
       String parentHash = null;
       if (parentIndex < commit.getParents().size()) {
         parentHash = commit.getParents().get(parentIndex).asString();

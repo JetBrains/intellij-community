@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -31,13 +31,11 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -68,7 +66,7 @@ public class HtmlUtil {
   public static final String ID_ATTRIBUTE_NAME = "id";
   public static final String CLASS_ATTRIBUTE_NAME = "class";
 
-  public static final String[] CONTENT_TYPES = ArrayUtilRt.toStringArray(MimeTypeDictionary.getContentTypes());
+  public static final String[] CONTENT_TYPES = ArrayUtil.toStringArray(MimeTypeDictionary.getContentTypes());
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -111,7 +109,7 @@ public class HtmlUtil {
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
-
+  
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
 
   @NonNls private static final String[] HTML5_TAGS = {
@@ -124,7 +122,7 @@ public class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name);
+      final String tagName = control.name.toLowerCase(Locale.US);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<>(control.autoClosedBy));
     }
@@ -138,12 +136,12 @@ public class HtmlUtil {
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || (tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive()) ? name : StringUtil.toLowerCase(name));
+    boolean result = EMPTY_TAGS_MAP.contains(lowerCase ? name.toLowerCase(Locale.US) : name);
     return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
-    return EMPTY_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return EMPTY_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isSingleHtmlTagL(String tagName) {
@@ -151,7 +149,7 @@ public class HtmlUtil {
   }
 
   public static boolean isOptionalEndForHtmlTag(String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isOptionalEndForHtmlTagL(String tagName) {
@@ -164,7 +162,7 @@ public class HtmlUtil {
   }
 
   public static boolean isHtmlBlockTag(String tagName) {
-    return BLOCK_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return BLOCK_TAGS_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isPossiblyInlineTag(String tagName) {
@@ -176,7 +174,7 @@ public class HtmlUtil {
   }
 
   public static boolean isInlineTagContainer(String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(StringUtil.toLowerCase(tagName));
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase(Locale.US));
   }
 
   public static boolean isInlineTagContainerL(String tagName) {
@@ -230,7 +228,7 @@ public class HtmlUtil {
   public static boolean isShortNotationOfBooleanAttributePreferred() {
     return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
   }
-
+  
   @TestOnly
   public static void setShortNotationOfBooleanAttributeIsPreferred(boolean value, Disposable parent) {
     final boolean oldValue = isShortNotationOfBooleanAttributePreferred();
@@ -273,7 +271,7 @@ public class HtmlUtil {
     }
     return false;
   }
-
+  
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
@@ -523,7 +521,7 @@ public class HtmlUtil {
         @Override
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
-          @NonNls String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls String name = localName.toString().toLowerCase();
           inTag.add(name);
           if (!inTag.contains("head") && !"html".equals(name)) terminate();
           return ProcessingOrder.TAGS_AND_ATTRIBUTES;
@@ -535,7 +533,7 @@ public class HtmlUtil {
 
         @Override
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls final String name = localName.toString().toLowerCase();
           if ("meta".equals(name) && (metHttpEquiv || metHttml5Charset) && contentAttributeValue != null) {
             String charsetName;
             if (metHttpEquiv) {
@@ -564,9 +562,9 @@ public class HtmlUtil {
 
         @Override
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
-            @NonNls String value = StringUtil.toLowerCase(v.toString());
+            @NonNls String value = v.toString().toLowerCase();
             if (name.equals("http-equiv")) {
               metHttpEquiv |= value.equals("content-type");
             } else if (name.equals(CHARSET)) {

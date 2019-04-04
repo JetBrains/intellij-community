@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.UserScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -26,7 +24,7 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 /**
  * @author tav
@@ -43,15 +41,15 @@ public class TestScaleHelper {
 
   @BeforeClass
   public static void setState() {
-    originalUserScale = JBUIScale.scale(1f);
-    originalSysScale = JBUIScale.sysScale();
-    originalJreHiDPIEnabled = JreHiDpiUtil.isJreHiDPIEnabled();
+    originalUserScale = JBUI.scale(1f);
+    originalSysScale = JBUI.sysScale();
+    originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
   }
 
   @AfterClass
   public static void restoreState() {
-    JBUIScale.setUserScaleFactor(originalUserScale);
-    JBUIScale.setSystemScaleFactor(originalSysScale);
+    JBUI.setUserScaleFactor(originalUserScale);
+    JBUI.setSystemScaleFactor(originalSysScale);
     overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
     restoreRegistryProperties();
     restoreSystemProperties();
@@ -90,7 +88,7 @@ public class TestScaleHelper {
   }
 
   public static void overrideJreHiDPIEnabled(boolean enabled) {
-    JreHiDpiUtil.test_jreHiDPI().set(enabled);
+    UIUtil.test_jreHiDPI().set(enabled);
   }
 
   public static void assumeStandalone() {
@@ -108,14 +106,14 @@ public class TestScaleHelper {
     //noinspection UndesirableClassUsage
     final BufferedImage image = new BufferedImage((int)Math.ceil(width * scale), (int)Math.ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
-    double gScale = JreHiDpiUtil.isJreHiDPIEnabled() ? scale : 1;
+    double gScale = UIUtil.isJreHiDPIEnabled() ? scale : 1;
     g.scale(gScale, gScale);
     return Pair.create(image, g);
   }
 
   public static JComponent createComponent(ScaleContext ctx) {
     return new JComponent() {
-      final MyGraphicsConfiguration myGC = new MyGraphicsConfiguration(ctx.getScale(SYS_SCALE));
+      MyGraphicsConfiguration myGC = new MyGraphicsConfiguration(ctx.getScale(SYS_SCALE));
       @Override
       public GraphicsConfiguration getGraphicsConfiguration() {
         return myGC;
@@ -147,11 +145,11 @@ public class TestScaleHelper {
   }
 
   public static String msg(UserScaleContext ctx) {
-    return "[JRE-HiDPI " + JreHiDpiUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
+    return "[JRE-HiDPI " + UIUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
   }
 
   private static class MyGraphicsConfiguration extends GraphicsConfiguration {
-    private final AffineTransform myTx;
+    private AffineTransform myTx;
 
     protected MyGraphicsConfiguration(double scale) {
       myTx = AffineTransform.getScaleInstance(scale, scale);

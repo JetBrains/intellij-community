@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -22,7 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
@@ -74,7 +73,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     }
 
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(new ArrayList<>(testClasses))
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(testClasses))
       .setRenderer(new PsiClassListCellRenderer())
       .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
       .setTitle("Choose Test")

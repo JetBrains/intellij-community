@@ -33,7 +33,7 @@ public class ConverterHelper implements IIdentifierRenamer {
            !isValidIdentifier(elementType == Type.ELEMENT_METHOD, value) ||
            KEYWORDS.contains(value) ||
            elementType == Type.ELEMENT_CLASS && (
-             RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase(Locale.ENGLISH)) ||
+             RESERVED_WINDOWS_NAMESPACE.contains(value.toLowerCase(Locale.US)) ||
              value.length() > 255 - ".class".length());
   }
 

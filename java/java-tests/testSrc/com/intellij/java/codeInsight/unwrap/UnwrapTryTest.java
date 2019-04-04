@@ -17,21 +17,6 @@ public class UnwrapTryTest extends UnwrapTestCase {
                     "<caret>}\n");
   }
 
-  public void testTryInsideIfWithoutBraces() {
-    assertUnwrapped("{\n" +
-                    "    if (true) try {\n" +
-                    "        <caret>System.out.println();\n" +
-                    "        System.out.println();\n" +
-                    "    } catch(Exception e) {}\n" +
-                    "}\n",
-
-                    "{\n" +
-                    "    if (true) {\n" +
-                    "        <caret>System.out.println();\n" +
-                    "        System.out.println();\n" +
-                    "    }\n}\n");
-  }
-
   public void testTryWithStatements() {
     assertUnwrapped("try {\n" +
                     "    int i;\n" +

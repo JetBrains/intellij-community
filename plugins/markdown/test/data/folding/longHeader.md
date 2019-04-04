@@ -1,1 +1,0 @@
-# You need to install Maya 2017 as well as Visual Studio 2017 first. After that, setup your [environment variables](#enviroment-variables). It is essential because Visual Studio need these variables to be able to compile successfully. The deliverable is called "SimagePlugins.mll" which contains several plugins (please check out [Plugin List](#plugin-list) below for more details).

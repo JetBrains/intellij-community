@@ -133,7 +133,7 @@ public class JavaModuleGraphUtil {
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
-    Set<PsiJavaModule> projectModules = new HashSet<>();
+    Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       List<PsiJavaModule> descriptors = Stream.of(ModuleRootManager.getInstance(module).getSourceRoots(true))
         .map(root -> findDescriptorByFile(root, project))
@@ -165,7 +165,7 @@ public class JavaModuleGraphUtil {
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
-          return ContainerUtil.map(components, elements -> new LinkedHashSet<>(elements));
+          return ContainerUtil.map(components, ContainerUtil::newLinkedHashSet);
         }
       }
     }
@@ -174,11 +174,11 @@ public class JavaModuleGraphUtil {
   }
 
   private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
-    Map<String, Set<String>> map = new HashMap<>();
+    Map<String, Set<String>> map = ContainerUtil.newHashMap();
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
       String pkg = statement.getPackageName();
       List<String> targets = statement.getModuleNames();
-      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new THashSet<>(targets));
+      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : ContainerUtil.newTroveSet(targets));
     }
     return map;
   }
@@ -195,7 +195,7 @@ public class JavaModuleGraphUtil {
    */
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
-    Set<String> transitiveEdges = new THashSet<>();
+    Set<String> transitiveEdges = ContainerUtil.newTroveSet();
 
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
@@ -257,7 +257,7 @@ public class JavaModuleGraphUtil {
     }
 
     public Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(PsiJavaModule source) {
-      Map<String, PsiJavaModule> exports = new HashMap<>();
+      Map<String, PsiJavaModule> exports = ContainerUtil.newHashMap();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule existing = exports.put(pkg, m);
         return existing != null ? new Trinity<>(pkg, existing, m) : null;
@@ -269,7 +269,7 @@ public class JavaModuleGraphUtil {
     }
 
     private <T> T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
-      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, new HashSet<>(), processor) : null;
+      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, ContainerUtil.newHashSet(), processor) : null;
     }
 
     private <T> T processExports(String name,

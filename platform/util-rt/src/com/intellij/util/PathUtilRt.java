@@ -114,8 +114,7 @@ public class PathUtilRt {
       }
     }
 
-    if (os == Platform.WINDOWS && name.length() >= 3 && name.length() <= 4 &&
-        WINDOWS_NAMES.contains(name.toUpperCase(Locale.ENGLISH))) {
+    if (os == Platform.WINDOWS && name.length() >= 3 && name.length() <= 4 && WINDOWS_NAMES.contains(name.toUpperCase(Locale.US))) {
       return false;
     }
 

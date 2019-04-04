@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.util.*;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
@@ -48,6 +47,9 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
@@ -336,9 +338,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     }
   }
 
-  private static void waitAndPump(Semaphore semaphore, int timeoutMs) {
-    TestTimeOut t = TestTimeOut.setTimeout(timeoutMs, TimeUnit.MILLISECONDS);
-    while (!t.timedOut()) {
+  private static void waitAndPump(Semaphore semaphore, int timeout) {
+    final long limit = System.currentTimeMillis() + timeout;
+    while (System.currentTimeMillis() < limit) {
       if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -379,8 +381,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommits();
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
-      TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
-      while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
+      long t2 = System.currentTimeMillis() + TIMEOUT;
+      while (!alienDocManager.isCommitted(alienDocument) && System.currentTimeMillis() < t2) {
         UIUtil.dispatchAllInvocationEvents();
       }
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
@@ -490,13 +492,13 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertException(new FileTooBigExceptionCase() {
       @Override
       public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2);
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2);
       }
     });
     assertException(new FileTooBigExceptionCase() {
       @Override
       public void tryClosure() throws Throwable {
-        vFile.setBinaryContent(ArrayUtilRt.EMPTY_BYTE_ARRAY, 1, 2, this);
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2, this);
       }
     });
     assertException(new FileTooBigExceptionCase() {

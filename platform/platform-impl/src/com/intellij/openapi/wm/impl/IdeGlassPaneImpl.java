@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -7,38 +7,31 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.BalloonImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
@@ -84,7 +77,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       IdeBackgroundUtil.initFramePainters(this);
       IdeBackgroundUtil.initEditorPainters(this);
     }
-    if (SystemInfoRt.isWindows && Registry.is("ide.window.shadow.painter")) {
+    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter")) {
       myWindowShadowPainter = new WindowShadowPainter();
       getPainters().addPainter(myWindowShadowPainter, null);
     }
@@ -263,11 +256,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private static boolean isContextMenu(Window window) {
-    if (window instanceof JWindow) {
-      JLayeredPane layeredPane = ((JWindow)window).getLayeredPane();
-      for (Component component : layeredPane.getComponents()) {
-        if (component instanceof JPanel
-            && ContainerUtil.findInstance(((JPanel)component).getComponents(), JPopupMenu.class) != null) {
+    if (window != null) {
+      for (Component component : window.getComponents()) {
+        if (component instanceof JComponent
+            && UIUtil.findComponentOfType((JComponent)component, JPopupMenu.class) != null) {
           return true;
         }
       }
@@ -332,7 +324,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
               }
 
               if (cursor != null && !cursor.equals(target.getCursor())) {
-                setCursor(target, cursor);
+                if (target instanceof JComponent) {
+                  savePreProcessedCursor((JComponent)target, target.getCursor());
+                }
+                UIUtil.setCursor(target, cursor);
               }
             }
 
@@ -356,34 +351,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
-  private static void setCursor(@NotNull Component target, Cursor cursor) {
-    if (target instanceof EditorComponentImpl) {
-      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, cursor);
-    }
-    else {
-      if (target instanceof JComponent) {
-        savePreProcessedCursor((JComponent)target, target.getCursor());
-      }
-      UIUtil.setCursor(target, cursor);
-    }
-  }
-
-  private static void resetCursor(@NotNull Component target, Cursor lastCursor) {
-    if (target instanceof EditorComponentImpl) {
-      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, null);
-    }
-    else {
-      Cursor cursor = null;
-      if (target instanceof JComponent) {
-        JComponent jComponent = (JComponent)target;
-        cursor = (Cursor)jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
-        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
-      }
-      cursor = cursor != null ? cursor : lastCursor;
-      UIUtil.setCursor(target, cursor);
-    }
-  }
-
   private static boolean canProcessCursorFor(Component target) {
     return !(target instanceof JMenuItem) &&
            !(target instanceof Divider) &&
@@ -403,7 +370,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void restoreLastComponent(Component newC) {
     if (myLastCursorComponent != null && myLastCursorComponent != newC) {
-      resetCursor(myLastCursorComponent, myLastOriginalCursor);
+      Cursor cursor = null;
+      if (myLastCursorComponent instanceof JComponent) {
+        JComponent jComponent = (JComponent)myLastCursorComponent;
+        cursor = (Cursor) jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
+        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
+      }
+      cursor = cursor != null ? cursor : myLastOriginalCursor;
+      UIUtil.setCursor(myLastCursorComponent, cursor);
     }
   }
 

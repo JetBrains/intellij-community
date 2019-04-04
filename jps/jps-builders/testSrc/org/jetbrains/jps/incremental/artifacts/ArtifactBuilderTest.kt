@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
-import com.intellij.util.io.zipFile
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
@@ -329,12 +328,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   private fun createXJarFile(): String {
-    val zipFile = zipFile {
-      dir("dir") {
-        file("file.txt", "text")
+    val zipDir = directoryContent {
+      zip("x.jar") {
+        dir("dir") {
+          file("file.txt", "text")
+        }
       }
     }.generateInTempDir()
-    return FileUtil.toSystemIndependentName(zipFile.absolutePath)
+    return FileUtil.toSystemIndependentName(File(zipDir, "x.jar").absolutePath)
   }
 
   fun testSelfIncludingArtifact() {

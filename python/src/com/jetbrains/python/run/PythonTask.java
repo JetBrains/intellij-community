@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -173,7 +173,7 @@ public class PythonTask {
     assert scriptParams != null;
 
     Map<String, String> env = cmd.getEnvironment();
-    if (!SystemInfoRt.isWindows && !PySdkUtil.isRemote(mySdk)) {
+    if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");

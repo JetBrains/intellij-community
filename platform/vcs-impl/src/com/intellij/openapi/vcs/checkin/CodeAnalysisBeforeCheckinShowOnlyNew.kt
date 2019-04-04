@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
+
 
 import com.intellij.codeInsight.CodeSmellInfo
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.Range
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -23,11 +24,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.impl.PsiDocumentManagerImpl
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
-import gnu.trove.THashMap
+
 
 internal object CodeAnalysisBeforeCheckinShowOnlyNew {
-  val LOG = logger<CodeAnalysisBeforeCheckinShowOnlyNew>()
+  val LOG = Logger.getInstance(CodeAnalysisBeforeCheckinShowOnlyNew.javaClass)
 
   @JvmStatic
   fun runAnalysis(project: Project, selectedFiles: List<VirtualFile>, progressIndicator: ProgressIndicator) : List<CodeSmellInfo> {
@@ -35,19 +37,20 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
     val codeSmellDetector = CodeSmellDetector.getInstance(project)
     val newCodeSmells = codeSmellDetector.findCodeSmells(selectedFiles)
     val location2CodeSmell = MultiMap<Pair<VirtualFile, Int>, CodeSmellInfo>()
-    val fileToChanges: MutableMap<VirtualFile, List<Range>> = THashMap()
+    val file2Changes = HashMap<VirtualFile, List<Range>>()
     val changeListManager = ChangeListManager.getInstance(project)
     val files4Update = ChangesUtil.getFilesFromChanges(changeListManager.allChanges)
     val fileDocumentManager = FileDocumentManager.getInstance()
     newCodeSmells.forEach { codeSmellInfo ->
       val virtualFile = fileDocumentManager.getFile(codeSmellInfo.document) ?: return@forEach
-      val unchanged = fileToChanges.getOrPut(virtualFile) {
+      val unchanged = file2Changes.getOrPut(virtualFile) {
         try {
           val contentFromVcs = changeListManager.getChange(virtualFile)?.beforeRevision?.content ?: return@getOrPut emptyList()
           val documentContent = codeSmellInfo.document.immutableCharSequence
-          compareLines(documentContent, contentFromVcs,
-                       LineOffsetsUtil.create(documentContent),
-                       LineOffsetsUtil.create(contentFromVcs)).iterateUnchanged().toList()
+          ContainerUtil.newArrayList(compareLines(documentContent, contentFromVcs,
+                                                  LineOffsetsUtil.create(documentContent),
+                                                  LineOffsetsUtil.create(contentFromVcs)).iterateUnchanged())
+
         }
         catch (e: VcsException) {
           LOG.warn("Couldn't load content", e)
@@ -85,7 +88,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
   }
 
   private fun runAnalysisAfterShelvingSync(project: Project, files: List<VirtualFile>, progressIndicator: ProgressIndicator,  afterShelve: () -> Unit) {
-    val versionedRoots = files.mapNotNull { ProjectLevelVcsManager.getInstance(project).getVcsRootFor(it) }.toSet()
+    val versionedRoots = files.map { ProjectLevelVcsManager.getInstance(project).getVcsRootFor(it) }.filterNotNull().toSet()
     val message = VcsBundle.message("searching.for.code.smells.freezing.process")
     VcsPreservingExecutor.executeOperation(project, versionedRoots, message, progressIndicator) { afterShelve() }
   }

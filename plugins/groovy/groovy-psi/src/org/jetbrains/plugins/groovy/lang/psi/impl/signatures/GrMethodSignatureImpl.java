@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,16 +18,11 @@ class GrMethodSignatureImpl implements GrSignature {
   private final PsiMethod myMethod;
   private final PsiSubstitutor mySubstitutor;
   private final boolean myEraseParameterTypes;
-  private final PsiElement myContext;
 
-  GrMethodSignatureImpl(@NotNull PsiMethod method,
-                        @NotNull PsiSubstitutor substitutor,
-                        boolean eraseParameterTypes,
-                        @NotNull PsiElement context) {
+  GrMethodSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean eraseParameterTypes) {
     myMethod = method;
     mySubstitutor = substitutor;
     myEraseParameterTypes = eraseParameterTypes;
-    myContext = context;
   }
 
   @NotNull
@@ -42,7 +40,7 @@ class GrMethodSignatureImpl implements GrSignature {
   public GrClosureParameter[] getParameters() {
     return ContainerUtil.map(
       myMethod.getParameterList().getParameters(),
-      (parameter) -> new GrClosureParameterImpl(parameter, mySubstitutor, myEraseParameterTypes, myContext),
+      (parameter) -> new GrClosureParameterImpl(parameter, mySubstitutor, myEraseParameterTypes),
       GrClosureParameter.EMPTY_ARRAY
     );
   }
@@ -82,6 +80,6 @@ class GrMethodSignatureImpl implements GrSignature {
 
   @Override
   public boolean isValid() {
-    return myContext.isValid() && myMethod.isValid() && getSubstitutor().isValid();
+    return myMethod.isValid() && getSubstitutor().isValid();
   }
 }

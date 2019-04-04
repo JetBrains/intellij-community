@@ -37,21 +37,18 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.components.JBLoadingPanel;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThreesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final ThreesideContentPanel myContentPanel;
-  @NotNull protected final JBLoadingPanel myLoadingPanel;
 
   @NotNull private final List<T> myHolders;
 
@@ -66,10 +63,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
     myContentPanel = new ThreesideContentPanel(myHolders, titlePanel);
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
-    myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
-
-    myPanel = new SimpleDiffPanel(myLoadingPanel, this, context);
+    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }
 
   @Override

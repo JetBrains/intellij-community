@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -29,7 +29,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Project myProject;
@@ -54,7 +54,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   String statusLabel;
   String statusExtraLine;
   boolean passStatusesVisible;
-  final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = new LinkedHashMap<>();
+  final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = ContainerUtil.newLinkedHashMap();
   static final int MAX = 100;
   boolean progressBarsEnabled;
   Boolean progressBarsCompleted;
@@ -128,7 +128,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   protected static class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
-    public int[] errorCount = ArrayUtilRt.EMPTY_INT_ARRAY;
+    public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
     // Used in Rider
     public String reasonWhyDisabled;
     // Used in Rider
@@ -320,7 +320,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       int count = status.errorCount[i];
       if (count > 0) {
         final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
-        String name = count > 1 ? StringUtil.pluralize(StringUtil.toLowerCase(severity.getName())) : StringUtil.toLowerCase(severity.getName());
+        String name = count > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
         text += status.errorAnalyzingFinished
                 ? DaemonBundle.message("errors.found", count, name)
                 : DaemonBundle.message("errors.found.so.far", count, name);

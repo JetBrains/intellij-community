@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +50,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Set<LocalChangeList> lists = new THashSet<>();
     lists.addAll(manager.getAffectedLists(changes));
 
-    new RollbackChangesDialog(project, new ArrayList<>(lists), new ArrayList<>(changes)).show();
+    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), new ArrayList<>(changes)).show();
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
@@ -88,7 +87,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           List<Change> allChanges = myBrowser.getAllChanges();
           Collection<Change> includedChanges = myBrowser.getIncludedChanges();
 
-          myInfoCalculator.update(allChanges, new ArrayList<>(includedChanges));
+          myInfoCalculator.update(allChanges, ContainerUtil.newArrayList(includedChanges));
           myCommitLegendPanel.update();
 
           boolean hasNewFiles = ContainerUtil.exists(includedChanges, change -> change.getType() == Change.Type.NEW);
@@ -103,7 +102,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     Disposer.register(getDisposable(), myBrowser);
 
     myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
-    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
+    myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
     setOKButtonText(myOperationName);
 
     myOperationName = UIUtil.removeMnemonic(myOperationName);

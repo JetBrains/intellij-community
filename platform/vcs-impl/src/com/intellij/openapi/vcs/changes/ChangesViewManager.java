@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,11 +47,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import com.intellij.vcs.commit.CommitWorkflowManager;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +60,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -75,9 +70,11 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.UIUtil.addBorder;
+import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -90,11 +87,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
-  private ChangesViewCommitPanel myCommitPanel;
-  private BorderLayoutPanel myContentPanel;
-  private ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-  private SimpleToolWindowPanel myToolWindowPanel;
-  private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -126,7 +118,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProject = project;
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myView = new ChangesListView(project, false);
+    myView = new ChangesListView(project, isNonModalCommit());
     myTreeExpander = new MyTreeExpander();
     myView.setTreeExpander(myTreeExpander);
     myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
@@ -160,13 +152,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    myToolWindowPanel = createChangeViewComponent();
-    myContent = new MyChangeViewContent(myToolWindowPanel, ChangesViewContentManager.LOCAL_CHANGES, false);
+    JComponent panel = createChangeViewComponent();
+    myContent = new MyChangeViewContent(panel, ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
-
-    CommitWorkflowManager.install(myProject);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -191,48 +181,24 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
-  @Nullable
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return myCommitWorkflowHandler;
-  }
-
-  public void updateCommitWorkflow(boolean isNonModal) {
-    if (isNonModal) {
-      if (myCommitPanel == null) {
-        myCommitPanel = new ChangesViewCommitPanel(myView, myToolWindowPanel);
-        myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-        Disposer.register(myContent, myCommitPanel);
-
-        myCommitPanelSplitter.setSecondComponent(myCommitPanel);
-      }
-    }
-    else if (myCommitPanel != null) {
-      myCommitPanelSplitter.setSecondComponent(null);
-      Disposer.dispose(myCommitPanel);
-
-      myCommitPanel = null;
-      myCommitWorkflowHandler = null;
-    }
-  }
-
-  @NotNull
-  private SimpleToolWindowPanel createChangeViewComponent() {
+  private JComponent createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
     BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
 
-    myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
-    myCommitPanelSplitter.setFirstComponent(changesPanel);
-    myContentPanel = new BorderLayoutPanel() {
+    BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
       @Override
       public Dimension getMinimumSize() {
         return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
       }
     };
-    myContentPanel.addToCenter(myCommitPanelSplitter);
+    contentPanel.addToCenter(changesPanel);
+    if (isNonModalCommit()) {
+      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+    }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+    mySplitterComponent = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                            myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
@@ -246,15 +212,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       @Override
       public List<AnAction> getActions(boolean originalProvider) {
         return changesToolbar.getActions();
-      }
-
-      @Nullable
-      @Override
-      public Object getData(@NotNull String dataId) {
-        Object data = super.getData(dataId);
-        if (data != null) return data;
-        // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
-        return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
       }
     };
     myProgressLabel = simplePanel();
@@ -278,12 +235,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup viewOptionsGroup = new DefaultActionGroup("View Options", true);
-    viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
-    viewOptionsGroup.add(new ToggleShowIgnoredAction());
-    viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
-
-    group.add(viewOptionsGroup);
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
+    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+    ignoreGroup.add(new ToggleShowIgnoredAction());
+    ignoreGroup.add(new IgnoredSettingsAction());
+    group.add(ignoreGroup);
     group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
     group.addSeparator();
@@ -356,23 +312,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-      List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
-      List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
 
       TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"))
+        .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
         .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
         .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
         .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
         .setSwitchedRoots(changeListManager.getSwitchedRoots())
         .setLockedFolders(changeListManager.getLockedFolders())
         .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(unversionedFiles);
+        .setUnversioned(changeListManager.getUnversionedFiles());
       if (myState.myShowIgnored) {
         treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
-      }
-      for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
-        extension.modifyTreeModelBuilder(treeModelBuilder);
       }
       DefaultTreeModel newModel = treeModelBuilder.build();
 
@@ -383,7 +334,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         myModelUpdateInProgress = true;
         try {
           myView.updateModel(newModel);
-          synchronizeInclusion(changeLists, unversionedFiles);
         }
         finally {
           myModelUpdateInProgress = false;
@@ -391,16 +341,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         updatePreview(true);
       }, ModalityState.NON_MODAL);
     }, indicator);
-  }
-
-  private void synchronizeInclusion(@NotNull List<LocalChangeList> changeLists, @NotNull List<VirtualFile> unversionedFiles) {
-    if (myView.isShowCheckboxes() && !myView.isInclusionEmpty()) {
-      THashSet<Object> possibleInclusion = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
-      changeLists.forEach(changeList -> possibleInclusion.addAll(changeList.getChanges()));
-      possibleInclusion.addAll(unversionedFiles);
-
-      myView.retainInclusion(possibleInclusion);
-    }
   }
 
   private void updatePreview(boolean fromModelRefresh) {
@@ -499,7 +439,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     public boolean myShowFlatten = true;
 
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public Set<String> groupingKeys = newHashSet();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;

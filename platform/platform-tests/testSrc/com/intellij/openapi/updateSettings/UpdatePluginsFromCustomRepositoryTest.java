@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCase {
   @Test
   public void testOnlyCompatiblePluginsAreChecked() throws Exception {
@@ -45,7 +42,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
     File descriptorFile = new File(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile(), false);
-    descriptor.loadFromFile(descriptorFile, null, true);
+    descriptor.loadFromFile(descriptorFile, null);
     return descriptor;
   }
 }

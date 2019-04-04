@@ -1,10 +1,3 @@
-## 7
-* add `icons`.
-* split post-startup activities into dumb-aware and edt.
-
-## 6
-* add `plugin`.
-
 ## 5
 * add `projectPostStartupActivities`.
 * add `thread` (thread name) to activity.

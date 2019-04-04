@@ -9,7 +9,6 @@ import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -120,35 +119,6 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
-      withModule("intellij.platform.util.ui")
-      withModule("intellij.platform.util.ex")
-
-      withModule("intellij.platform.ide.util.io")
-
-      withModule("intellij.platform.concurrency")
-      withModule("intellij.platform.core.ui")
-
-      withModule("intellij.platform.builtInServer.impl")
-      withModule("intellij.platform.credentialStore")
-      withModule("intellij.json")
-      withModule("intellij.spellchecker")
-      withModule("intellij.platform.images")
-
-      withModule("intellij.relaxng", "intellij-xml.jar")
-      withModule("intellij.xml.analysis.impl", "intellij-xml.jar")
-      withModule("intellij.xml.psi.impl", "intellij-xml.jar")
-      withModule("intellij.xml.structureView.impl", "intellij-xml.jar")
-      withModule("intellij.xml.impl", "intellij-xml.jar")
-
-      withModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
-
-      withModule("intellij.platform.objectSerializer.annotations")
-      withModule("intellij.platform.objectSerializer")
-      withModule("intellij.platform.configurationStore.impl")
-
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
@@ -307,8 +277,7 @@ class DistributionJARsBuilder {
   void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
 
-    if (productProperties.generateLibrariesLicensesTable && !buildContext.options.buildStepsToSkip.
-      contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
+    if (productProperties.generateLibrariesLicensesTable) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
       buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
@@ -331,7 +300,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildThirdPartyLibrariesList() {
-    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
+    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
       def generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                           buildContext.project,
                                                           buildContext.productProperties.allLibraryLicenses,
@@ -365,14 +334,8 @@ class DistributionJARsBuilder {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
-    if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      def whiteList = StatisticsRecorderBundledWhiteListProvider.downloadWhiteList(buildContext)
-      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
-    }
 
-    buildContext.messages.block("Build platform JARs in lib directory") {
-      buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
-    }
+    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -398,9 +361,7 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
-    buildContext.messages.block("Build bundled plugins") {
-      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
-    }
+    buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
@@ -422,12 +383,10 @@ class DistributionJARsBuilder {
           satisfiesBundlingRequirements(it, osFamily)
         }
 
-      if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
+      if (!osSpecificPlugins.isEmpty()) {
         def layoutBuilder = createLayoutBuilder()
-        buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
-          buildPlugins(layoutBuilder, osSpecificPlugins,
-                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
-        }
+        buildPlugins(layoutBuilder, osSpecificPlugins,
+                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
         usedModules.addAll(layoutBuilder.usedModules)
       }
     }
@@ -466,14 +425,8 @@ class DistributionJARsBuilder {
 
           CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
           if (compatibleBuildRange == null) {
-            def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                                   publishingSpec.includeInCustomPluginRepository &&
-                                                   buildContext.proprietaryBuildTools.artifactsServer != null
-            //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-                                   //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-                                   buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
-                                                                      : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+            def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+            compatibleBuildRange = includeInCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
           setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
@@ -841,11 +794,11 @@ class DistributionJARsBuilder {
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
     def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>",
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", 
                                                         "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>",
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", 
                                                         "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
     def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")

@@ -24,7 +24,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -46,7 +45,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +55,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.TimeoutUtil;
@@ -91,8 +90,10 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -164,7 +165,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillRunActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = new ArrayList<>();
+    List<AnAction> actions = ContainerUtil.newArrayList();
     // Rerun
     actions.add(createRerunAction());
     // Stop
@@ -194,7 +195,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillOutputActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = new ArrayList<>();
+    List<AnAction> actions = ContainerUtil.newArrayList();
     // Use soft wraps
     actions.add(new SoftWrapAction());
     // Scroll to the end
@@ -288,7 +289,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     NewErrorTreeViewPanel errorViewPanel = new NewErrorTreeViewPanel(myProject, null, false, false, null);
 
-    String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtilRt.EMPTY_STRING_ARRAY;
+    String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtil.EMPTY_STRING_ARRAY;
     if (messages.length == 0) {
       messages = new String[]{"Unknown error"};
     }
@@ -353,7 +354,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     GeneralCommandLine cmd =
       PythonCommandLineState.createPythonCommandLine(myProject, runParams, false,
-                                                     PtyCommandLine.isEnabled() && !SystemInfoRt.isWindows);
+                                                     PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
     cmd.withWorkDirectory(myWorkingDir);
 
     ParamsGroup exeGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
@@ -782,7 +783,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
     private RestartAction(PydevConsoleRunnerImpl runner) {
-      ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
     }

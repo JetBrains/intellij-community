@@ -1,6 +1,4 @@
 # coding=utf-8
-import errno
-from functools import wraps
 import sys
 import time
 
@@ -23,24 +21,6 @@ _quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]'}
 
 def escape_value(value):
     return "".join(_quote.get(x, x) for x in value)
-
-
-def retry_on_EAGAIN(callable):
-    # self.output seems to be non-blocking when running under teamcity.
-    @wraps(callable)
-    def wrapped(*args, **kwargs):
-        start_time = _time()
-        while True:
-            try:
-                return callable(*args, **kwargs)
-            except IOError as e:
-                if e.errno != errno.EAGAIN:
-                    raise
-                # Give up after a minute.
-                if _time() - start_time > 60:
-                    raise
-                time.sleep(.1)
-    return wrapped
 
 
 class TeamcityServiceMessages(object):
@@ -98,15 +78,15 @@ class TeamcityServiceMessages(object):
         message += ("]\n")
 
         # Python may buffer it for a long time, flushing helps to see real-time result
-        retry_on_EAGAIN(self.output.write)(self.encode(message))
-        retry_on_EAGAIN(self.output.flush)()
+        self.output.write(self.encode(message))
+        self.output.flush()
 
     def _single_value_message(self, messageName, value):
         message = ("##teamcity[%s '%s']\n" % (messageName, self.escapeValue(value)))
 
         # Python may buffer it for a long time, flushing helps to see real-time result
-        retry_on_EAGAIN(self.output.write)(self.encode(message))
-        retry_on_EAGAIN(self.output.flush)()
+        self.output.write(self.encode(message))
+        self.output.flush()
 
     def blockOpened(self, name, flowId=None):
         self.message('blockOpened', name=name, flowId=flowId)

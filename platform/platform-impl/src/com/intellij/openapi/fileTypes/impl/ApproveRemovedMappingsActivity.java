@@ -12,12 +12,14 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -27,13 +29,16 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("ide.restore.removed.mappings")) return;
 
-    RemovedMappingTracker removedMappings = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappingTracker();
-    List<RemovedMappingTracker.RemovedMapping> list = removedMappings.retrieveUnapprovedMappings();
-    if (!list.isEmpty()) {
+    final Map<FileNameMatcher,Pair<FileType,Boolean>> map = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappings();
+    if (!map.isEmpty()) {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        for (RemovedMappingTracker.RemovedMapping mapping : list) {
-          final FileNameMatcher matcher = mapping.getFileNameMatcher();
-          final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(mapping.getFileTypeName());
+        for (Iterator<Map.Entry<FileNameMatcher, Pair<FileType, Boolean>>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+          Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry = iterator.next();
+          if (entry.getValue().getSecond()) {
+            continue;
+          }
+          final FileNameMatcher matcher = entry.getKey();
+          final FileType fileType = entry.getValue().getFirst();
           Notification notification = new Notification("File type recognized", "File type recognized",
                                                        "File extension " + matcher.getPresentableString() +
                                                        " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
@@ -42,13 +47,14 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
               ApplicationManager.getApplication().runWriteAction(() -> {
                 FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
-                removedMappings.add(matcher, fileType.getName(), true);
+                map.put(matcher, Pair.create(fileType, true));
               });
               notification.expire();
             }
           });
           Notifications.Bus.notify(notification, project);
           ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileType, matcher));
+          iterator.remove();
         }
       });
     }

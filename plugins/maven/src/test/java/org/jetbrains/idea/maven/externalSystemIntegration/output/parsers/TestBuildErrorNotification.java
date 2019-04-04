@@ -14,7 +14,6 @@ public class TestBuildErrorNotification extends MavenBuildToolLogTestUtils {
              "[INFO] 1 error")
       .withParsers(new JavaBuildErrorNotification())
       .expect(expectedMessage, new FileEventMatcher(expectedMessage, expectedFileName, 12, 20))
-      .withSkippedOutput()
       .check();
   }
 
@@ -26,7 +25,6 @@ public class TestBuildErrorNotification extends MavenBuildToolLogTestUtils {
              "[INFO] ------------------------------------------------------------------------")
       .withParsers(new KotlinBuildErrorNotification())
       .expect(expectedMessage, new FileEventMatcher(expectedMessage, expectedFileName, 2, 15))
-      .withSkippedOutput()
       .check();
   }
 }

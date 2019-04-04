@@ -51,7 +51,6 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR_23 = "groovy-all-2.3.0.jar";
   public static final String GROOVY_JAR_30 = "groovy-3.0.0-alpha-2.jar";
 
-  @NotNull
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
   }

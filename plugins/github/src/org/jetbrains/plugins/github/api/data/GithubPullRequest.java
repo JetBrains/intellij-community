@@ -1,47 +1,50 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.Mandatory;
+import org.jetbrains.io.mandatory.RestModel;
 import org.jetbrains.plugins.github.api.data.util.GithubLink;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubPullRequest {
-  private String url;
-  private Long id;
+  @Mandatory private String url;
+  @Mandatory private Long id;
 
   //non-api urls
-  private String htmlUrl;
-  private String diffUrl;
-  private String patchUrl;
+  @Mandatory private String htmlUrl;
+  @Mandatory private String diffUrl;
+  @Mandatory private String patchUrl;
 
-  private Long number;
-  private GithubIssueState state;
-  private Boolean locked;
+  @Mandatory private Long number;
+  @Mandatory private GithubIssueState state;
+  @Mandatory private Boolean locked;
   private String activeLockReason;
-  private String title;
+  @Mandatory private String title;
   private GithubUser user;
-  private String body;
+  @Mandatory private String body;
 
-  private Date updatedAt;
+  @Mandatory private Date updatedAt;
   private Date closedAt;
   private Date mergedAt;
-  private Date createdAt;
+  @Mandatory private Date createdAt;
   private String mergeCommitSha;
-  private List<GithubUser> assignees;
-  private List<GithubUser> requestedReviewers;
+  @Mandatory private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> requestedReviewers;
   //requestedTeams
   private List<GithubIssueLabel> labels;
   //milestone
 
   private Tag head;
   private Tag base;
-  private Links _links;
+  @Mandatory private Links _links;
   private String authorAssociation;
 
   @NotNull
@@ -138,11 +141,11 @@ public class GithubPullRequest {
     return base;
   }
 
-
+  @RestModel
   public static class Tag {
-    private String label;
-    private String ref;
-    private String sha;
+    @Mandatory private String label;
+    @Mandatory private String ref;
+    @Mandatory private String sha;
 
     private GithubRepo repo;
     private GithubUser user;
@@ -190,15 +193,15 @@ public class GithubPullRequest {
     }
   }
 
-
+  @RestModel
   public static class Links {
-    private GithubLink self;
-    private GithubLink html;
-    private GithubLink issue;
-    private GithubLink comments;
-    private GithubLink reviewComments;
-    private GithubLink reviewComment;
-    private GithubLink commits;
-    private GithubLink statuses;
+    @Mandatory private GithubLink self;
+    @Mandatory private GithubLink html;
+    @Mandatory private GithubLink issue;
+    @Mandatory private GithubLink comments;
+    @Mandatory private GithubLink reviewComments;
+    @Mandatory private GithubLink reviewComment;
+    @Mandatory private GithubLink commits;
+    @Mandatory private GithubLink statuses;
   }
 }

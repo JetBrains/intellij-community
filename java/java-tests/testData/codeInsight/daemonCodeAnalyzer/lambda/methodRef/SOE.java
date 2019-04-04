@@ -2,7 +2,7 @@ import java.util.*;
 
 class LambdaTest {
     public void testR() {
-        new ArrayList<String>() :: <error descr="Cannot resolve method 'size'">size</error> = ""; 
+        <error descr="Incompatible types. Found: 'java.lang.String', required: '<method reference>'">new ArrayList<String>() :: size = ""</error>; 
 
     }
 }

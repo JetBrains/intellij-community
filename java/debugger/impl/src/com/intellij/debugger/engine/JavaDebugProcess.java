@@ -324,7 +324,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), getDebuggerStateManager());
         final Content threadsContent = ui.createContent(
           DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
-          null, null);
+          AllIcons.Debugger.Threads, null);
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
@@ -356,7 +356,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         final Content memoryViewContent =
           ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
-                           null, null);
+                           AllIcons.Debugger.MemoryView.Active, null);
 
         memoryViewContent.setCloseable(false);
         memoryViewContent.setShouldDisposeContent(true);
@@ -388,7 +388,7 @@ public class JavaDebugProcess extends XDebugProcess {
 
         DebugProcessImpl process = myJavaSession.getProcess();
         OverheadView monitor = new OverheadView(process);
-        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", null, null);
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", AllIcons.Debugger.Overhead, null);
 
         monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 

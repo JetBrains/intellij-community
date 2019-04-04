@@ -27,7 +27,7 @@ public class HgMergeDialog extends HgCommonDialogWithChoices {
                        @Nullable HgRepository selectedRepo) {
     super(project, repositories, selectedRepo);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
-    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Merge with"));
+    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Merge with", true));
     setTitle("Merge");
   }
 

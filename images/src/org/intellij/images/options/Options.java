@@ -15,9 +15,6 @@
  */
 package org.intellij.images.options;
 
-import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.NotNull;
-
 import java.beans.PropertyChangeListener;
 
 /**
@@ -26,10 +23,8 @@ import java.beans.PropertyChangeListener;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface Options extends Cloneable {
-    @NotNull
     EditorOptions getEditorOptions();
 
-    @NotNull
     ExternalEditorOptions getExternalEditorOptions();
 
     /**
@@ -37,9 +32,15 @@ public interface Options extends Cloneable {
      *
      * @param options Other options
      */
-    void inject(@NotNull Options options);
+    void inject(Options options);
 
-    void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parent);
+    void addPropertyChangeListener(PropertyChangeListener listener);
+
+    void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
+
+    void removePropertyChangeListener(PropertyChangeListener listener);
+
+    void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
     /**
      * Set option by string representation.
@@ -48,5 +49,5 @@ public interface Options extends Cloneable {
      * @param value Value
      * @return {@code true} if option is matched and setted.
      */
-    boolean setOption(@NotNull String name, Object value);
+    boolean setOption(String name, Object value);
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,6 @@ import java.util.List;
  *
  * @see ProjectRootManager#getFileIndex()
  */
-@ApiStatus.NonExtendable
 public interface ProjectFileIndex extends FileIndex {
   class SERVICE {
     private SERVICE() { }

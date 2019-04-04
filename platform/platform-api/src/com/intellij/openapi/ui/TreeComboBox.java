@@ -1,8 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -42,7 +56,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     myShowRootNode = showRootNode;
     setModel(new TreeModelWrapper(myTreeModel, showRootNode));
     setRenderer(new TreeListCellRenderer(this, showRootNode, defaultText));
-    if (SystemInfoRt.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
+    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
   }
 
   public void setTreeModel(@NotNull final TreeModel model, final boolean showRootNode) {
@@ -166,7 +180,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
           SELECTION_PAINTER.paintBorder(this, g, 0, 0, getWidth(), getHeight());
         }
 
-        if (SystemInfoRt.isMac && myChecked && !myEditable) {
+        if (SystemInfo.isMac && myChecked && !myEditable) {
           int i = getHeight() - 4;
           g.setColor(getForeground());
           g.drawString("\u2713", 6, i);

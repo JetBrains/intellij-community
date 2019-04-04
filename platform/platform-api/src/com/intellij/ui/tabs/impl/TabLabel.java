@@ -6,9 +6,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Pass;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
@@ -194,13 +194,13 @@ public class TabLabel extends JPanel implements Accessible {
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
-               JBUI.CurrentTheme.EditorTabs.underlinedTabForeground() : super.getActiveTextColor(attributesColor);
+               JBColor.namedColor("EditorTabs.selectedForeground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
       }
 
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeeded() ? 4 : 2) : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getShadowInstance().getHideTabsIfNeed() ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(JBUI.emptyInsets());
 
@@ -244,8 +244,8 @@ public class TabLabel extends JPanel implements Accessible {
 
     myCentered = toCenter;
   }
-
-
+  
+  
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {
@@ -358,7 +358,7 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUIScale.scale(1);
+        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
         break;
       case left:
       case right:
@@ -504,7 +504,13 @@ public class TabLabel extends JPanel implements Accessible {
 
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)));
+    myActionPanel = new ActionPanel(myTabs, myInfo, new Pass<MouseEvent>() {
+      @Override
+      public void pass(final MouseEvent event) {
+        final MouseEvent me = SwingUtilities.convertMouseEvent(event.getComponent(), event, TabLabel.this);
+        processMouseEvent(me);
+      }
+    });
 
     toggleShowActions(false);
 

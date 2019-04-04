@@ -39,7 +39,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                boolean currentSelection,
                                                boolean usageView,
                                                boolean showEmptyScopes) {
-    Collection<SearchScope> result = new LinkedHashSet<>();
+    Collection<SearchScope> result = ContainerUtil.newLinkedHashSet();
     result.add(GlobalSearchScope.everythingScope(project));
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
@@ -160,7 +159,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       addHierarchyScope(project, result);
       UsageView selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView();
       if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-        final Set<Usage> usages = new THashSet<>(selectedUsageView.getUsages());
+        final Set<Usage> usages = ContainerUtil.newTroveSet(selectedUsageView.getUsages());
         usages.removeAll(selectedUsageView.getExcludedUsages());
 
         if (prevSearchFiles) {
@@ -216,7 +215,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     ContainerUtil.addIfNotNull(result, getSelectedFilesScope(project, dataContext));
 
-    return new ArrayList<>(result);
+    return ContainerUtil.newArrayList(result);
   }
 
   private static void addHierarchyScope(@NotNull Project project, Collection<? super SearchScope> result) {

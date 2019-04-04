@@ -1,14 +1,12 @@
 from __future__ import nested_scopes
-
-from _pydev_imps._pydev_saved_modules import threading
 import os
 
 def set_trace_in_qt():
+    from _pydevd_bundle import pydevd_tracing
     from _pydevd_bundle.pydevd_comm import get_global_debugger
     debugger = get_global_debugger()
     if debugger is not None:
-        threading.current_thread()  # Create the dummy thread for qt.
-        debugger.enable_tracing()
+        pydevd_tracing.SetTrace(debugger.trace_dispatch)
 
 
 _patched_qt = False

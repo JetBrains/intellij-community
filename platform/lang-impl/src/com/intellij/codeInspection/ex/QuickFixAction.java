@@ -34,23 +34,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
 
 /**
  * @author max
  */
-public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
+public class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
@@ -139,7 +137,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   private void doApplyFix(@NotNull Project project,
                           @NotNull List<CommonProblemDescriptor[]> descriptors,
-                          @NotNull Set<? extends VirtualFile> readOnlyFiles,
+                          @NotNull Set<VirtualFile> readOnlyFiles,
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
@@ -290,7 +288,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        final ActionToolbar toolbar = ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)button);
+        final ActionToolbar toolbar = UIUtil.getParentOfType(ActionToolbar.class, button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
                                                          place,

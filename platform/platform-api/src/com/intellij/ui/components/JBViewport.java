@@ -1,14 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.*;
@@ -16,8 +15,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
@@ -313,8 +312,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
-    return (!SystemInfoRt.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
-           (view instanceof JList || view instanceof JTree || (!SystemInfoRt.isMac && ScrollSettings.isGapNeededForAnyComponent()));
+    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
   }
 
   private static Insets getInnerInsets(JComponent view) {
@@ -553,9 +552,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     int modelRows = model == null ? 0 : model.getSize();
     if (modelRows <= 0) {
       if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
-      if (fixedWidth <= 0) fixedWidth = JBUIScale.scale(256); // scaled value from JDK
+      if (fixedWidth <= 0) fixedWidth = JBUI.scale(256); // scaled value from JDK
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16); // scaled value from JDK
     }
     int visibleRows = list.getVisibleRowCount();
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
@@ -595,7 +594,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16);
+      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16);
     }
     int visibleRows = tree.getVisibleRowCount();
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");

@@ -32,8 +32,6 @@ import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -57,9 +55,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     FilePath file = fileAndRevision.getFirst();
     VcsRevisionNumber revisionNumber = fileAndRevision.getSecond();
 
-    String revisionNumberString = revisionNumber.asString();
-    if (canShowNewFileHistory(project, file, revisionNumberString)) {
-      showNewFileHistory(project, file, revisionNumberString);
+    if (canShowNewFileHistory(project, file)) {
+      showNewFileHistory(project, file, revisionNumber.asString());
     }
     else {
       VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
@@ -70,12 +67,12 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    historyProvider.showFileHistory(project, Collections.singletonList(path), revisionNumber);
+    historyProvider.showFileHistory(project, path, revisionNumber);
   }
 
-  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
+  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, Collections.singletonList(path), revisionNumber);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, path);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {
@@ -102,8 +99,7 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     if (fileAndRevision == null || change.getType() != Change.Type.DELETED) return fileAndRevision;
 
     Project project = event.getProject();
-    if (project == null ||
-        !canShowNewFileHistory(project, fileAndRevision.getFirst(), fileAndRevision.getSecond().asString())) return fileAndRevision;
+    if (project == null || !canShowNewFileHistory(project, fileAndRevision.getFirst())) return fileAndRevision;
     VcsRevisionNumber revisionNumber = event.getData(VcsDataKeys.VCS_REVISION_NUMBER);
     if (revisionNumber == null) return fileAndRevision;
 

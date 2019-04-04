@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ignore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
-import static java.lang.System.lineSeparator;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
@@ -78,7 +76,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
 
       if (notify && needAskToManageIgnoreFiles(myProject)) {
-        notifyVcsIgnoreFileManage(myProject, ignoredFileContentProvider, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
+        notifyVcsIgnoreFileManage(myProject, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
       }
       else {
         writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, false);
@@ -91,7 +89,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
     try {
       if (append) {
-        FileUtil.writeToFile(ignoreFile, (lineSeparator() + ignoreFileContent).getBytes(projectCharsetName), true);
+        FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), true);
       }
       else {
         //create ignore file with VFS to prevent externally added files detection
@@ -120,7 +118,6 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static void notifyVcsIgnoreFileManage(@NotNull Project project,
-                                                @NotNull IgnoredFileContentProvider ignoredFileContentProvider,
                                                 @NotNull Runnable writeToIgnoreFile) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
@@ -128,8 +125,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     VcsNotifier.getInstance(project).notifyMinorInfo(
       true,
       "",
-      VcsBundle.message("ignored.file.manage.message",
-                        ApplicationNamesInfo.getInstance().getFullProductName(), ignoredFileContentProvider.getFileName()),
+      VcsBundle.message("ignored.file.manage.message"),
       NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
         writeToIgnoreFile.run();
         propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
@@ -156,16 +152,13 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
-    VcsApplicationSettings vcsApplicationSettings = VcsApplicationSettings.getInstance();
-    if (vcsApplicationSettings.DISABLE_MANAGE_IGNORE_FILES) return false;
-
     boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
     if (wasGeneratedPreviously) {
       LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
       return false;
     }
 
-    boolean needGenerateRegistryFlag = ApplicationManager.getApplication().isInternal() || Registry.is("vcs.ignorefile.generation", true);
+    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
     if (!needGenerateRegistryFlag) {
       return false;
     }
@@ -195,7 +188,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
 
     static class State {
-      public Set<String> generatedRoots = new HashSet<>();
+      public Set<String> generatedRoots = ContainerUtil.newHashSet();
     }
 
     State myState = new State();

@@ -32,7 +32,9 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
@@ -83,9 +85,9 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
     if (tag.isValid()) {
       String templateText = expandTemplate(abbreviation, file, editor);
 
-      final Collection<String> classNames = new LinkedHashSet<>();
+      final Collection<String> classNames = ContainerUtil.newLinkedHashSet();
       ContainerUtil.addAll(classNames, HtmlUtil.splitClassNames(tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME)));
-      final Map<String, String> attributes = new LinkedHashMap<>();
+      final Map<String, String> attributes = ContainerUtil.newLinkedHashMap();
       final Ref<String> newTagName = Ref.create();
       processTags(file.getProject(), templateText, (tag1, firstTag) -> {
         if (firstTag && !abbreviation.isEmpty() && StringUtil.isJavaIdentifierPart(abbreviation.charAt(0))) {

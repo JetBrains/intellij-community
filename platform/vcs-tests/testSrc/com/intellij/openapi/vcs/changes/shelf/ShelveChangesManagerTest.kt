@@ -89,9 +89,8 @@ class ShelveChangesManagerTest : PlatformTestCase() {
                              removeFilesFromShelf: Boolean = true) {
     myShelvedChangesManager.isRemoveFilesFromShelf = removeFilesFromShelf
     val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangeList.loadChangesIfNeeded(project)
     val originalDate = shelvedChangeList.DATE
-    val changes = if (changesNum == 0) null else shelvedChangeList.changes!!.subList(0, changesNum)
+    val changes = if (changesNum == 0) null else shelvedChangeList.getChanges(myProject).subList(0, changesNum)
     val binaries = if (changesNum == 0) null else shelvedChangeList.binaryFiles.subList(0, binariesNum)
 
     myShelvedChangesManager.unshelveChangeList(shelvedChangeList, changes, binaries, null, false)
@@ -109,8 +108,7 @@ class ShelveChangesManagerTest : PlatformTestCase() {
                            expectedDeletedNum: Int,
                            undoDeletion: Boolean = false) {
     val originalDate = shelvedChangeList.DATE
-    shelvedChangeList.loadChangesIfNeeded(project)
-    val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.changes!!.subList(0, changesNum)
+    val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.getChanges(myProject).subList(0, changesNum)
     val binaries = if (changesNum == 0) emptyList<ShelvedBinaryFile>() else shelvedChangeList.binaryFiles.subList(0, binariesNum)
 
     val shouldDeleteEntireList = changesNum == 0 && binariesNum == 0

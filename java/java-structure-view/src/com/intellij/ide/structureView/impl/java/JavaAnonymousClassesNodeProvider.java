@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.PropertyOwner;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
@@ -60,7 +60,7 @@ public class JavaAnonymousClassesNodeProvider
   @NotNull
   @Override
   public Shortcut[] getShortcut() {
-    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfoRt.isMac ? "meta I" : "control I")};
+    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 
   @NotNull

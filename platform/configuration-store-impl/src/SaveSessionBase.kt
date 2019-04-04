@@ -31,7 +31,7 @@ abstract class SaveSessionBase : SaveSessionProducer, SafeWriteRequestor, LargeF
     setSerializedState(componentName, element)
   }
 
-  abstract fun setSerializedState(componentName: String, element: Element?)
+  protected abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
 internal fun serializeState(state: Any): Element? {
@@ -43,6 +43,6 @@ internal fun serializeState(state: Any): Element? {
       state.writeExternal(element)
       return element
     }
-    else -> return serialize(state)
+    else -> return state.serialize()
   }
 }

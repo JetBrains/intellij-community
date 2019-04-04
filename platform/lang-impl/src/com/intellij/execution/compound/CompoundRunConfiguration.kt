@@ -42,7 +42,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
   private val isDirty = AtomicBoolean()
 
   fun getConfigurationsWithTargets(runManager: RunManagerImpl): Map<RunConfiguration, ExecutionTarget?> {
-    initIfNeeded(runManager)
+    initIfNeed(runManager)
     return sortedConfigurationsWithTargets
   }
 
@@ -58,7 +58,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
     setConfigurationsWithTargets(value.associate { it to null })
   }
 
-  private fun initIfNeeded(runManager: RunManagerImpl) {
+  private fun initIfNeed(runManager: RunManagerImpl) {
     if (isInitialized) {
       return
     }

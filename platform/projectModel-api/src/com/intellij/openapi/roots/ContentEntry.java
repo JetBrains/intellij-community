@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -34,7 +33,6 @@ import java.util.Set;
  * @see ModuleRootModel#getContentEntries()
  * @see ModifiableRootModel#addContentEntry(VirtualFile)
  */
-@ApiStatus.NonExtendable
 public interface ContentEntry extends Synthetic {
   /**
    * Returns the root file or directory for the content root, if it is valid.
@@ -207,7 +205,4 @@ public interface ContentEntry extends Synthetic {
   void addExcludePattern(@NotNull String pattern);
   void removeExcludePattern(@NotNull String pattern);
   void setExcludePatterns(@NotNull List<String> patterns);
-
-  @NotNull
-  ModuleRootModel getRootModel();
 }

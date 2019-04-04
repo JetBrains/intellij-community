@@ -29,7 +29,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
   /**
    * @return preferred focused component inside the specified {@code component}.
    * Method can return component itself if the {@code component} is legal
-   * (JTextField)focusable
+   * (JTextFiel)focusable
    *
    */
   public static JComponent getPreferredFocusedComponent(@NotNull final JComponent component, final FocusTraversalPolicy policyToIgnore) {

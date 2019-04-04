@@ -315,10 +315,7 @@ public class UsageViewImpl implements UsageViewEx {
         TreeNode parent = node.getParent();
         if (parent == myRoot || !(parent instanceof GroupNode)) return;
         GroupNode parentNode = (GroupNode)parent;
-        List<Node> otherNodes;
-        synchronized (parentNode) {
-          otherNodes = ContainerUtil.filter(parentNode.getChildren(), n -> n.isExcluded() != almostAllChildrenExcluded);
-        }
+        List<Node> otherNodes = ContainerUtil.filter(parentNode.getChildren(), n -> n.isExcluded() != almostAllChildrenExcluded);
         if (otherNodes.size() == 1 && otherNodes.get(0) == node) {
           nodes.add(parentNode);
           collectParentNodes(parentNode, almostAllChildrenExcluded, nodes);
@@ -676,7 +673,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     });
 
-    TreeUtil.promiseSelectFirst(myTree);
+    TreeUtil.selectFirstNode(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
@@ -1498,7 +1495,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void addButtonToLowerPane(@NotNull Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index = myButtonPanel.getComponentCount();
-    if (!SystemInfoRt.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
+    if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
     Object o = action.getValue(Action.ACCELERATOR_KEY);
     if (o instanceof KeyStroke) {
@@ -1826,7 +1823,7 @@ public class UsageViewImpl implements UsageViewEx {
         public Collection<String> getTextLinesToCopy() {
           final Node[] selectedNodes = getSelectedNodes();
           if (selectedNodes != null && selectedNodes.length > 0) {
-            ArrayList<String> lines = new ArrayList<>();
+            ArrayList<String> lines = ContainerUtil.newArrayList();
             for (Node node : selectedNodes) {
               lines.add(node.getText(UsageViewImpl.this));
             }

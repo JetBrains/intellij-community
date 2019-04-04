@@ -11,7 +11,7 @@ import com.intellij.patterns.ElementPattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.*;
 import java.util.function.Supplier;
 
 /**
@@ -36,13 +36,13 @@ interface CompletionProcessEx extends CompletionProcess {
   @Nullable
   Lookup getLookup();
 
-  void registerChildDisposable(@NotNull Supplier<? extends Disposable> child);
+  void registerChildDisposable(@NotNull Supplier<Disposable> child);
 
   void itemSelected(LookupElement item, char aChar);
 
   void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition);
 
-  void addAdvertisement(@NotNull String message, @Nullable Icon icon);
+  void addAdvertisement(String message, @Nullable final Color bgColor);
 
   CompletionParameters getParameters();
 

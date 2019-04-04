@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSDefaults;
@@ -21,9 +20,8 @@ import sun.awt.image.WritableRasterNative;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
@@ -31,7 +29,7 @@ public class NST {
   private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
   private static final String MIN_OS_VERSION = "10.12.2";
-  static boolean isSupportedOS() { return SystemInfoRt.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
+  static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   static {
     try {
@@ -94,7 +92,7 @@ public class NST {
   static NSTLibrary loadLibrary() {
     NativeLibraryLoader.loadPlatformLibrary("nst");
 
-    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
@@ -145,7 +143,7 @@ public class NST {
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int itemsCount) {
+  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<TBItemScrubber.ItemData> items, int itemsCount) {
     final Memory mem = _packItems(items, 0, itemsCount);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
@@ -189,7 +187,7 @@ public class NST {
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
-  public static void updateScrubber(ID scrubObj, int itemWidth, List<? extends TBItemScrubber.ItemData> items) {
+  public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
     LOG.error("updateScrubber musn't be called");
   }
 
@@ -206,7 +204,7 @@ public class NST {
     return mem;
   }
 
-  static void appendScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  static void appendScrubberItems(ID scrubObj, List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     final Memory mem = _packItems(items, fromIndex, itemsCount);
     ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
   }
@@ -223,7 +221,7 @@ public class NST {
     ourNSTLibrary.showScrubberItems(scrubObj, mem, indices.size(), show);
   }
 
-  private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  private static @Nullable Memory _packItems(List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     if (items == null || itemsCount <= 0)
       return null;
     if (fromIndex < 0) {

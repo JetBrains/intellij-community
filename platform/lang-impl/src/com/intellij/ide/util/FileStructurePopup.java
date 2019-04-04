@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -32,7 +32,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -53,7 +52,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -156,11 +154,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!ApplicationManager.getApplication().isUnitTestMode() && myPopup.isDisposed()) {
           return;
         }
-        ProgressManager.getInstance().computePrioritized(() -> {
-          super.rebuildTree();
-          myFilteringStructure.rebuild();
-          return null;
-        });
+        super.rebuildTree();
+        myFilteringStructure.rebuild();
       }
 
       @Override
@@ -184,7 +179,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     FileStructurePopupFilter filter = new FileStructurePopupFilter();
     myFilteringStructure = new FilteringTreeStructure(filter, myTreeStructure, false);
 
-    myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure, this);
+    myStructureTreeModel = new StructureTreeModel<>(myFilteringStructure);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
@@ -490,7 +485,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setPreferredSize(JBUI.size(540, 500));
     JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
-                                                JBUIScale.scale(UIUtil.DEFAULT_HGAP), 0));
+      JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
     chkPanel.setOpaque(false);
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
@@ -1013,8 +1008,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @Nullable
   private static SpeedSearchObjectWithWeight find(@NotNull PsiElement element,
-                                                  @NotNull List<? extends SpeedSearchObjectWithWeight> objects,
-                                                  @NotNull BiPredicate<? super PsiElement, ? super TreePath> predicate) {
+                                                  @NotNull List<SpeedSearchObjectWithWeight> objects,
+                                                  @NotNull BiPredicate<PsiElement, TreePath> predicate) {
     return ContainerUtil.find(objects, object -> predicate.test(element, ObjectUtils.tryCast(object.node, TreePath.class)));
   }
 

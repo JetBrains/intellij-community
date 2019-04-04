@@ -42,21 +42,24 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private static final String ELLIPSIS = "<...>";
   private final int myCycleBufferSize = ConsoleBuffer.getCycleBufferSize();
 
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, @NotNull final TestConsoleProperties consoleProperties) {
-    // If console is editable, user may want to see output before new line char.
-    // stdout: "enter your name:"
-    // There is no new line after it, but user still wants to see this message.
-    // So, if console is editable, we enable "doNotBufferTextUntilNewLine".
-    this(testFrameworkName, consoleProperties.isEditable());
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
+    this(testFrameworkName);
   }
 
+
   /**
-   * @param doNotBufferTextUntilNewLine opposite to {@link OutputEventSplitter} constructor
+   * @deprecated use {@link #OutputToGeneralTestEventsConverter(String)}
    */
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, final boolean doNotBufferTextUntilNewLine) {
+  @SuppressWarnings("unused")
+  @Deprecated
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, final boolean unneded) {
+    this(testFrameworkName);
+  }
+
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputEventSplitter(! doNotBufferTextUntilNewLine) {
+    mySplitter = new OutputEventSplitter() {
       @Override
       public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
         processConsistentText(text, outputType);

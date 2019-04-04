@@ -25,10 +25,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
 import org.intellij.plugins.relaxNG.compact.psi.RncElement;
@@ -36,6 +33,8 @@ import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class RngCompactLanguage extends Language {
   public static final String ID = "RELAX-NG";
@@ -117,6 +116,16 @@ public class RngCompactLanguage extends Language {
   }
 
   public static class MyDocumentationProvider implements DocumentationProvider {
+    @Override
+    @Nullable
+    public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+      return null;
+    }
+
+    @Override
+    public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+      return null;
+    }
 
     @Override
     @Nullable
@@ -140,6 +149,18 @@ public class RngCompactLanguage extends Language {
           return sb.toString();
         }
       }
+      return null;
+    }
+
+    @Override
+    @Nullable
+    public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+      return null;
+    }
+
+    @Override
+    @Nullable
+    public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
       return null;
     }
   }

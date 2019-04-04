@@ -41,7 +41,7 @@ private class SyncAction(private val syncType: SyncType,
     }
 
     val repositoryManager = icsManager.repositoryManager
-    repositoryManager.createRepositoryIfNeeded()
+    repositoryManager.createRepositoryIfNeed()
     repositoryManager.setUpstream(url, null)
     return null
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Executor;
@@ -22,7 +22,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.indexing.FindSymbolParameters;
 import groovyjarjarcommonscli.Option;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,10 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
@@ -53,12 +55,6 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull String value) {
     return new RunAnythingGradleItem(getCommand(value), getIcon(value));
-  }
-
-  @Nullable
-  @Override
-  public String getHelpGroupTitle() {
-    return "Gradle";
   }
 
   @Nullable
@@ -109,7 +105,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     return new CommandLineInfo(prefix, toComplete, externalProjectName, commands.subList(1, commands.size()));
   }
 
-  private void appendProjectsVariants(@NotNull List<? super String> result,
+  private void appendProjectsVariants(@NotNull List<String> result,
                                       @NotNull DataContext dataContext,
                                       @NotNull String prefix) {
     if (!prefix.trim().equals(getHelpCommand())) return;
@@ -127,7 +123,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
       .forEach(data -> result.add(prefix + data.getExternalName()));
   }
 
-  private void appendTasksVariants(@NotNull List<? super String> result, @NotNull String prefix, @NotNull DataContext dataContext) {
+  private void appendTasksVariants(@NotNull List<String> result, @NotNull String prefix, @NotNull DataContext dataContext) {
     Project project = fetchProject(dataContext);
     String commandLine = trimStart(prefix, getHelpCommand()).trim();
     ProjectData projectData = getProjectData(project, commandLine);
@@ -145,7 +141,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     }
   }
 
-  private static void appendArgumentsVariants(@NotNull List<? super String> result, @NotNull String prefix, @NotNull String toComplete) {
+  private static void appendArgumentsVariants(@NotNull List<String> result, @NotNull String prefix, @NotNull String toComplete) {
     if (!toComplete.startsWith("-")) return;
 
     boolean isLongOpt = toComplete.startsWith("--");
@@ -183,7 +179,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     String callChain = toComplete.isEmpty() || !toComplete.contains(".") ? "*" : substringBeforeLast(toComplete, ".");
     Project project = fetchProject(dataContext);
     ChooseByNameModelEx model = new GotoClassModel2(project);
-    model.processNames(it -> processor.process(callChain + "." + it), FindSymbolParameters.simple(project, false));
+    model.processNames(it -> processor.process(callChain + "." + it), false);
   }
 
   private static List<TaskOption> getTaskOptions(@NotNull DataContext dataContext,
@@ -295,7 +291,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
   @NotNull
   private static Map<ProjectData, MultiMap<String, TaskData>> getTasksMap(Project project) {
-    Map<ProjectData, MultiMap<String, TaskData>> tasks = new LinkedHashMap<>();
+    Map<ProjectData, MultiMap<String, TaskData>> tasks = ContainerUtil.newLinkedHashMap();
     for (GradleProjectSettings setting : GradleSettings.getInstance(project).getLinkedProjectsSettings()) {
       final ExternalProjectInfo projectData =
         ProjectDataManager.getInstance().getExternalProjectData(project, GradleConstants.SYSTEM_ID, setting.getExternalProjectPath());

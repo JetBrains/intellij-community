@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
@@ -11,8 +10,6 @@ import com.intellij.ide.plugins.AvailablePluginsManagerMain;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
-import com.intellij.ide.ui.ConfigurableOptionsTopHitProvider;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,15 +23,12 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -43,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 /**
  * Used in installer's "build searchable options" step.
@@ -59,7 +55,6 @@ public class TraverseUIStarter implements ApplicationStarter {
   private static final String ID = "id";
   private static final String CONFIGURABLE_NAME = "configurable_name";
   private static final String OPTION = "option";
-  private static final String OPTION_TOP_HIT = "option_top_hit";
   private static final String NAME = "name";
   private static final String PATH = "path";
   private static final String HIT = "hit";
@@ -96,28 +91,18 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
-    MultiMap<String, OptionDescription> optionsTopHit = MultiMap.createLinkedSet();
     try {
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeStart();
       }
 
-      Project project = ProjectManager.getInstance().getDefaultProject();
-      SearchUtil.processProjectConfigurables(project, options);
+      SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
-      for (final SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getIterable()) {
-        if (provider instanceof ConfigurableOptionsTopHitProvider) {
-          for (OptionDescription option : ((ConfigurableOptionsTopHitProvider)provider).getOptions(project)) {
-            optionsTopHit.putValue(option.getConfigurableId(), option);
-          }
-        }
+      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
+        extension1.afterTraversal(options);
       }
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.afterTraversal(options);
-      }
-
-      final Map<String, Element> roots = new HashMap<>();
+      final Map<String, Element> roots = newHashMap();
       for (SearchableConfigurable option : options.keySet()) {
         SearchableConfigurable configurable = option;
 
@@ -154,7 +139,6 @@ public class TraverseUIStarter implements ApplicationStarter {
           }
         }
 
-        writeOptionsTopHit(optionsTopHit.get(configurable.getId()), configurableElement);
         final String module = splitByResourcePath ? getModuleByClass(configurable.getOriginalClass()) : "";
         addElement(roots, configurableElement, module);
       }
@@ -178,11 +162,6 @@ public class TraverseUIStarter implements ApplicationStarter {
       for (SearchableConfigurable configurable : options.keySet()) {
         configurable.disposeUIResources();
       }
-      for (OptionDescription option : optionsTopHit.values()) {
-        if (option instanceof Disposable) {
-          Disposer.dispose((Disposable)option);
-        }
-      }
     }
   }
 
@@ -201,7 +180,7 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static Map<String, Set<OptionDescription>> processFileTemplates(final boolean splitByResourcePath) {
     SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Map<String, Set<OptionDescription>> options = new HashMap<>();
+    final Map<String, Set<OptionDescription>> options = newHashMap();
 
     FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
     processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates(), splitByResourcePath);
@@ -258,7 +237,7 @@ public class TraverseUIStarter implements ApplicationStarter {
   }
 
   private static Map<String, Set<OptionDescription>> processKeymap(final boolean splitByResourcePath) {
-    final Map<String, Set<OptionDescription>> map = new HashMap<>();
+    final Map<String, Set<OptionDescription>> map = newHashMap();
     final ActionManager actionManager = ActionManager.getInstance();
     final Map<String, PluginId> actionToPluginId = splitByResourcePath ? getActionToPluginId() : Collections.emptyMap();
     final String componentName = "ActionManager";
@@ -283,7 +262,7 @@ public class TraverseUIStarter implements ApplicationStarter {
   @NotNull
   private static Map<String, PluginId> getActionToPluginId() {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Map<String, PluginId> actionToPluginId = new HashMap<>();
+    final Map<String, PluginId> actionToPluginId = newHashMap();
     for (final PluginId id : PluginId.getRegisteredIds().values()) {
       for (final String action : actionManager.getPluginActions(id)) {
         actionToPluginId.put(action, id);
@@ -335,18 +314,6 @@ public class TraverseUIStarter implements ApplicationStarter {
       optionElement.setAttribute(PATH, path);
     }
     optionElement.setAttribute(HIT, hit);
-    configurableElement.addContent(optionElement);
-  }
-
-  private static void writeOptionsTopHit(@NotNull final Collection<OptionDescription> options, @NotNull final Element configurableElement) {
-    for (final OptionDescription option : options) {
-      appendTopHit(option.getOption(), configurableElement);
-    }
-  }
-
-  private static void appendTopHit(@NotNull final String name, @NotNull final Element configurableElement) {
-    Element optionElement = new Element(OPTION_TOP_HIT);
-    optionElement.setAttribute(NAME, StringUtil.escapeStringCharacters(name));
     configurableElement.addContent(optionElement);
   }
 }

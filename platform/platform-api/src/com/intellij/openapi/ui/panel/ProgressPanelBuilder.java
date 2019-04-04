@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
@@ -200,7 +200,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       comment = new JLabel(myCommentText);
       comment.setForeground(Gray.x78);
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         Font font = comment.getFont();
         float size = font.getSize2D();
         Font smallFont = font.deriveFont(size - 2.0f);

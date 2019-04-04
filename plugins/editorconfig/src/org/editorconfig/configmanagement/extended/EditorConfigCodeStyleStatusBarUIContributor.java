@@ -32,7 +32,7 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   @Nullable
   @Override
   public AnAction createDisableAction(@NotNull Project project) {
-    return EditorConfigActionUtil.createDisableAction(project, EditorConfigBundle.message("action.disable"));
+    return EditorConfigActionUtil.createDisableAction(project);
   }
 
   @NotNull

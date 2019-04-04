@@ -19,9 +19,7 @@ public class JavaGradleSettingsControlProvider extends GradleSettingsControlProv
 
   @Override
   public GradleSystemSettingsControlBuilder getSystemSettingsControlBuilder(@NotNull GradleSettings initialSettings) {
-    IdeaGradleSystemSettingsControlBuilder result = new IdeaGradleSystemSettingsControlBuilder(initialSettings);
-    if (initialSettings.getProject().isDefault()) result.dropStoreExternallyCheckBox();
-    return result;
+    return new IdeaGradleSystemSettingsControlBuilder(initialSettings);
   }
 
   @Override

@@ -4,8 +4,8 @@ package git4idea.checkin;
 import com.google.common.collect.HashMultiset;
 import com.intellij.CommonBundle;
 import com.intellij.diff.util.Side;
+import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -40,6 +40,8 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.FunctionUtil;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -49,10 +51,6 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.vcs.commit.AmendCommitAware;
-import com.intellij.vcs.commit.AmendCommitHandler;
-import com.intellij.vcs.commit.AmendCommitModeListener;
-import com.intellij.vcs.commit.ToggleAmendCommitOption;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -93,16 +91,13 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
-import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
-import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
-public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
+public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
   @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
   @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
@@ -114,6 +109,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
+  private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
@@ -132,16 +128,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return true;
   }
 
-  @NotNull
   @Override
-  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(myProject, commitPanel, isAmendCommitOptionSupported(commitPanel, this));
+  @Nullable
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+    return new GitCheckinOptions(myProject, panel);
   }
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
-    LinkedHashSet<String> messages = new LinkedHashSet<>();
+  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
+    LinkedHashSet<String> messages = newLinkedHashSet();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
@@ -187,37 +184,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public boolean isAmendCommitSupported() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
-    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LOG);
-    h.addParameters("--max-count=1");
-    h.addParameters("--encoding=UTF-8");
-    String formatPattern;
-    if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myProject)) {
-      formatPattern = "%B";
-    }
-    else {
-      // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
-      // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
-      formatPattern = "%s%n%n%-b";
-    }
-    h.addParameters("--pretty=format:" + formatPattern);
-    return Git.getInstance().runCommand(h).getOutputOrThrow();
-  }
-
-  @NotNull
-  @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String commitMessage,
-                                   @NotNull CommitContext commitContext,
-                                   @NotNull Set<String> feedback) {
-    myNextCommitAmend = isAmendCommitMode(commitContext);
-
+                                   @NotNull String message,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
@@ -229,7 +198,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (myNextCommitCommitRenamesSeparately) {
-        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
+        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, message);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
 
@@ -239,14 +208,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         }
       }
 
-      exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
+      exceptions.addAll(commitRepository(repository, toCommit, message));
     }
 
-    if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
+    if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
+      List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
@@ -797,6 +766,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
   }
 
+
+  @Override
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
+  }
+
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
@@ -896,8 +871,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                   @NotNull File messageFile) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
-    handler.addParameters("-F");
-    handler.addAbsoluteFile(messageFile);
+    handler.addParameters("-F", messageFile.getAbsolutePath());
     if (myNextCommitAmend) {
       handler.addParameters("--amend");
     }
@@ -1014,7 +988,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -1037,7 +1011,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return rc;
   }
 
-  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File messageFile)
+  private void commit(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files, @NotNull File message)
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
@@ -1055,9 +1029,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       if (myNextCommitSkipHook) {
         handler.addParameters("--no-verify");
       }
-      handler.addParameters("--only");
-      handler.addParameters("-F");
-      handler.addAbsoluteFile(messageFile);
+      handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (myNextCommitAuthor != null) {
         handler.addParameters("--author=" + myNextCommitAuthor);
       }
@@ -1071,7 +1043,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -1141,25 +1113,28 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   public void reset() {
+    myNextCommitAmend = false;
     myNextCommitAuthor = null;
+    myNextCommitIsPushed = null;
     myNextCommitAuthorDate = null;
     myNextCommitSkipHook = false;
   }
 
-  public class GitCheckinOptions
-    implements CheckinChangeListSpecificComponent, RefreshableOnComponent, AmendCommitModeListener, Disposable {
+  public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
     private final List<GitCheckinExplicitMovementProvider> myExplicitMovementProviders;
 
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
+    @NotNull private final AmendComponent myAmendComponent;
     @NotNull private final JCheckBox mySignOffCheckbox;
     @NotNull private final JCheckBox myCommitRenamesSeparatelyCheckbox;
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
     @Nullable private Balloon myAuthorBalloon;
 
-    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel, boolean showAmendOption) {
+
+    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
       myCheckinProjectPanel = panel;
@@ -1191,8 +1166,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
-      ToggleAmendCommitOption amendOption = showAmendOption ? new ToggleAmendCommitOption(myCheckinProjectPanel, this) : null;
-
+      myAmendComponent = new MyAmendComponent(project, getRepositoryManager(project), panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -1204,29 +1178,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       myPanel = new JPanel(new GridBagLayout());
       myPanel.add(authorLabel, gb.nextLine().next());
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
-      if (amendOption != null) myPanel.add(amendOption, gb.nextLine().next().coverLine());
+      myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
       myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
       myPanel.add(myCommitRenamesSeparatelyCheckbox, gb.nextLine().next().coverLine());
-
-      getAmendHandler().addAmendCommitModeListener(this, this);
-    }
-
-    @NotNull
-    private AmendCommitHandler getAmendHandler() {
-      return myCheckinProjectPanel.getCommitWorkflowHandler().getAmendCommitHandler();
-    }
-
-    @Override
-    public void dispose() {
-    }
-
-    @Override
-    public void amendCommitModeToggled() {
-      updateRenamesCheckboxState();
     }
 
     public boolean isAmend() {
-      return getAmendHandler().isAmendCommitMode();
+      return myAmendComponent.isAmend();
     }
 
     @Nullable
@@ -1277,6 +1235,43 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
     }
 
+    private class MyAmendComponent extends AmendComponent {
+      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+        super(project, manager, panel);
+        myAmend.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            updateRenamesCheckboxState();
+          }
+        });
+      }
+
+      @NotNull
+      @Override
+      protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
+        return getRootsForFilePathsIfAny(myProject, files);
+      }
+
+      @Nullable
+      @Override
+      protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
+        GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LOG);
+        h.addParameters("--max-count=1");
+        h.addParameters("--encoding=UTF-8");
+        String formatPattern;
+        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myProject)) {
+          formatPattern = "%B";
+        }
+        else {
+          // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+          // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
+          formatPattern = "%s%n%n%-b";
+        }
+        h.addParameters("--pretty=format:" + formatPattern);
+        return Git.getInstance().runCommand(h).getOutputOrThrow();
+      }
+    }
+
     @NotNull
     private List<String> getUsersList(@NotNull Project project) {
       VcsUserRegistry userRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
@@ -1290,12 +1285,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       }
       else {
         myCommitRenamesSeparatelyCheckbox.setVisible(true);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(!isAmend());
+        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmend());
       }
     }
 
     @Override
     public void refresh() {
+      myAmendComponent.refresh();
       updateRenamesCheckboxState();
       myAuthorField.setText(null);
       clearAuthorWarn();
@@ -1309,6 +1305,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       if (myNextCommitAuthor != null) {
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
+      myNextCommitAmend = isAmend();
       myNextCommitAuthorDate = myAuthorDate;
 
       mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
@@ -1392,6 +1389,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
         return !filteredMovements.isEmpty();
       });
     }
+  }
+
+  public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
+    myNextCommitIsPushed = nextCommitIsPushed;
   }
 
   public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {

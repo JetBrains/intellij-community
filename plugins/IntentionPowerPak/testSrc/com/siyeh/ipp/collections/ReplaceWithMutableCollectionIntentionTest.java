@@ -11,44 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass(
-      "package com.google.common.collect;\n" +
-      "\n" +
-      "import java.io.Serializable;\n" +
-      "import java.util.AbstractCollection;\n" +
-      "\n" +
-      "public abstract class ImmutableCollection<E> extends AbstractCollection<E> implements Serializable {\n" +
-      "  \n" +
-      "}");
-    myFixture.addClass(
-      "package com.google.common.collect;\n" +
-      "\n" +
-      "import java.util.Set;\n" +
-      "\n" +
-      "public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements Set<E> {\n" +
-      "  public static <E> ImmutableSet<E> of(E e1, E e2, E e3, E e4, E e5, E e6, E... others) {\n" +
-      "    return null;\n" +
-      "  }\n" +
-      "}");
-    myFixture.addClass(
-      "package com.google.common.collect;\n" +
-      "import java.util.List;\n" +
-      "\n" +
-      "public abstract class ImmutableList<E> extends ImmutableCollection<E> implements List<E> {\n" +
-      "  public static <E> ImmutableList<E> of(E e1, E e2) {\n" +
-      "    return null;\n" +
-      "  }\n" +
-      "}");
-  }
-
   public void testMapOf() {
-    doTest();
-  }
-
-  public void testMapOfEntries() {
     doTest();
   }
 
@@ -72,59 +35,7 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
     doTest();
   }
 
-  public void testDeclaration() {
-    doTest();
-  }
-
-  public void testAssignment() {
-    doTest();
-  }
-
-  public void testSwitchExpression() {
-    doTest();
-  }
-
-  public void testAssignmentInSwitchExpression() {
-    doTest();
-  }
-
-  public void testMapOfEntriesTernary() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testMapOfEntriesArrayAccess() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testVarArgCall() {
-    doTest();
-  }
-
-  public void testFieldAssignment() {
-    doTest();
-  }
-
-  public void testGenericMethod() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testGenericMethodWithKnownType() {
-    doTest();
-  }
-
-  public void testNonTrivialQualifier() {
-    doTest();
-  }
-
-  public void testVolatileField() {
-    doTest();
-  }
-
-  public void testImmutableListAssignment() {
-    assertIntentionNotAvailable();
-  }
-
-  public void testImmutableSetVarArgArray() {
+  public void testAssigned() {
     doTest();
   }
 
@@ -141,6 +52,6 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_9_ANNOTATED;
   }
 }

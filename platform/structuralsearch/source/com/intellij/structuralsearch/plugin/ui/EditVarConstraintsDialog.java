@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.impl.RegExHelpPopup;
@@ -15,7 +15,10 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -41,6 +44,7 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,13 +102,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private final Project myProject;
 
-  EditVarConstraintsDialog(Project project, Configuration configuration, List<String> _variables, LanguageFileType fileType) {
+  EditVarConstraintsDialog(final Project project, Configuration configuration, List<String> _variables, final FileType fileType) {
     super(project, true);
     myProject = project;
     variables = _variables;
     myConfiguration = configuration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
+    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false);
     myProfile = StructuralSearchUtil.getProfileByFileType(fileType);
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
@@ -195,7 +199,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
-        final List<String> variableNames = new ArrayList<>(matchOptions.getVariableConstraintNames());
+        final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
         variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
@@ -567,14 +571,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   Editor createEditor(final Project project, final String text, final String fileName) {
-    final Language groovy = Language.findLanguageByID("Groovy");
+    Language groovy = Language.findLanguageByID("Groovy");
     Document doc = null;
     final FileType fileType = getFileType(fileName);
     if (groovy != null) {
       // there is no right way to create a code fragment for generic language, so we use this hole since we need extend resolve scope
       for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
         if (profile.isMyLanguage(groovy)) {
-          final PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text, null));
+          PsiCodeFragment fragment = Objects.requireNonNull(profile.createCodeFragment(project, text, null));
           fragment.forceResolveScope(new StructuralSearchScriptScope(myProject));
           doc = PsiDocumentManager.getInstance(project).getDocument(fragment);
           break;

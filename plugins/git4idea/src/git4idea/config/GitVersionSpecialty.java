@@ -1,10 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.util.SystemInfo;
+import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,7 +104,7 @@ public enum GitVersionSpecialty {
   DOESNT_DEFINE_HOME_ENV_VAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return SystemInfoRt.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
+      return SystemInfo.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
     }
   },
 
@@ -148,6 +161,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  FOLLOW_IS_BUGGY_IN_THE_LOG {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
+    }
+  },
+
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
 
     @Override
@@ -159,7 +179,7 @@ public enum GitVersionSpecialty {
   LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
-      return !SystemInfoRt.isMac || version.isLaterOrEqual(new GitVersion(1, 8, 3, 3));
+      return !SystemInfo.isMac || version.isLaterOrEqual(new GitVersion(1, 8, 3, 3));
     }
   },
 
@@ -206,7 +226,7 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
-      return SystemInfoRt.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
+      return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
     }
   },
 
@@ -248,15 +268,10 @@ public enum GitVersionSpecialty {
   public abstract boolean existsIn(@NotNull GitVersion version);
 
   public boolean existsIn(@NotNull Project project) {
-    GitVersion version = GitExecutableManager.getInstance().tryGetVersion(project);
-    return existsIn(ObjectUtils.chooseNotNull(version, GitVersion.NULL));
+    return existsIn(GitVcs.getInstance(project).getVersion());
   }
 
   public boolean existsIn(@NotNull GitRepository repository) {
-    return existsIn(repository.getProject());
-  }
-
-  public boolean existsIn(@NotNull AbstractVcs vcs) {
-    return existsIn(vcs.getProject());
+    return existsIn(repository.getVcs().getVersion());
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -58,7 +57,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   @Override
   @Nullable
   public Result applyFilter(@NotNull final String line, final int entireLength) {
-    final boolean dumb = isDumb();
+    final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
 
@@ -96,10 +95,6 @@ public class CompositeFilter implements Filter, FilterMixin {
       return null;
     }
     return createFinalResult(resultItems);
-  }
-
-  private boolean isDumb() {
-    return ReadAction.compute(()->myDumbService.isDumb());
   }
 
   @NotNull
@@ -174,7 +169,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   @Override
   public void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<AdditionalHighlight> consumer) {
-    final boolean dumb = isDumb();
+    final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
 
@@ -190,7 +185,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   @NotNull
   @Override
   public String getUpdateMessage() {
-    final boolean dumb = isDumb();
+    final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     final List<String> updateMessage = new ArrayList<>();
     int count = filters.size();

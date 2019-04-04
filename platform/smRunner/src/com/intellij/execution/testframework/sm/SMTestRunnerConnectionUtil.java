@@ -91,11 +91,6 @@ public class SMTestRunnerConnectionUtil {
   }
 
   @NotNull
-  public static SMTRunnerConsoleView createConsole(@NotNull SMTRunnerConsoleProperties consoleProperties) {
-    return (SMTRunnerConsoleView)createConsole(consoleProperties.getTestFrameworkName(), consoleProperties);
-  }
-
-  @NotNull
   public static String getSplitterPropertyName(@NotNull String testFrameworkName) {
     return testFrameworkName + ".Splitter.Proportion";
   }

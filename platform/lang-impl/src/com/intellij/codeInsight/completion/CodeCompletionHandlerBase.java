@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.OverridingAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
@@ -61,7 +60,7 @@ public class CodeCompletionHandlerBase {
 
   /**
    * If this key is set for a lookup element, the framework will only call handleInsert() on the lookup element when it is selected,
-   * and will not perform any additional processing such as multi-caret handling or insertion of completion character.
+   * and will not perform any additional processing such as multicaret handling or insertion of completion character.
    */
   public static final Key<Boolean> DIRECT_INSERTION = Key.create("CodeCompletionHandlerBase.directInsertion");
 
@@ -109,6 +108,12 @@ public class CodeCompletionHandlerBase {
 
   public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
     invokeCompletion(project, editor, time, false);
+  }
+
+  /** todo remove once there's no plugins using this */
+  @Deprecated
+  public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, boolean restarted) {
+    invokeCompletion(project, editor, time, hasModifiers);
   }
 
   public final void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers) {
@@ -235,52 +240,22 @@ public class CodeCompletionHandlerBase {
                                                                             initContext.getHostOffsets(),
                                                                             hasModifiers, lookup);
 
-    OffsetsInFile hostCopyOffsets = WriteAction.compute(() -> CompletionInitializationUtil.insertDummyIdentifier(initContext, indicator));
+    CompletionServiceImpl.setCompletionPhase(synchronous && isValidContext ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
-    if (synchronous && isValidContext && commitDocumentsWithTimeout(initContext, startingTime)) {
-      trySynchronousCompletion(initContext, hasModifiers, startingTime, indicator, hostCopyOffsets);
-    } else {
-      scheduleContributorsAfterAsyncCommit(initContext, indicator, hostCopyOffsets, hasModifiers);
-    }
-  }
-
-  private void scheduleContributorsAfterAsyncCommit(CompletionInitializationContextImpl initContext,
-                                                    CompletionProgressIndicator indicator,
-                                                    OffsetsInFile hostCopyOffsets,
-                                                    boolean hasModifiers) {
-    CompletionPhase phase;
-    if (synchronous) {
-      phase = new CompletionPhase.BgCalculation(indicator);
+    if (!isValidContext) {
       indicator.makeSureLookupIsShown(0);
-    } else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()));
+      return;
     }
-    CompletionServiceImpl.setCompletionPhase(phase);
 
-    AppUIExecutor.onUiThread().withDocumentsCommitted(initContext.getProject()).expireWith(phase).submit(() -> {
-      if (phase instanceof CompletionPhase.CommittingDocuments) {
-        ((CompletionPhase.CommittingDocuments)phase).replaced = true;
+    Future<?> future = indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
+      CompletionParameters parameters = CompletionInitializationUtil.prepareCompletionParameters(initContext, indicator);
+      if (parameters != null) {
+        parameters.setIsTestingMode(isTestingMode());
+        indicator.runContributors(initContext);
       }
-      CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
-      startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
-    });
-  }
+    }));
 
-  private boolean commitDocumentsWithTimeout(CompletionInitializationContextImpl initContext, long startingTime) {
-    return withTimeout(calcSyncTimeOut(startingTime), () -> {
-      PsiDocumentManager.getInstance(initContext.getProject()).commitAllDocuments();
-      return true;
-    }) != null;
-  }
-
-  private void trySynchronousCompletion(CompletionInitializationContextImpl initContext,
-                                        boolean hasModifiers,
-                                        long startingTime,
-                                        CompletionProgressIndicator indicator, OffsetsInFile hostCopyOffsets) {
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
-
-    Future<?> future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
-    if (future == null) {
+    if (!synchronous) {
       return;
     }
 
@@ -302,28 +277,6 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
     indicator.showLookup();
-  }
-
-  @Nullable
-  private Future<?> startContributorThread(CompletionInitializationContextImpl initContext,
-                                           CompletionProgressIndicator indicator,
-                                           OffsetsInFile hostCopyOffsets,
-                                           boolean hasModifiers) {
-    if (!hostCopyOffsets.getFile().isValid()) {
-      completionFinished(indicator, hasModifiers);
-      return null;
-    }
-
-    return indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
-      OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
-      indicator.registerChildDisposable(finalOffsets::getOffsets);
-
-      CompletionParameters parameters = CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
-      parameters.setIsTestingMode(isTestingMode());
-      indicator.setParameters(parameters);
-
-      indicator.runContributors(initContext);
-    }));
   }
 
   private static void checkForExceptions(Future<?> future) {
@@ -464,6 +417,22 @@ public class CodeCompletionHandlerBase {
     }
   }
 
+  public void handleCompletionElementSelected(CompletionParameters parameters,
+                                              @NotNull LookupElement item,
+                                              char completionChar) {
+    WatchingInsertionContext context = null;
+    try {
+      StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
+      context = insertItemHonorBlockSelection((CompletionProcessEx) parameters.getProcess(), item, completionChar, update);
+      update.trackStatistics(context);
+    }
+    finally {
+      if (context != null && context.getLaterRunnable() != null) {
+        context.getLaterRunnable().run();
+      }
+    }
+  }
+
   private static WatchingInsertionContext insertItemHonorBlockSelection(CompletionProcessEx indicator,
                                                                         LookupElement item,
                                                                         char completionChar,
@@ -505,7 +474,7 @@ public class CodeCompletionHandlerBase {
     if (context.shouldAddCompletionChar()) {
       WriteAction.run(() -> addCompletionChar(context, item));
     }
-    checkPsiTextConsistency(indicator);
+    checkPsiTextConcistency(indicator);
 
     return context;
   }
@@ -526,7 +495,7 @@ public class CodeCompletionHandlerBase {
         CompletionInitializationContext.calcDefaultIdentifierEnd(indicator.getEditor(), indicator.getCaret().getOffset());
   }
 
-  private static void checkPsiTextConsistency(CompletionProcessEx indicator) {
+  private static void checkPsiTextConcistency(CompletionProcessEx indicator) {
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
     if (psiFile != null) {
       if (Registry.is("ide.check.stub.text.consistency") ||
@@ -730,11 +699,7 @@ public class CodeCompletionHandlerBase {
     ourAutoInsertItemTimeout = timeout;
   }
 
-  protected boolean isTestingCompletionQualityMode() {
-    return false;
-  }
-
   protected boolean isTestingMode() {
-    return ApplicationManager.getApplication().isUnitTestMode() || isTestingCompletionQualityMode();
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 }

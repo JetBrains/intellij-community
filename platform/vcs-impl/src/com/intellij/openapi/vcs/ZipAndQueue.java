@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ZipperUpdater;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,13 +35,9 @@ public class ZipAndQueue {
   private final Runnable myInZipper;
   private Task.Backgroundable myInvokedOnQueue;
 
-  public ZipAndQueue(@NotNull Project project,
-                     final int interval,
-                     final String title,
-                     @NotNull Disposable parentDisposable,
-                     final Runnable runnable) {
+  public ZipAndQueue(@NotNull Project project, final int interval, final String title, final Runnable runnable) {
     final int correctedInterval = interval <= 0 ? 300 : interval;
-    myZipperUpdater = new ZipperUpdater(correctedInterval, parentDisposable);
+    myZipperUpdater = new ZipperUpdater(correctedInterval, project);
     myQueue = new BackgroundTaskQueue(project, title);
     myInZipper = () -> myQueue.run(myInvokedOnQueue);
     myInvokedOnQueue = new Task.Backgroundable(project, title, false) {
@@ -49,9 +46,19 @@ public class ZipAndQueue {
         runnable.run();
       }
     };
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        myZipperUpdater.stop();
+      }
+    });
   }
 
   public void request() {
     myZipperUpdater.queue(myInZipper);
+  }
+
+  public void stop() {
+    myZipperUpdater.stop();
   }
 }

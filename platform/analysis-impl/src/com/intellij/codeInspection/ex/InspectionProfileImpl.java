@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -19,7 +19,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
@@ -326,7 +326,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public <T extends InspectionProfileEntry> void modifyToolSettings(@NotNull final Key<T> shortNameKey,
                                                                     @NotNull final PsiElement psiElement,
-                                                                    @NotNull final Consumer<? super T> toolConsumer) {
+                                                                    @NotNull final Consumer<T> toolConsumer) {
     modifyProfile(model -> {
       InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
       //noinspection unchecked
@@ -504,7 +504,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }));
     if (builder.isAcyclic()) {
-      myScopesOrder = ArrayUtilRt.toStringArray(builder.getSortedNodes());
+      myScopesOrder = ArrayUtil.toStringArray(builder.getSortedNodes());
     }
 
     copyToolsConfigurations(project);

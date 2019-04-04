@@ -49,7 +49,7 @@ abstract class IcsTestCase {
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
     val icsManager = IcsManager(tempDirManager.newPath(), lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(tempDirManager.newPath()) })
-    icsManager.repositoryManager.createRepositoryIfNeeded()
+    icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.isRepositoryActive = true
     icsManager
   }

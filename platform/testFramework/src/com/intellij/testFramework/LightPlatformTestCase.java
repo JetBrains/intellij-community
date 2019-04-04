@@ -26,6 +26,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -61,7 +62,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,14 +139,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
-  protected static Project getProject() {
+  public static Project getProject() {
     return ourProject;
   }
 
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
-  protected static Module getModule() {
+  public static Module getModule() {
     return ourModule;
   }
 
@@ -154,7 +154,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * Shortcut to PsiManager.getInstance(getProject())
    */
   @NotNull
-  protected static PsiManager getPsiManager() {
+  public static PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(ourProject);
     }
@@ -270,14 +270,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
-    if (isPerformanceTest()) {
-      Timings.getStatistics();
-    }
-
-    initApplication();
-
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
+      ApplicationInfoImpl.setInStressTest(isStressTest());
+      if (isPerformanceTest()) {
+        Timings.getStatistics();
+      }
+      initApplication();
 
       ourApplication.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
@@ -300,10 +299,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
   }
 
-  @NotNull
-  public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      @NotNull LocalInspectionTool[] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) throws Exception {
+  public static void doSetup(@NotNull LightProjectDescriptor descriptor,
+                             @NotNull LocalInspectionTool[] localInspectionTools,
+                             @NotNull Disposable parentDisposable) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -367,7 +365,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    return Pair.createNonNull(getProject(), getModule());
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
@@ -394,41 +391,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      () -> CodeStyle.dropTemporarySettings(project),
+      () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
+      () -> doTearDown(project, ourApplication),
       () -> {
-        if (ApplicationManager.getApplication() != null) {
-          CodeStyle.dropTemporarySettings(project);
-        }
-      },
-      () -> {
-        if (myCodeStyleSettingsTracker != null) {
-          myCodeStyleSettingsTracker.checkForSettingsDamage();
-        }
-      },
-      () -> {
-        if (project != null && ourApplication != null) {
-          doTearDown(project, ourApplication);
-        }
-      },
-      () -> {
-        if (project != null) {
-          // needed for myVirtualFilePointerTracker check below
-          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-        }
+        // needed for myVirtualFilePointerTracker check below
+        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
       },
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
-      () -> {
-        if (myThreadTracker != null) {
-          myThreadTracker.checkLeak();
-        }
-      },
+      () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
-      () -> {
-        if (myVirtualFilePointerTracker != null) {
-          myVirtualFilePointerTracker.assertPointersAreDisposed();
-        }
-      }
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
     ).run();
   }
 
@@ -545,10 +520,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
-        if (ApplicationManager.getApplication() == null) {
-          return;
-        }
-
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used
         RunAll runAll = new RunAll();
         for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
@@ -786,7 +757,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
-      OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      OrderRootType[] rootTypes = new OrderRootType[]{OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
         final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
         final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);

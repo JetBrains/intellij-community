@@ -1,24 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
@@ -54,8 +55,9 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   }
 
   @NotNull
-  private TextDescriptor[] retrieveURLs(@NotNull String prefix, @NotNull String suffix) {
-    Set<TextDescriptor> urls = new LinkedHashSet<>();
+  private static TextDescriptor[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix)
+    throws MalformedURLException {
+    List<TextDescriptor> urls = new ArrayList<>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
       final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
@@ -63,35 +65,32 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
         if (matcher instanceof ExactFileNameMatcher) {
           final ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
           final String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
-          String resourcePath = getResourceLocation(prefix + "." + fileName + suffix);
-          URL resource = myLoader.getResource(resourcePath);
-          if (resource != null) urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
+          URL url = new URL(descriptionDirectory.toExternalForm() + "/" + prefix + "." + fileName + suffix);
+
+          if (checkUrl(url, urls))
+            break;
         }
         else if (matcher instanceof ExtensionFileNameMatcher) {
           final ExtensionFileNameMatcher extensionFileNameMatcher = (ExtensionFileNameMatcher)matcher;
           final String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
-            String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                                  + suffix);
-            URL resource = myLoader.getResource(resourcePath);
-            if (resource == null) break;
-            urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
+            URL url = new URL(descriptionDirectory.toExternalForm() + "/"
+                              + prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
+                              + suffix);
+            if (!checkUrl(url, urls))
+              break;
           }
         }
       }
     }
     if (urls.isEmpty()) {
-      URL descriptionUrl = myLoader.getResource(getResourceLocation(DESCRIPTION_FILE_NAME));
-      String url = descriptionUrl.toExternalForm();
-      URL descriptionDirectory = null;
       String[] children;
       Exception cause = null;
       try {
-        descriptionDirectory = new URL(url.substring(0, url.lastIndexOf('/')));
         URI uri = descriptionDirectory.toURI();
-        children = uri.isOpaque() ? null : ObjectUtils.notNull(new File(uri).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
+        children = uri.isOpaque() ? null : ObjectUtils.notNull(new File(uri).list(), ArrayUtil.EMPTY_STRING_ARRAY);
       }
-      catch (URISyntaxException | IllegalArgumentException | MalformedURLException e) {
+      catch (URISyntaxException | IllegalArgumentException e) {
         cause = e;
         children = null;
       }
@@ -109,11 +108,27 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     return urls.toArray(new TextDescriptor[0]);
   }
 
+  private static boolean checkUrl(URL url, List<TextDescriptor> urls) {
+    try (InputStream ignored = url.openStream()) {
+      urls.add(new ResourceTextDescriptor(url));
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
+
   @Override
   @NotNull
   public TextDescriptor[] getExampleUsagesBefore() {
     if (myExampleUsagesBefore == null) {
-      myExampleUsagesBefore = retrieveURLs(BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      try {
+        myExampleUsagesBefore = retrieveURLs(getDirURL(), BEFORE_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+        return EMPTY_EXAMPLE;
+      }
     }
     return myExampleUsagesBefore;
   }
@@ -122,7 +137,13 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   @NotNull
   public TextDescriptor[] getExampleUsagesAfter() {
     if (myExampleUsagesAfter == null) {
-      myExampleUsagesAfter = retrieveURLs(AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      try {
+        myExampleUsagesAfter = retrieveURLs(getDirURL(), AFTER_TEMPLATE_PREFIX, EXAMPLE_USAGE_URL_SUFFIX);
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+        return EMPTY_EXAMPLE;
+      }
     }
     return myExampleUsagesAfter;
   }
@@ -131,10 +152,19 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   @NotNull
   public TextDescriptor getDescription() {
     if (myDescription == null) {
-      myDescription = new ResourceTextDescriptor(myLoader, getResourceLocation(DESCRIPTION_FILE_NAME));
+      try {
+        final URL dirURL = getDirURL();
+        URL descriptionURL = new URL(dirURL.toExternalForm() + "/" + DESCRIPTION_FILE_NAME);
+        myDescription = new ResourceTextDescriptor(descriptionURL);
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+        return EMPTY_DESCRIPTION;
+      }
     }
     return myDescription;
   }
 
-  protected abstract String getResourceLocation(String resourceName);
+  @NotNull
+  protected abstract URL getDirURL();
 }

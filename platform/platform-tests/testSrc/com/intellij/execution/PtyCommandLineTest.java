@@ -3,7 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
@@ -15,7 +15,7 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
   @NotNull
   @Override
   protected String filterExpectedOutput(@NotNull String output) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       output = StringUtil.trimTrailing(expandTabs(output, 8));
     }
     return output;

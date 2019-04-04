@@ -11,7 +11,6 @@ import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.patterns.DomPatterns;
 import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.patterns.XmlTagPattern;
@@ -19,8 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -45,17 +42,20 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(extensionAttributePattern(EXTENSION_TAG_NAMES, "key", "groupKey"),
+    XmlAttributeValuePattern pattern = createPattern(EXTENSION_TAG_NAMES, "key", "groupKey");
+    registrar.registerReferenceProvider(pattern,
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    registrar.registerReferenceProvider(extensionAttributePattern(TYPE_NAME_TAG, "resourceKey"),
+    XmlAttributeValuePattern typeNameKeyPattern = createPattern(TYPE_NAME_TAG, "resourceKey");
+    registrar.registerReferenceProvider(typeNameKeyPattern,
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
-      XmlPatterns.xmlTag().withLocalName("categoryKey").
-        withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
+      XmlPatterns.xmlTag().withName("categoryKey").
+        withParent(XmlPatterns.xmlTag().withName(INTENTION_ACTION_TAG).
+          withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
     registrar.registerReferenceProvider(intentionActionKeyTagPattern,
                                         new PropertyKeyReferenceProvider(true, null, INTENTION_ACTION_BUNDLE_TAG));
   }
@@ -70,28 +70,29 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     };
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
-      XmlPatterns.xmlTag().withLocalName("resource-bundle").
-        withParent(DomPatterns.tagWithDom(IdeaPlugin.TAG_NAME, IdeaPlugin.class));
+      XmlPatterns.xmlTag().withName("resource-bundle").withParent(XmlPatterns.xmlTag().withName("idea-plugin"));
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
-    XmlAttributeValuePattern bundlePattern = extensionAttributePattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
+    XmlAttributeValuePattern bundlePattern = createPattern(EXTENSION_TAG_NAMES, "bundle", "groupBundle");
     registrar.registerReferenceProvider(bundlePattern, bundleReferenceProvider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    XmlAttributeValuePattern typeNameBundlePattern = extensionAttributePattern(TYPE_NAME_TAG, "resourceBundle");
+    XmlAttributeValuePattern typeNameBundlePattern = createPattern(TYPE_NAME_TAG, "resourceBundle");
     registrar.registerReferenceProvider(typeNameBundlePattern, bundleReferenceProvider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =
-      XmlPatterns.xmlTag().withLocalName(INTENTION_ACTION_BUNDLE_TAG).
-        withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
+      XmlPatterns.xmlTag().withName(INTENTION_ACTION_BUNDLE_TAG).
+        withParent(XmlPatterns.xmlTag().withName(INTENTION_ACTION_TAG).
+          withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
     registrar.registerReferenceProvider(intentionActionBundleTagPattern, bundleReferenceProvider,
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static XmlAttributeValuePattern extensionAttributePattern(String[] tagNames, String... attributeNames) {
+  private static XmlAttributeValuePattern createPattern(String[] tagNames, String... attributeNames) {
     return XmlPatterns.xmlAttributeValue(attributeNames)
-      .withSuperParent(2, DomPatterns.tagWithDom(tagNames, DomPatterns.domElement(Extension.class)));
+      .withSuperParent(2, XmlPatterns.xmlTag().withName(tagNames)
+        .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")));
   }
 
 

@@ -1,8 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -41,14 +54,14 @@ class NSScrollerHelper {
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       initNotificationObserver();
       updateBehaviorPreferences();
     }
   }
 
   private static boolean isOverlayScrollbarSupported() {
-    return SystemInfoRt.isMac && SystemInfo.isMacOSMountainLion;
+    return SystemInfo.isMac && SystemInfo.isMacOSMountainLion;
   }
 
   private static void initNotificationObserver() {
@@ -95,13 +108,13 @@ class NSScrollerHelper {
 
   @Nullable
   public static ClickBehavior getClickBehavior() {
-    if (!SystemInfoRt.isMac) return null;
+    if (!SystemInfo.isMac) return null;
     return ourClickBehavior;
   }
 
   private static void updateBehaviorPreferences() {
-    if (!SystemInfoRt.isMac) return;
-
+    if (!SystemInfo.isMac) return;
+    
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
       ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
@@ -140,7 +153,7 @@ class NSScrollerHelper {
     processReferences(null, listener, null);
   }
 
-  private static void processReferences(ScrollbarStyleListener toAdd, ScrollbarStyleListener toRemove, List<? super ScrollbarStyleListener> list) {
+  private static void processReferences(ScrollbarStyleListener toAdd, ScrollbarStyleListener toRemove, List<ScrollbarStyleListener> list) {
     synchronized (ourStyleListeners) {
       Iterator<Reference<ScrollbarStyleListener>> iterator = ourStyleListeners.iterator();
       while (iterator.hasNext()) {

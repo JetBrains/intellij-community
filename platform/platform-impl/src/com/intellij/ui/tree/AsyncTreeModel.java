@@ -166,7 +166,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   @NotNull
-  private Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
+  private Promise<TreePath> resolve(Promise<TreePath> promise) {
     if (promise == null && isValidThread()) {
       return rejectedPromise();
     }
@@ -181,7 +181,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return async;
   }
 
-  private void resolve(@NotNull AsyncPromise<? super TreePath> async, TreePath path) {
+  private void resolve(@NotNull AsyncPromise<TreePath> async, TreePath path) {
     LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");
@@ -204,8 +204,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   @Override
   public Object getRoot() {
-    if (disposed) return null;
-    onValidThread(this::promiseRootEntry);
+    if (disposed || !isValidThread()) return null;
+    promiseRootEntry();
     Node node = tree.root;
     return node == null ? null : node.object;
   }
@@ -224,12 +224,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   @Override
   public boolean isLeaf(Object object) {
     Node node = getEntry(object);
-    if (node == null) return true;
-    if (node.leafState == LeafState.ALWAYS) return true;
-    if (node.leafState == LeafState.NEVER) return false;
-    List<Node> children = node.children;
-    // leaf only if no children were loaded
-    return children != null && children.isEmpty();
+    return node == null || node.leaf;
   }
 
   @Override
@@ -272,7 +267,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     AbstractTreeWalker<Node> walker = new AbstractTreeWalker<Node>(visitor, node -> node.object) {
       @Override
       protected Collection<Node> getChildren(@NotNull Node node) {
-        if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
+        if (node.leaf || !allowLoading) return node.getChildren();
         promiseChildren(node)
           .onSuccess(parent -> setChildren(parent.getChildren()))
           .onError(this::setError);
@@ -323,7 +318,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   private Promise<Node> promiseChildren(@NotNull Node node) {
     if (disposed) return rejectedPromise();
     return node.queue.promise(processor, () -> {
-      node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), LeafState.ALWAYS));
+      node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), true));
       return new CmdGetChildren("Load children", node, false);
     });
   }
@@ -431,17 +426,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return emptyList();
   }
 
-  @NotNull
-  private LeafState getLeafState(Object object) {
-    LOG.assertTrue(processor.background.isValidThread());
-    if (object instanceof LeafState.Supplier) {
-      LeafState.Supplier supplier = (LeafState.Supplier)object;
-      LeafState leafState = supplier.getLeafState();
-      if (LeafState.DEFAULT != leafState) return leafState;
-    }
-    return model.isLeaf(object) ? LeafState.ALWAYS : LeafState.NEVER;
-  }
-
   private abstract static class ObsolescentCommand implements Obsolescent, Command<Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
@@ -507,7 +491,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     Node getNode(Object object) {
       if (object == null) object = model.getRoot();
       if (object == null || isObsolete()) return null;
-      return new Node(object, getLeafState(object));
+      return new Node(object, model.isLeaf(object));
     }
 
     @Override
@@ -576,8 +560,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
     @Override
     Node getNode(Object object) {
-      Node loaded = new Node(object, getLeafState(object));
-      if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
+      Node loaded = new Node(object, model.isLeaf(object));
+      if (loaded.leaf || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked
@@ -610,7 +594,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         }
         else {
           if (isObsolete()) return null;
-          children.add(new Node(child, getLeafState(child)));
+          children.add(new Node(child, model.isLeaf(child)));
         }
       }
       return children;
@@ -630,7 +614,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       List<Node> oldChildren = node.getChildren();
       List<Node> newChildren = loaded.getChildren();
       if (oldChildren.isEmpty() && newChildren.isEmpty()) {
-        node.setLeafState(loaded.leafState);
+        node.setLeaf(loaded.leaf);
         treeNodesChanged(node, null);
         LOG.debug("no children: ", node.object);
         node.queue.done(this, node);
@@ -640,7 +624,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       LinkedHashMap<Object, Integer> removed = getIndices(oldChildren, null);
       if (newChildren.isEmpty()) {
         oldChildren.forEach(child -> child.removeMapping(node, tree));
-        node.setLeafState(loaded.leafState);
+        node.setLeaf(loaded.leaf);
         treeNodesRemoved(node, removed);
         LOG.debug("children removed: ", node.object);
         node.queue.done(this, node);
@@ -659,13 +643,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         else {
           tree.fixEqualButNotSame(found, child.object);
           list.add(found);
-          if (found.leafState == LeafState.ALWAYS) {
-            if (child.leafState != LeafState.ALWAYS) {
-              found.setLeafState(child.leafState); // mark existing leaf node as not a leaf
+          if (found.leaf) {
+            if (!child.leaf) {
+              found.setLeaf(false); // mark existing leaf node as not a leaf
               reload.add(found.object); // and request to load its children
             }
           }
-          else if (child.leafState == LeafState.ALWAYS || !found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
+          else if (child.leaf || !found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
             reload.add(found.object); // request to load children of existing node
           }
         }
@@ -825,36 +809,36 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
     private final Set<TreePath> paths = new SmartHashSet<>();
     private volatile Object object;
-    private volatile LeafState leafState;
+    private volatile boolean leaf;
     @Nullable
     private volatile List<Node> children;
     private volatile Node loading;
 
-    private Node(@NotNull Object object, @NotNull LeafState leafState) {
+    private Node(@NotNull Object object, boolean leaf) {
       this.object = object;
-      this.leafState = leafState;
+      this.leaf = leaf;
     }
 
-    private void setLeafState(@NotNull LeafState leafState) {
-      this.leafState = leafState;
-      this.children = leafState == LeafState.ALWAYS ? null : emptyList();
+    private void setLeaf(boolean leaf) {
+      this.leaf = leaf;
+      this.children = leaf ? null : emptyList();
       this.loading = null;
     }
 
     private void setChildren(@NotNull List<Node> children) {
-      this.leafState = LeafState.NEVER;
+      this.leaf = false;
       this.children = children;
       this.loading = null;
     }
 
     private void setLoading(Node loading) {
-      this.leafState = LeafState.NEVER;
+      this.leaf = false;
       this.children = loading != null ? singletonList(loading) : emptyList();
       this.loading = loading;
     }
 
     private boolean isLoadingRequired() {
-      return leafState != LeafState.ALWAYS && children == null;
+      return !leaf && children == null;
     }
 
     @NotNull
@@ -950,7 +934,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
    */
   @Deprecated
   public void setRootImmediately(@NotNull Object object) {
-    Node node = new Node(object, LeafState.NEVER);
+    Node node = new Node(object, false);
     node.insertPath(new TreePath(object));
     tree.root = node;
     tree.map.put(object, node);

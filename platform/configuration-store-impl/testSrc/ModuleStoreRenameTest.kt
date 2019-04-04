@@ -3,13 +3,10 @@ package com.intellij.configurationStore
 
 import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.impl.inWriteAction
-import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -28,7 +25,6 @@ import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -90,14 +86,6 @@ internal class ModuleStoreRenameTest {
     },
     DisposeModulesRule(projectRule)
   )
-
-  @After
-  fun tearDown() {
-    ApplicationManager.getApplication().invokeAndWait {
-      (UndoManager.getInstance(projectRule.project) as UndoManagerImpl).dropHistoryInTests()
-      (UndoManager.getInstance(projectRule.project) as UndoManagerImpl).flushCurrentCommandMerger()
-    }
-  }
 
   // project structure
   @Test

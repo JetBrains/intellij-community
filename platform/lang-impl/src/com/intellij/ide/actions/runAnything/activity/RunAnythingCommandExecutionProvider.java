@@ -12,10 +12,4 @@ public class RunAnythingCommandExecutionProvider extends RunAnythingCommandProvi
   public String findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
     return pattern;
   }
-
-  @Nullable
-  @Override
-  public String getHelpGroupTitle() {
-    return null;
-  }
 }

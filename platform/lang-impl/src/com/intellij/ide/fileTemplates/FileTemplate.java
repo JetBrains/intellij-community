@@ -64,7 +64,7 @@ public interface FileTemplate extends Cloneable {
 
   void setName(@NotNull String name);
 
-  boolean isTemplateOfType(@NotNull FileType fType);
+  boolean isTemplateOfType(final FileType fType);
 
   boolean isDefault();
 
@@ -77,13 +77,12 @@ public interface FileTemplate extends Cloneable {
   void setText(String text);
 
   @NotNull
-  String getText(@NotNull Map attributes) throws IOException;
+  String getText(Map attributes) throws IOException;
 
   @NotNull
-  String getText(@NotNull Properties attributes) throws IOException;
+  String getText(Properties attributes) throws IOException;
 
-  @NotNull
-  String getExtension();
+  @NotNull String getExtension();
 
   void setExtension(@NotNull String extension);
 
@@ -95,9 +94,8 @@ public interface FileTemplate extends Cloneable {
 
   void setLiveTemplateEnabled(boolean value);
 
-  @NotNull
   FileTemplate clone();
 
   @NotNull
-  String[] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException;
+  String[] getUnsetAttributes(@NotNull Properties properties, Project project) throws ParseException;
 }

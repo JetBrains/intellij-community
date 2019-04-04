@@ -3,8 +3,8 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
@@ -19,15 +19,13 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Integer, SerializedStubTree, IndexedStubs> {
+class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Integer, SerializedStubTree, IndexedStubs , FileContent> {
   StubUpdatingForwardIndexAccessor() {super(new DataExternalizer<IndexedStubs>() {
     private volatile boolean myEnsuredStubElementTypesLoaded;
 
     @Override
     public void save(@NotNull DataOutput out, IndexedStubs indexedStubs) throws IOException {
-      byte[] hash = indexedStubs.getStubTreeHash();
-      DataInputOutputUtil.writeINT(out, hash.length);
-      out.write(hash);
+      DataInputOutputUtil.writeINT(out, indexedStubs.getFileId());
       Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = indexedStubs.getStubIndicesValueMap();
       DataInputOutputUtil.writeINT(out, stubIndicesValueMap.size());
       if (!stubIndicesValueMap.isEmpty()) {
@@ -43,8 +41,7 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
 
     @Override
     public IndexedStubs read(@NotNull DataInput in) throws IOException {
-      byte[] hash = new byte[DataInputOutputUtil.readINT(in)];
-      in.readFully(hash);
+      int fileId = DataInputOutputUtil.readINT(in);
       if (!myEnsuredStubElementTypesLoaded) {
         ProgressManager.getInstance().executeNonCancelableSection(() -> {
           SerializationManager.getInstance().initSerializers();
@@ -65,22 +62,22 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
             stubIndicesValueMap.put(stubIndexKey, stubIndex.deserializeIndexValue(in, stubIndexKey));
           }
         }
-        return new IndexedStubs(hash, stubIndicesValueMap);
+        return new IndexedStubs(fileId, stubIndicesValueMap);
       }
-      return new IndexedStubs(hash, Collections.emptyMap());
+      return new IndexedStubs(fileId, Collections.emptyMap());
     }
   });}
 
-  @Nullable
   @Override
-  public IndexedStubs convertToDataType(@NotNull InputData<Integer, SerializedStubTree> data) {
-    return getIndexedStubs(data.getKeyValues());
+  public IndexedStubs convertToDataType(@Nullable Map<Integer, SerializedStubTree> map,
+                                                                      @Nullable FileContent content) {
+    return getIndexedStubs(map);
   }
 
   @Override
   protected InputDataDiffBuilder<Integer, SerializedStubTree> createDiffBuilder(int inputId,
                                                                                 @Nullable IndexedStubs inputData) {
-    return new StubCumulativeInputDiffBuilder(inputId, inputData);
+    return new StubsCumulativeInputDiffBuilder(inputId, inputData);
   }
 
   @Nullable

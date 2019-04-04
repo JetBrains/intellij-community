@@ -1,28 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
-public final class LibraryDependencyData extends AbstractDependencyData<LibraryData> implements Named {
-  @NotNull
-  private final LibraryLevel level;
-
-  @PropertyMapping({"ownerModule", "target", "level"})
+/**
+ * Not thread-safe.
+ * 
+ * @author Denis Zhdanov
+ */
+public class LibraryDependencyData extends AbstractDependencyData<LibraryData> implements Named {
+  
+  @NotNull private final LibraryLevel myLevel;
+  
   public LibraryDependencyData(@NotNull ModuleData ownerModule, @NotNull LibraryData library, @NotNull LibraryLevel level) {
     super(ownerModule, library);
-
-    this.level = level;
+    myLevel = level;
   }
 
   @NotNull
   public LibraryLevel getLevel() {
-    return level;
+    return myLevel;
   }
 
   @Override
   public int hashCode() {
-    return 31 * super.hashCode() + level.hashCode();
+    return 31 * super.hashCode() + myLevel.hashCode();
   }
 
   @Override
@@ -30,6 +31,6 @@ public final class LibraryDependencyData extends AbstractDependencyData<LibraryD
     if (!super.equals(o)) {
       return false;
     }
-    return level.equals(((LibraryDependencyData)o).level);
+    return myLevel.equals(((LibraryDependencyData)o).myLevel);
   }
 }

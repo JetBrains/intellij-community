@@ -19,7 +19,8 @@ package com.intellij.openapi.editor.actions;
  * @author Denis Zhdanov
  */
 public class DeleteToWordStartInDifferentHumpsModeAction extends TextComponentEditorAction {
+
   public DeleteToWordStartInDifferentHumpsModeAction() {
-    super(new DeleteToWordBoundaryHandler(true, true));
+    super(new DeleteToWordStartAction.Handler(true));
   }
 }

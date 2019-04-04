@@ -78,18 +78,21 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     }
   }
 
-  public void testLongLineOfIdSymbolsIsSoftWrapped() {
+  public void testLongLineOfIdSymbolsIsNotSoftWrapped() {
     String text =
       "abcdefghijklmnopqrstuvwxyz<caret>\n" +
       "123\n" +
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     init(15, text);
-    verifySoftWrapPositions(14, 45);
+    assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
     type('1');
-    verifySoftWrapPositions(14, 46);
+    assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
+
+    int offset = myEditor.getDocument().getText().indexOf("\n");
     type(" test");
-    verifySoftWrapPositions(14, 27, 51);
+    assertEquals(1, getSoftWrapModel().getRegisteredSoftWraps().size());
+    assertNotNull(getSoftWrapModel().getSoftWrap(offset));
   }
 
   public void testFoldRegionCollapsing() {
@@ -159,6 +162,23 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(40, text);
     type('\t');
     assertEquals(new VisualPosition(2, 4), myEditor.getCaretModel().getVisualPosition());
+  }
+
+  public void testTypingThatExceedsRightMarginOnLastSoftWrappedLine() {
+    String text = 
+      "line1\n" +
+      "long line<caret>";
+    
+    init(69, text, 10);
+
+    int softWrapsBefore = getSoftWrapModel().getRegisteredSoftWraps().size();
+    assertTrue(softWrapsBefore > 0);
+    
+    for (int i = 0; i < 10; i++) {
+      type(String.valueOf(i));
+      assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps().size());
+      assertEquals(myEditor.getDocument().getTextLength(), myEditor.getCaretModel().getOffset());
+    }
   }
 
   public void testTrailingFoldRegionRemoval() {
@@ -431,7 +451,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "line4\n" +
       "line5";
     
-    init(63, text, 10);
+    init(43, text, 10);
     int start = text.indexOf("line3") - 1;
     addCollapsedFoldRegion(start, text.length(), "...");
     assertEquals(1, getSoftWrapModel().getRegisteredSoftWraps().size());
@@ -698,7 +718,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "444";
     init(15, text);
     
-    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(6, 0)));
+    assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(4, 0)));
   }
   
   public void testDeleteThatEndsOnLineWithMultiLineFoldRegion() {
@@ -723,7 +743,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertEquals(new VisualPosition(1, 8), getEditor().offsetToVisualPosition(getEditor().getDocument().getTextLength() - 1));
   }
 
-  public void testWrapAtFirstNonWsSymbolWithCustomIndent() {
+  public void testNoWrapAtFirstNonWsSymbolWithCustomIndent() {
     String text = 
       "   1111111111111111111111111111111";
     init(10, text);
@@ -732,7 +752,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     //Trigger soft wraps recalculation.
     ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).prepareToMapping();
 
-    verifySoftWrapPositions(3, 11, 19, 27);
+    // Don't expect soft wraps to be registered as there is no point in wrapping at the first non-white space symbol position
+    // in all cases when soft wrap is located at the left screen edge.
+    assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
 
   public void testLeadingTabWithShiftedWidth() {
@@ -814,7 +836,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
 
   public void testMultiLineFoldRegionBeforeWrapPosition() {
-    final String text =
+    final String text = 
       "package org.denis;\n" +
       "\n" +
       "\n" +
@@ -844,7 +866,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     final List<? extends SoftWrap> wraps = getSoftWrapModel().getRegisteredSoftWraps();
     assertEquals(1, wraps.size());
 
-    assertEquals(start, wraps.get(0).getStart());
+    assertEquals(end, wraps.get(0).getStart());
     assertEquals(myEditor.offsetToVisualPosition(start), myEditor.offsetToVisualPosition(start + 1));
     assertEquals(myEditor.offsetToVisualPosition(start).line, myEditor.offsetToVisualPosition(end - 1).line);
   }
@@ -963,9 +985,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testOnlyMinimalRangeIsRecalculatedOnDocumentChange() {
-    init("aa bb cc dd ee ff<caret> gg hh ii jj", TestFileType.TEXT);
+    init("aa bb cc dd ee<caret> ff gg hh ii jj", TestFileType.TEXT);
     EditorTestUtil.configureSoftWraps(myEditor, 8);
-    verifySoftWrapPositions(8, 15, 21);
+    verifySoftWrapPositions(6, 12, 18, 24);
     
     final IncrementalCacheUpdateEvent[] event = new IncrementalCacheUpdateEvent[1];
     ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).getApplianceManager().addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -978,10 +1000,10 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     
     type(' ');
     
-    verifySoftWrapPositions(8, 15, 22);
+    verifySoftWrapPositions(6, 12, 19, 25);
     assertNotNull(event[0]);
-    assertEquals(8, event[0].getStartOffset());
-    assertEquals(22, event[0].getActualEndOffset());
+    assertEquals(6, event[0].getStartOffset());
+    assertEquals(19, event[0].getActualEndOffset());
   }
   
   public void testPositionsAreCorrectAfterIncrementalRecalculation() {
@@ -1013,17 +1035,17 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     initText("unbreakableLine\nshort line");
     configureSoftWraps(10);
     
-    verifySoftWrapPositions(10);
+    verifySoftWrapPositions();
   }
   
   public void testFoldRegionPreventsLaterWrapping() {
     initText("unbreakableText.txt");
     configureSoftWraps(10);
-    verifySoftWrapPositions(10);
+    verifySoftWrapPositions(15);
     
     addCollapsedFoldRegion(12, 13, ".");
 
-    verifySoftWrapPositions(10);
+    verifySoftWrapPositions(12);
     assertEquals(1, myEditor.offsetToVisualPosition(19).line);
   }
   

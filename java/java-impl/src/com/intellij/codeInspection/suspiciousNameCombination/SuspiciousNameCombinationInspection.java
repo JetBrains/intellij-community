@@ -168,7 +168,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
   @NotNull
   private static String canonicalize(String word) {
-    return StringUtil.toLowerCase(word.trim());
+    return word.trim().toLowerCase(Locale.ENGLISH);
   }
 
   private class NameGroupsPanel extends AddEditDeleteListPanel<String> {

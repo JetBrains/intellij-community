@@ -163,7 +163,7 @@ public abstract class InplaceRefactoring {
   }
 
 
-  public boolean performInplaceRefactoring(@Nullable final LinkedHashSet<String> nameSuggestions) {
+  public boolean performInplaceRefactoring(final LinkedHashSet<String> nameSuggestions) {
     myNameSuggestions = nameSuggestions;
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
@@ -296,8 +296,7 @@ public abstract class InplaceRefactoring {
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
         Expression expression = createTemplateExpression(selectedElement);
-        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, expression,
-                               shouldStopAtLookupExpression(expression));
+        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, expression, expression instanceof MyLookupExpression);
         subrefOnPrimaryElement = true;
         continue;
       }
@@ -362,10 +361,6 @@ public abstract class InplaceRefactoring {
       showBalloon();
     }
     return true;
-  }
-
-  protected boolean shouldStopAtLookupExpression(Expression expression) {
-    return expression instanceof MyLookupExpression;
   }
 
   protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
@@ -611,7 +606,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private void addReferenceIfNeeded(@NotNull final Collection<? super PsiReference> refs, @Nullable final PsiReference reference) {
+  private void addReferenceIfNeeded(@NotNull final Collection<PsiReference> refs, @Nullable final PsiReference reference) {
     if (reference != null && reference.isReferenceTo(myElementToRename) && !refs.contains(reference)) {
       refs.add(reference);
     }
@@ -717,8 +712,7 @@ public abstract class InplaceRefactoring {
     final PsiElement element = reference.getElement();
     if (element == selectedElement && checkRangeContainsOffset(offset, reference.getRangeInElement(), element)) {
       Expression expression = createTemplateExpression(selectedElement);
-      builder.replaceElement(reference.getElement(), getRangeToRename(reference), PRIMARY_VARIABLE_NAME, expression,
-                             shouldStopAtLookupExpression(expression));
+      builder.replaceElement(reference.getElement(), getRangeToRename(reference), PRIMARY_VARIABLE_NAME, expression, expression instanceof MyLookupExpression);
     }
     else {
       builder.replaceElement(reference.getElement(), getRangeToRename(reference), OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
@@ -737,7 +731,7 @@ public abstract class InplaceRefactoring {
                            final TemplateBuilderImpl builder) {
     if (element == selectedElement) {
       Expression expression = createTemplateExpression(myElementToRename);
-      builder.replaceElement(element, getRangeToRename(element), PRIMARY_VARIABLE_NAME, expression, shouldStopAtLookupExpression(expression));
+      builder.replaceElement(element, getRangeToRename(element), PRIMARY_VARIABLE_NAME, expression, expression instanceof MyLookupExpression);
     }
     else if (textRange != null) {
       builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
@@ -783,8 +777,8 @@ public abstract class InplaceRefactoring {
   }
 
   private PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
-                                                final Collection<? extends PsiReference> refs,
-                                                Collection<? extends Pair<PsiElement, TextRange>> stringUsages,
+                                                final Collection<PsiReference> refs,
+                                                Collection<Pair<PsiElement, TextRange>> stringUsages,
                                                 final int offset) {
     //prefer reference in case of self-references
     for (PsiReference ref : refs) {

@@ -46,7 +46,7 @@ public class DateFilterComponent {
 
   public DateFilterComponent(final boolean showBorder, final DateFormat dateFormat) {
     if (showBorder) {
-      myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
+      myDatePanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter"), true));
     }
     myDateAfter.setDateFormat(dateFormat);
     myDateBefore.setDateFormat(dateFormat);

@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -31,6 +32,8 @@ public class ImportFromGradleControl
     if (!StringUtil.isEmpty(gradleHome)) {
       result.setGradleHome(gradleHome);
     }
+    result.setStoreProjectFilesExternally(ThreeState.UNSURE);
+    result.setUseQualifiedModuleNames(true);
     return result;
   }
   

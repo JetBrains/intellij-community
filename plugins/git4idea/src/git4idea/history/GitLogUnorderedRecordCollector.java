@@ -75,7 +75,7 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressed
 
   @Override
   protected GitCompressedRecord createEmptyCopy(@NotNull GitCompressedRecord record) {
-    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), record.isSupportsRawBody());
+    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), 0, record.isSupportsRawBody());
   }
 
   @Override

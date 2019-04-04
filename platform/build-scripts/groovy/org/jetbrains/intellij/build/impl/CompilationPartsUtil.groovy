@@ -107,11 +107,11 @@ class CompilationPartsUtil {
                        "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
       return
     }
-    String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
-    String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
+
+    String branch = System.getProperty('intellij.platform.vcs.branch')
     if (StringUtil.isEmptyOrSpaces(branch)) {
       messages.warning("Unable to determine current git branch, assuming 'master'. \n" +
-                       "Please set '$intellijCompileArtifactsBranchProperty' system property")
+                       "Please set 'intellij.platform.vcs.branch' system property")
       branch = 'master'
     }
 

@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -136,8 +135,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       DumbService.getInstance(project).setAlternativeResolveEnabled(true);
       try {
-        ThrowableComputable<T, RuntimeException> inRead = () -> ApplicationManager.getApplication().runReadAction(computable);
-        return ProgressManager.getInstance().computePrioritized(inRead);
+        return ApplicationManager.getApplication().runReadAction(computable);
       }
       finally {
         DumbService.getInstance(project).setAlternativeResolveEnabled(false);
@@ -180,7 +178,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
     if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);

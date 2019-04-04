@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -24,7 +38,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +58,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  public static PsiMethod[] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
+  public static PsiMethod[] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
@@ -52,9 +66,9 @@ public class SuperMethodWarningUtil {
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
     return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
-
+  
   @NotNull
-  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<? extends PsiElement> ignore) {
+  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
     if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
@@ -72,7 +86,7 @@ public class SuperMethodWarningUtil {
 
     SuperMethodWarningDialog dialog =
         new SuperMethodWarningDialog(method.getProject(), DescriptiveNameUtil.getDescriptiveName(method), actionString, superAbstract,
-                                     parentInterface, method.getContainingClass().isInterface(), ArrayUtilRt.toStringArray(superClasses));
+                                     parentInterface, method.getContainingClass().isInterface(), ArrayUtil.toStringArray(superClasses));
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -86,7 +100,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
+  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
@@ -98,12 +112,11 @@ public class SuperMethodWarningUtil {
         PsiMethod[] siblingSuperMethod = new PsiMethod[1];
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(()->{
           siblingSuperMethod[0] = ReadAction.compute(()->FindSuperElementsHelper.getSiblingInheritedViaSubClass(method));
-        }, "Searching for Sub-Classes", true, aClass.getProject())) {
+        }, "Searching for sub-classes", true, aClass.getProject())) {
           throw new ProcessCanceledException();
         }
         if (siblingSuperMethod[0] != null) {
           superMethods.add(siblingSuperMethod[0]);
-          superMethods.add(method); // add original method too because sometimes FindUsages can't find usages of this method by sibling super method
         }
       }
     }
@@ -178,7 +191,7 @@ public class SuperMethodWarningUtil {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback(value -> {
+      .setItemChosenCallback((value) -> {
         if (value.equals(renameBase)) {
           try {
             methods[0].putUserData(SIBLINGS, superMethods);

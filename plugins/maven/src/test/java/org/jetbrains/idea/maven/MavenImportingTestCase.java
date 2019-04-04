@@ -10,11 +10,11 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -298,7 +298,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   public void assertProjectLibraries(String... expectedNames) {
     List<String> actualNames = new ArrayList<>();
-    for (Library each : LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraries()) {
+    for (Library each : ProjectLibraryTable.getInstance(myProject).getLibraries()) {
       String name = each.getName();
       actualNames.add(name == null ? "<unnamed>" : name);
     }
@@ -491,7 +491,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void removeFromLocalRepository(String relativePath) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().shutdown(true);
     }
     FileUtil.delete(new File(getRepositoryPath(), relativePath));

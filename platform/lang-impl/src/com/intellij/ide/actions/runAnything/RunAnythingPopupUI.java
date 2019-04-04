@@ -18,6 +18,7 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -35,7 +36,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
@@ -61,8 +62,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -80,7 +83,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final Logger LOG = Logger.getInstance(RunAnythingPopupUI.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final String HELP_PLACEHOLDER = "?";
-  private static final int LIST_REBUILD_DELAY = 100;
+  private static final int LIST_REBUILD_DELAY = 200;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final AnActionEvent myActionEvent;
   private boolean myIsUsedTrigger;
@@ -236,7 +239,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
-    Map<String, Object> map = new HashMap<>();
+    Map<String, Object> map = ContainerUtil.newHashMap();
     map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
@@ -388,7 +391,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     myTextFieldTitle.setForeground(foregroundColor);
     myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
     }
     else {
@@ -402,7 +405,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   public DataContext createDataContext(@NotNull AnActionEvent e) {
-    HashMap<String, Object> dataMap = new HashMap<>();
+    HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
@@ -534,6 +537,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
@@ -544,7 +548,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -571,6 +575,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
+          myTitle.setText(title);
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
         }
       }
@@ -585,19 +590,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
-    }
-
-    @Nullable
-    private Icon findIcon(int index) {
-      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
-      Icon groupIcon = null;
-      if (model != null) {
-        RunAnythingGroup group = model.findItemGroup(index);
-        if (group != null) {
-          groupIcon = group.getIcon();
-        }
-      }
-      return groupIcon;
     }
 
     @Override
@@ -695,6 +687,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
       });
     }
 
+    private void runReadAction(@NotNull Runnable action) {
+      if (!DumbService.getInstance(myProject).isDumb()) {
+        ApplicationManager.getApplication().runReadAction(action);
+      }
+    }
+
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
@@ -713,18 +711,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
-      if (DumbService.getInstance(myProject).isDumb()) {
-        return;
-      }
-
       StreamEx.of(RunAnythingRecentGroup.INSTANCE)
         .select(RunAnythingGroup.class)
         .append(myListModel.getGroups().stream()
                   .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
                   .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle())))
         .forEach(group -> {
-          ApplicationManager.getApplication().runReadAction(
-            () -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
           checkCancellation.run();
         });
     }
@@ -751,7 +744,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 
@@ -924,7 +917,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     res.setOpaque(false);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new RunAnythingShowFilterAction());
+    actionGroup.addAction(new RunAnythingShowFilterAction(this));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -961,11 +954,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-
-    @NotNull
-    @Override
-    public String getDimensionServiceKey() {
-      return "RunAnythingAction_Filter_Popup";
+    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
+      super(parentDisposable, myProject);
     }
 
     @Override
@@ -981,7 +971,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected ElementsChooser<?> createChooser() {
       ElementsChooser<RunAnythingGroup> res =
-        new ElementsChooser<RunAnythingGroup>(new ArrayList<>(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
+        new ElementsChooser<RunAnythingGroup>(ContainerUtil.newArrayList(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
           @Override
           protected String getItemText(@NotNull RunAnythingGroup value) {
             return value.getTitle();

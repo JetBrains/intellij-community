@@ -22,13 +22,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
-  private static final Key<Integer> CARET_SHIFT = Key.create("tab.out.caret.shift");
-
   @Override
-  public void registerEmptyScope(@NotNull Editor editor, int offset, int tabOutOffset) {
+  public void registerEmptyScope(@NotNull Editor editor, int offset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editor.isDisposed()) throw new IllegalArgumentException("Editor is already disposed");
-    if (tabOutOffset <= offset) throw new IllegalArgumentException("tabOutOffset should be larger than offset");
+    assert !editor.isDisposed() : "Disposed editor";
 
     if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return;
 
@@ -40,36 +37,35 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     if (!(editor instanceof EditorImpl)) return;
 
     Tracker tracker = Tracker.forEditor((EditorImpl)editor, true);
-    tracker.registerScope(offset, tabOutOffset - offset);
+    tracker.registerScope(offset);
   }
 
   @Override
   public boolean hasScopeEndingAt(@NotNull Editor editor, int offset) {
-    return checkOrRemoveScopeEndingAt(editor, offset, false) > 0;
+    return checkOrRemoveScopeEndingAt(editor, offset, false);
   }
 
   @Override
-  public int removeScopeEndingAt(@NotNull Editor editor, int offset) {
-    int caretShift = checkOrRemoveScopeEndingAt(editor, offset, true);
-    return caretShift > 0 ? offset + caretShift : -1;
+  public boolean removeScopeEndingAt(@NotNull Editor editor, int offset) {
+    return checkOrRemoveScopeEndingAt(editor, offset, true);
   }
 
-  private static int checkOrRemoveScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
+  private static boolean checkOrRemoveScopeEndingAt(@NotNull Editor editor, int offset, boolean removeScope) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return 0;
+    if (!CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES) return false;
 
     if (editor instanceof EditorWindow) {
       DocumentWindow documentWindow = ((EditorWindow)editor).getDocument();
       offset = documentWindow.injectedToHost(offset);
       editor = ((EditorWindow)editor).getDelegate();
     }
-    if (!(editor instanceof EditorImpl)) return 0;
+    if (!(editor instanceof EditorImpl)) return false;
 
     Tracker tracker = Tracker.forEditor((EditorImpl)editor, false);
-    if (tracker == null) return 0;
+    if (tracker == null) return false;
 
-    return tracker.getCaretShiftForScopeEndingAt(offset, removeScope);
+    return tracker.hasScopeEndingAt(offset, removeScope);
   }
 
   private static class Tracker extends DocumentBulkUpdateListener.Adapter implements DocumentListener {
@@ -102,26 +98,24 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
       return result;
     }
 
-    private void registerScope(int offset, int caretShift) {
+    private void registerScope(int offset) {
       RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
       marker.setGreedyToLeft(true);
       marker.setGreedyToRight(true);
-      if (caretShift > 1) marker.putUserData(CARET_SHIFT, caretShift);
       getCurrentScopes(true).add(marker);
     }
 
-    private int getCaretShiftForScopeEndingAt(int offset, boolean remove) {
+    private boolean hasScopeEndingAt(int offset, boolean remove) {
       List<RangeMarker> scopes = getCurrentScopes(false);
-      if (scopes == null) return 0;
+      if (scopes == null) return false;
       for (Iterator<RangeMarker> it = scopes.iterator(); it.hasNext(); ) {
         RangeMarker scope = it.next();
         if (offset == scope.getEndOffset()) {
           if (remove) it.remove();
-          Integer caretShift = scope.getUserData(CARET_SHIFT);
-          return caretShift == null ? 1 : caretShift;
+          return true;
         }
       }
-      return 0;
+      return false;
     }
 
     @Override

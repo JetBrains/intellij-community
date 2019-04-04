@@ -2,9 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.serialization.ClassUtil;
-import com.intellij.serialization.MutableAccessor;
-import com.intellij.serialization.SerializationException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
@@ -15,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -26,33 +21,33 @@ import java.util.Map;
 
 public final class XmlSerializerImpl {
   public abstract static class XmlSerializerBase implements Serializer {
+    @Override
+    @Nullable
+    public final Binding getBinding(@NotNull Type type) {
+      return getBinding(typeToClass(type), type, null);
+    }
+
+    @Nullable
+    protected final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
+      return isPrimitive(aClass) ? null : getClassBinding(aClass, originalType, accessor);
+    }
+
     @Nullable
     @Override
     public final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type) {
-      return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type);
-    }
-
-    @Override
-    @NotNull
-    public final synchronized Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor) {
-      // do not cache because client will cache it in any case
-      Binding binding = createClassBinding(aClass, accessor, originalType);
-      if (binding == null) {
-        // BeanBinding doesn't depend on accessor, get from cache or compute
-        binding = getRootBinding(aClass, originalType);
-      }
-      else {
-        binding.init(originalType, this);
-      }
-      return binding;
+      return getBinding(aClass, type, null);
     }
 
     @Nullable
     @Override
     public final Binding getBinding(@NotNull MutableAccessor accessor) {
       Type type = accessor.getGenericType();
-      Class<?> aClass = ClassUtil.typeToClass(type);
-      return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type, accessor);
+      return getBinding(typeToClass(type), type, accessor);
+    }
+
+    @Override
+    public final Binding getClassBinding(@NotNull Class<?> aClass) {
+      return getClassBinding(aClass, aClass, null);
     }
 
     @Nullable
@@ -95,11 +90,11 @@ public final class XmlSerializerImpl {
   }
 
   static class XmlSerializer extends XmlSerializerBase {
-    private Reference<Map<Type, Binding>> ourBindings;
+    private Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
 
     @NotNull
-    private Map<Type, Binding> getBindingCacheMap() {
-      Map<Type, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
+    private Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
+      Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
       if (map == null) {
         map = ContainerUtil.newConcurrentMap();
         ourBindings = new SoftReference<>(map);
@@ -109,21 +104,22 @@ public final class XmlSerializerImpl {
 
     @NotNull
     @Override
-    public synchronized Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType) {
-      Map<Type, Binding> map = getBindingCacheMap();
-      Binding binding = map.get(originalType);
+    public synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
+      Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
+      Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
+      Binding binding = map.get(key);
       if (binding == null) {
-        binding = createClassBinding(aClass, null, originalType);
+        binding = createClassBinding(aClass, accessor, originalType);
         if (binding == null) {
-          binding = new BeanBinding(aClass);
+          binding = new BeanBinding(aClass, accessor);
         }
 
-        map.put(originalType, binding);
+        map.put(key, binding);
         try {
           binding.init(originalType, this);
         }
         catch (RuntimeException | Error e) {
-          map.remove(originalType);
+          map.remove(key);
           throw e;
         }
       }
@@ -134,10 +130,10 @@ public final class XmlSerializerImpl {
   static final XmlSerializer serializer = new XmlSerializer();
 
   @NotNull
-  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
+  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
     try {
       Class<?> aClass = object.getClass();
-      Binding binding = serializer.getRootBinding(aClass);
+      Binding binding = serializer.getClassBinding(aClass);
       if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, empty element will be omitted)
         return ((BeanBinding)binding).serialize(object, true, filter);
@@ -147,12 +143,41 @@ public final class XmlSerializerImpl {
         return (Element)binding.serialize(object, null, filter);
       }
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       throw e;
     }
     catch (Exception e) {
       throw new XmlSerializationException("Can't serialize instance of " + object.getClass(), e);
     }
+  }
+
+  @NotNull
+  static Class<?> typeToClass(@NotNull Type type) {
+    if (type instanceof Class) {
+      return (Class<?>)type;
+    }
+    else if (type instanceof TypeVariable) {
+      Type bound = ((TypeVariable)type).getBounds()[0];
+      return bound instanceof Class ? (Class)bound : (Class<?>)((ParameterizedType)bound).getRawType();
+    }
+    else if (type instanceof WildcardType) {
+      return (Class<?>)((WildcardType) type).getUpperBounds()[0];
+    }
+    else {
+      return (Class<?>)((ParameterizedType)type).getRawType();
+    }
+  }
+
+  static boolean isPrimitive(@NotNull Class<?> aClass) {
+    return aClass.isPrimitive() ||
+        aClass == String.class ||
+        aClass == Integer.class ||
+        aClass == Long.class ||
+        aClass == Boolean.class ||
+        aClass == Double.class ||
+        aClass == Float.class ||
+        aClass.isEnum() ||
+        Date.class.isAssignableFrom(aClass);
   }
 
   @Nullable
@@ -226,7 +251,7 @@ public final class XmlSerializerImpl {
     }
     else if (valueClass.isEnum()) {
       //noinspection unchecked
-      accessor.set(host, ClassUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
+      accessor.set(host, XmlSerializerUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
       try {

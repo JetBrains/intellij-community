@@ -1279,7 +1279,7 @@ public class JavaDocInfoGenerator {
     PsiElement sibling = tag.getPrevSibling();
     while (sibling != null) {
       if (sibling instanceof PsiDocToken) {
-        String text = StringUtil.toLowerCase(sibling.getText());
+        String text = sibling.getText().toLowerCase();
         int pos = text.lastIndexOf("pre>");
         if (pos > 0) {
           switch (text.charAt(pos - 1)) {
@@ -1455,7 +1455,7 @@ public class JavaDocInfoGenerator {
     generateParametersSection(buffer, CodeInsightBundle.message("javadoc.type.parameters"), collectedTags);
   }
 
-  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<? extends ParamInfo> collectedTags) {
+  private void generateParametersSection(StringBuilder buffer, String titleMessage, List<ParamInfo> collectedTags) {
     if (!collectedTags.isEmpty()) {
       startHeaderSection(buffer, titleMessage)
             .append(StringUtil.join(collectedTags, tag -> generateOneParameter(tag), "<p>"))

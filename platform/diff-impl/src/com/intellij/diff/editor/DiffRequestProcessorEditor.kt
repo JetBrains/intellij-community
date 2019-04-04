@@ -22,15 +22,13 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
-import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
-import javax.swing.KeyStroke
 
 class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
@@ -45,9 +43,6 @@ class DiffRequestProcessorEditor(
     Disposer.register(processor, Disposable {
       propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
-
-    processor.component.registerKeyboardAction({ Disposer.dispose(this) },
-                                               KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW)
   }
 
   override fun getComponent(): JComponent = processor.component

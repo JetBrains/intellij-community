@@ -168,30 +168,6 @@ def list_binaries(paths):
     return list(res.values())
 
 
-def is_source_file(path):
-    # Want to see that files regardless of their encoding.
-    if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
-        return True
-    has_bad_extension = path.endswith((
-            # plotlywidget/static/index.js.map is 8.7 MiB.
-            # Many map files from notebook are near 2 MiB.
-            '.js.map',
-
-            # uvloop/loop.c contains 6.4 MiB of code.
-            # Some header files from tensorflow has size more than 1 MiB.
-            '.h', '.c',
-
-            # Test data of pycrypto, many files are near 1 MiB.
-            '.rsp',
-
-            # No need to read these files even if they are small.
-            '.dll', '.pyc', '.pyd', '.pyo', '.so',
-    ))
-    if has_bad_extension:
-        return False
-    return is_text_file(path)
-
-
 def list_sources(paths):
     # noinspection PyBroadException
     try:
@@ -205,8 +181,8 @@ def list_sources(paths):
 
             for root, files in walk_python_path(path):
                 for name in files:
-                    file_path = os.path.join(root, name)
-                    if is_source_file(file_path):
+                    if name.endswith('.py') or name.endswith('-nspkg.pth'):
+                        file_path = os.path.join(root, name)
                         say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
         sys.stdout.flush()
@@ -233,11 +209,6 @@ def zip_sources(zip_path):
         try:
             while True:
                 line = sys.stdin.readline()
-
-                if not line:
-                    # TextIOWrapper.readline returns an empty string if EOF is hit immediately.
-                    break
-
                 line = line.strip()
 
                 if line == '-':
@@ -255,6 +226,9 @@ def zip_sources(zip_path):
                         split_items = match_two_files.group(1, 2)
                     (path, arcpath) = split_items
                     zip.write(path, arcpath)
+                else:
+                    # busy waiting for input from PyCharm...
+                    time.sleep(0.10)
             say('OK: ' + zip_filename)
             sys.stdout.flush()
         except:

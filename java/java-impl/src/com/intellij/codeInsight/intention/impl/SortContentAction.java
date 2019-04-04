@@ -333,13 +333,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       List<PsiElement> entryElements = ContainerUtil.map(entries, e -> e.myElement);
       if (entryElements.size() < MIN_ELEMENTS_COUNT) return null;
       if (!strategy.isSuitableElements(entryElements)) return null;
-      // in case when element after last sortable entry is an error element
-      // all comments until the end were glued to this entry,
-      // so now we need to remove them in order to avoid duplication
-      SortableEntry last = entries.get(entries.size() - 1);
-      if (last.myElement.getNextSibling() instanceof PsiErrorElement) {
-        last.myAfterSeparator.clear();
-      }
       return new SortableList(entries, strategy, sm.myLineLayout, beforeFirst);
     }
 
@@ -367,10 +360,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     boolean isSeparator(@NotNull PsiElement element) {
       return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.COMMA;
-    }
-
-    boolean isError(@NotNull PsiElement element) {
-      return element instanceof PsiErrorElement;
     }
 
 
@@ -436,9 +425,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
           }
           return false;
         }
-        boolean isSeparator = mySortable.isSeparator(next) ||
-                              // we assume that user forgot to add separator, so we consider error element as separator
-                              ((myState == State.Element || myState == State.BetweenElementAndSeparator) && mySortable.isError(next));
+        boolean isSeparator = mySortable.isSeparator(next);
         switch (myState) {
           case Element:
             myEntryElement = myCurrent;

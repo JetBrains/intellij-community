@@ -76,7 +76,7 @@ class GradleRunner {
     } else {
       command.add('--no-daemon')
     }
-    def additionalParams = System.getProperty('intellij.gradle.jdk.build.parameters')
+    def additionalParams = System.getProperty('intellij.build.additional.gradle.parameters')
     if (additionalParams != null && !additionalParams.isEmpty()) {
       command.addAll(additionalParams.split(" "))
     }

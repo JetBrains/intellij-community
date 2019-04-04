@@ -25,9 +25,7 @@ import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
 import java.awt.event.MouseEvent
 
-open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
-                             private val defaultKeymapManager: DefaultKeymap,
-                             val providerClass: Class<BundledKeymapProvider>) : KeymapImpl(dataHolder) {
+open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>, private val defaultKeymapManager: DefaultKeymap) : KeymapImpl(dataHolder) {
   final override var canModify: Boolean
     get() = false
     set(value) {

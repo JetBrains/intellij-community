@@ -1,12 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +53,10 @@ public class GitExecutableDetector {
 
   @NotNull
   public String detect() {
-    File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfoRt.isWindows ? GIT_EXE : GIT, getPath(), null);
+    File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
     if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
 
-    return SystemInfoRt.isWindows ? detectForWindows() : detectForUnix();
+    return SystemInfo.isWindows ? detectForWindows() : detectForUnix();
   }
 
   @NotNull
@@ -80,7 +93,7 @@ public class GitExecutableDetector {
     List<File> distrs = new ArrayList<>();
     for (String programFiles : PROGRAM_FILES) {
       File pf = new File(getWinRoot(), programFiles);
-      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
+      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && pathname.getName().toLowerCase().startsWith("git"));
       if (!pf.exists() || children == null) {
         continue;
       }
@@ -159,8 +172,8 @@ public class GitExecutableDetector {
 
     @Override
     public int compare(File f1, File f2) {
-      String name1 = StringUtil.toLowerCase(f1.getName());
-      String name2 = StringUtil.toLowerCase(f2.getName());
+      String name1 = f1.getName().toLowerCase();
+      String name2 = f2.getName().toLowerCase();
 
       // C:\Program Files\Git is better candidate for _default_ than C:\Program Files\Git_1.8.0
       if (name1.equals("git")) {
@@ -193,8 +206,8 @@ public class GitExecutableDetector {
       }
 
       // probably some unrecognized format of Git directory naming => just compare lexicographically
-      String name1 = StringUtil.toLowerCase(f1.getName());
-      String name2 = StringUtil.toLowerCase(f2.getName());
+      String name1 = f1.getName().toLowerCase();
+      String name2 = f2.getName().toLowerCase();
       return name1.compareTo(name2);
     }
 

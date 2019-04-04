@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.push
 
 import com.intellij.openapi.ui.DialogWrapper
@@ -25,6 +39,7 @@ import java.io.File
 import java.util.Collections.singletonMap
 import javax.swing.Action
 
+@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private lateinit var repository: GitRepository
@@ -283,7 +298,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun `test dont silently update if force push is rejected`() {
-    settings.updateMethod = UpdateMethod.REBASE
+    settings.updateType = UpdateMethod.REBASE
     settings.setAutoUpdateIfPushRejected(true)
 
     val remoteTipAndPushResult = forcePushWithReject(true)
@@ -296,7 +311,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   fun `test dont silently update if force with lease push is rejected`() {
     assumeForceWithLeaseSupported()
 
-    settings.updateMethod = UpdateMethod.REBASE
+    settings.updateType = UpdateMethod.REBASE
     settings.setAutoUpdateIfPushRejected(true)
 
     val remoteTipAndPushResult = forcePushWithReject(false)
@@ -433,7 +448,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     generateUnpushedMergedCommitProblem()
 
     settings.setAutoUpdateIfPushRejected(true)
-    settings.updateMethod = UpdateMethod.REBASE
+    settings.updateType = UpdateMethod.REBASE
 
     var rebaseOverMergeProblemDetected = false
     dialogManager.onMessage {
@@ -447,7 +462,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   fun `test dont overwrite rebase setting when chose to merge due to unpushed merge commits`() {
     generateUnpushedMergedCommitProblem()
 
-    settings.updateMethod = UpdateMethod.REBASE
+    settings.updateType = UpdateMethod.REBASE
 
     var rebaseOverMergeProblemDetected = false
     dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java, {
@@ -457,12 +472,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     push("master", "origin/master")
     assertTrue(rebaseOverMergeProblemDetected)
     assertEquals("Update method was overwritten by temporary update-via-merge decision",
-                 UpdateMethod.REBASE, settings.updateMethod)
+                 UpdateMethod.REBASE, settings.updateType)
   }
 
   fun `test respect branch default setting for rejected push dialog`() {
     generateUpdateNeeded()
-    settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
+    settings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
 
     var defaultActionName = ""
@@ -483,7 +498,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun `test respect branch default setting for silent update when rejected push`() {
     generateUpdateNeeded()
-    settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
+    settings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
     settings.setAutoUpdateIfPushRejected(true)
 
@@ -495,7 +510,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   // => simply don't rewrite the setting if the same value is chosen, as was default value initially
   fun `test dont overwrite branch default setting when agree in rejected push dialog`() {
     generateUpdateNeeded()
-    settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
+    settings.updateType = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
 
     dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java, {
@@ -503,7 +518,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     })
 
     push("master", "origin/master")
-    assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateMethod)
+    assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateType)
   }
 
   private fun generateUpdateNeeded() {
@@ -549,7 +564,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun getUpdatedFiles(updatedFiles: UpdatedFiles): Collection<String> {
-    val result = mutableListOf<String>()
+    val result = ContainerUtil.newArrayList<String>()
     for (group in updatedFiles.topLevelGroups) {
       result.addAll(getUpdatedFiles(group))
     }
@@ -557,7 +572,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun getUpdatedFiles(group: FileGroup): Collection<String> {
-    val result = mutableListOf<String>()
+    val result = ContainerUtil.newArrayList<String>()
     result.addAll(group.files.map { FileUtil.getRelativePath(File(projectPath), File(it))!! })
     for (child in group.children) {
       result.addAll(getUpdatedFiles(child))

@@ -8,7 +8,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @PlatformTestCase.WrapInCommand
-public class DirectoryIndexRestoreTest extends JavaProjectTestCase {
+public class DirectoryIndexRestoreTest extends IdeaTestCase {
   private VirtualFile myTempVFile;
   private String myTestDirPath;
 

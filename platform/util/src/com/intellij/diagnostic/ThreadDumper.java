@@ -12,26 +12,19 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class ThreadDumper {
-  private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
-    Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
-      .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
-      .thenComparingInt(o -> o.getStackTrace().length)
-      .reversed();
-
   private ThreadDumper() {
   }
 
   @NotNull
   public static String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean()), writer);
+    dumpThreadsToFile(ManagementFactory.getThreadMXBean(), writer);
     return writer.toString();
   }
   
@@ -54,36 +47,38 @@ public class ThreadDumper {
   @NotNull
   public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
     StringWriter writer = new StringWriter();
-    ThreadInfo[] threadInfos = getThreadInfos(threadMXBean);
-    StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
-    return new ThreadDump(writer.toString(), edtStack, threadInfos);
+    StackTraceElement[] edtStack = dumpThreadsToFile(threadMXBean, writer);
+    return new ThreadDump(writer.toString(), edtStack);
   }
 
-  @NotNull
-  private static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean) {
-    ThreadInfo[] threads;
+  @Nullable
+  private static StackTraceElement[] dumpThreadsToFile(@NotNull ThreadMXBean threadMXBean, @NotNull Writer f) {
+    StackTraceElement[] edtStack = null;
+    boolean dumpSuccessful = false;
+
     try {
-      threads = sort(threadMXBean.dumpAllThreads(false, false));
+      ThreadInfo[] threads = sort(threadMXBean.dumpAllThreads(false, false));
+      edtStack = dumpThreadInfos(threads, f);
+      dumpSuccessful = true;
     }
     catch (Exception ignored) {
-      threads = sort(threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE));
+
     }
-    return threads;
-  }
 
-  public static boolean isEDT(@NotNull ThreadInfo info) {
-    return isEDT(info.getThreadName());
-  }
+    if (!dumpSuccessful) {
+      final long[] threadIds = threadMXBean.getAllThreadIds();
+      final ThreadInfo[] threadInfo = sort(threadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE));
+      edtStack = dumpThreadInfos(threadInfo, f);
+    }
 
-  public static boolean isEDT(@NotNull String threadName) {
-    return threadName.startsWith("AWT-EventQueue");
+    return edtStack;
   }
 
   private static StackTraceElement[] dumpThreadInfos(@NotNull ThreadInfo[] threadInfo, @NotNull Writer f) {
     StackTraceElement[] edtStack = null;
     for (ThreadInfo info : threadInfo) {
       if (info != null) {
-        if (isEDT(info)) {
+        if (info.getThreadName().startsWith("AWT-EventQueue")) {
           edtStack = info.getStackTrace();
         }
         dumpThreadInfo(info, f);
@@ -94,7 +89,18 @@ public class ThreadDumper {
 
   @NotNull
   private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
-    Arrays.sort(threads, THREAD_INFO_COMPARATOR);
+    Arrays.sort(threads, (o1, o2) -> {
+      boolean awt1 = o1.getThreadName().startsWith("AWT-EventQueue");
+      boolean awt2 = o2.getThreadName().startsWith("AWT-EventQueue");
+      if (awt1 && !awt2) return -1;
+      if (awt2 && !awt1) return 1;
+      boolean r1 = o1.getThreadState() == Thread.State.RUNNABLE;
+      boolean r2 = o2.getThreadState() == Thread.State.RUNNABLE;
+      if (r1 && !r2) return -1;
+      if (r2 && !r1) return 1;
+      return 0;
+    });
+
     return threads;
   }
 

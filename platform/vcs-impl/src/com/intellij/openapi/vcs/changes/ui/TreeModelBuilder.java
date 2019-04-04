@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ReadAction;
@@ -28,16 +28,15 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLocke
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.sorted;
-import static com.intellij.util.containers.ContainerUtil.toList;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
-public class TreeModelBuilder implements ChangesViewModelBuilder {
+public class TreeModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
-    NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> new HashMap<>());
+    NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> newHashMap());
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
   // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
   // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
@@ -268,8 +267,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return subtreeRoot;
   }
 
-  @Override
-  public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
+  private void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
     List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
@@ -361,13 +359,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return this;
   }
 
-  @NotNull
-  @Override
-  public TreeModelBuilder insertChangeNode(@NotNull ChangesBrowserNode node) {
-    myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
-    return this;
-  }
-
   protected void insertChangeNode(@NotNull Object change,
                                   @NotNull ChangesBrowserNode subtreeRoot,
                                   @NotNull ChangesBrowserNode node) {
@@ -380,7 +371,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                   @NotNull Function<StaticFilePath, ChangesBrowserNode<?>> nodeBuilder) {
     PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
     if (!GROUPING_POLICY.isIn(subtreeRoot)) {
-      GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myProject, myModel));
+      GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myModel));
     }
 
     StaticFilePath pathKey = getKey(change);

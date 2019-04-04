@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -56,8 +55,8 @@ public class JBTabsImpl extends JComponent
              UISettingsListener, QuickActionProvider, Accessible {
 
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
-  static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
-  public static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
+  static final int MIN_TAB_WIDTH = JBUI.scale(75);
+  public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
@@ -242,7 +241,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
@@ -373,9 +372,9 @@ public class JBTabsImpl extends JComponent
       entry.getKey().revalidate();
       entry.getValue().setInactiveStateImage(null);
     }
-    boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
-    if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
+    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
+    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
       updateRowLayout();
     }
   }

@@ -26,8 +26,6 @@ import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
@@ -59,7 +57,7 @@ public class GitRootChecker extends VcsRootChecker {
     GitLineHandler handler = new GitLineHandler(null, virtualToIoFile(root),
                                                 GitExecutableManager.getInstance().getPathToGit(), GitCommand.CHECK_IGNORE, emptyList());
     handler.addParameters("--quiet"); // Don't output anything, just set exit status: 0 if ignored
-    handler.addRelativeFiles(Collections.singletonList(checkForIgnore));
+    handler.addParameters(checkForIgnore.getPath());
     return Git.getInstance().runCommand(handler).success();
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -176,7 +177,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final HgVersion version = logCommand.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(false, version);
     String template = HgChangesetUtil.makeTemplate(templates);
-    List<String> argsForCmd = new ArrayList<>();
+    List<String> argsForCmd = ContainerUtil.newArrayList();
     String relativePath = originalHgFile.getRelativePath();
     argsForCmd.add("--rev");
     argsForCmd

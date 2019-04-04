@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -164,7 +164,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
    * @return call matcher with additional check before actual call matching
    */
-  default CallMatcher withContextFilter(@NotNull Predicate<? super PsiElement> filter) {
+  default CallMatcher withContextFilter(@NotNull Predicate<PsiElement> filter) {
     return new CallMatcher() {
       @Override
       public Stream<String> names() {
@@ -204,7 +204,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   }
 
   class Simple implements CallMatcher {
-    static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtilRt.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
+    static final Simple ENUM_VALUES = new Simple("", Collections.singleton("values"), ArrayUtil.EMPTY_STRING_ARRAY, CallType.ENUM_STATIC);
     static final Simple ENUM_VALUE_OF =
       new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
     private final @NotNull String myClassName;
@@ -235,7 +235,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (myParameters != null) {
         throw new IllegalStateException("Parameter count is already set to " + count);
       }
-      return new Simple(myClassName, myNames, count == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[count], myCallType);
+      return new Simple(myClassName, myNames, count == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : new String[count], myCallType);
     }
 
     /**
@@ -250,7 +250,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }
-      return new Simple(myClassName, myNames, types.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : types.clone(), myCallType);
+      return new Simple(myClassName, myNames, types.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : types.clone(), myCallType);
     }
 
     private static boolean parameterTypeMatches(String type, PsiParameter parameter) {

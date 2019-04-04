@@ -2,7 +2,7 @@
 package com.intellij.ui.picker;
 
 import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -34,7 +34,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   }
 
   public static boolean canUseMacPipette() {
-    return SystemInfoRt.isMac && Registry.is("ide.mac.new.color.picker") && JnaLoader.isLoaded();
+    return SystemInfo.isMac && Registry.is("ide.mac.new.color.picker") && JnaLoader.isLoaded();
   }
 
   @Override
@@ -47,7 +47,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
   }
 
   protected Color getPixelColor(Point location) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       BufferedImage image = MacColorPipette.captureScreen(myPickerFrame, new Rectangle(location.x, location.y, 1, 1));
       if (image != null) {
         //noinspection UseJBColor

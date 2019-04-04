@@ -107,7 +107,6 @@ public abstract class ExternalAnnotationsManager {
                                                  @NotNull String annotationFQN,
                                                  @Nullable PsiNameValuePair[] value);
 
-  @NotNull
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
   @Nullable

@@ -15,34 +15,31 @@
  */
 package com.siyeh.ipp.asserttoif;
 
-import com.intellij.java.codeInspection.DataFlowInspectionTest;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @see com.siyeh.ipp.asserttoif.ObjectsRequireNonNullIntention
  * @author Bas Leijdekkers
  */
 public class ObjectsRequireNonNullIntentionTest extends IPPTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
-    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    myFixture.addClass("package java.util;\n" +
+                      "public class Objects {\n" +
+                      "    public static <T> T requireNonNull(T obj) {\n" +
+                      "        if (obj == null)\n" +
+                      "            throw new NullPointerException();\n" +
+                      "        return obj;\n" +
+                      "    }\n" +
+                      "}");
   }
 
   public void testOne() { doTest(); }
   public void testTwo() { doTest(); }
   public void testThree() { doTest(); }
-  public void testContainer() { doTest(); }
 
   @Override
   protected String getRelativePath() {

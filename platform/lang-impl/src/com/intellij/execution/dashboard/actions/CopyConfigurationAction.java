@@ -46,7 +46,7 @@ public class CopyConfigurationAction extends AnAction {
     RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
 
     RunnerAndConfigurationSettings copiedSettings = ((RunnerAndConfigurationSettingsImpl)settings).clone();
-    runManager.setUniqueNameIfNeeded(copiedSettings);
+    runManager.setUniqueNameIfNeed(copiedSettings);
     copiedSettings.setFolderName(settings.getFolderName());
     copiedSettings.getConfiguration().setBeforeRunTasks(settings.getConfiguration().getBeforeRunTasks());
 

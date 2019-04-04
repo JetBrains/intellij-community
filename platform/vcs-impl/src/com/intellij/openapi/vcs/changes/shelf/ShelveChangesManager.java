@@ -33,9 +33,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -67,11 +69,9 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
-import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static java.util.Objects.requireNonNull;
 
 @State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
@@ -104,7 +104,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     @Attribute("show_recycled")
     public boolean myShowRecycled;
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public Set<String> groupingKeys = newHashSet();
   }
 
   @Nullable
@@ -227,7 +227,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void filterNonValidShelvedChangeLists() {
-    final List<ShelvedChangeList> allSchemes = new ArrayList<>(mySchemeManager.getAllSchemes());
+    final List<ShelvedChangeList> allSchemes = newArrayList(mySchemeManager.getAllSchemes());
     process(allSchemes, shelvedChangeList -> {
       if (!shelvedChangeList.isValid()) {
         mySchemeManager.removeScheme(shelvedChangeList);
@@ -240,20 +240,18 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     final SchemeManager<ShelvedChangeList> newSchemeManager = createShelveSchemeManager(myProject, VcsUtil.getFilePath(toFile).getPath());
     newSchemeManager.loadSchemes();
     if (VcsConfiguration.getInstance(myProject).MOVE_SHELVES && fromFile.exists()) {
-      new Task.Modal(myProject, "Copying Shelves to the New Directory...", true) {
+      new Task.Modal(myProject, "Moving Shelves to the New Directory...", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
             if (!list.isValid()) continue;
-            try {
-              File newTargetDirectory = suggestPatchName(myProject, list.DESCRIPTION, toFile, "");
-              ShelvedChangeList migratedList = createChangelistCopyWithChanges(list, newTargetDirectory);
-              newSchemeManager.addScheme(migratedList, false);
-              indicator.checkCanceled();
-            }
-            catch (IOException e) {
-              LOG.error("Can't copy patch file: " + list.PATH);
-            }
+            ShelvedChangeList migratedList = ShelvedChangeList.copy(list);
+            //find new name;
+            File newTargetDirectory = suggestPatchName(myProject, migratedList.DESCRIPTION, toFile, "");
+            migrateResourcesTo(migratedList, newTargetDirectory, false);
+            newSchemeManager.addScheme(migratedList, false);
+            // migrate resources and scheme path
+            indicator.checkCanceled();
           }
           clearShelvedLists(mySchemeManager.getAllSchemes(), false);
         }
@@ -333,9 +331,45 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
   }
 
+  /**
+   * Should be called only once: when Settings Repository plugin runs first time
+   *
+   * @return collection of non-migrated or not deleted files to show a error somewhere outside
+   */
   @NotNull
-  private static List<ShelvedBinaryFile> copyBinaryFiles(@NotNull ShelvedChangeList list, @NotNull File targetDirectory) {
-    List<ShelvedBinaryFile> copied = new ArrayList<>();
+  public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
+    Collection<String> nonMigratedPaths = newArrayList();
+    for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
+      File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
+      // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
+      if (!newPatchDir.exists() && newPatchDir.mkdirs()) {
+        nonMigratedPaths.addAll(migrateResourcesTo(list, newPatchDir, true));
+      }
+    }
+    return nonMigratedPaths;
+  }
+
+  @NotNull
+  private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
+                                                       @NotNull File targetDirectory,
+                                                       boolean deleteOld) {
+    Collection<String> nonMigratedPaths = newArrayList();
+    //try to copy/move .patch file
+    File patchFile = new File(list.PATH);
+    if (patchFile.exists()) {
+      File newPatchFile = getPatchFileInConfigDir(targetDirectory);
+      try {
+        FileUtil.copy(patchFile, newPatchFile);
+        list.PATH = toSystemIndependentName(newPatchFile.getPath());
+        if (deleteOld) {
+          FileUtil.delete(patchFile);
+        }
+      }
+      catch (IOException e) {
+        nonMigratedPaths.add(list.PATH);
+      }
+    }
+
     for (ShelvedBinaryFile file : list.getBinaryFiles()) {
       if (file.SHELVED_PATH != null) {
         File shelvedFile = new File(file.SHELVED_PATH);
@@ -343,15 +377,18 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
           File newShelvedFile = new File(targetDirectory, PathUtil.getFileName(file.AFTER_PATH));
           try {
             FileUtil.copy(shelvedFile, newShelvedFile);
-            copied.add(new ShelvedBinaryFile(file.BEFORE_PATH, file.AFTER_PATH, toSystemIndependentName(newShelvedFile.getPath())));
+            file.SHELVED_PATH = toSystemIndependentName(newShelvedFile.getPath());
+            if (deleteOld) {
+              FileUtil.delete(shelvedFile);
+            }
           }
           catch (IOException e) {
-            LOG.error("Can't copy binary file: " + list.PATH);
+            nonMigratedPaths.add(shelvedFile.getPath());
           }
         }
       }
     }
-    return copied;
+    return nonMigratedPaths;
   }
 
   @NotNull
@@ -438,9 +475,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
     ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, commitContext);
 
-    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
-                                                               createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
-                                                                                                   patches));
+    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles);
     changeList.markToDelete(markToBeDeleted);
     changeList.setName(schemePatchDir.getName());
     ProgressManager.checkCanceled();
@@ -490,9 +525,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       File schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
       File patchFile = getPatchFileInConfigDir(schemePatchDir);
       ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, patchTransitExtensions, new CommitContext());
-      final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), fileName.replace('\n', ' '), new SmartList<>(),
-                                                                 createShelvedChangesFromFilePatches(myProject, patchFile.getPath(),
-                                                                                                     patches));
+      final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), fileName.replace('\n', ' '), new SmartList<>());
       changeList.setName(schemePatchDir.getName());
       mySchemeManager.addScheme(changeList, false);
       return changeList;
@@ -521,7 +554,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     return result;
   }
 
-  @CalledInBackground
   public List<ShelvedChangeList> importChangeLists(final Collection<? extends VirtualFile> files,
                                                    final Consumer<? super VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<>(files.size());
@@ -531,22 +563,20 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         filesProgress.updateIndicator(file);
         final String description = file.getNameWithoutExtension().replace('_', ' ');
         File schemeNameDir = generateUniqueSchemePatchDir(description, true);
-        final File patchFile = getPatchFileInConfigDir(schemeNameDir);
-        String patchPath = patchFile.getPath();
+        final File patchPath = getPatchFileInConfigDir(schemeNameDir);
+        final ShelvedChangeList list = new ShelvedChangeList(patchPath.getPath(), description, new SmartList<>(),
+                                                             file.getTimeStamp());
+        list.setName(schemeNameDir.getName());
         try {
-          List<? extends FilePatch> filePatches = loadPatchesWithoutContent(myProject, patchPath, new CommitContext());
-          if (!filePatches.isEmpty()) {
-            FileUtil.copy(new File(file.getPath()), patchFile);
-            final ShelvedChangeList list =
-              new ShelvedChangeList(patchPath, description, new SmartList<>(),
-                                    createShelvedChangesFromFilePatches(myProject, patchPath, filePatches),
-                                    file.getTimeStamp());
-            list.setName(schemeNameDir.getName());
+          final List<TextFilePatch> patchesList = loadPatches(myProject, file.getPath(), new CommitContext());
+          if (!patchesList.isEmpty()) {
+            FileUtil.copy(new File(file.getPath()), patchPath);
+            // add only if ok to read patch
             mySchemeManager.addScheme(list, false);
             result.add(list);
           }
         }
-        catch (Exception e) {
+        catch (IOException | PatchSyntaxException e) {
           exceptionConsumer.consume(new VcsException(e));
         }
       }
@@ -565,7 +595,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     String shelvedPath = null;
     if (afterFile != null) {
       String shelvedFileName = afterFile.getName();
-      String name = FileUtilRt.getNameWithoutExtension(shelvedFileName);
+      String name = FileUtil.getNameWithoutExtension(shelvedFileName);
       String extension = FileUtilRt.getExtension(shelvedFileName);
       File shelvedFile = FileUtil.findSequentNonexistentFile(schemePatchDir, name, extension);
       FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);
@@ -703,7 +733,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                              @NotNull List<? extends ShelvedChange> changesToDelete,
                                              @NotNull List<? extends ShelvedBinaryFile> binariesToDelete) {
     // filter changes
-    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = new ArrayList<>(shelvedListsFromChanges);
+    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = newArrayList(shelvedListsFromChanges);
     shelvedListsFromChangesToDelete.removeAll(shelvedListsToDelete);
 
     if (shelvedListsFromChangesToDelete.size() + binariesToDelete.size() == 0 && shelvedListsToDelete.isEmpty()) {
@@ -711,7 +741,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
 
     //store original dates to restore if needed
-    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = new HashMap<>();
+    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = newHashMap();
     for (ShelvedChangeList changeList : shelvedListsToDelete) {
       Date originalDate = changeList.DATE;
       if (changeList.isDeleted()) {
@@ -818,7 +848,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
-    final List<ShelvedChangeList> result = new ArrayList<>();
+    final List<ShelvedChangeList> result = newArrayList();
     new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -836,7 +866,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
-    Set<VirtualFile> fileSet = new HashSet<>();
+    Set<VirtualFile> fileSet = newHashSet();
     fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
     myShelvingFiles = fileSet;
   }
@@ -852,9 +882,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   private List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<? extends Change> changes) {
-    List<String> failedChangeLists = new ArrayList<>();
-    List<ShelvedChangeList> result = new ArrayList<>();
-    List<Change> shelvedChanges = new ArrayList<>();
+    List<String> failedChangeLists = newArrayList();
+    List<ShelvedChangeList> result = newArrayList();
+    List<Change> shelvedChanges = newArrayList();
 
     try {
       SHELVED_FILES_LOCK.writeLock().lock();
@@ -940,9 +970,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : selectedChangeLists) {
           List<ShelvedChange> changesForChangelist =
-            new ArrayList<>(intersection(requireNonNull(changeList.getChanges()), selectedChanges));
+            newArrayList(intersection(changeList.getChanges(myProject), selectedChanges));
           List<ShelvedBinaryFile> binariesForChangelist =
-            new ArrayList<>(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
+            newArrayList(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
           boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
           unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
                              shouldUnshelveAllList ? null : binariesForChangelist,
@@ -1059,12 +1089,10 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                                           boolean delete) {
 
     try {
-      ShelvedChangeList listCopy = createChangelistCopyWithChanges(changeList, generateUniqueSchemePatchDir(changeList.DESCRIPTION, true));
-      listCopy.updateDate();
-      //changes should be loaded
+      ShelvedChangeList listCopy = createChangelistCopy(changeList);
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
-      removeFromListWithChanges(listCopy, requireNonNull(changeList.getChanges()), changeList.getBinaryFiles());
+      removeFromList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
       if (delete) {
         markChangeListAsDeleted(listCopy);
       }
@@ -1086,30 +1114,26 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     writePatchesToFile(myProject, changeList.PATH, remainingPatches, commitContext);
 
     changeList.getBinaryFiles().retainAll(remainingBinaries);
-    changeList.setChanges(createShelvedChangesFromFilePatches(myProject, changeList.PATH, remainingPatches));
+    changeList.clearLoadedChanges();
   }
 
-  void saveListAsScheme(@NotNull ShelvedChangeList list) {
-    if (!list.getBinaryFiles().isEmpty() || !isEmpty(list.getChanges())) {
+  private void saveListAsScheme(@NotNull ShelvedChangeList list) {
+    if (!list.getBinaryFiles().isEmpty() ||
+        !list.getChanges(myProject).isEmpty()) {
       // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
       mySchemeManager.addScheme(list, false);
     }
   }
 
   @NotNull
-  ShelvedChangeList createChangelistCopyWithChanges(@NotNull ShelvedChangeList changeList, @NotNull File targetDir)
-    throws IOException {
-    final File newPath = getPatchFileInConfigDir(targetDir);
+  private ShelvedChangeList createChangelistCopy(@NotNull ShelvedChangeList changeList) throws IOException {
+    final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
+    final File newPath = getPatchFileInConfigDir(newPatchDir);
     FileUtil.copy(new File(changeList.PATH), newPath);
-    changeList.loadChangesIfNeeded(myProject);
-
-    final ShelvedChangeList listCopy =
-      new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION, copyBinaryFiles(changeList, targetDir),
-                            ContainerUtilRt.newArrayList(requireNonNull(changeList.getChanges())), changeList.DATE.getTime());
+    final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
+                                                             new ArrayList<>(changeList.getBinaryFiles()));
     listCopy.markToDelete(changeList.isMarkedToDelete());
-    listCopy.setRecycled(changeList.isRecycled());
-    listCopy.setDeleted(changeList.isDeleted());
-    listCopy.setName(targetDir.getName());
+    listCopy.setName(newPatchDir.getName());
     return listCopy;
   }
 
@@ -1134,7 +1158,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     clearShelvedLists(getRecycledShelvedChangeLists(), true);
   }
 
-  void clearShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists, boolean updateView) {
+  private void clearShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
       deleteResources(list);
@@ -1150,10 +1174,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     return new HashSet<>(ContainerUtil.notNullize(myShelvingFiles));
   }
 
-  private void removeFromListWithChanges(@NotNull final ShelvedChangeList listCopy,
-                                         @NotNull List<? extends ShelvedChange> shelvedChanges,
-                                         @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges) {
-    //listCopy should contain loaded changes
+  private void removeFromList(@NotNull final ShelvedChangeList listCopy,
+                              @NotNull List<? extends ShelvedChange> shelvedChanges,
+                              @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges) {
     removeBinaries(listCopy, shelvedBinaryChanges);
     removeChanges(listCopy, shelvedChanges);
 
@@ -1161,9 +1184,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     try {
       final CommitContext commitContext = new CommitContext();
       final List<FilePatch> patches = new ArrayList<>();
-      List<TextFilePatch> filePatches = loadPatches(myProject, listCopy.PATH, commitContext);
-      for (ShelvedChange change : requireNonNull(listCopy.getChanges())) {
-        patches.add(find(filePatches, patch -> change.getBeforePath().equals(patch.getBeforeName())));
+      for (ShelvedChange change : listCopy.getChanges(myProject)) {
+        patches.add(change.loadFilePatch(myProject, commitContext));
       }
       writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
     }
@@ -1173,8 +1195,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     }
   }
 
-  private static void removeChanges(@NotNull ShelvedChangeList list, @NotNull List<? extends ShelvedChange> shelvedChanges) {
-    for (Iterator<ShelvedChange> iterator = requireNonNull(list.getChanges()).iterator(); iterator.hasNext(); ) {
+  private void removeChanges(@NotNull ShelvedChangeList list, @NotNull List<? extends ShelvedChange> shelvedChanges) {
+    for (Iterator<ShelvedChange> iterator = list.getChanges(myProject).iterator(); iterator.hasNext(); ) {
       final ShelvedChange change = iterator.next();
       for (ShelvedChange newChange : shelvedChanges) {
         if (Comparing.equal(change.getBeforePath(), newChange.getBeforePath()) &&
@@ -1221,6 +1243,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void deleteResources(@NotNull final ShelvedChangeList changeList) {
+    FileUtil.delete(new File(getShelfResourcesDirectory(), changeList.getName()));
+    //backward compatibility deletion: if we didn't preform resource migration
     FileUtil.delete(new File(changeList.PATH));
     for (ShelvedBinaryFile binaryFile : changeList.getBinaryFiles()) {
       final String path = binaryFile.SHELVED_PATH;
@@ -1228,16 +1252,10 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         FileUtil.delete(new File(path));
       }
     }
-    //schema dir may be related to another list, so check that it's empty first
-    File schemaDir = new File(getShelfResourcesDirectory(), changeList.getName());
-    if (schemaDir.exists() && ArrayUtil.isEmpty(schemaDir.list())) {
-      FileUtil.delete(schemaDir);
-    }
   }
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
     changeList.DESCRIPTION = newName;
-    notifyStateChanged();
   }
 
   @NotNull
@@ -1271,6 +1289,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   public void setShowRecycled(final boolean showRecycled) {
     myState.myShowRecycled = showRecycled;
+    notifyStateChanged();
   }
 
   @NotNull

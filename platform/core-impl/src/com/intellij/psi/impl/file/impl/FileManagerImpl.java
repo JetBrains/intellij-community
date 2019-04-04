@@ -411,7 +411,12 @@ public class FileManagerImpl implements FileManager {
     PsiDirectory psiDir = psiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (isExcludedOrIgnored(vFile)) return null;
+    if (Registry.is("ide.hide.excluded.files")) {
+      if (myFileIndex.isExcludedFile(vFile)) return null;
+    }
+    else {
+      if (myFileIndex.isUnderIgnored(vFile)) return null;
+    }
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?
@@ -420,11 +425,6 @@ public class FileManagerImpl implements FileManager {
 
     psiDir = PsiDirectoryFactory.getInstance(myManager.getProject()).createDirectory(vFile);
     return ConcurrencyUtil.cacheOrGet(psiDirMap, vFile, psiDir);
-  }
-
-  private boolean isExcludedOrIgnored(@NotNull VirtualFile vFile) {
-    if (myManager.getProject().isDefault()) return false;
-    return Registry.is("ide.hide.excluded.files") ? myFileIndex.isExcludedFile(vFile) : myFileIndex.isUnderIgnored(vFile);
   }
 
   public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {

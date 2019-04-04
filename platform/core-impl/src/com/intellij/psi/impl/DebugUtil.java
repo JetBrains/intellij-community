@@ -47,28 +47,24 @@ public class DebugUtil {
   }
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 
-  @NotNull
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {
     final ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
     assert node != null : element;
     return treeToString(node, skipWhitespaces);
   }
 
-  @NotNull
   public static String treeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, true);
     return buffer.toString();
   }
 
-  @NotNull
   public static String nodeTreeToString(@NotNull final ASTNode root, final boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, false);
     return buffer.toString();
   }
 
-  @NotNull
   public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false, true);
@@ -179,7 +175,6 @@ public class DebugUtil {
     }
   }
 
-  @NotNull
   public static String lightTreeToString(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
                                          final boolean skipWhitespaces) {
     final StringBuilder buffer = new StringBuilder();
@@ -234,14 +229,13 @@ public class DebugUtil {
     }
   }
 
-  @NotNull
-  public static String stubTreeToString(@NotNull Stub root) {
+  public static String stubTreeToString(final Stub root) {
     StringBuilder builder = new StringBuilder();
     stubTreeToBuffer(root, builder, 0);
     return builder.toString();
   }
 
-  public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, final int indent) {
+  public static void stubTreeToBuffer(final Stub node, final Appendable buffer, final int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
       final ObjectStubSerializer stubType = node.getStubType();
@@ -260,7 +254,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBufferWithUserData(@NotNull Appendable buffer, @NotNull TreeElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBufferWithUserData(Appendable buffer, TreeElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -294,7 +288,7 @@ public class DebugUtil {
     }
   }
 
-  private static void treeToBufferWithUserData(@NotNull Appendable buffer, @NotNull PsiElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBufferWithUserData(Appendable buffer, PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -336,7 +330,7 @@ public class DebugUtil {
     }
   }
 
-  private static void checkSubtree(@NotNull CompositeElement root) {
+  private static void checkSubtree(CompositeElement root) {
     if (root.rawFirstChild() == null) {
       if (root.rawLastChild() != null) {
         throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
@@ -388,18 +382,15 @@ public class DebugUtil {
     LOG.assertTrue(fromCharTab == toCharTab);
   }
 
-  @NotNull
   public static String psiToString(@NotNull PsiElement element, final boolean skipWhitespaces) {
     return psiToString(element, skipWhitespaces, false);
   }
 
-  @NotNull
   public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges) {
     return psiToString(root, skipWhiteSpaces, showRanges, null);
   }
 
-  @NotNull
-  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+  public static String psiToString(@NotNull final PsiElement root, final boolean skipWhiteSpaces, final boolean showRanges, PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     StringBuilder buffer = new StringBuilder();
     psiToBuffer(buffer, root, skipWhiteSpaces, showRanges, extra);
     return buffer.toString();
@@ -425,11 +416,11 @@ public class DebugUtil {
     return buffer.toString();
   }
 
-  private static void psiToBuffer(@NotNull Appendable buffer,
-                                  @NotNull PsiElement root,
+  private static void psiToBuffer(final Appendable buffer,
+                                  final PsiElement root,
                                   final boolean skipWhiteSpaces,
                                   final boolean showRanges,
-                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+                                  PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     final ASTNode node = root.getNode();
     if (node == null) {
       psiToBuffer(buffer, root, 0, skipWhiteSpaces, showRanges, showRanges, extra);
@@ -454,7 +445,7 @@ public class DebugUtil {
                                  final boolean skipWhiteSpaces,
                                  boolean showRanges,
                                  final boolean showChildrenRanges,
-                                 @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+                                 PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -483,15 +474,13 @@ public class DebugUtil {
     }
   }
 
-  @NotNull
-  public static String fixWhiteSpaces(@NotNull String text) {
+  public static String fixWhiteSpaces(String text) {
     text = StringUtil.replace(text, "\n", "\\n");
     text = StringUtil.replace(text, "\r", "\\r");
     text = StringUtil.replace(text, "\t", "\\t");
     return text;
   }
 
-  @NotNull
   public static String currentStackTrace() {
     return ExceptionUtil.currentStackTrace();
   }
@@ -567,7 +556,6 @@ public class DebugUtil {
       finishPsiModification();
     }
   }
-
   public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     startPsiModification(trace);
     try {
@@ -671,21 +659,19 @@ public class DebugUtil {
     return "unknown inconsistency in " + fileDiagnostics;
   }
 
-  @NotNull
-  public static <T> String graphToString(@NotNull InboundSemiGraph<T> graph) {
+  public static <T> String graphToString(InboundSemiGraph<T> graph) {
     StringBuilder buffer = new StringBuilder();
     printNodes(graph.getNodes().iterator(), node -> graph.getIn(node), 0, new HashSet<>(), buffer);
     return buffer.toString();
   }
 
-  @NotNull
-  public static <T> String graphToString(@NotNull OutboundSemiGraph<T> graph) {
+  public static <T> String graphToString(OutboundSemiGraph<T> graph) {
     StringBuilder buffer = new StringBuilder();
     printNodes(graph.getNodes().iterator(), node -> graph.getOut(node), 0, new HashSet<>(), buffer);
     return buffer.toString();
   }
 
-  private static <T> void printNodes(@NotNull Iterator<? extends T> nodes, @NotNull Function<? super T, ? extends Iterator<T>> getter, int indent, @NotNull Set<? super T> visited, @NotNull StringBuilder buffer) {
+  private static <T> void printNodes(Iterator<? extends T> nodes, Function<? super T, ? extends Iterator<T>> getter, int indent, Set<? super T> visited, StringBuilder buffer) {
     while (nodes.hasNext()) {
       T node = nodes.next();
       StringUtil.repeatSymbol(buffer, ' ', indent);

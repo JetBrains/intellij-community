@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -6,13 +5,13 @@ import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfig
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.GradleConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,7 +63,7 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
   @NotNull
   @Override
   public List<VirtualFile> findAll(@NotNull ExternalProjectSettings externalProjectSettings) {
-    List<VirtualFile> list = new ArrayList<>();
+    List<VirtualFile> list = ContainerUtil.newArrayList();
     for (String path : externalProjectSettings.getModules()) {
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
       if (vFile != null) {

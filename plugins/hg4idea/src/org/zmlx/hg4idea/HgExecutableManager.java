@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +65,7 @@ public class HgExecutableManager {
   private static String identifyDefaultHgExecutable() {
     String[] paths;
     String programName;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       programName = DEFAULT_WINDOWS_HG;
       paths = DEFAULT_WINDOWS_PATHS;
     }

@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,8 +17,6 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -70,47 +67,28 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
-  protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
+  private final FilesProcessor myProjectConfigurationFilesProcessor;
+  protected final FilesProcessor myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
-  /**
-   * @see #installListeners()
-   */
-  protected VcsVFSListener(@NotNull AbstractVcs vcs) {
-    myProject = vcs.getProject();
+  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
+    myProject = project;
     myVcs = vcs;
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-    myVcsIgnoreManager = VcsIgnoreManager.getInstance(myProject);
+    myChangeListManager = ChangeListManager.getInstance(project);
+    myVcsIgnoreManager = VcsIgnoreManager.getInstance(project);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
-  }
-
-  /**
-   * @deprecated Use {@link #VcsVFSListener(AbstractVcs)} followed by {@link #installListeners()}
-   */
-  @Deprecated
-  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
-    this(vcs);
-    installListeners();
-  }
-
-  protected void installListeners() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-    VirtualFileManager.getInstance().addAsyncFileListener(new MyAsyncVfsListener(), this);
-    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
-
-    myProjectConfigurationFilesProcessor.install();
-    myExternalFilesProcessor.install();
-    new IgnoreFilesProcessorImpl(myProject, myVcs, this).install();
+    createIgnoredFilesProcessor();
   }
 
   @Override
@@ -358,8 +336,12 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected abstract boolean isDirectoryVersioningSupported();
 
+  private void createIgnoredFilesProcessor() {
+    new IgnoreFilesProcessorImpl(myProject, this);
+  }
+
   @SuppressWarnings("unchecked")
-  private ExternallyAddedFilesProcessorImpl createExternalFilesProcessor() {
+  private FilesProcessor createExternalFilesProcessor() {
     return new ExternallyAddedFilesProcessorImpl(myProject,
                                                  this,
                                                  myVcs,
@@ -370,7 +352,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   @SuppressWarnings("unchecked")
-  private ProjectConfigurationFilesProcessorImpl createProjectConfigurationFilesProcessor() {
+  private FilesProcessor createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
                                                       this,
                                                       myVcs.getDisplayName(),
@@ -463,32 +445,13 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-  }
-
-  private class MyAsyncVfsListener implements AsyncFileListener {
-    @Nullable
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-      List<VirtualFileEvent> filtered = new ArrayList<>();
-      for (VFileEvent event : events) {
-        if (event instanceof VFileContentChangeEvent) {
-          ProgressManager.checkCanceled();
-          VirtualFile file = Objects.requireNonNull(event.getFile());
-          if (isUnderMyVcs(file)) {
-            VFileContentChangeEvent ce = (VFileContentChangeEvent)event;
-            filtered.add(
-              new VirtualFileEvent(event.getRequestor(), file, file.getParent(), ce.getOldModificationStamp(), ce.getModificationStamp()));
-          }
-        }
+    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
+      assert !file.isDirectory();
+      if (isUnderMyVcs(file)) {
+        VcsVFSListener.this.beforeContentsChange(event, file);
       }
-      return filtered.isEmpty() ? null : new ChangeApplier() {
-        @Override
-        public void beforeVfsChange() {
-          for (VirtualFileEvent event : filtered) {
-            beforeContentsChange(event, event.getFile());
-          }
-        }
-      };
     }
   }
 

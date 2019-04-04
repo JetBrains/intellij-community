@@ -14,7 +14,8 @@ import javax.swing.*;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Interceptor for the next popup chooser
@@ -37,9 +38,10 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
 
   @Override
   protected void doIntercept(JBPopup popup) {
-    JBList<?> content = popup.isDisposed() ? null : UIUtil.findComponentOfType(popup.getContent(), JBList.class);
+    JComponent component = popup.getContent();
+    JBList<?> content = UIUtil.findComponentOfType(component, JBList.class);
     if (content == null) {
-      fail("JBList not found under " + popup.getContent());
+      fail("JBList not found under " + component);
     }
     ListModel<?> model = content.getModel();
     List<String> actualOptions = IntStreamEx.range(model.getSize()).mapToObj(model::getElementAt).map(Object::toString).toList();
@@ -54,7 +56,6 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
       fail("Several options matched: " + matched + " (pattern: " + myToSelect + ")");
     }
     content.setSelectedIndex(actualOptions.indexOf(matched.get(0)));
-    assertTrue(popup.canClose()); // calls cancelHandler
     popup.closeOk(null);
   }
 

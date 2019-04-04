@@ -32,7 +32,7 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
 
   @Override
   public void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-    pattern = StringUtil.toLowerCase(pattern.trim());
+    pattern = pattern.trim().toLowerCase();
     if (StringUtil.isBetween(pattern, "cyc", "cyclic ") || StringUtil.isBetween(pattern, "scr", "scroll ")) {
       collector.accept(CYCLING_SCROLLING);
     }

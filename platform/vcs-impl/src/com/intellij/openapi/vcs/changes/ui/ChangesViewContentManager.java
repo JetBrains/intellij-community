@@ -22,12 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
+public class ChangesViewContentManager implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
 
@@ -47,17 +45,18 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
+    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
   }
 
   @Override
   public void setUp(ToolWindow toolWindow) {
+
     final ContentManager contentManager = toolWindow.getContentManager();
     myContentManagerListener = new MyContentManagerListener();
     contentManager.addContentManagerListener(myContentManagerListener);
 
-    Disposer.register(this, new Disposable() {
+    Disposer.register(myProject, new Disposable(){
       @Override
       public void dispose() {
         contentManager.removeContentManagerListener(myContentManagerListener);
@@ -66,8 +65,9 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
     loadExtensionTabs();
     myContentManager = contentManager;
-    for (Content content : myAddedContents) {
-      addIntoCorrectPlace(content);
+    final List<Content> ordered = doPresetOrdering(myAddedContents);
+    for(Content content: ordered) {
+      myContentManager.addContent(content);
     }
     myAddedContents.clear();
     if (contentManager.getContentCount() > 0) {
@@ -141,8 +141,7 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
   }
 
-  @Override
-  public void dispose() {
+  public void projectClosed() {
     for (Content content : myAddedContents) {
       Disposer.dispose(content);
     }
@@ -258,66 +257,54 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     }
   }
 
-  public static final Key<Integer> ORDER_WEIGHT_KEY = Key.create("ChangesView.ContentOrderWeight");
   public static final String LOCAL_CHANGES = "Local Changes";
   public static final String REPOSITORY = "Repository";
   public static final String INCOMING = "Incoming";
   public static final String SHELF = "Shelf";
-
-  public enum TabOrderWeight {
-    LOCAL_CHANGES(ChangesViewContentManager.LOCAL_CHANGES, 10),
-    REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
-    INCOMING(ChangesViewContentManager.INCOMING, 30),
-    SHELF(ChangesViewContentManager.SHELF, 40),
-    OTHER(null, 100);
-
-    @Nullable private final String myName;
-    private final int myWeight;
-
-    TabOrderWeight(@Nullable String name, int weight) {
-      myName = name;
-      myWeight = weight;
+  private static final String[] ourPresetOrder = {LOCAL_CHANGES, REPOSITORY, INCOMING, SHELF};
+  private static List<Content> doPresetOrdering(final List<Content> contents) {
+    final List<Content> result = new ArrayList<>(contents.size());
+    for (final String preset : ourPresetOrder) {
+      for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {
+        final Content current = iterator.next();
+        if (preset.equals(current.getTabName())) {
+          iterator.remove();
+          result.add(current);
+        }
+      }
     }
-
-    @Nullable
-    private String getName() {
-      return myName;
-    }
-
-    public int getWeight() {
-      return myWeight;
-    }
+    result.addAll(contents);
+    return result;
   }
 
   private void addIntoCorrectPlace(final Content content) {
-    int weight = getContentWeight(content);
-
+    final String name = content.getTabName();
     final Content[] contents = myContentManager.getContents();
 
-    int index = -1;
-    for (int i = 0; i < contents.length; i++) {
-      int oldWeight = getContentWeight(contents[i]);
-      if (oldWeight > weight) {
-        index = i;
-        break;
+    int idxOfBeingInserted = -1;
+    for (int i = 0; i < ourPresetOrder.length; i++) {
+      final String s = ourPresetOrder[i];
+      if (s.equals(name)) {
+        idxOfBeingInserted = i;
       }
     }
-
-    if (index == -1) index = contents.length;
-    myContentManager.addContent(content, index);
-  }
-
-  private static int getContentWeight(Content content) {
-    Integer userData = content.getUserData(ORDER_WEIGHT_KEY);
-    if (userData != null) return userData;
-
-    String tabName = content.getTabName();
-    for (TabOrderWeight value : TabOrderWeight.values()) {
-      if (value.getName() != null && value.getName().equals(tabName)) {
-        return value.getWeight();
-      }
+    if (idxOfBeingInserted == -1) {
+      myContentManager.addContent(content);
+      return;
     }
 
-    return TabOrderWeight.OTHER.getWeight();
+    final Set<String> existingNames = new HashSet<>();
+    for (Content existingContent : contents) {
+      existingNames.add(existingContent.getTabName());
+    }
+
+    int place = idxOfBeingInserted;
+    for (int i = 0; i < idxOfBeingInserted; i++) {
+      if (! existingNames.contains(ourPresetOrder[i])) {
+        -- place;
+      }
+
+    }
+    myContentManager.addContent(content, place);
   }
 }

@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 
 public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
   public void testIDEA121866() { doTest(); }
@@ -57,7 +56,6 @@ public class ClsGenerics18HighlightingTest extends ClsGenericsHighlightingTest {
     myFixture.checkHighlighting();
   }
 
-  @NotNull
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;

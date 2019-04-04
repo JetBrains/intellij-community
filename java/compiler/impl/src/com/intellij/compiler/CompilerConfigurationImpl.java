@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -398,7 +397,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     String compilerHome = System.getProperty(TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME, null);
     if (compilerHome == null) {
       File javaHome = new File(System.getProperty("java.home"));
-      if (SystemInfoRt.isMac || !new File(javaHome.getParentFile(), "bin").exists()) {
+      if (SystemInfo.isMac || !new File(javaHome.getParentFile(), "bin").exists()) {
         compilerHome = javaHome.getAbsolutePath();
       }
       else {
@@ -483,7 +482,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private String[] getWildcardPatterns() {
-    return ArrayUtilRt.toStringArray(myWildcardPatterns);
+    return ArrayUtil.toStringArray(myWildcardPatterns);
   }
 
   @Override

@@ -1125,10 +1125,10 @@ public class JavaFxPsiUtil {
       CachedValueProvider.Result.create(Arrays.stream(enumClass.getFields())
                                           .filter(PsiEnumConstant.class::isInstance)
                                           .map(PsiField::getName)
-                                          .map(StringUtil::toUpperCase)
+                                          .map(String::toUpperCase)
                                           .collect(Collectors.toCollection(THashSet::new)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
-    if (!constantNames.contains(StringUtil.toUpperCase(name))) {
+    if (!constantNames.contains(name.toUpperCase())) {
       return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
     }
     return null;

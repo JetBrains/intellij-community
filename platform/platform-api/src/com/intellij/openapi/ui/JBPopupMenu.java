@@ -81,7 +81,7 @@ public class JBPopupMenu extends JPopupMenu {
     super.paint(g);
     LayoutManager layout = getLayout();
     if (layout instanceof MyLayout) {
-      ((MyLayout)layout).paintIfNeeded(g);
+      ((MyLayout)layout).paintIfNeed(g);
     }
   }
 
@@ -190,7 +190,7 @@ public class JBPopupMenu extends JPopupMenu {
       ColorUtil.withAlpha(JBColor.background(), .1),
     };
 
-    public void paintIfNeeded(Graphics g) {
+    public void paintIfNeed(Graphics g) {
       if (myShift > 0) {
         for (int i = 0; i < dim.length; i++) {
           g.setColor(dim[i]);

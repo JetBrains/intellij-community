@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
     myField.setToolTipText(myDescription);
     label.setToolTipText(myDescription);
     final Border originalBorder;
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       originalBorder = BorderFactory.createLoweredBevelBorder();
     }
     else {

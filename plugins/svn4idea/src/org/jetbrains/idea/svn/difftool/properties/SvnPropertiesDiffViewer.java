@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContentFactory;
@@ -46,8 +45,10 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final WrapperRequest myWrapperRequest;
@@ -446,13 +447,13 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     public List<DiffContent> getContents() {
-      return Arrays.asList(myContent1, myContent2);
+      return ContainerUtil.list(myContent1, myContent2);
     }
 
     @NotNull
     @Override
     public List<String> getContentTitles() {
-      return myEmbedded ? Arrays.asList(null, null) : myRequest.getContentTitles();
+      return myEmbedded ? ContainerUtil.list(null, null) : myRequest.getContentTitles();
     }
 
     @Nullable

@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -37,6 +35,7 @@ import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -105,32 +104,40 @@ public final class DomManagerImpl extends DomManager {
       }
     }, project);
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      @Nullable
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+      private final List<DomEvent> myDeletionEvents = new SmartList<>();
+
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-        List<DomEvent> domEvents = new ArrayList<>();
-        for (VFileEvent event : events) {
-          if (shouldFireDomEvents(event)) {
-            ProgressManager.checkCanceled();
-            domEvents.addAll(calcDomChangeEvents(event.getFile()));
-          }
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        if (!event.isFromSave()) {
+          fireEvents(calcDomChangeEvents(event.getFile()));
         }
-        return domEvents.isEmpty() ? null : new ChangeApplier() {
-          @Override
-          public void afterVfsChange() {
-            fireEvents(domEvents);
-          }
-        };
       }
 
-      private boolean shouldFireDomEvents(VFileEvent event) {
-        if (event instanceof VFileContentChangeEvent) return !event.isFromSave();
-        if (event instanceof VFilePropertyChangeEvent) {
-          return VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())
-                 && !((VFilePropertyChangeEvent)event).getFile().isDirectory();
+      @Override
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        fireEvents(calcDomChangeEvents(event.getFile()));
+      }
+
+      @Override
+      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
+        myDeletionEvents.addAll(calcDomChangeEvents(event.getFile()));
+      }
+
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        if (!myDeletionEvents.isEmpty()) {
+          fireEvents(myDeletionEvents);
+          myDeletionEvents.clear();
         }
-        return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
+      }
+
+      @Override
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+          fireEvents(calcDomChangeEvents(file));
+        }
       }
     }, myProject);
   }
@@ -152,7 +159,7 @@ public final class DomManagerImpl extends DomManager {
       return Collections.emptyList();
     }
 
-    final List<DomEvent> events = new ArrayList<>();
+    final List<DomEvent> events = ContainerUtil.newArrayList();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -206,7 +213,7 @@ public final class DomManagerImpl extends DomManager {
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  private void fireEvents(@NotNull Collection<? extends DomEvent> events) {
+  private void fireEvents(@NotNull Collection<DomEvent> events) {
     for (DomEvent event : events) {
       fireEvent(event);
     }

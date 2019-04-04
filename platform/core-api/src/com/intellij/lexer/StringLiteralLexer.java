@@ -225,12 +225,9 @@ public class StringLiteralLexer extends LexerBase {
       if (myBuffer.charAt(i) == 'u') {
         return locateUnicodeEscapeSequence(start, i);
       }
-
-      int additionalLocation = locateAdditionalEscapeSequence(start, i);
-      if (additionalLocation != -1) {
-        return additionalLocation;
+      else {
+        return i + 1;
       }
-      return i + 1;
     }
     LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer.charAt(i) == myQuoteChar, this);
     while (i < myBufferEnd) {
@@ -266,23 +263,6 @@ public class StringLiteralLexer extends LexerBase {
       }
     }
     return i;
-  }
-
-  /**
-   * Locates the end of the additional (non standard) escape sequence. The sequence is considered to begin with a backslash symbol
-   * located at the {@code start} index of the lexer's buffer.
-   * <p/>
-   * Override this method if your language supports non standard escape sequences. For example, Golang supports unicode escape sequences
-   * like '\U12345678'. To locate this escape sequence, the implementation should check that {@code indexOfCharAfterSlash} points to the
-   * 'U' symbol in the buffer and return {@code start + 8} (or the end index of the buffer if it is too short).
-   * Otherwise, the implementations should return -1 to indicate that the current buffer starting at {@code start} index
-   * doesn't represent an additional escape sequence.
-   * <p/>
-   * When overriding this method, you most likely will need to also override {@link StringLiteralLexer#getTokenType} to return proper type
-   * for the sequences located here.
-   */
-  protected int locateAdditionalEscapeSequence(int start, int indexOfCharAfterSlash) {
-    return -1;
   }
 
   @Override

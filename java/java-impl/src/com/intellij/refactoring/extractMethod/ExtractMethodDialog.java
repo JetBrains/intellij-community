@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -28,7 +28,10 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -107,7 +110,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     setTitle(title);
 
     myNameField = new NameSuggestionsField(suggestMethodNames(), myProject);
-
+    
     myMakeStatic = new NonFocusableCheckBox();
     myMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
     if (canBeChainedConstructor) {
@@ -121,9 +124,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   protected String[] suggestMethodNames() {
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
-
+  
   protected boolean areTypesDirected() {
     return true;
   }
@@ -252,7 +255,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   protected boolean isVoidReturn() {
     return false;
   }
-
+  
   @Nullable
   private JPanel createReturnTypePanel() {
     if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullability == Nullability.NULLABLE) {
@@ -406,7 +409,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     final PsiMethod containingMethod = getContainingMethod();
-    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)
+    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC) 
                         ? PropertiesComponent.getInstance(myProject).getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
                         : PsiModifier.PRIVATE);
     panel.addListener(e -> {
@@ -441,7 +444,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   @NotNull
   public String getVisibility() {
-    return myTargetClass.isInterface() || myVisibilityPanel == null
+    return myTargetClass.isInterface() || myVisibilityPanel == null 
            ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 

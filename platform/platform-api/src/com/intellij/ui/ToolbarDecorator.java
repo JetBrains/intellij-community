@@ -1,17 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +93,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   public ToolbarDecorator initPosition() {
-    setToolbarPosition(SystemInfoRt.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
+    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
     return this;
   }
 
@@ -93,7 +106,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public static ToolbarDecorator createDecorator(@NotNull JTable table) {
     return new TableToolbarDecorator(table, null).initPosition();
   }
-
+  
   public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
     return createDecorator(tree, null);
   }
@@ -154,7 +167,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     myButtonComparator = buttonComparator;
     return this;
   }
-
+  
   public ToolbarDecorator setButtonComparator(String...actionNames) {
     final List<String> names = Arrays.asList(actionNames);
     myButtonComparator = (o1, o2) -> {
@@ -346,7 +359,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
 
-    Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);
+    Border mainBorder = myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL);  
     if (myAsUsualTopToolbar) {
       scrollPane.setBorder(mainBorder);
     } else {
@@ -496,20 +509,18 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                               @Nullable Icon icon) {
+    public ElementActionButton(String text, String description, @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
+    public ElementActionButton(String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+    public ElementActionButton(String text) {
       super(text);
     }
   }

@@ -1,8 +1,7 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.yaml.LightScalarResolver
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -12,16 +11,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.inputStreamIfExists
-import org.snakeyaml.engine.v1.api.LoadSettingsBuilder
-import org.snakeyaml.engine.v1.composer.Composer
-import org.snakeyaml.engine.v1.nodes.MappingNode
-import org.snakeyaml.engine.v1.nodes.ScalarNode
-import org.snakeyaml.engine.v1.parser.ParserImpl
-import org.snakeyaml.engine.v1.scanner.StreamReader
+import org.yaml.snakeyaml.nodes.MappingNode
+import org.yaml.snakeyaml.parser.ParserImpl
+import org.yaml.snakeyaml.reader.StreamReader
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
 
+internal const val IDE_FILE = "intellij.yaml"
+internal const val IDE_FILE_VARIANT_2 = "intellij.yml"
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
@@ -44,10 +42,6 @@ internal class ConfigurationFileManager(project: Project) {
     registerClearableLazyValue(yamlData)
   }
 
-  companion object {
-    fun getInstance(project: Project) = project.service<ConfigurationFileManager>()
-  }
-
   fun registerClearableLazyValue(value: SynchronizedClearableLazy<*>) {
     clearableLazyValues.add(value)
   }
@@ -66,7 +60,7 @@ internal class ConfigurationFileManager(project: Project) {
 
           if (event is VFileCreateEvent) {
             // VFileCreateEvent computes file on request, so, avoid getFile call
-            if (event.isDirectory || !isConfigurationFile(event.childName)) {
+            if (event.isDirectory || !(event.childName == IDE_FILE || event.childName == IDE_FILE_VARIANT_2)) {
               continue
             }
           }
@@ -84,47 +78,18 @@ internal class ConfigurationFileManager(project: Project) {
   }
 
   fun getConfigurationNode() = yamlData.value
-
-  fun findValueNode(namePath: String): MappingNode? {
-    return findValueNodeByPath(namePath, yamlData.value ?: return null)
-  }
-}
-
-internal fun findValueNodeByPath(namePath: String, rootNode: MappingNode): MappingNode? {
-  var node = rootNode
-  loop@
-  for (name in namePath.splitToSequence('.')) {
-    for (tuple in node.value) {
-      val keyNode = tuple.keyNode
-      if (keyNode is ScalarNode && keyNode.value == name) {
-        node = tuple.valueNode as? MappingNode ?: continue
-        continue@loop
-      }
-    }
-    return null
-  }
-
-  return if (node === rootNode) null else node
 }
 
 internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
-    val settings = LoadSettingsBuilder()
-      .setUseMarks(false)
-      .setScalarResolver(LightScalarResolver())
-      .build()
-    return Composer(ParserImpl(StreamReader(it, settings), settings), settings.scalarResolver).singleNode.orElse(null) as? MappingNode
+    return LightweightComposer(ParserImpl(StreamReader(it))).getSingleNode() as? MappingNode
   }
 }
 
 // todo check parent?
-internal fun isConfigurationFile(file: VirtualFile) = isConfigurationFile(file.nameSequence)
-
-private const val filePrefix = "intellij."
-private val fileExtensions = listOf("yaml", "yml", "json")
-
-internal fun isConfigurationFile(name: CharSequence): Boolean {
-  return name.startsWith(filePrefix) && fileExtensions.any { name.length == (filePrefix.length + it.length) && name.endsWith(it) }
+internal fun isConfigurationFile(file: VirtualFile): Boolean {
+  val nameSequence = file.nameSequence
+  return StringUtil.equals(nameSequence, IDE_FILE) || StringUtil.equals(nameSequence, IDE_FILE_VARIANT_2)
 }
 
 /**

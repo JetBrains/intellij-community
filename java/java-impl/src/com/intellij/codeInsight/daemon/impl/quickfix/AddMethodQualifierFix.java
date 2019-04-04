@@ -131,7 +131,7 @@ public class AddMethodQualifierFix implements IntentionAction {
       qualify(candidates.get(0), editor);
     }
     else {
-      chooseAndQualify(project, editor, candidates);
+      chooseAndQualify(editor, candidates);
     }
   }
 
@@ -140,7 +140,7 @@ public class AddMethodQualifierFix implements IntentionAction {
     return false;
   }
 
-  private void chooseAndQualify(Project project, Editor editor, List<? extends PsiVariable> candidates) {
+  private void chooseAndQualify(Editor editor, List<PsiVariable> candidates) {
     final BaseListPopupStep<PsiVariable> step =
       new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), candidates) {
         @Override
@@ -163,7 +163,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         }
       };
 
-    ListPopupImpl popup = new ListPopupImpl(project, step);
+    final ListPopupImpl popup = new ListPopupImpl(step);
     popup.showInBestPositionFor(editor);
   }
 

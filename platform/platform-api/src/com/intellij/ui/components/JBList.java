@@ -142,7 +142,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString());
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
@@ -186,8 +186,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   private void init() {
-    setSelectionBackground(UIUtil.getListSelectionBackground(true));
-    setSelectionForeground(UIUtil.getListSelectionForeground(true));
+    setSelectionBackground(UIUtil.getListSelectionBackground());
+    setSelectionForeground(UIUtil.getListSelectionForeground());
     installDefaultCopyAction();
 
     myEmptyText = new StatusText(this) {
@@ -292,7 +292,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
-  public <T> void installCellRenderer(@NotNull final NotNullFunction<? super T, ? extends JComponent> fun) {
+  public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 

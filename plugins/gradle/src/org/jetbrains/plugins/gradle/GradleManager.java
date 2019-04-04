@@ -70,6 +70,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -102,7 +103,7 @@ public final class GradleManager
       @NotNull
       @Override
       protected List<GradleProjectResolverExtension> compute() {
-        List<GradleProjectResolverExtension> result = new ArrayList<>();
+        List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
 
         // It's possible usecase when 'java' subsystem dependent plugins bundled with the non-java IDE using fat plugin distribution.
         // This approach can lead to unwanted/incompatible extensions to be loaded.
@@ -213,7 +214,7 @@ public final class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
-      boolean delegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath);
+      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
       result.setDelegatedBuild(delegatedBuildEnabled);
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
@@ -279,7 +280,7 @@ public final class GradleManager
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
-    final Set<String> additionalEntries = new HashSet<>();
+    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
       ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
       for (Class aClass : extension.getExtraProjectModelClasses()) {
@@ -479,8 +480,8 @@ public final class GradleManager
   @Nullable
   private static Map<String, String> patchLinkedProjects(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
-    Collection<GradleProjectSettings> correctedSettings = new ArrayList<>();
-    Map<String/* old path */, String/* new path */> adjustedPaths = new HashMap<>();
+    Collection<GradleProjectSettings> correctedSettings = ContainerUtilRt.newArrayList();
+    Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
       if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
@@ -507,8 +508,7 @@ public final class GradleManager
   }
 
   private static void patchAvailableProjects(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
-    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects =
-      new HashMap<>();
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
       String newPath = adjustedPaths.get(entry.getKey().getPath());
       if (newPath == null) {

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.Set;
  */
 public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder>, NanoXmlBuilder {
   public static String computeNamespace(final InputStream is) {
-    return computeNamespace(new InputStreamReader(is, StandardCharsets.UTF_8)).getNamespace();
+    return computeNamespace(new InputStreamReader(is)).getNamespace();
   }
 
   public static XsdNamespaceBuilder computeNamespace(@NotNull Reader reader) {

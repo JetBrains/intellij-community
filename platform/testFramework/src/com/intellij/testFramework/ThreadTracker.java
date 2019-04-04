@@ -83,8 +83,7 @@ public class ThreadTracker {
     "Netty ",
     "ObjectCleanerThread",
     "Reference Handler",
-    "RMI GC Daemon",
-    "RMI TCP ",
+    "RMI TCP Connection",
     "Signal Dispatcher",
     "timer-int", //serverIm,
     "timer-sys", //clientim,
@@ -102,7 +101,7 @@ public class ThreadTracker {
     wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
-    if (application != null && !application.isDisposed()) {
+    if (!application.isDisposed()) {
       longRunningThreadCreated(application,
                                "Periodic tasks thread",
                                "ApplicationImpl pooled thread ",

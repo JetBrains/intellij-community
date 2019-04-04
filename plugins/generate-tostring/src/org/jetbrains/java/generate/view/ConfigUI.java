@@ -96,7 +96,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Settings
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorder("Settings"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Settings", true));
         Container innerPanel = Box.createHorizontalBox();
         innerPanel.add(fullyQualifiedName);
         innerPanel.add(Box.createHorizontalGlue());
@@ -136,7 +136,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorder("When method already exists"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("When method already exists", true));
         for (JRadioButton anInitialValueForReplaceDialog : initialValueForReplaceDialog) {
             panel.add(anInitialValueForReplaceDialog);
         }
@@ -154,7 +154,7 @@ public class ConfigUI extends JPanel {
         }
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorder("Where to insert?"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Where to insert?", true));
         for (JRadioButton anInitialValueForNewMethodDialog : initialValueForNewMethodDialog) {
             panel.add(anInitialValueForNewMethodDialog);
         }
@@ -165,7 +165,7 @@ public class ConfigUI extends JPanel {
         // UI Layout - Exclude fields
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(IdeBorderFactory.createTitledBorder("Exclude"));
+        panel.setBorder(IdeBorderFactory.createTitledBorder("Exclude", true));
         innerPanel = Box.createHorizontalBox();
         innerPanel.add(filterConstant);
         innerPanel.add(Box.createHorizontalGlue());

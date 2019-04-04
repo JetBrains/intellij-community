@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
@@ -24,7 +23,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import org.jetbrains.annotations.NotNull;
 
 public class ImportListElement extends CompositeElement{
   public ImportListElement() {
@@ -45,14 +43,5 @@ public class ImportListElement extends CompositeElement{
       }
     }
     return super.addInternal(first, last, anchor, before);
-  }
-
-  @Override
-  public void deleteChildInternal(@NotNull ASTNode child) {
-    super.deleteChildInternal(child);
-    TreeElement first = getFirstChildNode();
-    if (first != null && first == getLastChildNode() && first.getElementType() == JavaTokenType.SEMICOLON) {
-      super.deleteChildInternal(first);
-    }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "version": "0.2",
+  "version": "0.1",
   "definitions": {
     "color": {
       "type": "string",
@@ -286,14 +286,6 @@
             }
           }
         }
-      }
-    },
-    "colors" : {
-      "type": "object",
-      "title": "Theme Color Palette",
-      "description": "Define common colors here and use color names in 'ui' section instead of #rrggbb values",
-      "patternProperties": {
-        ".*": {"$ref": "#/definitions/color"}
       }
     }
   }

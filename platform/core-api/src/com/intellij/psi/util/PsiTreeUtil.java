@@ -146,7 +146,7 @@ public class PsiTreeUtil {
   }
 
   @Contract(pure = true)
-  public static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+  private static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
     int depth=0;
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {
@@ -1193,7 +1193,7 @@ public class PsiTreeUtil {
   public static List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
     PsiElement psi = outerLanguageElement.getContainingFile().getViewProvider().getPsi(outerLanguageElement.getLanguage());
     TextRange injectionRange = outerLanguageElement.getTextRange();
-    List<PsiElement> res = new ArrayList<>();
+    List<PsiElement> res = ContainerUtil.newArrayList();
 
     assert psi != null : outerLanguageElement;
     for (PsiElement element = psi.findElementAt(injectionRange.getStartOffset());

@@ -229,9 +229,9 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
 
     if (arguments.length == argumentOffset + 1) {
-      final List<PsiExpression> arrayElements = getVarargs(arguments[argumentOffset]);
+      final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
       if (arrayElements != null) {
-        return arrayElements;
+        return Arrays.asList(arrayElements);
       }
     }
     if (arguments.length >= argumentOffset) {

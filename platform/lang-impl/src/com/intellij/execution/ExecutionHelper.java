@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -34,17 +33,17 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -119,7 +118,7 @@ public class ExecutionHelper {
     for (final Exception exception : exceptions) {
       String message = exception.getMessage();
 
-      String[] messages = StringUtil.isNotEmpty(message) ? StringUtil.splitByLines(message) : ArrayUtilRt.EMPTY_STRING_ARRAY;
+      String[] messages = StringUtil.isNotEmpty(message) ? StringUtil.splitByLines(message) : ArrayUtil.EMPTY_STRING_ARRAY;
       if (messages.length == 0) {
         messages = new String[]{defaultMessage};
       }
@@ -180,7 +179,7 @@ public class ExecutionHelper {
           }
           else {
             errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
-            errorTreeView.addMessage(MessageCategory.SIMPLE, ArrayUtilRt.EMPTY_STRING_ARRAY, file, -1, -1, null);
+            errorTreeView.addMessage(MessageCategory.SIMPLE, ArrayUtil.EMPTY_STRING_ARRAY, file, -1, -1, null);
             errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, file, -1, -1, null);
           }
         }
@@ -215,39 +214,26 @@ public class ExecutionHelper {
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
                                                                     @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
-    final Ref<Collection<RunContentDescriptor>> ref = new Ref<>();
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Runnable computeDescriptors = () -> {
-      RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
-      final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
-      if (selectedContent != null) {
-        final ToolWindow toolWindow = contentManager.getToolWindowByDescriptor(selectedContent);
-        if (toolWindow != null && toolWindow.isVisible()) {
-          if (descriptorMatcher.fun(selectedContent)) {
-            ref.set(Collections.singletonList(selectedContent));
-            return;
-          }
+    RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
+    final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
+    if (selectedContent != null) {
+      final ToolWindow toolWindow = contentManager.getToolWindowByDescriptor(selectedContent);
+      if (toolWindow != null && toolWindow.isVisible()) {
+        if (descriptorMatcher.fun(selectedContent)) {
+          return Collections.singletonList(selectedContent);
         }
       }
+    }
 
-      final List<RunContentDescriptor> result = new SmartList<>();
-      for (RunContentDescriptor runContentDescriptor : contentManager.getAllDescriptors()) {
-        if (descriptorMatcher.fun(runContentDescriptor)) {
-          result.add(runContentDescriptor);
-        }
+    final List<RunContentDescriptor> result = new SmartList<>();
+    for (RunContentDescriptor runContentDescriptor : contentManager.getAllDescriptors()) {
+      if (descriptorMatcher.fun(runContentDescriptor)) {
+        result.add(runContentDescriptor);
       }
-      ref.set(result);
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      computeDescriptors.run();
     }
-    else {
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
-      ApplicationManager.getApplication().invokeAndWait(computeDescriptors);
-    }
-
-    return ref.get();
+    return result;
   }
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
@@ -273,7 +259,7 @@ public class ExecutionHelper {
     else if (consoles.size() > 1) {
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(new ArrayList<>(consoles))
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(consoles))
         .setRenderer(SimpleListCellRenderer.<RunContentDescriptor>create((label, value, index) -> {
           label.setText(value.getDisplayName());
           label.setIcon(icon);
@@ -322,12 +308,6 @@ public class ExecutionHelper {
                                              @NotNull final ProcessHandler processHandler,
                                              @NotNull final ExecutionMode mode,
                                              @NotNull final String presentableCmdline) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.warn("Running " + presentableCmdline);
-      processHandler.waitFor();
-      return;
-    }
-
     final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
     final Runnable process;
     if (mode.cancelable()) {
@@ -445,7 +425,6 @@ public class ExecutionHelper {
         }
       }
     });
-    Throwable invocatorStack = new Throwable();
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
@@ -453,7 +432,7 @@ public class ExecutionHelper {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
-            mode.onTimeout(processHandler, presentableCmdline, outputCollected, invocatorStack);
+            mode.onTimeout(processHandler, presentableCmdline, outputCollected);
             processHandler.destroyProcess();
           }
         }

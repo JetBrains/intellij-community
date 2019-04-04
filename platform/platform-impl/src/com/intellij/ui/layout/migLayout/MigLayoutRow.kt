@@ -12,10 +12,13 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -227,7 +230,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       component.isEnabled = false
     }
 
-    if (!shareCellWithPreviousComponentIfNeeded(component, cc)) {
+    if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
       // increase column index if cell mode not enabled or it is a first component of cell
       if (componentIndexWhenCellModeWasEnabled == -1 || componentIndexWhenCellModeWasEnabled == (components.size - 1)) {
         columnIndex++
@@ -287,7 +290,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {
+  private fun shareCellWithPreviousComponentIfNeed(component: JComponent, componentCC: Lazy<CC>): Boolean {
     if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.GearPlain) {
       componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 

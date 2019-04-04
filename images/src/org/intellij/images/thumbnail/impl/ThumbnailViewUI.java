@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -54,6 +68,8 @@ import java.util.List;
 import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+    private final VirtualFileListener vfsListener = new VFSListener();
+    private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
@@ -91,7 +107,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             cellRenderer = new ThumbnailListCellRenderer();
             ImageComponent imageComponent = cellRenderer.getImageComponent();
 
-            VirtualFileManager.getInstance().addVirtualFileListener(new VFSListener(), this);
+            VirtualFileManager.getInstance().addVirtualFileListener(vfsListener);
 
             Options options = OptionsManager.getInstance().getOptions();
             EditorOptions editorOptions = options.getEditorOptions();
@@ -104,7 +120,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setFileNameVisible(editorOptions.isFileNameVisible());
             imageComponent.setFileSizeVisible(editorOptions.isFileSizeVisible());
 
-            options.addPropertyChangeListener(new OptionsChangeListener(), this);
+            options.addPropertyChangeListener(optionsListener);
 
             list = new JBList();
             list.setModel(new DefaultListModel());
@@ -605,6 +621,11 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     public void dispose() {
         removeAll();
 
+        Options options = OptionsManager.getInstance().getOptions();
+        options.removePropertyChangeListener(optionsListener);
+
+        VirtualFileManager.getInstance().removeVirtualFileListener(vfsListener);
+
         list = null;
         cellRenderer = null;
         tagsPanel = null;
@@ -653,7 +674,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public void fileDeleted(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             VirtualFile root = thumbnailView.getRoot();
-            if (root != null && VfsUtilCore.isAncestor(file, root, false)) {
+            if (root != null && VfsUtil.isAncestor(file, root, false)) {
                 refresh();
             }
             if (list != null) {

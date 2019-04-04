@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -186,13 +185,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   }
 
   public void jumpToCommitByPartOfHash(@NotNull String commitHash, @NotNull SettableFuture<? super Boolean> future) {
-    String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
-    if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit or reference '" + commitHash + "' not found", MessageType.WARNING);
+    if (!VcsLogUtil.HASH_REGEX.matcher(commitHash).matches()) {
       future.set(false);
       return;
     }
-    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future);
+    jumpTo(commitHash, GraphTableModel::getRowOfCommitByPartOfHash, future);
   }
 
   protected <T> void jumpTo(@NotNull final T commitId,

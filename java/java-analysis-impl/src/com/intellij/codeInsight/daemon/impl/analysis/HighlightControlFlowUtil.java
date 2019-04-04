@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -411,7 +411,7 @@ public class HighlightControlFlowUtil {
       }
       if (variable instanceof PsiField) {
         ChangeModifierRequest request = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
-        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions((PsiField)variable, request));
+        QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, request));
       }
       return highlightInfo;
     }
@@ -541,18 +541,7 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.already.assigned", variable.getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false)
-        );
-      }
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
     }
@@ -584,18 +573,7 @@ public class HighlightControlFlowUtil {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      if (resolved instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)resolved, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix((PsiVariable)resolved, PsiModifier.FINAL, false, false)
-        );
-      }
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions((PsiVariable)resolved, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
       return highlightInfo;
     }
     return null;
@@ -622,18 +600,7 @@ public class HighlightControlFlowUtil {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
     final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (innerClass == null || variable instanceof PsiField) {
-      if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false)
-        );
-      }
+      QuickFixAction.registerQuickFixActions(highlightInfo, null, JvmElementActionFactories.createModifierActions(variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
     }
     else {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));

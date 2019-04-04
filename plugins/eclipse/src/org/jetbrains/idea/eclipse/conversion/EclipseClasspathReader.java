@@ -175,7 +175,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   @Override
   protected void setUpModuleJdk(ModifiableRootModel rootModel,
-                                Collection<? super String> unknownJdks,
+                                Collection<String> unknownJdks,
                                 EclipseModuleManager eclipseModuleManager,
                                 String jdkName) {
     if (jdkName == null) {
@@ -239,7 +239,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   @Override
   protected void addNamedLibrary(final ModifiableRootModel rootModel,
-                                 final Collection<? super String> unknownLibraries,
+                                 final Collection<String> unknownLibraries,
                                  final boolean exported,
                                  final String name,
                                  final boolean applicationLevel) {

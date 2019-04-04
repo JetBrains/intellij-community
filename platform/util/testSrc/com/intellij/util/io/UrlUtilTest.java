@@ -2,10 +2,8 @@
 
 package com.intellij.util.io;
 
-import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +34,7 @@ public class UrlUtilTest {
     assertPair(URLUtil.splitJarUrl("jar:file:/path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
     assertPair(URLUtil.splitJarUrl("jar:file:///path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "C:/path/to/jar.jar", "resource.xml");
       assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "//HOST/share/path/to/jar.jar", "resource.xml");
     }
@@ -73,7 +71,7 @@ public class UrlUtilTest {
 
   @Test
   public void resourceExistsForFileInJar() throws Exception {
-    URL stringUrl = Maps.class.getResource("Maps.class");
+    URL stringUrl = String.class.getResource("String.class");
     assertEquals(ThreeState.YES, URLUtil.resourceExists(stringUrl));
     URL xxxUrl = new URL(stringUrl.getProtocol(), "", -1, stringUrl.getPath() + "/xxx");
     assertEquals(ThreeState.NO, URLUtil.resourceExists(xxxUrl));
@@ -177,37 +175,6 @@ public class UrlUtilTest {
     }
     console.log(encodeURIComponent(s));
     */
-    assertThat(URLUtil.encodeURIComponent(str.toString())).isEqualTo(expected);
-    assertThat(URLUtil.unescapePercentSequences(expected)).isEqualTo(str.toString());
-    assertThat(URLUtil.unescapePercentSequences(expected, 0, expected.length()).toString()).isEqualTo(str.toString());
-  }
-
-  @Test
-  public void testUnescapePercentSequences() {
-    String k = "foo%3F%25%26%3D";
-    String v = "bar%3F1%3D%25";
-    String query = k + "=" + v;
-    assertThat(URLUtil.unescapePercentSequences(query, 0, k.length()).toString()).isEqualTo("foo?%&=");
-    assertThat(URLUtil.unescapePercentSequences(v)).isEqualTo("bar?1=%");
-    assertThat(URLUtil.unescapePercentSequences(query, k.length() + 1, query.length()).toString()).isEqualTo("bar?1=%");
-  }
-
-  @Test
-  public void testUrlsWithParen() {
-    doUrlWithParensTest("https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)",
-                        "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)");
-    doUrlWithParensTest("(http://some.url)", "http://some.url");
-  }
-
-  private static void doUrlWithParensTest(@NotNull String text, @Nullable String expectedExtractedUrl) {
-    TextRange result = URLUtil.findUrl(text, 0, text.length());
-    if (expectedExtractedUrl == null) {
-      assertNull("URL shouldn't be found", result);
-    }
-    else {
-      assertNotNull("URL should be found", result);
-      assertEquals("Wrong URL found", expectedExtractedUrl, result.substring(text));
-      assertNull("Extra URL found", URLUtil.findUrl(text, result.getEndOffset(), text.length()));
-    }
+    assertEquals(expected, URLUtil.encodeURIComponent(str.toString()));
   }
 }

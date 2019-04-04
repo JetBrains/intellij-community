@@ -47,8 +47,8 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
   @NotNull
   @Override
-  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
-    return createGoToChangeAction(this, onSelected, defaultSelection);
+  public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
+    return createGoToChangeAction(this, onSelected);
   }
 
   /**
@@ -56,9 +56,8 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
    */
   @NotNull
   private static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
-                                                 @NotNull Consumer<? super Integer> onSelected,
-                                                 int defaultSelection) {
-    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, defaultSelection) {
+                                                 @NotNull Consumer<? super Integer> onSelected) {
+    return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, chain.getIndex()) {
       @NotNull
       @Override
       protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
@@ -174,8 +173,8 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
 
     @Nullable
     @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
-      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected, defaultSelection);
+    public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected) {
+      return ChangeDiffRequestChain.createGoToChangeAction(this, onSelected);
     }
   }
 }

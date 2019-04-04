@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -53,7 +53,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   }
 
   private void modifyFontSize() {
-    if (SystemInfoRt.isMac || SystemInfoRt.isLinux) {
+    if (SystemInfo.isMac || SystemInfo.isLinux) {
       Font font = UIManager.getFont("TabbedPane.font");
       tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() + FONT_SIZE_OFFSET.get()));
     }

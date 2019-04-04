@@ -4,7 +4,6 @@ package com.intellij.ui.tree.ui;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
 import java.awt.Graphics;
 import javax.swing.Icon;
 
@@ -37,7 +36,7 @@ public final class DefaultControl implements Control {
   }
 
   @Override
-  public void paint(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height, boolean expanded, boolean selected) {
+  public void paint(@NotNull Graphics g, int x, int y, int width, int height, boolean expanded, boolean selected) {
     Icon icon = getIcon(expanded, selected);
     icon.paintIcon(null, g,
                    x + (width - icon.getIconWidth()) / 2,

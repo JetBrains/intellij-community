@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 
@@ -24,6 +23,6 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @Override
   protected int textIconGap() {
-    return JBUIScale.scale(4);
+    return JBUI.scale(4);
   }
 }

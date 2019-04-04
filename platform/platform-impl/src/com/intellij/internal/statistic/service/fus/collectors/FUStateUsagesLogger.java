@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LOCK;
 
@@ -24,19 +28,33 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project) {
-    synchronized (LOCK) {
-      for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
-        final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-        logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getMetrics(project));
+    logProjectStates(project, EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
+  }
+
+  public void logApplicationStates() {
+    logApplicationStates(EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
+  }
+
+  public void logProjectStates(@NotNull Project project, @NotNull FUSWhitelist whitelist, boolean recordAll) {
+    if (!whitelist.isEmpty() || ApplicationManagerEx.getApplicationEx().isInternal()) {
+      synchronized (LOCK) {
+        for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
+          if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
+            final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+            logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getUsages(project));
+          }
+        }
       }
     }
   }
 
-  public void logApplicationStates() {
+  public void logApplicationStates(@NotNull FUSWhitelist whitelist, boolean recordAll) {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
-        final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-        logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getMetrics());
+        if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
+          final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+          logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getUsages());
+        }
       }
     }
   }
@@ -44,14 +62,15 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   private static void logUsagesAsStateEvents(@Nullable Project project,
                                              @NotNull EventLogGroup group,
                                              @Nullable FeatureUsageData context,
-                                             @NotNull Set<MetricEvent> metrics) {
+                                             @NotNull Set<UsageDescriptor> usages) {
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
-    if (!metrics.isEmpty()) {
+    usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
+    if (!usages.isEmpty()) {
       final FeatureUsageData groupData = addProject(project, context);
-      for (MetricEvent metric : metrics) {
-        final FeatureUsageData data = mergeWithEventData(groupData, metric.getData());
+      for (UsageDescriptor usage : usages) {
+        final FeatureUsageData data = mergeWithEventData(groupData, usage.getData(), usage.getValue());
         final Map<String, Object> eventData = data != null ? data.build() : Collections.emptyMap();
-        logger.logState(group, metric.getEventId(), eventData);
+        logger.logState(group, usage.getKey(), eventData);
       }
     }
     logger.logState(group, INVOKED, new FeatureUsageData().addProject(project).build());
@@ -67,11 +86,17 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   }
 
   @Nullable
-  public static FeatureUsageData mergeWithEventData(@Nullable FeatureUsageData groupData, @Nullable FeatureUsageData data) {
-    if (data == null) return groupData;
+  public static FeatureUsageData mergeWithEventData(@Nullable FeatureUsageData groupData, @Nullable FeatureUsageData data, int value) {
+    if (data == null && value == 1) return groupData;
 
     final FeatureUsageData newData = groupData == null ? new FeatureUsageData() : groupData.copy();
-    newData.merge(data, "event_");
+    if (value != 1) {
+      newData.addData("value", value);
+    }
+
+    if (data != null) {
+      newData.merge(data, "event_");
+    }
     return newData;
   }
 

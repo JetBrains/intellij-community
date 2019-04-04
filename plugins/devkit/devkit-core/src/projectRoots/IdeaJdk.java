@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @NotNull
   @Override
   public String adjustSelectedSdkHome(@NotNull String homePath) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       File home = new File(homePath, "Contents");
       if (home.exists()) return home.getPath();
     }
@@ -150,9 +150,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public static String getBuildNumber(String ideaHome) {
     try {
-      @NonNls final String buildTxt = SystemInfoRt.isMac ? "Resources/build.txt" : "build.txt";
+      @NonNls final String buildTxt = SystemInfo.isMac ? "Resources/build.txt" : "build.txt";
       File file = new File(ideaHome, buildTxt);
-      if (SystemInfoRt.isMac && !file.exists()) {
+      if (SystemInfo.isMac && !file.exists()) {
         // IntelliJ IDEA 13 and earlier used a different location for build.txt on Mac;
         // recognize the old location as well
         file = new File(ideaHome, "build.txt");
@@ -168,7 +168,6 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     List<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
-    appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
@@ -235,7 +234,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       int choice = Messages.showChooseDialog(
         "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
         "Select Internal Java Platform",
-        ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
         Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));
@@ -332,7 +331,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
-    Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
+    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
+    Sdk internalJava = sdkModel.findSdk(sdkName);
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
@@ -357,7 +357,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     VirtualFileManager vfsManager = VirtualFileManager.getInstance();
-    Set<VirtualFile> addedRoots = new THashSet<>();
+    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
     for (JpsModule o : modules) {
       indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
@@ -436,7 +436,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void addDocs(@NotNull SdkModificator sdkModificator, @NotNull Sdk javaSdk) {
-    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) && SystemInfoRt.isMac) {
+    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) && SystemInfo.isMac) {
       Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
@@ -450,7 +450,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (javaSdk != null) {
       if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (Sdk jdk : jdks) {
             if (jdk.getSdkType() instanceof JavaSdk) {

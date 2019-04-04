@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -13,14 +13,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +99,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void actionPerformed(@NotNull AnActionEvent e) {
         final String prefix = getEnteredPrefix();
         assert prefix != null;
-        final String[] strings = NameUtilCore.splitNameIntoWords(prefix);
+        final String[] strings = NameUtil.splitNameIntoWords(prefix);
         final String last = strings[strings.length - 1];
         final int i = prefix.lastIndexOf(last);
         mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
@@ -109,7 +109,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfoRt.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
     installSupplyTo(component);
   }
