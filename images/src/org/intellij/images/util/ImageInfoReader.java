@@ -46,6 +46,20 @@ public class ImageInfoReader {
 
   @Nullable
   public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
+    Info info = getSvgInfo(data);
+    if (info != null) return info;
+    
+    return getSimpleInfo(data, inputName);
+  }
+
+  @Nullable
+  public static Info getSimpleInfo(@NotNull byte[] data,
+                                   @Nullable String inputName) {
+    return read(new ByteArrayInputStream(data), inputName);
+  }
+
+  @Nullable
+  public static Info getSvgInfo(@NotNull byte[] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -58,7 +72,7 @@ public class ImageInfoReader {
         break;
       }
     }
-    return read(new ByteArrayInputStream(data), inputName);
+    return null;
   }
 
   private static Info getSvgSize(byte[] data) {
