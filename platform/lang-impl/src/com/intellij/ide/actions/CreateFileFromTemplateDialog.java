@@ -293,7 +293,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         .setRequestFocus(true)
         .setMovable(true)
         .setBelongsToGlobalPopupStack(true)
-        .setCancelOnClickOutside(false)
         .setCancelKeyEnabled(true)
         .setCancelOnWindowDeactivation(false)
         .setCancelOnClickOutside(true)
