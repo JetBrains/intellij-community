@@ -8,12 +8,18 @@ import com.intellij.psi.PsiElement;
 public interface BashShellParameterExpansion extends BashCompositeElement {
 
   @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
+
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
+
+  @NotNull
+  List<BashSubshellCommand> getSubshellCommandList();
+
+  @NotNull
   PsiElement getLeftCurly();
 
   @Nullable
   PsiElement getRightCurly();
-
-  @Nullable
-  PsiElement getParameterExpansionBody();
 
 }

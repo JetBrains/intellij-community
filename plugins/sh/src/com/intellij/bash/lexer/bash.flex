@@ -110,7 +110,7 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"
 AssigOp                  = "=" | "+="
 
-EscapedRightCurly        = "\\}"
+EscapedCurly             = "\\{" | "\\}"
 
 HeredocMarker            = [^\r\n|&\\;()[] \"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -203,10 +203,10 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <PARAMETER_EXPANSION> {
+  "${"                                { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
   "{"                                 {             return LEFT_CURLY; }
   "}"                                 { popState(); return RIGHT_CURLY; }
-  ([^{}]|{EscapedRightCurly})+ / "}"  {             return PARAMETER_EXPANSION_BODY; }
-  [^]                                 { popState(); }
+  ([^{}]|{EscapedCurly})+ / "${"|"}"  {             return PARAMETER_EXPANSION_BODY; }
 }
 
 <CASE_CONDITION> {

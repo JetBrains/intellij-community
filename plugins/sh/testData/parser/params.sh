@@ -52,6 +52,9 @@ ${#a[1]}
 ${a-`$[1]`}
 ${\}}
 
+if [[ -z "${CONTENT[${index}-${index}-${index}]-}" ]]; then
+    echo "Example"
+fi
 
 $(( ${param} + 1))
 

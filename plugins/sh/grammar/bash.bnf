@@ -136,7 +136,7 @@ private vars ::= variable | composed_var | command_substitution_command
 private composed_var ::= '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner {pin=2}
 private composed_var_inner ::= arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
-shell_parameter_expansion ::= '{' parameter_expansion_body '}' {pin=1}
+shell_parameter_expansion ::= '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}' {pin=1}
 bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}

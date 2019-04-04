@@ -37,7 +37,9 @@ ${!prefix*}
 ${!prefix@}
 
 
-
+if [[ -z "${CONTENT[${index}-${index}-${index}]-}" ]]; then
+    echo "Example"
+fi
 
 NEW_USERNAME=${NEW_USERNAME:-builduser}
 

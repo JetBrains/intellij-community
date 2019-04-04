@@ -2178,16 +2178,47 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' parameter_expansion_body '}'
+  // '{' parameter_expansion_body (composed_var parameter_expansion_body?)* '}'
   public static boolean shell_parameter_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, SHELL_PARAMETER_EXPANSION, null);
-    r = consumeTokens(b, 1, LEFT_CURLY, PARAMETER_EXPANSION_BODY, RIGHT_CURLY);
+    r = consumeTokens(b, 1, LEFT_CURLY, PARAMETER_EXPANSION_BODY);
     p = r; // pin = 1
+    r = r && report_error_(b, shell_parameter_expansion_2(b, l + 1));
+    r = p && consumeToken(b, RIGHT_CURLY) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // (composed_var parameter_expansion_body?)*
+  private static boolean shell_parameter_expansion_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!shell_parameter_expansion_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "shell_parameter_expansion_2", c)) break;
+    }
+    return true;
+  }
+
+  // composed_var parameter_expansion_body?
+  private static boolean shell_parameter_expansion_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = composed_var(b, l + 1);
+    r = r && shell_parameter_expansion_2_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // parameter_expansion_body?
+  private static boolean shell_parameter_expansion_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_parameter_expansion_2_0_1")) return false;
+    consumeToken(b, PARAMETER_EXPANSION_BODY);
+    return true;
   }
 
   /* ********************************************************** */
