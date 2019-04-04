@@ -14,7 +14,7 @@ import javax.swing.UIManager;
 
 final class ClassicPainter implements Control.Painter {
   static final Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
-  static final Control.Painter COMPACT = new ClassicPainter(true, 0, 0, null);
+  static final Control.Painter COMPACT = new ClassicPainter(true, 0, 0, 0);
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
