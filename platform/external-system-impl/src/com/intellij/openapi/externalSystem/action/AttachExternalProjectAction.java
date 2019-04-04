@@ -33,8 +33,7 @@ public class AttachExternalProjectAction extends AnAction {
     Presentation presentation = e.getPresentation();
     // todo [Vlad, IDEA-187835]: provide java subsystem independent implementation
     if (!ExternalSystemApiUtil.isJavaCompatibleIde()) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 

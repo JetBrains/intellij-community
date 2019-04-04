@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -57,27 +57,23 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
     IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    presentation.setEnabledAndVisible(true);
 
     boolean isPackage = false;
     final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
