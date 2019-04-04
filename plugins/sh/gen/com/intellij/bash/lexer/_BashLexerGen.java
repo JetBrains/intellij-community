@@ -1413,7 +1413,8 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 181: break;
           case 65: 
-            { if (yystate() != HERE_DOC_PIPELINE) { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
+            { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
+                                    { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT;
             } 
             // fall through

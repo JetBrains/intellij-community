@@ -45,6 +45,12 @@ monthnoToName()
    return 0
 }
 
+case "$PACKER_BUILDER_TYPE" in
+*)
+    echo "Unknown Packer Builder Type >>$PACKER_BUILDER_TYPE<< selected."
+ ;;  # <- One more issue
+esac
+
 
 
 echo *""*
