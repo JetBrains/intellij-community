@@ -21,7 +21,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -124,9 +123,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void visitErrorElement(@NotNull PsiErrorElement element) {
-    Iterator<HighlightErrorFilter> iterator = HighlightErrorFilter.EP_NAME.iterator(myProject);
-    while (iterator.hasNext()) {
-      HighlightErrorFilter errorFilter = iterator.next();
+    for (HighlightErrorFilter errorFilter : HighlightErrorFilter.EP_NAME.getIterable(myProject)) {
       if (errorFilter == null) {
         break;
       }
