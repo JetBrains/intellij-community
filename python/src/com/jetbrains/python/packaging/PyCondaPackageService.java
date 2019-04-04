@@ -126,14 +126,16 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
           executableFile = findExecutable(condaName, appData);
           if (executableFile != null) return executableFile;
           condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
+          executableFile = findExecutable(condaName, condaFolder);
+          if (executableFile != null) return executableFile;
         }
-        else {
-          final String systemWidePath = "/opt/anaconda";
-          condaFolder = LocalFileSystem.getInstance().findFileByPath(systemWidePath);
-        }
-        executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
       }
+    }
+
+    if (!SystemInfo.isWindows) {
+      final VirtualFile systemCondaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/anaconda");
+      String executableFile = findExecutable(condaName, systemCondaFolder);
+      if (executableFile != null) return executableFile;
     }
 
     return null;
