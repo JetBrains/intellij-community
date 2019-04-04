@@ -97,6 +97,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected ComboPopup createPopup() {
+    if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      return new DarculaJBPopupComboPopup<Object>(comboBox);
+    }
     return new CustomComboPopup(comboBox);
   }
 
@@ -662,15 +665,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
-  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
-    private final ListCellRenderer<Object> myRenderer;
+  private static class ComboBoxRendererWrapper<T> implements ListCellRenderer<T> {
+    private final ListCellRenderer<T> myRenderer;
 
-    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<T> renderer) {
       myRenderer = renderer;
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
       Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       return new NonOpaquePanel((JComponent)c) {
         @Override
