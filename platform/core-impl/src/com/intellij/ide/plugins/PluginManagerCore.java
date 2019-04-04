@@ -189,11 +189,6 @@ public class PluginManagerCore {
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
         loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
       }
-
-      // Android Studio: we do not bundle the Maven plugin, and its presence on the classpath prevents the Kotlin plugin from loading.
-      if (PlatformUtils.isAndroidStudio()) {
-        ourDisabledPlugins.add("org.jetbrains.idea.maven");
-      }
     }
     return ourDisabledPlugins;
   }
@@ -1106,6 +1101,10 @@ public class PluginManagerCore {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null && existingResults.add(descriptor)) {
+        // Android Studio: we do not bundle the Maven plugin, and its presence on the classpath prevents the Kotlin plugin from loading.
+        if (PlatformUtils.isAndroidStudio() && descriptor.getPluginId().getIdString().equals("org.jetbrains.idea.maven")) {
+          continue;
+        }
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (context.getPluginLoadProgressManager() != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
