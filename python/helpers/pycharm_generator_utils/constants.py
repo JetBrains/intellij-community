@@ -6,7 +6,7 @@ import string
 import time
 
 # !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.147"
+VERSION = "1.148"
 
 OUT_ENCODING = 'utf-8'
 
