@@ -179,7 +179,7 @@ public class StartupUtil {
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
       Path newConfigDir = Paths.get(PathManager.getConfigPath());
-      SwingUtilities.invokeAndWait(() -> {
+      EventQueue.invokeAndWait(() -> {
         PluginManager.installExceptionHandler();
         ConfigImportHelper.importConfigsTo(newConfigDir, log);
       });
@@ -192,7 +192,7 @@ public class StartupUtil {
 
     if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
       // exception handler is already set by ConfigImportHelper
-      SwingUtilities.invokeAndWait(() -> runStartupWizard(appStarter));
+      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
     }
 
     appStarter.start();
