@@ -1921,6 +1921,34 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("pydev debugger: bytes arguments were passed to `execv` function. " +
                       "Breakpoints won't work in the new process.\n");
       }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("python3");
+      }
+    });
+  }
+
+  @Test
+  public void testCallSpawnWithBytesArgs() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_spawn_with_bytes_args.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForOutput("pydev debugger: bytes arguments were passed to `spawnv` function. " +
+                      "Breakpoints won't work in the new process.\n");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("python3");
+      }
     });
   }
 }
