@@ -649,7 +649,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (myPattern.trim().length() == 0) {
           buildGroups(true);
-          updatePopup();
           return;
         }
 
@@ -681,6 +680,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     private void buildGroups(boolean isRecent) {
       buildAllGroups(myPattern, () -> check(), isRecent);
+      updatePopup();
     }
 
     private void buildHelpGroups(@NotNull RunAnythingSearchListModel listModel) {
