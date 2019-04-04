@@ -23,7 +23,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
@@ -569,25 +568,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       protected void configureList() {
         super.configureList();
         list.setBackground(UIManager.getColor("TextField.background"));
-        wrapRenderer();
-      }
-
-      @Override
-      protected PropertyChangeListener createPropertyChangeListener() {
-        PropertyChangeListener listener = super.createPropertyChangeListener();
-        return new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            listener.propertyChange(evt);
-            if ("renderer".equals(evt.getPropertyName())) {
-              wrapRenderer();
-            }
-          }
-        };
       }
 
       @SuppressWarnings("unchecked")
-      private void wrapRenderer() {
+      @Override
+      protected void wrapRenderer() {
         ListCellRenderer renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
