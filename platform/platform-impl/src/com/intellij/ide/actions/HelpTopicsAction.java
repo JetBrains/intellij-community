@@ -16,7 +16,6 @@ public class HelpTopicsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
 
     boolean enabled = ApplicationInfo.helpAvailable();
     e.getPresentation().setEnabledAndVisible(enabled);

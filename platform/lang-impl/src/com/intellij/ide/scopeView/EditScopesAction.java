@@ -35,7 +35,6 @@ public final class EditScopesAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    super.update(event);
     Project project = event.getData(CommonDataKeys.PROJECT);
     ProjectView view = project == null ? null : ProjectView.getInstance(project);
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace())) {

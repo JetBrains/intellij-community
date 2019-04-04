@@ -84,7 +84,6 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(myEnabled);
     }
   }

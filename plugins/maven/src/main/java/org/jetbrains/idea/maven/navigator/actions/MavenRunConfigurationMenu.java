@@ -71,7 +71,6 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(myEnabled);
     }
   }

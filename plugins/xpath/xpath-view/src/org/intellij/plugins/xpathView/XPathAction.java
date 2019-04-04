@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class XPathAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
-    super.update(event);
     final Presentation presentation = event.getPresentation();
 
     // keep track of enabled status

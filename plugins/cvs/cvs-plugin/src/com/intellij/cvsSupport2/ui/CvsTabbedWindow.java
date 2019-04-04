@@ -186,7 +186,6 @@ public class CvsTabbedWindow implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       Object data = e.getData(ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY);
       e.getPresentation().setEnabled(data instanceof CvsException);
     }

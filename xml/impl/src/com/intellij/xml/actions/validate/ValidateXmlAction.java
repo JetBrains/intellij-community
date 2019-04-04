@@ -63,7 +63,6 @@ public class ValidateXmlAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    super.update(event);
 
     Presentation presentation = event.getPresentation();
     PsiElement psiElement = event.getData(CommonDataKeys.PSI_FILE);

@@ -17,7 +17,6 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Presentation p = e.getPresentation();
     final boolean visible = isVisible(e);
     p.setVisible(visible);

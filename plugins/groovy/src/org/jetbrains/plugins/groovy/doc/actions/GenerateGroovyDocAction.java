@@ -49,7 +49,6 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    super.update(event);
     final Presentation presentation = event.getPresentation();
     Module module = event.getData(LangDataKeys.MODULE);
 
