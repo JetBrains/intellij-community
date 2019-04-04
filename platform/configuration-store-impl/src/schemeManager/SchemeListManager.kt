@@ -91,7 +91,7 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     schemes.addAll(newSchemes)
 
     val oldCurrentScheme = schemeManager.activeScheme
-    schemeManager.retainExternalInfo()
+    schemeManager.retainExternalInfo(isScheduleToDelete = true)
 
     if (oldCurrentScheme != newCurrentScheme) {
       val newScheme: T?
