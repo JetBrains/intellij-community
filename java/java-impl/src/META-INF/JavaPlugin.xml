@@ -1278,6 +1278,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
                      implementationClass="com.intellij.codeInspection.IdempotentLoopBodyInspection"/>
+    <localInspection language="JAVA" shortName="IterableUsedAsVararg" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     bundle="messages.InspectionsBundle" key="inspection.collection.used.as.vararg.display.name"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.IterableUsedAsVarargInspection"/>
     <localInspection language="JAVA" shortName="ConditionalBreakInInfiniteLoop" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.conditional.break.in.infinite.loop.description"
