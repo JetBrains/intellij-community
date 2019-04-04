@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -22,7 +21,7 @@ class ShowCommitOptionsAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val workflowHandler = getCommitWorkflowHandler(e)!!
-    workflowHandler.showCommitOptions(e.inputEvent?.component is ActionButtonComponent, e.dataContext)
+    workflowHandler.showCommitOptions(e.isFromActionToolbar, e.dataContext)
   }
 
   private fun getCommitWorkflowHandler(e: AnActionEvent): ChangesViewCommitWorkflowHandler? {
