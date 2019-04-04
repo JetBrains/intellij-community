@@ -575,15 +575,17 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String) = removeFirstScheme { processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = removeFirstScheme(true) { processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T) = removeFirstScheme { it === scheme } != null
+  override fun removeScheme(scheme: T) = removeScheme(scheme, isScheduleToDelete = true)
+
+  fun removeScheme(scheme: T, isScheduleToDelete: Boolean) = removeFirstScheme(isScheduleToDelete) { it === scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
   override fun toString() = fileSpec
 
-  private fun removeFirstScheme(condition: (T) -> Boolean): T? {
+  internal fun removeFirstScheme(isScheduleToDelete: Boolean, condition: (T) -> Boolean): T? {
     val iterator = schemes.iterator()
     for (scheme in iterator) {
       if (!condition(scheme)) {
@@ -596,7 +598,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       iterator.remove()
 
-      if (processor.isExternalizable(scheme)) {
+      if (isScheduleToDelete && processor.isExternalizable(scheme)) {
         schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete)
       }
       return scheme

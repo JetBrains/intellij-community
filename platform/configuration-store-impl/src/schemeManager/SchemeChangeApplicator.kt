@@ -12,10 +12,14 @@ internal interface SchemeChangeEvent {
   fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>)
 }
 
-internal fun findExternalizableSchemeByFileName(fileName: String, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
+private fun findExternalizableSchemeByFileName(fileName: String, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
   return schemeManager.schemes.firstOrNull {
-    fileName == "${schemeManager.getFileName(it)}${schemeManager.schemeExtension}"
+    fileName == getSchemeFileName(schemeManager, it)
   }
+}
+
+internal fun <T : Any> getSchemeFileName(schemeManager: SchemeManagerImpl<T, T>, scheme: T): String {
+  return "${schemeManager.getFileName(scheme)}${schemeManager.schemeExtension}"
 }
 
 internal fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
