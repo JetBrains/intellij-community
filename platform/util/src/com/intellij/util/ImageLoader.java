@@ -277,7 +277,7 @@ public class ImageLoader implements Serializable {
       Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
                                  FileUtilRt.getExtension(path),
                                  cls,
-                                 Registry.is("ide.svg.icon"),
+                                 true,
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
       if (path.contains("://") && !path.startsWith("file:")) {
