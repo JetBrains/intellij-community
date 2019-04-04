@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
@@ -140,10 +141,10 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
                                                             linkVFile.is(VFileProperty.SYMLINK));
 
     setWritableAndCheck(targetFile, true);
-    refresh();
+    refresh(myTempDir.getRoot());
     assertTrue(linkVFile.getPath(), linkVFile.isWritable());
     setWritableAndCheck(targetFile, false);
-    refresh();
+    refresh(myTempDir.getRoot());
     assertFalse(linkVFile.getPath(), linkVFile.isWritable());
 
     File targetDir = myTempDir.newFolder("target");
@@ -153,10 +154,10 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     if (!SystemInfo.isWindows) {
       setWritableAndCheck(targetDir, true);
-      refresh();
+      refresh(myTempDir.getRoot());
       assertTrue(linkVDir.getPath(), linkVDir.isWritable());
       setWritableAndCheck(targetDir, false);
-      refresh();
+      refresh(myTempDir.getRoot());
       assertFalse(linkVDir.getPath(), linkVDir.isWritable());
     }
     else {
@@ -268,7 +269,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertTrue(link.toString(), link.delete());
     createSymLink(targetDir2.getPath(), myTempDir.getRoot() + "/" + link.getName());
 
-    refresh();
+    refresh(myTempDir.getRoot());
     assertTrue(vLink1.isValid());
     VirtualFile vLink2 = LocalFileSystem.getInstance().findFileByIoFile(link);
     assertEquals(vLink1, vLink2);
@@ -306,7 +307,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertTrue(link.toString(), link.delete());
     createSymLink(target2.getPath(), myTempDir.getRoot() + "/" + link.getName());
 
-    refresh();
+    refresh(myTempDir.getRoot());
     assertTrue(vLink1.isValid());
     VirtualFile vLink2 = LocalFileSystem.getInstance().findFileByIoFile(link);
     VfsUtilCore.loadText(vLink2);
@@ -342,13 +343,18 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Nullable
   private VirtualFile refreshAndFind(File ioFile) {
-    refresh();
+    return refreshAndFind(myTempDir.getRoot(), ioFile);
+  }
+
+  @Nullable
+  static VirtualFile refreshAndFind(File root, File ioFile) {
+    refresh(root);
     return LocalFileSystem.getInstance().findFileByPath(ioFile.getPath());
   }
 
-  protected void refresh() {
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
-    assertNotNull(myTempDir.getRoot().getPath(), tempDir);
+  private static void refresh(File root) {
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+    assertNotNull(root.getPath(), tempDir);
 
     tempDir.getChildren();
     tempDir.refresh(false, true);
@@ -371,11 +377,13 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
 
-    Set<String> actualSet = new java.util.HashSet<>();
+    Set<String> actualSet = new HashSet<>();
     VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        actualSet.add(file.getPath());
+        if (!actualSet.add(file.getPath())) {
+          throw new AssertionError(file + " already visited");
+        }
         return true;
       }
     });
