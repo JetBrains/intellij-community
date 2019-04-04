@@ -77,10 +77,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
       public void visitElement(final PsiElement element) {
         if (holder.getResultCount()>1000) return;
 
-        if (element.getTextLength() > TOKEN_LENGTH_LIMIT) {
-          return;
-        }
-
         final ASTNode node = element.getNode();
         if (node == null) {
           return;
@@ -108,6 +104,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
+        if (element.getTextLength() > TOKEN_LENGTH_LIMIT) {
+          return;
+        }
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
       }
     };
