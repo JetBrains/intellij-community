@@ -36,7 +36,7 @@ envs {
 //  python "python37", "3.7.2"
 
   if (System.getenv("PYCHARM_BOOTSTRAP_ANACONDA") == "true") {
-//    conda "Anaconda2", "Anaconda2-2018.12", "64", []
+    conda "Anaconda2", "Anaconda2-2018.12", "64", []
     conda "Anaconda3", "Anaconda3-2018.12", "64", []
   }
 }
