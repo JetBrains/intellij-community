@@ -830,14 +830,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getFilePath("test_python_subprocess_with_c_parameter.py"), 5);
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
-        eval("ret").hasValue("0");
+        eval("x").hasValue("42");
         resume();
         waitForOutput("Hello!");
       }
