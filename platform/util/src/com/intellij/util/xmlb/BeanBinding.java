@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
-  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.newConcurrentMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
