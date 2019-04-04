@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/build/builder-model/3.3.0/builder-model-3.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/build/builder-model/3.3.0/builder-model-3.3.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
