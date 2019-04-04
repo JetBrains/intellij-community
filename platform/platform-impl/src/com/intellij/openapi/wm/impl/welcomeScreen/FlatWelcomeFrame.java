@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -99,16 +100,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setGlassPane(glassPane);
     glassPane.setVisible(false);
-    //setUndecorated(true);
+
     if (IdeFrameDecorator.isCustomDecoration()) {
       JdkEx.setHasCustomDecoration(this);
+
+      CustomFrameDialogContent content = new CustomFrameDialogContent(this, myScreen.getWelcomePanel());
+      setContentPane(content.getView());
+    } else {
+      setContentPane(myScreen.getWelcomePanel());
     }
 
-    setContentPane(myScreen.getWelcomePanel());
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
-    getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
+
+    getRootPane().setPreferredSize(JBUI.size(width, getPreferredSize().height));
     setResizable(false);
 
     Dimension size = getPreferredSize();
