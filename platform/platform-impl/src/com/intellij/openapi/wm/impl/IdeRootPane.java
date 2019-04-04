@@ -9,6 +9,7 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -102,7 +103,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
       setJMenuBar(menu);
     } else {
       if (isDecoratedMenu()) {
-        myCustomFrameTitlePane = CustomHeader.Companion.createFrameHeader((JFrame) frame);
+        JFrame jframe = (JFrame) frame;
+        JdkEx.setHasCustomDecoration(jframe);
+
+        myCustomFrameTitlePane = CustomHeader.Companion.createFrameHeader(jframe);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }
