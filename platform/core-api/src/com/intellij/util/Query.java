@@ -77,17 +77,27 @@ public interface Query<Result> extends Iterable<Result> {
 
   @NotNull
   default <R> Query<R> map(@NotNull Function<? super Result, ? extends R> mapper) {
-    return QueryDefaults.map(this, mapper);
+    return new PostProcessingQuery<Result, R>(this) {
+      @Override
+      protected boolean process(Result r, @NotNull Processor<? super R> resultProcessor) {
+        return resultProcessor.process(mapper.apply(r));
+      }
+    };
   }
 
   @NotNull
   default Query<Result> filter(@NotNull Predicate<? super Result> predicate) {
-    return QueryDefaults.filter(this, predicate);
+    return new FilteredQuery<>(this, predicate::test);
   }
 
   @NotNull
   default <R> Query<R> flatMap(@NotNull Function<? super Result, ? extends Query<? extends R>> subquery) {
-    return QueryDefaults.flatMap(this, subquery);
+    return new PostProcessingQuery<Result, R>(this) {
+      @Override
+      protected boolean process(Result r, @NotNull Processor<? super R> resultProcessor) {
+        return subquery.apply(r).forEach(resultProcessor);
+      }
+    };
   }
 
   /**

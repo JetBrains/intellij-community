@@ -2,7 +2,6 @@
 package com.intellij.model.search.impl
 
 import com.intellij.model.Symbol
-import com.intellij.model.SymbolReference
 import com.intellij.model.SymbolService
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.application.QueryExecutorBase
@@ -13,7 +12,7 @@ import com.intellij.psi.search.QuerySearchRequest
 import com.intellij.psi.search.SearchRequestCollector
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch.SearchParameters
-import com.intellij.util.PostProcessingQuery
+import com.intellij.util.InstanceofQuery
 import com.intellij.util.PairProcessor
 import com.intellij.util.Processor
 
@@ -30,22 +29,11 @@ class SymbolToPsiReferenceSearcher : QueryExecutorBase<PsiReference, SearchParam
     val symbol = SymbolService.adaptPsiElement(queryParameters.elementToSearch)
     val symbolParameters = PsiToSymbolParameters(symbol, queryParameters)
     val symbolQuery = SearchService.getInstance().searchTarget(symbolParameters)
-    val psiQuery = PostProcessingQuery(symbolQuery, this::adaptProcessor)
+    val psiQuery = InstanceofQuery(symbolQuery, PsiReference::class.java)
     queryParameters.optimizer.apply {
       val nested = SearchRequestCollector(searchSession)
       val request = QuerySearchRequest(psiQuery, nested, false, PairProcessor { ref, _ -> consumer.process(ref) })
       searchQuery(request)
-    }
-  }
-
-  private fun adaptProcessor(psiProcessor: Processor<in PsiReference>): Processor<in SymbolReference> {
-    return Processor { modelReference ->
-      if (modelReference is PsiReference) {
-        psiProcessor.process(modelReference)
-      }
-      else {
-        TODO("Found reference: $modelReference, class: ${modelReference.javaClass}")
-      }
     }
   }
 
