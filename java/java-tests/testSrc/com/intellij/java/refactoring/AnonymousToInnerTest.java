@@ -47,14 +47,6 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
     doTest("MyPredicate", true);
   }
   
-  public void testRedundantTypeParameter() {
-    doTest("MyConsumer", false);
-  }
-  
-  public void testRequiredTypeParameter() {
-    doTest("MyConsumer", true);
-  }
-  
   public void testCanBeStatic() {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     AnonymousToInnerHandler handler = new AnonymousToInnerHandler(){

@@ -51,7 +51,6 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testClsCapturedReturnTypes() { doTest(); }
   public void testOverloadChooserOfReturnType() { doTest(); }
   public void testIDEA98866() { doTest(); }
-  public void testDiamondWithConditionalInside() { doTest(); }
   public void testIncompleteSubstitution() { doTest(); }
   public void testJDK8028774() { doTest(); }
   public void testErasedByReturnConstraint() { doTest(); }
@@ -203,7 +202,6 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
   public void testNotInferredVarShouldNotBeUsedForInferenceJava10() { doTest(); }
   public void testJavac8UnCaptureBug() { doTest(); }
-  public void testLambdaInConditional() { doTest(); }
   public void testTopLevelParentNoParameters() {
     doTest();
   }

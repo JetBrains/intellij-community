@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
   @NotNull
   @Override
   public <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
-    return ContainerUtil.filterIsInstance(myDependencies, aClass);
+    return ContainerUtil.collect(myDependencies.iterator(), FilteringIterator.instanceOf(aClass));
   }
 
   @NotNull
@@ -53,7 +54,7 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
   }
 
   @Override
-  public void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies) {
+  public void setAllDependencies(@NotNull List<ProjectExternalDependency> dependencies) {
     myDependencies.clear();
     myDependencies.addAll(dependencies);
     Collections.sort(myDependencies, DEPENDENCY_COMPARATOR);

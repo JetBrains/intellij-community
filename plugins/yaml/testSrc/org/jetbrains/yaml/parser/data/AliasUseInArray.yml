@@ -1,6 +1,0 @@
-properties:
-  - !logical &REF
-    name: "something"
-
-  - !logical &ALL
-    items: [*REF]

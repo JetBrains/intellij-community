@@ -45,8 +45,4 @@ public class SelectionNode extends Expression {
     return calculateQuickResult(context);
   }
 
-  @Override
-  public boolean requiresCommittedPSI() {
-    return false;
-  }
 }

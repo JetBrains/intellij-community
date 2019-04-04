@@ -28,8 +28,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -139,7 +139,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
+  private static String collectSuitableVariables(final PsiMethod method, final List<PsiVariable> suitableVariables) {
     final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());
@@ -201,8 +201,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (containingClass == null) return false;
     Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(PsiUtil.typeParametersIterable(containingClass));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), typeParameters)) return true;
+      if (PsiPolyExpressionUtil.mentionsTypeParameters(parameter.getType(), typeParameters)) return true;
     }
-    return PsiTypesUtil.mentionsTypeParameters(method.getReturnType(), typeParameters);
+    return PsiPolyExpressionUtil.mentionsTypeParameters(method.getReturnType(), typeParameters);
   }
 }

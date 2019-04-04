@@ -96,48 +96,44 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.Arrays.asList"
   )
   
-  val showIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
-                                                             "If method name contains parameter name",
-                                                             false)
+  val isDoNotShowIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
+                                                                    "Do not show if method name contains parameter name",
+                                                                    true)
   
-  val showForParamsWithSameType: Option = Option("java.multiple.params.same.type",
-                                                 "For non-literals in case of multiple params with the same type",
-                                                 false)
+  val isShowForParamsWithSameType: Option = Option("java.multiple.params.same.type",
+                                                   "Show for non-literals in case of multiple params with the same type",
+                                                   false)
   
-  val showForBuilderLikeMethods: Option = Option("java.build.like.method",
-                                                 "For builder-like methods",
-                                                 false)
+  val isDoNotShowForBuilderLikeMethods: Option = Option("java.build.like.method",
+                                                        "Do not show for builder-like methods",
+                                                        true)
 
 
   val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
-                                                  "For methods with same-named numbered parameters",
-                                                  false)
+                                                  "Do not show for methods with same-named numbered parameters",
+                                                  true)
 
   val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
-                                                           "Even when type of expression is clear",
+                                                           "Show hints even when type of expression is clear",
                                                            false)
 
   val isShowHintsForEnumConstants: Option = Option("java.enums",
-                                                           "For enum constants",
+                                                           "Show hints for enum constants",
                                                            true)
 
   val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    "For 'new' expressions",
+                                                    "Show hints for 'new' expressions",
                                                     true)
 
   override fun getSupportedOptions(): List<Option> {
     return listOf(
-      showIfMethodNameContainsParameterName,
-      showForParamsWithSameType,
-      showForBuilderLikeMethods,
+      isDoNotShowIfMethodNameContainsParameterName,
+      isShowForParamsWithSameType,
+      isDoNotShowForBuilderLikeMethods,
       ignoreOneCharOneDigitHints,
       isShowHintWhenExpressionTypeIsClear,
       isShowHintsForEnumConstants,
       isShowHintsForNewExpressions
     )
-  }
-
-  override fun getSettingsPreview(): String {
-    return "class A {\n  native void foo(String name, boolean isChanged);\n  \n  void bar() {\n    foo(\"\", false);\n  }\n}"
   }
 }

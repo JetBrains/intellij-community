@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.openapi.ui;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -14,11 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "masterDetails", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
-public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
+@State(name = "masterDetails", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
+  private final SkipDefaultValuesSerializationFilters mySerializationFilter = new SkipDefaultValuesSerializationFilters();
   private final Map<String, ComponentState> myStates = new HashMap<>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
@@ -30,11 +30,11 @@ public final class MasterDetailsStateService implements PersistentStateComponent
     ComponentState state = myStates.get(key);
     if (state == null) return null;
     final Element settings = state.mySettings;
-    return settings == null ? null : XmlSerializer.deserialize(settings, stateClass);
+    return settings != null ? XmlSerializer.deserialize(settings, stateClass) : null;
   }
 
   public void setComponentState(@NotNull @NonNls String key, @NotNull MasterDetailsState state) {
-    final Element element = XmlSerializer.serialize(state);
+    final Element element = XmlSerializer.serialize(state, mySerializationFilter);
     final ComponentState componentState = new ComponentState();
     componentState.myKey = key;
     componentState.mySettings = element;
@@ -58,7 +58,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
   }
 
   @Tag("state")
-  public static final class ComponentState {
+  public static class ComponentState {
     @Attribute("key")
     public String myKey;
 
@@ -66,7 +66,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
     public Element mySettings;
   }
 
-  public static final class States {
+  public static class States {
     private List<ComponentState> myStates = new ArrayList<>();
 
     @XCollection(style = XCollection.Style.v2)

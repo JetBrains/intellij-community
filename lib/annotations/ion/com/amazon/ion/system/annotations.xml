@@ -1,5 +1,0 @@
-<root>
-  <item name='com.amazon.ion.system.IonReaderBuilder com.amazon.ion.system.IonReaderBuilder standard()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

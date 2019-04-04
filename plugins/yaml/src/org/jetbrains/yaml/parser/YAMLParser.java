@@ -234,15 +234,12 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         advanceLexer(); // alias name
         aliasMarker.done(YAMLElementTypes.ALIAS_NODE);
         if (getTokenType() == COLON) {
-          // Alias is used as key name
           eolSeen = false;
           int indentAddition = getShorthandIndentAddition();
           nodeType = parseSimpleScalarKeyValueFromColon(indent, indentAddition);
         }
         else {
-          // simple ALIAS_NODE was constructed and marker should be dropped
-          marker.drop();
-          return YAMLElementTypes.ALIAS_NODE;
+          nodeType = null;
         }
       }
       else {

@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -12,7 +26,10 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -57,19 +74,16 @@ public class ApplicationUtil {
   }
 
   /**
-   * Waits for {@code future} to be complete, or the current thread's indicator to be canceled.
-   * Note that {@code future} will not be cancelled by this method.
+   * Waits for {@code future} to be complete, or the current thread's indicator to be canceled
+   * Note that {@code future} will not be cancelled by this method
    */
-  public static <T> T runWithCheckCanceled(@NotNull Future<T> future,
-                                           @NotNull final ProgressIndicator indicator) throws ExecutionException {
+  public static void runWithCheckCanceled(@NotNull Future<?> future, @NotNull final ProgressIndicator indicator) throws Exception {
     while (true) {
       indicator.checkCanceled();
 
       try {
-        return future.get(25, TimeUnit.MILLISECONDS);
-      }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException(e);
+        future.get(25, TimeUnit.MILLISECONDS);
+        break;
       }
       catch (TimeoutException ignored) { }
     }

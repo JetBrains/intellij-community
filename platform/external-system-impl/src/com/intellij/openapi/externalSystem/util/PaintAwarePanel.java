@@ -26,7 +26,7 @@ import java.awt.*;
  */
 public class PaintAwarePanel extends JPanel {
 
-  @Nullable private Consumer<? super Graphics> myPaintCallback;
+  @Nullable private Consumer<Graphics> myPaintCallback;
 
   public PaintAwarePanel() {
     this(new GridBagLayout());
@@ -44,7 +44,12 @@ public class PaintAwarePanel extends JPanel {
     super.paint(g);
   }
 
-  public void setPaintCallback(@Nullable Consumer<? super Graphics> paintCallback) {
+  @Nullable
+  public Consumer<Graphics> getPaintCallback() {
+    return myPaintCallback;
+  }
+
+  public void setPaintCallback(@Nullable Consumer<Graphics> paintCallback) {
     myPaintCallback = paintCallback;
   }
 }

@@ -1,10 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
@@ -12,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,7 +43,7 @@ public class SignatureParsing {
       return Collections.emptyList();
     }
 
-    List<Pair<String, String[]>> typeParameters = new ArrayList<>();
+    List<Pair<String, String[]>> typeParameters = ContainerUtil.newArrayList();
     signature.next();
     while (signature.current() != '>') {
       typeParameters.add(parseTypeParameter(signature, mapping));
@@ -70,7 +83,7 @@ public class SignatureParsing {
       bounds.add(bound);
     }
 
-    return pair(parameterName, ArrayUtilRt.toStringArray(bounds));
+    return pair(parameterName, ArrayUtil.toStringArray(bounds));
   }
 
   @Nullable

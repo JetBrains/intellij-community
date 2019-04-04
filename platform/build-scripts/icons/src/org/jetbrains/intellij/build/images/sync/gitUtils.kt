@@ -47,7 +47,7 @@ private fun listGitTree(
   if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
-    .filter(String::isNotBlank).map { line ->
+    .filter { it.isNotBlank() }.map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
       line.splitWithTab()
         .also { if (it.size != 2) error(line) }
@@ -135,16 +135,10 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): CommitInfo {
-  execute(
-    repo, GIT,
-    "-c", "user.name=$user",
-    "-c", "user.email=$email",
-    "commit", "-m", message,
-    "--author=$user <$email>"
-  )
-  push(repo, "$branch:$branch")
-  return commitInfo(repo) ?: error("Unable to read last commit")
+internal fun commitAndPush(repo: File, branch: String, message: String): String {
+  execute(repo, GIT, "commit", "-m", message)
+  push(repo, "+$branch:$branch")
+  return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
 
 internal fun checkout(repo: File, branch: String) = execute(repo, GIT, "checkout", branch)
@@ -159,27 +153,9 @@ internal fun deleteBranch(repo: File, branch: String) {
 }
 
 private fun push(repo: File, spec: String) =
-  retry(doRetry = { beforePushRetry(it, repo, spec) }) {
+  retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
     execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
-
-private fun beforePushRetry(e: Throwable, repo: File, spec: String): Boolean {
-  if (!isGitServerUnavailable(e)) {
-    val specParts = spec.split(':')
-    if (specParts.count() == 2) {
-      val flippedSpec = "${specParts[1]}:${specParts[0]}"
-      execute(repo, GIT, "pull", "--rebase=true", "origin", flippedSpec)
-    }
-  }
-  return true
-}
-
-private fun isGitServerUnavailable(e: Throwable) = with(e.message ?: "") {
-  contains("remote end hung up unexpectedly")
-  || contains("Service is in readonly mode")
-  || contains("failed to lock")
-  || contains("Connection timed out")
-}
 
 @Volatile
 private var origins = emptyMap<File, String>()
@@ -195,7 +171,7 @@ internal fun getOriginUrl(repo: File): String {
       }
     }
   }
-  return origins.getValue(repo)
+  return origins[repo]!!
 }
 
 @Volatile
@@ -210,7 +186,7 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = monoRepoMergeAwareCommitInfo(repo, path)
+        val commitInfo = commitInfo(repo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
@@ -220,27 +196,7 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
       }
     }
   }
-  return latestChangeCommits.getValue(file)
-}
-
-private fun monoRepoMergeAwareCommitInfo(repo: File, path: String) =
-  commitInfo(repo, "--", path)?.let { commitInfo ->
-    if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-      val strippedPath = path.stripMergedRepoPrefix()
-      commitInfo.parents.asSequence().mapNotNull {
-        commitInfo(repo, it, "--", strippedPath)
-      }.firstOrNull()
-    }
-    else commitInfo
-  }
-
-private fun String.stripMergedRepoPrefix(): String = when {
-  startsWith("community/android/tools-base/") -> removePrefix("community/android/tools-base/")
-  startsWith("community/android/") -> removePrefix("community/android/")
-  startsWith("community/") -> removePrefix("community/")
-  startsWith("contrib/") -> removePrefix("contrib/")
-  startsWith("CIDR/") -> removePrefix("CIDR/")
-  else -> this
+  return latestChangeCommits[file]!!
 }
 
 /**
@@ -266,7 +222,7 @@ private fun findMergeCommit(repo: File, commit: String, searchUntil: String = "H
     .lineSequence().filter { it.isNotBlank() }.toSet()
   // last common commit may be the latest merge
   return ancestryPathList
-    .lastOrNull(firstParentList::contains)
+    .lastOrNull { firstParentList.contains(it) }
     ?.let { commitInfo(repo, it) }
     ?.takeIf {
       // should be merge
@@ -316,21 +272,21 @@ internal fun head(repo: File): String {
       }
     }
   }
-  return heads.getValue(repo)
+  return heads[repo]!!
 }
 
 internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%cn/%ce/%s", "--date=raw", *args)
+  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
     .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
-  return if (output.size >= 6) {
+  return if (output.size >= 5) {
     CommitInfo(
       repo = repo,
       hash = output[0],
       timestamp = output[1].splitWithSpace()[0].toLong(),
       parents = output[2].splitWithSpace(),
-      committer = Committer(name = output[3], email = output[4]),
-      subject = output.subList(5, output.size)
+      committerEmail = output[3],
+      subject = output.subList(4, output.size)
         .joinToString(separator = "/")
         .removeSuffix(System.lineSeparator())
     )
@@ -342,12 +298,31 @@ internal data class CommitInfo(
   val hash: String,
   val timestamp: Long,
   val subject: String,
-  val committer: Committer,
   val parents: List<String>,
+  val committerEmail: String,
   val repo: File
 )
 
-internal data class Committer(val name: String, val email: String)
+internal fun <T> withUser(repo: File, user: String, email: String, block: () -> T): T {
+  val (originalUser, originalEmail) = callSafely(printStackTrace = false) {
+    execute(repo, GIT, "config", "user.name").removeSuffix(System.lineSeparator()) to
+      execute(repo, GIT, "config", "user.email").removeSuffix(System.lineSeparator())
+  } ?: "" to ""
+  return try {
+    configureUser(repo, user, email)
+    block()
+  }
+  finally {
+    callSafely {
+      configureUser(repo, originalUser, originalEmail)
+    }
+  }
+}
+
+private fun configureUser(repo: File, user: String, email: String) {
+  execute(repo, GIT, "config", "user.name", user)
+  execute(repo, GIT, "config", "user.email", email)
+}
 
 internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
   execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")

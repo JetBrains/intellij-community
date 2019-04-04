@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,9 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.serialization.SerializationException;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializationException;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -74,6 +75,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
 
 
+  public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
+
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
@@ -114,14 +117,16 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
+  public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
+
   @OptionTag("SMART_BACKSPACE") // explicit name makes it work also for obfuscated private field's name
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
-
+  
   @Transient
   @NotNull
   public SmartBackspaceMode getBackspaceMode() {
     SmartBackspaceMode[] values = SmartBackspaceMode.values();
-    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF;
+    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF; 
   }
 
   @Transient
@@ -152,7 +157,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean INDENT_TO_CARET_ON_PASTE;
 
   @MagicConstant(intValues = {YES, NO, ASK})
-  public int ADD_IMPORTS_ON_PASTE = YES;
+  public int ADD_IMPORTS_ON_PASTE = ASK;
   public static final int YES = 1;
   public static final int NO = 2;
   public static final int ASK = 3;
@@ -184,7 +189,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
   @NotNull
-  public String[] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   @Override
   public void loadState(@NotNull Element state) {
@@ -192,9 +197,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     setDefaults();
 
     try {
-      XmlSerializer.deserializeInto(state, this);
+      XmlSerializer.deserializeInto(this, state);
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       LOG.info(e);
     }
   }
@@ -213,7 +218,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       LOG.info(e);
     }
 
-    EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
+    EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -223,11 +228,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     return element;
   }
 
-  public void writeExternal(@NotNull Element element) {
+  public void writeExternal(final Element element) {
     try {
-      XmlSerializer.serializeObjectInto(this, element);
+      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       LOG.info(e);
     }
   }

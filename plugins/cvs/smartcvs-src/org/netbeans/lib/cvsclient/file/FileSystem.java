@@ -12,7 +12,6 @@
  */
 package org.netbeans.lib.cvsclient.file;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
@@ -105,7 +104,7 @@ public final class FileSystem
 			canonicalFileName = canonicalFileName.substring(0, canonicalFileName.length() - 1);
 		}
 		if (System.getProperty(OS_NAME_PARAMETER).startsWith(WINDOWS)) {
-			return StringUtil.toLowerCase(canonicalFileName);
+			return canonicalFileName.toLowerCase();
 		}
 		return canonicalFileName;
 	}

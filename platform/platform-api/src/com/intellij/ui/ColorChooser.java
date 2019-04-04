@@ -35,7 +35,7 @@ public class ColorChooser {
                                   @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
-                                  List<? extends ColorPickerListener> listeners,
+                                  List<ColorPickerListener> listeners,
                                   boolean opacityInPercent) {
     return ColorChooserService.getInstance().showDialog(null, parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
@@ -70,7 +70,7 @@ public class ColorChooser {
                                   @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
-                                  List<? extends ColorPickerListener> listeners,
+                                  List<ColorPickerListener> listeners,
                                   boolean opacityInPercent) {
     return ColorChooserService.getInstance().showDialog(project, parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }

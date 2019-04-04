@@ -36,7 +36,7 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<File> {
+  fun downloadPatchChain(chain: List<BuildNumber>, forceHttps: Boolean, indicator: ProgressIndicator): List<File> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
     val files = mutableListOf<File>()
@@ -48,6 +48,7 @@ object UpdateInstaller {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println( "  patchName: $patchName" )
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -55,7 +56,7 @@ object UpdateInstaller {
           super.setFraction((i - 1) * share + fraction / share)
         }
       }
-      HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
+      HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
       ZipFile(patchFile).use {
         if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
           throw IOException("Corrupted patch file: ${patchFile.name}")
@@ -186,8 +187,7 @@ object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String {
-    var jreHome = File(PathManager.getHomePath(), "jbr")
-    if (!jreHome.exists()) jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
     if (!jreHome.exists()) return "-no-jbr"
     val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
     val version = try {

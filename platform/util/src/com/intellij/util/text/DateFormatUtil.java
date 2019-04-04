@@ -6,21 +6,14 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
@@ -322,8 +315,12 @@ public class DateFormatUtil {
     long kCFDateFormatterShortStyle = 1;
     long kCFDateFormatterMediumStyle = 2;
 
-    @Structure.FieldOrder({"location", "length"})
     class CFRange extends Structure implements Structure.ByValue {
+      @Override
+      protected List<String> getFieldOrder() {
+        return Arrays.asList("location", "length");
+      }
+
       public long location;
       public long length;
 
@@ -342,7 +339,7 @@ public class DateFormatUtil {
 
   // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
-    CF cf = Native.load("CoreFoundation", CF.class);
+    CF cf = Native.loadLibrary("CoreFoundation", CF.class);
     return new DateFormat[]{
       getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
       getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
@@ -405,7 +402,7 @@ public class DateFormatUtil {
   }
 
   private static DateFormat[] getWindowsFormats() {
-    Kernel32 kernel32 = Native.load("Kernel32", Kernel32.class);
+    Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
     int bufferSize = 128, rv;
     char[] buffer = new char[bufferSize];
 

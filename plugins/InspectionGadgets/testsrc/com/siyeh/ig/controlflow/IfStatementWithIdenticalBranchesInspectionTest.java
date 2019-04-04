@@ -10,7 +10,6 @@ public class IfStatementWithIdenticalBranchesInspectionTest extends LightQuickFi
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     IfStatementWithIdenticalBranchesInspection inspection = new IfStatementWithIdenticalBranchesInspection();
-    inspection.myHighlightWhenLastStatementIsCall = !getTestName(false).equals("LastStatementIsCallInfo.java");
     return new LocalInspectionTool[]{inspection};
   }
 

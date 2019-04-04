@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,10 +18,9 @@ import com.intellij.util.indexing.impl.ForwardIndex;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
-import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.EdgeData;
-import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TByteObjectHashMap;
@@ -113,16 +113,16 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) throws IOException {
+  public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept)
+    throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
-    int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
     for (Couple<Integer> rename : renames) {
-      if ((isChildPath && rename.second == pathId) ||
-          (!isChildPath && rename.first == pathId)) {
-        FilePath path1 = getPath(rename.first);
-        FilePath path2 = getPath(rename.second);
-        return new EdgeData<>(path1, path2);
+      FilePath path1 = getPath(rename.first);
+      FilePath path2 = getPath(rename.second);
+      Couple<FilePath> paths = Couple.of(path1, path2);
+      if (accept.fun(paths)) {
+        return paths;
       }
     }
     return null;
@@ -133,7 +133,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     Collection<Integer> keysForCommit = getKeysForCommit(commit);
     if (keysForCommit == null) return Collections.emptySet();
 
-    Set<FilePath> paths = new HashSet<>();
+    Set<FilePath> paths = ContainerUtil.newHashSet();
     for (Integer pathId : keysForCommit) {
       LightFilePath lightFilePath = myPathsIndexer.getPathsEnumerator().valueOf(pathId);
       if (lightFilePath.isDirectory()) continue;

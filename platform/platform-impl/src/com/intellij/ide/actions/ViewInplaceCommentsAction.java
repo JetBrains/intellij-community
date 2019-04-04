@@ -5,12 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author gregsh
@@ -28,14 +23,6 @@ public class ViewInplaceCommentsAction extends DumbAwareToggleAction {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     UISettings.getInstance().setShowInplaceComments(state);
-    updateAllTreesCellsWidth();
     IdeBackgroundUtil.repaintAllWindows();
-  }
-
-  private static void updateAllTreesCellsWidth() {
-    for (JTree tree : UIUtil.uiTraverser(null).withRoots(Window.getWindows()).filter(JTree.class)) {
-      //noinspection deprecation
-      TreeUtil.invalidateCacheAndRepaint(tree.getUI());
-    }
   }
 }

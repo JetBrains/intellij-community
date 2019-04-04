@@ -10,6 +10,6 @@ class Test {
   static void m(Test t, Object s) {}
 
   static void test() {
-    I i = Test::<error descr="Cannot resolve method 'm'">m</error>;
+    <error descr="Incompatible types. Found: '<method reference>', required: 'Test.I'">I i = Test::m;</error>
   }
 }

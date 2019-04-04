@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.facet.frameworks.beans;
 
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -15,7 +17,7 @@ public class ArtifactItem {
   @Property(surroundWithTag = false)
   @XCollection
   public RequiredClass[] myRequiredClasses;
-
+  
   @Attribute("name")
   public String myName;
 
@@ -65,14 +67,14 @@ public class ArtifactItem {
 
   @Override
   public String toString() {
-    return myName;
+    return myName;    
   }
 
   public String[] getRequiredClasses() {
-    if (myRequiredClasses == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
-
+    if (myRequiredClasses == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    
     final List<String> classes = ContainerUtil.mapNotNull(myRequiredClasses, requiredClass -> requiredClass.getFqn());
 
-    return ArrayUtilRt.toStringArray(classes);
+    return ArrayUtil.toStringArray(classes);
   }
 }

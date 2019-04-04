@@ -3,16 +3,15 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
 
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
 
@@ -22,19 +21,31 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     if (StringUtil.isEmpty(pattern)) {
       return Collections.emptyList();
     }
-    List<MavenRepositoryArtifactInfo> searchResults = new ArrayList<>();
-    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(project).getDependencySearchService();
-    Promise<Void> asyncPromise = searchService.fulltextSearch(pattern, SearchParameters.DEFAULT, mdci -> searchResults.add(mdci));
-    new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
-      @Override
-      protected boolean condition() {
-        return asyncPromise.getState() != Promise.State.PENDING;
-      }
-    };
-    return processResults(searchResults);
+    DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
+    List<MavenDependencyCompletionItem> searchResults =
+      service.findByTemplate(pattern, new SearchParameters(1000, 5000, EnumSet.of(ALL_VERSIONS)));
+    return processResults(searchResults, pattern);
   }
 
-  private static List<MavenArtifactSearchResult> processResults(List<MavenRepositoryArtifactInfo> searchResults) {
-    return ContainerUtil.map(searchResults, MavenArtifactSearchResult::new);
+  private static List<MavenArtifactSearchResult> processResults(List<MavenDependencyCompletionItem> searchResults, String pattern) {
+    Map<String, List<MavenDependencyCompletionItem>> results = new HashMap<>();
+    for (MavenDependencyCompletionItem item : searchResults) {
+      if (item.getGroupId() == null ||
+          item.getArtifactId() == null ||
+          item.getVersion() == null ||
+          item.getType() == MavenDependencyCompletionItem.Type.CACHED_ERROR) {
+        continue;
+      }
+      String key = item.getGroupId() + ":" + item.getArtifactId();
+
+      List<MavenDependencyCompletionItem> list = results.get(key);
+      if (list == null) {
+        list = new ArrayList<>();
+        results.put(key, list);
+      }
+      list.add(item);
+    }
+    ;
+    return ContainerUtil.map(results.values(), MavenArtifactSearchResult::new);
   }
 }

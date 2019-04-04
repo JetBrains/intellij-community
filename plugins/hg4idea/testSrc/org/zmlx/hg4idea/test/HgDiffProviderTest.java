@@ -18,12 +18,12 @@ package org.zmlx.hg4idea.test;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
+import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.provider.HgDiffProvider;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class HgDiffProviderTest extends HgSingleUserTest {
   
@@ -49,7 +49,7 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     ContentRevision fileContent = diffProvider.createFileContent(diffProvider.getCurrentRevision(child), child);
 
     assertNotNull(fileContent);
-    assertEquals(UPDATED_FILE_CONTENT, fileContent.getContent());
+    assertEquals(fileContent.getContent(), UPDATED_FILE_CONTENT);
   }
   
   @Test
@@ -70,7 +70,8 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
 
     HgRevisionNumber currentRevision = (HgRevisionNumber)diffProvider.getCurrentRevision(myWorkingCopyDir.findChild(AFILE));
-    assertNotNull("The current revision for AFILE should be found", currentRevision);
-    assertEquals("The diff provider should return the revision in which AFILE was last changed", "1", currentRevision.getRevision());
+    assertNotNull(currentRevision, "The current revision for AFILE should be found");
+    assertEquals(currentRevision.getRevision(), "1", "The diff provider should return the revision in which AFILE was last changed");
+    
   }
 }

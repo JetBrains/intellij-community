@@ -1043,6 +1043,5 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
   public void testCallOnRawWithExplicitTypeArguments() { doTest(); }
   public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
-  public void testLowerBoundAssignabilityCheck() { doTest(); }
   public void testIgnoreErasureForProperTypeBound() { doTest(); }
 }

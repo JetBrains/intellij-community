@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.hint.actions;
 
+import com.intellij.codeInsight.actions.CodeInsightEditorAction;
 import com.intellij.codeInsight.hint.PrevNextParameterHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -32,7 +33,8 @@ public class PrevParameterAction extends EditorAction {
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    PrevNextParameterHandler.commitDocumentsIfNeeded(e);
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     super.beforeActionPerformedUpdate(e);
   }
+
 }

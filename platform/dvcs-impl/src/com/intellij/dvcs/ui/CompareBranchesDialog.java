@@ -45,9 +45,7 @@ public class CompareBranchesDialog {
     myTitle = String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString);
     myMode = dialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
 
-    CompareBranchesDiffPanel diffPanel = new CompareBranchesDiffPanel(helper.getProject(), helper.getDvcsCompareSettings(),
-                                                    branchName, currentBranchName);
-    diffPanel.setCompareInfo(compareInfo);
+    JPanel diffPanel = new CompareBranchesDiffPanel(helper, branchName, currentBranchName, compareInfo);
     myLogPanel = new CompareBranchesLogPanel(helper, branchName, currentBranchName, compareInfo, initialRepo);
 
     myTabbedPane = new TabbedPaneImpl(SwingConstants.TOP);

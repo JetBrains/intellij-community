@@ -11,16 +11,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.JarFile;
 
 /**
@@ -52,7 +56,7 @@ public class BuildProcessClasspathManager {
   }
 
   private static List<String> computeCompileServerPluginsClasspath() {
-    final List<String> classpath = new ArrayList<>();
+    final List<String> classpath = ContainerUtil.newArrayList();
 
     for (CompileServerPlugin serverPlugin : CompileServerPlugin.EP_NAME.getExtensions()) {
       final PluginId pluginId = serverPlugin.getPluginDescriptor().getPluginId();
@@ -82,7 +86,7 @@ public class BuildProcessClasspathManager {
           // development mode
           if (PluginManagerCore.isRunningFromSources()) {
             // ... try "out/classes/production/<jar-name>", assuming that <jar-name> means module name
-            String moduleName = FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(relativePath));
+            String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
             if (OLD_TO_NEW_MODULE_NAME.containsKey(moduleName)) {
               moduleName = OLD_TO_NEW_MODULE_NAME.get(moduleName);
             }
@@ -144,7 +148,7 @@ public class BuildProcessClasspathManager {
   }
 
   private static List<String> getDynamicClasspath(Project project) {
-    final List<String> classpath = new ArrayList<>();
+    final List<String> classpath = ContainerUtil.newArrayList();
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       classpath.addAll(provider.getClassPath());
     }
@@ -152,7 +156,7 @@ public class BuildProcessClasspathManager {
   }
 
   public static List<String> getLauncherClasspath(Project project) {
-    final List<String> classpath = new ArrayList<>();
+    final List<String> classpath = ContainerUtil.newArrayList();
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensionList(project)) {
       classpath.addAll(provider.getLauncherClassPath());
     }

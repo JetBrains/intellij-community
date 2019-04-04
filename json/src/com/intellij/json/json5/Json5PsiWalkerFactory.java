@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.json5;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -25,7 +26,8 @@ public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   @Override
   public boolean handles(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    return parent != null && JsonDialectUtil.getLanguage(parent) == Json5Language.INSTANCE;
+    if (parent == null) return false;
+    return JsonDialectUtil.getLanguage(CompletionUtil.getOriginalOrSelf(parent)) == Json5Language.INSTANCE;
   }
 
   @NotNull

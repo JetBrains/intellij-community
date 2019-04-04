@@ -1,11 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.NameUtilCore;
+import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +41,8 @@ public class NameSuggester {
   public NameSuggester(String oldClassName, String newClassName) {
     myOldClassNameAsGiven = oldClassName;
     myNewClassNameAsGiven = newClassName;
-    myOldClassName = NameUtilCore.splitNameIntoWords(oldClassName);
-    myNewClassName = NameUtilCore.splitNameIntoWords(newClassName);
+    myOldClassName = NameUtil.splitNameIntoWords(oldClassName);
+    myNewClassName = NameUtil.splitNameIntoWords(newClassName);
 
     myChanges = new ArrayList<>();
     int oldIndex = myOldClassName.length - 1;
@@ -76,7 +90,7 @@ public class NameSuggester {
 
   public String suggestName(final String propertyName) {
     if (myOldClassNameAsGiven.equals(propertyName)) return myNewClassNameAsGiven;
-    final String[] propertyWords = NameUtilCore.splitNameIntoWords(propertyName);
+    final String[] propertyWords = NameUtil.splitNameIntoWords(propertyName);
     TIntIntHashMap matches = calculateMatches(propertyWords);
     if (matches.isEmpty()) return propertyName;
     TreeMap<Pair<Integer,Integer>, String> replacements = calculateReplacements(propertyWords, matches);
@@ -158,7 +172,7 @@ public class NameSuggester {
    * @return
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
-    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>(Comparator.comparing(pair -> pair.getFirst()));
+    TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<>((pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst()));
     for (final OriginalToNewChange change : myChanges) {
       final int first = change.oldFirst;
       final int last = change.oldLast;

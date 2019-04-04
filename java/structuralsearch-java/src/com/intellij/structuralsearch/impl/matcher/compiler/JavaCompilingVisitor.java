@@ -456,18 +456,11 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitTypeElement(PsiTypeElement type) {
-    super.visitTypeElement(type);
-
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(type);
-    GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiTypeElement);
-  }
-
-  @Override
   public void visitClass(PsiClass psiClass) {
     super.visitClass(psiClass);
 
-    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final CompileContext context = myCompilingVisitor.getContext();
+    final CompiledPattern pattern = context.getPattern();
     final MatchingHandler handler = pattern.getHandler(psiClass);
 
     if (needsSupers(psiClass, handler)) {
@@ -525,16 +518,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         final MatchingHandler handler = pattern.getHandler(expressionStatement);
         if (handler instanceof SubstitutionHandler) {
           final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-          if (parent instanceof PsiForStatement &&
-              (((PsiForStatement)parent).getInitialization() == expressionStatement ||
-               ((PsiForStatement)parent).getUpdate() == expressionStatement)) {
-            substitutionHandler.setFilter(e -> e instanceof PsiExpression || e instanceof PsiExpressionListStatement ||
-                                               e instanceof PsiDeclarationStatement || e instanceof PsiEmptyStatement);
-          }
-          else {
-            substitutionHandler.setFilter(new StatementFilter());
-            substitutionHandler.setMatchHandler(new StatementHandler());
-          }
+          substitutionHandler.setFilter(new StatementFilter());
+          substitutionHandler.setMatchHandler(new StatementHandler());
         }
       }
     }

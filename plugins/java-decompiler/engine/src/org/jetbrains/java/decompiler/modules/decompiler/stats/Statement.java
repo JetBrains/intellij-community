@@ -546,7 +546,7 @@ public class Statement implements IMatchable {
   // private methods
   // *****************************************************************************
 
-  private static void addToReversePostOrderListIterative(Statement root, List<? super Statement> lst) {
+  private static void addToReversePostOrderListIterative(Statement root, List<Statement> lst) {
 
     LinkedList<Statement> stackNode = new LinkedList<>();
     LinkedList<Integer> stackIndex = new LinkedList<>();
@@ -589,7 +589,7 @@ public class Statement implements IMatchable {
   }
 
 
-  private static void addToPostReversePostOrderList(Statement stat, List<? super Statement> lst, HashSet<? super Statement> setVisited) {
+  private static void addToPostReversePostOrderList(Statement stat, List<Statement> lst, HashSet<Statement> setVisited) {
 
     if (setVisited.contains(stat)) { // because of not considered exception edges, s. isExitComponent. Should be rewritten, if possible.
       return;

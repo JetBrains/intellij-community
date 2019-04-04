@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    getCurrentExternalProjectSettings().setDelegatedBuild(true);
+    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.YES);
   }
 
   @Test

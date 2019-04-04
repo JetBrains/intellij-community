@@ -33,7 +33,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,7 +193,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       for (ClassFilter classFilter : patterns) {
         filters.add(classFilter.getPattern());
       }
-      return ArrayUtilRt.toStringArray(filters);
+      return ArrayUtil.toStringArray(filters);
     }
     return null;
   }

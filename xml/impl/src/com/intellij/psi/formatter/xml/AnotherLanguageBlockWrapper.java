@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.InjectedLanguageBlockWrapper;
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class AnotherLanguageBlockWrapper extends AbstractXmlBlock implements ReadOnlyBlockContainer {
+public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   private final InjectedLanguageBlockWrapper myInjectedBlock;
   private final Indent myIndent;
 

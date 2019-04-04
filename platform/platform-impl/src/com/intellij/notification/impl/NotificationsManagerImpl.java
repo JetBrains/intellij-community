@@ -40,7 +40,6 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Function;
@@ -434,7 +433,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       layoutData.maxScrollHeight = layoutData.fullHeight;
     }
     else if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
-      pane.setViewport(new GradientViewport(text, JBInsets.create(10, 0), true) {
+      pane.setViewport(new GradientViewport(text, JBUI.insets(10, 0), true) {
         @Nullable
         @Override
         protected Color getViewColor() {
@@ -521,7 +520,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
         if (title != null && layoutData.showActions != null && layoutData.showActions.compute()) {
           int width = layoutData.configuration.allActionsOffset;
-          int x = getWidth() - width - JBUIScale.scale(5);
+          int x = getWidth() - width - JBUI.scale(5);
           int y = layoutData.configuration.topSpaceHeight;
 
           int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
@@ -616,7 +615,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setSize(text.getPreferredSize());
 
     Dimension paneSize = new Dimension(text.getPreferredSize());
-    int maxWidth = JBUIScale.scale(600);
+    int maxWidth = JBUI.scale(600);
     if (windowComponent != null) {
       maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
     }
@@ -808,7 +807,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     private Component myLastComponent;
 
-    public void addComponent(@NotNull Component component, @NotNull Function<? super Component, ? extends Rectangle> hover) {
+    public void addComponent(@NotNull Component component, @NotNull Function<Component, Rectangle> hover) {
       myComponents.add(Pair.create(component, hover));
     }
 
@@ -962,12 +961,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
     AbstractLayoutManager layout = new AbstractLayoutManager() {
       @Override
       public Dimension preferredLayoutSize(Container parent) {
-        return new Dimension(parent.getWidth(), JBUIScale.scale(20) + 2);
+        return new Dimension(parent.getWidth(), JBUI.scale(20) + 2);
       }
 
       @Override
       public void layoutContainer(Container parent) {
-        parent.getComponent(0).setBounds(2, 1, parent.getWidth() - 4, JBUIScale.scale(20));
+        parent.getComponent(0).setBounds(2, 1, parent.getWidth() - 4, JBUI.scale(20));
       }
     };
     JPanel mergePanel = new NonOpaquePanel(layout) {
@@ -1059,7 +1058,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static void showPopup(@NotNull LinkLabel link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
       ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-      menu.getComponent().show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
+      menu.getComponent().show(link, JBUI.scale(-10), link.getHeight() + JBUI.scale(2));
     }
   }
 
@@ -1169,7 +1168,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       return layoutSize(component -> component.getMinimumSize());
     }
 
-    private Dimension layoutSize(@NotNull Function<? super Component, ? extends Dimension> size) {
+    private Dimension layoutSize(@NotNull Function<Component, Dimension> size) {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
       Dimension actionSize = myActionPanel == null ? new Dimension() : size.fun(myActionPanel);

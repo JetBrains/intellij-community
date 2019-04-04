@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -99,7 +100,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
-      if (ignoreUncompilable && expression.isArrayCreation()) {
+      if (ignoreUncompilable && ExpressionUtils.isArrayCreationExpression(expression)) {
         //array creation can (almost) never be generic
         return;
       }

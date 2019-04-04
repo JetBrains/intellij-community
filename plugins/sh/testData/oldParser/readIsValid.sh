@@ -1,1 +1,0 @@
-read a v[i]

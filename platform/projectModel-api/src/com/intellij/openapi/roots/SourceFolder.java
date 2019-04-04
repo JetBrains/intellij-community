@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -26,7 +25,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @author dsl
  * @see ContentEntry#getSourceFolders()
  */
-@ApiStatus.NonExtendable
 public interface SourceFolder extends ContentFolder {
   /**
    * Checks if this root is a production or test source root.

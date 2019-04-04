@@ -4,7 +4,7 @@ package git4idea.repo;
   import com.intellij.openapi.diagnostic.Logger;
   import com.intellij.openapi.util.Pair;
   import com.intellij.openapi.util.text.StringUtil;
-  import com.intellij.util.ArrayUtilRt;
+  import com.intellij.util.ArrayUtil;
   import com.intellij.util.containers.ContainerUtil;
   import git4idea.GitLocalBranch;
   import git4idea.GitRemoteBranch;
@@ -274,7 +274,7 @@ public class GitConfig {
           urls.add(remoteUrl);                                             // but url is left intact
           substituted = true;
           break;
-        }
+        } 
       }
       if (!substituted) {
         urls.add(remoteUrl);
@@ -305,7 +305,7 @@ public class GitConfig {
 
     return new UrlsAndPushUrls(urls, pushUrls);
   }
-
+  
   private static class UrlsAndPushUrls {
     final List<String> myUrls;
     final Collection<String> myPushUrls;
@@ -358,7 +358,7 @@ public class GitConfig {
       myRemoteBean = remoteBean;
       myName = name;
     }
-
+    
     @NotNull
     private Collection<String> getUrls() {
       return nonNullCollection(myRemoteBean.getUrl());
@@ -379,7 +379,7 @@ public class GitConfig {
     private List<String> getFetchSpecs() {
       return asList(notNull(myRemoteBean.getFetch()));
     }
-
+    
   }
 
   private interface RemoteBean {
@@ -415,7 +415,7 @@ public class GitConfig {
     @Nullable String getInsteadof();
     @Nullable String getPushinsteadof();
   }
-
+  
   private static class BranchConfig {
     private final String myName;
     private final BranchBean myBean;
@@ -433,7 +433,7 @@ public class GitConfig {
       return myBean;
     }
   }
-
+  
   private interface BranchBean {
     @Nullable String getRemote();
     @Nullable String getMerge();
@@ -442,7 +442,7 @@ public class GitConfig {
 
   @NotNull
   private static String[] notNull(@Nullable String[] s) {
-    return s == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : s;
+    return s == null ? ArrayUtil.EMPTY_STRING_ARRAY : s;
   }
 
   @NotNull

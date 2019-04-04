@@ -27,7 +27,6 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
@@ -90,8 +89,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   @Nullable
   @Override
-  protected AnAction[] createImportActions() {
-    return new AnAction[] {new ImportTestsGroup(this), new ImportTestsFromFileAction()};
+  protected AnAction createImportAction() {
+    return new ImportTestsGroup(this);
   }
 
   public boolean isIdBasedTestTree() {

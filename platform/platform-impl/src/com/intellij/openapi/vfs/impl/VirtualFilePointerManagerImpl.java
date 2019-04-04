@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -45,6 +46,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
   static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
+  private final TempFileSystem TEMP_FILE_SYSTEM;
   private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {};
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = ContainerUtil.newIdentityTroveMap(); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
@@ -53,11 +55,15 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull private final MessageBus myBus;
   @NotNull private final FileTypeManager myFileTypeManager;
 
-  VirtualFilePointerManagerImpl() {
-    myVirtualFileManager = VirtualFileManager.getInstance();
-    myBus = ApplicationManager.getApplication().getMessageBus();
-    myFileTypeManager = FileTypeManager.getInstance();
-    myBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, this);
+  VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
+                                @NotNull MessageBus bus,
+                                @NotNull TempFileSystem tempFileSystem,
+                                @NotNull FileTypeManager fileTypeManager) {
+    myVirtualFileManager = virtualFileManager;
+    myBus = bus;
+    myFileTypeManager = fileTypeManager;
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+    TEMP_FILE_SYSTEM = tempFileSystem;
   }
 
   @Override
@@ -152,7 +158,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       url = VirtualFileManager.constructUrl(protocol, path);
     }
 
-    if (fileSystem instanceof TempFileSystem && listener == null) {
+    if (fileSystem == TEMP_FILE_SYSTEM && listener == null) {
       // Since VFS events work correctly in temp FS as well, ideally, this branch shouldn't exist and normal VFPointer should be used in all tests
       // but we have so many tests that create pointers, not dispose and leak them,
       // so for now we create normal pointers only when there are listeners.
@@ -217,57 +223,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  // convert // -> /
-  // convert /. ->
-  // trim trailing / (except when it's !/)
   @NotNull
   private static String cleanupPath(@NotNull String path) {
+    path = FileUtil.normalize(path);
     path = trimTrailingSeparators(path);
-    for (int i = 0; i < path.length(); ) {
-      int slash = path.indexOf('/', i);
-      if (slash == -1 || slash == path.length()-1) {
-        break;
-      }
-      char next = path.charAt(slash + 1);
-
-      if (next == '/' || next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
-        return cleanupTail(path, slash);
-      }
-      i = slash + 1;
-    }
     return path;
-  }
-
-  // removes // and //. when we know for sure they are there, starting from 'slashIndex'
-  @NotNull
-  private static String cleanupTail(@NotNull String path, int slashIndex) {
-    StringBuilder s = new StringBuilder(path.length());
-    s.append(path, 0, slashIndex);
-    for (int i = slashIndex; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c == '/') {
-        char nextc = i == path.length()-1 ? 0 : path.charAt(i + 1);
-        if (nextc == '.') {
-          if (i == path.length() - 2) {
-            // ends with "/.", ignore
-            break;
-          }
-          char nextNextc = path.charAt(i + 2);
-          if (nextNextc == '/') {
-            i+=2;
-            // "/./" in the middle, ignore "/."
-            continue;
-          }
-          // "/.xxx", append
-        }
-        else if (nextc == '/') {
-          // ignore duplicate /
-          continue;
-        }
-      }
-      s.append(c);
-    }
-    return s.toString();
   }
 
   @NotNull

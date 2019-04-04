@@ -259,7 +259,22 @@
 
     <!-- Modifiers -->
     <intentionAction>
-      <className>com.siyeh.ipp.modifiers.ChangeModifierIntention</className>
+      <className>com.siyeh.ipp.modifiers.MakePublicIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePackagePrivateIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakeProtectedIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePrivateIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.modifiers</categoryKey>
     </intentionAction>
@@ -325,7 +340,7 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.expression.eliminate.EliminateParenthesesIntention</className>
+      <className>com.siyeh.ipp.expression.expand.ExpandBracketsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

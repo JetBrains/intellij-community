@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -18,7 +17,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -92,7 +89,7 @@ public class BuildViewMavenConsole extends MavenConsole {
       ApplicationManager.getApplication().invokeLater(() -> {
         DefaultActionGroup actions = new DefaultActionGroup();
         actions.addAll((myBuildView).getSwitchActions());
-        actions.add(BuildTreeFilters.createFilteringActionsGroup(myBuildView));
+        actions.add(new ShowExecutionErrorsOnlyAction(myBuildView));
         JComponent consolePanel = createConsolePanel(myBuildView, actions);
         RunContentDescriptor descriptor =
           new RunContentDescriptor(myBuildView, processHandler, consolePanel, myTitle, MavenIcons.MavenLogo);

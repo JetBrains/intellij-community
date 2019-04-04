@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -76,7 +75,7 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
       if (fieldName == null) {
         return;
       }
-      if (!fieldName.equals(StringUtil.toUpperCase(fieldName))) {
+      if (!fieldName.equals(fieldName.toUpperCase())) {
         return;
       }
       registerFieldError(field);

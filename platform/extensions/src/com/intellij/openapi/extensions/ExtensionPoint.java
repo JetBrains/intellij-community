@@ -9,7 +9,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -50,11 +49,6 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   List<T> getExtensionList();
-
-  /**
-   * Invokes the given lambda for each extension registered in this extension point. Logs exceptions thrown by the lambda.
-   */
-  void forEachExtensionSafe(Consumer<T> extensionConsumer);
 
   @NotNull
   Stream<T> extensions();

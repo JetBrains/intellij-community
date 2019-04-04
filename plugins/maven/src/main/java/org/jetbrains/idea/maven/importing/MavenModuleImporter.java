@@ -25,11 +25,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,14 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenImportingSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.project.SupportedRequestType;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
@@ -123,22 +112,17 @@ public class MavenModuleImporter {
       final ModuleType moduleType = ModuleType.get(myModule);
 
       for (final MavenImporter importer : getSuitableImporters()) {
-        try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
-
-          if (importer.getModuleType() == moduleType) {
-            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
-          }
+        final MavenProjectChanges changes;
+        if (myMavenProjectChanges == null) {
+          if (importer.processChangedModulesOnly()) continue;
+          changes = MavenProjectChanges.NONE;
         }
-        catch (Exception e) {
-          MavenLog.LOG.error(e);
+        else {
+          changes = myMavenProjectChanges;
+        }
+
+        if (importer.getModuleType() == moduleType) {
+          importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
         }
       }
     });
@@ -162,19 +146,14 @@ public class MavenModuleImporter {
           }
 
           if (importer.getModuleType() == moduleType) {
-            try {
-              importer.process(myModifiableModelsProvider,
-                               myModule,
-                               myRootModelAdapter,
-                               myMavenTree,
-                               myMavenProject,
-                               changes,
-                               myMavenProjectToModuleName,
-                               postTasks);
-            }
-            catch (Exception e) {
-              MavenLog.LOG.error(e);
-            }
+            importer.process(myModifiableModelsProvider,
+                             myModule,
+                             myRootModelAdapter,
+                             myMavenTree,
+                             myMavenProject,
+                             changes,
+                             myMavenProjectToModuleName,
+                             postTasks);
           }
         }
       });
@@ -188,23 +167,18 @@ public class MavenModuleImporter {
       final ModuleType moduleType = ModuleType.get(myModule);
 
       for (final MavenImporter importer : getSuitableImporters()) {
-        try {
-          final MavenProjectChanges changes;
-          if (myMavenProjectChanges == null) {
-            if (importer.processChangedModulesOnly()) continue;
-            changes = MavenProjectChanges.NONE;
-          }
-          else {
-            changes = myMavenProjectChanges;
-          }
-
-          if (importer.getModuleType() == moduleType) {
-            importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
-          }
-        } catch(Exception e) {
-          MavenLog.LOG.error(e);
+        final MavenProjectChanges changes;
+        if (myMavenProjectChanges == null) {
+          if (importer.processChangedModulesOnly()) continue;
+          changes = MavenProjectChanges.NONE;
+        }
+        else {
+          changes = myMavenProjectChanges;
         }
 
+        if (importer.getModuleType() == moduleType) {
+          importer.postProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
+        }
       }
     });
   }

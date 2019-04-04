@@ -19,9 +19,8 @@ package org.intellij.plugins.relaxNG.convert;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.thaiopensource.relaxng.edit.SchemaCollection;
 import com.thaiopensource.relaxng.input.InputFailedException;
 import com.thaiopensource.relaxng.input.InputFormat;
@@ -77,7 +76,7 @@ public class IdeaDriver {
 
       final VirtualFile inputFile = inputFiles[0];
       final SchemaType type = settings.getOutputType();
-      final String outputType = StringUtil.toLowerCase(type.toString());
+      final String outputType = type.toString().toLowerCase();
 
       final ArrayList<String> inputParams = new ArrayList<>();
 
@@ -102,9 +101,9 @@ public class IdeaDriver {
           for (int i = 0; i < inputFiles.length; i++) {
             uris[i] = UriOrFile.toUri(inputFiles[i].getPath());
           }
-          sc = format.load(uris, ArrayUtilRt.toStringArray(inputParams), outputType, errorHandler);
+          sc = format.load(uris, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
         } else {
-          sc = inFormat.load(uri, ArrayUtilRt.toStringArray(inputParams), outputType, errorHandler);
+          sc = inFormat.load(uri, ArrayUtil.toStringArray(inputParams), outputType, errorHandler);
         }
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, uri, -1, -1, e));
@@ -128,7 +127,7 @@ public class IdeaDriver {
                 outputFile,
                 "." + outputType,
                 settings.getOutputEncoding(),
-                length > 0 ? length : DEFAULT_LINE_LENGTH,
+                length > 0 ? length : DEFAULT_LINE_LENGTH, 
                 indent > 0 ? indent : DEFAULT_INDENT)
         {
           @Override
@@ -150,7 +149,7 @@ public class IdeaDriver {
 
         final OutputFormat of = getOutputFormat(settings.getOutputType());
 
-        of.output(sc, od, ArrayUtilRt.toStringArray(outputParams), StringUtil.toLowerCase(inputType.toString()), errorHandler);
+        of.output(sc, od, ArrayUtil.toStringArray(outputParams), inputType.toString().toLowerCase(), errorHandler);
       } catch (IOException e) {
         errorHandler.fatalError(new SAXParseException(e.getMessage(), null, UriOrFile.fileToUri(outputFile), -1, -1, e));
       }

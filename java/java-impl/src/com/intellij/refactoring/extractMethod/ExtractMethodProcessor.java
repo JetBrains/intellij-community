@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
@@ -56,7 +55,10 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.refactoring.util.duplicates.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -754,7 +756,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         return GenerateMembersUtil.suggestGetterName(field);
       }));
       ContainerUtil.addIfNotNull(getters, nameByComment);
-      return ArrayUtilRt.toStringArray(getters);
+      return ArrayUtil.toStringArray(getters);
     }
     return new String[] {myInitialMethodName};
   }
@@ -1698,7 +1700,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void updateAnnotations(PsiModifierListOwner owner, List<String> toRemove, String toAdd, List<String> toKeep) {
-    AddAnnotationPsiFix.removePhysicalAnnotations(owner, ArrayUtilRt.toStringArray(toRemove));
+    AddAnnotationPsiFix.removePhysicalAnnotations(owner, ArrayUtil.toStringArray(toRemove));
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null && !AnnotationUtil.isAnnotated(owner, toKeep, CHECK_TYPE)) {
       PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, modifierList);
@@ -2234,7 +2236,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
   }
 
-  public boolean hasDuplicates(Set<? extends VirtualFile> files) {
+  public boolean hasDuplicates(Set<VirtualFile> files) {
     initDuplicates(null);
     final DuplicatesFinder finder = getExactDuplicatesFinder();
 

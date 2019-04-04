@@ -35,17 +35,17 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  private static class AstLoadingExceptionCase extends AbstractExceptionCase<AstLoadingException> {
+  private static class AssertionCase extends AbstractExceptionCase<AssertionError> {
 
     private final Runnable myRunnable;
 
-    private AstLoadingExceptionCase(Runnable runnable) {
+    private AssertionCase(Runnable runnable) {
       myRunnable = runnable;
     }
 
     @Override
-    public Class<AstLoadingException> getExpectedExceptionClass() {
-      return AstLoadingException.class;
+    public Class<AssertionError> getExpectedExceptionClass() {
+      return AssertionError.class;
     }
 
     @Override
@@ -57,19 +57,19 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
   public void testDisallowedLoading() {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
-    assertException(new AstLoadingExceptionCase(
+    assertException(new AssertionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> file.getNode()
       )
     ));
   }
 
-  public void testForceAllowLoading() throws AstLoadingException {
+  public void testForceAllowLoading() {
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     PsiFileImpl anotherFile = addAnotherFile();
     assertFalse(anotherFile.isContentsLoaded());
-    assertNoException(new AstLoadingExceptionCase(
+    assertNoException(new AssertionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file
@@ -77,7 +77,7 @@ public class AstLoadingFilterTest extends LightPlatformCodeInsightFixtureTestCas
         )
       )
     ));
-    assertException(new AstLoadingExceptionCase(
+    assertException(new AssertionCase(
       () -> AstLoadingFilter.disallowTreeLoading(
         () -> AstLoadingFilter.forceAllowTreeLoading(
           file,                                                                 // allow for file

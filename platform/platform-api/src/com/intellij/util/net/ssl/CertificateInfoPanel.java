@@ -13,7 +13,6 @@
 // limitations under the License.
 package com.intellij.util.net.ssl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
@@ -78,7 +77,7 @@ public class CertificateInfoPanel extends JPanel {
     if (hex.length() > 0) {
       builder.deleteCharAt(builder.length() - 1);
     }
-    return StringUtil.toUpperCase(builder.toString());
+    return builder.toString().toUpperCase();
   }
 
   public X509Certificate getCertificate() {

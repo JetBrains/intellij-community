@@ -24,11 +24,10 @@ import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.serialization.SerializationException;
 import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,6 +35,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -408,7 +408,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
         if (name.equals(list.DESCRIPTION)) {
-          manager.unshelveChangeList(list, null, list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
+          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), changeListManager.getDefaultChangeList(), true);
           return;
         }
       }
@@ -635,7 +635,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
           repository.initializeRepository();
           repositories.add(repository);
         }
-        catch (SerializationException e) {
+        catch (XmlSerializationException e) {
           LOG.error(e.getMessage(), e);
         }
       }
@@ -707,7 +707,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         @Override
@@ -837,7 +837,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
-          List<Task> filteredTasks = TaskUtil.filterTasks(request, Arrays.asList(tasks));
+          List<Task> filteredTasks = TaskUtil.filterTasks(request, ContainerUtil.list(tasks));
           ContainerUtil.addAll(issues, filteredTasks);
         }
         else {
@@ -977,7 +977,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     String name = constructDefaultBranchName(task);
     if (task.isIssue()) return name.replace(' ', '-');
     List<String> words = StringUtil.getWordsIn(name);
-    String[] strings = ArrayUtilRt.toStringArray(words);
+    String[] strings = ArrayUtil.toStringArray(words);
     return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 

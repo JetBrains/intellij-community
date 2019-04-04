@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -154,7 +154,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private void checkTargetComboConsistency(boolean mode) {
     String item = myTargetComboBox.getText();
     assert item != null;
-    if (mode && !StringUtil.toLowerCase(item).contains("module")) {
+    //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+    if (mode && !item.toLowerCase().contains("module")) {
       throw new IllegalArgumentException("This option should refer to a module");
     }
   }

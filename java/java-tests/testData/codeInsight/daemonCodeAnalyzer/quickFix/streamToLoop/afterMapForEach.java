@@ -31,15 +31,4 @@ public class Main {
       }
   }
 
-  class X implements Map<String, String> {
-    class Y {
-      void test() {
-          for (Entry<String, String> entry : X.this.entrySet()) {
-              String k = entry.getKey();
-              String v = entry.getValue();
-              System.out.println(k + "-" + v);
-          }
-      }
-    }
-  }
 }

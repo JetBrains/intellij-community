@@ -1,20 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ui.list.ListCellBackgroundSupplier;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 
 /**
  * SimpleColoredComponent-based list cell renderer.
  *
  * @see SimpleListCellRenderer for a simpler JBLabel-based variant.
- * @see ListCellBackgroundSupplier for different background color.
- *
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
@@ -25,7 +23,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
 
   public ColoredListCellRenderer() {
     setFocusBorderAroundIcon(true);
-    getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUIScale.scale(UIUtil.getListCellHPadding());
+    getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
   }
 
   @Override
@@ -106,5 +104,34 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   @Override public void firePropertyChange(String propertyName, float oldValue, float newValue) {}
   @Override public void firePropertyChange(String propertyName, double oldValue, double newValue) {}
   @Override public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+
+  @Override
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+    if (propertyName == "text"
+        || ((propertyName == "font" || propertyName == "foreground")
+            && oldValue != newValue
+            && getClientProperty(BasicHTML.propertyKey) != null)) {
+      super.firePropertyChange(propertyName, oldValue, newValue);
+    }
+  }
   // @formatter:on
+
+  /**
+   * Copied AS IS
+   *
+   * @see DefaultListCellRenderer#isOpaque()
+   */
+  @Override
+  public boolean isOpaque() {
+    Color back = getBackground();
+    Component p = getParent();
+    if (p != null) {
+      p = p.getParent();
+    }
+    // p should now be the JList.
+    boolean colorMatch = (back != null) && (p != null) &&
+                         back.equals(p.getBackground()) &&
+                         p.isOpaque();
+    return !colorMatch && super.isOpaque();
+  }
 }

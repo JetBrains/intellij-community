@@ -31,8 +31,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -55,7 +53,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.UpdatableDefaultActionGroup;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -66,8 +63,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
 
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -203,7 +200,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  private List<FrameDiffTool> filterFittedTools(@NotNull List<? extends DiffTool> tools) {
+  private List<FrameDiffTool> filterFittedTools(@NotNull List<DiffTool> tools) {
     List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
@@ -364,8 +361,14 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    return Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
-                         new MyPrevChangeAction(), new MyNextChangeAction());
+    return ContainerUtil.list(
+      new MyPrevDifferenceAction(),
+      new MyNextDifferenceAction(),
+      new MyOpenInEditorAction(),
+      Separator.getInstance(),
+      new MyPrevChangeAction(),
+      new MyNextChangeAction()
+    );
   }
 
   @NotNull
@@ -373,7 +376,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
     final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
     TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
-    return Arrays.asList(left, main);
+    return ContainerUtil.list(
+      left,
+      main
+    );
   }
 
   //
@@ -395,7 +401,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  protected List<DiffTool> getToolOrderFromSettings(@NotNull List<? extends DiffTool> availableTools) {
+  protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = getSettings().getDiffToolsOrder();
 
@@ -411,7 +417,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return result;
   }
 
-  protected void updateToolOrderSettings(@NotNull List<? extends DiffTool> toolOrder) {
+  protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
     List<String> savedOrder = new ArrayList<>();
     for (DiffTool tool : toolOrder) {
       savedOrder.add(tool.getClass().getCanonicalName());
@@ -443,7 +449,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
-  protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
+  protected void collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
@@ -466,7 +472,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myTouchbarActionGroup.replaceAll(getTouchbarActions());
   }
 
-  protected void collectPopupActions(@Nullable List<? extends AnAction> viewerActions) {
+  protected void collectPopupActions(@Nullable List<AnAction> viewerActions) {
     myPopupActionGroup.removeAll();
 
     List<AnAction> selectToolActions = new ArrayList<>();
@@ -480,7 +486,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffUtil.addActionBlock(myPopupActionGroup, viewerActions);
   }
 
-  protected void buildToolbar(@Nullable List<? extends AnAction> viewerActions) {
+  protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     collectToolbarActions(viewerActions);
 
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
@@ -489,7 +495,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
-  protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
+  protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
     DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
@@ -775,7 +781,7 @@ public abstract class DiffRequestProcessor implements Disposable {
                                                      "You can disable this feature in " + DiffUtil.getSettingsConfigurablePath());
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
+    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
 
     if (editor == null) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -819,12 +825,6 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Iterate requests
 
   protected class MyNextChangeAction extends NextChangeAction {
-    public MyNextChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_NEXT_EDITOR_TAB);
-      }
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isToolbarPlace(e.getPlace())) {
@@ -850,12 +850,6 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected class MyPrevChangeAction extends PrevChangeAction {
-    public MyPrevChangeAction() {
-      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-        patchShortcutSet(this, IdeActions.ACTION_PREVIOUS_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
-      }
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isToolbarPlace(e.getPlace())) {
@@ -878,26 +872,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       goToPrevChange(false);
     }
-  }
-
-  protected static void patchShortcutSet(@NotNull AnAction action,
-                                         @NotNull String originalActionId,
-                                         @Nullable String replacementActionId) {
-    //noinspection ConstantConditions
-    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);
-
-    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    Set<Shortcut> newShortcuts = new HashSet<>(Arrays.asList(shortcuts));
-    boolean hadOriginalShortcut = ContainerUtil.removeAll(newShortcuts, originalShortcuts);
-    if (!hadOriginalShortcut) return;
-
-    if (replacementActionId != null) {
-      Shortcut[] replacementShortcuts = keymap.getShortcuts(replacementActionId);
-      ContainerUtil.addAll(newShortcuts, replacementShortcuts);
-    }
-
-    action.registerCustomShortcutSet(new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY)), null);
   }
 
   private static boolean isToolbarPlace(String place) {
@@ -1010,11 +984,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class MyDiffContext extends DiffContextEx {
-    @NotNull private final UserDataHolder myInitialContext;
-    @NotNull private final UserDataHolder myOwnContext = new UserDataHolderBase();
+    @NotNull private final UserDataHolder myContext;
 
-    MyDiffContext(@NotNull UserDataHolder initialContext) {
-      myInitialContext = initialContext;
+    MyDiffContext(@NotNull UserDataHolder context) {
+      myContext = context;
     }
 
     @Override
@@ -1066,14 +1039,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      T data = myOwnContext.getUserData(key);
-      if (data != null) return data;
-      return myInitialContext.getUserData(key);
+      return myContext.getUserData(key);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      myOwnContext.putUserData(key, value);
+      myContext.putUserData(key, value);
     }
   }
 

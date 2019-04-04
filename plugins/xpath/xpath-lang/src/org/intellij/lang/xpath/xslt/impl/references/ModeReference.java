@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.completion.NamespaceLookup;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
@@ -86,7 +85,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
       }
       return ArrayUtil.toObjectArray(l);
     }
-    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

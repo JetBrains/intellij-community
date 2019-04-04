@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,6 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,7 +36,7 @@ public class CommandRuntime {
     SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
     exePath = settings.getCommandLinePath();
 
-    myModules = new ArrayList<>();
+    myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
     myModules.add(new ProxyModule(this));
     myModules.add(new SshTunnelRuntimeModule(this));
@@ -167,7 +166,7 @@ public class CommandRuntime {
 
   @Nullable
   private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final Url url, boolean isUnderTerminal) {
-    List<AuthCallbackCase> authCases = new ArrayList<>();
+    List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
     if (isUnderTerminal) {
       // Subversion client does not prompt for proxy credentials (just fails with error) even in terminal mode. So we handle this case the

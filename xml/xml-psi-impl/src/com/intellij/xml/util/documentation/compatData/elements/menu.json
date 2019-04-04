@@ -21,14 +21,21 @@
               "version_added": "8"
             },
             "firefox_android": {
-              "version_added": "8",
+              "version_added": true,
               "notes": "Nested menus are not supported."
             },
             "ie": {
               "version_added": false
             },
             "opera": {
-              "version_added": false
+              "version_added": true,
+              "flags": [
+                {
+                  "type": "preference",
+                  "name": "Enable Experimental Web Platform Features",
+                  "value_to_set": "true"
+                }
+              ]
             },
             "opera_android": {
               "version_added": false
@@ -129,7 +136,7 @@
                 "version_added": false
               },
               "opera": {
-                "version_added": false
+                "version_added": null
               },
               "opera_android": {
                 "version_added": false
@@ -164,23 +171,23 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
                 "version_added": "8"
               },
               "firefox_android": {
-                "version_added": "8",
+                "version_added": true,
                 "notes": "Nested menus are not supported."
               },
               "ie": {
                 "version_added": false
               },
               "opera": {
-                "version_added": false
+                "version_added": true
               },
               "opera_android": {
                 "version_added": false
@@ -226,14 +233,14 @@
                   "version_added": "8"
                 },
                 "firefox_android": {
-                  "version_added": "8",
+                  "version_added": true,
                   "notes": "Nested menus are not supported."
                 },
                 "ie": {
                   "version_added": false
                 },
                 "opera": {
-                  "version_added": false
+                  "version_added": true
                 },
                 "opera_android": {
                   "version_added": false

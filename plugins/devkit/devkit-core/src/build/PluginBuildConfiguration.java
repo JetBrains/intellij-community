@@ -31,7 +31,6 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
-import java.util.Objects;
 
 @State(name = "DevKit.ModuleBuildProperties")
 public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
@@ -69,8 +68,8 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
       State state = (State)o;
 
-      if (!Objects.equals(url, state.url)) return false;
-      if (!Objects.equals(manifest, state.manifest)) return false;
+      if (url != null ? !url.equals(state.url) : state.url != null) return false;
+      if (manifest != null ? !manifest.equals(state.manifest) : state.manifest != null) return false;
 
       return true;
     }

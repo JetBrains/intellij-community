@@ -1,4 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -6,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -99,7 +101,7 @@ public class PropertiesUtil {
         final String name = file.getName();
 
         if (!StringUtil.containsChar(name, '_')) {
-          return FileUtilRt.getNameWithoutExtension(name);
+          return FileUtil.getNameWithoutExtension(name);
         }
 
         final Matcher matcher = LOCALE_PATTERN.matcher(name);
@@ -116,11 +118,11 @@ public class PropertiesUtil {
               continue;
             }
             baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
-            return FileUtilRt.getNameWithoutExtension(baseNameWithExtension);
+            return FileUtil.getNameWithoutExtension(baseNameWithExtension);
           }
         }
         baseNameWithExtension = name;
-        return FileUtilRt.getNameWithoutExtension(baseNameWithExtension);
+        return FileUtil.getNameWithoutExtension(baseNameWithExtension);
       }
     });
   }
@@ -248,7 +250,7 @@ public class PropertiesUtil {
   public static String getSuffix(@NotNull PropertiesFile propertiesFile) {
     final String baseName = propertiesFile.getResourceBundle().getBaseName();
     final String propertiesFileName = propertiesFile.getName();
-    if (baseName.equals(FileUtilRt.getNameWithoutExtension(propertiesFileName))) return "";
-    return FileUtilRt.getNameWithoutExtension(propertiesFileName.substring(baseName.length() + 1));
+    if (baseName.equals(FileUtil.getNameWithoutExtension(propertiesFileName))) return "";
+    return FileUtil.getNameWithoutExtension(propertiesFileName.substring(baseName.length() + 1));
   }
 }

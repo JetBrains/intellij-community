@@ -2,43 +2,50 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.impl.ShadowPainter;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -46,22 +53,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -82,14 +85,10 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
 
-  private boolean ready;
-  private Image mySelfie;
+  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
+    super(ApplicationNamesInfo.getInstance().getFullProductName());
 
-  public IdeFrameImpl() {
-    super();
-    updateTitle();
-
-    myRootPane = new IdeRootPane(this);
+    myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -108,14 +107,14 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
-    size.height = Math.min(1000, size.height - 40);
+    size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
-        !ApplicationManager.getApplication().isActive()) {
+        !ApplicationManagerEx.getApplicationEx().isActive()) {
       setAutoRequestFocus(false);
     }
 
@@ -152,9 +151,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) {
-      setIconImage(null);
-    }
+    if (SystemInfo.isMac) setIconImage(null);
 
     MouseGestureManager.getInstance().add(this);
 
@@ -203,7 +200,14 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     if (myProject != null) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
+      if (focusOwner instanceof EditorComponentImpl && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
+        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          return toolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(toolWindow.getComponent());
+        }
+      }
+      else {
         EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
         if (currentWindow != null) {
           EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
@@ -215,47 +219,19 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
           }
         }
       }
-      else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
-        if (content != null) {
-          JComponent component = content.getPreferredFocusableComponent();
-          if (component == null) {
-            LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
-                     toolWindowId + " tool window to avoid focus-related problems.");
-          }
-          return component == null ? getComponentToRequestFocus(toolWindow)  : component;
-        }
-      }
     }
     return null;
-  }
-
-  @Nullable
-  private static Component getComponentToRequestFocus(ToolWindow toolWindow) {
-    Container container = toolWindow.getComponent();
-    if (container == null || !container.isShowing()) {
-      LOG.warn(toolWindow.getTitle() + " tool window - parent container is hidden");
-      return null;
-    }
-    FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
-    if (policy == null) {
-      LOG.warn(toolWindow.getTitle() + " tool window does not provide focus traversal policy");
-      return null;
-    }
-    Component component = policy.getDefaultComponent(container);
-    if (component == null || !component.isShowing()) {
-      LOG.debug(toolWindow.getTitle() + " tool window - default component is hidden");
-      return null;
-    }
-    return component;
   }
 
   @Override
   public void addNotify() {
     super.addNotify();
     PowerSupplyKit.checkPowerSupply();
+  }
+
+  @NotNull
+  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+    return new IdeRootPane(actionManager, dataManager, this);
   }
 
   @NotNull
@@ -357,8 +333,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
-  public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+  public static String getElevationSuffix() {
+    return WindowsElevationUtil.isUnderElevation() ? " (Administrator)" : "";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -367,7 +343,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     try {
       ourUpdatingTitle = true;
 
-      if (IdeFrameDecorator.isCustomDecoration()) {
+      if(IdeFrameDecorator.isCustomDecoration()) {
         frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
       }
 
@@ -377,12 +353,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
       }
-      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
-        builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
+      else if (!SystemInfo.isMac || builder.isEmpty()) {
+        builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
       }
-      builder.append(getSuperUserSuffix(), " ");
       frame.setTitle(builder.toString());
     }
     finally {
@@ -404,19 +379,15 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private static final class Builder {
     private final StringBuilder sb = new StringBuilder();
 
-    Builder append(@Nullable String s) {
-      return append(s, " - ");
-    }
-
-    Builder append(@Nullable String s, String separator) {
+    public Builder append(@Nullable String s) {
       if (!StringUtil.isEmptyOrSpaces(s)) {
-        if (sb.length() > 0) sb.append(separator);
+        if (sb.length() > 0) sb.append(" - ");
         sb.append(s);
       }
       return this;
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
       return sb.length() == 0;
     }
 
@@ -467,15 +438,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       }
 
       installDefaultProjectStatusBarWidgets(myProject);
-
-      ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerListener() {
-        @Override
-        public void projectClosingBeforeSave(@NotNull Project project) {
-          takeASelfie();
-        }
-      });
-
-      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> ready = true);
     }
     else {
       if (myRootPane != null) { //already disposed
@@ -505,8 +467,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
   }
 
-  private final Set<String> widgetIDs = new HashSet<>();
-
+  private final Set<String> widgetIDs = ContainerUtil.newHashSet();
   private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
     if (!widgetIDs.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
@@ -518,7 +479,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new IdeNotificationArea(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
@@ -537,9 +498,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       }
       widgetIDs.clear();
 
-      if (statusBar instanceof IdeStatusBarImpl) {
-        ((IdeStatusBarImpl)statusBar).removeCustomIndicationComponents();
-      }
+      ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }
 
@@ -593,52 +552,19 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
   }
 
+  private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
+                                                                          AllIcons.Ide.Shadow.TopRight,
+                                                                          AllIcons.Ide.Shadow.Right,
+                                                                          AllIcons.Ide.Shadow.BottomRight,
+                                                                          AllIcons.Ide.Shadow.Bottom,
+                                                                          AllIcons.Ide.Shadow.BottomLeft,
+                                                                          AllIcons.Ide.Shadow.Left,
+                                                                          AllIcons.Ide.Shadow.TopLeft);
+
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    if (shouldPaintSelfie()) {
-      try {
-        if (mySelfie == null) {
-          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), ScaleContext.create(this));
-        }
-      } catch (IOException ignored) {}
-      StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
-      return;
-    } else {
-      mySelfie = null;
-    }
     super.paint(g);
-  }
-
-  private boolean shouldPaintSelfie() {
-    return !ready && Registry.is("ide.project.loading.show.last.state") &&
-           (myProject != null || ProjectManager.getInstance().getOpenProjects().length == 0);
-  }
-
-  public void takeASelfie() {
-    if (myProject == null || !Registry.is("ide.project.loading.show.last.state")) return;
-    BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-    UISettings.setupAntialiasing(image.getGraphics());
-    paint(image.getGraphics());
-    try {
-      File selfie = getSelfieLocation();
-      if (selfie.getParentFile().exists() || selfie.getParentFile().mkdirs()) {
-        ImageIO.write(image, "png", selfie);
-        FileUtil.copy(selfie, getLastSelfieLocation());
-      }
-    } catch (IOException ignored) {}
-  }
-
-  @NotNull
-  private File getSelfieLocation() {
-    return myProject != null ?
-           ProjectUtil.getProjectCachePath(myProject, "selfies", false, ".png").toFile() :
-           getLastSelfieLocation();
-  }
-
-  @NotNull
-  private static File getLastSelfieLocation() {
-    return new File(PathManager.getSystemPath(), "selfies/last_closed_project.png");
   }
 
   @Override

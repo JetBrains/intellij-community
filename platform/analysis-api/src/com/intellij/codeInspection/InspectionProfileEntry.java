@@ -15,32 +15,38 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * @author anna
+ */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 
-  private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
 
+  private static final SerializationFilter DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
   private static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
@@ -80,7 +86,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return false;
   }
 
-  @NonNls
   @NotNull
   protected String getSuppressId() {
     return getShortName();
@@ -187,18 +192,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   interface DefaultNameProvider {
-
-    @NonNls
-    @Nullable
-    String getDefaultShortName();
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @Nullable
-    String getDefaultDisplayName();
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @Nullable
-    String getDefaultGroupDisplayName();
+    @Nullable String getDefaultShortName();
+    @Nullable String getDefaultDisplayName();
+    @Nullable String getDefaultGroupDisplayName();
   }
 
   protected volatile DefaultNameProvider myNameProvider;
@@ -208,7 +204,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls
   @NotNull
   public String getGroupDisplayName() {
     if (myNameProvider != null) {
@@ -224,7 +220,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @see InspectionEP#groupPath
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
@@ -239,7 +234,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls
   @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
@@ -317,7 +312,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       try {
         XmlSerializer.deserializeInto(node, this);
       }
-      catch (SerializationException e) {
+      catch (XmlSerializationException e) {
         throw new InvalidDataException(e);
       }
     }
@@ -335,6 +330,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {
+      //noinspection deprecation
       XmlSerializer.serializeObjectInto(this, node, getSerializationFilter());
     }
     else {
@@ -359,7 +355,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       return;
     }
 
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
@@ -391,7 +387,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {
-    return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
+    return DEFAULT_FILTER;
   }
 
   /**
@@ -409,11 +405,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Nullable
   protected URL getDescriptionUrl() {
-    return null;
+    final String fileName = getDescriptionFileName();
+    if (fileName == null) return null;
+    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
   }
 
   @NotNull
@@ -428,7 +424,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return short name of tool whose results will be used
    */
-  @NonNls
   @Nullable
   public String getMainToolId() {
     return null;
@@ -440,12 +435,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (description != null) return description;
 
     try {
-      InputStream descriptionStream = null;
-      final String fileName = getDescriptionFileName();
-      if (fileName != null) {
-        descriptionStream = ResourceUtil.getResourceAsStream(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
-      }
-      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
+      URL descriptionUrl = getDescriptionUrl();
+      if (descriptionUrl == null) return null;
+      return ResourceUtil.loadText(descriptionUrl);
     }
     catch (IOException ignored) {
     }

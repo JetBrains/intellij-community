@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -16,12 +15,11 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.newImpl.TabsHeightController;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,8 +63,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       add(myWestPanel, "grow");
       myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
-
-      TabsHeightController.registerActive(this, this);
     }
     else {
       setLayout(new BorderLayout());
@@ -142,7 +138,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     JComponent component = myToolbar.getComponent();
 
     if (JBTabsFactory.getUseNewTabs()) {
-      component.setBorder(JBUI.Borders.empty(2, 0));
+      component.setBorder(JBUI.Borders.empty());
       component.setOpaque(false);
       add(component);
     }
@@ -188,10 +184,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     setOpaque(true);
     if (JBTabsFactory.getUseNewTabs()) {
-      setBorder(JBUI.Borders.empty(0));
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
     }
     else {
-      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
     }
 
     new DoubleClickListener() {
@@ -352,23 +348,21 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract void hideToolWindow();
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    TabsHeightController.registerAdjective(this, height -> {
-      updateHeight(height);
-      return Unit.INSTANCE;
-    }, this);
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (JBTabsFactory.getUseNewTabs()) {
+      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+    }
+    return size;
   }
 
-  private void updateHeight(int value) {
+  @Override
+  public Dimension getMinimumSize() {
     Dimension size = super.getMinimumSize();
-    Insets insets = getInsets();
-    value = value - insets.top - insets.bottom;
-
-    if(size.height != value) {
-      Dimension newSize = new Dimension(size.width, value);
-      setMinimumSize(newSize);
+    if (JBTabsFactory.getUseNewTabs()) {
+      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
     }
+    return size;
   }
 
   private class ShowOptionsAction extends DumbAwareAction {
@@ -394,7 +388,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   private class HideAction extends DumbAwareAction {
     HideAction() {
-      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID);
+      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID));
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }

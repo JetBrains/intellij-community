@@ -16,15 +16,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.Constants;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
@@ -44,7 +43,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
-    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName(Extension.IMPLEMENTATION_ATTRIBUTE);
+    private final XmlName OS_XML_NAME = new XmlName("os");
+    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
 
     @Override
     public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
@@ -73,11 +73,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
         registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
+
+      registrar.registerGenericAttributeValueChildExtension(OS_XML_NAME, com.intellij.openapi.extensions.Extensions.OS.class);
     }
   };
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
-    Set<IdeaPlugin> result = new HashSet<>();
+    Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
     result.addAll(byId.get(null));
@@ -110,17 +112,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                              String epPrefix,
                                              @Nullable String pluginId) {
     String epName = extensionPoint.getName().getStringValue();
-    if (epName != null && StringUtil.isNotEmpty(pluginId)) {
-      epName = pluginId + "." + epName;
-    }
-    else {
-      epName = extensionPoint.getQualifiedName().getStringValue();
-    }
-    if (epName == null || !epName.startsWith(epPrefix)) return;
+    if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
+    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
+    if (epName == null) return;
+    if (!epName.startsWith(epPrefix)) return;
 
-    registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class)
-      .setDeclaringElement(extensionPoint)
-      .addExtender(EXTENSION_EXTENDER);
+    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class);
+    domExtension.setDeclaringElement(extensionPoint);
+    domExtension.addExtender(EXTENSION_EXTENDER);
   }
 
   private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
@@ -165,17 +164,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || Extension.isClassField(fieldName)) {
+        if (withElement != null || isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
-        if (findAnnotation(RequiredElement.class, field) != null) {
-          extension.addCustomAnnotation(MyRequired.INSTANCE);
-        }
-
         markAsClass(extension, fieldName, withElement);
         if (clazz.equals(String.class)) {
           markAsLanguage(extension, fieldName);
@@ -225,9 +220,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (withElement != null || Extension.isClassField(fieldName)) {
+    if (withElement != null || isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
+  }
+
+  public static boolean isClassField(String fieldName) {
+    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) ||
+           fieldName.equals("className") ||
+           fieldName.equals("implementation") ||
+           fieldName.equals("serviceInterface") ||
+           fieldName.equals("serviceImplementation");
   }
 
   @Nullable
@@ -378,12 +381,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
-      AbstractCollectionChildDescription collectionChildDescription =
-        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
-      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
-      assert handler != null;
-      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
-      for (ExtensionPoints points : children) {
+      for (ExtensionPoints points : plugin.getExtensionPoints()) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
@@ -396,14 +394,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return false;
   }
 
-  public interface SimpleTagValue extends GenericDomValue<String> {
+  public interface SimpleTagValue extends DomElement {
+    @SuppressWarnings("UnusedDeclaration")
+    @TagValue
+    String getTagValue();
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyRequired implements Required {
 
     private static final MyRequired INSTANCE = new MyRequired();
-
+    
     @Override
     public boolean value() {
       return true;

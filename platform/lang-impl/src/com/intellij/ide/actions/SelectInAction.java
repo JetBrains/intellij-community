@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +74,7 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = new ArrayList<>(targetVector);
+      myVisibleTargets = ContainerUtil.newArrayList(targetVector);
       List<Icon> icons = fillInIcons(targetVector, selectInContext);
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
     }

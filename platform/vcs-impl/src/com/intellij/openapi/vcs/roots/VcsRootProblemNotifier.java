@@ -148,13 +148,10 @@ public class VcsRootProblemNotifier {
     return NotificationAction.create("Configure...", (event, notification) -> {
       if (!myProject.isDisposed()) {
         ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
-          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
-            notification.expire();
-          }
-        });
+        Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
+        if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+          notification.expire();
+        }
       }
     });
   }

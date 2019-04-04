@@ -14,7 +14,7 @@ import java.util.*;
  * @author peter
  */
 public class SmartFMap<K,V> implements Map<K,V> {
-  private static final SmartFMap EMPTY = new SmartFMap(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+  private static final SmartFMap EMPTY = new SmartFMap(ArrayUtil.EMPTY_OBJECT_ARRAY);
   private static final int ARRAY_THRESHOLD = 8;
   private final Object myMap; // Object[] for map sizes up to ARRAY_THRESHOLD or Map
 

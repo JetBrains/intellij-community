@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -22,7 +36,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -743,7 +756,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
     final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(() -> {
       final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
-      return new CachedValueProvider.Result<>(simpleTypeDescriptor, tag);
+      return new CachedValueProvider.Result<TypeDescriptor>(simpleTypeDescriptor, tag);
     }, false);
     myTypesMap.put(pair, value);
     return value;
@@ -939,7 +952,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @NotNull
   @Override
   public Object[] getDependencies() {
-    if (dependencies == null) dependencies = myFile == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
+    if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
     return dependencies;
   }
   static {

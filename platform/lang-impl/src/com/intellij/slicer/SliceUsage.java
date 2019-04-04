@@ -62,7 +62,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     return transformedUsages != null ? transformedUsages : Collections.singletonList(usage);
   }
 
-  public void processChildren(@NotNull Processor<? super SliceUsage> processor) {
+  public void processChildren(@NotNull Processor<SliceUsage> processor) {
     final PsiElement element = ReadAction.compute(this::getElement);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();

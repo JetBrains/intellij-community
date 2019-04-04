@@ -15,14 +15,17 @@
  */
 package com.intellij.util.containers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtilRt;
-import org.junit.Test;
-
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import com.intellij.util.ArrayUtil;
+import org.junit.Test;
 
 /**
  * Test for {@link DisposableWrapperList}.
@@ -42,7 +45,7 @@ public class DisposableWrapperListTest {
     assertEquals("b", l.get(2));
     assertEquals("c", l.get(3));
     assertEquals(4, l.size());
-    assertEquals("[a, d, b, c]", Arrays.toString(ArrayUtilRt.toStringArray(l)));
+    assertEquals("[a, d, b, c]", Arrays.toString(ArrayUtil.toStringArray(l)));
     Disposer.dispose(d2);
     assertFalse(l.contains("d"));
     assertEquals(3, l.size());

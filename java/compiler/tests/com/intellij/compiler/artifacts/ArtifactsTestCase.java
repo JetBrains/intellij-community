@@ -38,7 +38,7 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public abstract class ArtifactsTestCase extends JavaProjectTestCase {
+public abstract class ArtifactsTestCase extends IdeaTestCase {
   protected boolean mySetupModule;
 
   protected ArtifactManager getArtifactManager() {
@@ -98,7 +98,7 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
 
   public static void renameFile(final VirtualFile file, final String newName) {
     try {
-      WriteAction.runAndWait(() -> file.rename(JavaProjectTestCase.class, newName));
+      WriteAction.runAndWait(() -> file.rename(IdeaTestCase.class, newName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -147,8 +147,8 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     }
 
     @Override
-    public List<Module> chooseModules(List<? extends Module> modules, String title) {
-      return new ArrayList<>(modules);
+    public List<Module> chooseModules(List<Module> modules, String title) {
+      return modules;
     }
 
     @Override

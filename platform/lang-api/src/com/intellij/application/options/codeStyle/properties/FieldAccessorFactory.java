@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings.BraceStyleConstant;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +36,7 @@ class FieldAccessorFactory {
         if (wrapAnnotation != null) {
           return ValueType.WRAP;
         }
-        BraceStyleConstant braceAnnotation = myField.getAnnotation(BraceStyleConstant.class);
-        if (braceAnnotation != null) {
+        else if (fieldName.endsWith("BRACE_STYLE")) {
           return ValueType.BRACE_STYLE;
         }
         else if (fieldName.endsWith("_BRACE_FORCE")) {

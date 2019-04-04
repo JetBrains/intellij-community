@@ -46,7 +46,6 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -210,7 +209,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
                                                 long timeStamp,
                                                 CoverageRunner coverageRunner,
                                                 CoverageFileProvider fileProvider) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, selectedFileName, fileProvider, ArrayUtilRt.EMPTY_STRING_ARRAY, timeStamp, null, false, false);
+    final CoverageSuite suite = createCoverageSuite(coverageRunner, selectedFileName, fileProvider, ArrayUtil.EMPTY_STRING_ARRAY, timeStamp, null, false, false);
     myCoverageSuites.add(suite);
     return suite;
   }
@@ -387,7 +386,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   /**
    * Called from EDT, on external coverage suite choosing
    */
-  public void addRootsToWatch(List<? extends CoverageSuite> suites) {
+  public void addRootsToWatch(List<CoverageSuite> suites) {
     myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));

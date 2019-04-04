@@ -9,6 +9,7 @@ import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
@@ -19,7 +20,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.text.StringCharacterIterator;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class GroovyTraitFieldsFileIndex
   }
 
   private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
-    final Collection<TraitFieldDescriptor> values = new ArrayList<>();
+    final Collection<TraitFieldDescriptor> values = ContainerUtil.newArrayList();
 
     new ClassReader(inputData.getContent()).accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override

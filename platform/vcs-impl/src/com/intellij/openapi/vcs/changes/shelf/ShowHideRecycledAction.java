@@ -50,7 +50,6 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
     final Project project = getEventProject(e);
     if (project != null) {
       ShelveChangesManager.getInstance(project).setShowRecycled(state);
-      ShelvedChangesViewManager.getInstance(project).updateViewContent();
     }
   }
 }

@@ -1,32 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class WebConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
+/**
+ * @author Vladislav.Soroka
+ */
+public class WebConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
+  private static final long serialVersionUID = 1L;
+
   @NotNull
   public static final Key<WebConfigurationModelData> KEY = Key.create(WebConfigurationModelData.class, ExternalSystemConstants.UNORDERED);
 
   @NotNull
-  private final List<War> artifacts;
+  private final List<War> myWars;
 
-  @PropertyMapping({"owner", "artifacts"})
-  public WebConfigurationModelData(@NotNull ProjectSystemId owner, @NotNull List<War> artifacts) {
+  public WebConfigurationModelData(@NotNull ProjectSystemId owner, @NotNull List<War> warModels) {
     super(owner);
-    this.artifacts = artifacts;
+    myWars = warModels;
   }
 
   @Override
   @NotNull
   public List<War> getArtifacts() {
-    return artifacts;
+    return myWars;
   }
 
   @Override
@@ -37,7 +40,7 @@ public final class WebConfigurationModelData extends AbstractExternalEntityData 
 
     WebConfigurationModelData data = (WebConfigurationModelData)o;
 
-    if (!artifacts.equals(data.artifacts)) return false;
+    if (!myWars.equals(data.myWars)) return false;
 
     return true;
   }
@@ -45,14 +48,14 @@ public final class WebConfigurationModelData extends AbstractExternalEntityData 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + artifacts.hashCode();
+    result = 31 * result + myWars.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
     return "WebConfigurationModelData{" +
-           "myWars=" + artifacts +
+           "myWars=" + myWars +
            '}';
   }
 }

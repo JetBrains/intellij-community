@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -22,13 +22,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.proxy.SharedProxyConfig;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import gnu.trove.THashMap;
@@ -48,16 +50,17 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
-  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
-  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
-  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
+  public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
+  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
+  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -122,10 +125,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     final HttpConfigurable currentState = getState();
     if (currentState != null) {
-      final Element serialized = XmlSerializer.serialize(currentState);
+      final Element serialized = XmlSerializer.serializeIfNotDefault(currentState, new SkipDefaultsSerializationFilter());
       if (serialized == null) {
         // all settings are defaults
         // trying user's proxy configuration entered while obtaining the license
@@ -151,11 +154,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
     CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
-  }
-
-  @Deprecated
-  public void initComponent() {
-    initializeComponent();
   }
 
   @NotNull
@@ -366,7 +364,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
-    com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
+    XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();

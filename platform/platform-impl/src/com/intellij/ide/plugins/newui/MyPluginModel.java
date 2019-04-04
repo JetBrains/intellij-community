@@ -5,14 +5,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -27,7 +24,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -56,8 +52,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private StatusBarEx myStatusBar;
 
   private PluginUpdatesService myPluginUpdatesService;
-
-  private Runnable myInvalidFixCallback;
 
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
@@ -143,26 +137,26 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return myInstallingWithUpdatesPlugins.contains(descriptor);
   }
 
-  void installOrUpdatePlugin(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
+  void installOrUpdatePlugin(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Collections.singletonList(descriptor))) {
       return;
     }
 
-    IdeaPluginDescriptor actionDescriptor = updateDescriptor == null ? descriptor : updateDescriptor;
     PluginNode pluginNode;
-    if (actionDescriptor instanceof PluginNode) {
-      pluginNode = (PluginNode)actionDescriptor;
+    if (descriptor instanceof PluginNode) {
+      pluginNode = (PluginNode)descriptor;
     }
     else {
-      pluginNode = new PluginNode(actionDescriptor.getPluginId(), actionDescriptor.getName(), "-1");
-      pluginNode.setDepends(Arrays.asList(actionDescriptor.getDependentPluginIds()), actionDescriptor.getOptionalDependentPluginIds());
+      pluginNode = new PluginNode(descriptor.getPluginId(), descriptor.getName(), "-1");
+      pluginNode.setDepends(Arrays.asList(descriptor.getDependentPluginIds()), descriptor.getOptionalDependentPluginIds());
       pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
     }
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
+    needRestart = true;
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, install));
   }
 
   private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
@@ -197,9 +191,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
-    boolean install = updateDescriptor == null;
-    InstallPluginInfo info = new InstallPluginInfo(descriptor, updateDescriptor, this, install);
+  private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
+    InstallPluginInfo info = new InstallPluginInfo(descriptor, this, install);
     myInstallingInfos.put(descriptor, info);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -269,9 +262,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (detailPanel != null && detailPanel.myPlugin == descriptor) {
       detailPanel.hideProgress(success);
     }
-    for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin == descriptor) {
-        panel.hideProgress(success);
+    for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
+      if (detailPanel.myPlugin == descriptor) {
+        detailPanel.hideProgress(success);
       }
     }
 
@@ -302,14 +295,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (myUpdates != null) {
         myUpdates.titleWithCount();
       }
-      myPluginUpdatesService.finishUpdate(info.updateDescriptor);
+      myPluginUpdatesService.finishUpdate(descriptor);
     }
 
     info.indicator.cancel();
 
-    if (success) {
-      needRestart = true;
-    }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
@@ -367,12 +357,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private void appendDependsAfterInstall() {
-    if (myDownloaded == null || myDownloaded.ui == null) {
-      return;
-    }
-
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded.ui.findComponent(descriptor) != null) {
+      if (myDownloaded != null && myDownloaded.ui != null && myDownloaded.ui.findComponent(descriptor) != null) {
         continue;
       }
 
@@ -433,55 +419,18 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   @NotNull
   public List<String> getVendors() {
     if (ContainerUtil.isEmpty(myVendorsSorted)) {
-      assert myDownloadedPanel != null;
+      assert myDownloaded != null;
 
-      List<IdeaPluginDescriptor> descriptors =
-        myDownloadedPanel.getGroups().stream().flatMap(group -> group.plugins.stream()).map(plugin -> plugin.myPlugin)
-          .collect(Collectors.toList());
-
-      myVendorsSorted = getVendors(descriptors);
+      Set<String> vendors = new HashSet<>();
+      for (IdeaPluginDescriptor descriptor : myDownloaded.descriptors) {
+        String vendor = StringUtil.trim(descriptor.getVendor());
+        if (!StringUtil.isEmptyOrSpaces(vendor)) {
+          vendors.add(vendor);
+        }
+      }
+      myVendorsSorted = ContainerUtil.sorted(vendors, String::compareToIgnoreCase);
     }
     return myVendorsSorted;
-  }
-
-  @NotNull
-  public static List<String> getVendors(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
-    Map<String, Integer> vendors = new HashMap<>();
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      String vendor = StringUtil.trim(descriptor.getVendor());
-      if (!StringUtil.isEmptyOrSpaces(vendor)) {
-        Integer count = vendors.get(vendor);
-        if (count == null) {
-          vendors.put(vendor, 1);
-        }
-        else {
-          vendors.put(vendor, count + 1);
-        }
-      }
-    }
-
-    vendors.put("JetBrains", Integer.MAX_VALUE);
-
-    return ContainerUtil.sorted(vendors.keySet(), (v1, v2) -> {
-      int result = vendors.get(v2) - vendors.get(v1);
-      return result == 0 ? v2.compareToIgnoreCase(v1) : result;
-    });
-  }
-
-  public static boolean isVendor(@NotNull IdeaPluginDescriptor descriptor, @NotNull Set<String> vendors) {
-    String vendor = StringUtil.trim(descriptor.getVendor());
-    if (StringUtil.isEmpty(vendor)) {
-      return false;
-    }
-
-    for (String vendorToFind : vendors) {
-      if (vendor.equalsIgnoreCase(vendorToFind) || StringUtil.containsIgnoreCase(vendor, vendorToFind)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
@@ -543,15 +492,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
-
-      if (myInvalidFixCallback != null) {
-        ApplicationManager.getApplication().invokeLater(myInvalidFixCallback, ModalityState.any());
-      }
     }
-  }
-
-  public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
-    myInvalidFixCallback = invalidFixCallback;
   }
 
   private void updateAfterEnableDisable() {
@@ -623,64 +564,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-    if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-      for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (descriptor instanceof IdeaPluginDescriptorImpl) {
-          if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
-            return descriptor;
-          }
-        }
-      }
-    }
-    return plugin;
-  }
-
-  @Override
-  public boolean hasProblematicDependencies(PluginId pluginId) {
-    Set<PluginId> ids = getDependentToRequiredListMap().get(pluginId);
-    if (ContainerUtil.isEmpty(ids)) {
-      return false;
-    }
-
-    for (PluginId id : ids) {
-      IdeaPluginDescriptor plugin = findPlugin(id);
-      if (plugin != null && !isEnabled(plugin)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
     return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId());
-  }
-
-  @NotNull
-  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
-    String message;
-
-    Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = findPlugin(id);
-        return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
-    }
-
-    return message;
   }
 }

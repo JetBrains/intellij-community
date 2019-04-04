@@ -11,8 +11,8 @@ public enum LogMessageType {
   WARNING("[WARNING] "),
   ERROR("[ERROR] ");
 
-  private final String myPrefix;
-  private final int myPrefixLength;
+  private String myPrefix;
+  private int myPrefixLength;
 
   LogMessageType(final String prefix) {
     myPrefix = prefix;

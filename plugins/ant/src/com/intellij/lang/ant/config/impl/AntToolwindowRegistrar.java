@@ -36,10 +36,11 @@ public class AntToolwindowRegistrar implements ProjectComponent {
 
   @Override
   public void projectOpened() {
+    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     final String prefix = AntConfiguration.getActionIdPrefix(myProject);
     final ActionManager actionManager = ActionManager.getInstance();
 
-    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+    for (Keymap keymap : keymapManager.getAllKeymaps()) {
       for (String id : keymap.getActionIdList()) {
         if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
           actionManager.registerAction(id, new TargetActionStub(id, myProject));
@@ -72,7 +73,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     });
   }
 
-  private boolean initializeAndRun(CompileContext context, Processor<? super AntConfigurationBase> action) {
+  private boolean initializeAndRun(CompileContext context, Processor<AntConfigurationBase> action) {
     context.getProgressIndicator().pushState();
     try {
       context.getProgressIndicator().setText(AntBundle.message("loading.ant.config.progress"));

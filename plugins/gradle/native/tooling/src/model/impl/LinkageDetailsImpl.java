@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,47 +14,47 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public final class LinkageDetailsImpl implements LinkageDetails {
-  private ExternalTask linkTask;
-  private File outputLocation;
+public class LinkageDetailsImpl implements LinkageDetails {
+  private ExternalTask myLinkTask;
+  private File myOutputLocation;
   @NotNull
-  private List<String> additionalArgs;
+  private List<String> myAdditionalArgs;
 
   public LinkageDetailsImpl() {
-    additionalArgs = Collections.emptyList();
+    myAdditionalArgs = Collections.emptyList();
   }
 
   public LinkageDetailsImpl(LinkageDetails details) {
-    linkTask = new DefaultExternalTask(details.getLinkTask());
-    outputLocation = details.getOutputLocation();
-    additionalArgs = new ArrayList<String>(details.getAdditionalArgs());
+    myLinkTask = new DefaultExternalTask(details.getLinkTask());
+    myOutputLocation = details.getOutputLocation();
+    myAdditionalArgs = new ArrayList<String>(details.getAdditionalArgs());
   }
 
   @Override
   public ExternalTask getLinkTask() {
-    return linkTask;
+    return myLinkTask;
   }
 
   public void setLinkTask(ExternalTask linkTask) {
-    this.linkTask = linkTask;
+    myLinkTask = linkTask;
   }
 
   @Override
   public File getOutputLocation() {
-    return outputLocation;
+    return myOutputLocation;
   }
 
   public void setOutputLocation(File outputLocation) {
-    this.outputLocation = outputLocation;
+    myOutputLocation = outputLocation;
   }
 
   @NotNull
   @Override
   public List<String> getAdditionalArgs() {
-    return additionalArgs;
+    return myAdditionalArgs;
   }
 
   public void setAdditionalArgs(@NotNull List<String> additionalArgs) {
-    this.additionalArgs = additionalArgs;
+    myAdditionalArgs = additionalArgs;
   }
 }

@@ -238,7 +238,7 @@ public class UpdateHighlightersUtil {
       if (!atStart) {
         return true;
       }
-      if (info.isFileLevelAnnotation() && psiFile != null) {
+      if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
         codeAnalyzer.addFileLevelHighlight(project, group, info, psiFile);
         changed[0] = true;
         return true;

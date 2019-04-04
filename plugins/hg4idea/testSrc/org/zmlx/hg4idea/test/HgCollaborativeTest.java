@@ -15,8 +15,6 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.testFramework.RunAll;
-
 /**
  * The parent of all tests, where at least two repositories communicate with each other.
  * This is used to test collaborative tasks, such as push, pull, merge and others.
@@ -36,9 +34,8 @@ public class HgCollaborativeTest extends HgTest {
 
   @Override
   protected void tearDownRepositories() throws Exception {
-    new RunAll(() -> myRepo.getDirFixture().tearDown(),
-               () -> myParentRepo.getDirFixture().tearDown())
-      .run();
+    myRepo.getDirFixture().tearDown();
+    myParentRepo.getDirFixture().tearDown();
   }
 
 }

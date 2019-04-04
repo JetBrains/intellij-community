@@ -1,14 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.io;
 
 import com.google.common.base.Charsets;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ThrowableRunnable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,36 +26,43 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
-public class PagedFileStorageTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
-
+public class PagedFileStorageTest extends TestCase {
   private final PagedFileStorage.StorageLock lock = new PagedFileStorage.StorageLock();
   private File f;
   private PagedFileStorage s;
 
-  @Before
-  public void setUp() throws IOException {
-    withLock(lock, () -> {
-      f = tempDir.newFile("storage");
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    lock.lock();
+    try {
+      f = FileUtil.createTempFile("storage", ".tmp");
       s = new PagedFileStorage(f, lock);
-    });
+    }
+    finally {
+      lock.unlock();
+    }
   }
 
-  @After
-  public void tearDown() throws IOException {
-    withLock(lock, () -> {
+  @Override
+  public void tearDown() throws Exception {
+    lock.lock();
+    try {
       s.close();
-      File l = new File(f.getPath() + ".len");
-      assertTrue(l.getPath(), !l.exists() || l.delete());
-      assertTrue(f.getPath(), f.delete());
-    });
+      final File l = new File(f.getPath() + ".len");
+      assert !l.exists() || l.delete() : l.getPath();
+      assert f.delete() : f.getPath();
+    } finally {
+      lock.unlock();
+      super.tearDown();
+    }
   }
 
-  @Test
   public void testResizing() throws IOException {
-    withLock(lock, () -> {
+    lock.lock();
+    try {
       assertEquals(0, f.length());
 
       s.resize(12345);
@@ -53,23 +70,27 @@ public class PagedFileStorageTest {
 
       s.resize(123);
       assertEquals(123, f.length());
-    });
+    } finally {
+      lock.unlock();
+    }
   }
 
-  @Test
   public void testFillingWithZerosAfterResize() throws IOException {
-    withLock(lock, () -> {
+    lock.lock();
+    try {
       s.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
         assertEquals(0, s.get(i));
       }
-    });
+    } finally {
+      lock.unlock();
+    }
   }
 
-  @Test
-  public void testResizeableMappedFile() throws IOException {
-    withLock(lock, () -> {
+  public void testResizeableMappedFile() throws Exception {
+    lock.lock();
+    try {
       ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
 
       System.out.println("writing...");
@@ -99,17 +120,19 @@ public class PagedFileStorageTest {
       System.out.println("done in " + t + " ms");
 
       file.close();
-    });
+    } finally {
+      lock.unlock();
+    }
   }
 
-  @Test
-  public void testResizeableMappedFile2() throws IOException {
-    withLock(lock, () -> {
+  public void testResizeableMappedFile2() throws Exception {
+    lock.lock();
+    try {
       int initialSize = 4096;
       ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock.myDefaultStorageLockContext, PagedFileStorage.MB, false);
       byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(Charsets.UTF_8);
       assertTrue(bytes.length > initialSize);
-
+      
       file.put(0, bytes, 0, bytes.length);
       int written_bytes = (int)file.length();
       byte[] newBytes = new byte[written_bytes];
@@ -117,15 +140,7 @@ public class PagedFileStorageTest {
       assertArrayEquals(bytes, newBytes);
 
       file.close();
-    });
-  }
-
-  private static void withLock(PagedFileStorage.StorageLock lock, ThrowableRunnable<IOException> block) throws IOException {
-    lock.lock();
-    try {
-      block.run();
-    }
-    finally {
+    } finally {
       lock.unlock();
     }
   }

@@ -35,7 +35,7 @@ public abstract class JBPopupFactory {
   }
 
   @NotNull
-  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list);
+  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list);
 
   @NotNull
   public PopupChooserBuilder createPopupChooserBuilder(@NotNull JTable table) {
@@ -144,7 +144,6 @@ public abstract class JBPopupFactory {
     List<JBPopup> popups = getChildPopups(parent);
     for (JBPopup each : popups) {
       if (each.isFocused()) return each;
-      if (each.isDisposed()) continue;
       JBPopup childFocusedPopup = getChildFocusedPopup(each.getContent());
       if (childFocusedPopup != null) {
         return childFocusedPopup;
@@ -270,7 +269,7 @@ public abstract class JBPopupFactory {
                                                    boolean honorActionMnemonics,
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount,
-                                                   @Nullable Condition<? super AnAction> preselectActionCondition);
+                                                   @Nullable Condition<AnAction> preselectActionCondition);
 
   @NotNull
   public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -280,7 +279,7 @@ public abstract class JBPopupFactory {
                                                    boolean showDisabledActions,
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount,
-                                                   @Nullable Condition<? super AnAction> preselectActionCondition,
+                                                   @Nullable Condition<AnAction> preselectActionCondition,
                                                    @Nullable String actionPlace);
 
   /**

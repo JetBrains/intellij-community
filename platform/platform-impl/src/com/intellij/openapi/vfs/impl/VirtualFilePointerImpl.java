@@ -121,8 +121,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @Override
   public String toString() {
     FilePointerPartNode node = myNode;
-    Pair<VirtualFile, String> fileAndUrl;
-    return node == null ? "(disposed)" : (fileAndUrl = node.myFileAndUrl) == null ? "?" : fileAndUrl.second;
+    return node == null ? "(disposed)" : node.myFileAndUrl.second;
   }
 
   public void dispose() {

@@ -91,10 +91,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-@State(name = "ProjectView", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
@@ -203,13 +200,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       protected void setAutoScrollMode(boolean state) {
         setAutoscrollToSource(state, myCurrentViewId);
-      }
-
-      @Override
-      protected boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
-        if (!super.isAutoScrollEnabledFor(file)) return false;
-        AbstractProjectViewPane pane = getCurrentProjectViewPane();
-        return pane == null || pane.isAutoScrollEnabledFor(file);
       }
     };
 
@@ -714,7 +704,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
+  protected void createTitleActions(@NotNull List<AnAction> titleActions) {
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       titleActions.add(new ScrollFromSourceAction());
     }

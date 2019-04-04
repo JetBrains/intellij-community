@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -35,7 +35,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
@@ -488,8 +487,16 @@ public class HighlightMethodUtil {
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
                                          @Nullable HighlightInfo highlightInfo,
                                          @NotNull TextRange range) {
-    for (IntentionAction action : QUICK_FIX_FACTORY.createCreateMethodFromUsageFixes(methodCall)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, range, action);
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      for (IntentionAction action : QUICK_FIX_FACTORY.createCreateMethodFromUsageFixes(methodCall)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, range, action);
+      }
+    }
+    else {
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateMethodFromUsageFix(methodCall));
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateAbstractMethodFromUsageFix(methodCall));
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreatePropertyFromUsageFix(methodCall));
+      QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createCreateGetterSetterPropertyFromUsageFix(methodCall));
     }
   }
 
@@ -783,7 +790,7 @@ public class HighlightMethodUtil {
       registerMethodCallIntentions(info, methodCall, list, resolveHelper);
     }
     if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-      HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
     }
     if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       HighlightFixUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
@@ -879,8 +886,8 @@ public class HighlightMethodUtil {
     PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
     if (expectedTypeByParent != null) {
       PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null &&
-          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) &&
+      if (methodCallType != null && 
+          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) && 
           !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
@@ -971,7 +978,7 @@ public class HighlightMethodUtil {
     );
   }
 
-  @NotNull
+  @NotNull 
   private static String escTrim(@NotNull String s) {
     return XmlStringUtil.escapeString(trimNicely(s));
   }
@@ -1256,6 +1263,7 @@ public class HighlightMethodUtil {
     if (hasNoBody) {
       if (isExtension) {
         description = JavaErrorMessages.message("extension.method.should.have.a.body");
+        additionalFixes.add(QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
       }
       else if (isInterface) {
         if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
@@ -1264,9 +1272,6 @@ public class HighlightMethodUtil {
         else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
           description = "Private methods in interfaces should have a body";
         }
-      }
-      if (description != null) {
-        additionalFixes.add(QUICK_FIX_FACTORY.createAddMethodBodyFix(method));
       }
     }
     else if (isInterface) {
@@ -1283,7 +1288,6 @@ public class HighlightMethodUtil {
     }
     else if (isExtension) {
       description = JavaErrorMessages.message("extension.method.in.class");
-      additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, false, false));
     }
     else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       description = JavaErrorMessages.message("abstract.methods.cannot.have.a.body");
@@ -1296,9 +1300,7 @@ public class HighlightMethodUtil {
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     if (!hasNoBody) {
-      if (!isExtension) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
-      }
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createPushDownMethodFix());
     }
     if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
@@ -1707,14 +1709,12 @@ public class HighlightMethodUtil {
         if (staticFactory instanceof MethodCandidateInfo) {
           if (((MethodCandidateInfo)staticFactory).isApplicable()) {
             result = (MethodCandidateInfo)staticFactory;
-            if (constructor == null) {
-              constructor = ((MethodCandidateInfo)staticFactory).getElement();
-            }
+            constructor = ((MethodCandidateInfo)staticFactory).getElement();
           }
           else {
             applicable = false;
           }
-        }
+        } 
         else {
           applicable = result != null && result.isApplicable();
         }
@@ -1823,7 +1823,7 @@ public class HighlightMethodUtil {
   }
 
   private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
-                                                  @NotNull PsiJvmMember resolved,
+                                                  @NotNull PsiMember resolved,
                                                   @NotNull JavaResolveResult result) {
     String description = HighlightUtil.accessProblemDescription(ref, resolved, result);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1).create();

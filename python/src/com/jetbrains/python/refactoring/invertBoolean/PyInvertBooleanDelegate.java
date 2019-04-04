@@ -34,7 +34,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
       return true;
     }
-    return isBooleanLiteral(element.getParent());
+    return element.getParent() instanceof PyBoolLiteralExpression;
   }
 
   @Override
@@ -46,16 +46,15 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       if (assignmentStatement != null) {
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
         if (assignedValue == null) return false;
-        return isBooleanLiteral(assignedValue);
+        final String name = assignedValue.getText();
+        return name != null && (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name));
       }
     }
     if (element instanceof PyNamedParameter) {
       final PyExpression defaultValue = ((PyNamedParameter)element).getDefaultValue();
-      if (defaultValue != null && isBooleanLiteral(defaultValue)) {
-        return true;
-      }
+      if (defaultValue instanceof PyBoolLiteralExpression) return true;
     }
-    return isBooleanLiteral(element.getParent());
+    return element.getParent() instanceof PyBoolLiteralExpression;
   }
 
   @Nullable
@@ -145,12 +144,5 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
       }
     }
     return elementGenerator.createExpressionFromText(LanguageLevel.forElement(expression), "not " + expression.getText());
-  }
-
-  private static boolean isBooleanLiteral(@Nullable PsiElement element) {
-    if (element instanceof PyBoolLiteralExpression) {
-      return true;
-    }
-    return element instanceof PyReferenceExpression && (PyNames.TRUE.equals(element.getText()) || PyNames.FALSE.equals(element.getText()));
   }
 }

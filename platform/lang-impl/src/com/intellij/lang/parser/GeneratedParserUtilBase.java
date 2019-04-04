@@ -23,12 +23,14 @@ import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
@@ -565,7 +567,7 @@ public class GeneratedParserUtilBase {
 
       PsiBuilderImpl.ProductionMarker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
-        eatMoreFlagOnce ? getLatestExtensibleDoneMarker(builder) : null;
+        eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
       // advance to the last error pos
       // skip tokens until lastErrorPos. parseAsTree might look better here...
       int parenCount = 0;
@@ -761,12 +763,6 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  @Nullable
-  private static PsiBuilderImpl.ProductionMarker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
-    PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(((Builder)builder).getProductions());
-    return marker == null || marker.getTokenType() == null || !(marker instanceof PsiBuilder.Marker) ? null : marker;
-  }
-
   private static boolean reportError(PsiBuilder builder,
                                      ErrorState state,
                                      Frame frame,
@@ -795,7 +791,7 @@ public class GeneratedParserUtilBase {
       mark.error(message);
     }
     else if (inner) {
-      PsiBuilderImpl.ProductionMarker latestDoneMarker = getLatestExtensibleDoneMarker(builder);
+      PsiBuilderImpl.ProductionMarker latestDoneMarker = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
       builder.error(message);
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
@@ -830,7 +826,7 @@ public class GeneratedParserUtilBase {
 
   public static class CompletionState implements Function<Object, String> {
     public final int offset;
-    public final Collection<String> items = new THashSet<>();
+    public final Collection<String> items = ContainerUtil.newTroveSet();
 
     public CompletionState(int offset_) {
       offset = offset_;
@@ -903,11 +899,6 @@ public class GeneratedParserUtilBase {
 
     public Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
-    }
-
-    @Nullable
-    public List<PsiBuilderImpl.ProductionMarker> getProductions() {
-      return ((PsiBuilderImpl)myDelegate).getProductions();
     }
   }
 

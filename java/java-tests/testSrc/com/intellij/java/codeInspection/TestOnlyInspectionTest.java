@@ -46,7 +46,7 @@ public class TestOnlyInspectionTest extends InspectionTestCase {
   @NotNull
   @Override
   protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
-    return new AnalysisScope(getModule());
+    return new AnalysisScope(myModule);
   }
 
   public void testSimple() {

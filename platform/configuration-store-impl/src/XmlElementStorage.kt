@@ -8,7 +8,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -92,17 +92,17 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>) {
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {
-      LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: old data null, load new for ${toString()}" }
+      LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: old data null, load new for ${toString()}" }
       componentNames.addAll(newData.keys())
     }
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData)
       if (changedComponentNames.isNotEmpty()) {
-        LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: changedComponentNames $changedComponentNames for ${toString()}" }
+        LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}" }
         componentNames.addAll(changedComponentNames)
       }
     }
@@ -179,7 +179,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
       val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeeded(componentName, normalized, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeed(componentName, normalized, originalStates, newLiveStates)
       }
       else {
         updateState(copiedStates!!, componentName, normalized, newLiveStates)
@@ -250,7 +250,7 @@ internal class XmlDataWriter(private val rootElementName: String?,
         writer.append('"')
         var value = entry.value
         if (replacePathMap != null) {
-          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfo.isFileSystemCaseSensitive)
+          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfoRt.isFileSystemCaseSensitive)
         }
         writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')

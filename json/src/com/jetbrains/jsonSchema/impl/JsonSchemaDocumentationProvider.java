@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -13,13 +13,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,6 +29,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, originalElement, true, null);
+  }
+
+  @Nullable
+  @Override
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    return null;
   }
 
   @Nullable
@@ -102,7 +108,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
     String htmlDescription = null;
     boolean deprecated = false;
-    List<JsonSchemaType> possibleTypes = new ArrayList<>();
+    List<JsonSchemaType> possibleTypes = ContainerUtil.newArrayList();
     for (JsonSchemaObject schema : schemas) {
       if (htmlDescription == null) {
         htmlDescription = getBestDocumentation(preferShort, schema);
@@ -204,6 +210,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
       return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
     }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 

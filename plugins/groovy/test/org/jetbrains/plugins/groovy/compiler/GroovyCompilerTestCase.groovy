@@ -64,8 +64,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    edt { ModuleGroupTestsKt.renameModule(module, "mainModule") }
-    myCompilerTester = new CompilerTester(module)
+    edt { ModuleGroupTestsKt.renameModule(myModule, "mainModule") }
+    myCompilerTester = new CompilerTester(myModule)
   }
 
   @Override
@@ -111,7 +111,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   protected void setupTestSources() {
     WriteCommandAction.runWriteCommandAction(getProject(), {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module)
+        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule)
         final ModifiableRootModel rootModel = rootManager.getModifiableModel()
         final ContentEntry entry = rootModel.getContentEntries()[0]
         entry.removeSourceFolder(entry.getSourceFolders()[0])
@@ -123,7 +123,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   protected Module addDependentModule() {
     Module module = addModule("dependent", true)
-    ModuleRootModificationUtil.addDependency(module, getModule())
+    ModuleRootModificationUtil.addDependency(module, myModule)
     return module
   }
 
@@ -136,13 +136,13 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         moduleModel.commit()
 
         final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName)
-        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(module).getSdk())
+        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk())
         if (withSource) {
           PsiTestUtil.addSourceRoot(dep, depRoot)
         } else {
           PsiTestUtil.addContentRoot(dep, depRoot)
         }
-        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel())
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtensionImpl.getInstance(myModule).getLanguageLevel())
 
         return dep
     } as ThrowableComputable<Module,RuntimeException>)
@@ -154,7 +154,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Nullable
   protected VirtualFile findClassFile(String className) {
-    return findClassFile(className, module)
+    return findClassFile(className, myModule)
   }
 
   @Nullable
@@ -191,7 +191,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected void assertOutput(String className, String output) throws ExecutionException {
-    assertOutput(className, output, module)
+    assertOutput(className, output, myModule)
   }
 
   protected void assertOutput(String className, String expected, final Module module) throws ExecutionException {

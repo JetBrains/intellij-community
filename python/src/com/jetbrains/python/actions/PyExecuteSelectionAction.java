@@ -34,8 +34,7 @@ import java.util.List;
 
 public class PyExecuteSelectionAction extends AnAction {
 
-  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Python Console";
-  public static final String EXECUTE_LINE_IN_CONSOLE = "Execute Line in Python Console";
+  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Console";
 
   public PyExecuteSelectionAction() {
     super(EXECUTE_SELECTION_IN_CONSOLE);
@@ -156,7 +155,7 @@ public class PyExecuteSelectionAction extends AnAction {
       else {
         text = getLineUnderCaret(editor);
         if (text != null) {
-          presentation.setText(EXECUTE_LINE_IN_CONSOLE);
+          presentation.setText("Execute Line in Console");
         }
       }
 
@@ -310,10 +309,10 @@ public class PyExecuteSelectionAction extends AnAction {
     runner.run(false);
   }
 
-  public static boolean canFindConsole(@Nullable Project project, @Nullable String sdkHomePath) {
+  public static boolean canFindConsole(@Nullable Project project, @Nullable String sdkHome) {
     if (project != null) {
       Collection<RunContentDescriptor> descriptors = getConsoles(project);
-      if (sdkHomePath == null) {
+      if (sdkHome == null) {
         return descriptors.size() > 0;
       }
       else {
@@ -321,7 +320,7 @@ public class PyExecuteSelectionAction extends AnAction {
           final ExecutionConsole console = descriptor.getExecutionConsole();
           if (console instanceof PythonConsoleView) {
             final PythonConsoleView pythonConsole = (PythonConsoleView)console;
-            if (sdkHomePath.equals(pythonConsole.getSdkHomePath())) {
+            if (pythonConsole.getText().startsWith(sdkHome)) {
               return true;
             }
           }

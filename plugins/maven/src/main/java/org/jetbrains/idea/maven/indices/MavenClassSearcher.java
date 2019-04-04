@@ -3,29 +3,29 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.VersionComparatorUtil;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
 import java.util.*;
+
+import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
-    OfflineSearchService service = MavenProjectIndicesManager.getInstance(project).getOfflineSearchService();
-    List<MavenDependencyCompletionItemWithClass> items =
-      service.findClasses(preparePattern(pattern), new SearchParameters(1000, 10000, true));
+    DependencySearchService service = MavenProjectIndicesManager.getInstance(project).getSearchService();
+    List<MavenDependencyCompletionItemWithClass> items = service.findClasses(pattern, new SearchParameters(1000, 10000, EnumSet
+      .of(ALL_VERSIONS)));
     return processResults(items, maxResult);
   }
 
   protected String preparePattern(String pattern) {
-    pattern = StringUtil.toLowerCase(pattern);
+    pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
       return pattern;
     }
@@ -77,13 +77,19 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
         className = entry.getKey().substring(pos + 1);
       }
 
-      MavenDependencyCompletionItem firstOfBunch = entry.getValue().get(0);
-      MavenDependencyCompletionItem[] items = entry.getValue().toArray(new MavenDependencyCompletionItem[0]);
-      Arrays.sort(items, Comparator.comparing(c -> c.getVersion(), VersionComparatorUtil.COMPARATOR.reversed()));
-      MavenClassSearchResult classResult = new MavenClassSearchResult(
-        new MavenRepositoryArtifactInfo(firstOfBunch.getGroupId(), firstOfBunch.getArtifactId(), items), className, packageName);
+      MavenClassSearchResult classResult = new MavenClassSearchResult(entry.getValue(), className, packageName);
       results.add(classResult);
     }
     return results;
+  }
+
+
+  @Override
+  protected String makeSortKey(MavenClassSearchResult result) {
+    return makeKey(result.getClassName(), result.getSearchResults().get(0));
+  }
+
+  private String makeKey(String className, MavenDependencyCompletionItem info) {
+    return className + " " + super.makeKey(info);
   }
 }

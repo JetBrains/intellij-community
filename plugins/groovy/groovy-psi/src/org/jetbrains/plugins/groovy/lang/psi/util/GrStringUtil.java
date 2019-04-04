@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
@@ -23,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+
+import java.util.Locale;
 
 /**
  * @author Maxim.Medvedev
@@ -231,7 +232,7 @@ public class GrStringUtil {
   }
 
   private static void appendUnicode(StringBuilder buffer, char ch) {
-    String hexCode = StringUtil.toUpperCase(Integer.toHexString(ch));
+    String hexCode = Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
     while (paddingCount-- > 0) {

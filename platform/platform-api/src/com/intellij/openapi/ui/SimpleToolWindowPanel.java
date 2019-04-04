@@ -4,7 +4,6 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.JBIterable;
@@ -156,7 +155,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     super.paintComponent(g);
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
-      g.setColor(JBColor.border());
+      g.setColor(UIUtil.getBorderColor());
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
         UIUtil.drawLine(g, 0, y, getWidth(), y);

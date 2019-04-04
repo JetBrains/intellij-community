@@ -93,7 +93,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
       if (strippedArgument == null || qualifier == null || strippedQualifier == null) {
         return;
       }
-      final CommentTracker tracker = new CommentTracker();
+      CommentTracker tracker = new CommentTracker();
       tracker.grabComments(qualifier);
       tracker.markUnchanged(strippedQualifier);
       tracker.grabComments(argument);

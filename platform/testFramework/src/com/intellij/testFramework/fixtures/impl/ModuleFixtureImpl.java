@@ -30,7 +30,6 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
     myBuilder = builder;
   }
 
-  @NotNull
   @Override
   public Module getModule() {
     if (myModule == null) {

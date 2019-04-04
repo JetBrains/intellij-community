@@ -24,11 +24,11 @@
 
 package com.intellij.openapi.vcs.changes.ignore.util;
 
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -117,10 +117,10 @@ public class RegexUtil {
   @NotNull
   public static String[] getParts(@Nullable Pattern pattern) {
     if (pattern == null) {
-      return ArrayUtilRt.EMPTY_STRING_ARRAY;
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    List<String> parts = new ArrayList<>();
+    List<String> parts = ContainerUtil.newArrayList();
     String sPattern = pattern.toString();
 
     StringBuilder part = new StringBuilder();
@@ -138,6 +138,6 @@ public class RegexUtil {
       inSquare = ch != ']' && ((ch == '[') || inSquare);
     }
 
-    return ArrayUtilRt.toStringArray(parts);
+    return ArrayUtil.toStringArray(parts);
   }
 }

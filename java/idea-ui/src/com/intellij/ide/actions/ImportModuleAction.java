@@ -39,7 +39,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,43 +85,29 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     if (wizard == null || wizard.getStepCount() > 0 && !wizard.showAndGet()) {
       return Collections.emptyList();
     }
+
     return createFromWizard(project, wizard);
   }
 
   public static List<Module> createFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
-    try {
-      Ref<List<Module>> result = Ref.create();
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
-      return result.get();
-    }
-    finally {
-      wizard.disposeIfNeeded();
-    }
+    Ref<List<Module>> result = Ref.create();
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> result.set(doCreateFromWizard(project, wizard)));
+    return result.get();
   }
 
   private static List<Module> doCreateFromWizard(@Nullable Project project, AbstractProjectWizard wizard) {
-    final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     if (project == null) {
-      Project newProject;
-      if (projectBuilder instanceof DeprecatedProjectBuilderForImport) {
-        // The path to remove import action
-        newProject = ProjectUtil.openOrImport(wizard.getNewProjectFilePath(), null, false);
-      }
-      else {
-        newProject = NewProjectUtil.createFromWizard(wizard, null);
-      }
+      Project newProject = NewProjectUtil.createFromWizard(wizard, null);
       return newProject == null ? Collections.emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
 
+    final ProjectBuilder projectBuilder = wizard.getProjectBuilder();
     try {
       if (wizard.getStepCount() > 0) {
         Module module = new NewModuleAction().createModuleFromWizard(project, null, wizard);
         return Collections.singletonList(module);
       }
       else {
-        if (!projectBuilder.validate(project, project)) {
-          return Collections.emptyList();
-        }
         return projectBuilder.commit(project);
       }
     }

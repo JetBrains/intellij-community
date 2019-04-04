@@ -20,7 +20,7 @@ private const val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
 
 class MyPrettyPrinter : DefaultPrettyPrinter() {
   init {
-    _arrayIndenter = NopIndenter.instance
+    _arrayIndenter = DefaultPrettyPrinter.NopIndenter.instance
   }
 
   override fun createInstance(): MyPrettyPrinter = MyPrettyPrinter()

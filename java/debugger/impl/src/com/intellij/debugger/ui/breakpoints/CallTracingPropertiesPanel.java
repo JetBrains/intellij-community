@@ -40,7 +40,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     _panel.add(myStartTracing);
     _panel.add(myEndTracing);
     _panel.add(filters);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder("Tracing"));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder("Tracing", true));
 
     ActionListener listener = new ActionListener() {
       @Override

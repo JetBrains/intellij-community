@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,21 +10,33 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public interface Binding {
-  Logger LOG = Logger.getInstance(Binding.class);
+public abstract class Binding {
+  static final Logger LOG = Logger.getInstance(Binding.class);
+
+  protected final MutableAccessor myAccessor;
+
+  protected Binding(@Nullable MutableAccessor accessor) {
+    myAccessor = accessor;
+  }
+
+  @NotNull
+  public MutableAccessor getAccessor() {
+    //noinspection ConstantConditions
+    return myAccessor;
+  }
 
   @Nullable
-  Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
 
-  default boolean isBoundTo(@NotNull Element element) {
+  public boolean isBoundTo(@NotNull Element element) {
     return false;
   }
 
-  default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
   @Nullable
-  static Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
+  public static Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
@@ -41,9 +53,9 @@ public interface Binding {
     }
   }
 
-  Object deserializeUnsafe(Object context, @NotNull Element element);
+  public abstract Object deserializeUnsafe(Object context, @NotNull Element element);
 
-  static void addContent(@NotNull final Element targetElement, final Object node) {
+  protected static void addContent(@NotNull final Element targetElement, final Object node) {
     if (node instanceof Content) {
       Content content = (Content)node;
       targetElement.addContent(content);

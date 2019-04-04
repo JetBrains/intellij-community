@@ -12,15 +12,15 @@
 
 <script lang="ts">
   import {Component, Vue, Watch} from "vue-property-decorator"
-  import ActivityChart from "@/views/ActivityChart.vue"
+  import ActivityChart from "@/charts/ActivityChart.vue"
   import {Location} from "vue-router"
-  import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
+  import {ActivityChartType, chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
   @Component({components: {ActivityChart}})
   export default class TabbedCharts extends Vue {
-    charts = chartDescriptors.filter(it => it.isInfoChart !== true)
+    charts = chartDescriptors
 
-    activeName: string = chartDescriptors[0].id
+    activeName: ActivityChartType = chartDescriptors[0].id
 
     created() {
       this.updateLocation(this.$route)

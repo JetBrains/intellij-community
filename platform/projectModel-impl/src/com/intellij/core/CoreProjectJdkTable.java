@@ -89,6 +89,14 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   }
 
   @Override
+  public void addListener(@NotNull Listener listener) {
+  }
+
+  @Override
+  public void removeListener(@NotNull Listener listener) {
+  }
+
+  @Override
   @NotNull
   public SdkTypeId getDefaultSdkType() {
     return CoreSdkType.INSTANCE;

@@ -8,7 +8,7 @@ import org.junit.Assert
 
 
 class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
-  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest", false) }
+  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest") }
 
   private var flushBufferSize = 0
 
@@ -47,10 +47,10 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
     this.flushBufferSize = flushBufferSize
     val testProxy = SMTestProxy.SMRootTestProxy()
     converter.processor = if (idBased) {
-      GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralIdBasedToSMTRunnerEventsConvertor(LightPlatformTestCase.ourProject, testProxy, "root")
     }
     else {
-      GeneralToSMTRunnerEventsConvertor(getProject(), testProxy, "root")
+      GeneralToSMTRunnerEventsConvertor(LightPlatformTestCase.getProject(), testProxy, "root")
     }
 
     converter.setTestingStartedHandler {  }

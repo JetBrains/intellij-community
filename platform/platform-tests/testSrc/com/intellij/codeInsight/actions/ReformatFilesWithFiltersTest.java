@@ -45,6 +45,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
   private PsiDirectory myWorkingDirectory;
 
   private MockCodeStyleManager myMockCodeStyleManager;
+  private MockPlainTextFormattingModelBuilder myMockPlainTextFormattingModelBuilder;
 
   private CodeStyleManager myRealCodeStyleManger;
 
@@ -57,14 +58,17 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     myMockCodeStyleManager = new MockCodeStyleManager();
     registerCodeStyleManager(myMockCodeStyleManager);
 
-    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new MockPlainTextFormattingModelBuilder(),
-                                                     getTestRootDisposable());
+    myMockPlainTextFormattingModelBuilder = new MockPlainTextFormattingModelBuilder();
+    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
       if (myRealCodeStyleManger != null) registerCodeStyleManager(myRealCodeStyleManger);
+      if (myMockPlainTextFormattingModelBuilder != null) {
+        LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+      }
       if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
     catch (Throwable e) {
@@ -73,6 +77,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     finally {
       myRealCodeStyleManger = null;
       myMockCodeStyleManager = null;
+      myMockPlainTextFormattingModelBuilder = null;
       super.tearDown();
     }
   }

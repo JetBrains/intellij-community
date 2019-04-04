@@ -28,8 +28,6 @@ import java.util.StringTokenizer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -296,8 +294,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String toLowerCase(@Nullable String str) {
-    return str == null ? null : str.toLowerCase(Locale.ENGLISH);
+  public static String toLowerCase(@Nullable final String str) {
+    return str == null ? null : str.toLowerCase();
   }
 
   @NotNull
@@ -479,7 +477,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String toTitleCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true);
+    return fixCapitalization(s, ArrayUtil.EMPTY_STRING_ARRAY, true);
   }
 
   @NotNull
@@ -615,7 +613,7 @@ public class StringUtil extends StringUtilRt {
             buffer.append("\\").append(ch);
           }
           else if (escapeUnicode && !isPrintableUnicode(ch)) {
-            CharSequence hexCode = toUpperCase(Integer.toHexString(ch));
+            CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -841,7 +839,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
     if (s.isEmpty()) return s;
-    if (s.length() == 1) return toUpperCase(s);
+    if (s.length() == 1) return StringUtilRt.toUpperCase(s).toString();
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -1525,10 +1523,6 @@ public class StringUtil extends StringUtilRt {
     return builder.toString();
   }
 
-  public static Collector<CharSequence, ?, String> joining() {
-    return Collectors.joining(", ");
-  }
-
   /**
    * Consider using {@link StringUtil#unquoteString(String)} instead.
    * Note: this method has an odd behavior:
@@ -1726,32 +1720,6 @@ public class StringUtil extends StringUtilRt {
       }
     }
     return result.toString();
-  }
-
-  /**
-   * Trim all characters not accepted by given filter
-   *
-   * @param s      e.g. "/n    my string "
-   * @param filter e.g. {@link CharFilter#NOT_WHITESPACE_FILTER}
-   * @return trimmed string e.g. "my string"
-   */
-  @NotNull
-  @Contract(pure = true)
-  public static String trim(@NotNull final String s, @NotNull final CharFilter filter) {
-    int start = 0;
-    int end = s.length();
-
-    for (; start < end; start++) {
-      char ch = s.charAt(start);
-      if (filter.accept(ch)) break;
-    }
-
-    for (; start < end; end--) {
-      char ch = s.charAt(end - 1);
-      if (filter.accept(ch)) break;
-    }
-
-    return s.substring(start, end);
   }
 
   @NotNull
@@ -2362,7 +2330,6 @@ public class StringUtil extends StringUtilRt {
         String replaceWith = to.get(j);
 
         final int len = toReplace.length();
-        if (len == 0) continue;
         if (text.regionMatches(i, toReplace, 0, len)) {
           if (result == null) {
             result = new StringBuilder(text.length());
@@ -2787,7 +2754,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
-    List<Pair<String, Integer>> res = new ArrayList<>();
+    List<Pair<String, Integer>> res = ContainerUtil.newArrayList();
     s += " ";
     StringBuilder name = new StringBuilder();
     int startInd = -1;
@@ -2842,27 +2809,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int compare(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean ignoreCase) {
-    if (s1 == s2) return 0;
-    if (s1 == null) return -1;
-    if (s2 == null) return 1;
-
-    int length1 = s1.length();
-    int length2 = s2.length();
-    int i = 0;
-    for (; i < length1 && i < length2; i++) {
-      int diff = compare(s1.charAt(i), s2.charAt(i), ignoreCase);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return length1 - length2;
-  }
-
-  @Contract(pure = true)
   public static int comparePairs(@Nullable String s1, @Nullable String t1, @Nullable String s2, @Nullable String t2, boolean ignoreCase) {
     final int compare = compare(s1, s2, ignoreCase);
     return compare != 0 ? compare : compare(t1, t2, ignoreCase);
+  }
+
+  @Contract(pure = true)
+  public static int hashCode(@NotNull CharSequence s) {
+    return stringHashCode(s);
   }
 
   @Contract(pure = true)
@@ -3100,8 +3054,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String toUpperCase(String s) {
-    return s == null ? null : s.toUpperCase(Locale.ENGLISH);
+  public static String toUpperCase(String a) {
+    return a == null ? null : StringUtilRt.toUpperCase(a).toString();
   }
 
   @Contract(pure = true)
@@ -3261,9 +3215,10 @@ public class StringUtil extends StringUtilRt {
    * Say smallPart = "op" and bigPart="open". Method returns true for "Ope" and false for "ops"
    */
   @Contract(pure = true)
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
-    String s = toLowerCase(string);
-    return s.startsWith(toLowerCase(smallPart)) && toLowerCase(bigPart).startsWith(s);
+    final String s = string.toLowerCase();
+    return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
   }
 
   /**

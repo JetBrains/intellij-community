@@ -1,4 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 import com.intellij.configurationStore.BaseXmlOutputter
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.openapi.application.ApplicationManager
@@ -62,7 +69,7 @@ class DoNotStorePasswordTest {
   }
 
   fun check(clazz: Class<*>) {
-    if (clazz === Attribute::class.java || clazz === Element::class.java || clazz === java.lang.String::class.java || Map::class.java.isAssignableFrom(clazz)) {
+    if (clazz === Attribute::class.java || clazz === Element::class.java) {
       return
     }
 

@@ -17,11 +17,9 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 
 public class ClsGenerics15HighlightingTest extends ClsGenericsHighlightingTest {
   
-  @NotNull
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_5;

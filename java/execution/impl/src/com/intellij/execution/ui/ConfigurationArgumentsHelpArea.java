@@ -17,7 +17,6 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.ui.PopupHandler;
@@ -85,7 +84,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   private class MyCopyAction extends AnAction {
     MyCopyAction() {
       super(ExecutionBundle.message("run.configuration.arguments.help.panel.copy.action.name"));
-      ActionUtil.copyFrom(this, IdeActions.ACTION_COPY);
+      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     }
 
     @Override

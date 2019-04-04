@@ -74,7 +74,7 @@ public class MacGestureSupportForEditor {
     myActions.clear();
 
     // search in main keymap
-    if (KeymapManagerImpl.isKeymapManagerInitialized()) {
+    if (KeymapManagerImpl.ourKeymapManagerInitialized) {
       final KeymapManager keymapManager = KeymapManager.getInstance();
       if (keymapManager != null) {
         final Keymap keymap = keymapManager.getActiveKeymap();

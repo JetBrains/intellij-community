@@ -3,7 +3,6 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectObjectProcedure;
 
 import java.io.ByteArrayOutputStream;
@@ -48,7 +47,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
       public boolean execute(final K a, final Collection<V> b) {
         // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
         final String keyStr = a instanceof File && !SystemInfo.isFileSystemCaseSensitive?
-                              StringUtil.toLowerCase(((File)a).getPath()) :
+                              ((File)a).getPath().toLowerCase(Locale.US) :
                               a.toString();
         keys.add(Pair.create(a, keyStr));
         return true;

@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -26,7 +40,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
@@ -136,7 +150,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     @Override
-    protected void updateHashCodeMemberInfos(Collection<? extends MemberInfo> equalsMemberInfos) {
+    protected void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
       if (myHashCodePanel == null) return;
       List<MemberInfo> hashCodeFields = new ArrayList<>();
 
@@ -148,7 +162,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     @Override
-    protected void updateNonNullMemberInfos(Collection<? extends MemberInfo> equalsMemberInfos) {
+    protected void updateNonNullMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
       final ArrayList<MemberInfo> list = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
@@ -198,7 +212,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     return memberInfosToFields(myNonNullPanel.getTable().getSelectedMemberInfos());
   }
 
-  private static PsiField[] memberInfosToFields(Collection<? extends MemberInfo> infos) {
+  private static PsiField[] memberInfosToFields(Collection<MemberInfo> infos) {
     ArrayList<PsiField> list = new ArrayList<>();
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
@@ -412,7 +426,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           label.setForeground(JBColor.RED);
         }
       }));
-      comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(names)));
+      comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(names)));
       String baseName = templatesManager.getDefaultTemplateBaseName();
       if (invalid.contains(baseName)) { //preselect default template but do not remember as default
         baseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(templatesManager.getAllTemplates().iterator().next());

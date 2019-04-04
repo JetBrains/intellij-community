@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
-import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -14,7 +15,8 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.EnumSet;
 
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUI.scale;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
@@ -33,7 +35,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
 
   @Test
   public void testAlign() {
-    JBUIScale.setUserScaleFactor((float)1);
+    JBUI.setUserScaleFactor(1);
 
     overrideJreHiDPIEnabled(false);
     supplyGraphics(1, 1, 1, LinePainter2DTest::testAlign);
@@ -44,9 +46,9 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
 
   private static Void testAlign(Graphics2D g) {
     double scale = ScaleContext.create(g).getScale(PIX_SCALE);
-    String msg = "LinePainter2D.align is incorrect (JreHiDPIEnabled: " + JreHiDpiUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
+    String msg = "LinePainter2D.align is incorrect (JreHiDPIEnabled: " + UIUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
     double delta = 0.000001;
-    boolean jhd = JreHiDpiUtil.isJreHiDPIEnabled();
+    boolean jhd = UIUtil.isJreHiDPIEnabled();
 
     // HORIZONTAL
     Line2D line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 2.5, 2.5, 5, false, StrokeType.CENTERED, 1);
@@ -102,7 +104,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
   }
 
   private static void paintLines(Graphics2D g, StrokeType type, float trX, float trY) {
-    g.translate(JBUIScale.scale(trX), JBUIScale.scale(trY));
+    g.translate(scale(trX), scale(trY));
     Object aa = RenderingHints.VALUE_ANTIALIAS_ON;
     paintLine(g, 0, 0, 0, 0, type, 1, aa); // a dot
     paintLine(g, 0, -2, 0, -LINE_LEN, type, 1, aa);
@@ -122,11 +124,11 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
                                 double strokeWidth,
                                 Object valueAA)
   {
-    strokeWidth = JBUIScale.scale((float)strokeWidth);
-    x1 = JBUIScale.scale((float)x1);
-    y1 = JBUIScale.scale((float)y1);
-    x2 = JBUIScale.scale((float)x2);
-    y2 = JBUIScale.scale((float)y2);
+    strokeWidth = scale((float)strokeWidth);
+    x1 = scale((float)x1);
+    y1 = scale((float)y1);
+    x2 = scale((float)x2);
+    y2 = scale((float)y2);
     LinePainter2D.paint(g, x1, y1, x2, y2, strokeType, strokeWidth, valueAA);
   }
 

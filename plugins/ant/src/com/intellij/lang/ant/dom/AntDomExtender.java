@@ -20,7 +20,6 @@ import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFileSystemItem;
@@ -228,7 +227,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     while (introspectedAttributes.hasNext()) {
       final String attribName = introspectedAttributes.next();
       if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet
-        final String _attribName = StringUtil.toLowerCase(attribName);
+        final String _attribName = attribName.toLowerCase(Locale.US);
         final Pair<Type, Class> types = registeredAttribs.get(_attribName);
         Type type = Pair.getFirst(types);
         Class converterClass = Pair.getSecond(types);
@@ -264,7 +263,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     for (XmlAttribute xmlAttribute : xmlTag.getAttributes()) {
       final String existingAttribName = xmlAttribute.getName();
       if (genericInfo.getAttributeChildDescription(existingAttribName) == null) {
-        final Pair<Type, Class> pair = registeredAttribs.get(StringUtil.toLowerCase(existingAttribName));
+        final Pair<Type, Class> pair = registeredAttribs.get(existingAttribName.toLowerCase(Locale.US));
         if (pair != null) { // if such attribute should actually be here
           registerAttribute(registrar, existingAttribName, pair.getFirst(), pair.getSecond());
         }
@@ -298,7 +297,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           if (converterAnnotation != null) {
             converterType = converterAnnotation.value();
           }
-          map.put(StringUtil.toLowerCase(name), new Pair<>(attribType, converterType));
+          map.put(name.toLowerCase(Locale.US), new Pair<>(attribType, converterType));
         }
       }
     }
@@ -329,7 +328,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
   @Nullable
   private static Class<? extends AntDomElement> getModelClass(@NotNull String tagName) {
-    return TAG_MAPPING.get(StringUtil.toLowerCase(tagName));
+    return TAG_MAPPING.get(tagName.toLowerCase(Locale.US));
   }
 
   private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {
@@ -671,9 +670,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
   private static class EnumerationToIteratorAdapter<T> implements Iterator<T> {
 
-    private final Enumeration<? extends T> myEnum;
+    private final Enumeration<T> myEnum;
 
-    EnumerationToIteratorAdapter(Enumeration<? extends T> enumeration) {
+    EnumerationToIteratorAdapter(Enumeration<T> enumeration) {
       myEnum = enumeration;
     }
 

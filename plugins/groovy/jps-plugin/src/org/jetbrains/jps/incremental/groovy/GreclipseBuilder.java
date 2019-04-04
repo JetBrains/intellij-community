@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +69,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   @Nullable
   private ClassLoader createGreclipseLoader(@Nullable String jar) {
     if (StringUtil.isEmpty(jar)) return null;
-
+    
     if (jar.equals(myGreclipseJar)) {
       return myGreclipseLoader;
     }
@@ -164,11 +164,11 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       StringWriter out = new StringWriter();
       StringWriter err = new StringWriter();
-      HashMap<String, List<String>> outputMap = new HashMap<>();
+      HashMap<String, List<String>> outputMap = ContainerUtil.newHashMap();
 
       boolean success = performCompilation(args, out, err, outputMap, context, chunk);
-
-      List<GroovycOutputParser.OutputItem> items = new ArrayList<>();
+      
+      List<GroovycOutputParser.OutputItem> items = ContainerUtil.newArrayList();
       for (String src : outputMap.keySet()) {
         for (String classFile : outputMap.get(src)) {
           items.add(new GroovycOutputParser.OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
@@ -255,7 +255,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       Method compileMethod = mainClass.getMethod("compile", String[].class);
 
       Object main = constructor.newInstance(new PrintWriter(out), new PrintWriter(err), outputs);
-      return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtilRt.toStringArray(args)});
+      return (Boolean)compileMethod.invoke(main, new Object[]{ArrayUtil.toStringArray(args)});
     }
     catch (Exception e) {
       context.processMessage(CompilerMessage.createInternalBuilderError(getPresentableName(), e));

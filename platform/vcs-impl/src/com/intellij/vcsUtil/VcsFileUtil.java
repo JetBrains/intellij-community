@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcsUtil;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -18,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -51,7 +66,7 @@ public class VcsFileUtil {
                                          int groupSize,
                                          @NotNull ThrowableNotNullFunction<? super List<String>, ? extends List<? extends T>, ? extends VcsException> processor)
     throws VcsException {
-    List<T> result = new ArrayList<>();
+    List<T> result = ContainerUtil.newArrayList();
 
     foreachChunk(arguments, groupSize, chunk -> {
       result.addAll(processor.fun(chunk));
@@ -251,19 +266,6 @@ public class VcsFileUtil {
    * Get relative path
    *
    * @param root a root path
-   * @param file a target path
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  @NotNull
-  public static String relativePath(@NotNull FilePath root, @NotNull FilePath file) {
-    return relativePath(root.getIOFile(), file.getIOFile());
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
    * @param path a path to file (possibly deleted file)
    * @return a relative path
    * @throws IllegalArgumentException if path is not under root.
@@ -396,13 +398,5 @@ public class VcsFileUtil {
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);
     }
-  }
-
-  public static boolean isAncestor(@NotNull FilePath ancestor, @NotNull FilePath path, boolean strict) {
-    return FileUtil.isAncestor(ancestor.getIOFile(), path.getIOFile(), strict);
-  }
-
-  public static boolean isAncestor(@NotNull VirtualFile root, @NotNull FilePath path) {
-    return FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), path.getIOFile(), false);
   }
 }

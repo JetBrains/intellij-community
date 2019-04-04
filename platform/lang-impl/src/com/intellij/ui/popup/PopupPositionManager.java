@@ -92,7 +92,7 @@ public class PopupPositionManager {
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
     final JBPopup popup = datakey.getData(dataContext);
-    if (popup != null && popup.isVisible() && !popup.isDisposed()) {
+    if (popup != null && popup.isVisible()) {
       return popup.getContent();
     }
 
@@ -105,7 +105,7 @@ public class PopupPositionManager {
     if (focusOwner == null) return null;
 
     JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
-    if (popup != null && popup != hint && !popup.isDisposed()) {
+    if (popup != null && popup != hint) {
       return new PositionAdjuster(popup.getContent());
     }
 

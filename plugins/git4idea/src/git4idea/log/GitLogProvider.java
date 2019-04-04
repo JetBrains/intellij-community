@@ -37,7 +37,6 @@ import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
-import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -284,17 +283,17 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
 
-    Set<VcsRef> refs = new HashSet<>();
-    Set<VcsCommitMetadata> commits = new HashSet<>();
+    Set<VcsRef> refs = ContainerUtil.newHashSet();
+    Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-      String[] parameters = ArrayUtilRt.toStringArray(ContainerUtil.concat(params, tagsChunk));
+      String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
     });
 
     sw.report();
-    return new LogDataImpl(refs, new ArrayList<>(commits));
+    return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
   }
 
   @Override
@@ -434,7 +433,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       return Collections.emptyList();
     }
 
-    List<String> filterParameters = new ArrayList<>();
+    List<String> filterParameters = ContainerUtil.newArrayList();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
     VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
@@ -448,7 +447,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
         Collection<GitBranch> branches = ContainerUtil
           .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
         Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
+        Collection<String> predefinedNames = ContainerUtil.list(GitUtil.HEAD);
 
         for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
           if (branchFilter.matches(branchName)) {
@@ -500,7 +499,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs)) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
@@ -530,7 +529,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
       }
     }
 
-    List<TimedVcsCommit> commits = new ArrayList<>();
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
     GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
@@ -579,16 +578,10 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
 
   @Nullable
   @Override
-  public VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return new GitLogHistoryHandler(myProject);
-  }
-
-  @Nullable
-  @Override
   public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
     if (file != null && file.isDirectory()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(file);
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
       if (repository != null) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
         if (submodule != null) {
@@ -608,9 +601,6 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     }
     else if (property == VcsLogProperties.SUPPORTS_INDEXING) {
       return (T)Boolean.valueOf(isIndexingOn());
-    }
-    else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
-      return (T)Boolean.TRUE;
     }
     return null;
   }

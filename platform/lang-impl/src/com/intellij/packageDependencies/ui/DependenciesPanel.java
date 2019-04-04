@@ -215,7 +215,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         }
       }
     }
-    TreeUtil.promiseSelectFirst(myLeftTree);
+    TreeUtil.selectFirstNode(myLeftTree);
   }
 
   private void putAllDependencies(DependenciesBuilder builder) {

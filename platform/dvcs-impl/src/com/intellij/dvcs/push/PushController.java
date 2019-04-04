@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -9,8 +9,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,6 +22,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -55,9 +54,8 @@ public class PushController implements Disposable {
   @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
-  @NotNull private final ModalityState myModalityState;
   @Nullable private final Repository myCurrentlyOpenedRepository;
-  private final List<PrePushHandler> myHandlers = new ArrayList<>();
+  private final List<PrePushHandler> myHandlers = ContainerUtil.newArrayList();
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
@@ -75,7 +73,6 @@ public class PushController implements Disposable {
     myPushSupports = getAffectedSupports();
     mySingleRepoProject = isSingleRepoProject();
     myDialog = dialog;
-    myModalityState = ModalityState.stateForComponent(myDialog.getRootPane());
     CheckedTreeNode rootNode = new CheckedTreeNode(null);
     createTreeModel(rootNode);
     myPushLog = new PushLog(myProject, rootNode, isSyncStrategiesAllowed());
@@ -111,12 +108,12 @@ public class PushController implements Disposable {
   }
 
   private void startLoadingCommits() {
-    Map<RepositoryNode, MyRepoModel> priorityLoading = new LinkedHashMap<>();
-    Map<RepositoryNode, MyRepoModel> others = new LinkedHashMap<>();
+    Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
+    Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
     if (nodeForCurrentEditor != null) {
       MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
-      //for ASYNC with no preselected -> check current repo
+      //for ASYNC with no preselected -> check current repo 
       if (isPreChecked(currentRepoModel) || myPreselectedRepositories.isEmpty()) {
         // put current editor repo to be loaded at first
         priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
@@ -298,7 +295,7 @@ public class PushController implements Disposable {
         .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
       result.compareAndSet(null, outgoing);
       try {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
+        EdtInvocationManager.getInstance().invokeAndWait(() -> {
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -343,9 +340,10 @@ public class PushController implements Disposable {
             node.setChecked(false);
           }
           myDialog.updateOkActions();
-        }, myModalityState);
+        });
       }
-      catch (ProcessCanceledException ignore) {
+      catch (InterruptedException e) {
+        // ignore
       }
       catch (Exception e) {
         LOG.error(e);
@@ -501,7 +499,7 @@ public class PushController implements Disposable {
 
   @NotNull
   private List<PushInfo> preparePushDetails() {
-    List<PushInfo> allDetails = new ArrayList<>();
+    List<PushInfo> allDetails = ContainerUtil.newArrayList();
     Collection<MyRepoModel<?, ?, ?>> repoModels = getSelectedRepoNode();
 
     for (MyRepoModel<?, ?, ?> model : repoModels) {
@@ -511,7 +509,7 @@ public class PushController implements Disposable {
       }
       PushSpec<PushSource, PushTarget> pushSpec = new PushSpec<>(model.getSource(), target);
 
-      List<VcsFullCommitDetails> loadedCommits = new ArrayList<>();
+      List<VcsFullCommitDetails> loadedCommits = ContainerUtil.newArrayList();
       loadedCommits.addAll(model.getLoadedCommits());
       if (loadedCommits.isEmpty()) {
         //Note: loadCommits is cancellable - it tracks current thread's progress indicator under the hood!
@@ -618,7 +616,7 @@ public class PushController implements Disposable {
 
   @NotNull
   public Map<PushSupport, VcsPushOptionsPanel> createAdditionalPanels() {
-    Map<PushSupport, VcsPushOptionsPanel> result = new LinkedHashMap<>();
+    Map<PushSupport, VcsPushOptionsPanel> result = ContainerUtil.newLinkedHashMap();
     for (PushSupport support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }

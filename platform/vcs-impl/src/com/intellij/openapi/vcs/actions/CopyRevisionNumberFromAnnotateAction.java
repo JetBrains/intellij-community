@@ -18,7 +18,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   private int myLineNumber = -1;
 
   public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
-    super("Copy Revision Number");
+    super("Copy revision number");
     myAnnotation = annotation;
   }
 
@@ -27,7 +27,8 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
     if (myLineNumber < 0) return;
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(revisionNumber.asString()));
+      final String revision = revisionNumber.asString();
+      CopyPasteManager.getInstance().setContents(new TextTransferable(revision));
     }
   }
 

@@ -18,8 +18,8 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
-import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.TestScaleHelper
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
@@ -67,7 +67,7 @@ open class RestoreScaleRule : ExternalResource() {
   }
 }
 
-suspend fun changeLafIfNeeded(lafName: String) {
+suspend fun changeLafIfNeed(lafName: String) {
   System.setProperty("idea.ui.set.password.echo.char", "true")
 
   if (UIManager.getLookAndFeel().name == lafName) {
@@ -82,7 +82,7 @@ suspend fun changeLafIfNeeded(lafName: String) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added and it leads to NPE on set comment text)
-      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet())
+      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
     }
   }
 }
@@ -105,7 +105,7 @@ fun getSnapshotRelativePath(lafName: String): String {
 }
 
 @Throws(FileComparisonFailure::class)
-fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
+fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String, isUpdateSnapshots: Boolean = isUpdateSnapshotsGlobal) {
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
     actualSerializedLayout = serializeLayout(component)
@@ -118,11 +118,11 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
       .dump(linkedMapOf("bounds" to dumpComponentBounds(component)))
   }
 
-  compareFileContent(actualSerializedLayout, snapshotDir.resolve("$snapshotName.yml"))
+  compareSnapshot(snapshotDir.resolve("$snapshotName.yml"), actualSerializedLayout, isUpdateSnapshots)
 }
 
 @Throws(FileComparisonFailure::class)
-internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMismatch: Boolean) {
+internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
   if (!snapshotFile.exists()) {
     System.out.println("Write a new snapshot ${snapshotFile.fileName}")
     snapshotFile.write(newData)
@@ -131,13 +131,17 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
 
   val uri = snapshotFile.toUri().toURL()
 
+  fun updateSnapshot() {
+    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
+  }
+
   val old = try {
     snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
   }
   catch (e: Exception) {
-    if (updateIfMismatch) {
-      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-      snapshotFile.write(newData)
+    if (isUpdateSnapshots) {
+      updateSnapshot()
       return
     }
 
@@ -151,10 +155,38 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
   }
 
   try {
-    compareFileContent(newData, snapshotFile, updateIfMismatch = updateIfMismatch)
+    compareFileContent(newData, snapshotFile)
   }
   catch (e: FileComparisonFailure) {
-    throw MultipleFailureException(listOf(AssertionError(imageMismatchError.toString()), e))
+    if (isUpdateSnapshots) {
+      updateSnapshot()
+      return
+    }
+    else {
+      throw MultipleFailureException(listOf(AssertionError(imageMismatchError.toString()), e))
+    }
+  }
+}
+
+@Throws(FileComparisonFailure::class)
+internal fun compareSnapshot(snapshotFile: Path, newData: String, isUpdateSnapshots: Boolean) {
+  if (!snapshotFile.exists()) {
+    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(newData)
+    return
+  }
+
+  try {
+    compareFileContent(newData, snapshotFile)
+  }
+  catch (e: FileComparisonFailure) {
+    if (isUpdateSnapshots) {
+      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+      snapshotFile.write(newData)
+    }
+    else {
+      throw e
+    }
   }
 }
 

@@ -9,7 +9,7 @@
               "version_added": true
             },
             "chrome_android": {
-              "version_added": true
+              "version_added": null
             },
             "edge": {
               "version_added": null
@@ -21,7 +21,7 @@
               "version_added": true
             },
             "firefox_android": {
-              "version_added": true
+              "version_added": null
             },
             "ie": {
               "version_added": false
@@ -39,7 +39,7 @@
               "version_added": true
             },
             "webview_android": {
-              "version_added": true
+              "version_added": null
             }
           },
           "status": {
@@ -49,100 +49,6 @@
           }
         },
         "calcMode": {
-          "__compat": {
-            "support": {
-              "chrome": {
-                "version_added": null
-              },
-              "chrome_android": {
-                "version_added": null
-              },
-              "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
-                "version_added": null
-              },
-              "firefox": {
-                "version_added": null
-              },
-              "firefox_android": {
-                "version_added": null
-              },
-              "ie": {
-                "version_added": false
-              },
-              "opera": {
-                "version_added": null
-              },
-              "opera_android": {
-                "version_added": null
-              },
-              "safari": {
-                "version_added": null
-              },
-              "safari_ios": {
-                "version_added": null
-              },
-              "webview_android": {
-                "version_added": null
-              }
-            },
-            "status": {
-              "experimental": false,
-              "standard_track": true,
-              "deprecated": false
-            }
-          }
-        },
-        "keyPoints": {
-          "__compat": {
-            "support": {
-              "chrome": {
-                "version_added": null
-              },
-              "chrome_android": {
-                "version_added": null
-              },
-              "edge": {
-                "version_added": null
-              },
-              "edge_mobile": {
-                "version_added": null
-              },
-              "firefox": {
-                "version_added": null
-              },
-              "firefox_android": {
-                "version_added": null
-              },
-              "ie": {
-                "version_added": false
-              },
-              "opera": {
-                "version_added": null
-              },
-              "opera_android": {
-                "version_added": null
-              },
-              "safari": {
-                "version_added": null
-              },
-              "safari_ios": {
-                "version_added": null
-              },
-              "webview_android": {
-                "version_added": null
-              }
-            },
-            "status": {
-              "experimental": false,
-              "standard_track": true,
-              "deprecated": false
-            }
-          }
-        },
-        "origin": {
           "__compat": {
             "support": {
               "chrome": {
@@ -236,7 +142,101 @@
             }
           }
         },
+        "keyPoints": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": null
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": null
+              },
+              "firefox_android": {
+                "version_added": null
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": null
+              },
+              "opera_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
         "rotate": {
+          "__compat": {
+            "support": {
+              "chrome": {
+                "version_added": null
+              },
+              "chrome_android": {
+                "version_added": null
+              },
+              "edge": {
+                "version_added": null
+              },
+              "edge_mobile": {
+                "version_added": null
+              },
+              "firefox": {
+                "version_added": null
+              },
+              "firefox_android": {
+                "version_added": null
+              },
+              "ie": {
+                "version_added": false
+              },
+              "opera": {
+                "version_added": null
+              },
+              "opera_android": {
+                "version_added": null
+              },
+              "safari": {
+                "version_added": null
+              },
+              "safari_ios": {
+                "version_added": null
+              },
+              "webview_android": {
+                "version_added": null
+              }
+            },
+            "status": {
+              "experimental": false,
+              "standard_track": true,
+              "deprecated": false
+            }
+          }
+        },
+        "origin": {
           "__compat": {
             "support": {
               "chrome": {

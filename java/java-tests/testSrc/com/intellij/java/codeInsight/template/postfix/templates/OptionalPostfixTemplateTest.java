@@ -90,7 +90,7 @@ public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
   }
   
   public void testDoNotExpandOnJavaLess8() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
     doTest();
   }
 }

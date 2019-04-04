@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -147,26 +147,7 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
            "class X {}",
            PsiElement::getText,
            "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
-    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.with.final.parameters")),
-           "class X {" +
-           "  public void m(final int i, int j, int k) {" +
-           "    System.out.println(i);" +
-           "  }" +
-           "  void n() {}" +
-           "  void o(String s) {}" +
-           "}",
-           "public void m(final int i, int j, int k) {    System.out.println(i);  }");
-    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.of.the.class")),
-                                   "abstract class X {" +
-                                   "  X() {}" +
-                                   "  X(String s) {}" +
-                                   "  abstract void x();" +
-                                   "  int x(int i) {}" +
-                                   "  boolean x(double d, Object o) {}" +
-                                   "}",
-                                   "X() {}", "X(String s) {}", "abstract void x();", "int x(int i) {}", "boolean x(double d, Object o) {}");
-    //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
-    //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
+    //assertTrue("untested configurations: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
 
   private void doTest(Configuration template, String source, String... results) {
@@ -177,7 +158,7 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
     if (!(template instanceof SearchConfiguration)) fail();
     final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
     options = searchConfiguration.getMatchOptions();
-    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, false);
+    final List<MatchResult> matches = testMatcher.testFindMatches(source, options, true, StdFileTypes.JAVA, null, false);
     assertEquals(template.getName(), expectedResults.length, matches.size());
     String[] actualResults = matches.stream().map(MatchResult::getMatch).map(resultConverter).toArray(String[]::new);
     for (int i = 0; i < actualResults.length; i++) {

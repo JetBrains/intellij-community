@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -38,7 +37,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler");
 
   @Override
-  public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer, @Nullable PsiReference reference) {
+  public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer) {
     HashSet<String> names = new HashSet<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiFile) {
@@ -54,7 +53,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       }
     }
 
-    return super.canMove(elements, targetContainer, reference);
+    return super.canMove(elements, targetContainer);
   }
 
   @Override
@@ -110,31 +109,5 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       return true;
     }
     return false;
-  }
-
-  @Nullable
-  @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
-    return getMoveOrCopyActionName(elements, "Move");
-  }
-
-  @NotNull
-  public static String getMoveOrCopyActionName(@NotNull PsiElement[] elements, final String verb) {
-    int fileCount = 0, directoryCount = 0;
-    for (PsiElement element : elements) {
-      if (element instanceof PsiFile) {
-        fileCount++;
-      }
-      else if (element instanceof PsiDirectory) {
-        directoryCount++;
-      }
-    }
-    if (directoryCount == 0) {
-      return fileCount == 1 ? verb + " File..." : verb + " Files...";
-    }
-    if (fileCount == 0) {
-      return directoryCount == 1 ? verb + " Directory..." : verb + " Directories...";
-    }
-    return verb + " Files and Directories...";
   }
 }

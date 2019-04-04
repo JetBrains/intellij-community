@@ -23,10 +23,7 @@ import org.intellij.lang.annotations.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
-class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>,
-                         defaultKeymapManager: DefaultKeymap,
-                         providerClass: Class<BundledKeymapProvider>)
-  : DefaultKeymapImpl(dataHolder, defaultKeymapManager, providerClass) {
+class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>, defaultKeymapManager: DefaultKeymap) : DefaultKeymapImpl(dataHolder, defaultKeymapManager) {
   companion object {
     @JvmStatic
     fun convertShortcutFromParent(shortcut: Shortcut): Shortcut {

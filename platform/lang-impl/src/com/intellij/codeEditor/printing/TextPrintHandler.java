@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.print.PageFormat;
@@ -34,7 +35,6 @@ import java.awt.print.PrinterJob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
@@ -107,9 +107,9 @@ public class TextPrintHandler extends PrintActionHandler {
       painter = new MultiFilePainter(psiFiles, printSettings.EVEN_NUMBER_OF_PAGES);
     }
     else if (printSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
-      List<PsiFile> filesList = new ArrayList<>();
+      List<PsiFile> filesList = ContainerUtil.newArrayList();
       boolean isRecursive = printSettings.isIncludeSubdirectories();
-      addToPsiFileList(Objects.requireNonNull(psiDirectory), filesList, isRecursive);
+      addToPsiFileList(psiDirectory, filesList, isRecursive);
       painter = new MultiFilePainter(filesList, printSettings.EVEN_NUMBER_OF_PAGES);
     }
     else {
@@ -176,7 +176,11 @@ public class TextPrintHandler extends PrintActionHandler {
 
   private static String generateFileName(DataContext dataContext) {
     RunProfile runProfile = dataContext.getData(LangDataKeys.RUN_PROFILE);
-    return runProfile == null ? "unknown" : runProfile.getName();
+    if (runProfile != null) {
+      String name = runProfile.getName();
+      if (name != null) return name;
+    }
+    return "unknown";
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, List<? super PsiFile> filesList, boolean isRecursive) {
@@ -245,10 +249,10 @@ public class TextPrintHandler extends PrintActionHandler {
     if (virtualFile == null) return null;
     DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (doc == null) return null;
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getColorSchemeForPrinting(),
-                                                                         psiFile.getProject());
-    return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(),
-                           psiFile.getFileType(), psiFile.getProject(), CodeStyle.getSettings(psiFile));
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getColorSchemeForPrinting(), psiFile.getProject());
+    highlighter.setText(doc.getCharsSequence());
+    return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(), 
+                           psiFile, psiFile.getFileType());
   }
 
   private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project,
@@ -264,6 +268,7 @@ public class TextPrintHandler extends PrintActionHandler {
 
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(EditorColorsUtil.getColorSchemeForPrinting(), "unknown", project);
+    highlighter.setText(doc.getCharsSequence());
     return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
   }
 }

@@ -54,7 +54,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -184,13 +183,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     renderers.add(renderer);
   }
 
-  private static void removeDuplicatedRangesForInjected(@NotNull List<? extends HighlightInfo> infos) {
+  private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
     Collections.sort(infos, (o1, o2) -> {
       final int i = o2.startOffset - o1.startOffset;
       return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
     });
     HighlightInfo prevInfo = null;
-    for (Iterator<? extends HighlightInfo> it = infos.iterator(); it.hasNext();) {
+    for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
       final HighlightInfo info = it.next();
       if (prevInfo != null &&
           info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY &&
@@ -471,7 +470,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private long collectAndCheckHighlighting(boolean checkWarnings,
                                            boolean checkInfos,
                                            boolean checkWeakWarnings,
-                                           Stream<? extends VirtualFile> files) {
+                                           Stream<VirtualFile> files) {
     List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> data = files.map(file -> {
       PsiFile psiFile = myPsiManager.findFile(file);
       assertNotNull(psiFile);
@@ -858,7 +857,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public String getUsageViewTreeTextRepresentation(@NotNull final Collection<? extends UsageInfo> usages) {
+  public String getUsageViewTreeTextRepresentation(@NotNull final Collection<UsageInfo> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
       .getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY,
                                                  StreamEx.of(usages)
@@ -1181,24 +1180,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
-        if (ApplicationManager.getApplication() == null) {
-          return;
-        }
-
         Project project = getProject();
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
           AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
         }
-
-        // return default value to avoid unnecessary save
-        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
-        if (daemonCodeAnalyzerSettings != null) {
-          daemonCodeAnalyzerSettings.setImportHintEnabled(true);
-        }
-
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+        closeOpenFiles();
         if (project != null) {
-          closeOpenFiles();
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();

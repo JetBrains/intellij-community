@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -33,11 +32,6 @@ public abstract class FileTypeRegistry {
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
   public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
-
-  @Nullable
-  public LanguageFileType findFileTypeByLanguage(Language language) {
-    return language.findMyFileType(getRegisteredFileTypes());
-  }
 
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();

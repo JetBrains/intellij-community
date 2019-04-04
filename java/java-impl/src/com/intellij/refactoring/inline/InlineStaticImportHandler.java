@@ -24,7 +24,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -55,11 +54,5 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
 
     WriteCommandAction.writeCommandAction(project).withName(REFACTORING_NAME).run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
-  }
-
-  @Nullable
-  @Override
-  public String getActionName(PsiElement element) {
-    return REFACTORING_NAME;
   }
 }

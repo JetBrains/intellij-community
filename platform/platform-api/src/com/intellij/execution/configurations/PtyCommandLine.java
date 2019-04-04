@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.pty4j.PtyProcessBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +188,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private static void setSystemProperty(@NotNull String propertyName,
                                         @Nullable String newPropertyValue,
-                                        @Nullable List<? super Pair<String, String>> backup) {
+                                        @Nullable List<Pair<String, String>> backup) {
     if (backup != null) {
       String oldValue = System.getProperty(propertyName);
       backup.add(Pair.create(propertyName, oldValue));
@@ -206,7 +206,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
 
-    String[] command = ArrayUtilRt.toStringArray(commands);
+    String[] command = ArrayUtil.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
     boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
@@ -217,7 +217,7 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
       .setRedirectErrorStream(isRedirectErrorStream())
-      .setWindowsAnsiColorEnabled(!Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode"));
+      .setWindowsAnsiColorEnabled(!"true".equals(System.getProperty("pty4j.win.disable.ansi.in.console.mode")));
     return builder.start();
   }
 }

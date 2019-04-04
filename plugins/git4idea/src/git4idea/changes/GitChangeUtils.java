@@ -1,8 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -10,7 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -21,6 +36,7 @@ import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +88,28 @@ public class GitChangeUtils {
     }
   }
 
+  public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
+    final Collection<String> result = new ArrayList<>();
+
+    while (s.hasMoreData()) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      if ("CADUMR".indexOf(s.peek()) == -1) {
+        // exit if there is no next character
+        break;
+      }
+      assert 'M' != s.peek() : "Moves are not yet handled";
+      String[] tokens = s.line().split("\t");
+      String path = tokens[tokens.length - 1];
+      path = rootPath + File.separator + GitUtil.unescapePath(path);
+      path = FileUtil.toSystemDependentName(path);
+      result.add(path);
+    }
+    return result;
+  }
+
   /**
    * Parse changes from lines
    *
@@ -105,7 +143,7 @@ public class GitChangeUtils {
       final ContentRevision before;
       final ContentRevision after;
       final String path = tokens[tokens.length - 1];
-      final FilePath filePath = GitContentRevision.createPathFromEscaped(vcsRoot, path);
+      final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, true);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
@@ -129,7 +167,7 @@ public class GitChangeUtils {
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          final FilePath oldFilePath = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
+          final FilePath oldFilePath = GitContentRevision.createPath(vcsRoot, tokens[1], true);
           before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
           after = GitContentRevision.createRevision(filePath, thisRevision, project);
           break;
@@ -184,6 +222,17 @@ public class GitChangeUtils {
     handler.endOptions();
     handler.setSilent(true);
     return handler;
+  }
+
+  /**
+   * Check if the exception means that HEAD is missing for the current repository.
+   *
+   * @param e the exception to examine
+   * @return true if the head is missing
+   */
+  public static boolean isHeadMissing(final VcsException e) {
+    @NonNls final String errorText = "fatal: bad revision 'HEAD'\n";
+    return e.getMessage().equals(errorText);
   }
 
   /**
@@ -266,7 +315,7 @@ public class GitChangeUtils {
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
-    final String[] parents = parentsLine.length() == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
+    final String[] parents = parentsLine.length() == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : parentsLine.split(" ");
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);
@@ -400,7 +449,7 @@ public class GitChangeUtils {
     }
 
     String output = StringUtil.join(result.getOutput(), "\n");
-    HashSet<String> unmergedPaths = new HashSet<>();
+    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
     for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
@@ -425,7 +474,7 @@ public class GitChangeUtils {
   }
 
   @NotNull
-  public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
+  private static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                           @NotNull VirtualFile root,
                                                           @NotNull String oldRevision,
                                                           @Nullable Collection<FilePath> dirtyPaths,
@@ -463,6 +512,12 @@ public class GitChangeUtils {
       handler = getDiffHandler(project, root, diffRange, null, reverse, detectRenames);
     }
     return Git.getInstance().runCommand(handler).getOutputOrThrow();
+  }
+
+  @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    return getDiffOutput(project, root, diffRange, dirtyPaths, false, true);
   }
 
 

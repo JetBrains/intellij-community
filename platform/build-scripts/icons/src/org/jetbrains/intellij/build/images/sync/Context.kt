@@ -13,7 +13,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                        private val devIconsVerifier: Consumer<Collection<File>>? = null) {
   companion object {
     const val iconsCommitHashesToSyncArg = "sync.icons.commits"
-    private const val iconsRepoArg = "icons.repo"
   }
 
   val devRepoDir: File
@@ -25,6 +24,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val doSyncDevRepo: Boolean
   val doSyncRemovedIconsInDev: Boolean
   private val failIfSyncDevIconsRequired: Boolean
+  val assignInvestigation: Boolean
   val notifySlack: Boolean
   lateinit var iconsRepo: File
   lateinit var devRepoRoot: File
@@ -38,9 +38,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var iconsCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
+  /**
+   * commits to review id
+   */
+  var commitsAlreadyInReview = emptyMap<CommitInfo, String>()
   val devIconsSyncAll: Boolean
 
   init {
+    val iconsRepoArg = "icons.repo"
     val devRepoArg = "dev.repo"
     val iconsRepoNameArg = "icons.repo.name"
     val iconsRepoPathArg = "icons.repo.path"
@@ -75,28 +80,46 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
 
     fun bool(arg: String) = System.getProperty(arg)?.toBoolean() ?: false
 
+    fun ignoreCaseInDirName(path: String) = File(path).parentFile?.listFiles()?.firstOrNull {
+      it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
+    }
+
     fun commits(arg: String) = System.getProperty(arg)
                                  ?.takeIf { it.trim() != "*" }
                                  ?.split(",", ";", " ")
                                  ?.filter { it.isNotBlank() }
                                  ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf<String>()
 
-    devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
+    fun File.isDir() = exists() && isDirectory && !list().isNullOrEmpty()
+
+    devRepoDir = System.getProperty(devRepoArg)?.let(::ignoreCaseInDirName) ?: {
       log("WARNING: $devRepoArg not found")
       File(System.getProperty("user.dir"))
     }()
-    val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
-    val iconsRepoRootDir = findDirectoryIgnoringCase(System.getProperty(iconsRepoArg)) ?: cloneIconsRepoToTempDir()
-    iconsRepoDir = iconsRepoRootDir.resolve(iconsRepoRelativePath)
-    if (!iconsRepoDir.isDirectory) {
-      doFail("Cannot find $iconsRepoRelativePath under $iconsRepoRootDir")
-    }
+    val iconsRepoPath = System.getProperty(iconsRepoPathArg) ?: ""
+    iconsRepoDir = System.getProperty(iconsRepoArg)?.let { "$it/$iconsRepoPath" }?.let { path ->
+      File(path).takeIf(File::isDir) ?: ignoreCaseInDirName(path)?.takeIf(File::isDir)
+    } ?: {
+      log("WARNING: $iconsRepoArg not found")
+      val tmp = Files.createTempDirectory("icons-sync").toFile()
+      Runtime.getRuntime().addShutdownHook(thread(start = false) {
+        tmp.deleteRecursively()
+      })
+      val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
+      val repo = callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
+      System.getProperty(iconsRepoArg)?.let {
+        var file: File? = File(it)
+        while (file != null && file.name != repo.name) file = file.parentFile
+        if (file != null) repo.resolve(File(it).toRelativeString(file)) else null
+      }?.let { ignoreCaseInDirName(it.absolutePath) } ?: repo
+    }()
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
     skipDirsPattern = System.getProperty(patternArg)
     doSyncDevRepo = bool(syncDevIconsArg)
     doSyncIconsRepo = bool(syncIconsArg)
     failIfSyncDevIconsRequired = bool(failIfSyncDevIconsRequiredArg)
+    assignInvestigation = bool(assignInvestigationArg)
     notifySlack = bool(notifySlackArg)
     iconsCommitHashesToSync = commits(iconsCommitHashesToSyncArg)
     doSyncRemovedIconsInDev = bool(syncRemovedIconsInDevArg) || iconsCommitHashesToSync.isNotEmpty()
@@ -124,16 +147,6 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       }?.toMutableSet() ?: mutableSetOf()
   }
 
-  private fun cloneIconsRepoToTempDir(): File {
-    log("WARNING: $iconsRepoArg not found")
-    val tmp = Files.createTempDirectory("icons-sync").toFile()
-    Runtime.getRuntime().addShutdownHook(thread(start = false) {
-      tmp.deleteRecursively()
-    })
-    val uri = "ssh://git@github.com/JetBrains/IntelliJIcons.git"
-    return callWithTimer("Cloning $uri into $tmp") { gitClone(uri, tmp) }
-  }
-
   val byDesigners = Changes(includeRemoved = doSyncRemovedIconsInDev)
   val devIconsFilter: (File) -> Boolean by lazy {
     val skipDirsRegex = skipDirsPattern?.toRegex()
@@ -151,20 +164,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
   fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
+  fun iconsReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_ICONS_PROJECT_ID }
   fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
   fun doFail(report: String) {
     log(report)
     errorHandler.accept(report)
   }
 
-  fun isFail() = notifySlack && failIfSyncDevIconsRequired && devSyncRequired()
+  fun isFail() = (notifySlack || assignInvestigation) &&
+                 (iconsSyncRequired() || failIfSyncDevIconsRequired && devSyncRequired())
 
-  private fun findDirectoryIgnoringCase(path: String?): File? {
-    if (path == null) return null
-    val file = File(path)
-    if (file.isDirectory) return file
-    return file.parentFile?.listFiles()?.firstOrNull {
-      it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
-    }
-  }
 }

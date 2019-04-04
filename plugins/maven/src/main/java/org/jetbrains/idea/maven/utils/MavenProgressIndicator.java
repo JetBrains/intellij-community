@@ -19,32 +19,23 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Condition;
-import org.jetbrains.idea.maven.buildtool.ArtifactSyncListener;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class MavenProgressIndicator {
   private ProgressIndicator myIndicator;
   private final List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<>();
-  private final Supplier<MavenSyncConsole> mySyncSupplier;
 
-  public MavenProgressIndicator(Supplier<MavenSyncConsole> syncSupplier) {
-    this(new MyEmptyProgressIndicator(), syncSupplier);
+  public MavenProgressIndicator() {
+    this(new MyEmptyProgressIndicator());
   }
 
-  public MavenProgressIndicator(ProgressIndicator i,
-                                Supplier<MavenSyncConsole> syncSupplier) {
-
+  public MavenProgressIndicator(ProgressIndicator i) {
     myIndicator = i;
-    mySyncSupplier = syncSupplier;
   }
 
   public synchronized void setIndicator(ProgressIndicator i) {
-    //setIndicatorStatus(i);
     i.setText(myIndicator.getText());
     i.setText2(myIndicator.getText2());
     if (!i.isIndeterminate()) {
@@ -111,27 +102,6 @@ public class MavenProgressIndicator {
     if (isCanceled()) throw new ProcessCanceledException();
   }
 
-  public void startedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
-
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadStarted(id);
-    }
-  }
-
-  public void completedDownload(MavenServerProgressIndicator.ResolveType type, String id) {
-    if (mySyncSupplier != null) {
-      mySyncSupplier.get().getListener(type).downloadCompleted(id);
-    }
-  }
-
-  public void failedDownload(MavenServerProgressIndicator.ResolveType type,
-                             String id,
-                             String message,
-                             String trace) {
-    if (mySyncSupplier != null) {
-     mySyncSupplier.get().getListener(type).downloadFailed(id, message, trace);
-    }
-  }
 
   private static class MyEmptyProgressIndicator extends EmptyProgressIndicator {
     private String myText;

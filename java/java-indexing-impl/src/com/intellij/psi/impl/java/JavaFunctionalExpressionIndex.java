@@ -373,12 +373,13 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       if (offsets.length == 0) return Collections.emptyMap();
 
       Map<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> result = new HashMap<>();
-      LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
+      LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
-      LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {
-        LighterASTNode element = tree.getParent(leaf);
-        if (element == null) return;
+      for (int offset : offsets) {
+        LighterASTNode leaf = LightTreeUtil.findLeafElementAt(tree, offset);
+        LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
+        if (element == null) continue;
 
         if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
           FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
@@ -387,7 +388,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
           Map<Integer, FunExprOccurrence> map = result.computeIfAbsent(key, __ -> new LinkedHashMap<>());
           map.put(element.getStartOffset(), createOccurrence(element, resolver));
         }
-      });
+      }
 
       return result;
     };

@@ -57,24 +57,18 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForLinux()
-        if (jreDirectoryPath != null) {
-          buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.secondJreSuffix())
-        }
-        else {
-          buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-        }
-      }
-      // Used for Snap packages
-      String jreDirectoryPath = buildContext.bundledJreManager.extractJre("linux")
-      buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
-
+      def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
+        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
         buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
-        buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
+        buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+      }
+      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+      if (secondJreBuild != null) {
+        def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
+        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
   }
@@ -93,7 +87,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
-      filterset(begintoken: "__", endtoken: "__") {
+      filterset(begintoken: "@@", endtoken: "@@") {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
@@ -148,8 +142,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jbr/bin/*"
-      javaExecutablePath = "jbr/bin/java"
+      extraBins += "jre64/bin/*"
+      javaExecutablePath = "jre64/bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
@@ -253,11 +247,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           customizer.extraExecutables.each { include(name: it) }
         }
         fileset(dir: jreDirectoryPath) {
-          include(name: "jbr/bin/*")
+          include(name: "jre64/bin/*")
         }
       }
 
-      generateProductJson(unixSnapDistPath, "jbr/bin/java")
+      generateProductJson(unixSnapDistPath, "jre64/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")

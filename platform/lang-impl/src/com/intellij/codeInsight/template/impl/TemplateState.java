@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -109,7 +109,7 @@ public class TemplateState implements Disposable {
       @Override
       public void itemSelected(@NotNull LookupEvent event) {
         if (isCaretOutsideCurrentSegment(null)) {
-          if (isCaretInsideOrBeforeNextVariable()) {
+          if (isCaretInsideNextVariable()) {
             nextTab();
           }
           else {
@@ -176,17 +176,11 @@ public class TemplateState implements Disposable {
     editor.getCaretModel().addCaretListener(listener, this);
   }
 
-  private boolean isCaretInsideOrBeforeNextVariable() {
+  private boolean isCaretInsideNextVariable() {
     if (myEditor != null && myCurrentVariableNumber >= 0) {
       int nextVar = getNextVariableNumber(myCurrentVariableNumber);
-      TextRange nextVarRange = nextVar < 0 ? null : getVariableRange(myTemplate.getVariableNameAt(nextVar));
-      if (nextVarRange == null) return false;
-
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      if (nextVarRange.containsOffset(caretOffset)) return true;
-
-      TextRange currentVarRange = getVariableRange(myTemplate.getVariableNameAt(myCurrentVariableNumber));
-      return currentVarRange != null && currentVarRange.getEndOffset() < caretOffset && caretOffset < nextVarRange.getStartOffset();
+      TextRange range = nextVar < 0 ? null : getVariableRange(myTemplate.getVariableNameAt(nextVar));
+      return range != null && range.containsOffset(myEditor.getCaretModel().getOffset());
     }
     return false;
   }
@@ -635,7 +629,7 @@ public class TemplateState implements Disposable {
     catch (IndexNotReadyException ignored) { }
     if (elements == null) return Collections.emptyList();
 
-    List<TemplateExpressionLookupElement> result = new ArrayList<>();
+    List<TemplateExpressionLookupElement> result = ContainerUtil.newArrayList();
     for (int i = 0; i < elements.length; i++) {
       result.add(new TemplateExpressionLookupElement(this, elements[i], i));
     }
@@ -744,7 +738,7 @@ public class TemplateState implements Disposable {
           }
         }
 
-        List<TemplateDocumentChange> changes = new ArrayList<>();
+        List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
         boolean selectionCalculated = false;
         for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
           if (!calcedSegments.get(i)) {
@@ -837,14 +831,11 @@ public class TemplateState implements Disposable {
     String oldValue = getExpressionString(segmentNumber);
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    boolean commitDocument = !isQuick || expressionNode.requiresCommittedPSI();
 
-    if(commitDocument) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-    }
+    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = getPsiFile();
     PsiElement element = psiFile != null ? psiFile.findElementAt(start) : null;
-    if (element != null && commitDocument) {
+    if (element != null) {
       PsiUtilCore.ensureValid(element);
     }
 
@@ -867,7 +858,7 @@ public class TemplateState implements Disposable {
     if (defaultValue != null && resultIsNullOrEmpty) {
       result = defaultValue.calculateResult(context);
     }
-    if (element != null && commitDocument) {
+    if (element != null) {
       PsiUtilCore.ensureValid(element);
     }
     if (result == null || result.equalsToText(oldValue, element)) return;
@@ -966,7 +957,7 @@ public class TemplateState implements Disposable {
     TextRange range = getCurrentVariableRange();
     if (range != null && range.getLength() > 0) {
       int caret = myEditor.getCaretModel().getOffset();
-      if (caret == range.getEndOffset() || isCaretInsideOrBeforeNextVariable()) {
+      if (caret == range.getEndOffset() || isCaretInsideNextVariable()) {
         nextTab();
       }
       else if (caret > range.getEndOffset()) {
@@ -1158,7 +1149,7 @@ public class TemplateState implements Disposable {
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     IntArrayList indices = new IntArrayList();
-    List<TemplateDocumentChange> changes = new ArrayList<>();
+    List<TemplateDocumentChange> changes = ContainerUtil.newArrayList();
     for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
       int length = mySegments.getSegmentEnd(i) - mySegments.getSegmentStart(i);
       if (length != 0) continue;
@@ -1183,7 +1174,7 @@ public class TemplateState implements Disposable {
   }
 
   private void restoreEmptyVariables(IntArrayList indices) {
-    List<TextRange> rangesToRemove = new ArrayList<>();
+    List<TextRange> rangesToRemove = ContainerUtil.newArrayList();
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
       rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));

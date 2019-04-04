@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.internal.psiView;
 
@@ -12,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -49,7 +62,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
   public Object[] getChildElements(@NotNull final Object element) {
     if (myRootElement == element) {
       if (myRootPsiElement == null) {
-        return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
       if (!(myRootPsiElement instanceof PsiFile)) {
         return new Object[]{myRootPsiElement};
@@ -58,7 +71,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       return PsiUtilCore.toPsiFileArray(files);
     }
     final Object[][] children = new Object[1][];
-    children[0] = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    children[0] = ArrayUtil.EMPTY_OBJECT_ARRAY;
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object[] result;
       if (myShowTreeNodes) {

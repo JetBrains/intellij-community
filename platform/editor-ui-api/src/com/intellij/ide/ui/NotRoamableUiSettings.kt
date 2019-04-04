@@ -3,7 +3,6 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Pair
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
@@ -52,9 +51,9 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 }
 
 class NotRoamableUiOptions : BaseState() {
-  var ideAAType by enum(AntialiasingType.SUBPIXEL)
+  var ideAAType by property(AntialiasingType.SUBPIXEL)
 
-  var editorAAType by enum(AntialiasingType.SUBPIXEL)
+  var editorAAType by property(AntialiasingType.SUBPIXEL)
 
   @get:Property(filter = FontFilter::class)
   var fontFace by string()
@@ -87,4 +86,4 @@ private class FontFilter : SerializationFilter {
 }
 
 private val systemFontFaceAndSize: Pair<String, Int>
-  get() = JBUIScale.getSystemFontData()
+  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)

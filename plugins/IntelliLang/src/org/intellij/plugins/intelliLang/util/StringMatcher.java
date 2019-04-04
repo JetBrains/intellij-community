@@ -147,7 +147,7 @@ public abstract class StringMatcher<T> {
 
     @Override
     public boolean matches(String what) {
-      return myTarget.matches(StringUtil.toLowerCase(what));
+      return myTarget.matches(what.toLowerCase());
     }
 
     @Override
@@ -229,7 +229,7 @@ public abstract class StringMatcher<T> {
       // this assumes the regex is syntactically correct
       if (branch.startsWith("(?i)")) {
         ignoreCase = true;
-        branch = StringUtil.toLowerCase(branch.substring(2));
+        branch = branch.substring(2).toLowerCase();
       }
       if (branch.endsWith(".*")) {
         startsWith = true;

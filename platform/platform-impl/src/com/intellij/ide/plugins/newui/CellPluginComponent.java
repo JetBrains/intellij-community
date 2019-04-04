@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -12,8 +12,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +33,6 @@ import java.util.List;
 public abstract class CellPluginComponent extends JPanel {
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
-
-  public static boolean HANDLE_FOCUS_ON_SELECTION = true;
 
   public final IdeaPluginDescriptor myPlugin;
 
@@ -89,7 +87,7 @@ public abstract class CellPluginComponent extends JPanel {
           setSize(new JBDimension(180, 20));
         }
         Integer property = (Integer)getClientProperty("parent.width");
-        int width = property == null ? JBUIScale.scale(180) : property;
+        int width = property == null ? JBUI.scale(180) : property;
         View view = getUI().getRootView(this);
         view.setSize(width, Integer.MAX_VALUE);
         return new Dimension(width, function.getHeight(this));
@@ -129,7 +127,7 @@ public abstract class CellPluginComponent extends JPanel {
 
     if (scrollAndFocus) {
       scrollToVisible();
-      if (getParent() != null && type == EventHandler.SelectionType.SELECTION && HANDLE_FOCUS_ON_SELECTION) {
+      if (getParent() != null && type == EventHandler.SelectionType.SELECTION) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
       }
     }

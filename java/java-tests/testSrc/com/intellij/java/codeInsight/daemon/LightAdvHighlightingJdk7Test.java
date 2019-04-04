@@ -121,7 +121,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedGenericsArrayCreation() { doTest(true, false); }
   public void testGenericsArrayCreation() { doTest(false, false); }
   public void testPreciseRethrow() { doTest(false, false); }
-  public void testPreciseRethrowCaptured() { doTest(false, false); }
   public void testPreciseRethrowNonAssignableToException() { doTest(false, false); }
   public void testPreciseRethrowOfOneExceptionInTheBlock() { doTest(false, false); }
   public void testPreciseRethrowWithRuntimeExceptionDeclared() { doTest(false, false); }
@@ -169,7 +168,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIntersectionTypeCast() { doTest(false, false); }
   public void testUsedMethodCalledViaReflectionInTheSameFile() { doTest(true, false); }
   public void testCatchSubclassOfThrownException() { doTest(true, false); }
-  public void testNoUncheckedWarningOnRawSubstitutor() { doTest(true, false); }
+
   public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
 
   public void testJavaUtilCollections_NoVerify() {

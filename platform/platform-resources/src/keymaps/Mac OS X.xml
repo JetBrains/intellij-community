@@ -417,12 +417,8 @@
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="ctrl alt UP"/>
   </action>
-
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
-  <action id="ChangesView.SetDefault">
-    <keyboard-shortcut first-keystroke="control SPACE" />
-  </action>
 
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="alt shift F5"/>

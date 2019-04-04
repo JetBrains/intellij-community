@@ -376,9 +376,4 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testAnotherMethodIsWrappedIntoStatic() {
     doMultiFileTest();
   }
-
-  // PY-35512
-  public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
-  }
 }

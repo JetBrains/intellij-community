@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
@@ -9,7 +23,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage;
@@ -21,7 +34,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
-                                                                                        List<? extends TargetTypeBuildScope> scopes,
+                                                                                        List<TargetTypeBuildScope> scopes,
                                                                                         Collection<String> paths,
                                                                                         final Map<String, String> userData,
                                                                                         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -32,7 +45,7 @@ public class CmdlineProtoUtil {
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(String project,
-                                                                                List<? extends TargetTypeBuildScope> scopes,
+                                                                                List<TargetTypeBuildScope> scopes,
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
                                                                                 final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -62,7 +75,7 @@ public class CmdlineProtoUtil {
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
                                                                                           String project,
-                                                                                          List<? extends TargetTypeBuildScope> scopes,
+                                                                                          List<TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
@@ -107,7 +120,7 @@ public class CmdlineProtoUtil {
       try (PrintStream stream = new PrintStream(baos)) {
         cause.printStackTrace(stream);
       }
-      final String stacktrace = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+      final String stacktrace = new String(baos.toByteArray());
       builder.setStacktrace(stacktrace);
       if (description == null) {
         builder.setDescription(stacktrace);
@@ -199,14 +212,14 @@ public class CmdlineProtoUtil {
     return createBuildEvent(BuilderMessage.BuildEvent.Type.BUILD_COMPLETED, description, status, null, null);
   }
 
-  public static BuilderMessage createFileGeneratedEvent(final Collection<? extends Pair<String, String>> paths) {
+  public static BuilderMessage createFileGeneratedEvent(final Collection<Pair<String, String>> paths) {
     return createBuildEvent(BuilderMessage.BuildEvent.Type.FILES_GENERATED, null, null, paths, null);
   }
 
   private static BuilderMessage createBuildEvent(final BuilderMessage.BuildEvent.Type type,
                                                  @Nullable String description,
                                                  @Nullable final BuilderMessage.BuildEvent.Status status,
-                                                 @Nullable Collection<? extends Pair<String, String>> generatedPaths,
+                                                 @Nullable Collection<Pair<String, String>> generatedPaths,
                                                  @Nullable final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
     final BuilderMessage.BuildEvent.Builder builder = BuilderMessage.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {

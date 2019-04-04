@@ -7,6 +7,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +30,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
+                                                                              ProjectComponent {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenTasksManagerState myState = new MavenTasksManagerState();
@@ -83,7 +85,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (!isNormalProject()) return;
     if (isInitialized.getAndSet(true)) return;
 

@@ -2,37 +2,19 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
-import kotlin.Triple;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class LiveTemplateRunLogger {
   private static final String GROUP = "live.templates";
 
   static void log(@NotNull TemplateImpl template, @NotNull Language language) {
-    Triple<String, String, PluginInfo> keyGroupPluginToLog = getKeyGroupPluginToLog(template);
-    if (keyGroupPluginToLog == null) return;
-
-    FeatureUsageData data = new FeatureUsageData().addLanguage(language).addData("group", keyGroupPluginToLog.getSecond());
-    PluginInfo plugin = keyGroupPluginToLog.getThird();
-    if (plugin != null) {
-      data.addPluginInfo(plugin);
-    }
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, keyGroupPluginToLog.getFirst(), data);
-  }
-
-  @Nullable
-  static Triple<String, String, PluginInfo> getKeyGroupPluginToLog(@NotNull TemplateImpl template) {
     String key = template.getKey();
     String groupName = template.getGroupName();
-    if (isCreatedProgrammatically(key, groupName)) return null;
+    if (isCreatedProgrammatically(key, groupName)) return;
 
     PluginInfo plugin = TemplateSettings.getInstance().findPluginForPredefinedTemplate(template);
     if (plugin == null) {
@@ -43,39 +25,15 @@ class LiveTemplateRunLogger {
       key = "custom.plugin.template";
       groupName = "custom.plugin.group";
     }
-    return new Triple<>(key, groupName, plugin);
+
+    FeatureUsageData data = new FeatureUsageData().addLanguage(language).addData("group", groupName);
+    if (plugin != null) {
+      data.addPluginInfo(plugin);
+    }
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, key, data);
   }
 
   private static boolean isCreatedProgrammatically(String key, String groupName) {
     return StringUtil.isEmpty(key) || StringUtil.isEmpty(groupName);
   }
-
-  public static class LiveTemplateValidator extends CustomWhiteListRule {
-    @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "live_template".equals(ruleId) || "live_template_group".equals(ruleId) ;
-    }
-
-    @NotNull
-    @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      return validateKeyGroup(context.eventId, context.eventData.get("group"));
-    }
-
-    @NotNull
-    public static ValidationResultType validateKeyGroup(String key, Object group) {
-      if (group == null) return ValidationResultType.REJECTED;
-      if ("user.defined.template".equals(key) && "user.defined.group".equals(group)) return ValidationResultType.ACCEPTED;
-      if ("custom.plugin.template".equals(key) && "custom.plugin.group".equals(group)) return ValidationResultType.ACCEPTED;
-      try {
-        TemplateImpl template = TemplateSettings.getInstance().getTemplate(key, group.toString());
-        if (template != null) {
-          PluginInfo info = TemplateSettings.getInstance().findPluginForPredefinedTemplate(template);
-          if (info != null && info.isSafeToReport()) return ValidationResultType.ACCEPTED;
-        }
-      } catch (Exception ignored) { }
-      return ValidationResultType.REJECTED;
-    }
-  }
-
 }

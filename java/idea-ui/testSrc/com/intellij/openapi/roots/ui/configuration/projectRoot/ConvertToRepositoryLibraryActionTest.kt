@@ -17,29 +17,31 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import com.intellij.util.io.zipFile
 
 /**
  * @author nik
  */
 class ConvertToRepositoryLibraryActionTest : LightPlatformTestCase() {
   fun `test detect single coordinates`() {
-    val file = zipFile {
-      dir("META-INF") {
-        dir("maven") {
-          dir("myGroupId") {
-            dir("myArtifactId") {
-              file("pom.properties", """
+    val file = directoryContent {
+      zip("library.jar") {
+        dir("META-INF") {
+          dir("maven") {
+            dir("myGroupId") {
+              dir("myArtifactId") {
+                file("pom.properties", """
                   |version=1.0
                   |groupId=myGroupId
                   |artifactId=myArtifactId
                 """.trimMargin())
+              }
             }
           }
         }
       }
-    }.generateInVirtualTempDir()
+    }.generateInVirtualTempDir().findChild("library.jar")!!
     val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file)!!
     val coordinates = assertOneElement(ConvertToRepositoryLibraryActionBase.detectMavenCoordinates(arrayOf(jarRoot)))
     assertEquals("myGroupId", coordinates.groupId)
@@ -48,28 +50,30 @@ class ConvertToRepositoryLibraryActionTest : LightPlatformTestCase() {
   }
 
   fun `test detect multiple coordinates`() {
-    val file = zipFile {
-      dir("META-INF") {
-        dir("maven") {
-          dir("myGroupId") {
-            dir("myArtifactId1") {
-              file("pom.properties", """
+    val file = directoryContent {
+      zip("library2.jar") {
+        dir("META-INF") {
+          dir("maven") {
+            dir("myGroupId") {
+              dir("myArtifactId1") {
+                file("pom.properties", """
                   |version=1.0
                   |groupId=myGroupId
                   |artifactId=myArtifactId1
                 """.trimMargin())
-            }
-            dir("myArtifactId2") {
-              file("pom.properties", """
+              }
+              dir("myArtifactId2") {
+                file("pom.properties", """
                   |version=1.0
                   |groupId=myGroupId
                   |artifactId=myArtifactId2
                 """.trimMargin())
+              }
             }
           }
         }
       }
-    }.generateInVirtualTempDir()
+    }.generateInVirtualTempDir().findChild("library2.jar")!!
     val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file)!!
     val (coordinates1, coordinates2) = ConvertToRepositoryLibraryActionBase.detectMavenCoordinates(arrayOf(jarRoot)).sortedBy { it.artifactId }
     assertEquals("myGroupId", coordinates1.groupId)

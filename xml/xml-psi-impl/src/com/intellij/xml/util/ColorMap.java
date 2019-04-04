@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class ColorMap {
   private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<>(25);
@@ -245,7 +245,7 @@ public class ColorMap {
 
     while (tokenizer.hasMoreTokens()) {
       String name = tokenizer.nextToken();
-      ourSystemColors.add(StringUtil.toLowerCase(name));
+      ourSystemColors.add(name.toLowerCase(Locale.US));
       tokenizer.nextToken();
     }
 
@@ -308,7 +308,7 @@ public class ColorMap {
     if (StringUtil.isEmptyOrSpaces(text)) {
       return null;
     }
-    String hexValue = text.charAt(0) == '#' ? text : getHexCodeForColorName(StringUtil.toLowerCase(text));
+    String hexValue = text.charAt(0) == '#' ? text : getHexCodeForColorName(text.toLowerCase(Locale.US));
     if (hexValue != null) {
       return ColorUtil.fromHex(hexValue, null);
     }

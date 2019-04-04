@@ -1,4 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -23,13 +24,15 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+/**
+ * @author Eugene Belyaev
+ */
 public class HyperlinkLabel extends HighlightableComponent {
   private static final TextAttributes BOLD_ATTRIBUTES = new TextAttributes(new JBColor(() -> {
     final Color foreground1 = UIUtil.getLabelTextForeground();
@@ -103,7 +106,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processComponentKeyEvent(KeyEvent event) {
     if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
       event.consume();
-      fireHyperlinkEvent(event);
+      fireHyperlinkEvent();
     }
   }
 
@@ -113,12 +116,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMouseHover = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-      setCursor(null);
+      setCursor(Cursor.getDefaultCursor());
       myMouseHover = false;
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent(e);
+      fireHyperlinkEvent();
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -134,7 +137,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       boolean onLink = isOnLink(e.getX());
       boolean needRepaint = myMouseHover != onLink;
       myMouseHover = onLink;
-      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
+      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
 
       if (needRepaint) {
         repaint();
@@ -192,15 +195,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     return myHighlightedText.getText();
   }
 
-  protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
-    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
+  protected void fireHyperlinkEvent() {
+    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
     for (HyperlinkListener listener : myListeners) {
       listener.hyperlinkUpdate(e);
     }
   }
 
   public void doClick() {
-    fireHyperlinkEvent(null);
+    fireHyperlinkEvent();
   }
 
   public void setHtmlText(String text) {

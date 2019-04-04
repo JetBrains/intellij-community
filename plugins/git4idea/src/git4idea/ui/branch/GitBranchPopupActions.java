@@ -290,7 +290,6 @@ class GitBranchPopupActions {
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
@@ -319,12 +318,14 @@ class GitBranchPopupActions {
 
     @Override
     public boolean hasIncomingCommits() {
-      return myIncomingOutgoingManager.hasIncomingFor(chooseRepo(), myBranchName);
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.hasIncomingFor(chooseRepo(), myBranchName);
     }
 
     @Override
     public boolean hasOutgoingCommits() {
-      return myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
     private static class CheckoutAction extends DumbAwareAction {
@@ -475,7 +476,6 @@ class GitBranchPopupActions {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
-        new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, false),
@@ -569,31 +569,6 @@ class GitBranchPopupActions {
       String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
                                          getBranchPresentation(myBranchName),
                                          getCurrentBranchPresentation(myRepositories));
-      e.getPresentation().setDescription(description);
-    }
-  }
-
-  private static class ShowDiffWithBranchAction extends DumbAwareAction {
-
-    private final Project myProject;
-    private final List<GitRepository> myRepositories;
-    private final String myBranchName;
-
-    ShowDiffWithBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Show Diff with Working Tree");
-      myProject = project;
-      myRepositories = repositories;
-      myBranchName = branchName;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      GitBrancher.getInstance(myProject).showDiffWithLocal(myBranchName, myRepositories);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Compare the file tree in %1$s and its current state", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
     }
   }

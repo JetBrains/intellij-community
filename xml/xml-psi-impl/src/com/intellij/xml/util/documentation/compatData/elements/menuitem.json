@@ -12,10 +12,10 @@
               "version_added": false
             },
             "edge": {
-              "version_added": false
+              "version_added": true
             },
             "edge_mobile": {
-              "version_added": false
+              "version_added": true
             },
             "firefox": {
               "version_added": "8",
@@ -55,7 +55,7 @@
           },
           "status": {
             "experimental": false,
-            "standard_track": true,
+            "standard_track": false,
             "deprecated": true
           }
         },
@@ -69,16 +69,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -104,7 +112,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -119,16 +127,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -154,7 +170,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -169,16 +185,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -204,7 +228,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -219,16 +243,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -254,7 +286,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -269,16 +301,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -304,7 +344,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -319,16 +359,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -354,7 +402,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }
@@ -369,16 +417,24 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
+                "version_added": true
               },
               "edge_mobile": {
-                "version_added": false
+                "version_added": true
               },
               "firefox": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "firefox_android": {
-                "version_added": "8"
+                "version_added": "8",
+                "notes": [
+                  "Only works for <code>&lt;menuitem&gt;</code> elements defined within a <code>&lt;menu&gt;</code> element assigned to an element via the <code>contextmenu</code> attribute.",
+                  "The <code>&lt;menuitem&gt;</code> element requires a closing tag."
+                ]
               },
               "ie": {
                 "version_added": false
@@ -404,7 +460,7 @@
             },
             "status": {
               "experimental": false,
-              "standard_track": true,
+              "standard_track": false,
               "deprecated": true
             }
           }

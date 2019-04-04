@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -460,114 +458,6 @@ public class PsiTypesUtil {
     PsiElement explicitTypeElement = typeElement.replace(typeElementByExplicitType);
     explicitTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(explicitTypeElement);
     return (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
-  }
-
-  public static PsiType getTypeByMethod(@NotNull PsiElement context,
-                                        PsiExpressionList argumentList,
-                                        PsiElement parentMethod,
-                                        boolean varargs,
-                                        PsiSubstitutor substitutor,
-                                        boolean inferParent) {
-    if (parentMethod instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
-      if (parameters.length == 0) return null;
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length && !inferParent) return null;
-      PsiElement arg = context;
-      while (arg.getParent() instanceof PsiParenthesizedExpression) {
-        arg = arg.getParent();
-      }
-      final int i = ArrayUtilRt.find(args, arg);
-      if (i < 0) return null;
-      final PsiType parameterType = substitutor != null ? substitutor.substitute(getParameterType(parameters, i, varargs)) : null;
-      final boolean isRaw = substitutor != null && PsiUtil.isRawSubstitutor((PsiMethod)parentMethod, substitutor);
-      return isRaw ? TypeConversionUtil.erasure(parameterType) : parameterType;
-    }
-    return null;
-  }
-
-  /**
-   * Checks if {@code type} mentions type parameters from the passed {@code Set} 
-   * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
-   */
-  public static boolean mentionsTypeParameters(@Nullable PsiType type, Set<PsiTypeParameter> typeParameters) {
-    return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters, false);
-  }
-
-  /**
-   * Checks if {@code resolveResult} depicts unchecked method call
-   */
-  public static boolean isUncheckedCall(JavaResolveResult resolveResult) {
-    final PsiElement element = resolveResult.getElement();
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      if (PsiUtil.isRawSubstitutor(method, substitutor)) {
-        Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
-        Arrays.stream(method.getTypeParameters()).forEach(typeParameters::remove);
-        return Arrays.stream(method.getParameterList().getParameters())
-          .anyMatch(parameter -> mentionsTypeParametersOrUnboundedWildcard(parameter.getType(), typeParameters, true));
-      }
-    }
-    return false;
-  }
-  
-  private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   Set<PsiTypeParameter> typeParameters,
-                                                                   boolean acceptUnboundedWildcard) {
-    if (type == null) return false;
-    return type.accept(new PsiTypeVisitor<Boolean>() {
-      @Override
-      public Boolean visitType(PsiType type) {
-        return false;
-      }
-
-      @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        if (bound != null) {
-          return bound.accept(this);
-        }
-        return acceptUnboundedWildcard;
-      }
-
-      @Override
-      public Boolean visitClassType(PsiClassType classType) {
-        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
-        final PsiClass psiClass = result.getElement();
-        if (psiClass != null) {
-          PsiSubstitutor substitutor = result.getSubstitutor();
-          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
-            PsiType type = substitutor.substitute(parameter);
-            if (type != null && type.accept(this)) return true;
-          }
-        }
-        return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
-      }
-
-      @Override
-      public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
-        for (PsiType conjunct : intersectionType.getConjuncts()) {
-          if (conjunct.accept(this)) return true;
-        }
-        return false;
-      }
-
-      @Override
-      public Boolean visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
-        return false;
-      }
-
-      @Override
-      public Boolean visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
-        return false;
-      }
-
-      @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-    });
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

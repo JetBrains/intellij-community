@@ -60,9 +60,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
-import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
-import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.*
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -229,14 +227,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     final VirtualFile vFile = psiFile.getVirtualFile()
 
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject())
-
     CodeStyleManager.getInstance(project).reformat(psiFile)
 
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     PsiManager.getInstance(project).reloadFromDisk(psiFile)
-
-    assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
     FileContentUtilCore.reparseFiles(vFile)
 
@@ -773,6 +767,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   class RecordingVfsListener extends IndexedFilesListener {
+    def vfsEventMerger = new VfsEventsMerger()
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -785,9 +780,18 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       })
     }
 
+    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
+      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange)
+    }
+
+    @Override
+    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
+      vfsEventMerger.recordFileEvent(((VirtualFileWithId)file).id, file, contentChange)
+    }
+
     String indexingOperation(VirtualFile file) {
       Ref<String> operation = new Ref<>()
-      eventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
+      vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
         @Override
         boolean process(@NotNull VfsEventsMerger.ChangeInfo info) {
           operation.set(info.toString())
@@ -802,7 +806,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testIndexedFilesListener() throws Throwable {
     def listener = new RecordingVfsListener()
 
-    VirtualFileManager.instance.addAsyncFileListener(listener, myFixture.testRootDisposable)
+    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
+      VirtualFileManager.VFS_CHANGES,
+      listener
+    )
 
     def fileName = "test.txt"
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
@@ -832,7 +839,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def facade = JavaPsiFacade.getInstance(project)
 
     def srcFile = myFixture.addFileToProject('foo/bar/A.java', 'class A {}')
-    assert facade.findClass('A', GlobalSearchScope.moduleScope(module)) != null
+    assert facade.findClass('A', GlobalSearchScope.moduleScope(myModule)) != null
 
     def anotherDir = myFixture.tempDirFixture.findOrCreateDir('another')
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', anotherDir)
@@ -911,12 +918,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @CompileStatic
-  void "test Vfs Event Processing Performance"() {
+  void "test Vfs Events Processing Performance"() {
     def filename = 'A.java'
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
     PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", 1000, {
-      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
+      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
       assert files?.length == 1
 
       VirtualFile file = files[0].virtualFile
@@ -933,11 +940,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
       }
 
-      def applier = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector.prepareChange(eventList)
-      applier.beforeVfsChange()
-      applier.afterVfsChange()
+      IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
+      indexedFilesListener.before(eventList)
+      indexedFilesListener.after(eventList)
 
-      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
+      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
       assert files?.length == 1
     }).assertTiming()
   }
@@ -1080,15 +1087,5 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
-  }
-
-  void "test stub updating index stamp"() {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-    VfsUtil.saveText(vFile, "class Foo { void m() {} }")
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-    VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
 }

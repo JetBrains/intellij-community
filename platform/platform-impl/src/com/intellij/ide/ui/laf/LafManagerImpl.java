@@ -13,34 +13,39 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -57,7 +62,7 @@ import java.util.List;
 import java.util.*;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
-public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
+public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
@@ -81,13 +86,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final UIManager.LookAndFeelInfo[] myLaFs;
   private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
-  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
+  private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
 
   // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
   public static final String WINDOW_ALPHA = "Window.alpha";
 
-  private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
-
+  private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
@@ -160,7 +164,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void initializeComponent() {
+  public void initComponent() {
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
@@ -331,7 +335,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
-        AppUIUtil.updateForDarcula(true);
+        updateForDarcula(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -423,10 +427,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public static void updateForDarcula(boolean isDarcula) {
-    AppUIUtil.updateForDarcula(isDarcula);
+    JBColor.setDark(isDarcula);
+    IconLoader.setUseDarkIcons(isDarcula);
   }
 
   @Nullable
@@ -472,7 +475,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
-    patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
@@ -509,8 +511,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
     initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
-      if (!(key instanceof String)) continue;
-      if (!StringUtil.endsWithIgnoreCase(((String)key), "font")) continue;
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
         FontUIResource font = (FontUIResource)value;
@@ -534,40 +534,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
-  private static void patchBorder(UIDefaults defaults, String key) {
-    if (defaults.getBorder(key) == null) {
-      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
-    }
-  }
-
-  private static void patchListUI(UIDefaults defaults) {
-    patchBorder(defaults, "List.border");
-  }
-
   private static void patchTreeUI(UIDefaults defaults) {
-    patchBorder(defaults, "Tree.border");
     if (Registry.is("ide.tree.ui.experimental")) {
       defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
       defaults.put("Tree.repaintWholeRow", true);
     }
-    if (isUnsupported(defaults.getIcon("Tree.collapsedIcon"))) {
+    Icon collapsedIcon = defaults.getIcon("Tree.collapsedIcon");
+    if (collapsedIcon == null || collapsedIcon instanceof UIResource) {
       defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
       defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
     }
-    if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
+    Icon expandedIcon = defaults.getIcon("Tree.expandedIcon");
+    if (expandedIcon == null || collapsedIcon instanceof UIResource) {
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
     }
-  }
-
-  /**
-   * @param icon an icon retrieved from L&F
-   * @return {@code true} if an icon is not specified or if it is declared in some Swing L&F
-   * (such icons do not have a variant to paint in selected row)
-   */
-  private static boolean isUnsupported(@Nullable Icon icon) {
-    String name = icon == null ? null : icon.getClass().getName();
-    return name == null || name.startsWith("javax.swing.plaf.") || name.startsWith("com.sun.java.swing.plaf.");
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
@@ -575,7 +556,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
+    if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
@@ -605,11 +586,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
-          entry.setValue(Integer.valueOf(JBUIScale.scale(normValue)));
+          entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
         }
       }
     }
-    defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
+    defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
@@ -647,7 +628,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
    * and default UI is created there directly.
    */
-  static void fixOptionButton(UIDefaults uiDefaults) {
+  private static void fixOptionButton(UIDefaults uiDefaults) {
     if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
@@ -661,7 +642,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = StringUtil.toLowerCase(property).trim();
+    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
@@ -718,7 +699,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
-      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize()));
+      JBUI.setUserScaleFactor(JBUI.getFontScale(uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -733,7 +714,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(JBFont.label().getSize()));
+    JBUI.setUserScaleFactor(JBUI.getFontScale(JBUI.Fonts.label().getSize()));
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
@@ -869,7 +850,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
-        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();

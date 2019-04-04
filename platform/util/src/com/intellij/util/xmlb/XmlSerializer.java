@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.serialization.SerializationException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -27,12 +26,12 @@ public class XmlSerializer {
   /**
    * Consider to use {@link SkipDefaultValuesSerializationFilters}
    */
-  public static Element serialize(@NotNull Object object) throws SerializationException {
+  public static Element serialize(@NotNull Object object) throws XmlSerializationException {
     return serialize(object, TRUE_FILTER);
   }
 
   @NotNull
-  public static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
+  public static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
     return XmlSerializerImpl.serialize(object, filter == null ? TRUE_FILTER : filter);
   }
 
@@ -40,22 +39,22 @@ public class XmlSerializer {
   public static Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
     SerializationFilter filter1 = filter == null ? TRUE_FILTER : filter;
     Class<?> aClass = object.getClass();
-    return (Element)XmlSerializerImpl.serializer.getRootBinding(aClass).serialize(object, null, filter1);
+    return (Element)XmlSerializerImpl.serializer.getClassBinding(aClass).serialize(object, null, filter1);
   }
 
   @NotNull
-  public static <T> T deserialize(Document document, Class<T> aClass) throws SerializationException {
+  public static <T> T deserialize(Document document, Class<T> aClass) throws XmlSerializationException {
     return deserialize(document.getRootElement(), aClass);
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
-  public static <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
+  public static <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws XmlSerializationException {
     try {
-      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
+      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getClassBinding(aClass);
       return (T)binding.deserialize(null, element);
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       throw e;
     }
     catch (Exception e) {
@@ -64,7 +63,7 @@ public class XmlSerializer {
   }
 
   @NotNull
-  public static <T> T deserialize(@NotNull URL url, Class<T> aClass) throws SerializationException {
+  public static <T> T deserialize(@NotNull URL url, Class<T> aClass) throws XmlSerializationException {
     try {
       Document document = JDOMUtil.loadDocument(url);
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
@@ -79,7 +78,7 @@ public class XmlSerializer {
     try {
       getBeanBinding(bean).deserializeInto(bean, element);
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       throw e;
     }
     catch (Exception e) {
@@ -93,7 +92,7 @@ public class XmlSerializer {
   @ApiStatus.Experimental
   @NotNull
   public static BeanBinding getBeanBinding(@NotNull Object bean) {
-    return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(bean.getClass());
+    return (BeanBinding)XmlSerializerImpl.serializer.getClassBinding(bean.getClass());
   }
 
   public static void serializeInto(final Object bean, final Element element) {
@@ -107,7 +106,7 @@ public class XmlSerializer {
     try {
       getBeanBinding(bean).serializeInto(bean, element, filter);
     }
-    catch (SerializationException e) {
+    catch (XmlSerializationException e) {
       throw e;
     }
     catch (Exception e) {

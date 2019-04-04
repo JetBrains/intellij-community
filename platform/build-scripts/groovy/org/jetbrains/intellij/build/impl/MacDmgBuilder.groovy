@@ -35,18 +35,17 @@ class MacDmgBuilder {
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
-                              MacHostProperties macHostProperties, String macZipPath,
-                              String jreArchivePath, boolean isSecondJre) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath, String secondJreArchive = null) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
+    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
     if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isSecondJre)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, secondJreArchive)
     }
     else {
       buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, null, false)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, null)
     }
   }
 
@@ -106,16 +105,16 @@ class MacDmgBuilder {
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isSecondJre) {
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreArchive = null) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
     def jreManager = buildContext.bundledJreManager
     String suffix = "-no-jdk", javaExePath = null
-    if (isSecondJre) {
-      suffix = jreManager.secondJreSuffix()
-      javaExePath = getJavaExePath(jreArchivePath, jreManager.isSecondBundledJreModular())
+    if (secondJreArchive != null) {
+      suffix = "-jbr${jreManager.getSecondJreVersion()}"
+      javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
     }
     else if (jreArchivePath != null) {
-      suffix = ""
+      suffix = jreManager.jreSuffix()
       javaExePath = getJavaExePath(jreArchivePath, jreManager.isBundledJreModular())
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
@@ -194,9 +193,6 @@ class MacDmgBuilder {
       }
       ftpAction("put", false, "777") {
         ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-          include(name: "entitlements.xml")
-          include(name: "sign.sh")
-          include(name: "notarize.sh")
           include(name: "signapp.sh")
         }
       }
@@ -207,9 +203,7 @@ class MacDmgBuilder {
                            macHostProperties.userName,
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
-                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           "no" // set to 'yes' to enable notarization
-      ]
+                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help")]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
       }

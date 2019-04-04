@@ -29,10 +29,7 @@ public abstract class ExtensionsImpl implements Extensions {
       final IdeaPlugin ideaPlugin = getParentOfType(IdeaPlugin.class, true);
       prefix = ideaPlugin == null ? null : StringUtil.notNullize(ideaPlugin.getPluginId(), DEFAULT_PREFIX);
     }
-    if (prefix == null) {
-      //noinspection deprecation
-      prefix = getXmlns().getStringValue();
-    }
+    if (prefix == null) prefix = getXmlns().getStringValue();
     return prefix != null ? prefix + "." : "";
   }
 }

@@ -1,7 +1,6 @@
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.tasks.jira.jql.JqlTokenTypes;
 import com.intellij.tasks.jira.jql.psi.JqlElementVisitor;
@@ -28,7 +27,7 @@ public class JqlHistoryPredicateImpl extends JqlElementImpl implements JqlHistor
   public Type getType() {
     PsiElement keyword = findChildByType(JqlTokenTypes.HISTORY_PREDICATES);
     assert keyword != null;
-    return Type.valueOf(StringUtil.toUpperCase(keyword.getText()));
+    return Type.valueOf(keyword.getText().toUpperCase());
   }
 
   @Nullable

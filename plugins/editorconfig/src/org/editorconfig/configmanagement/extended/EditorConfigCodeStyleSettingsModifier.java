@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,25 +15,23 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
-
+  private final static Map<String,List<String>> DEPENDENCIES = ContainerUtil.newHashMap();
   static {
     addDependency("indent_size", "continuation_indent_size");
   }
@@ -77,7 +75,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(context.getLanguage());
     if (provider != null) {
       AbstractCodeStylePropertyMapper mapper = provider.getPropertyMapper(context.getSettings());
-      Set<String> processed = new HashSet<>();
+      Set<String> processed = ContainerUtil.newHashSet();
       boolean isModified = processOptions(context, mapper, false, processed);
       isModified = processOptions(context, mapper, true, processed) || isModified;
       return isModified;
@@ -196,14 +194,5 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
       return String.valueOf(indentOptions.TAB_SIZE);
     }
-  }
-
-  @Nullable
-  @Override
-  public Consumer<CodeStyleSettings> getDisablingFunction() {
-    return settings -> {
-      EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
-      editorConfigSettings.ENABLED = false;
-    };
   }
 }

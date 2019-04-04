@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,12 +14,11 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -28,7 +27,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
@@ -122,17 +123,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (info.interfaceNames != null && myResult.isAnnotationType()) {
         info.interfaceNames.remove(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
       }
-      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtilRt.toStringArray(info.interfaceNames));
-      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtilRt.EMPTY_STRING_ARRAY);
+      newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.toStringArray(info.interfaceNames));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY);
     }
     else {
       if (info.superName == null || "java/lang/Object".equals(superName) || myResult.isEnum() && "java/lang/Enum".equals(superName)) {
-        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtilRt.EMPTY_STRING_ARRAY);
+        newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY);
       }
       else {
         newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{info.superName});
       }
-      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtilRt.toStringArray(info.interfaceNames));
+      newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.toStringArray(info.interfaceNames));
     }
   }
 
@@ -384,7 +385,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       new PsiModifierListStubImpl(parameterStub, 0);
     }
 
-    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtilRt.toStringArray(info.throwTypes));
+    newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
     int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     int localVarIgnoreCount = isEnumConstructor ? 3 : isInnerClassConstructor ? 2 : !isStatic ? 1 : 0;
@@ -548,7 +549,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       return new AnnotationTextCollector(desc, myMapping, text -> {
-        if (myFilter == null) myFilter = new THashSet<>();
+        if (myFilter == null) myFilter = ContainerUtil.newTroveSet();
         myFilter.add(text);
         new PsiAnnotationStubImpl(myModList, text);
       });
@@ -669,11 +670,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private boolean accepted(int index, String text) {
       if (myFilters == null) {
-        myFilters = new ArrayList<>(myParamCount + 1);
+        myFilters = ContainerUtil.newArrayListWithCapacity(myParamCount + 1);
         for (int i = 0; i < myParamCount + 1; i++) myFilters.add(null);
       }
       Set<String> filter = myFilters.get(index);
-      if (filter == null) myFilters.set(index, filter = new THashSet<>());
+      if (filter == null) myFilters.set(index, filter = ContainerUtil.newTroveSet());
       return filter.add(text);
     }
   }
@@ -785,7 +786,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   private static Function<String, String> createMapping(byte[] classBytes) {
-    final Map<String, Pair<String, String>> mapping = new HashMap<>();
+    final Map<String, Pair<String, String>> mapping = ContainerUtil.newHashMap();
 
     try {
       new ClassReader(classBytes).accept(new ClassVisitor(ASM_API) {

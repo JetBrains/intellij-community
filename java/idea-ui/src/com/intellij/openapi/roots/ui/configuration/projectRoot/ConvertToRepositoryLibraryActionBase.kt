@@ -139,7 +139,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return dialog.selectedLibraryDescriptor
+    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies,
+                                               emptyList<String>())
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {

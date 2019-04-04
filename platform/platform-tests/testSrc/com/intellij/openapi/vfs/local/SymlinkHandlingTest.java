@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.VfsTestUtil;
@@ -23,14 +24,13 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static org.junit.Assert.*;
 
 public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   @Before
   public void setUp() {
-    assumeSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
   }
 
   @After

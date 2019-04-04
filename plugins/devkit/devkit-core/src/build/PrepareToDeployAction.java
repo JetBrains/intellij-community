@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.xml.XmlFile;
@@ -62,7 +61,7 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module != null && PluginModuleType.isOfType(module)) {
-      doPrepare(Collections.singletonList(module), e.getProject());
+      doPrepare(Arrays.asList(module), e.getProject());
     }
   }
 
@@ -180,7 +179,7 @@ public class PrepareToDeployAction extends AnAction {
           String classpath = tag.getAttributeValue("classpath");
           if (classpath != null) {
             for (String path : StringUtil.split(classpath, ";")) {
-              String moduleName = FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(path));
+              String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(path));
               Module jpsModule = ModuleManager.getInstance(module.getProject()).findModuleByName(moduleName);
               if (jpsModule != null) {
                 jpsPluginToOutputPath.put(jpsModule, path);

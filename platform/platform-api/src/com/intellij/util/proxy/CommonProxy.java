@@ -1,4 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.util.proxy;
 
 import com.intellij.CommonBundle;
@@ -9,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class CommonProxy extends ProxySelector {
+public class CommonProxy extends ProxySelector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.proxy.CommonProxy");
 
   private final static CommonProxy ourInstance = new CommonProxy();
@@ -179,10 +182,6 @@ public final class CommonProxy extends ProxySelector {
     return select(createUri(url));
   }
 
-  private static boolean isLocalhost(@NotNull String hostName) {
-    return hostName.equalsIgnoreCase("localhost") || hostName.equals("127.0.0.1") || hostName.equals("::1");
-  }
-
   @Override
   public List<Proxy> select(@Nullable URI uri) {
     isInstalledAssertion();
@@ -197,7 +196,7 @@ public final class CommonProxy extends ProxySelector {
     try {
       ourReenterDefence.set(Boolean.TRUE);
       String host = StringUtil.notNullize(uri.getHost());
-      if (isLocalhost(host)) {
+      if (NetUtils.isLocalhost(host)) {
         return NO_PROXY_LIST;
       }
 
@@ -367,4 +366,8 @@ public final class CommonProxy extends ProxySelector {
       return result;
     }
   }
+
+
+
+
 }

@@ -7,16 +7,12 @@ export interface Item {
   readonly end: number
 
   readonly duration: number
-
-  readonly thread: string
 }
 
 export interface InputData {
   readonly version: string
 
   readonly stats: Stats
-
-  readonly icons?: Array<{ [key: string]: IconData; }>
 
   readonly items: Array<Item>
 
@@ -49,19 +45,10 @@ export interface Stats {
 
   readonly component: StatItem
   readonly service: StatItem
-
-  readonly loadedClasses: { [key: string]: number; }
 }
 
 export interface StatItem {
   readonly app: number
   readonly project: number
   readonly module: number
-}
-
-export interface IconData {
-  readonly count: number
-
-  readonly loading: number
-  readonly decoding: number
 }

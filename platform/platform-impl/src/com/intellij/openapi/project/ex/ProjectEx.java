@@ -19,5 +19,7 @@ public interface ProjectEx extends Project {
     }
   }
 
+  void init();
+
   void setProjectName(@NotNull String name);
 }

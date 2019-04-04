@@ -38,17 +38,15 @@ import org.jetbrains.annotations.NotNull;
 public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
   private final String myText;
-  private final String mySuffix;
 
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
+    return InspectionsBundle.message("inspection.surround.if.quickfix", myText);
   }
 
-  public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert, String suffix) {
+  public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
     myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
-    mySuffix = suffix;
   }
 
   @Override
@@ -75,7 +73,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       TextRange textRange = new JavaWithIfSurrounder().surroundElements(project, editor, elements);
       if (textRange == null) return;
 
-      @NonNls String newText = myText + mySuffix;
+      @NonNls String newText = myText + " != null";
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
 
       editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());

@@ -168,10 +168,4 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
     return null;
   }
-
-  @Nullable
-  @Override
-  public String getActionName(PsiElement element) {
-    return INLINE_VARIABLE;
-  }
 }

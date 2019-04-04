@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("PropertyName")
+
 package com.intellij.ide.ui
 
 import com.intellij.openapi.Disposable
@@ -10,12 +12,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Graphics
@@ -23,14 +23,11 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
-import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
-class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
-  constructor() : this(ServiceManager.getService(NotRoamableUiSettings::class.java))
-
+class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRoamableUiSettings = NotRoamableUiSettings()) : PersistentStateComponent<UISettingsState> {
   private var state = UISettingsState()
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
@@ -161,12 +158,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showStatusBar = value
     }
 
-  var showMainMenu: Boolean
-    get() = !SystemInfo.isWindows || (SystemInfo.isWindows && state.showMainMenu)
-    set(value) {
-      state.showMainMenu = value
-    }
-
   var showIconInQuickNavigation: Boolean
     get() = state.showIconInQuickNavigation
     set(value) {
@@ -197,12 +188,8 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortLookupElementsLexicographically = value
     }
 
-  @Deprecated("The property name is grammatically incorrect", replaceWith = ReplaceWith("this.hideTabsIfNeeded"))
   val hideTabsIfNeed: Boolean
-    get() = hideTabsIfNeeded
-
-  val hideTabsIfNeeded: Boolean
-    get() = state.hideTabsIfNeeded
+    get() = state.hideTabsIfNeed
 
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs
@@ -349,18 +336,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.consoleCommandHistoryLimit = value
     }
 
-  var sortTabsAlphabetically: Boolean
-    get() = state.sortTabsAlphabetically
-    set(value) {
-      state.sortTabsAlphabetically = value
-    }
-
-  var openTabsAtTheEnd: Boolean
-    get() = state.openTabsAtTheEnd
-    set(value) {
-      state.openTabsAtTheEnd = value
-    }
-
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -370,16 +345,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
-  init {
-    // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical")) {
-      sortTabsAlphabetically = true
-    }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
-      openTabsAtTheEnd = true
-    }
-  }
-
   companion object {
     init {
       verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
@@ -387,7 +352,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
     @JvmStatic
     private fun verbose(msg: String, vararg args: Any) {
-      if (JBUIScale.SCALE_VERBOSE) {
+      if (UIUtil.SCALE_VERBOSE) {
         LOG.info(String.format(msg, *args))
       }
     }
@@ -409,7 +374,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     val instanceOrNull: UISettings?
       get() {
         var result = _instance
-        if (result == null && ApplicationManager.getApplication() != null) {
+        if (result == null) {
+          if (ApplicationManager.getApplication() == null) {
+            return null
+          }
+
           result = ServiceManager.getService(UISettings::class.java)
           _instance = result
         }
@@ -422,7 +391,15 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     val shadowInstance: UISettings
-      get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
+      get() {
+        val uiSettings = if (ApplicationManager.getApplication() == null) null else instanceOrNull
+        return when {
+          uiSettings != null -> uiSettings
+          else -> {
+            return UISettings()
+          }
+        }
+      }
 
     @JvmField
     val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
@@ -487,7 +464,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else JBUIScale.sysScale()
+      get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
 
     /**
      * Returns the default font size scaled by #defFontScale
@@ -504,20 +481,20 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       if (readScale == null || readScale <= 0) {
         verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
       }
       else {
         var oldDefFontScale = defFontScale
         if (SystemInfo.isLinux) {
-          val fontData = JBUIScale.getSystemFontData()
-          // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-          // not converting fonts stored with scale equal to the old calculation
-          oldDefFontScale = fontData.second / 12f
-          verbose("oldDefFontScale=%.2f", oldDefFontScale)
+          val fdata = UIUtil.getSystemFontData()
+          if (fdata != null) {
+            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
+            // not converting fonts stored with scale equal to the old calculation
+            oldDefFontScale = fdata.second / 12f
+            verbose("oldDefFontScale=%.2f", oldDefFontScale)
+          }
         }
-        if (readScale != defFontScale && readScale != oldDefFontScale) {
-          size = ((readSize / readScale) * defFontScale).roundToInt()
-        }
+        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
@@ -632,85 +609,85 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
   @JvmField
   @Transient
   var FONT_FACE: String? = null
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
   @JvmField
   @Transient
   var FONT_SIZE: Int? = 0
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
   @JvmField
   @Transient
   var HIDE_TOOL_STRIPES = true
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
   @JvmField
   @Transient
   var CONSOLE_COMMAND_HISTORY_LIMIT = 300
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
   @JvmField
   @Transient
   var CYCLE_SCROLLING = true
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
   @JvmField
   @Transient
   var SHOW_MAIN_TOOLBAR = false
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
   @JvmField
   @Transient
   var SHOW_CLOSE_BUTTON = true
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
   @JvmField
   @Transient
   var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
   @JvmField
   @Transient
   var PRESENTATION_MODE = false
 
-  @Suppress("unused", "PropertyName", "SpellCheckingInspection")
+  @Suppress("unused", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient
   var OVERRIDE_NONIDEA_LAF_FONTS = false
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
   @JvmField
   @Transient
   var PRESENTATION_MODE_FONT_SIZE = 24
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
   @JvmField
   @Transient
   var EDITOR_TAB_LIMIT = editorTabLimit
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use overrideConsoleCycleBufferSize", replaceWith = ReplaceWith("overrideConsoleCycleBufferSize"))
   @JvmField
   @Transient
   var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
 
-  @Suppress("unused", "PropertyName")
+  @Suppress("unused")
   @Deprecated("Use consoleCycleBufferSizeKb", replaceWith = ReplaceWith("consoleCycleBufferSizeKb"))
   @JvmField
   @Transient

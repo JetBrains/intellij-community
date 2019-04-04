@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
@@ -18,51 +16,39 @@ import com.intellij.util.ui.UIUtil.rightArrow
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcs.branch.LinkedBranchData
-import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.awt.Color
 import java.awt.Dimension
-import java.beans.PropertyChangeListener
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 import javax.swing.UIManager
 
-class CurrentBranchComponent(
-  val project: Project,
-  private val tree: ChangesTree,
-  private val commitWorkflowUi: CommitWorkflowUi
-) : JBLabel() {
-
+class CurrentBranchComponent(val project: Project, val browser: CommitDialogChangesBrowser) : JBLabel() {
   private var branches = setOf<BranchData>()
 
   private val isGroupedByRepository: Boolean
     get() {
-      val groupingSupport = tree.groupingSupport
+      val groupingSupport = browser.viewer.groupingSupport
       return groupingSupport.isAvailable(REPOSITORY_GROUPING) && groupingSupport[REPOSITORY_GROUPING]
     }
 
   init {
-    isVisible = false
     icon = AllIcons.Vcs.Branch
     foreground = TEXT_COLOR
 
-    val treeChangeListener = PropertyChangeListener { e ->
+    browser.viewer.addPropertyChangeListener { e ->
       if (e.propertyName == TREE_MODEL_PROPERTY) {
         refresh()
       }
     }
-    tree.addPropertyChangeListener(treeChangeListener)
-    Disposer.register(commitWorkflowUi, Disposable { tree.removePropertyChangeListener(treeChangeListener) })
-
-    refresh()
   }
 
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()
 
   private fun refresh() {
-    val needShowBranch = !isGroupedByRepository
-    if (needShowBranch) setData(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
-
-    isVisible = needShowBranch && branches.isNotEmpty()
+    isVisible = !isGroupedByRepository
+    if (isVisible) {
+      setData(browser.displayedChanges, browser.displayedUnversionedFiles)
+    }
   }
 
   private fun setData(changes: Iterable<Change>, unversioned: Iterable<VirtualFile>) {

@@ -27,7 +27,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
@@ -57,17 +56,15 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(configurable, null);
   }
 
-  public SettingsDialog(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
+  public SettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter) {
     super(project, true);
-
     myDimensionServiceKey = DIMENSION_KEY;
     myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
     myApplyButtonNeeded = true;
     init(null, project);
   }
 
-  @NotNull
-  protected SettingsTreeView treeViewFactory(SettingsFilter filter, List<ConfigurableGroup> groups) {
+  protected SettingsTreeView treeViewFactory(SettingsFilter filter, ConfigurableGroup[] groups) {
     return new SettingsTreeView(filter, groups);
   }
 
@@ -76,7 +73,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
   }
 
-  private void init(@Nullable Configurable configurable, @Nullable Project project) {
+  private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) {
@@ -84,12 +81,8 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
                                     title, StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
     }
     setTitle(name == null ? title : name.replace('\n', ' '));
-
     ShortcutSet set = getFindActionShortcutSet();
-    if (set != null) {
-      new FindAction().registerCustomShortcutSet(set, getRootPane(), myDisposable);
-    }
-
+    if (set != null) new FindAction().registerCustomShortcutSet(set, getRootPane(), myDisposable);
     init();
   }
 
@@ -196,7 +189,6 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     super.doCancelAction(source);
   }
 
-  @Nullable
   static ShortcutSet getFindActionShortcutSet() {
     AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
     return action == null ? null : action.getShortcutSet();

@@ -4,7 +4,6 @@ package com.intellij.tasks.generic;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.config.TaskRepositoryEditor;
@@ -86,7 +85,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
     public TaskRepository createRepository() {
       Element element;
       try {
-        String configFileName = StringUtil.toLowerCase(myName) + ".xml";
+        String configFileName = myName.toLowerCase() + ".xml";
         //URL resourceUrl = ResourceUtil.getResource(GenericRepositoryType.class, "connectors", configFileName);
         URL resourceUrl = GenericRepository.class.getResource("connectors/" + configFileName);
         if (resourceUrl == null) {

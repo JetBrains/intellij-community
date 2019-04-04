@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -11,9 +11,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -80,10 +78,9 @@ public final class CommentTracker {
    * @param <T>     the type of the element
    * @return the passed argument
    */
-  @Contract("_ -> param1")
-  public <T extends PsiElement> T markUnchanged(@Nullable T element) {
+  public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
     checkState();
-    if (element != null) addIgnored(element);
+    addIgnored(element);
     return element;
   }
 
@@ -336,7 +333,7 @@ public final class CommentTracker {
   }
 
   public @NotNull PsiElement replaceExpressionAndRestoreComments(@NotNull PsiExpression expression, @NotNull String replacementText,
-                                                                 List<? extends PsiElement> toDelete) {
+                                                                 List<PsiElement> toDelete) {
     List<PsiElement> trailingComments = new SmartList<>();
     List<PsiElement> comments = grabCommentsBefore(PsiTreeUtil.lastChild(expression));
     if (!comments.isEmpty()) {
@@ -381,7 +378,7 @@ public final class CommentTracker {
     return hasComment ? suffix : Collections.emptyList();
   }
 
-  private static void restoreSuffixComments(PsiElement target, List<? extends PsiElement> suffix) {
+  private static void restoreSuffixComments(PsiElement target, List<PsiElement> suffix) {
     if (!suffix.isEmpty()) {
       PsiElement lastChild = target.getLastChild();
       if (lastChild instanceof PsiComment && JavaTokenType.END_OF_LINE_COMMENT.equals(((PsiComment)lastChild).getTokenType())) {

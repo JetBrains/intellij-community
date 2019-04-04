@@ -1,55 +1,64 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Thread-safe lazy initializer.
  *
  * @author tav
  */
-public final class LazyInitializer {
-  private static final Object UNINITIALIZED_VALUE = new Object();
-
+public class LazyInitializer {
   public abstract static class NullableValue<T> {
-    @SuppressWarnings("unchecked")
-    private volatile T value = (T)UNINITIALIZED_VALUE;
+    private class Initializer {
+      private final ReentrantLock lock = new ReentrantLock();
+
+      T init() {
+        try {
+          return initialize();
+        }
+        catch (Exception e) {
+          Logger.getInstance(LazyInitializer.class).error(e);
+        }
+        return null;
+      }
+    }
+
+    protected volatile T value;
+    private volatile Initializer initializer = new Initializer(); // dropped when initialized
 
     @Nullable
     public abstract T initialize();
 
     /**
      * Initializes the value if necessary and returns it.
+     *
+     * @return the initialized value
      */
     @Nullable
     public T get() {
-      T v = value;
-      if (v != UNINITIALIZED_VALUE) {
-        return value;
-      }
-
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        v = value;
-        if (v != UNINITIALIZED_VALUE) {
-          return value;
+      Initializer init = initializer;
+      if (init != null) {
+        init.lock.lock();
+        try {
+          if (init.lock.getHoldCount() > 1) {
+            return null;
+          }
+          if (initializer != null) {
+            value = initializer.init();
+            initializer = null;
+          }
         }
-
-        v = initialize();
-        value = v;
+        finally {
+          init.lock.unlock();
+        }
+        onInitialized(value);
       }
-      onInitialized(value);
       return value;
-    }
-
-    protected void set(T value) {
-      //noinspection SynchronizeOnThis
-      synchronized(this) {
-        this.value = value;
-      }
     }
 
     /**
@@ -88,11 +97,22 @@ public final class LazyInitializer {
     public abstract T initialize();
   }
 
-  public static final class MutableNotNullValue<T> extends NullableValue<T> {
-    private final Supplier<? extends T> supplier;
+  public static abstract class MutableNullableValue<T> extends NullableValue<T> {
+    /**
+     * Sets the value. If it hasn't been initialized - forces initialization.
+     *
+     * @param value the value to set
+     */
+    public void set(T value) {
+      get(); // force init in case it has a side effect
+      this.value = value;
+    }
+  }
 
-    public MutableNotNullValue(@NotNull Supplier<? extends T> supplier) {
-      this.supplier = supplier;
+  public static abstract class MutableNotNullValue<T> extends MutableNullableValue<T> {
+    @Override
+    public void set(@NotNull T value) {
+      super.set(value);
     }
 
     @NotNull
@@ -102,15 +122,8 @@ public final class LazyInitializer {
       return super.get();
     }
 
-    @Override
-    public void set(@NotNull T value) {
-      super.set(value);
-    }
-
     @NotNull
     @Override
-    public final T initialize() {
-      return supplier.get();
-    }
+    public abstract T initialize();
   }
 }

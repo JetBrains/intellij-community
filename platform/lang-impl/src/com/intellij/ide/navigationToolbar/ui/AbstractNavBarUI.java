@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +38,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? JBInsets.create(1, 2) : JBUI.emptyInsets();
+    return isPopupElement ? JBUI.insets(1, 2) : JBUI.emptyInsets();
   }
 
   @Override
@@ -174,7 +173,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (!item.isLastElement()) {
       if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
         Icon icon = AllIcons.Ide.NavBarSeparator;
-        icon.paintIcon(item, g2, w - icon.getIconWidth() - JBUIScale.scale(1), h2 - icon.getIconHeight() / 2);
+        icon.paintIcon(item, g2, w - icon.getIconWidth() - JBUI.scale(1), h2 - icon.getIconHeight() / 2);
       }
     }
 
@@ -183,11 +182,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   private static int getDecorationOffset() {
-    return JBUIScale.scale(8);
-  }
+     return JBUI.scale(8);
+   }
 
    private static int getFirstElementLeftOffset() {
-     return JBUIScale.scale(6);
+     return JBUI.scale(6);
    }
 
   @Override
@@ -204,7 +203,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   public Insets getWrapperPanelInsets(Insets insets) {
     final JBInsets result = JBUI.insets(insets);
     if (shouldPaintWrapperPanel()) {
-      result.top += JBUIScale.scale(1);
+      result.top += JBUI.scale(1);
     }
     return result;
   }
@@ -228,6 +227,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public int getPopupOffset(@NotNull NavBarItem item) {
-    return item.isFirstElement() ? 0 : JBUIScale.scale(5);
+    return item.isFirstElement() ? 0 : JBUI.scale(5);
   }
 }

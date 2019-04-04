@@ -36,15 +36,16 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
   private Color myRightForeground;
 
   public ListCellRendererWithRightAlignedComponent() {
-    myPanel = new CellRendererPanel();
-    myPanel.setLayout(new BorderLayout());
+    myPanel = new JPanel(new BorderLayout());
     myLeftRenderer = SimpleListCellRenderer.create((label, value, index) -> {
       label.setText(myLeftText);
       label.setIcon(myIcon);
+      label.setForeground(myLeftForeground);
     });
     myRightRenderer = SimpleListCellRenderer.create((label, value, index) -> {
       label.setText(StringUtil.notNullize(myRightText));
       label.setIcon(myRightIcon);
+      label.setForeground(myRightForeground);
     });
   }
 
@@ -58,14 +59,8 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
     myIcon = null;
     myRightForeground = null;
     customize(value);
-    Component left = myLeftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    Component right = myRightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (!isSelected) {
-      left.setForeground(myLeftForeground);
-      right.setForeground(myRightForeground);
-    }
-    myPanel.add(left, BorderLayout.CENTER);
-    myPanel.add(right, BorderLayout.EAST);
+    myPanel.add(myLeftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.CENTER);
+    myPanel.add(myRightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.EAST);
     return myPanel;
   }
 

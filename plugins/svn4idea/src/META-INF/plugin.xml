@@ -95,7 +95,6 @@
     </group>
 
     <group id="IgnoreChoicesGroup" popup="true" class="org.jetbrains.idea.svn.actions.IgnoreActionGroup">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
       <add-to-group group-id="SubversionGroup" relative-to-action="ChangesView.AddUnversioned" anchor="after"/>
     </group>
 
@@ -126,8 +125,7 @@
                         serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
     <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
-    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
-         areChildrenValidMappings="true"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
     <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
       <configurable id="vcs.Subversion.Presentation" displayName="Presentation"

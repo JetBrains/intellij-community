@@ -3,11 +3,10 @@ package org.jetbrains.idea.maven.importing.output;
 
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Collections;
 import java.util.List;
 
 public class MavenImportOutputParserProvider implements ExternalSystemOutputParserProvider {
@@ -17,7 +16,7 @@ public class MavenImportOutputParserProvider implements ExternalSystemOutputPars
   }
 
   @Override
-  public List<BuildOutputParser> getBuildOutputParsers(@NotNull ExternalSystemTaskId taskId) {
-    return Collections.singletonList(new MavenImportOutputParser());
+  public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemTask task) {
+    return ContainerUtil.list(new MavenImportOutputParser());
   }
 }

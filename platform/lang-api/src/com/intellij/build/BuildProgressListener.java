@@ -24,9 +24,5 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface BuildProgressListener {
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
-  default void onEvent(@NotNull BuildEvent event) {}
-
-  void onEvent(@NotNull Object buildId, @NotNull BuildEvent event);
+  void onEvent(@NotNull BuildEvent event);
 }

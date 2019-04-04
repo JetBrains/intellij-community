@@ -18,14 +18,10 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiComment
 import org.jetbrains.uast.internal.log
 
-open class UComment(override val sourcePsi: PsiComment, private val givenParent: UElement?) : UElement {
+class UComment(override val sourcePsi: PsiComment, override val uastParent: UElement) : UElement {
 
   @Suppress("OverridingDeprecatedMember")
   override val psi get() = sourcePsi
-
-  override val uastParent: UElement? by lazy {
-    givenParent ?: sourcePsi.parent?.toUElement()
-  }
 
   val text: String
     get() = asSourceString()

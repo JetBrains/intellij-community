@@ -5,12 +5,14 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -49,7 +51,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -94,11 +95,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-@State(name = "FileEditorManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
-public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
+@State(
+  name = "FileEditorManager",
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
+)
+public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
@@ -131,9 +132,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
   private final List<EditorComposite> myOpenedEditors = new CopyOnWriteArrayList<>();
 
-  public FileEditorManagerImpl(@NotNull Project project) {
+  public FileEditorManagerImpl(@NotNull Project project, DockManager dockManager) {
+/*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
-    myDockManager = DockManager.getInstance(myProject);
+    myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
@@ -180,10 +182,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     });
   }
 
-  @Override
-  public void dispose() {
-  }
-
   private void dumbModeFinished(Project project) {
     VirtualFile[] files = getOpenFiles();
     for (VirtualFile file : files) {
@@ -212,7 +210,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
     myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory);
-    Disposer.register(this, myContentFactory);
+    Disposer.register(myProject, myContentFactory);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {
@@ -305,7 +303,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
           panel.setOpaque(false);
           panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
-          Disposer.register(this, mySplitters);
+          Disposer.register(myProject, mySplitters);
           panel.add(mySplitters, BorderLayout.CENTER);
           myPanels = panel;
         }
@@ -767,7 +765,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                 @NotNull final VirtualFile file,
                                                                 final boolean focusEditor) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(window, file, focusEditor, null)), "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(window, file, focusEditor, null, true)), "", null);
     return result.get();
   }
 
@@ -783,8 +781,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
                                                          @NotNull final VirtualFile file,
                                                          final boolean focusEditor,
-                                                         @Nullable final HistoryEntry entry) {
-    return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withCurrentTab(true).withFocusEditor(focusEditor));
+                                                         @Nullable final HistoryEntry entry,
+                                                         boolean current) {
+    return openFileImpl4(window, file, entry, current, focusEditor, null, -1, false);
   }
 
   /**
@@ -794,14 +793,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   Pair<FileEditor[], FileEditorProvider[]> openFileImpl4(@NotNull final EditorWindow window,
                                                          @NotNull final VirtualFile file,
                                                          @Nullable final HistoryEntry entry,
-                                                         final FileEditorOpenOptions options) {
+                                                         final boolean current,
+                                                         final boolean focusEditor,
+                                                         final Boolean pin,
+                                                         final int index,
+                                                         final boolean exactState) {
     assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed() : "must not open files under read action since we are doing a lot of invokeAndWaits here";
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
 
-    if (!options.isReopeningEditorsOnStartup()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> compositeRef.set(window.findFileComposite(file)));
-    }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> compositeRef.set(window.findFileComposite(file)));
 
     final FileEditorProvider[] newProviders;
     final AsyncFileEditorProvider.Builder[] builders;
@@ -838,145 +839,139 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       newProviders = null;
       builders = null;
     }
+    Runnable runnable = () -> {
+      if (myProject.isDisposed() || !file.isValid()) {
+        return;
+      }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders));
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+
+      compositeRef.set(window.findFileComposite(file));
+      boolean newEditor = compositeRef.isNull();
+      if (newEditor) {
+        clearWindowIfNeeded(window);
+
+        getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
+
+        FileEditor[] newEditors = new FileEditor[newProviders.length];
+        for (int i = 0; i < newProviders.length; i++) {
+          try {
+            final FileEditorProvider provider = newProviders[i];
+            final FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
+            LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " +
+                                              (provider == null ? null : provider.getClass().getName()));
+            newEditors[i] = editor;
+            // Register PropertyChangeListener into editor
+            editor.addPropertyChangeListener(myEditorPropertyChangeListener);
+            editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception | AssertionError e) {
+            LOG.error(e);
+          }
+        }
+
+        // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
+        // After that we have to select opened editor.
+        EditorWithProviderComposite composite = createComposite(file, newEditors, newProviders);
+        if (composite == null) return;
+
+        if (index >= 0) {
+          composite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+        }
+
+        compositeRef.set(composite);
+        myOpenedEditors.add(composite);
+      }
+
+      final EditorWithProviderComposite composite = compositeRef.get();
+      FileEditor[] editors = composite.getEditors();
+      FileEditorProvider[] providers = composite.getProviders();
+
+      window.setEditor(composite, current, focusEditor);
+
+      for (int i = 0; i < editors.length; i++) {
+        restoreEditorState(file, providers[i], editors[i], entry, newEditor, exactState);
+      }
+
+      // Restore selected editor
+      final FileEditorProvider selectedProvider;
+      if (entry == null) {
+        selectedProvider = ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance())
+          .getSelectedFileEditorProvider(EditorHistoryManager.getInstance(myProject), file, providers);
+      }
+      else {
+        selectedProvider = entry.getSelectedProvider();
+      }
+      if (selectedProvider != null) {
+        for (int i = editors.length - 1; i >= 0; i--) {
+          final FileEditorProvider provider = providers[i];
+          if (provider.equals(selectedProvider)) {
+            composite.setSelectedEditor(i);
+            break;
+          }
+        }
+      }
+
+      // Notify editors about selection changes
+      window.getOwner().setCurrentWindow(window, focusEditor);
+      window.getOwner().afterFileOpen(file);
+      addSelectionRecord(file, window);
+
+      composite.getSelectedEditor().selectNotify();
+
+      // Transfer focus into editor
+      if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+        if (focusEditor) {
+          //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
+          window.setAsCurrentWindow(true);
+          Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
+          if (windowAncestor != null &&
+              windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          }
+        }
+      }
+
+      if (newEditor) {
+        ourOpenFilesSetModificationCount.incrementAndGet();
+      }
+
+      //[jeka] this is a hack to support back-forward navigation
+      // previously here was incorrect call to fireSelectionChanged() with a side-effect
+      ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
+
+      // Update frame and tab title
+      updateFileName(file);
+
+      // Make back/forward work
+      IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
+
+      if (pin != null) {
+        window.setFilePinned(file, pin);
+      }
+
+      if (newEditor) {
+        getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+                    .fileOpenedSync(this, file, Pair.pair(editors, providers));
+
+        notifyPublisher(() -> {
+          if (isFileOpen(file)) {
+            getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+                        .fileOpened(this, file);
+          }
+        });
+      }
+    };
+
+    ApplicationManager.getApplication().invokeAndWait(runnable);
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
                        composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
-  }
-
-  private void openFileImpl4Edt(@NotNull EditorWindow window,
-                                @NotNull VirtualFile file,
-                                @Nullable HistoryEntry entry,
-                                FileEditorOpenOptions options,
-                                Ref<EditorWithProviderComposite> compositeRef,
-                                FileEditorProvider[] newProviders, AsyncFileEditorProvider.Builder[] builders) {
-    if (myProject.isDisposed() || !file.isValid()) {
-      return;
-    }
-
-    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-
-    compositeRef.set(window.findFileComposite(file));
-    boolean newEditor = compositeRef.isNull();
-    if (newEditor) {
-      clearWindowIfNeeded(window);
-
-      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
-
-      FileEditor[] newEditors = new FileEditor[newProviders.length];
-      for (int i = 0; i < newProviders.length; i++) {
-        try {
-          final FileEditorProvider provider = newProviders[i];
-          final FileEditor editor = builders[i] == null ? provider.createEditor(myProject, file) : builders[i].build();
-          LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " +
-                                            (provider == null ? null : provider.getClass().getName()));
-          newEditors[i] = editor;
-          // Register PropertyChangeListener into editor
-          editor.addPropertyChangeListener(myEditorPropertyChangeListener);
-          editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception | AssertionError e) {
-          LOG.error(e);
-        }
-      }
-
-      // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
-      // After that we have to select opened editor.
-      EditorWithProviderComposite composite = createComposite(file, newEditors, newProviders);
-      if (composite == null) return;
-
-      if (options.getIndex() >= 0) {
-        composite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, options.getIndex());
-      }
-
-      compositeRef.set(composite);
-      myOpenedEditors.add(composite);
-    }
-
-    final EditorWithProviderComposite composite = compositeRef.get();
-    FileEditor[] editors = composite.getEditors();
-    FileEditorProvider[] providers = composite.getProviders();
-
-    window.setEditor(composite, options.isCurrentTab(), options.isFocusEditor());
-
-    for (int i = 0; i < editors.length; i++) {
-      restoreEditorState(file, providers[i], editors[i], entry, newEditor, options.isExactState());
-    }
-
-    // Restore selected editor
-    final FileEditorProvider selectedProvider;
-    if (entry == null) {
-      selectedProvider = ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance())
-        .getSelectedFileEditorProvider(EditorHistoryManager.getInstance(myProject), file, providers);
-    }
-    else {
-      selectedProvider = entry.getSelectedProvider();
-    }
-    if (selectedProvider != null) {
-      for (int i = editors.length - 1; i >= 0; i--) {
-        final FileEditorProvider provider = providers[i];
-        if (provider.equals(selectedProvider)) {
-          composite.setSelectedEditor(i);
-          break;
-        }
-      }
-    }
-
-    // Notify editors about selection changes
-    window.getOwner().setCurrentWindow(window, options.isFocusEditor());
-    window.getOwner().afterFileOpen(file);
-    addSelectionRecord(file, window);
-
-    composite.getSelectedEditor().selectNotify();
-
-    // Transfer focus into editor
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (options.isFocusEditor()) {
-        //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
-        window.setAsCurrentWindow(true);
-        Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
-        if (windowAncestor != null &&
-            windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
-        }
-      }
-    }
-
-    if (newEditor) {
-      ourOpenFilesSetModificationCount.incrementAndGet();
-    }
-
-    //[jeka] this is a hack to support back-forward navigation
-    // previously here was incorrect call to fireSelectionChanged() with a side-effect
-    ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
-
-    // Update frame and tab title
-    updateFileName(file);
-
-    // Make back/forward work
-    IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
-
-    if (options.getPin() != null) {
-      window.setFilePinned(file, options.getPin());
-    }
-
-    if (newEditor) {
-      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                  .fileOpenedSync(this, file, Pair.pair(editors, providers));
-
-      notifyPublisher(() -> {
-        if (isFileOpen(file)) {
-          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-                      .fileOpened(this, file);
-        }
-      });
-    }
   }
 
   @Nullable
@@ -1328,7 +1323,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    file = BackedVirtualFile.getOriginFileIfBacked(file);
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
       return composite.getSelectedWithProvider();
@@ -1359,7 +1353,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    file = BackedVirtualFile.getOriginFileIfBacked(file);
+    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
@@ -1511,6 +1505,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                 LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
                 LOG.info("Project opening took " + time + " ms");
+                PluginManagerCore.dumpPluginClassStatistics();
               }
             }, myProject.getDisposed());
             // group 1
@@ -1590,8 +1585,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       if (newData.first != null) {
         final JComponent component = newData.second.getComponent();
-        final EditorWindowHolder holder =
-          ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
+        final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
         if (holder != null) {
           addSelectionRecord(newData.first, holder.getEditorWindow());
         }
@@ -1870,7 +1864,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     private void replaceEditors(Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> replacements) {
       if (replacements.isEmpty()) return;
-
+      
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();
         EditorWithProviderComposite[] editors = eachWindow.getEditors();

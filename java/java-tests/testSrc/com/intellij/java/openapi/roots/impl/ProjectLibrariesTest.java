@@ -22,20 +22,20 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 
 import java.util.Arrays;
 
 /**
  * @author dsl
  */
-public class ProjectLibrariesTest extends JavaProjectTestCase {
+public class ProjectLibrariesTest extends IdeaTestCase {
   private VirtualFile myRoot;
   private Library myLib;
 
@@ -47,7 +47,7 @@ public class ProjectLibrariesTest extends JavaProjectTestCase {
     assertNotNull(myRoot);
 
     myLib = WriteCommandAction.runWriteCommandAction(null,
-                                                     (Computable<Library>)() -> LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary("LIB"));
+                                                     (Computable<Library>)() -> ProjectLibraryTable.getInstance(myProject).createLibrary("LIB"));
     ModuleRootModificationUtil.addDependency(myModule, myLib);
   }
 

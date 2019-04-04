@@ -84,7 +84,6 @@ public abstract class LightToolWindowManager implements Disposable {
 
   @Nullable
   public DesignerEditorPanelFacade getActiveDesigner() {
-    if (myProject.isDisposed()) return null;
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
       DesignerEditorPanelFacade designer = getDesigner(editor);
       if (designer != null) {

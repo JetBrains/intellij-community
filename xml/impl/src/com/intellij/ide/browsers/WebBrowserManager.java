@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -51,8 +51,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
-      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac
-                                                                                                                           ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER),
       new ConfigurableWebBrowser(PREDEFINED_EDGE_ID, BrowserFamily.EXPLORER, "Edge", SystemInfo.isWindows ? EDGE_COMMAND : null, true, null)
     );
@@ -116,7 +115,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
-      state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
+      state.setAttribute("default", defaultBrowserPolicy.name().toLowerCase(Locale.ENGLISH));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -219,7 +218,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     String defaultValue = element.getAttributeValue("default");
     if (!StringUtil.isEmpty(defaultValue)) {
       try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
+        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(defaultValue.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         LOG.warn(e);
@@ -307,12 +306,12 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition) {
     return getBrowsers(condition, true);
   }
 
   @NotNull
-  public List<WebBrowser> getBrowsers(@NotNull Condition<? super WebBrowser> condition, boolean onlyActive) {
+  public List<WebBrowser> getBrowsers(@NotNull Condition<WebBrowser> condition, boolean onlyActive) {
     List<WebBrowser> result = new SmartList<>();
     for (ConfigurableWebBrowser browser : browsers) {
       if ((!onlyActive || browser.isActive()) && condition.value(browser)) {

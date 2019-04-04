@@ -35,10 +35,16 @@ public class TestDataGuessByTestDiscoveryUtil {
     if (testClassQualifiedName == null) return Collections.emptyList();
     List<Couple<String>> testQName =
       Collections.singletonList(Couple.of(testClassQualifiedName, ReadAction.compute(() -> method.getName())));
-    Project project = ReadAction.compute(() -> method.getProject());
-    AffectedPathConsumer consumer = new AffectedPathConsumer(project);
-    TestDiscoveryProducer.consumeAffectedPaths(project, testQName, consumer, (byte)0x0 /* TODO */);
-    return consumer.getTestData();
+    try {
+      Project project = ReadAction.compute(() -> method.getProject());
+      AffectedPathConsumer consumer = new AffectedPathConsumer(project);
+      TestDiscoveryProducer.consumeAffectedPaths(project, testQName, consumer, (byte)0x0 /* TODO */);
+      return consumer.getTestData();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
   }
 
   @NotNull
@@ -47,9 +53,15 @@ public class TestDataGuessByTestDiscoveryUtil {
     String testClassQualifiedName = ReadAction.compute(() -> parametrizedTestClass.getQualifiedName());
     if (testClassQualifiedName == null) return Collections.emptyList();
     Project project = ReadAction.compute(() -> parametrizedTestClass.getProject());
-    AffectedPathConsumer consumer = new AffectedPathConsumer(project);
-    TestDiscoveryProducer.consumeAffectedPaths(project, testClassQualifiedName, consumer, (byte)0x0 /* TODO */);
-    return consumer.getTestData();
+    try {
+      AffectedPathConsumer consumer = new AffectedPathConsumer(project);
+      TestDiscoveryProducer.consumeAffectedPaths(project, testClassQualifiedName, consumer, (byte)0x0 /* TODO */);
+      return consumer.getTestData();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
   }
 
   private static boolean isEnabled() {

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -67,7 +68,7 @@ public class GitMergeUpdater extends GitUpdater {
     String originalText = myProgressIndicator.getText();
     myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
     try {
-      GitCommandResult result = myGit.merge(myRepository, myBranchPair.getTarget().getName(),
+      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myBranchPair.getDest()).getName(),
                                             asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
                                             GitStandardProgressAnalyzer.createListener(myProgressIndicator));
       myProgressIndicator.setText(originalText);
@@ -133,8 +134,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     // git log --name-status master..origin/master
-    String currentBranch = myBranchPair.getSource().getName();
-    String remoteBranch = myBranchPair.getTarget().getName();
+    String currentBranch = myBranchPair.getBranch().getName();
+    String remoteBranch = myBranchPair.getDest().getName();
     try {
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
       if (repository == null) {
@@ -248,7 +249,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, Collections.singleton(root), makeParams(project));
+      super(project, git, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;
     }

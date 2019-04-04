@@ -4,7 +4,6 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -23,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -453,7 +449,7 @@ abstract class FunctionHelper {
       }
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(functionalInterface);
       if (psiClass != null && psiClass.getName() != null) {
-        return StringUtil.toLowerCase(psiClass.getName());
+        return psiClass.getName().toLowerCase(Locale.ENGLISH);
       }
       return "fn";
     }

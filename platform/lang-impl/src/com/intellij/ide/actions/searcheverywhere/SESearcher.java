@@ -7,22 +7,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 interface SESearcher {
-  ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
-                           @NotNull String pattern);
+  ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?, ?>, Integer> contributorsAndLimits,
+                           @NotNull String pattern,
+                           boolean useNonProjectItems,
+                           @NotNull Function<? super SearchEverywhereContributor<?, ?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
-  ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
+  ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?, ?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                                   @NotNull String pattern,
-                                  @NotNull SearchEverywhereContributor<?> contributor,
-                                  int newLimit);
+                                  boolean useNonProjectItems,
+                                  @NotNull SearchEverywhereContributor<?, ?> contributor,
+                                  int newLimit,
+                                  @NotNull Function<? super SearchEverywhereContributor<?, ?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
   /**
    * Search process listener interface
    */
   interface Listener {
-    void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
-    void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
-    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
+    void elementsAdded(@NotNull List<SearchEverywhereFoundElementInfo> list);
+    void elementsRemoved(@NotNull List<SearchEverywhereFoundElementInfo> list);
+    void searchFinished(@NotNull Map<SearchEverywhereContributor<?, ?>, Boolean> hasMoreContributors);
   }
 }

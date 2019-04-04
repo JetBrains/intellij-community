@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.find.impl;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
@@ -78,12 +80,12 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
 
   @NotNull
   public String[] getRecentFindStrings(){
-    return ArrayUtilRt.toStringArray(findStrings);
+    return ArrayUtil.toStringArray(findStrings);
   }
 
   @NotNull
   public String[] getRecentReplaceStrings(){
-    return ArrayUtilRt.toStringArray(replaceStrings);
+    return ArrayUtil.toStringArray(replaceStrings);
   }
 
 

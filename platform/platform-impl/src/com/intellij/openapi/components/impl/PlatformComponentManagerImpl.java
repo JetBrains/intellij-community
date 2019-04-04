@@ -39,15 +39,10 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   }
 
   @Override
-  public void initializeComponent(@NotNull Object component, @Nullable ServiceDescriptor serviceDescriptor) {
-    if (serviceDescriptor == null || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
-      getComponentStore().initComponent(component, serviceDescriptor);
+  public void initializeComponent(@NotNull Object component, boolean service) {
+    if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
+      ServiceKt.getStateStore(this).initComponent(component, service);
     }
-  }
-
-  @NotNull
-  protected IComponentStore getComponentStore() {
-    return ServiceKt.getStateStore(this);
   }
 
   @Override

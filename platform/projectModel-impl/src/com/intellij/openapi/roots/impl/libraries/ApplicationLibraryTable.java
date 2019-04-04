@@ -20,13 +20,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is for internal use, in order to get instance of the application-level library table, use {@link LibraryTablesRegistrar#getLibraryTable()}
+ *  @author dsl
  */
-@ApiStatus.Internal
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     @NotNull

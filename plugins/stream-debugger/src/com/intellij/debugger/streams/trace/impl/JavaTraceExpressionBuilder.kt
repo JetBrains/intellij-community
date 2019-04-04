@@ -2,7 +2,9 @@
 package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.streams.lib.HandlerFactory
+import com.intellij.debugger.streams.psi.impl.LambdaToAnonymousTransformer
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer
+import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.application.ApplicationManager
@@ -30,6 +32,8 @@ class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: H
           codeBlock, chain.context)
 
         MethodReferenceToLambdaTransformer.transform(block)
+        LambdaToAnonymousTransformer.transform(block)
+        ToObjectInheritorTransformer.transform(block)
 
         val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.ANY, resultVariableName), dsl.nullExpression, true).toCode()
         val result = "$resultDeclaration; \n " +

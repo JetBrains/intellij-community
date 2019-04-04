@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -20,13 +20,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Functions;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,10 +75,12 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox<>(names);
-    myModuleComboBox.setSwingPopup(false);
-    myModuleComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300)); // as ScopeChooser
-    myModuleComboBox.setRenderer(SimpleListCellRenderer.create("", Functions.id()));
+    new ComboboxSpeedSearch(myModuleComboBox);
 
+    SwingHelper.setLongestAsPrototype(myModuleComboBox, Arrays.asList(names));
+    if (myModuleComboBox.getPrototypeDisplayValue() != null) {
+      myModuleComboBox.setMinLength(myModuleComboBox.getPrototypeDisplayValue().length());
+    }
     ActionListener restartSearchListener = e -> scheduleResultsUpdate();
     myModuleComboBox.addActionListener(restartSearchListener);
 

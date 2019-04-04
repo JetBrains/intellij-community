@@ -1,14 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.CheckedActionGroup;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +42,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(text);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                        @Nullable Icon icon) {
+  public AnActionButton(String text, String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
+  public AnActionButton(String text, Icon icon) {
     this(text, null, icon);
   }
 
@@ -131,8 +138,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   private boolean isContextComponentOk() {
     return myContextComponent == null
-           || (myContextComponent.isVisible() && ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class,
-                                                                               (Component)myContextComponent) != null);
+           || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
   }
 
   @Nullable

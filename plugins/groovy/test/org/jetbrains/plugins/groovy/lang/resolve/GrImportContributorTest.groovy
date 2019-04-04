@@ -3,15 +3,14 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 
 @CompileStatic
 class GrImportContributorTest extends LightGroovyTestCase {
 
-  LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
+  LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
   @Override
   void setUp() throws Exception {
@@ -29,7 +28,7 @@ public class MyClass {
 
   void 'test regular import'() {
     GrImportContributor.EP_NAME.getPoint(null).registerExtension({
-      [new RegularImport("foo.bar.MyClass")]
+      [new Import("foo.bar.MyClass", ImportType.REGULAR)]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'new MyClass()')
@@ -39,7 +38,7 @@ public class MyClass {
 
   void 'test static import method'() {
     GrImportContributor.EP_NAME.getPoint(null).registerExtension({
-      [new StaticImport("foo.bar.MyClass", "foo")]
+      [new Import("foo.bar.MyClass.foo", ImportType.STATIC)]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'foo()')
@@ -49,7 +48,7 @@ public class MyClass {
 
   void 'test static import field'() {
     GrImportContributor.EP_NAME.getPoint(null).registerExtension({
-      [new StaticImport("foo.bar.MyClass", "BAR")]
+      [new Import("foo.bar.MyClass.BAR", ImportType.STATIC)]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'println BAR')
@@ -59,7 +58,7 @@ public class MyClass {
 
   void 'test star import'() {
     GrImportContributor.EP_NAME.getPoint(null).registerExtension({
-      [new StarImport("foo.bar")]
+      [new Import("foo.bar", ImportType.STAR)]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', 'new MyClass()')
@@ -69,7 +68,7 @@ public class MyClass {
 
   void 'test static star import'() {
     GrImportContributor.EP_NAME.getPoint(null).registerExtension({
-      [new StaticStarImport("foo.bar.MyClass")]
+      [new Import("foo.bar.MyClass", ImportType.STATIC_STAR)]
     } as GrImportContributor, myFixture.testRootDisposable)
     fixture.with {
       configureByText('a.groovy', '''\

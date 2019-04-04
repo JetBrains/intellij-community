@@ -18,7 +18,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -202,7 +201,7 @@ internal class ProjectStoreTest {
       class AOther : A()
 
       val component = AOther()
-      componentStore.initComponent(component, null)
+      componentStore.initComponent(component, false)
       assertThat(component.options.foo).isEqualTo("some data")
 
       componentStore.save()
@@ -229,15 +228,13 @@ internal class ProjectStoreTest {
         launch {
           project.stateStore.save()
         }
-
-        delay(50)
       }
     }
   }
 
   private suspend fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
-    project.stateStore.initComponent(testComponent, null)
+    project.stateStore.initComponent(testComponent, true)
     assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
     testComponent.state!!.value = "foo"

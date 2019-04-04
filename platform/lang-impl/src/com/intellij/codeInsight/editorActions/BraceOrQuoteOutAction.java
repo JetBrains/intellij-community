@@ -28,8 +28,10 @@ public class BraceOrQuoteOutAction extends EditorAction {
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assert caret != null;
-      int targetOffset = TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caret.getOffset());
-      if (targetOffset > 0) caret.moveToOffset(targetOffset);
+      int caretOffset = caret.getOffset();
+      if (TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset)) {
+        caret.moveToOffset(caretOffset + 1);
+      }
     }
   }
 }

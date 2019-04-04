@@ -28,6 +28,7 @@ import git4idea.commands.*
 import git4idea.config.GitConfigUtil
 import git4idea.merge.GitConflictResolver
 import git4idea.ui.StashInfo
+import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import git4idea.util.StringScanner
@@ -85,27 +86,26 @@ fun unstash(project: Project,
   }
 }
 
-@Deprecated("use the simpler overloading method which returns a list")
 fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
-  for (stash in loadStashStack(project, root)) {
-    consumer.consume(stash)
-  }
+  loadStashStack(project, root, Charset.forName(GitConfigUtil.getLogEncoding(project, root)), consumer)
 }
 
-@Throws(VcsException::class)
-fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
-  val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
-
+private fun loadStashStack(project: Project, root: VirtualFile, charset: Charset, consumer: Consumer<StashInfo>) {
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)
   h.addParameters("list")
-  h.charset = charset
-  val out = Git.getInstance().runCommand(h).getOutputOrThrow()
+  val out: String
+  try {
+    h.charset = charset
+    out = Git.getInstance().runCommand(h).getOutputOrThrow()
+  }
+  catch (e: VcsException) {
+    GitUIUtil.showOperationError(project, e, h.printableCommandLine())
+    return
+  }
 
-  val result = mutableListOf<StashInfo>()
   val s = StringScanner(out)
   while (s.hasMoreData()) {
-    result.add(StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim { it <= ' ' }))
+    consumer.consume(StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim { it <= ' ' }))
   }
-  return result
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +154,7 @@ public interface PsiResolveHelper {
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                     @NotNull PsiParameter[] parameters,
                                     @NotNull PsiExpression[] arguments,
-                                    @NotNull MethodCandidateInfo info, 
+                                    @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
                                     @NotNull ParameterTypeInferencePolicy policy,
                                     @NotNull LanguageLevel languageLevel);

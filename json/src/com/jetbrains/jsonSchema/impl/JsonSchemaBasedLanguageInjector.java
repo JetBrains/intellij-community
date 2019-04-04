@@ -36,13 +36,12 @@ public class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBase {
     final JsonPointerPosition position = walker.findPosition(context, true);
     if (position == null || position.isEmpty()) return null;
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, position).resolve();
-    for (JsonSchemaObject schema : schemas) {
-      String injection = schema.getLanguageInjection();
-      if (injection != null) {
-        Language language = Language.findLanguageByID(injection);
-        if (language != null) return language;
-      }
-    }
-    return null;
+    if (schemas.size() != 1) return null;
+    JsonSchemaObject object = schemas.iterator().next();
+    String injection = object.getLanguageInjection();
+    if (injection == null) return null;
+    Language language = Language.findLanguageByID(injection);
+    if (language == null) return null;
+    return language;
   }
 }

@@ -367,7 +367,7 @@ internal class GitTest : GitTestCase() {
   }
 
   private suspend fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
-    repositoryManager.createRepositoryIfNeeded()
+    repositoryManager.createRepositoryIfNeed()
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
     val store = ApplicationStoreImpl(ApplicationManager.getApplication()!!)

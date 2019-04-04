@@ -21,7 +21,6 @@ private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("Co
 /**
  * @author Dmitry Avdeev
  */
-@Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
                                          private val executor: Executor,
                                          private val order: Int) : ActionGroup() {

@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,8 +180,7 @@ public class JBScrollPane extends JScrollPane {
                 }
                 if (!event.isConsumed()) {
                   // try to process a mouse wheel event by outer scroll pane
-                  MouseEventAdapter.redispatch(event, ComponentUtil
-                    .getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)pane.getParent()));
+                  MouseEventAdapter.redispatch(event, UIUtil.getParentOfType(JScrollPane.class, pane.getParent()));
                 }
               }
             }

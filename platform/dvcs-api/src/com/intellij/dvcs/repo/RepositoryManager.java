@@ -56,9 +56,6 @@ public interface RepositoryManager<T extends Repository> {
   @Nullable
   T getRepositoryForFile(@NotNull FilePath file);
 
-  @Nullable
-  T getRepositoryForFileQuick(@NotNull FilePath file);
-
   /**
    * @return all repositories tracked by the manager.
    */

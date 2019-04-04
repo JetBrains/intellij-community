@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
+import com.intellij.ide.BootstrapClassLoaderUtil
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
@@ -12,6 +13,7 @@ import com.intellij.util.io.ZipUtil
 import com.intellij.util.ui.UIUtil
 import java.io.File
 
+
 /**
  * @author Aleksey.Rostovskiy
  */
@@ -21,7 +23,7 @@ open class PyGeneratorBase {
     System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, FileUtil.createTempDirectory("pystubs", "plugins").absolutePath)
     System.setProperty(PathManager.PROPERTY_SYSTEM_PATH, FileUtil.createTempDirectory("pystubs", "system").absolutePath)
     System.setProperty(PathManager.PROPERTY_CONFIG_PATH, FileUtil.createTempDirectory("pystubs", "config").absolutePath)
-    //Thread.currentThread().contextClassLoader = BootstrapClassLoaderUtil.initClassLoader()
+    Thread.currentThread().contextClassLoader = BootstrapClassLoaderUtil.initClassLoader()
     IdeaTestApplication.getInstance()
   }
 

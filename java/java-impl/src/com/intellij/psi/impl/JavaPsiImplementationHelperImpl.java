@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +192,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return null;
       }
       String className = virtualFile.getNameWithoutExtension();
-      Set<VirtualFile> visitedRoots = new HashSet<>();
+      Set<VirtualFile> visitedRoots = ContainerUtil.newHashSet();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
         for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
           if (visitedRoots.add(rootFile)) {

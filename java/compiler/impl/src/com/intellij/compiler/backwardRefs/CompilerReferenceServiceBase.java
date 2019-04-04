@@ -94,7 +94,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
    @Override
   public void projectOpened() {
     if (CompilerReferenceService.isEnabled()) {
-      myDirtyScopeHolder.installVFSListener(myProject);
+      myDirtyScopeHolder.installVFSListener();
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         CompilerManager compilerManager = CompilerManager.getInstance(myProject);
@@ -114,7 +114,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           }
           executeOnBuildThread(() -> {
             if (isUpToDate) {
-              openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
+              openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
             } else {
               markAsOutdated(validIndexExists);
             }
@@ -122,7 +122,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         });
       }
 
-      Disposer.register(myProject, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+      Disposer.register(myProject, () -> closeReaderIfNeed(IndexCloseReason.PROJECT_CLOSED));
     }
   }
 
@@ -386,7 +386,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected void closeReaderIfNeeded(IndexCloseReason reason) {
+  protected void closeReaderIfNeed(IndexCloseReason reason) {
     myOpenCloseLock.lock();
     try {
       if (reason == IndexCloseReason.COMPILATION_STARTED) {
@@ -402,7 +402,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected void openReaderIfNeeded(IndexOpenReason reason) {
+  protected void openReaderIfNeed(IndexOpenReason reason) {
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
@@ -606,7 +606,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     LOG.error("an exception during " + actionName + " calculation", e);
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
     if (requireIndexRebuild(unwrapped)) {
-      closeReaderIfNeeded(IndexCloseReason.AN_EXCEPTION);
+      closeReaderIfNeed(IndexCloseReason.AN_EXCEPTION);
     }
     return null;
   }

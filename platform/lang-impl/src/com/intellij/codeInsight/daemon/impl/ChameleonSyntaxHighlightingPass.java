@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.MainHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,38 +28,39 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
-  final static class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-    @Override
-    public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
+  public static class Factory implements MainHighlightingPassFactory {
+    private final Project myProject;
+
+    protected Factory(Project project, TextEditorHighlightingPassRegistrar registrar) {
+      myProject = project;
       registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, -1);
     }
 
-    @NotNull
+    @Nullable
     @Override
     public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      Project project = file.getProject();
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-      if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
+      if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
       ProperTextRange priority = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-      return new ChameleonSyntaxHighlightingPass(project, file, editor.getDocument(), ProperTextRange.create(restrict),
+      return new ChameleonSyntaxHighlightingPass(myProject, file, editor.getDocument(), ProperTextRange.create(restrict),
                                                  priority, editor, new DefaultHighlightInfoProcessor());
     }
 
-    @NotNull
+    @Nullable
     @Override
     public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
                                                                  @NotNull Document document,
                                                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
-      return new ChameleonSyntaxHighlightingPass(file.getProject(), file, document, range, range, null, highlightInfoProcessor);
+      return new ChameleonSyntaxHighlightingPass(myProject, file, document, range, range, null, highlightInfoProcessor);
     }
   }
 
@@ -79,10 +83,10 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
         return type instanceof ILazyParseableElementType && !(type instanceof IFileElementType);
       });
 
-    List<PsiElement> lazyOutside = new ArrayList<>(100);
-    List<PsiElement> lazyInside = new ArrayList<>(100);
-    List<HighlightInfo> outside = new ArrayList<>(100);
-    List<HighlightInfo> inside = new ArrayList<>(100);
+    List<PsiElement> lazyOutside = ContainerUtil.newArrayListWithCapacity(100);
+    List<PsiElement> lazyInside = ContainerUtil.newArrayListWithCapacity(100);
+    List<HighlightInfo> outside = ContainerUtil.newArrayListWithCapacity(100);
+    List<HighlightInfo> inside = ContainerUtil.newArrayListWithCapacity(100);
 
     for (PsiElement e : s) {
       (e.getTextRange().intersects(myPriorityRange) ? lazyInside : lazyOutside).add(e);

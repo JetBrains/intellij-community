@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.statusbar;
 
 import com.intellij.application.options.CodeStyle;
@@ -17,10 +17,10 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -106,7 +106,8 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(DataContext context)
+  {
     WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
@@ -120,7 +121,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
         }
       };
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        "Code Style", actionGroup, context,
+        null, actionGroup, context,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
     }
     return null;
@@ -128,7 +129,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @NotNull
   private static AnAction[] getActions(@Nullable final CodeStyleStatusBarUIContributor uiContributor, @NotNull PsiFile psiFile) {
-    List<AnAction> allActions = new ArrayList<>();
+    List<AnAction> allActions = ContainerUtilRt.newArrayList();
     if (uiContributor != null) {
       AnAction[] actions = uiContributor.getActions(psiFile);
       if (actions != null) {
@@ -144,10 +145,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
       AnAction disabledAction = uiContributor.createDisableAction(psiFile.getProject());
       if (disabledAction != null) {
         allActions.add(disabledAction);
-      }
-      AnAction showAllAction = uiContributor.createShowAllAction(psiFile.getProject());
-      if (showAllAction != null) {
-        allActions.add(showAllAction);
       }
     }
     return allActions.toArray(AnAction.EMPTY_ARRAY);

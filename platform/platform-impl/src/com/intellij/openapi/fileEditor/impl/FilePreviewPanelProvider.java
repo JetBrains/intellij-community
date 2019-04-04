@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, Pair<FileEditor[], FileEditorProvider[]>> {
+public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, Pair<FileEditor[], FileEditorProvider[]>> {
   public static final PreviewProviderId<VirtualFile, Pair<FileEditor[], FileEditorProvider[]>> ID = PreviewProviderId.create("Files");
 
   private final FileEditorManagerImpl myManager;
@@ -103,7 +103,7 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
     return Comparing.equal(content1, content2);
   }
 
-  private final class MyEditorsSplitters extends EditorsSplitters {
+  private class MyEditorsSplitters extends EditorsSplitters {
     private MyEditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
       super(manager, dockManager, createOwnDockableContainer);
     }
@@ -113,7 +113,6 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
       PreviewManager.SERVICE.close(myProject, getId(), file);
     }
 
-    @NotNull
     @Override
     protected EditorWindow createEditorWindow() {
       return new EditorWindow(this) {

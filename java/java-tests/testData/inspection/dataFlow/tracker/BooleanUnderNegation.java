@@ -1,6 +1,6 @@
 /*
-Value is always false (b; line#8)
-  'b == false' was established from condition (!b; line#8)
+Value is always false (b)
+  'b == false' was established from condition (!b)
  */
 class Test {
   void test(boolean b, int limit) {

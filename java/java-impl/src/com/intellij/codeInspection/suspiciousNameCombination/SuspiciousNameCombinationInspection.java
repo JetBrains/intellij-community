@@ -168,7 +168,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
   @NotNull
   private static String canonicalize(String word) {
-    return StringUtil.toLowerCase(word.trim());
+    return word.trim().toLowerCase(Locale.ENGLISH);
   }
 
   private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
@@ -197,7 +197,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     protected String findItemToAdd() {
       return Messages.showInputDialog(this,
                                       InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.add.title"),
+                                      InspectionsBundle.message("suspicious.name.combination.add.titile"),
                                       Messages.getQuestionIcon(), "", null);
     }
 

@@ -49,20 +49,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.util.TestTimeOut.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsNot.not;
 
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
-
-  private TestTimeOut t;
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     exception = null;
-    t = setTimeout(2, TimeUnit.MINUTES);
+    timeOut = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
   }
 
   @Override
@@ -178,7 +174,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  private static void joinWithTimeout(List<? extends Thread> threads) throws TimeoutException {
+  private static void joinWithTimeout(List<Thread> threads) throws TimeoutException {
     for (Thread thread : threads) {
       try {
         thread.join(20_000);
@@ -193,9 +189,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
+  private long timeOut;
   private void checkTimeout() throws Throwable {
     if (exception != null) throw exception;
-    if (t.timedOut()) throw new TimeoutException("timeout");
+    if (System.currentTimeMillis() > timeOut) throw new TimeoutException("timeout");
   }
 
   public void testAppLockReadWritePreference() throws Throwable {
@@ -278,8 +275,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         // make sure EDT called writelock
         while (!application.myLock.writeRequested) checkTimeout();
 
-        TestTimeOut c = setTimeout(2, TimeUnit.SECONDS);
-        while (!c.timedOut()) {
+        long timeout = System.currentTimeMillis() + 2_000;
+        while (System.currentTimeMillis() < timeout) {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -298,8 +295,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         holdRead1.set(false);
         while (!writeAcquired.get()) checkTimeout();
 
-        c = setTimeout(2, TimeUnit.SECONDS);
-        while (!c.timedOut()) {
+        timeout = System.currentTimeMillis() + 2_000;
+        while (System.currentTimeMillis() < timeout) {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -319,8 +316,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         while (!read2Released.get()) checkTimeout();
 
-        c = setTimeout(2, TimeUnit.SECONDS);
-        while (!c.timedOut()) {
+        timeout = System.currentTimeMillis() + 2_000;
+        while (System.currentTimeMillis() < timeout) {
           checkTimeout();
           assertTrue(aboutToAcquireWrite.get());
           assertTrue(read1Acquired.get());
@@ -536,8 +533,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testRWLockPerformance() {
-    TestTimeOut p = setTimeout(2, TimeUnit.SECONDS);
-    while (!p.timedOut()) {
+    long s = System.currentTimeMillis();
+    while (System.currentTimeMillis() < s + 2000) {
       UIUtil.dispatchAllInvocationEvents();
     }
     //System.out.println("warming finished");
@@ -546,7 +543,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-
       List<Thread> threads = new ArrayList<>(numOfThreads);
       for (int i = 0; i < numOfThreads; i++) {
         @SuppressWarnings("Convert2Lambda") // runnable is more debuggable
@@ -562,7 +558,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
               }
             }
           }
-        }, "read thread " + i+"/"+numOfThreads);
+        }, "read thread " + i);
         thread.start();
         threads.add(thread);
       }
@@ -704,7 +700,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     try {
       app.executeSuspendingWriteAction(ourProject, "", () ->
         future.set(app.executeOnPooledThread(
-          () -> assertTrue(mayFinish.waitFor(5_000)))));
+          () -> assertTrue(mayFinish.waitFor(1000)))));
     }
     catch (AssertionError e) {
       if (!isEscapingThreadAssertion(e)) {
@@ -829,8 +825,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         TimeoutUtil.sleep(300);
         stopRead.set(true);
       }
-      catch (Throwable e) {
-        exception = e;
+      catch (Throwable throwable) {
+        exception = throwable;
       }
     });
     app.runWriteAction(EmptyRunnable.getInstance());
@@ -858,12 +854,10 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       Assert.assertThat(applicationInfo.getPluginsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
       Assert.assertThat(applicationInfo.getPluginsDownloadUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
       Assert.assertThat(applicationInfo.getChannelsListUrl(), not(containsString(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST)));
-    }
-    finally {
+    } finally {
       if (oldHost == null) {
         System.clearProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY);
-      }
-      else {
+      } else {
         System.setProperty(ApplicationInfoImpl.IDEA_PLUGINS_HOST_PROPERTY, oldHost);
       }
     }

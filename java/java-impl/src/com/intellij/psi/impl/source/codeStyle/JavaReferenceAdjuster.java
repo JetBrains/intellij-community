@@ -31,7 +31,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -276,18 +275,11 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         PsiElement parent = psiReference.getParent();
         if (parent instanceof PsiNewExpression || parent.getParent() instanceof PsiNewExpression) return true;
 
-        if (parent instanceof PsiTypeElement) {
+        if (parent instanceof PsiTypeElement &&
+            parent.getParent() instanceof PsiInstanceOfExpression) {
           final PsiClass containingClass = refClass.getContainingClass();
           if (containingClass != null && containingClass.hasTypeParameters()) {
-            if (parent.getParent() instanceof PsiInstanceOfExpression) {
-              return false;
-            }
-            if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
-              if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
-                return false;
-              }
-            }
+            return false;
           }
         }
       }

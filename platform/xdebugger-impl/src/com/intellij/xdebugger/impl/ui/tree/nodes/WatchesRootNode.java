@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XExpression;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -56,7 +54,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       }
     });
     myWatchesView = watchesView;
-    myChildren = new ArrayList<>();
+    myChildren = ContainerUtil.newArrayList();
     for (XExpression watchExpression : expressions) {
       myChildren.add(new WatchNodeImpl(myTree, this, watchExpression, stackFrame));
     }
@@ -180,7 +178,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, null);
       myChildren.add(targetIndex, messageNode);
       fireNodeInserted(targetIndex);
-      getTree().setSelectionRows(ArrayUtilRt.EMPTY_INT_ARRAY);
+      getTree().setSelectionRows(ArrayUtil.EMPTY_INT_ARRAY);
     }
     else {
       messageNode = node;

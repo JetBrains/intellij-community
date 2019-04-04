@@ -436,8 +436,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       variable = restoredVar;
     }
 
-    if (variable == null) return null;
-
     if (isReplaceAllOccurrences()) {
       List<RangeMarker> occurrences = new ArrayList<>();
       ReferencesSearch.search(variable).forEach(reference -> {
@@ -463,7 +461,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return variable;
   }
 
-  @Nullable
   protected PsiVariable introduceVariable() {
     PsiVariable variable = VariableExtractor
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);

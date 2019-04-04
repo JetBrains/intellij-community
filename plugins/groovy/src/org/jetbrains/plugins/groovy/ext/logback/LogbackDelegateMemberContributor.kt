@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.openapi.util.Key
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_TYPE_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
@@ -108,7 +108,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       wrappedBase.copy().apply {
         addParameter("clazz", classType)
         addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE).apply {
-          putUserData(DELEGATES_TO_TYPE_KEY, componentDelegateFqn)
+          putUserData(DELEGATES_TO_KEY, componentDelegateFqn)
           putUserData(DELEGATES_TO_STRATEGY_KEY, DELEGATE_FIRST)
         }
       }.let {

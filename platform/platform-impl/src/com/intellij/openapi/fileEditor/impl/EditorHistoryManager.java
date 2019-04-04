@@ -28,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "editorHistoryManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 

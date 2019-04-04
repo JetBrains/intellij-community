@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -37,11 +37,11 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;
   private final Project myProject;
-  private final List<? extends OrderRoot> myRoots;
+  private final List<OrderRoot> myRoots;
   private final JPanel myPanel;
   private final String myDefaultName;
 
-  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
+  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
     super(project, true);
     setTitle("Create Library");
     myProject = project;
@@ -92,15 +92,15 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   }
 
   @Nullable
-  private Module findModule(List<? extends OrderRoot> roots) {
+  private Module findModule(List<OrderRoot> roots) {
     for (OrderRoot root : roots) {
       Module module = null;
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());
       if (local != null) {
-        module = ModuleUtilCore.findModuleForFile(local, myProject);
+        module = ModuleUtil.findModuleForFile(local, myProject);
       }
       if (module == null) {
-        module = ModuleUtilCore.findModuleForFile(root.getFile(), myProject);
+        module = ModuleUtil.findModuleForFile(root.getFile(), myProject);
       }
       if (module != null) {
         return module;

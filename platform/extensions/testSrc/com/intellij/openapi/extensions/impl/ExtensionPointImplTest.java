@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -12,7 +13,6 @@ import org.junit.Test;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -225,7 +225,7 @@ public class ExtensionPointImplTest {
   public void testListenerNotifications() {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
 
-    final List<String> extensions = new ArrayList<>();
+    final List<String> extensions = ContainerUtil.newArrayList();
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
       @Override
       public void extensionAdded(@NotNull String extension, @Nullable PluginDescriptor pluginDescriptor) {

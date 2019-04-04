@@ -105,10 +105,10 @@ private fun stageChanges(changes: MutableCollection<String>,
     while (iterator.hasNext()) {
       action(iterator.next(), iterator::remove) { repo, change ->
         if (!toStage.containsKey(repo)) toStage[repo] = mutableListOf()
-        toStage.getValue(repo) += change
+        toStage[repo]!! += change
       }
     }
-    toStage.forEach { (repo, change) ->
+    toStage.forEach { repo, change ->
       stageFiles(change, repo)
     }
   }

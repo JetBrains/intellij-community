@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -103,7 +102,6 @@ public interface FilePath {
    * @return the path to the file represented by this file path in the system-independent format.
    */
   @NotNull
-  @SystemIndependent
   String getPath();
 
   /**

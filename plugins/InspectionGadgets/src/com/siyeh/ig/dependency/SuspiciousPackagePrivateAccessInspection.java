@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
@@ -61,9 +62,9 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return ApiUsageUastVisitor.createPsiElementVisitor(
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(
       new SuspiciousApiUsageProcessor(holder, myModuleSetByModuleName.getValue())
-    );
+    ), true);
   }
 
   private static class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
@@ -79,8 +80,8 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     @Override
     public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
       PsiClass accessObjectType = getAccessObjectType(qualifier);
-      if (target instanceof PsiJvmMember) {
-        checkAccess(sourceNode, (PsiJvmMember)target, accessObjectType);
+      if (target instanceof PsiMember) {
+        checkAccess(sourceNode, (PsiMember)target, accessObjectType);
       }
     }
 
@@ -89,8 +90,13 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
                                              @NotNull PsiClass instantiatedClass,
                                              @Nullable PsiMethod constructor,
                                              @Nullable UClass subclassDeclaration) {
-      if (subclassDeclaration == null && constructor != null) {
-        checkAccess(sourceNode, constructor, null);
+      if (subclassDeclaration == null) {
+        if (constructor != null) {
+          checkAccess(sourceNode, constructor, null);
+        }
+        else {
+          checkAccess(sourceNode, instantiatedClass, null);
+        }
       }
     }
 
@@ -110,7 +116,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       return null;
     }
 
-    private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiJvmMember target, @Nullable PsiClass accessObjectType) {
+    private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable PsiClass accessObjectType) {
       if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
         checkPackageLocalAccess(sourceNode, target, "package-private");
       }
@@ -119,7 +125,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       }
     }
 
-    private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
+    private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType) {
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
         Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);

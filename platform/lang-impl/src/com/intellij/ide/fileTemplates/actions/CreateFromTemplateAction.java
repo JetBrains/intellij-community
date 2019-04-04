@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
   private final Supplier<? extends FileTemplate> myTemplate;
 

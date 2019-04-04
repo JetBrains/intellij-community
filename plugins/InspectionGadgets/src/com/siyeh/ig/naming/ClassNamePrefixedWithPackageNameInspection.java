@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -89,8 +88,8 @@ public class ClassNamePrefixedWithPackageNameInspection
       if (lastPackageName == null) {
         return;
       }
-      final String lowercaseClassName = StringUtil.toLowerCase(className);
-      final String lowercasePackageName = StringUtil.toLowerCase(lastPackageName);
+      final String lowercaseClassName = className.toLowerCase();
+      final String lowercasePackageName = lastPackageName.toLowerCase();
       if (!lowercaseClassName.startsWith(lowercasePackageName)) {
         return;
       }

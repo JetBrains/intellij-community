@@ -2,59 +2,26 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange
-import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.containers.ContainerUtil
 
 class WhitelistBuilder {
-  private val groupIds: MutableSet<String> = HashSet()
-  private val groupVersions: MutableMap<String, MutableList<VersionRange>> = HashMap()
-  private val groupBuilds: MutableMap<String, MutableList<BuildRange>> = HashMap()
+  val groups: MutableMap<String, List<FUSWhitelist.VersionRange>> = ContainerUtil.newHashMap()
 
-  fun addVersion(id: String, from: Int, to: Int): WhitelistBuilder {
-    if (!groupVersions.containsKey(id)) {
-      groupIds.add(id)
-      groupVersions[id] = mutableListOf()
-    }
-    groupVersions[id]!!.add(VersionRange(from, to))
+  fun add(id: String): WhitelistBuilder {
+    groups[id] = ContainerUtil.emptyList()
     return this
   }
 
-  fun addVersion(id: String, from: String?, to: String?): WhitelistBuilder {
-    if (!groupVersions.containsKey(id)) {
-      groupIds.add(id)
-      groupVersions[id] = mutableListOf()
+  fun add(id: String, vararg versions: FUSWhitelist.VersionRange): WhitelistBuilder {
+    val versionsList = ContainerUtil.newArrayList<FUSWhitelist.VersionRange>()
+    for (version in versions) {
+      versionsList.add(version)
     }
-    groupVersions[id]!!.add(VersionRange.create(from, to))
-    return this
-  }
-
-  fun addBuild(id: String, from: BuildNumber?, to: BuildNumber?): WhitelistBuilder {
-    if (!groupBuilds.containsKey(id)) {
-      groupIds.add(id)
-      groupBuilds[id] = mutableListOf()
-    }
-    groupBuilds[id]!!.add(BuildRange(from, to))
-    return this
-  }
-
-  fun addBuild(id: String, from: String?, to: String?): WhitelistBuilder {
-    if (!groupBuilds.containsKey(id)) {
-      groupIds.add(id)
-      groupBuilds[id] = mutableListOf()
-    }
-    groupBuilds[id]!!.add(BuildRange.create(from, to))
+    groups[id] = versionsList
     return this
   }
 
   fun build(): FUSWhitelist {
-    val result = HashMap<String, FUSWhitelist.GroupFilterCondition>()
-    for (groupId in groupIds) {
-      groupBuilds.getOrDefault(groupId, emptyList<BuildRange>())
-      val builds: List<BuildRange> = groupBuilds.getOrDefault(groupId, emptyList())
-      val versions: List<VersionRange> = groupVersions.getOrDefault(groupId, emptyList())
-      result[groupId] = FUSWhitelist.GroupFilterCondition(builds, versions)
-    }
-    return FUSWhitelist.create(result)
+    return FUSWhitelist.create(groups)
   }
 }

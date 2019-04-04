@@ -348,7 +348,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     }
     if (!selected) {
-      TreeUtil.promiseSelectFirst(myTree);
+      TreeUtil.selectFirstNode(myTree);
     }
 
     //'updateSelectionFromTree' initializes 'details' components and it may take some time, so if the component isn't showing now
@@ -711,7 +711,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     removeNodes(nodes);
   }
 
-  protected void removeNodes(final List<? extends MyNode> nodes) {
+  protected void removeNodes(final List<MyNode> nodes) {
     MyNode parentNode = null;
     int idx = -1;
     for (MyNode node : nodes) {
@@ -756,7 +756,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
       else {
-        TreeUtil.promiseSelectFirst(myTree);
+        TreeUtil.selectFirstNode(myTree);
       }
     }
   }

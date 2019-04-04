@@ -4,8 +4,6 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 class LevelAndCount {
   @NotNull
   private final HighlightDisplayLevel myLevel;
@@ -29,14 +27,14 @@ class LevelAndCount {
     LevelAndCount count = (LevelAndCount)o;
 
     if (myCount != count.myCount) return false;
-    if (!Objects.equals(myLevel, count.myLevel)) return false;
+    if (myLevel != null ? !myLevel.equals(count.myLevel) : count.myLevel != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myLevel.hashCode();
+    int result = myLevel != null ? myLevel.hashCode() : 0;
     result = 31 * result + myCount;
     return result;
   }

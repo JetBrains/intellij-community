@@ -6,7 +6,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
-import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,10 +70,5 @@ public class YamlEmptyObjectAdapter implements JsonObjectValueAdapter {
   @Override
   public JsonArrayValueAdapter getAsArray() {
     return null;
-  }
-
-  @Override
-  public JsonSchemaType substituteTypeForErrorMessage(JsonSchemaType type) {
-    return type == JsonSchemaType._object ? JsonSchemaType._null : type;
   }
 }

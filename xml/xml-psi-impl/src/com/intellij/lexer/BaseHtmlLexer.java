@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * @author Maxim.Mossienko
@@ -105,7 +106,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       }
 
       String name = TreeUtil.getTokenText(lexer);
-      if (caseInsensitive) name = StringUtil.toLowerCase(name);
+      if (caseInsensitive) name = name.toLowerCase(Locale.US);
 
       final boolean style = name.equals(TOKEN_STYLE);
       final int state = getState() & BASE_STATE_MASK;
@@ -168,11 +169,11 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     public void handleElement(Lexer lexer) {
       if (seenContentType && seenScript && !seenAttribute) {
         @NonNls String mimeType = TreeUtil.getTokenText(lexer);
-        scriptType = caseInsensitive ? StringUtil.toLowerCase(mimeType) : mimeType;
+        scriptType = caseInsensitive ? mimeType.toLowerCase(Locale.US) : mimeType;
       }
       if (seenStylesheetType && seenStyle && !seenAttribute) {
         @NonNls String type = TreeUtil.getTokenText(lexer).trim();
-        styleType = caseInsensitive ? StringUtil.toLowerCase(type) : type;
+        styleType = caseInsensitive ? type.toLowerCase(Locale.US) : type;
       }
     }
   }
@@ -364,7 +365,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
         if (base.getTokenType() == XmlTokenType.XML_NAME) {
           String name = TreeUtil.getTokenText(base);
-          if (caseInsensitive) name = StringUtil.toLowerCase(name);
+          if (caseInsensitive) name = name.toLowerCase(Locale.US);
 
           if(endOfTheEmbeddment(name)) {
             break; // really found end

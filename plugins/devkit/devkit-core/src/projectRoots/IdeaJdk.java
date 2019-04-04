@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -168,7 +168,6 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     List<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar");
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
-    appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "database-impl.jar", "jdbc-console.jar");
@@ -235,7 +234,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       int choice = Messages.showChooseDialog(
         "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
         "Select Internal Java Platform",
-        ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
         Sdk internalJava = ObjectUtils.assertNotNull(sdkModel.findSdk(name));
@@ -332,7 +331,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
-    Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
+    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
+    Sdk internalJava = sdkModel.findSdk(sdkName);
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
@@ -357,7 +357,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     VirtualFileManager vfsManager = VirtualFileManager.getInstance();
-    Set<VirtualFile> addedRoots = new THashSet<>();
+    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
     for (JpsModule o : modules) {
       indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {

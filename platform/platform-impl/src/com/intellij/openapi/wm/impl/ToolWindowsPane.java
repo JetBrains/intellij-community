@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -23,8 +23,8 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,8 +149,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private void updateInnerMinSize(@NotNull RegistryValue value) {
     int minSize = Math.max(0, Math.min(100, value.asInteger()));
-    myVerticalSplitter.setMinSize(JBUIScale.scale(minSize));
-    myHorizontalSplitter.setMinSize(JBUIScale.scale(minSize));
+    myVerticalSplitter.setMinSize(JBUI.scale(minSize));
+    myHorizontalSplitter.setMinSize(JBUI.scale(minSize));
   }
 
   @Override
@@ -215,7 +215,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createAddButtonCmd(final StripeButton button,
                                               @NotNull WindowInfoImpl info,
-                                              @NotNull Comparator<? super StripeButton> comparator,
+                                              @NotNull Comparator<StripeButton> comparator,
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
@@ -946,11 +946,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class AddToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
-    private final Comparator<? super StripeButton> myComparator;
+    private final Comparator<StripeButton> myComparator;
 
     AddToolStripeButtonCmd(final StripeButton button,
                            @NotNull WindowInfoImpl info,
-                           @NotNull Comparator<? super StripeButton> comparator,
+                           @NotNull Comparator<StripeButton> comparator,
                            @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;

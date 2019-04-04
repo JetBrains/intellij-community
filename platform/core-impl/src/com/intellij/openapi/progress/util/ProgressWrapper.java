@@ -45,7 +45,6 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     //  LOG.error("Too many wrapped indicators");
     //}
     ProgressManager.assertNotCircular(original);
-    dontStartActivity();
   }
 
   @Override

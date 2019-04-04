@@ -29,7 +29,7 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
   private final MavenIndex myIndex;
   private final MavenDependencyCompletionItem.Type resultingType;
 
-  public IndexBasedCompletionProvider(@NotNull MavenIndex index) {
+  public IndexBasedCompletionProvider(MavenIndex index) {
     myIndex = index;
     resultingType = myIndex.getKind() == MavenSearchIndex.Kind.LOCAL
                     ? MavenDependencyCompletionItem.Type.LOCAL
@@ -38,7 +38,7 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
 
   @NotNull
   @Override
-  public List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters parameters) {
+  public List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters parameters) throws IOException {
     return ContainerUtil.map(myIndex.getGroupIds(), g -> new MavenDependencyCompletionItem(g, resultingType));
   }
 
@@ -52,7 +52,7 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
 
   @NotNull
   @Override
-  public List<MavenDependencyCompletionItem> findAllVersions(MavenCoordinate template, SearchParameters parameters) {
+  public List<MavenDependencyCompletionItem> findAllVersions(MavenCoordinate template, SearchParameters parameters) throws IOException {
     return ContainerUtil.map(myIndex.getVersions(template.getGroupId(), template.getArtifactId()), v ->
       new MavenDependencyCompletionItem(template.getGroupId(), template.getArtifactId(), v, resultingType));
   }
@@ -63,7 +63,7 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
     if (StringUtil.isEmpty(str)) {
       return Collections.emptyList();
     }
-    Query searchQuery;
+    Query searchQuery = null;
     try {
       searchQuery = createSearchQuery(str);
     }

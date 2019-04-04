@@ -15,7 +15,7 @@ const val LOCK_NAME: String = "\$lock"
 const val STATIC_LOCK_NAME: String = "\$LOCK"
 
 internal val PATTERN: ElementPattern<out GrLiteral> = GroovyPatterns.stringLiteral().annotationParam(
-    ANNO_FQN, DEFAULT_REFERENCED_METHOD_NAME
+    StandardPatterns.string().equalTo(ANNO_FQN), DEFAULT_REFERENCED_METHOD_NAME
 )
 
 fun getImplicitLockUsages(field: GrField): Sequence<PsiAnnotation> {

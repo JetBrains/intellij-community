@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.io.setOwnerPermissions
@@ -37,9 +37,11 @@ import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -127,14 +129,21 @@ private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MIN
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
-    token = DigestUtil.randomToken()
+    token = TokenGenerator.generate()
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
 }
 
+// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+private object TokenGenerator {
+  private val random = SecureRandom()
+
+  fun generate(): String = BigInteger(130, random).toString(32)
+}
+
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
-  val decodedPath = urlDecoder.path()
+  val decodedPath = URLUtil.unescapePercentSequences(urlDecoder.path())
   var offset: Int
   var isEmptyPath: Boolean
   val isCustomHost = projectNameAsHost != null
@@ -161,7 +170,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     if (isCustomHost) {
       // domain name is case-insensitive
       if (projectName.equals(name, ignoreCase = true)) {
-        if (!SystemInfo.isFileSystemCaseSensitive) {
+        if (!SystemInfoRt.isFileSystemCaseSensitive) {
           // may be passed path is not correct
           projectName = name
         }
@@ -170,7 +179,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     }
     else {
       // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
-      if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
+      if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
         val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
         if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
           projectName = name

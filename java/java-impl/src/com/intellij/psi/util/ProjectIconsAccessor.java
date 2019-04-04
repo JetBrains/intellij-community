@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Resolve small icons located in project for use in UI (e.g. gutter preview icon, lookups).
@@ -129,12 +129,12 @@ public class ProjectIconsAccessor {
   }
 
   private static boolean isIconFileExtension(String extension) {
-    return extension != null && ICON_EXTENSIONS.contains(StringUtil.toLowerCase(extension));
+    return extension != null && ICON_EXTENSIONS.contains(extension.toLowerCase(Locale.US));
   }
 
   private static boolean hasProperSize(Icon icon) {
-    return icon.getIconHeight() <= JBUIScale.scale(ICON_MAX_HEIGHT) &&
-           icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
+    return icon.getIconHeight() <= JBUI.scale(ICON_MAX_HEIGHT) &&
+           icon.getIconWidth() <= JBUI.scale(ICON_MAX_WEIGHT);
   }
 
   private static boolean isIdeaProject(@Nullable Project project) {

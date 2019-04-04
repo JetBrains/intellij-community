@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import java.io.File
-import java.lang.IllegalArgumentException
 
 /**
  * @author traff
@@ -61,7 +60,7 @@ fun getOrCreateModule(project: Project, projectPath: String, moduleTypeId: Strin
       Computable<Module> { ModuleManager.getInstance(project).newModule(projectPath, moduleTypeId) }
     )
 
-    val root = VfsUtil.findFileByIoFile(File(projectPath), true) ?: throw AssertionError("Can't find $projectPath")
+    val root = VfsUtil.findFileByIoFile(File(projectPath), true)!!
 
     ModuleRootModificationUtil.updateModel(module, { t ->
       val e = t.addContentEntry(root)

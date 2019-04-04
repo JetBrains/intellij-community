@@ -193,7 +193,7 @@ public class PyExceptionBreakpointType
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
       innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
       panel.add(innerPanel, BorderLayout.NORTH);
-      panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy"));
+      panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy", true));
 
       return panel;
     }

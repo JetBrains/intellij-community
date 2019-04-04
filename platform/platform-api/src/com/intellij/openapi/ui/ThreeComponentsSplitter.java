@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -10,9 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -125,16 +137,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       return findChildToFocus(myLastComponent);
     }
 
-    private boolean myReentrantLock = false;
     @Override
     public Component getDefaultComponent(Container aContainer) {
-      if (myReentrantLock) return null;
-      try {
-        myReentrantLock = true;
-        return findChildToFocus(myInnerComponent);
-      } finally {
-        myReentrantLock = false;
-      }
+      return findChildToFocus(myInnerComponent);
     }
 
     Component findChildToFocus (Component component) {
@@ -216,7 +221,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   public void setDividerMouseZoneSize(int size) {
-    myDividerZone = JBUIScale.scale(size);
+    myDividerZone = JBUI.scale(size);
   }
 
   public boolean isHonorMinimumSize() {
@@ -673,10 +678,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         Point point = SwingUtilities.convertPoint(this, p, window);
         Component component = UIUtil.getDeepestComponentAt(window, point.x, point.y);
         List<Component> components = Arrays.asList(myFirstComponent, myFirstDivider, myInnerComponent, myLastDivider, myLastComponent);
-        if (ComponentUtil.findParentByCondition(component, c -> c != null && components.contains(c)) == null) return false;
+        if (UIUtil.findParentByCondition(component, c -> c != null && components.contains(c)) == null) return false;
       }
 
-      int dndOff = myIsOnePixel ? JBUIScale.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
+      int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
       if (myVerticalSplit) {
         if (p.x >= 0 && p.x < getWidth()) {
           if (getHeight() > 0) {

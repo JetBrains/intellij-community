@@ -2,9 +2,6 @@
 package org.editorconfig.language.codeinsight.completion.templates
 
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.TextResult
-import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.Variable
 import org.editorconfig.language.util.EditorConfigTemplateUtil.uniqueId
@@ -43,7 +40,7 @@ class EditorConfigTemplateSegmentBuildAssistant(
     if (nextTokens.isEmpty()) {
       val variableId = variableId ?: return null
       val expression = EmptyExpression()
-      val placeholder = ConstantNode(variableId).withLookupStrings(variableId)
+      val placeholder = EditorConfigTemplateSingletonExpression(variableId)
       return template.addVariable(uniqueId, expression, placeholder, true)
     }
 
@@ -54,9 +51,9 @@ class EditorConfigTemplateSegmentBuildAssistant(
       return null
     }
 
-    val expression = ConstantNode(null).withLookupStrings(distinctTokes)
+    val expression = EditorConfigTemplateConstantExpression(distinctTokes)
     val placeholderText = variableId ?: distinctTokes.first()
-    val placeholder = ConstantNode(placeholderText).withLookupStrings(placeholderText)
+    val placeholder = EditorConfigTemplateSingletonExpression(placeholderText)
     return template.addVariable(variableId ?: uniqueId, expression, placeholder, true)
   }
 }

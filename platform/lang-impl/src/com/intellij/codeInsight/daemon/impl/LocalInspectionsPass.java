@@ -40,7 +40,6 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -72,7 +70,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionProfileWrapper myProfileWrapper;
-  private final Map<String, Set<PsiElement>> mySuppressedElements = new ConcurrentHashMap<>();
+  private final Map<String, Set<PsiElement>> mySuppressedElements = new HashMap<>();
   private final boolean myInspectInjectedPsi;
 
   public LocalInspectionsPass(@NotNull PsiFile file,
@@ -212,8 +210,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void highlightRedundantSuppressions(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                               @NotNull InspectionManager iManager,
-                                              List<? extends PsiElement> inside,
-                                              List<? extends PsiElement> outside,
+                                              List<PsiElement> inside, 
+                                              List<PsiElement> outside, 
                                               Set<String> elementDialectIds) {
     HighlightDisplayKey key = HighlightDisplayKey.find(RedundantSuppressInspection.SHORT_NAME);
     final InspectionProfileImpl inspectionProfile = myProfileWrapper.getInspectionProfile();
@@ -539,7 +537,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
     if (context != getFile()) {
       String errorMessage = "Reported element " + element +
-                       " is not from the file '" + file.getVirtualFile().getPath() +
+                       " is not from the file '" + file +
                        "' the inspection '" + toolWrapper +
                        "' (" + tool.getClass() +
                        ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
@@ -594,7 +592,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
 
-  private static final Interner<String> tooltips = new WeakInterner<>();
+  private static final WeakInterner<String> tooltips = new WeakInterner<>();
 
   private static boolean showToolDescription(@NotNull LocalInspectionToolWrapper tool) {
     return tool.getStaticDescription() == null || !tool.getStaticDescription().isEmpty();

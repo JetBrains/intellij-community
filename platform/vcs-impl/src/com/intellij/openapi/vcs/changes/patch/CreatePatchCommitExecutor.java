@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
@@ -50,7 +50,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager = changeListManager;
   }
 
-  @NotNull
   @Override
   @Nls
   public String getActionText() {
@@ -67,10 +66,10 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     return true;
   }
 
-  @NotNull
   @Override
-  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
-    return new CreatePatchCommitSession(commitContext);
+  @NotNull
+  public CommitSession createCommitSession() {
+    return new CreatePatchCommitSession();
   }
 
   @Override
@@ -78,16 +77,26 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager.registerCommitExecutor(this);
   }
 
-  private class CreatePatchCommitSession implements CommitSession {
+  private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
-    @NotNull private final CommitContext myCommitContext;
+    private CommitContext myCommitContext;
 
-    CreatePatchCommitSession(@NotNull CommitContext commitContext) {
-      myCommitContext = commitContext;
+    CreatePatchCommitSession() {
     }
 
     @Override
-    public JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void setContext(CommitContext context) {
+      myCommitContext = context;
+    }
+
+    @Override
+    @Nullable
+    public JComponent getAdditionalConfigurationUI() {
+      return myPanel.getPanel();
+    }
+
+    @Override
+    public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
       String patchPath = StringUtil.nullize(PropertiesComponent.getInstance(myProject).getValue(VCS_PATCH_PATH_KEY));
       if (patchPath == null) {
         patchPath = VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION;

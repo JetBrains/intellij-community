@@ -12,13 +12,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.util.*
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 /**
  * @author Vladislav.Soroka
  */
 open class BuildOutputInstantReaderImpl(private val buildId: Any,
-                                        private val parentEventId: Any,
                                         buildProgressListener: BuildProgressListener,
                                         parsers: List<BuildOutputParser>) : BuildOutputInstantReader, Closeable, Appendable {
   private val readJob: Job
@@ -30,30 +29,30 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
   private val appendedLineProcessor: LineProcessor
 
   init {
-    readJob = createReadJob(buildProgressListener, parsers)
+    readJob = createReadJob(buildProgressListener, this, parsers)
     val appendScope = CoroutineScope(Dispatchers.Default + appendParentJob)
     appendedLineProcessor = MyLineProcessor(readJob, appendScope, outputLinesChannel)
   }
 
   private fun createReadJob(buildProgressListener: BuildProgressListener,
+                            reader: BuildOutputInstantReaderImpl,
                             parsers: List<BuildOutputParser>): Job {
-    val thisReader: BuildOutputInstantReader = this
     return CoroutineScope(Dispatchers.Default).launch(start = CoroutineStart.LAZY) {
       var lastMessage: BuildEvent? = null
       val messageConsumer = { event: BuildEvent ->
         //do not add duplicates, e.g. sometimes same messages can be added both to stdout and stderr
         if (event != lastMessage) {
-          buildProgressListener.onEvent(buildId, event)
+          buildProgressListener.onEvent(event)
         }
         lastMessage = event
       }
 
       while (true) {
-        val line = thisReader.readLine() ?: break
+        val line = reader.readLine() ?: break
         if (line.isBlank()) continue
 
         for (parser in parsers) {
-          val readerWrapper = BuildOutputInstantReaderWrapper(thisReader)
+          val readerWrapper = BuildOutputInstantReaderWrapper(reader)
           if (parser.parse(line, readerWrapper, messageConsumer)) break
           readerWrapper.pushBackReadLines()
         }
@@ -61,8 +60,8 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
     }
   }
 
-  override fun getParentEventId(): Any {
-    return parentEventId
+  override fun getBuildId(): Any {
+    return buildId
   }
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
@@ -84,7 +83,7 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
     closeAndGetFuture()
   }
 
-  fun closeAndGetFuture(): CompletableFuture<Unit> {
+  fun closeAndGetFuture(): Future<Unit> {
     appendedLineProcessor.close()
     outputLinesChannel.close()
     return CoroutineScope(Dispatchers.Default).future {
@@ -147,10 +146,10 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
     }
   }
 
-  private class BuildOutputInstantReaderWrapper(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
+  private class BuildOutputInstantReaderWrapper(private val reader: BuildOutputInstantReaderImpl) : BuildOutputInstantReader {
     private var linesRead = 0
 
-    override fun getParentEventId(): Any = reader.parentEventId
+    override fun getBuildId(): Any = reader.buildId
 
     override fun readLine(): String? {
       val line = reader.readLine()
@@ -182,33 +181,4 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
     @TestOnly
     fun getMaxLinesBufferSize() = 50
   }
-}
-
-@ApiStatus.Experimental
-class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
-  private val readLines = LinkedList<String>()
-  override fun getParentEventId(): Any = reader.parentEventId
-
-  override fun readLine(): String? {
-    val line = reader.readLine()
-    if (line != null) {
-      readLines.add(line)
-    }
-    return line
-  }
-
-  override fun pushBack() {
-    reader.pushBack()
-    readLines.pollLast()
-  }
-
-  override fun pushBack(numberOfLines: Int) {
-    reader.pushBack(numberOfLines)
-    repeat(numberOfLines) { readLines.pollLast() ?: return@repeat }
-
-  }
-
-  override fun getCurrentLine(): String = reader.currentLine
-
-  fun getOutput(): String = readLines.joinToString(separator = "\n")
 }

@@ -230,7 +230,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     boolean seenBytes = false;
     boolean seenNonBytes = false;
     for (PyStringElement element : node.getStringElements()) {
-      final String prefix = StringUtil.toUpperCase(element.getPrefix());
+      final String prefix = element.getPrefix().toUpperCase();
       if (prefix.isEmpty()) continue;
 
       final boolean bytes = element.isBytes();
@@ -681,14 +681,5 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         .map(ASTNode::getPsi)
         .forEach(element -> registerProblem(element, "Python version 3.5 does not support 'await' inside comprehensions"));
     }
-  }
-
-  @Override
-  public void visitPySlashParameter(PySlashParameter node) {
-    super.visitPySlashParameter(node);
-
-    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
-                                   " not support positional-only parameters",
-                                   node);
   }
 }

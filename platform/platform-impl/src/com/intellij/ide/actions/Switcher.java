@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -52,7 +52,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
@@ -85,9 +84,8 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public class Switcher extends AnAction implements DumbAware {
   private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
-  private static final int MINIMUM_HEIGHT = JBUIScale.scale(100);
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
 
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
 
@@ -145,19 +143,17 @@ public class Switcher extends AnAction implements DumbAware {
     SwitcherPanel switcher = SWITCHER_KEY.get(project);
     if (switcher != null) {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
-      if (sameShortcut) {
-        if (switcher.isCheckboxMode() &&
-            e.getInputEvent() instanceof KeyEvent &&
-            KeymapUtil.isEventForAction((KeyEvent)e.getInputEvent(), TOGGLE_CHECK_BOX_ACTION_ID)) {
+      if (switcher.isCheckboxMode()) {
+        if (sameShortcut) {
           switcher.toggleShowEditedFiles();
         }
         else {
-          switcher.goForward();
+          switcher.setShowOnlyEditedFiles(onlyEdited);
         }
         return null;
       }
-      else if (switcher.isCheckboxMode()) {
-        switcher.setShowOnlyEditedFiles(onlyEdited);
+      else if (sameShortcut) {
+        switcher.goForward();
         return null;
       }
     }
@@ -173,27 +169,6 @@ public class Switcher extends AnAction implements DumbAware {
     SwitcherPanel switcher = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
     SWITCHER_KEY.set(project, switcher);
     return switcher;
-  }
-
-  public static class ToggleCheckBoxAction extends DumbAwareAction implements DumbAware {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      SwitcherPanel switcherPanel = SWITCHER_KEY.get(project);
-      if (switcherPanel != null) {
-        switcherPanel.toggleShowEditedFiles();
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
-    }
-
-    static boolean isEnabled() {
-      return getActiveKeymapShortcuts(TOGGLE_CHECK_BOX_ACTION_ID).getShortcuts().length > 0;
-    }
   }
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
@@ -213,6 +188,7 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
+    final String myActionId;
     final int myBaseModifier;
     private JBPopup myHint;
 
@@ -317,6 +293,7 @@ public class Switcher extends AnAction implements DumbAware {
       setLayout(new SwitcherLayouter());
       this.project = project;
       myTitle = title;
+      myActionId = actionId;
       myPinned = pinned;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch(this) : null;
 
@@ -341,7 +318,7 @@ public class Switcher extends AnAction implements DumbAware {
       twManager = ToolWindowManager.getInstance(project);
       CollectionListModel<ToolWindow> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
-      List<ToolWindow> windows = new ArrayList<>();
+      List<ToolWindow> windows = ContainerUtil.newArrayList();
       for (ActivateToolWindowAction action : actions) {
         ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());
         if (tw.isAvailable()) {
@@ -492,9 +469,7 @@ public class Switcher extends AnAction implements DumbAware {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(ToggleCheckBoxAction.isEnabled() ? TOGGLE_CHECK_BOX_ACTION_ID
-                                                                                      : actionId,
-                                                     onlyEdited);
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
       myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
                                   isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
                                   pinned);
@@ -623,7 +598,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<? super T, String> namer,
+                                            Function<T, String> namer,
                                             SwitcherSpeedSearch speedSearch,
                                             boolean pinned) {
       ListModel<T> listModel;
@@ -654,7 +629,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private Container getPopupFocusAncestor() {
-      return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
+      JComponent content = myPopup.getContent();
+      return content == null ? null : content.getFocusCycleRootAncestor();
     }
 
     @NotNull
@@ -735,8 +711,8 @@ public class Switcher extends AnAction implements DumbAware {
       topPanel.add(showOnlyEditedFilesCheckBox, BorderLayout.EAST);
 
       Dimension size = topPanel.getPreferredSize();
-      size.height = JBUIScale.scale(29);
-      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUIScale.scale(50);
+      size.height = JBUI.scale(29);
+      size.width = titleLabel.getPreferredSize().width + showOnlyEditedFilesCheckBox.getPreferredSize().width + JBUI.scale(50);
       topPanel.setPreferredSize(size);
       topPanel.setMinimumSize(size);
       topPanel.setBorder(JBUI.Borders.empty(5, 8));
@@ -1006,14 +982,14 @@ public class Switcher extends AnAction implements DumbAware {
     void toggleShowEditedFiles() {
       myShowOnlyEditedFilesCheckBox.doClick();
     }
-
+    
     void setShowOnlyEditedFiles(boolean onlyEdited) {
       if (myShowOnlyEditedFilesCheckBox.isSelected() != onlyEdited) {
         myShowOnlyEditedFilesCheckBox.setSelected(onlyEdited);
       }
-
+      
       final boolean listWasSelected = files.getSelectedIndex() != -1;
-
+      
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(
         project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
       final int selectionIndex = filesAndSelection.getSecond();
@@ -1065,7 +1041,7 @@ public class Switcher extends AnAction implements DumbAware {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
+                manager.openFile(file, true, true);
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }
@@ -1279,7 +1255,7 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       public void layoutContainer(@NotNull Container target) {
-        final JScrollPane scrollPane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)files);
+        final JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, files);
         JComponent filesPane = scrollPane != null ? scrollPane : files;
         if (sBounds == null || !target.isShowing()) {
           super.layoutContainer(target);
@@ -1325,7 +1301,7 @@ public class Switcher extends AnAction implements DumbAware {
              + "</html>";
     }
   }
-
+  
   private static class VirtualFilesRenderer extends ColoredListCellRenderer<FileInfo> {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;

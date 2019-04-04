@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
@@ -37,7 +37,7 @@ public class CalloutBorder implements Border {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Color oldColor = g.getColor();
-    g.setColor(JBColor.border());
+    g.setColor(UIUtil.getBorderColor());
     
     Graphics2D g2 = (Graphics2D)g;
     Object oldHint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);

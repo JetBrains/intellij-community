@@ -27,20 +27,13 @@ public class GrCastFix extends GroovyFix {
 
   @NotNull
   private final SmartPsiElementPointer<GrExpression> pointer;
-  @NotNull
-  private final String myName;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
     this(expectedType, expression, true);
   }
 
   public GrCastFix(PsiType expectedType, GrExpression expression, boolean safe) {
-    this(expectedType, expression, safe, "Cast to " + expectedType.getPresentableText());
-  }
-
-  public GrCastFix(PsiType expectedType, GrExpression expression, boolean safe, @NotNull String name) {
     mySafe = safe;
-    myName = name;
     myExpectedType = PsiImplUtil.normalizeWildcardTypeByPosition(expectedType, expression);
     pointer = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
   }
@@ -75,10 +68,8 @@ public class GrCastFix extends GroovyFix {
     final GrSafeCastExpression cast = (GrSafeCastExpression)factory.createExpressionFromText("foo as String");
     final GrTypeElement typeElement = factory.createTypeElement(type);
     cast.getOperand().replaceWithExpression(expr, true);
-    GrTypeElement castTypeElement = cast.getCastTypeElement();
-    if (castTypeElement != null) {
-      castTypeElement.replace(typeElement);
-    }
+    cast.getCastTypeElement().replace(typeElement);
+
     final GrExpression replaced = expr.replaceWithExpression(cast, true);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
@@ -86,7 +77,7 @@ public class GrCastFix extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return "Cast to " + myExpectedType.getPresentableText();
   }
 
   @Nls

@@ -17,10 +17,12 @@ public interface VcsLogIndexer {
   /**
    * Reads full details for specified commits in the repository.
    * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   * Allows to skip full rename detection to make things faster. For git, for example, this would be adding diff.renameLimit=x to the command.
    */
   void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
                        @NotNull VcsLogIndexer.PathsEncoder encoder,
-                       @NotNull Consumer<? super CompressedDetails> commitConsumer)
+                       @NotNull Consumer<? super CompressedDetails> commitConsumer,
+                       boolean fast)
     throws VcsException;
 
   /**
@@ -40,6 +42,8 @@ public interface VcsLogIndexer {
 
     @NotNull
     TIntIntHashMap getRenamedPaths(int parent);
+
+    boolean hasRenames();
   }
 
   interface PathsEncoder {

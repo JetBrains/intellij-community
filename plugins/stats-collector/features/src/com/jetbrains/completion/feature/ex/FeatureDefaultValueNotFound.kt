@@ -17,4 +17,4 @@
 package com.jetbrains.completion.feature.ex
 
 class FeatureDefaultValueNotFound(name: String)
-    : InconsistentMetadataException("Feature default value not found. Feature name: $name")
+    : IllegalArgumentException("Feature default value not found. Feature name: $name")

@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,11 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -26,8 +39,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
-  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
-  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
+  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
+  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
   private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
@@ -72,7 +85,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
           final Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
-          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
+          registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
           return;
         }
         if (condition1 instanceof CaseInsensitiveValuePatternCondition) {

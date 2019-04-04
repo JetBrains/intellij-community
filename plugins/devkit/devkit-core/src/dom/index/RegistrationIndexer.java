@@ -53,7 +53,7 @@ class RegistrationIndexer {
       return Collections.emptyMap();
     }
 
-    final PsiFile file = myContent.getPsiFile();
+    final PsiFile file = ((FileContentImpl)myContent).getPsiFileForPsiDependentIndex();
     if (!(file instanceof XmlFile)) return Collections.emptyMap();
 
     final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);

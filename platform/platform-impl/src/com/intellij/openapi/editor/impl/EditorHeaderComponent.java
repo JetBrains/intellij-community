@@ -19,8 +19,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.newImpl.TabsHeightController;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,15 +41,8 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    boolean topBorderRequired = uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar();
-
-    if (JBTabsFactory.getUseNewTabs()) {
-      topBorderRequired = uiSettings.getEditorTabPlacement() == 0 && topBorderRequired;
-    }
-    else {
-      topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP && topBorderRequired;
-    }
-
+    boolean topBorderRequired = uiSettings.getEditorTabPlacement() != SwingConstants.TOP &&
+                                (uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar());
     setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 }

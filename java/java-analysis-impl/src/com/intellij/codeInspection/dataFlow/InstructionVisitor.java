@@ -188,7 +188,7 @@ public abstract class InstructionVisitor {
       PsiExpression array = arrayAccess.getArrayExpression();
       DfaValue value = factory.createValue(array);
       if (value instanceof DfaVariableValue) {
-        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables().toArray(new DfaVariableValue[0])) {
+        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables()) {
           if (qualified.isFlushableByCalls()) {
             memState.flushVariable(qualified);
           }

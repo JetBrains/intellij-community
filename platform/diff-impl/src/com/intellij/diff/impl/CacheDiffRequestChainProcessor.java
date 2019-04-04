@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.diff.impl;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -7,23 +21,23 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
+  private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
+
   @NotNull private final DiffRequestChain myRequestChain;
-  private int myIndex;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
@@ -31,11 +45,8 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
     if (myRequestChain instanceof AsyncDiffRequestChain) {
       ((AsyncDiffRequestChain)myRequestChain).onAssigned(true);
-      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
       ((AsyncDiffRequestChain)myRequestChain).addListener(new MyChangeListener(), this);
     }
-
-    myIndex = myRequestChain.getIndex();
   }
 
   @Override
@@ -61,8 +72,9 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   @Override
   protected DiffRequestProducer getCurrentRequestProvider() {
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
-    if (myIndex < 0 || myIndex >= requests.size()) return null;
-    return requests.get(myIndex);
+    int index = myRequestChain.getIndex();
+    if (index < 0 || index >= requests.size()) return null;
+    return requests.get(index);
   }
 
   @NotNull
@@ -88,29 +100,36 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   @NotNull
   @Override
   protected List<AnAction> getNavigationActions() {
-    return Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
-                         new MyPrevChangeAction(), new MyNextChangeAction(), createGoToChangeAction());
+    return ContainerUtil.list(
+      new MyPrevDifferenceAction(),
+      new MyNextDifferenceAction(),
+      new MyOpenInEditorAction(),
+      Separator.getInstance(),
+      new MyPrevChangeAction(),
+      new MyNextChangeAction(),
+      createGoToChangeAction()
+    );
   }
 
   @Override
   protected boolean hasNextChange() {
-    return myIndex < myRequestChain.getRequests().size() - 1;
+    return myRequestChain.getIndex() < myRequestChain.getRequests().size() - 1;
   }
 
   @Override
   protected boolean hasPrevChange() {
-    return myIndex > 0;
+    return myRequestChain.getIndex() > 0;
   }
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    myIndex += 1;
+    myRequestChain.setIndex(myRequestChain.getIndex() + 1);
     updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    myIndex -= 1;
+    myRequestChain.setIndex(myRequestChain.getIndex() - 1);
     updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
   }
 
@@ -121,23 +140,18 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
   @NotNull
   private AnAction createGoToChangeAction() {
-    AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
-      if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
-        myIndex = index;
+    return GoToChangePopupBuilder.create(myRequestChain, index -> {
+      if (index >= 0 && index != myRequestChain.getIndex()) {
+        myRequestChain.setIndex(index);
         updateRequest();
       }
-    }, myIndex);
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-      patchShortcutSet(action, "GotoClass", null);
-    }
-    return action;
+    });
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {
     @Override
     public void onRequestsLoaded() {
       dropCaches();
-      myIndex = myRequestChain.getIndex();
       updateRequest(true);
     }
   }

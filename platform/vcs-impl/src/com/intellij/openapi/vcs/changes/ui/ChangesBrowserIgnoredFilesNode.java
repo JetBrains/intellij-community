@@ -50,6 +50,7 @@ public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesN
 
   @Override
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+    IgnoreUnversionedDialog.ignoreSelectedFiles(dragOwner.getProject(), dragBean.getUnversionedFiles());
   }
 
   @Override

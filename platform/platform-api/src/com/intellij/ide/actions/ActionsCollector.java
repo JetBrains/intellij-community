@@ -6,20 +6,19 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class ActionsCollector {
-
-  public static ActionsCollector getInstance() {
-    return ServiceManager.getService(ActionsCollector.class);
-  }
-
   /**
    * @deprecated use {@link #record(Project, AnAction, AnActionEvent)} instead
    */
@@ -49,5 +48,19 @@ public abstract class ActionsCollector {
    */
   public abstract void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang);
 
-  public abstract void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId);
+  public abstract State getState();
+
+  public static ActionsCollector getInstance() {
+    return ServiceManager.getService(ActionsCollector.class);
+  }
+
+  public final static class State {
+    @Tag("counts")
+    @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
+    public Map<String, Integer> myValues = new HashMap<>();
+
+    @Tag("contextMenuCounts")
+    @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
+    public Map<String, Integer> myContextMenuValues = new HashMap<>();
+  }
 }

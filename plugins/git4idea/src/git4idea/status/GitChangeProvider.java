@@ -19,7 +19,6 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -96,9 +95,6 @@ public class GitChangeProvider implements ChangeProvider {
           builder.processUnversionedFile(f);
           holder.unversioned(f);
         }
-
-        GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
-        conflictsHolder.refresh(dirtyScope, collector.getConflicts());
       }
       holder.feedBuilder(builder);
 

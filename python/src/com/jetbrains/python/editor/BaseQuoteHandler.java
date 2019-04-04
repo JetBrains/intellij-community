@@ -2,13 +2,13 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
-import com.intellij.codeInsight.editorActions.QuoteHandler;
+import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,13 +18,12 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class BaseQuoteHandler implements MultiCharQuoteHandler {
+public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements MultiCharQuoteHandler {
 
   private final char[] ourAutoClosingChars; // we add auto-close quotes before these
-  private final TokenSet myPlainStringTokens;
 
   public BaseQuoteHandler(TokenSet tokenSet, char[] autoClosingChars) {
-    myPlainStringTokens = tokenSet;
+    super(tokenSet);
     ourAutoClosingChars = autoClosingChars;
     Arrays.sort(ourAutoClosingChars);
   }
@@ -44,10 +43,11 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
       if (isOpeningTripleQuote(iterator, offset)) return true;
     }
     if (mayBeSingleQuote) {
-      if (isOpeningSingleQuote(iterator, offset)) {
+      // handle string literal context
+      if (super.isOpeningQuote(iterator, offset)) {
         return true;
       }
-      if (getOpeningQuotesTokens().contains(iterator.getTokenType())) {
+      if (myLiteralTokenSet.contains(iterator.getTokenType())) {
         int start = iterator.getStart();
         if (offset - start <= PyStringLiteralUtil.MAX_PREFIX_LENGTH) {
           if (getLiteralStartOffset(text, start) == offset) return true;
@@ -58,12 +58,13 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
   }
 
   private boolean isOpeningTripleQuote(HighlighterIterator iterator, int offset) {
-    final CharSequence text = iterator.getDocument().getCharsSequence();
+    final String text = iterator.getDocument().getText();
     char theQuote = text.charAt(offset);
 
     final IElementType tokenType = iterator.getTokenType();
     // if we're next to two same quotes, auto-close triple quote
-    if (getOpeningQuotesTokens().contains(tokenType)) {
+    if (myLiteralTokenSet.contains(tokenType) && !(tokenType == PyTokenTypes.FSTRING_TEXT || 
+                                                   tokenType == PyTokenTypes.FSTRING_END)) {
       if (
         offset >= 2 &&
         text.charAt(offset - 1) == theQuote &&
@@ -81,13 +82,10 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
   }
 
   @Override
-  public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+  protected boolean isNonClosedLiteral(HighlighterIterator iterator, CharSequence chars) {
     final IElementType tokenType = iterator.getTokenType();
-    if (!getOpeningQuotesTokens().contains(tokenType)) {
-      return false;
-    }
-    
-    final CharSequence chars = iterator.getDocument().getCharsSequence();
+    // Either the typed quote completed an f-string literal or is somewhere inside it 
+    if (tokenType == PyTokenTypes.FSTRING_END || tokenType == PyTokenTypes.FSTRING_TEXT) return false;
     int end = iterator.getEnd();
     if (getLiteralStartOffset(chars, iterator.getStart()) >= end - 1) return true;
     char endSymbol = chars.charAt(end - 1);
@@ -106,7 +104,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
   @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
-    if (getClosingQuotesTokens().contains(tokenType)) {
+    if (myLiteralTokenSet.contains(tokenType)) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
       if (end - start >= 1 && offset == end - 1) {
@@ -130,7 +128,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     Document document = iterator.getDocument();
-    CharSequence text = document.getCharsSequence();
+    String text = document.getText();
     char theQuote = text.charAt(offset - 1);
     // Both isOpeningTripleQuote() and isOpeningQuote() expect iterator to be on the token
     // of the passed offset, not one character to the right. 
@@ -143,7 +141,7 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
       if (isOpeningTripleQuote(iterator, offset - 1)) {
         return StringUtil.repeat(String.valueOf(theQuote), 3);
       }
-      else if (isOpeningSingleQuote(iterator, offset - 1)) {
+      else if (super.isOpeningQuote(iterator, offset - 1)) {
         return String.valueOf(theQuote);
       }
       return null;
@@ -153,33 +151,5 @@ public class BaseQuoteHandler implements MultiCharQuoteHandler {
         iterator.advance();
       }
     }
-  }
-
-  private boolean isOpeningSingleQuote(@NotNull HighlighterIterator iterator, int offset) {
-    if (getOpeningQuotesTokens().contains(iterator.getTokenType())){
-      int start = iterator.getStart();
-      return offset == start;
-    }
-    return false;
-  }
-
-  @Override
-  public boolean isInsideLiteral(HighlighterIterator iterator) {
-    return getLiteralContentTokens().contains(iterator.getTokenType());
-  }
-
-  @NotNull
-  protected TokenSet getOpeningQuotesTokens() {
-    return myPlainStringTokens;
-  }
-
-  @NotNull
-  protected TokenSet getClosingQuotesTokens() {
-    return myPlainStringTokens;
-  }
-
-  @NotNull
-  protected TokenSet getLiteralContentTokens() {
-    return myPlainStringTokens;
   }
 }

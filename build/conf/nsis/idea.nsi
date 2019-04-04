@@ -1398,15 +1398,6 @@ SectionEnd
 Function .onInit
   SetRegView 32
   Call createLog
-  ${If} ${RunningX64}
-    Goto init
-  ${Else}
-    StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" install_jbr11_bundled_on_win32 init
-install_jbr11_bundled_on_win32:
-    MessageBox MB_OK "$(not_supported_32bit_win_version)"
-    Abort
-  ${EndIf}
-init:
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
@@ -1890,11 +1881,8 @@ skip_delete_settings:
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
   StrCmp $R3 1 "" skip_delete_tools
     SetShellVarContext current
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 delete_downloaded_jdk8
+    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 continue_uninstall
     RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-delete_downloaded_jdk8:
-    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 continue_uninstall
-    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
 
 continue_uninstall:
   StrCmp $baseRegKey "HKLM" 0 skip_delete_tools

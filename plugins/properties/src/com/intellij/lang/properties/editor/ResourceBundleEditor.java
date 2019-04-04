@@ -60,6 +60,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
@@ -106,7 +107,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final JPanel              myValuesPanel;
   private final JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
-  private final ResourceBundleEditorFileListener myVfsListener;
+  private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
   private final ResourceBundleEditorHighlighter myHighlighter;
@@ -199,7 +200,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
     myDataProviderPanel = new DataProviderPanel(splitPanel);
 
-    myVfsListener = installPropertiesChangeListeners();
+    installPropertiesChangeListeners();
 
     myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
@@ -286,7 +287,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
 
-    Stack<TreeElement> toCheck = new Stack<>();
+    Stack<TreeElement> toCheck = ContainerUtilRt.newStack();
     toCheck.push(myStructureViewComponent.getTreeModel().getRoot());
 
     while (!toCheck.isEmpty()) {
@@ -504,10 +505,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
-  @NotNull
-  private ResourceBundleEditorFileListener installPropertiesChangeListeners() {
+  private void installPropertiesChangeListeners() {
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    ResourceBundleEditorFileListener myVfsListener = new ResourceBundleEditorFileListener(this);
+    if (myVfsListener != null) {
+      throw new AssertionError("Listeners can't be initialized twice");
+    }
+    myVfsListener = new ResourceBundleEditorFileListener(this);
 
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
@@ -541,9 +544,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
-    return myVfsListener;
   }
-
   private void selectionChanged() {
     myBackSlashPressed.clear();
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -781,6 +782,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       }
     }
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
     myDisposed = true;
     Disposer.dispose(myStructureViewComponent);
     releaseAllEditors();

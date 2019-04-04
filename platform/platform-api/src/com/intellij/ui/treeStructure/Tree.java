@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
@@ -119,7 +119,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isEmpty() {
-    return 0 >= getRowCount();
+    TreeModel model = getModel();
+    if (model == null) return true;
+    if (model.getRoot() == null) return true;
+    if (!isRootVisible()) {
+      int childCount = model.getChildCount(model.getRoot());
+      if (childCount == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected boolean isCustomUI() {

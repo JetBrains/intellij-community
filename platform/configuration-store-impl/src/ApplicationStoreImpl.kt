@@ -52,17 +52,8 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   override fun toString() = "app"
 }
 
-internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfiguration {
-  override val isUseVfsForRead: Boolean
-    get() = false
-
-  override val isUseVfsForWrite: Boolean
-    get() = false
-}
-
 class ApplicationStorageManager(application: Application?, pathMacroManager: PathMacroManager? = null)
   : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
-  override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     return when (component) {
@@ -81,9 +72,12 @@ class ApplicationStorageManager(application: Application?, pathMacroManager: Pat
   override val isUseXmlProlog: Boolean
     get() = false
 
+  override val isUseVfsForWrite: Boolean
+    get() = false
+
   override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
+    if (storage.fileSpec == "path.macros.xml") {
       LOG.runAndLogException {
         writer.writeTo(storage.file)
       }

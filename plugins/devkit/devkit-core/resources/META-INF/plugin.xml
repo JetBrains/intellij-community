@@ -3,17 +3,14 @@
   <name>Plugin DevKit</name>
   <id>DevKit</id>
 
-  <description><![CDATA[
+  <description>
     Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
-    <br>
-    <a href="http://www.jetbrains.org/intellij/sdk/docs/">IntelliJ Platform SDK Docs</a>
-  ]]></description>
+  </description>
 
   <category>inspection</category>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
-  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
@@ -23,7 +20,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
-    <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
+    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
@@ -44,7 +41,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="12"/>
+                      stubVersion="11"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -77,107 +74,93 @@
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
 
-    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml validity" applyToDialects="false"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true" level="ERROR"
+    <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="XML" shortName="PluginXmlCapitalization" displayName="Plugin.xml text capitalization" applyToDialects="false"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"/>
     <localInspection language="JVM" shortName="ComponentNotRegistered"
-                     groupPath="Plugin DevKit"
-                     key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
+                     key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
-    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection description checker"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
     <localInspection language="JAVA" shortName="InspectionUsingGrayColors" displayName="Using new Color(a,a,a)"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"/>
     <localInspection language="JAVA" shortName="InspectionUniqueToolbarId" displayName="Specify toolbar id"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"/>
-    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention description checker"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
     <localInspection language="JAVA"
                      key="inspections.component.postfix.template.not.found.description.name"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
-    <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
     <localInspection language="XML" shortName="InspectionMappingConsistency" applyToDialects="false"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+                     groupKey="inspections.group.name"
                      displayName="&lt;inspection&gt; tag consistency"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
     <localInspection language="UAST" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"/>
     <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.FileEqualsUsageInspection"/>
     <localInspection language="JAVA" shortName="UnsafeVfsRecursion" displayName="Unsafe VFS recursion"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"/>
     <localInspection language="JAVA" shortName="UseJBColor" displayName="Use Darcula aware JBColor"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"/>
     <localInspection language="JAVA" shortName="UseDPIAwareInsets" displayName="Use DPI-aware insets"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"/>
     <localInspection language="JAVA" shortName="UseDPIAwareBorders" displayName="Use DPI-aware borders"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"/>
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"/>
     <localInspection language="JAVA" shortName="DontUsePairConstructor" displayName="Don't use constructor of Pair class"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"/>
-    <!--suppress PluginXmlCapitalization -->
     <localInspection language="JAVA" shortName="UseVirtualFileEquals" displayName="Use VirtualFile.equals"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection"/>
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
-    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful extension"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful Extension"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
     <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"/>
     <localInspection language="JAVA" shortName="UsePrimitiveTypes" displayName="Use .equals with primitive types"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
-    <!--suppress PluginXmlCapitalization -->
     <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
@@ -185,29 +168,28 @@
                      level="ERROR" implementationClass="org.jetbrains.idea.devkit.inspections.internal.HighlightVisitorInternalInspection"/>
     <localInspection language="JAVA" shortName="QuickFixGetFamilyNameViolation"
                      displayName="QuickFix's getFamilyName() implementation must not depend on a specific context"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspection"/>
     <localInspection language="JAVA" shortName="PsiElementConcatenation"
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for extension class"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
     <localInspection language="UAST" shortName="PresentationAnnotation" displayName="Invalid icon path in @Presentation"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
     <localInspection language="UAST" shortName="UnregisteredNamedColor" displayName="Unregistered named color"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" isInternal="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
     <localInspection language="UAST" shortName="MissingRecentApi" displayName="Usage of IntelliJ API not available in older IDEs"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection"/>
 
@@ -217,7 +199,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
-    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemePathReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
@@ -283,15 +265,13 @@
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <!--cached value profiler-->
-    <fileType extensions="cvp" name="CVP"
-              implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
+    <fileTypeFactory implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileTypeFactory"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
     <!-- themes -->
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeAnnotator"/>
-    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
     <spellchecker.support language="JSON"
                           order="first"
                           implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
@@ -310,12 +290,20 @@
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
   </extensions>
 
+
   <extensionPoints >
     <extensionPoint name="lang.goodCodeRedVisitor"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
   </extensionPoints>
+
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+
 
   <actions>
     <group id="PluginDeployActions">
@@ -372,9 +360,12 @@
             text="Navigate to Test Data" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
-            text="Dump Highlighting-Markup-Free Data">
+    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
+    </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
+      <add-to-group group-id="FindMenuGroup" anchor="last"/>
     </action>
 
     <!-- Theme Toolbar -->

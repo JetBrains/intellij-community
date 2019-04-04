@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.configurations.ConfigurationType;
@@ -21,10 +21,8 @@ public abstract class CompatibleRunConfigurationProducer<T extends RunConfigurat
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull T configuration,
-                                                  @NotNull ConfigurationContext context,
-                                                  @NotNull Ref<PsiElement> sourceElement) {
-    if (!isContextCompatible(context)) {
+  protected boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+    if (configuration == null || context == null || sourceElement == null || !isContextCompatible(context)) {
       return false;
     }
     return setupConfigurationFromCompatibleContext(configuration, context, sourceElement);
@@ -35,8 +33,8 @@ public abstract class CompatibleRunConfigurationProducer<T extends RunConfigurat
                                                                      @NotNull Ref<PsiElement> sourceElement);
 
   @Override
-  public final boolean isConfigurationFromContext(@NotNull T configuration, @NotNull ConfigurationContext context) {
-    if (!isContextCompatible(context)) {
+  public final boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
+    if (configuration == null || context == null || !isContextCompatible(context)) {
       return false;
     }
     return isConfigurationFromCompatibleContext(configuration, context);

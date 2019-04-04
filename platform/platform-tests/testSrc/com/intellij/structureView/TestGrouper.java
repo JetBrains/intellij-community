@@ -46,7 +46,7 @@ public class TestGrouper implements Grouper {
     throw new RuntimeException();
   }
 
-  private static class StringGroup implements Group {
+  private class StringGroup implements Group {
     private final String myString;
     private final Collection<TreeElement> myChildren;
     private final Collection<String> myChildrenUsedStrings;
@@ -62,7 +62,7 @@ public class TestGrouper implements Grouper {
     public Collection<TreeElement> getChildren() {
       Collection<TreeElement> result = new LinkedHashSet<>();
       for (TreeElement object : myChildren) {
-        if (object.toString().contains(myString)) {
+        if (object.toString().indexOf(myString) >= 0) {
           result.add(object);
         }
       }

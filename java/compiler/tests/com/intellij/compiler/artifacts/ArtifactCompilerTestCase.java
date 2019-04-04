@@ -1,4 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.BaseCompilerTestCase;
@@ -8,7 +7,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -103,7 +102,7 @@ public abstract class ArtifactCompilerTestCase extends BaseCompilerTestCase {
   public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) {
     final VirtualFile outputFile = getOutputDir(artifact);
     outputFile.refresh(false, true);
-    item.build().assertDirectoryEqual(VfsUtilCore.virtualToIoFile(outputFile));
+    item.build().assertDirectoryEqual(VfsUtil.virtualToIoFile(outputFile));
   }
 
   protected static VirtualFile getOutputDir(Artifact artifact) {

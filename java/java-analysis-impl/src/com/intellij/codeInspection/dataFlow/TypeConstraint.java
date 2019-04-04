@@ -1,10 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +69,6 @@ public abstract class TypeConstraint {
 
   public abstract boolean isExact(String typeName);
 
-  public abstract String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable);
 
   static final class Exact extends TypeConstraint {
     final @NotNull DfaPsiType myType;
@@ -80,21 +93,6 @@ public abstract class TypeConstraint {
     @Override
     public TypeConstraint withNotInstanceofValue(DfaPsiType type) {
       return type.isAssignableFrom(myType) ? null : this;
-    }
-
-    @Override
-    public String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable) {
-      boolean actual = otherType.isAssignableFrom(myType);
-      if (actual != expectedAssignable) return null;
-      if (expectedAssignable) {
-        if (myType == otherType) {
-          return "is already known to be " + myType;
-        }
-        return "type is exactly " + myType + " which is a subtype of " + otherType;
-      }
-      else {
-        return "type is exactly " + myType + " which is not a subtype of " + otherType;
-      }
     }
 
     @NotNull
@@ -250,7 +248,7 @@ public abstract class TypeConstraint {
         }
       }
 
-      Set<DfaPsiType> newInstanceof = new THashSet<>(myInstanceofValues);
+      Set<DfaPsiType> newInstanceof = ContainerUtil.newTroveSet(myInstanceofValues);
       newInstanceof.removeAll(moreGeneric);
       newInstanceof.add(type);
       return create(newInstanceof, myNotInstanceofValues);
@@ -275,7 +273,7 @@ public abstract class TypeConstraint {
         }
       }
 
-      Set<DfaPsiType> newNotInstanceof = new THashSet<>(myNotInstanceofValues);
+      Set<DfaPsiType> newNotInstanceof = ContainerUtil.newTroveSet(myNotInstanceofValues);
       newNotInstanceof.removeAll(moreSpecific);
       newNotInstanceof.add(type);
       return create(myInstanceofValues, newNotInstanceof);
@@ -285,12 +283,12 @@ public abstract class TypeConstraint {
     @NotNull
     TypeConstraint withoutType(@NotNull DfaPsiType type) {
       if (myInstanceofValues.contains(type)) {
-        Set<DfaPsiType> newInstanceof = new THashSet<>(myInstanceofValues);
+        Set<DfaPsiType> newInstanceof = ContainerUtil.newTroveSet(myInstanceofValues);
         newInstanceof.remove(type);
         return create(newInstanceof, myNotInstanceofValues);
       }
       if (myNotInstanceofValues.contains(type)) {
-        Set<DfaPsiType> newNotInstanceof = new THashSet<>(myNotInstanceofValues);
+        Set<DfaPsiType> newNotInstanceof = ContainerUtil.newTroveSet(myNotInstanceofValues);
         newNotInstanceof.remove(type);
         return create(myInstanceofValues, newNotInstanceof);
       }
@@ -356,7 +354,7 @@ public abstract class TypeConstraint {
     }
 
     private TypeConstraint unite(@NotNull Constrained other) {
-      Set<DfaPsiType> notTypes = new THashSet<>(this.myNotInstanceofValues);
+      Set<DfaPsiType> notTypes = ContainerUtil.newTroveSet(this.myNotInstanceofValues);
       notTypes.retainAll(other.myNotInstanceofValues);
       Set<DfaPsiType> instanceOfTypes;
       if (this.myInstanceofValues.containsAll(other.myInstanceofValues)) {
@@ -411,31 +409,6 @@ public abstract class TypeConstraint {
     @Override
     public boolean isExact(String typeName) {
       return false;
-    }
-
-    @Override
-    public String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable) {
-      if (expectedAssignable) {
-        for (DfaPsiType dfaTypeValue : myInstanceofValues) {
-          if (otherType.isAssignableFrom(dfaTypeValue)) {
-            return "is already known to be " + dfaTypeValue +
-                   (otherType == dfaTypeValue ? "" : " which is a subtype of " + otherType);
-          }
-        }
-      } else {
-        for (DfaPsiType dfaTypeValue : myNotInstanceofValues) {
-          if (dfaTypeValue.isAssignableFrom(otherType)) {
-            return "is known to be not " + dfaTypeValue +
-                   (otherType == dfaTypeValue ? "" : " which is a supertype of " + otherType);
-          }
-        }
-        for (DfaPsiType dfaTypeValue : myInstanceofValues) {
-          if (!otherType.isConvertibleFrom(dfaTypeValue)) {
-            return "is known to be " + dfaTypeValue + " which is definitely incompatible with " + otherType;
-          }
-        }
-      }
-      return null;
     }
 
     @Override

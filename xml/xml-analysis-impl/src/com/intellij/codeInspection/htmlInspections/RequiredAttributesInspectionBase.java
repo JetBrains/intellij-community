@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElement
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -192,7 +191,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   private static boolean isAdditionallyDeclared(final String additional, String name) {
-    name = StringUtil.toLowerCase(name);
+    name = name.toLowerCase();
     if (!additional.contains(name)) return false;
 
     StringTokenizer tokenizer = new StringTokenizer(additional, ", ");

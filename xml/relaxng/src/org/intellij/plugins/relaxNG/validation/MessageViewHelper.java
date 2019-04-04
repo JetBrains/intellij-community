@@ -22,7 +22,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -201,7 +200,7 @@ public class MessageViewHelper {
       myMessageView.getContentManager().removeContentManagerListener(this);
       NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(myKey);
       if (errorTreeView != null) {
-        Disposer.dispose(errorTreeView);
+        errorTreeView.dispose();
       }
       eventContent.putUserData(myKey, null);
     }

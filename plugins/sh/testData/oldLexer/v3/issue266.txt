@@ -1,4 +1,0 @@
-$ ('$')
-{ ('{')
-parameter_expansion_body ('#')
-} ('}')

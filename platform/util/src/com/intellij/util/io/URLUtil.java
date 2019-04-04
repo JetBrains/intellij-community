@@ -2,8 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ThreeState;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,6 @@ public class URLUtil {
 
   public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
-  public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
   public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
 
   public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
@@ -179,30 +178,18 @@ public class URLUtil {
 
   @NotNull
   public static String unescapePercentSequences(@NotNull String s) {
-    return unescapePercentSequences(s, 0, s.length()).toString();
-  }
-
-  @NotNull
-  public static CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
-    int i = StringUtil.indexOf(s, '%', from, end);
-    if (i == -1) {
-      return s.subSequence(from, end);
+    if (s.indexOf('%') == -1) {
+      return s;
     }
 
     StringBuilder decoded = new StringBuilder();
-    decoded.append(s, from, i);
-
-    TIntArrayList bytes = null;
-    while (i < end) {
+    final int len = s.length();
+    int i = 0;
+    while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        if (bytes == null) {
-          bytes = new TIntArrayList();
-        }
-        else {
-          bytes.clear();
-        }
-        while (i + 2 < end && s.charAt(i) == '%') {
+        TIntArrayList bytes = new TIntArrayList();
+        while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
           if (d1 != -1 && d2 != -1) {
@@ -226,7 +213,7 @@ public class URLUtil {
       decoded.append(c);
       i++;
     }
-    return decoded;
+    return decoded.toString();
   }
 
   private static int decode(char c) {
@@ -259,26 +246,14 @@ public class URLUtil {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
                ? Base64.getDecoder().decode(content)
-               : decode(content).getBytes(StandardCharsets.UTF_8);
+               : URLDecoder.decode(content, CharsetToolkit.UTF8).getBytes(StandardCharsets.UTF_8);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalArgumentException | UnsupportedEncodingException e) {
         return null;
       }
     }
     return null;
   }
-
-  @NotNull
-  public static String decode(@NotNull String string) {
-    try {
-      return URLDecoder.decode(string, StandardCharsets.UTF_8.name());
-    }
-    catch (UnsupportedEncodingException ignore) {
-      //noinspection deprecation
-      return URLDecoder.decode(string);
-    }
-  }
-
 
   @NotNull
   public static String parseHostFromSshUrl(@NotNull String sshUrl) {
@@ -324,7 +299,7 @@ public class URLUtil {
   @NotNull
   public static String encodeURIComponent(@NotNull String s) {
     try {
-      return URLEncoder.encode(s, StandardCharsets.UTF_8.name())
+      return URLEncoder.encode(s, CharsetToolkit.UTF8)
         .replace("+", "%20")
         .replace("%21", "!")
         .replace("%27", "'")
@@ -335,31 +310,5 @@ public class URLUtil {
     catch (UnsupportedEncodingException e) {
       return s;
     }
-  }
-
-  /**
-   * Finds the first range in text containing URL. This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing
-   * matched set of parentheses.
-   */
-  @Nullable
-  public static TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
-    Matcher m = URL_WITH_PARENS_PATTERN.matcher(text);
-    m.region(startOffset, endOffset);
-    if (!m.find()) return null;
-    int start = m.start();
-    int end = m.end();
-    int unmatchedPos = 0;
-    int unmatchedCount = 0;
-    for (int i = m.end(1); i < end; i++) {
-      char c = text.charAt(i);
-      if (c == '(') {
-        if (unmatchedCount++ == 0) unmatchedPos = i;
-      }
-      else if (c == ')') {
-        if (unmatchedCount-- == 0) return new TextRange(start, i);
-      }
-    }
-    if (unmatchedCount > 0) return new TextRange(start, unmatchedPos);
-    return new TextRange(start, end);
   }
 }

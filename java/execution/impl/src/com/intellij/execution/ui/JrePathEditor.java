@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,12 +67,10 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     final Set<String> jrePaths = new HashSet<>();
     for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
-      if (provider.isAvailable()) {
-        String path = provider.getJrePath();
-        if (!StringUtil.isEmpty(path)) {
-          jrePaths.add(path);
-          myComboBoxModel.add(new CustomJreItem(path, provider.getPresentableName()));
-        }
+      String path = provider.getJrePath();
+      if (!StringUtil.isEmpty(path)) {
+        jrePaths.add(path);
+        myComboBoxModel.add(new CustomJreItem(path));
       }
     }
 
@@ -93,7 +91,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
       {
-        setIpad(JBInsets.create(1, 0));
+        setIpad(JBUI.insets(1, 0));
         setMyBorder(null);
       }
 
@@ -249,15 +247,9 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
-    private final String myName;
 
     CustomJreItem(String path) {
-      this(path, null);
-    }
-
-    CustomJreItem(String path, String name) {
       myPath = path;
-      myName = name;
     }
 
     @Override
@@ -268,7 +260,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     @Override
     public String getPresentableText() {
-      return myName != null && !myPath.equals(myName) ? myName : FileUtil.toSystemDependentName(myPath);
+      return FileUtil.toSystemDependentName(myPath);
     }
 
     @Override

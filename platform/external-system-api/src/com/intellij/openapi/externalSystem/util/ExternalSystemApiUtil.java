@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -36,7 +36,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -47,7 +49,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.util.PlatformUtils.*;
 
@@ -187,7 +188,7 @@ public class ExternalSystemApiUtil {
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
     MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
-    Queue<Collection<DataNode<?>>> queue = new LinkedList<>();
+    Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
       Collection<DataNode<?>> _nodes = queue.remove();
@@ -223,7 +224,7 @@ public class ExternalSystemApiUtil {
         continue;
       }
       if (result == null) {
-        result = new ArrayList<>();
+        result = ContainerUtilRt.newArrayList();
       }
       result.add((DataNode<T>)child);
     }
@@ -274,9 +275,16 @@ public class ExternalSystemApiUtil {
     return getChildren(parent, key);
   }
 
-  public static void visit(@Nullable DataNode<?> originalNode, @NotNull Consumer<? super DataNode<?>> consumer) {
-    if (originalNode != null) {
-      originalNode.visit(consumer);
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
+    if (node == null) return;
+
+    Stack<DataNode> toProcess = ContainerUtil.newStack(node);
+    while (!toProcess.isEmpty()) {
+      DataNode<?> node0 = toProcess.pop();
+      consumer.consume(node0);
+      for (DataNode<?> child : node0.getChildren()) {
+        toProcess.push(child);
+      }
     }
   }
 

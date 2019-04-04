@@ -17,7 +17,6 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,20 +36,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 // Not really with identical branches, but also common parts
 public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
-  public boolean myHighlightWhenLastStatementIsCall = true;
-
   private static final List<IfStatementInspector> ourInspectors = new ArrayList<>(Arrays.asList(
     ImplicitElse::inspect,
     ThenElse::inspect,
     ElseIf::inspect
   ));
-
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Highlight when last common statement is call", this, "myHighlightWhenLastStatementIsCall");
-  }
 
   @NotNull
   @Override
@@ -62,7 +51,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         for (IfStatementInspector inspector : ourInspectors) {
-          IfInspectionResult result = inspector.inspect(ifStatement, thenStatements, elseStatements, isOnTheFly, myHighlightWhenLastStatementIsCall);
+          IfInspectionResult result = inspector.inspect(ifStatement, thenStatements, elseStatements, isOnTheFly);
           if (result != null) {
             ProblemHighlightType highlightType;
             if (result.myIsWarning) {
@@ -84,8 +73,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @Nullable IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                          @NotNull PsiStatement[] thenBranch,
                                          @NotNull PsiStatement[] elseBranch,
-                                         boolean isOnTheFly,
-                                         boolean highlightWhenLastStatementIsCall);
+                                         boolean isOnTheFly);
   }
 
   private static class IfInspectionResult {
@@ -187,10 +175,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private final boolean myMayChangeSemantics;
     private final boolean myIsOnTheFly;
 
-
-    private ExtractCommonIfPartsFix(CommonPartType type,
-                                    boolean mayChangeSemantics,
-                                    boolean isOnTheFly) {
+    private ExtractCommonIfPartsFix(CommonPartType type, boolean mayChangeSemantics, boolean isOnTheFly) {
       myType = type;
       myMayChangeSemantics = mayChangeSemantics;
       myIsOnTheFly = isOnTheFly;
@@ -646,8 +631,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                          @NotNull PsiStatement[] thenBranch,
                                          @NotNull PsiStatement[] elseBranch,
-                                         boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                         boolean isOnTheFly) {
       ImplicitElse implicitElse = from(thenBranch, elseBranch, ifStatement);
       if (implicitElse == null) return null;
       CommonPartType type = implicitElse.getType();
@@ -823,36 +807,21 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return new ThenElse(headCommonParts, tailCommonParts, mayChangeSemantics, type, substitutionTable);
     }
 
-    private static boolean isSingleCallTail(List<PsiStatement> tail) {
-      if (tail.size() != 1) return false;
-      PsiExpressionStatement expressionStatement = tryCast(tail.get(0), PsiExpressionStatement.class);
-      if (expressionStatement == null) return false;
-      PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
-      return call != null;
-    }
-
 
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                                 @NotNull PsiStatement[] thenBranch,
                                                 @NotNull PsiStatement[] elseBranch,
-                                                boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                                boolean isOnTheFly) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
       if (thenElse == null) return null;
       boolean isNotInCodeBlock = !(ifStatement.getParent() instanceof PsiCodeBlock);
       boolean mayChangeSemantics = thenElse.myMayChangeSemantics;
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
-      boolean tailStatementIsSingleCall = !highlightWhenLastStatementIsCall
-                                          && isSingleCallTail(thenElse.myTailStatementsOfThen)
-                                          && thenElse.myHeadUnitsOfThen.isEmpty();
-      boolean isInfoLevel = mayChangeSemantics
-                            || isNotInCodeBlock
-                            || type == CommonPartType.WITH_VARIABLES_EXTRACT
-                            || tailStatementIsSingleCall;
+      boolean isInfoLevel = mayChangeSemantics || isNotInCodeBlock;
       PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
-      return new IfInspectionResult(elementToHighlight, !isInfoLevel, fix,
+      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !isInfoLevel, fix,
                                     type.getDescriptionMessage(mayChangeSemantics));
     }
 
@@ -1069,8 +1038,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                                 @NotNull PsiStatement[] thenBranch,
                                                 @NotNull PsiStatement[] elseBranch,
-                                                boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                                boolean isOnTheFly) {
       ElseIf elseIf = from(ifStatement, thenBranch);
       if (elseIf == null) return null;
       String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if.description");
@@ -1113,6 +1081,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           return false;
         }
       }
+      PsiAnnotation[] firstAnnotations = localVariable1.getAnnotations();
+      if (firstAnnotations.length != localVariable2.getAnnotations().length || firstAnnotations.length != 0) return false;
       PsiType firstType = localVariable1.getType();
       if (!firstType.equals(localVariable2.getType())) return false;
       String firstName = localVariable1.getName();

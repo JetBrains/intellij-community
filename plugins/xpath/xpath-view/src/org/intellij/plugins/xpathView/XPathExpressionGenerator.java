@@ -16,7 +16,6 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -155,7 +154,7 @@ public class XPathExpressionGenerator {
         static private String chooseSegment(String ns) {
             int off = ns.indexOf('#');
             if (off >= 0) {
-                String segment = StringUtil.toLowerCase(ns.substring(off + 1));
+                String segment = ns.substring(off + 1).toLowerCase();
                 if (isValidPrefix(segment)) return segment;
             } else {
                 off = ns.length();
@@ -163,13 +162,13 @@ public class XPathExpressionGenerator {
             for (; ;) {
                 int i = ns.lastIndexOf('/', off - 1);
                 if (i < 0 || (i > 0 && ns.charAt(i - 1) == '/')) break;
-                String segment = StringUtil.toLowerCase(ns.substring(i + 1, off));
+                String segment = ns.substring(i + 1, off).toLowerCase();
                 if (segmentOk(segment)) return segment;
                 off = i;
             }
             off = ns.indexOf(':');
             if (off >= 0) {
-                String segment = StringUtil.toLowerCase(ns.substring(off + 1));
+                String segment = ns.substring(off + 1).toLowerCase();
                 if (segmentOk(segment)) return segment;
             }
             return null;

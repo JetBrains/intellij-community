@@ -17,7 +17,6 @@ package com.intellij.testIntegration
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.keymap.MacKeymapUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -33,10 +32,9 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 
 
-class RecentTestsListPopup(project: Project,
-                           popupStep: ListPopupStep<RecentTestsPopupEntry>,
+class RecentTestsListPopup(popupStep: ListPopupStep<RecentTestsPopupEntry>,
                            private val testRunner: RecentTestRunner,
-                           private val locator: TestLocator) : ListPopupImpl(project, popupStep) {
+                           private val locator: TestLocator) : ListPopupImpl(popupStep) {
 
   init {
     shiftReleased()

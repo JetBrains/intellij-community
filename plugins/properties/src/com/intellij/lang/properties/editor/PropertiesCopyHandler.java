@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -18,7 +18,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -166,7 +166,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
 
   @NotNull
   private static String getPropertiesFileSuffix(PropertiesFile searchFile, String baseName) {
-    String suffix = FileUtilRt.getNameWithoutExtension(searchFile.getContainingFile().getName());
+    String suffix = FileUtil.getNameWithoutExtension(searchFile.getContainingFile().getName());
     suffix = StringUtil.trimStart(suffix, baseName);
     return suffix;
   }
@@ -244,6 +244,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         }
       };
 
+      //noinspection GtkPreferredJComboBoxRenderer
       resourceBundleComboBox.setRenderer(new GotoFileCellRenderer(500) {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

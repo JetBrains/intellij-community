@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -53,21 +53,35 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, OfflineSearchService searchService) {
-    return Collections.emptySet();
+  protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
+    Set<String> result =
+      MavenProjectsManager.getInstance(searchService.getProject()).getProjects().stream().map(p -> p.getMavenId().getGroupId())
+        .collect(Collectors.toSet());
+    result.addAll(searchService.findGroupCandidates(id, SearchParameters.DEFAULT).stream()
+                    .map(s -> s.getGroupId()).collect(Collectors.toSet()));
+    return result;
   }
+
+  private void addProjectGroupsToResult(Set<String> result, Project project) {
+    Set<String> projectGroups =
+      MavenProjectsManager.getInstance(project).getProjects().stream().map(p -> p.getMavenId().getGroupId()).collect(Collectors.toSet());
+    result.addAll(projectGroups);
+  }
+
 
   @Nullable
   @Override
   public LookupElement createLookupElement(String s) {
-    return null;
+    LookupElementBuilder res = LookupElementBuilder.create(s);
+    res = res.withInsertHandler(MavenGroupIdInsertHandler.INSTANCE);
+    return res;
   }
 
   @Override
   public Collection<String> getSmartVariants(ConvertContext convertContext) {
     String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();
     if (!StringUtil.isEmptyOrSpaces(artifactId)) {
-      OfflineSearchService searchService = MavenProjectIndicesManager.getInstance(convertContext.getProject()).getOfflineSearchService();
+      DependencySearchService searchService = MavenProjectIndicesManager.getInstance(convertContext.getProject()).getSearchService();
 
       return searchService.findByTemplate(artifactId, SearchParameters.DEFAULT)
         .stream().filter(p -> artifactId.equals(p.getArtifactId())).map(p -> p.getGroupId()).collect(Collectors.toSet());
@@ -75,5 +89,38 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     return Collections.emptySet();
   }
 
+  private static class MavenGroupIdInsertHandler implements InsertHandler<LookupElement> {
 
+    public static final InsertHandler<LookupElement> INSTANCE = new MavenGroupIdInsertHandler();
+
+    @Override
+    public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
+      if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
+        return; // Don't brake the template.
+      }
+
+      context.commitDocument();
+
+      PsiFile contextFile = context.getFile();
+      if (!(contextFile instanceof XmlFile)) return;
+
+      XmlFile xmlFile = (XmlFile)contextFile;
+
+      PsiElement element = xmlFile.findElementAt(context.getStartOffset());
+      XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      if (tag == null) return;
+
+      XmlTag dependencyTag = tag.getParentTag();
+
+      DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(dependencyTag);
+      if (!(domElement instanceof MavenDomDependency)) return;
+
+      MavenDomDependency dependency = (MavenDomDependency)domElement;
+
+      String artifactId = dependency.getArtifactId().getStringValue();
+      if (StringUtil.isEmpty(artifactId)) return;
+
+      MavenDependencyCompletionUtil.addTypeAndClassifierAndVersion(context, dependency, item.getLookupString(), artifactId);
+    }
+  }
 }

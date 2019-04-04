@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
-import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
@@ -99,7 +98,7 @@ public class JavaCompletionUtil {
     JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
   }
 
-  public static void putAllMethods(LookupElement item, List<? extends PsiMethod> methods) {
+  public static void putAllMethods(LookupElement item, List<PsiMethod> methods) {
     item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
@@ -277,8 +276,7 @@ public class JavaCompletionUtil {
 
     List<PsiType> runtimeQualifiers = getQualifierCastTypes(javaReference, parameters);
     if (!runtimeQualifiers.isEmpty()) {
-      PsiType[] conjuncts = JBIterable.of(plainQualifier).append(runtimeQualifiers).toArray(PsiType.EMPTY_ARRAY);
-      PsiType composite = PsiIntersectionType.createIntersection(false, conjuncts);
+      PsiType composite = PsiIntersectionType.createIntersection(JBIterable.of(plainQualifier).append(runtimeQualifiers).toList());
       PsiElement ctx = createContextWithXxxVariable(element, composite);
       javaReference = createReference("xxx.xxx", ctx);
       processor.setQualifierType(composite);
@@ -317,7 +315,7 @@ public class JavaCompletionUtil {
 
     if (javaReference instanceof PsiJavaCodeReferenceElement) {
       PsiElement refQualifier = ((PsiJavaCodeReferenceElement)javaReference).getQualifier();
-      if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
+      if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class) == null) {
         final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
         memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
           if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
@@ -584,7 +582,7 @@ public class JavaCompletionUtil {
   }
 
   public static LinkedHashSet<String> getAllLookupStrings(@NotNull PsiMember member) {
-    LinkedHashSet<String> allLookupStrings = new LinkedHashSet<>();
+    LinkedHashSet<String> allLookupStrings = ContainerUtil.newLinkedHashSet();
     String name = member.getName();
     allLookupStrings.add(name);
     PsiClass containingClass = member.getContainingClass();
@@ -631,16 +629,6 @@ public class JavaCompletionUtil {
       return endOffset;
     }
 
-    if (reference != null && !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass containingClass = psiClass.getContainingClass();
-      if (containingClass != null && containingClass.hasTypeParameters()) {
-        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(reference.getElement(), null);
-        if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, psiClass, false)) {
-          return endOffset;
-        }
-      }
-    }
-    
     assert document != null;
     document.replaceString(startOffset, endOffset, name);
 
@@ -839,15 +827,7 @@ public class JavaCompletionUtil {
 
       }
     }
-    Editor editor = context.getEditor();
-    int tailOffset = context.getTailOffset();
-    int afterTailOffset = toInsert.processTail(editor, tailOffset);
-    int caretOffset = editor.getCaretModel().getOffset();
-    if (afterTailOffset > tailOffset &&
-        tailOffset > caretOffset &&
-        TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset) > 0) {
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset);
-    }
+    toInsert.processTail(context.getEditor(), context.getTailOffset());
     return true;
   }
 

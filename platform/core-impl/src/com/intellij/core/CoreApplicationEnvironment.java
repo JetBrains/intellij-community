@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -55,7 +56,6 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -96,9 +96,9 @@ public class CoreApplicationEnvironment {
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
       charSequence -> new DocumentImpl(charSequence), null));
 
-    List<VirtualFileSystem> fs = myJrtFileSystem != null
-                             ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
-                             : Arrays.asList(myLocalFileSystem, myJarFileSystem);
+    VirtualFileSystem[] fs = myJrtFileSystem != null
+                             ? new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem, myJrtFileSystem}
+                             : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs);
     registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
 
@@ -220,7 +220,7 @@ public class CoreApplicationEnvironment {
   }
 
   public <T> void addExplicitExtension(@NotNull LanguageExtension<T> instance, @NotNull Language language, @NotNull T object) {
-    instance.addExplicitExtension(language, object, myParentDisposable);
+    doAddExplicitExtension(instance, language, object);
   }
 
   public void registerParserDefinition(@NotNull Language language, @NotNull ParserDefinition parserDefinition) {
@@ -228,11 +228,21 @@ public class CoreApplicationEnvironment {
   }
 
   public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
-    instance.addExplicitExtension(fileType, object, myParentDisposable);
+    doAddExplicitExtension(instance, fileType, object);
+  }
+
+  private <T,U> void doAddExplicitExtension(@NotNull final KeyedExtensionCollector<T,U> instance, @NotNull final U key, @NotNull final T object) {
+    instance.addExplicitExtension(key, object);
+    Disposer.register(myParentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.removeExplicitExtension(key, object);
+      }
+    });
   }
 
   public <T> void addExplicitExtension(@NotNull final ClassExtension<T> instance, @NotNull final Class aClass, @NotNull final T object) {
-    instance.addExplicitExtension(aClass, object, myParentDisposable);
+    doAddExplicitExtension(instance, aClass, object);
   }
 
   public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {

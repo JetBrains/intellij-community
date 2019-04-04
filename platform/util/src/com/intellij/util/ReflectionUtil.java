@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -122,7 +125,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static List<Field> collectFields(@NotNull Class clazz) {
-    List<Field> result = new ArrayList<>();
+    List<Field> result = ContainerUtil.newArrayList();
     for (Class c : classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
@@ -280,7 +283,7 @@ public class ReflectionUtil {
 
   @NotNull
   private static List<Method> filterRealMethods(@NotNull Method[] methods) {
-    List<Method> result = new ArrayList<>();
+    List<Method> result = ContainerUtil.newArrayList();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
         result.add(method);

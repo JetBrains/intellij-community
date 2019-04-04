@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -30,16 +29,17 @@ import java.util.jar.Manifest;
  */
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.SdkVersionUtil");
+  private static final ActionRunner ACTION_RUNNER = r -> SharedThreadPool.getInstance().executeOnPooledThread(r);
 
   @Nullable
   @Override
   public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath) {
-    return detectJdkVersionInfo(homePath, SharedThreadPool.getInstance());
+    return detectJdkVersionInfo(homePath, ACTION_RUNNER);
   }
 
   @Nullable
   @Override
-  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ExecutorService runner) {
+  public JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath, @NotNull ActionRunner runner) {
     // Java 1.7+
     File releaseFile = new File(homePath, "release");
     if (releaseFile.isFile()) {
@@ -120,10 +120,10 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
       @Override public boolean withSeparators() { return false; }
     };
 
-    private final ExecutorService myRunner;
+    private final ActionRunner myRunner;
     private final List<String> myLines;
 
-    VersionOutputReader(@NotNull InputStream stream, @NotNull ExecutorService runner) {
+    VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
       myLines = new CopyOnWriteArrayList<>();
@@ -133,7 +133,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     @NotNull
     @Override
     protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return myRunner.submit(runnable);
+      return myRunner.run(runnable);
     }
 
     @Override

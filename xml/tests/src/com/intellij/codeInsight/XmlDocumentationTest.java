@@ -101,14 +101,12 @@ public class XmlDocumentationTest extends LightPlatformCodeInsightFixtureTestCas
     String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
     String text = context.generateDoc();
     assertNotNull(text);
-    assertEquals(stripFirstLine(expectedText).replaceAll("\\s+",""), stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+",""));
+    assertEquals(stripFirstLine(expectedText), stripFirstLine(StringUtil.convertLineSeparators(text)));
 
     if (completionVariant != null) {
       vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() +baseFileNames[0] + ".expected.completion.html"));
       expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
-      assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                   stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
-                     .replaceAll("\\s+", ""));
+      assertEquals(stripFirstLine(expectedText), stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n")));
     }
   }
 

@@ -70,6 +70,7 @@ public class GitInit extends DumbAwareAction {
           }
 
           refreshAndConfigureVcsMappings(project, root, root.getPath());
+          GitUtil.proposeUpdateGitignore(project, root);
         }
       }.queue();
     });

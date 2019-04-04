@@ -968,8 +968,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return null;
   }
 
-  @NotNull
-  private static String getExternalDocumentationRoot(@NotNull Sdk sdk) {
+  @Override
+  public String getExternalDocumentationRoot(Sdk sdk) {
     final String versionString = sdk.getVersionString();
     if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
       return "http://jython.org/docs/library/";

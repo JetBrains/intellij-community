@@ -8,14 +8,12 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.RemoteDesktopService;
-import com.intellij.ide.ui.ScreenAreaTracker;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -31,7 +29,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -60,10 +57,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
-public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.ScreenAreaConsumer {
-
-  private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
-
+public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   /**
    * This key is supposed to be used as client property of content component (with value Boolean.TRUE) to suppress shadow painting
    * when builder is being created indirectly and client cannot call its methods
@@ -341,7 +335,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
                      Dimension pointerSize,
                      int cornerToPointerDistance) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : JBInsets.create(5, 8);
+    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(5, 8);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -504,7 +498,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
         lp.width -= myContainerInsets.right;
         lp.height -= myContainerInsets.bottom;
 
-        if (!lp.contains(rec) || !ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, rec, this)) {
+        if (!lp.contains(rec)) {
           Rectangle2D currentSquare = lp.createIntersection(rec);
 
           double maxSquare = currentSquare.getWidth() * currentSquare.getHeight();
@@ -528,30 +522,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     if (myPosition != position) {
       myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
                                                  myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
-      position = myPosition;
     }
 
     createComponent();
-    Rectangle r = getRecForPosition(myPosition, false);
-    Point location = r.getLocation();
-    SwingUtilities.convertPointToScreen(location, myLayeredPane);
-    r.setLocation(location);
-    if (!ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
-      for (AbstractPosition eachPosition : myPosition.getOtherPositions()) {
-        r = getRecForPosition(eachPosition, false);
-        location = r.getLocation();
-        SwingUtilities.convertPointToScreen(location, myLayeredPane);
-        r.setLocation(location);
-        if (ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
-          myPosition = eachPosition;
-          positionChangeFix = myPosition.getChangeShift(position, myPositionChangeXShift, myPositionChangeYShift);
-          myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
-                                                     myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
-          myPosition.updateBounds(this);
-          break;
-        }
-      }
-    }
 
     myComp.validate();
 
@@ -564,13 +537,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
       myLayeredPane.remove(myComp);
 
       createComponent();
-      Dimension availSpace = myLayeredPane.getSize();
-      Dimension reqSpace = myComp.getSize();
-      if (!new Rectangle(availSpace).contains(new Rectangle(reqSpace))) {
-        // Balloon is bigger than window, don't show it at all.
-        LOG.warn("Not enough space to show: " +
-                 "required [" + reqSpace.width + " x " + reqSpace.height + "], " +
-                 "available [" + availSpace.width + " x " + availSpace.height + "]");
+      if (!new Rectangle(myLayeredPane.getSize())
+        .contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
         myComp.removeAll();
         myLayeredPane.remove(myComp);
         myLayeredPane = null;
@@ -748,8 +716,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
           int iconHeight = icon.getIconHeight();
           Insets borderInsets = getShadowBorderInsets();
 
-          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUIScale.scale(8),
-                                  lpBounds.y + borderInsets.top + JBUIScale.scale(6), iconWidth, iconHeight);
+          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUI.scale(8),
+                                  lpBounds.y + borderInsets.top + JBUI.scale(6), iconWidth, iconHeight);
         }
       };
     }
@@ -762,9 +730,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     myLayeredPane.add(myComp);
     myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
     myPosition.updateBounds(this);
-
-    ScreenAreaTracker.register(this);
-
     if (myBlockClicks) {
       myComp.addMouseListener(new MouseAdapter() {
         @Override
@@ -785,21 +750,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     }
   }
 
-
-  @NotNull
-  @Override
-  public Rectangle getConsumedScreenBounds() {
-    Rectangle bounds = myComp.getBounds();
-    Point location = bounds.getLocation();
-    SwingUtilities.convertPointToScreen(location, myLayeredPane);
-    bounds.setLocation(location);
-    return bounds;
-  }
-
-  @Override
-  public Component getUnderlyingAreaOwner() {
-    return myLayeredPane;
-  }
 
   @NotNull
   private EmptyBorder getPointlessBorder() {
@@ -1220,7 +1170,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
         shape = getPointingShape(bounds, pointTarget, balloon);
       }
       else {
-        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1), balloon.getArc(), balloon.getArc());
+        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUI.scale(1), bounds.height - JBUI.scale(1), balloon.getArc(), balloon.getArc());
       }
 
       g.setColor(balloon.myFillColor);
@@ -1237,10 +1187,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
         inset.left += borderInsets.left;
         inset.right += borderInsets.right;
 
-        titleBounds.x -= inset.left + JBUIScale.scale(1);
-        titleBounds.width += inset.left + inset.right + JBUIScale.scale(50);
-        titleBounds.y -= inset.top + JBUIScale.scale(1);
-        titleBounds.height += inset.top + inset.bottom + JBUIScale.scale(1);
+        titleBounds.x -= inset.left + JBUI.scale(1);
+        titleBounds.width += inset.left + inset.right + JBUI.scale(50);
+        titleBounds.y -= inset.top + JBUI.scale(1);
+        titleBounds.height += inset.top + inset.bottom + JBUI.scale(1);
 
         Area area = new Area(shape);
         area.intersect(new Area(titleBounds));
@@ -1315,11 +1265,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     public abstract Point getShiftedPoint(Point targetPoint, int shift);
 
     public abstract Point getShiftedPoint(Point targetPoint, Insets shift);
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName();
-    }
   }
 
   public static final AbstractPosition BELOW = new Below();
@@ -1380,7 +1325,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
+      return new Insets(pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset), JBUI.scale(normalInset));
     }
 
     @Override
@@ -1454,7 +1399,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     protected Shape getPointingShape(final Rectangle bounds, Point pointTarget, final BalloonImpl balloon) {
       pointTarget = new Point(pointTarget.x, Math.max((int) bounds.getMaxY(), pointTarget.y));
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.BOTTOM);
-      shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + JBUIScale.scale(1));
+      shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + JBUI.scale(1));
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
         .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth(this) / 2, shaper.getCurrent().y)
         .lineTo(pointTarget.x, pointTarget.y)
@@ -1516,7 +1461,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(JBUIScale.scale(normalInset), pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
+      return new Insets(JBUI.scale(normalInset), pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset));
     }
 
     @Override
@@ -1584,7 +1529,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(JBUIScale.scale(normalInset), pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
+      return new Insets(JBUI.scale(normalInset), pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset));
     }
 
     @Override
@@ -1592,7 +1537,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
       pointTarget = new Point(Math.max((int) bounds.getMaxX(), pointTarget.x), pointTarget.y);
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.RIGHT);
       shaper
-        .lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - JBUIScale.scale(1), pointTarget.y + balloon.getPointerWidth(this) / 2);
+        .lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - JBUI.scale(1), pointTarget.y + balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();
@@ -1664,7 +1609,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
       if (myEnableButtons) {
         final boolean pressed = myButton.isPressedByMouse();
-        icon.paintIcon(this, g, pressed ? JBUIScale.scale(1) : 0, pressed ? JBUIScale.scale(1) : 0);
+        icon.paintIcon(this, g, pressed ? JBUI.scale(1) : 0, pressed ? JBUI.scale(1) : 0);
       }
     }
   }
@@ -1788,8 +1733,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
 
       Graphics2D g2d = (Graphics2D)g.create();
       try {
-        if (JreHiDpiUtil.isJreHiDPI(g2d)) {
-          float s = 1 / JBUIScale.sysScale(g2d);
+        if (UIUtil.isJreHiDPI(g2d)) {
+          float s = 1 / JBUI.sysScale(g2d);
           g2d.scale(s, s);
         }
         UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
@@ -1856,9 +1801,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
       if (myShadow != null) {
         Graphics2D g2d = (Graphics2D)graphics;
         try {
-          if (JreHiDpiUtil.isJreHiDPI(g2d)) {
+          if (UIUtil.isJreHiDPI(g2d)) {
             g2d = (Graphics2D)graphics.create();
-            float s = 1 / JBUIScale.sysScale(this);
+            float s = 1 / JBUI.sysScale(this);
             g2d.scale(s, s);
           }
           UIUtil.drawImage(g2d, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
@@ -1880,8 +1825,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
       else {
         shape = new RoundRectangle2D.Double(bounds.x,
                                             bounds.y,
-                                            bounds.width - JBUIScale.scale(1),
-                                            bounds.height - JBUIScale.scale(1),
+                                            bounds.width - JBUI.scale(1),
+                                            bounds.height - JBUI.scale(1),
                                             myBalloon.getArc(), myBalloon.getArc());
       }
       return shape.contains(x, y);
@@ -2034,13 +1979,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     }
 
     public Shaper toRightCurve() {
-      myPath.lineTo((int)myBounds.getMaxX() - myBalloon.getArc() - getTargetDelta(SwingConstants.RIGHT) - JBUIScale.scale(1), getCurrent().y);
+      myPath.lineTo((int)myBounds.getMaxX() - myBalloon.getArc() - getTargetDelta(SwingConstants.RIGHT) - JBUI.scale(1), getCurrent().y);
       return this;
     }
 
     public Shaper toBottomCurve() {
-      myPath.lineTo(getCurrent().x, (int)myBounds.getMaxY() - myBalloon.getArc() - getTargetDelta(SwingConstants.BOTTOM) -
-                                    JBUIScale.scale(1));
+      myPath.lineTo(getCurrent().x, (int)myBounds.getMaxY() - myBalloon.getArc() - getTargetDelta(SwingConstants.BOTTOM) - JBUI.scale(1));
       return this;
     }
 

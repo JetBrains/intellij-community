@@ -36,8 +36,8 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,10 +47,10 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -63,14 +63,13 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -150,8 +149,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
+    myList.getExpandableItemsHandler();
+
     myAdComponent = new Advertiser();
-    myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
     myOffsets = new LookupOffsets(myEditor);
 
@@ -196,7 +196,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myCalculating;
   }
 
-  public void setCalculating(boolean calculating) {
+  public void setCalculating(final boolean calculating) {
     myCalculating = calculating;
     if (myUi != null) {
       myUi.setCalculating(calculating);
@@ -487,12 +487,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private void updateListHeight(ListModel<LookupElement> model) {
+  private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
+
     myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
   }
 
-  private void addEmptyItem(CollectionListModel<? super LookupElement> model) {
+  private void addEmptyItem(CollectionListModel<LookupElement> model) {
     LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     model.add(item);
 
@@ -677,7 +678,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       sameCase = sameCase && i < lookupString.length() && isLower == Character.isLowerCase(lookupString.charAt(i));
     }
     if (sameCase) return lookupString;
-    if (isAllLower) return StringUtil.toLowerCase(lookupString);
+    if (isAllLower) return lookupString.toLowerCase();
     if (isAllUpper) return StringUtil.toUpperCase(lookupString);
     return lookupString;
   }
@@ -757,7 +758,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myAdComponent.clearAdvertisements();
     }
 
-    myUi = new LookupUi(this, myAdComponent, myList);//, myProject);
+    myUi = new LookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
     Point p = myUi.calculatePosition().getLocation();
     if (ScreenReader.isActive()) {
@@ -805,7 +806,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private void delegateActionToEditor(@NotNull String actionID, @Nullable Supplier<? extends AnAction> delegateActionSupplier, @NotNull AnActionEvent actionEvent) {
+  private void delegateActionToEditor(@NotNull String actionID, @Nullable Supplier<AnAction> delegateActionSupplier, @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
     DumbAwareAction.create(
       e -> ActionUtil.performActionDumbAware(delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
@@ -934,13 +935,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (index < 0) {
       LOG.error("No selected element, size=" + getListModel().getSize() + "; items" + getItems());
     }
-    Rectangle itemBounds = myList.getCellBounds(index, index);
-    if (itemBounds == null){
+    Rectangle itmBounds = myList.getCellBounds(index, index);
+    if (itmBounds == null){
       LOG.error("No bounds for " + index + "; size=" + getListModel().getSize());
       return null;
     }
-
-    return SwingUtilities.convertRectangle(myList, itemBounds, getComponent());
+    Point layeredPanePoint=SwingUtilities.convertPoint(myList,itmBounds.x,itmBounds.y,getComponent());
+    itmBounds.x = layeredPanePoint.x;
+    itmBounds.y = layeredPanePoint.y;
+    return itmBounds;
   }
 
   private boolean fireBeforeItemSelected(@Nullable final LookupElement item, char completionChar) {
@@ -1153,11 +1156,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  @Override
-  protected void onPopupCancel() {
-    hide();
-  }
-
   private static Throwable staticDisposeTrace = null;
   private Throwable disposeTrace = null;
 
@@ -1213,11 +1211,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     requestResize();
   }
 
-  public void addAdvertisement(@NotNull String text, @Nullable Icon icon) {
-    if (!containsDummyIdentifier(text)) {
-      myAdComponent.addAdvertisement(text, icon);
-      requestResize();
+  public void addAdvertisement(@NotNull final String text, final @Nullable Color bgColor) {
+    if (containsDummyIdentifier(text)) {
+      return;
     }
+
+    myAdComponent.addAdvertisement(text, bgColor);
+    requestResize();
   }
 
   public boolean isLookupDisposed() {
@@ -1230,30 +1230,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  @Override
-  public void showElementActions(@Nullable InputEvent event) {
-    if (!isVisible()) return;
+  private void showItemPopup(JBPopup hint) {
+    final Rectangle bounds = getCurrentItemBounds();
+    hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width, bounds.y)));
+  }
 
-    LookupElement element = getCurrentItem();
+  @Override
+  public boolean showElementActions() {
+    if (!isVisible()) return false;
+
+    final LookupElement element = getCurrentItem();
     if (element == null) {
-      return;
+      return false;
     }
 
-    Collection<LookupElementAction> actions = getActionsFor(element);
+    final Collection<LookupElementAction> actions = getActionsFor(element);
     if (actions.isEmpty()) {
-      return;
+      return false;
     }
 
     UIEventLogger.logUIEvent(UIEventId.LookupShowElementActions);
-
-    Rectangle itemBounds = getCurrentItemBounds();
-    Rectangle visibleRect = SwingUtilities.convertRectangle(myList, myList.getVisibleRect(), getComponent());
-    ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new LookupActionsStep(actions, this, element));
-    Point p = (itemBounds.intersects(visibleRect) || event == null) ?
-              new Point(itemBounds.x + itemBounds.width, itemBounds.y):
-              SwingUtilities.convertPoint(event.getComponent(), new Point(0, event.getComponent().getHeight() + JBUIScale.scale(2)), getComponent());
-
-    listPopup.show(new RelativePoint(getComponent(), p));
+    showItemPopup(JBPopupFactory.getInstance().createListPopup(new LookupActionsStep(actions, this, element)));
+    return true;
   }
 
   @NotNull
@@ -1262,6 +1260,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private <T> T withLock(Computable<T> computable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    }
     synchronized (myArrangerLock) {
       return computable.compute();
     }

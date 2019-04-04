@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -27,7 +27,10 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class YamlJsonPsiWalker implements JsonLikePsiWalker {
@@ -349,7 +352,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
     if (!(file instanceof YAMLFile)) return ContainerUtil.emptyList();
-    Collection<PsiElement> roots = new HashSet<>();
+    Collection<PsiElement> roots = ContainerUtil.newHashSet();
     for (YAMLDocument document : ((YAMLFile)file).getDocuments()) {
       YAMLValue topLevelValue = document.getTopLevelValue();
       roots.add(topLevelValue == null ? document : topLevelValue);

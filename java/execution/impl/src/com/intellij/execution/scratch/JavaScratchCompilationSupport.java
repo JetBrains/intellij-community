@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -124,7 +123,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
               }
             }
           }
-          return FileUtilRt.getNameWithoutExtension(scratchFile.getName());
+          return FileUtil.getNameWithoutExtension(scratchFile);
         });
         srcFile = new File(srcDir, srcFileName + ".java");
         FileUtil.copy(scratchFile, srcFile);

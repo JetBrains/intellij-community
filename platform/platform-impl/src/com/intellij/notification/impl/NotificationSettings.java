@@ -16,7 +16,6 @@
 package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +78,7 @@ public final class NotificationSettings {
     }
     else if (displayTypeString != null) {
       try {
-        displayType = NotificationDisplayType.valueOf(StringUtil.toUpperCase(displayTypeString));
+        displayType = NotificationDisplayType.valueOf(displayTypeString.toUpperCase());
       }
       catch (IllegalArgumentException ignored) {
       }

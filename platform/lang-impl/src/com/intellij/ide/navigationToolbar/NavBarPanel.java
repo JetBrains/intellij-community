@@ -305,9 +305,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       item.update();
     }
     if (UISettings.getInstance().getShowNavigationBar()) {
-      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = ComponentUtil
-        .getParentOfType((Class<? extends NavBarRootPaneExtension.NavBarWrapperPanel>)NavBarRootPaneExtension.NavBarWrapperPanel.class,
-                         (Component)this);
+      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = UIUtil.getParentOfType(
+        NavBarRootPaneExtension.NavBarWrapperPanel.class, this);
 
       if (wrapperPanel != null) {
         wrapperPanel.revalidate();
@@ -661,7 +660,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return JBIterable.of(size > 0 ? myModel.getElement(size - 1) : null);
   }
 
-  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Getter<? extends JBIterable<?>> selection) {
+  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Getter<JBIterable<?>> selection) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }

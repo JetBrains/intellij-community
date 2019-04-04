@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +44,7 @@ public class JavaSdkUtil {
       }
     }
     else if (new File(home, "lib/jrt-fs.jar").exists()) {
-      jarDirs = ArrayUtilRt.EMPTY_FILE_ARRAY;
+      jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
     }
     else {
       File libDir = new File(home, isJre ? "lib" : "jre/lib");
@@ -56,7 +55,7 @@ public class JavaSdkUtil {
 
     FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
     Set<String> pathFilter = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
-    List<File> rootFiles = new ArrayList<>();
+    List<File> rootFiles = ContainerUtil.newArrayList();
     if (Registry.is("project.structure.add.tools.jar.to.new.jdk")) {
       File toolsJar = new File(home, "lib/tools.jar");
       if (toolsJar.isFile()) {
@@ -108,7 +107,7 @@ public class JavaSdkUtil {
   }
 
   private static File[] listFiles(File dir, FileFilter filter) {
-    return notNull(dir.listFiles(filter), ArrayUtilRt.EMPTY_FILE_ARRAY);
+    return notNull(dir.listFiles(filter), ArrayUtil.EMPTY_FILE_ARRAY);
   }
 
   @Nullable

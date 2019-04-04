@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"TextLabelInSwitchStatement", "UnusedLabel"})
 public class TextLabelInSwitchStatementInspectionTest extends LightInspectionTestCase {
 
   public void testSwitchStatement() {

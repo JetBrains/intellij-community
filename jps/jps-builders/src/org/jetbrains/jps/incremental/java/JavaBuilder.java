@@ -84,7 +84,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
-  private static final int RETIRE_POLICY_VERSIONS_COUNT = 5;
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
@@ -271,7 +270,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private ExitCode compile(CompileContext context,
                            ModuleChunk chunk,
                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                           Collection<? extends File> files,
+                           Collection<File> files,
                            OutputConsumer outputConsumer,
                            JavaCompilingTool compilingTool,
                            boolean hasModules) throws Exception {
@@ -364,10 +363,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private boolean compileJava(CompileContext context,
                               ModuleChunk chunk,
-                              Collection<? extends File> files,
-                              Collection<? extends File> originalClassPath,
-                              Collection<? extends File> originalPlatformCp,
-                              Collection<? extends File> sourcePath,
+                              Collection<File> files,
+                              Collection<File> originalClassPath,
+                              Collection<File> originalPlatformCp,
+                              Collection<File> sourcePath,
                               DiagnosticOutputConsumer diagnosticSink,
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
@@ -411,7 +410,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final int compilerSdkVersion = forkSdk == null ? JavaVersion.current().feature : forkSdk.getSecond();
 
       final Pair<List<String>, List<String>> vm_compilerOptions = getCompilationOptions(
-        compilerSdkVersion, context, chunk, profile, hasModules, compilingTool
+        compilerSdkVersion, context, chunk, profile, compilingTool
       );
       final List<String> vmOptions = vm_compilerOptions.first;
       final List<String> options = vm_compilerOptions.second;
@@ -421,7 +420,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
       }
 
-      Collection<? extends File> platformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
+      Collection<File> platformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
       if (platformCp == null) {
         String text = "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\"" +
                       " differs from javac's platform (" + System.getProperty("java.version") + ")\n" +
@@ -430,9 +429,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return false;
       }
 
-      Collection<? extends File> classPath = originalClassPath;
+      Collection<File> classPath = originalClassPath;
       Collection<File> modulePath = Collections.emptyList();
-      Collection<? extends File> upgradeModulePath = Collections.emptyList();
+      Collection<File> upgradeModulePath = Collections.emptyList();
 
       if (hasModules) {
         // in Java 9, named modules are not allowed to read classes from the classpath
@@ -449,7 +448,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         // because platform classes are stored in jimage binary files with unknown format.
         // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
         // and prepending additional jars from the JDK configuration to compilation classpath
-        classPath = JBIterable.<File>from(platformCp).append(classPath).toList();
+        classPath = JBIterable.from(platformCp).append(classPath).toList();
         platformCp = Collections.emptyList();
       }
 
@@ -604,7 +603,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // compiler version is 9+ here, so:
     //  - java 5 and older are not supported for sure
     //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
-    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > RETIRE_POLICY_VERSIONS_COUNT;
+    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > 5;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -626,7 +625,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<? extends File> calcEffectivePlatformCp(Collection<? extends File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
     if (ourDefaultRtJar == null || !isJavac(compilingTool)) {
       return platformCp;
     }
@@ -690,7 +689,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           @NotNull
           @Override
           public Future<?> executeTask(@NotNull Runnable task) {
-            return SharedThreadPool.getInstance().submit(task);
+            return SharedThreadPool.getInstance().executeOnPooledThread(task);
           }
         };
       }
@@ -731,7 +730,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                                                         CompileContext context,
                                                                         ModuleChunk chunk,
                                                                         @Nullable ProcessorConfigProfile profile,
-                                                                        boolean withModules,
                                                                         @NotNull JavaCompilingTool compilingTool) {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
@@ -809,22 +807,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.addAll(extension.getOptions(compilingTool));
     }
 
-    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, withModules);
+    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
 
     return pair(vmOptions, compilationOptions);
   }
 
-  public static void addCompilationOptions(List<? super String> options,
+  public static void addCompilationOptions(List<String> options,
                                            CompileContext context,
                                            ModuleChunk chunk,
                                            @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile, false);
+    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile);
   }
 
   private static void addCompilationOptions(int compilerSdkVersion,
-                                            List<? super String> options,
+                                            List<String> options,
                                             CompileContext context, ModuleChunk chunk,
-                                            @Nullable ProcessorConfigProfile profile, boolean withModules) {
+                                            @Nullable ProcessorConfigProfile profile) {
     if (!options.contains("-encoding")) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -851,7 +849,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (addAnnotationProcessingOptions(options, profile, withModules)) {
+    if (addAnnotationProcessingOptions(options, profile)) {
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
@@ -866,9 +864,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   /**
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
-  public static boolean addAnnotationProcessingOptions(List<? super String> options,
-                                                       @Nullable AnnotationProcessingConfiguration profile,
-                                                       boolean withModules) {
+  public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
       options.add("-proc:none");
       return false;
@@ -877,7 +873,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // configuring annotation processing
     if (!profile.isObtainProcessorsFromClasspath()) {
       final String processorsPath = profile.getProcessorPath();
-      options.add(withModules ? "--processor-module-path" : "-processorpath");
+      options.add("-processorpath");
       options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
     }
 
@@ -900,7 +896,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return config == null ? JavaCompilers.JAVAC_ID : config.getJavaCompilerId();
   }
 
-  private static void addCrossCompilationOptions(int compilerSdkVersion, List<? super String> options, CompileContext context, ModuleChunk chunk) {
+  private static void addCrossCompilationOptions(int compilerSdkVersion, List<String> options, CompileContext context, ModuleChunk chunk) {
     final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
       context.getProjectDescriptor().getProject()
     );
@@ -1027,7 +1023,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
     if (sdkVersionPair != null) {
       final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= RETIRE_POLICY_VERSIONS_COUNT)) {
+      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= 3)) {
         // current javac compiler does support required language level
         return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
@@ -1086,9 +1082,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     private volatile int myWarningCount;
     private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     @NotNull
-    private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
+    private final Collection<JavacFileReferencesRegistrar> myRegistrars;
 
-    private DiagnosticSink(CompileContext context, @NotNull Collection<? extends JavacFileReferencesRegistrar> refRegistrars) {
+    private DiagnosticSink(CompileContext context, @NotNull Collection<JavacFileReferencesRegistrar> refRegistrars) {
       myContext = context;
       myRegistrars = refRegistrars;
     }
@@ -1148,7 +1144,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     private static BuildMessage.Kind getKindByMessageText(String line) {
-      final String lowercasedLine = StringUtil.toLowerCase(line);
+      final String lowercasedLine = line.toLowerCase(Locale.US);
       if (lowercasedLine.contains("error") || lowercasedLine.contains("requires target release")) {
         return BuildMessage.Kind.ERROR;
       }

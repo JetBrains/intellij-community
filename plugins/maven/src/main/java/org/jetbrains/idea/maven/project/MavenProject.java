@@ -694,7 +694,6 @@ public class MavenProject {
                                                                          Collections.singleton(getFile()),
                                                                          getActivatedProfilesIds(),
                                                                          locator);
-    MavenUtil.notifySyncForUnresolved(project, results);
     final MavenProjectReaderResult result = results.iterator().next();
     MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
 

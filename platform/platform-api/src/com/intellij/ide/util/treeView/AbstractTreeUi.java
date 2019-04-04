@@ -25,7 +25,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,11 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-/**
- * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
   protected JTree myTree;// protected for TestNG
@@ -1600,7 +1594,7 @@ public class AbstractTreeUi {
     }
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady(e);
-      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
@@ -3489,7 +3483,7 @@ public class AbstractTreeUi {
     return myTreeModel;
   }
 
-  private void insertNodesInto(@NotNull final List<? extends TreeNode> toInsert, @NotNull final DefaultMutableTreeNode parentNode) {
+  private void insertNodesInto(@NotNull final List<TreeNode> toInsert, @NotNull final DefaultMutableTreeNode parentNode) {
     sortChildren(parentNode, toInsert, false, true);
     final List<TreeNode> all = new ArrayList<>(toInsert.size() + parentNode.getChildCount());
     all.addAll(toInsert);
@@ -3554,7 +3548,7 @@ public class AbstractTreeUi {
     }
   }
 
-  private void sortChildren(@NotNull DefaultMutableTreeNode node, @NotNull List<? extends TreeNode> children, boolean updateStamp, boolean forceSort) {
+  private void sortChildren(@NotNull DefaultMutableTreeNode node, @NotNull List<TreeNode> children, boolean updateStamp, boolean forceSort) {
     NodeDescriptor descriptor = getDescriptorFrom(node);
     assert descriptor != null;
 
@@ -3832,7 +3826,7 @@ public class AbstractTreeUi {
   final Set<Object> getSelectedElements() {
     TreePath[] paths = myTree.getSelectionPaths();
 
-    Set<Object> result = new LinkedHashSet<>();
+    Set<Object> result = ContainerUtil.newLinkedHashSet();
     if (paths != null) {
       for (TreePath eachPath : paths) {
         if (eachPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
@@ -4805,7 +4799,7 @@ public class AbstractTreeUi {
     private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<>();
 
     LoadedChildren(@Nullable Object[] elements) {
-      myElements = Arrays.asList(elements != null ? elements : ArrayUtilRt.EMPTY_OBJECT_ARRAY);
+      myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {

@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +153,7 @@ public class HectorComponent extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    final int width = JBUIScale.scale(300);
+    final int width = JBUI.scale(300);
     if (preferredSize.width < width){
       preferredSize.width = width;
     }

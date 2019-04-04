@@ -50,9 +50,9 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
-  @Nullable private final Set<? extends TextRange> myTextRanges;
+  @Nullable private final Set<TextRange> myTextRanges;
   private final MatchType myMatchType;
-  private final Set<? extends PsiVariable> myEffectivelyLocal;
+  private final Set<PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
   private ComplexityHolder myCandidateComplexityHolder;
 
@@ -61,8 +61,8 @@ public class DuplicatesFinder {
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
                           @NotNull MatchType matchType,
-                          @Nullable Set<? extends PsiVariable> effectivelyLocal,
-                          @Nullable Set<? extends TextRange> textRanges) {
+                          @Nullable Set<PsiVariable> effectivelyLocal,
+                          @Nullable Set<TextRange> textRanges) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;

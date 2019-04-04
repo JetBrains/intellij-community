@@ -26,10 +26,12 @@ import java.io.IOException;
  */
 public class FileStubSerializer implements ObjectStubSerializer<FileStub, Stub> {
 
+  final static FileStubSerializer INSTANCE = new FileStubSerializer();
+
   @NotNull
   @Override
   public String getExternalId() {
-    return "xml.FileStubSerializer";
+    return "FileStubSerializer";
   }
 
   @Override

@@ -130,7 +130,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
   }
 
   private void resize(final TreePath path, JTree tree) {
-    if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) return;
+    if (myPopup == null || !myPopup.isVisible()) return;
     final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();

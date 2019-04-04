@@ -5,11 +5,9 @@ import com.intellij.ide.plugins.newui.HorizontalLayout;
 import com.intellij.ide.plugins.newui.TagComponent;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -19,7 +17,7 @@ public class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
 
   public TagPanel(@NotNull LinkListener<Object> searchListener) {
-    super(new HorizontalLayout(JBUIScale.scale(6)));
+    super(new HorizontalLayout(JBUI.scale(6)));
     mySearchListener = searchListener;
     setBorder(JBUI.Borders.emptyTop(2));
   }
@@ -55,18 +53,5 @@ public class TagPanel extends NonOpaquePanel {
     }
 
     setVisible(true);
-  }
-
-  @Override
-  public int getBaseline(int width, int height) {
-    int count = getComponentCount();
-    for (int i = 0; i < count; i++) {
-      Component component = getComponent(i);
-      if (component.isVisible()) {
-        Dimension size = component.getPreferredSize();
-        return component.getY() + component.getBaseline(size.width, size.height);
-      }
-    }
-    return -1;
   }
 }

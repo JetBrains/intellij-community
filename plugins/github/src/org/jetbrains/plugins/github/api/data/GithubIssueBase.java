@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.mandatory.Mandatory;
+import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
 import java.util.List;
@@ -95,28 +97,29 @@ import java.util.Objects;
   "body": ""
 }*/
 //endregion
+@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public abstract class GithubIssueBase {
   private String url;
   private String repositoryUrl;
   private String labelsUrl;
-  private String commentsUrl;
+  @Mandatory private String commentsUrl;
   private String eventsUrl;
-  private String htmlUrl;
+  @Mandatory private String htmlUrl;
   private Long id;
   private String nodeId;
-  private Long number;
-  private String title;
-  private GithubUser user;
+  @Mandatory private Long number;
+  @Mandatory private String title;
+  @Mandatory private GithubUser user;
   private List<GithubIssueLabel> labels;
-  private GithubIssueState state;
-  private Boolean locked;
+  @Mandatory private GithubIssueState state;
+  @Mandatory private Boolean locked;
   private GithubUser assignee;
-  private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> assignees;
   //private ??? milestone;
   private Long comments;
-  private Date createdAt;
-  private Date updatedAt;
+  @Mandatory private Date createdAt;
+  @Mandatory private Date updatedAt;
   private Date closedAt;
   private String authorAssociation;
   private String body;

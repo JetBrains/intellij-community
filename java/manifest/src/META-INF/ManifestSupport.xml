@@ -1,9 +1,9 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
+    <extensionPoint name="manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Manifest" implementationClass="org.jetbrains.lang.manifest.ManifestFileType" fieldName="INSTANCE" extensions="MF" language="Manifest"/>
+    <fileTypeFactory implementation="org.jetbrains.lang.manifest.ManifestFileTypeFactory"/>
     <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
     <lang.syntaxHighlighterFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
     <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>

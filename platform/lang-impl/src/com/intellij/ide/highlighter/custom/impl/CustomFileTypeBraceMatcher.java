@@ -16,7 +16,7 @@ import static com.intellij.psi.CustomHighlighterTokenType.*;
  * @author Maxim.Mossienko
  */
 public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
-  private static final BracePair[] PAIRS = new BracePair[]{
+  public static final BracePair[] PAIRS = new BracePair[]{
     new BracePair(L_BRACKET, R_BRACKET, true),
     new BracePair(L_ANGLE, R_ANGLE, true),
     new BracePair(L_PARENTH, R_PARENTH, true),
@@ -48,11 +48,14 @@ public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
     return false;
   }
 
-  public static final PairedBraceMatcherAdapter INSTANCE = new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
-    @Override
-    public int getBraceTokenGroupId(IElementType tokenType) {
-      int id = super.getBraceTokenGroupId(tokenType);
-      return id == -1 ? -1 : 777;
-    }
-  };
+  @NotNull
+  public static PairedBraceMatcherAdapter createBraceMatcher() {
+    return new PairedBraceMatcherAdapter(new CustomFileTypeBraceMatcher(), IDENTIFIER.getLanguage()) {
+      @Override
+      public int getBraceTokenGroupId(IElementType tokenType) {
+        int id = super.getBraceTokenGroupId(tokenType);
+        return id == -1 ? -1 : 777;
+      }
+    };
+  }
 }

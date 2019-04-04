@@ -64,8 +64,8 @@ public class ShowPreviewEditorAction extends DumbAwareAction {
 
     @NotNull
     @Override
-    public DiffRequestProcessor createProcessor(@NotNull Project project) {
-      return myProvider.createDiffRequestProcessor();
+    public Builder createProcessorAsync(@NotNull Project project) {
+      return () -> myProvider.createDiffRequestProcessor();
     }
 
     @Override

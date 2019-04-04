@@ -16,7 +16,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -78,7 +78,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
   @NotNull
   private static Color getBackgroundColor(@NotNull EditorColorsScheme colorsScheme, boolean selected) {
-    return selected ? HintUtil.getRecentLocationsSelectionColor(colorsScheme) : colorsScheme.getDefaultBackground();
+    return selected ? HintUtil.getRecentLocationsSelectionColor() : colorsScheme.getDefaultBackground();
   }
 
   @NotNull
@@ -167,7 +167,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
     titleTextComponent.setBorder(JBUI.Borders.empty());
 
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       titleTextComponent.setFont(FontUtil.minusOne(UIUtil.getLabelFont()));
     }
 
@@ -232,7 +232,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                        boolean hasFocus) {
   }
 
-  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<? extends TextRange> resultIterator) {
+  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<TextRange> resultIterator) {
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       return;
     }

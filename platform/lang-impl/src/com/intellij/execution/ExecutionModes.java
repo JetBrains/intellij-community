@@ -80,7 +80,7 @@ public class ExecutionModes {
     }
 
     /**
-     * @deprecated use a constructor without a callback. Instead of callback, override {@link ExecutionMode#onTimeout(ProcessHandler, String, ProcessOutput, Throwable)}
+     * @deprecated use a constructor without a callback. Instead of callback, override {@link #onTimeout(ProcessHandler, String, ProcessOutput)}
      */
     @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
     @Deprecated
@@ -124,12 +124,10 @@ public class ExecutionModes {
     @Override
     public void onTimeout(@NotNull ProcessHandler processHandler,
                           @NotNull String commandLineString,
-                          @NotNull ProcessOutput outputCollected,
-                          @Nullable Throwable invocatorStack) {
-      super.onTimeout(processHandler, commandLineString, outputCollected, invocatorStack);
+                          @NotNull ProcessOutput outputCollected) {
+      super.onTimeout(processHandler, commandLineString, outputCollected);
       String output = "\n    stdout: " + outputCollected.getStdout() + ";\n    stderr: " + outputCollected.getStderr();
-      LOG.error(new Throwable("Timeout (" + getTimeout() + " sec) on executing: " + commandLineString + "; output collected: " + output,
-                              invocatorStack));
+      LOG.error("Timeout (" + getTimeout() + " sec) on executing: " + commandLineString + "; output collected: " + output);
     }
 
     @Deprecated

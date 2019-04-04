@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -17,51 +16,37 @@ import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
-  private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
-    @Attribute
-    public boolean physical;
-  }
+  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
+    new KeyedExtensionCollector<VirtualFileSystem, String>("com.intellij.virtualFileSystem", this) {
+      @NotNull
+      @Override
+      protected String keyToString(@NotNull String key) {
+        return key;
+      }
+    };
 
-  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>("com.intellij.virtualFileSystem", this);
   private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
+  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems) {
     this(fileSystems, ApplicationManager.getApplication().getMessageBus());
   }
 
-  public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems, @NotNull MessageBus bus) {
-    List<VirtualFileSystem> physicalFileSystems = new ArrayList<>(fileSystems);
-
-    ExtensionPoint<KeyedLazyInstance<VirtualFileSystem>> point = myCollector.getPoint();
-    if (point != null) {
-      for (KeyedLazyInstance<VirtualFileSystem> bean : point.getExtensionList()) {
-        if (((VirtualFileSystemBean)bean).physical) {
-          physicalFileSystems.add(bean.getInstance());
-        }
-      }
-    }
-
-    myPhysicalFileSystems = physicalFileSystems.toArray(new VirtualFileSystem[0]);
+  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
+    myPhysicalFileSystems = fileSystems;
 
     for (VirtualFileSystem fileSystem : fileSystems) {
       myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
@@ -89,16 +74,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   @Nullable
   public VirtualFileSystem getFileSystem(@Nullable String protocol) {
-    if (protocol == null) {
-      return null;
-    }
-
+    if (protocol == null) return null;
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     int size = systems.size();
-    if (size == 0) {
-      return null;
-    }
-
+    if (size == 0) return null;
     if (size > 1) {
       LOG.error(protocol + ": " + systems);
     }
@@ -195,17 +174,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
-  }
-
-  @Override
-  public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
-    myAsyncFileListeners.add(listener);
-    Disposer.register(parentDisposable, () -> myAsyncFileListeners.remove(listener));
-  }
-
-  @ApiStatus.Internal
-  public List<AsyncFileListener> getAsyncFileListeners() {
-    return Collections.unmodifiableList(myAsyncFileListeners);
   }
 
   @Override

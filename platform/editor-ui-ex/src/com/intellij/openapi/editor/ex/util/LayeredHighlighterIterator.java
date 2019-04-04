@@ -17,9 +17,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import org.jetbrains.annotations.NotNull;
 
 public interface LayeredHighlighterIterator extends HighlighterIterator {
-  @NotNull
   SyntaxHighlighter getActiveSyntaxHighlighter();
 }

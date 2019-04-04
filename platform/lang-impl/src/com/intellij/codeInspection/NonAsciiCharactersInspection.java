@@ -20,7 +20,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -111,7 +110,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
           if (bom != null) {
             String hex = IntStream.range(0, bom.length)
               .map(i -> bom[i])
-              .mapToObj(b -> StringUtil.toUpperCase(Integer.toString(b & 0x00ff, 16)))
+              .mapToObj(b -> Integer.toString(b & 0x00ff, 16).toUpperCase())
               .collect(Collectors.joining());
             Charset charsetFromBOM = CharsetToolkit.guessFromBOM(bom);
             holder.registerProblem(file, "File contains BOM: '" + hex +"'"+

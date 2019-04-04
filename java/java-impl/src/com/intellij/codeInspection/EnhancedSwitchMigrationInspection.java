@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -75,7 +75,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return null;
   }
 
-  private static OldSwitchStatementBranch addBranch(List<? super OldSwitchStatementBranch> branches,
+  private static OldSwitchStatementBranch addBranch(List<OldSwitchStatementBranch> branches,
                                                     PsiStatement[] statements,
                                                     int unmatchedCaseIndex,
                                                     int endIndexExcl,
@@ -142,7 +142,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   @Nullable
   private static PsiSwitchBlock generateEnhancedSwitch(@NotNull PsiStatement statementToReplace,
                                                        PsiExpression expressionBeingSwitched,
-                                                       List<? extends SwitchExpressionBranch> newBranches,
+                                                       List<SwitchExpressionBranch> newBranches,
                                                        CommentTracker mainCommentTracker,
                                                        boolean isExpr) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(statementToReplace.getProject());
@@ -188,7 +188,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return switchBlock;
   }
 
-  private static boolean isExhaustiveSwitch(List<? extends OldSwitchStatementBranch> branches, PsiExpression expressionBeingSwitched) {
+  private static boolean isExhaustiveSwitch(List<OldSwitchStatementBranch> branches, PsiExpression expressionBeingSwitched) {
     for (OldSwitchStatementBranch branch : branches) {
       if (branch.isDefault()) return true;
     }
@@ -256,7 +256,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   }
 
 
-  static class ReplaceWithSwitchExpressionFix implements LocalQuickFix {
+  class ReplaceWithSwitchExpressionFix implements LocalQuickFix {
     private final ReplacementType myReplacementType;
 
     ReplaceWithSwitchExpressionFix(ReplacementType replacementType) {myReplacementType = replacementType;}
@@ -281,12 +281,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static class ReturningSwitchReplacer implements SwitchReplacer {
     @NotNull final PsiStatement myStatement;
     @NotNull final PsiExpression myExpressionBeingSwitched;
-    final List<? extends SwitchExpressionBranch> myNewBranches;
+    final List<SwitchExpressionBranch> myNewBranches;
     final @Nullable PsiReturnStatement myReturnToDelete;
 
     private ReturningSwitchReplacer(@NotNull PsiStatement statement,
                                     @NotNull PsiExpression expressionBeingSwitched,
-                                    List<? extends SwitchExpressionBranch> newBranches, @Nullable PsiReturnStatement returnToDelete) {
+                                    List<SwitchExpressionBranch> newBranches, @Nullable PsiReturnStatement returnToDelete) {
       myStatement = statement;
       myExpressionBeingSwitched = expressionBeingSwitched;
       myNewBranches = newBranches;
@@ -303,7 +303,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       commentTracker.replaceAndRestoreComments(statement, returnStatement);
       if (myReturnToDelete != null) {
         CommentTracker ct = new CommentTracker();
-        ct.markUnchanged(myReturnToDelete.getReturnValue());
+        PsiExpression returnValue = myReturnToDelete.getReturnValue();
+        if (returnValue != null) {
+          ct.markUnchanged(returnValue);
+        }
         ct.deleteAndRestoreComments(myReturnToDelete);
       }
     }
@@ -373,14 +376,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     @NotNull final PsiVariable myVariableToAssign;
     @NotNull final PsiStatement myStatement;
     @NotNull final PsiExpression myExpressionBeingSwitched;
-    final List<? extends SwitchExpressionBranch> myNewBranches;
+    final List<SwitchExpressionBranch> myNewBranches;
     final boolean myIsRightAfterDeclaration;
 
     private SwitchExistingVariableReplacer(
       @NotNull PsiVariable variableToAssign,
       @NotNull PsiStatement statement,
       @NotNull PsiExpression expressionBeingSwitched,
-      List<? extends SwitchExpressionBranch> newBranches,
+      List<SwitchExpressionBranch> newBranches,
       boolean isRightAfterDeclaration) {
       myVariableToAssign = variableToAssign;
       myStatement = statement;
@@ -510,11 +513,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static class SwitchStatementReplacer implements SwitchReplacer {
     @NotNull final PsiStatement myStatement;
     @NotNull final PsiExpression myExpressionBeingSwitched;
-    @NotNull final List<? extends SwitchExpressionBranch> myExpressionBranches;
+    @NotNull final List<SwitchExpressionBranch> myExpressionBranches;
 
     private SwitchStatementReplacer(@NotNull PsiStatement statement,
                                     @NotNull PsiExpression expressionBeingSwitched,
-                                    @NotNull List<? extends SwitchExpressionBranch> ruleResults) {
+                                    @NotNull List<SwitchExpressionBranch> ruleResults) {
       myStatement = statement;
       myExpressionBeingSwitched = expressionBeingSwitched;
       myExpressionBranches = ruleResults;
@@ -607,12 +610,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   private static class SwitchExpressionBranch {
     final boolean myIsDefault;
-    final List<? extends PsiExpression> myCaseExpressions;
+    final List<PsiExpression> myCaseExpressions;
     @NotNull final List<? extends PsiElement> myUsedElements; // used elements only for this branch
     private final SwitchRuleResult myRuleResult;
 
     private SwitchExpressionBranch(boolean isDefault,
-                                   List<? extends PsiExpression> caseExpressions,
+                                   List<PsiExpression> caseExpressions,
                                    SwitchRuleResult ruleResult,
                                    @NotNull List<? extends PsiElement> usedElements) {
       myIsDefault = isDefault;

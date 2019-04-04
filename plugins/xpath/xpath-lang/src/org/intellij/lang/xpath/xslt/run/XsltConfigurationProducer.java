@@ -50,7 +50,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {

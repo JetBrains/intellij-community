@@ -125,7 +125,8 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myPerModuleCompilerOutput.addActionListener(listener);
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title")));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title"),
+                                                        true));
     panel.add(outputPathsPanel, BorderLayout.NORTH);
     return panel;
   }

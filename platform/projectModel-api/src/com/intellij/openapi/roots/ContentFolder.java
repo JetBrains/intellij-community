@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * @see ContentEntry#getExcludeFolders()
  * @author dsl
  */
-@ApiStatus.NonExtendable
 public interface ContentFolder extends Synthetic {
   /**
    * Returns the root file or directory for this root.

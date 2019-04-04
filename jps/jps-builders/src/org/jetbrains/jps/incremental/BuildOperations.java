@@ -46,27 +46,23 @@ import java.util.*;
 public class BuildOperations {
   private BuildOperations() { }
 
-  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
+  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
-      if (!readOnly) {
-        configuration.save(context);
-      }
+      configuration.save(context);
     }
     else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
-      if (!readOnly) {
-        if (!context.getScope().isBuildForced(target)) {
-          // case when target build is forced, is handled separately
-          IncProjectBuilder.clearOutputFiles(context, target);
-        }
-        pd.dataManager.cleanTargetStorages(target);
-        configuration.save(context);
+      if (!context.getScope().isBuildForced(target)) {
+        // case when target build is forced, is handled separately
+        IncProjectBuilder.clearOutputFiles(context, target);
       }
+      pd.dataManager.cleanTargetStorages(target);
+      configuration.save(context);
     }
     else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);
@@ -205,7 +201,7 @@ public class BuildOperations {
     }
   }
 
-  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<? super String> deletedPaths, @Nullable Set<? super File> parentDirs) {
+  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<? super File> parentDirs) {
     File file = new File(path);
     boolean deleted = deleteRecursively(file, deletedPaths);
     if (deleted && parentDirs != null) {
@@ -217,7 +213,7 @@ public class BuildOperations {
     return deleted;
   }
 
-  private static boolean deleteRecursively(final File file, final Collection<? super String> deletedPaths) {
+  private static boolean deleteRecursively(final File file, final Collection<String> deletedPaths) {
     try {
       Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
         @Override

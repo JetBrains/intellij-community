@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 
 /**
  * @author Dmitry Avdeev
@@ -161,23 +161,28 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     final String description = getStaticDescription();
     if (description != null) return description;
     try {
-      InputStream descriptionStream = getDescriptionStream();
-      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
+      URL descriptionUrl = getDescriptionUrl();
+      if (descriptionUrl == null) return null;
+      return ResourceUtil.loadText(descriptionUrl);
     }
     catch (IOException ignored) { }
 
     return getTool().loadDescription();
   }
 
-  private InputStream getDescriptionStream() {
+  private URL getDescriptionUrl() {
     Application app = ApplicationManager.getApplication();
-    String fileName = getDescriptionFileName();
-
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
+      return superGetDescriptionUrl();
     }
+    String fileName = getDescriptionFileName();
+    return myEP.getLoaderForClass().getResource("inspectionDescriptions/" + fileName);
+  }
 
-    return myEP.getLoaderForClass().getResourceAsStream("inspectionDescriptions/" + fileName);
+  @Nullable
+  private URL superGetDescriptionUrl() {
+    final String fileName = getDescriptionFileName();
+    return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
   }
 
   @NotNull

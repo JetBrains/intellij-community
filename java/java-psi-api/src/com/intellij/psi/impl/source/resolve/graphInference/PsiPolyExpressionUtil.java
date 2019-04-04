@@ -2,10 +2,11 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -33,7 +34,11 @@ public class PsiPolyExpressionUtil {
       return isInAssignmentOrInvocationContext(expression);
     }
     if (expression instanceof PsiMethodCallExpression) {
-      return isMethodCallPolyExpression(expression, expr -> ((PsiMethodCallExpression)expr).resolveMethod());
+      return isMethodCallPolyExpression(expression, expr -> {
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties =
+          MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expr).getArgumentList());
+        return candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expr).resolveMethod();
+      });
     }
     if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -64,13 +69,55 @@ public class PsiPolyExpressionUtil {
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {
-        return PsiTypesUtil.mentionsTypeParameters(returnType, typeParameters);
+        return mentionsTypeParameters(returnType, typeParameters);
       }
     }
     else if (method.isConstructor() && expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
       return true;
     }
     return false;
+  }
+
+  public static Boolean mentionsTypeParameters(@Nullable PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
+    if (returnType == null) return false;
+    return returnType.accept(new PsiTypeVisitor<Boolean>() {
+      @NotNull
+      @Override
+      public Boolean visitType(PsiType type) {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        if (bound != null) {
+          return bound.accept(this);
+        }
+        return false;
+      }
+
+      @NotNull
+      @Override
+      public Boolean visitClassType(PsiClassType classType) {
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
+        }
+        return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+    });
   }
 
   private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {

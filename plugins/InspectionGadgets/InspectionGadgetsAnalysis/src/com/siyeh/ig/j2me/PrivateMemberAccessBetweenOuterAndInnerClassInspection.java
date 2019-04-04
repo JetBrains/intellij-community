@@ -27,14 +27,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends BaseInspection {
 
-  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override
   public String getID() {
@@ -207,7 +205,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
           return;
         }
         aClass = (PsiClass)target;
-        if (aClass.isInterface() || !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (!aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
           return;
         }
       }

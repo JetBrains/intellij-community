@@ -49,25 +49,15 @@ public enum ArtifactKind {
     }
     return null;
   }
-
-  public static EnumSet<ArtifactKind> kindsOf(boolean sources, boolean javadoc, String... artifactPackaging) {
+  
+  @NotNull
+  public static EnumSet<ArtifactKind> kindsOf(boolean sources, boolean javadoc) {
     EnumSet<ArtifactKind> result = EnumSet.noneOf(ArtifactKind.class);
     if (sources) {
       result.add(SOURCES);
     }
     if (javadoc) {
       result.add(JAVADOC);
-    }
-    if (artifactPackaging.length == 0 || artifactPackaging.length == 1 && artifactPackaging[0] == null) {
-      result.add(ARTIFACT);
-    }
-    else {
-      for (String packaging : artifactPackaging) {
-        final ArtifactKind artifact = find(ARTIFACT.getClassifier(), packaging);
-        if (artifact != null) {
-          result.add(artifact);
-        }
-      }
     }
     return result;
   }

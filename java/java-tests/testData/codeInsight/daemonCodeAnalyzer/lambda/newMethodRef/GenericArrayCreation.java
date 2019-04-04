@@ -6,11 +6,11 @@ class Test {
         Test m(List<Integer> l1, List<Integer> l2);
     }
 
-    static Test meth(List<Integer>... lli) {
+    static Test meth(List<Integer>... <warning descr="Parameter 'lli' is never used">lli</warning>) {
         return null;
     }
 
-    Test(List<Integer>... lli) {}
+    Test(List<Integer>... <warning descr="Parameter 'lli' is never used">lli</warning>) {}
 
     {
         I <warning descr="Variable 'i1' is never used">i1</warning> = <warning descr="Unchecked generics array creation for varargs parameter">Test::meth</warning>;

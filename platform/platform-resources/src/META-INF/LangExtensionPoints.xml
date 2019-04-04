@@ -1,7 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar"/>
-
     <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
     </extensionPoint>
@@ -113,9 +111,7 @@
                     interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
     <extensionPoint name="templateParameterTraversalPolicy"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
-    </extensionPoint>
+                    interface="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
 
     <!-- com.intellij.psi.PsiElement -->
     <extensionPoint name="cantBeStatic"
@@ -410,7 +406,6 @@
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
-    <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
@@ -529,7 +524,7 @@
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
-    <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+    <extensionPoint name="statistician" beanClass="com.intellij.psi.statistics.StatisticsExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>
     </extensionPoint>
 
@@ -643,14 +638,6 @@
     <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
     </extensionPoint>
-
-    <extensionPoint name="codeInsight.inlayProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintsProvider"/>
-    </extensionPoint>
-
-    <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
-                    interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"/>
-
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
@@ -673,7 +660,7 @@
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
     <extensionPoint name="virtualFileQualifiedNameProvider"
-                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
+                    interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
@@ -699,8 +686,6 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="usageViewFactory"
                     interface="com.intellij.usages.impl.UsageViewFactory"/>
-    <extensionPoint name="usageViewElementsListener"
-                    interface="com.intellij.usages.impl.UsageViewElementsListener"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"
@@ -869,6 +854,8 @@
                     interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
                     area="IDEA_PROJECT"/>
 
+    <extensionPoint name="fileTemplateDefaultExtension" beanClass="com.intellij.ide.fileTemplates.FileTemplateDefaultExtension"/>
+
     <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT"/>
 
     <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter"/>
@@ -967,7 +954,7 @@
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
     <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer"/>
-    <extensionPoint name="equivalenceDescriptorProvider"
+    <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
     <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>

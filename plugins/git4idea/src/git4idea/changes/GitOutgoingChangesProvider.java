@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.Change;
@@ -17,8 +18,6 @@ import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,18 +55,19 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   @Nullable
   public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
-    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(anyFileUnderRoot);
-    if (repository == null) {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final VirtualFile root = vcsManager.getVcsRootFor(anyFileUnderRoot);
+    if (root == null) {
       LOG.info("VCS root not found");
       return null;
     }
 
-    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, repository.getRoot(), true);
+    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, root, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       LOG.info("local or remote not found");
       return null;
     }
-    final GitRevisionNumber base = getMergeBase(myProject, repository.getRoot(), searcher.getLocal(), searcher.getRemote());
+    final GitRevisionNumber base = getMergeBase(myProject, root, searcher.getLocal(), searcher.getRemote());
     LOG.debug("found base: " + ((base == null) ? null : base.asString()));
     return base;
   }

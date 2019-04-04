@@ -125,7 +125,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   private static void extractTests(final File traceFile,
                                    final DataInputStream in,
-                                   final Set<? super String> tests,
+                                   final Set<String> tests,
                                    final String classFQName,
                                    final int lineNumber) throws IOException {
     long traceSize = in.readInt();
@@ -136,7 +136,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         final int line = in.readInt();
         if (Comparing.strEqual(className, classFQName)) {
           if (lineNumber == line) {
-            tests.add(FileUtilRt.getNameWithoutExtension(traceFile.getName()));
+            tests.add(FileUtil.getNameWithoutExtension(traceFile));
             return;
           }
         }
@@ -162,7 +162,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   private static File getTracesDirectory(CoverageSuite coverageSuite) {
     final String filePath = coverageSuite.getCoverageDataFileName();
-    final String dirName = FileUtilRt.getNameWithoutExtension(new File(filePath).getName());
+    final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
 
     final File parentDir = new File(filePath).getParentFile();
     return new File(parentDir, dirName);
@@ -372,7 +372,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @NotNull
   public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
-    return StringUtil.getQualifiedName(packageFQName, FileUtilRt.getNameWithoutExtension(outputFile.getName()));
+    return StringUtil.getQualifiedName(packageFQName, FileUtil.getNameWithoutExtension(outputFile));
   }
 
   @NotNull
@@ -436,7 +436,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       final String className = ReadAction.compute(() -> psiClass.getName());
       for (File child : children) {
         if (FileUtilRt.extensionEquals(child.getName(), StdFileTypes.CLASS.getDefaultExtension())) {
-          final String childName = FileUtilRt.getNameWithoutExtension(child.getName());
+          final String childName = FileUtil.getNameWithoutExtension(child);
           if (childName.equals(className) ||  //class or inner
               childName.startsWith(className) && childName.charAt(className.length()) == '$') {
             classFiles.add(child);

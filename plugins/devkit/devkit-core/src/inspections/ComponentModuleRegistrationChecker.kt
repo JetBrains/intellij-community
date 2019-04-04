@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -189,7 +190,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
   }
 
   private fun findModulePluginXmlFile(module: Module): XmlFile? {
-    for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+    for (sourceRoot in ModuleRootManager.getInstance(module).sourceRoots) {
       val metaInf = sourceRoot.findChild("META-INF")
       if (metaInf != null && metaInf.isDirectory) {
         for (file in metaInf.children) {

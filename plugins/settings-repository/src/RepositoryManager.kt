@@ -7,7 +7,7 @@ import java.io.InputStream
 import java.util.*
 
 interface RepositoryManager {
-  fun createRepositoryIfNeeded(): Boolean
+  fun createRepositoryIfNeed(): Boolean
 
   /**
    * Think twice before use

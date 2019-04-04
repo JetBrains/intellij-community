@@ -27,7 +27,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -45,7 +44,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
+import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -55,6 +54,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
+  private final boolean myForceHttps;
   private final Collection<? extends PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
@@ -66,10 +66,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
+                   boolean forceHttps,
                    @Nullable Collection<? extends PluginDownloader> updatedPlugins,
                    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
+    myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
     myPatches = patches;
@@ -96,6 +98,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
     myUpdatedChannel = channel;
+    myForceHttps = true;
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
     myPatches = patches;
@@ -143,7 +146,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   @NotNull
   @Override
   protected Action[] createActions() {
-    List<Action> actions = new ArrayList<>();
+    List<Action> actions = ContainerUtil.newArrayList();
 
     if (myPatches != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
@@ -198,7 +201,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         String[] command;
         try {
           if (myPatches != null) {
-            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
+            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), myForceHttps, indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
           else {
@@ -210,8 +213,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.error.connection.title");
-          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
+          String message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              openDownloadPage();
+            }
+          }).notify(null);
 
           return;
         }
@@ -249,23 +257,21 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     application.invokeLater(() -> application.exit(true, true, true, command));
   }
 
-  private String downloadUrl() {
+  private void openDownloadPage() {
     String url = myNewBuild.getDownloadUrl();
-    if (url == null) url = myNewBuild.getBlogPost();
-    if (url == null) url = myUpdatedChannel.getUrl();
-    if (url == null) url = "https://www.jetbrains.com";
-    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
+    assert !StringUtil.isEmptyOrSpaces(url) : "channel:" + myUpdatedChannel.getId() + " build:" + myNewBuild.getNumber();
+    BrowserUtil.browse(augmentUrl(url));
   }
 
   private static void showPatchInstructions(String[] command) {
-    String product = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-'));
+    String product = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.US);
     String version = ApplicationInfo.getInstance().getFullVersion();
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
       String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
                     StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
       FileUtil.writeToFile(file, text);
-      FileUtil.setExecutable(file);
+      FileUtil.setExecutableAttribute(file.getPath(), true);
     }
     catch (Exception e) {
       Logger.getInstance(UpdateInstaller.class).error(e);
@@ -290,7 +296,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       if (myInfo.isDownload()) {
         IdeUpdateUsageTriggerCollector.trigger( "dialog.download.clicked");
       }
-      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myInfo.getUrl()));
+      BrowserUtil.browse(augmentUrl(myInfo.getUrl()));
     }
   }
 
@@ -311,8 +317,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       String message = myNewBuild.getMessage();
       if (StringUtil.isEmptyOrSpaces(message)) {
-        String url = downloadUrl();
-        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName(), url);
+        String url = myNewBuild.getDownloadUrl();
+        if (url == null) url = myNewBuild.getBlogPost();
+        if (url == null) url = myUpdatedChannel.getUrl();
+        if (url == null) url = "https://www.jetbrains.com";
+        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName(), augmentUrl(url));
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
@@ -348,7 +357,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public Dimension getPreferredScrollableViewportSize() {
           Dimension size = super.getPreferredScrollableViewportSize();
-          size.height = Math.min(size.height, JBUIScale.scale(400));
+          size.height = Math.min(size.height, JBUI.scale(400));
           return size;
         }
       };
@@ -359,5 +368,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private static String formatVersion(String versionString, BuildNumber build) {
     return IdeBundle.message("updates.version.info", versionString, build.asStringWithoutProductCode());
+  }
+
+  private static String augmentUrl(String url) {
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
   }
 }

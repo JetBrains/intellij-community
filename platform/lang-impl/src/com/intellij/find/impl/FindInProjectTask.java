@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -47,7 +47,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +75,7 @@ class FindInProjectTask {
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
-  private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(new THashSet<>());
+  private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(ContainerUtil.newTroveSet());
   private final Set<? extends VirtualFile> myFilesToScanInitially;
   private final AtomicLong myTotalFilesSize = new AtomicLong();
   private final String myStringToFindInIndices;
@@ -157,7 +156,7 @@ class FindInProjectTask {
 
   private static void logStats(@NotNull Collection<? extends VirtualFile> otherFiles, long time) {
     Map<String, Long> extensionToCount = otherFiles.stream()
-      .collect(Collectors.groupingBy(file -> StringUtil.toLowerCase(StringUtil.notNullize(file.getExtension())), Collectors.counting()));
+      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
     String topExtensions = extensionToCount
       .entrySet().stream()
       .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -170,7 +169,7 @@ class FindInProjectTask {
              "Most frequent non-indexed file extensions: " + topExtensions);
   }
 
-  private void searchInFiles(@NotNull Collection<? extends VirtualFile> virtualFiles,
+  private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
                              @NotNull final Processor<? super UsageInfo> consumer) {
     AtomicInteger occurrenceCount = new AtomicInteger();
@@ -398,7 +397,7 @@ class FindInProjectTask {
                                                                               myProject);
 
     if (TrigramIndex.ENABLED) {
-      final Set<Integer> keys = new THashSet<>();
+      final Set<Integer> keys = ContainerUtil.newTroveSet();
       TrigramBuilder.processTrigrams(stringToFind, new TrigramBuilder.TrigramProcessor() {
         @Override
         public boolean execute(int value) {

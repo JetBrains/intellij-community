@@ -36,7 +36,7 @@ public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
       if (!(quoteHandler instanceof BaseQuoteHandler)) return;
 
       final int offset = editor.getCaretModel().getCurrentCaret().getOffset();
-      CharSequence text = editor.getDocument().getCharsSequence();
+      String text = editor.getDocument().getText();
       boolean mayBeTripleQuote = offset >= 3 && offset + 2 < text.length();
       if (mayBeTripleQuote) {
         final int quoteOffset = offset - 1;

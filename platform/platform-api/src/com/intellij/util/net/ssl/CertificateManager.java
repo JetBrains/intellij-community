@@ -126,8 +126,10 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
-      SSLContext.setDefault(getSslContext());
-      LOG.info("Default SSL context initialized");
+      if (Registry.is("ide.certificate.manager")) {
+        SSLContext.setDefault(getSslContext());
+        LOG.info("Default SSL context initialized");
+      }
     }
     catch (Exception e) {
       LOG.error(e);
@@ -153,14 +155,25 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   public synchronized SSLContext getSslContext() {
     if (mySslContext == null) {
       SSLContext context = getSystemSslContext();
-      try {
-        // SSLContext context = SSLContext.getDefault();
-        // NOTE: existence of default trust manager can be checked here as
-        // assert systemManager.getAcceptedIssuers().length != 0
-        context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
+      if (Registry.is("ide.certificate.manager")) {
+        try {
+          // SSLContext context = SSLContext.getDefault();
+          // NOTE: existence of default trust manager can be checked here as
+          // assert systemManager.getAcceptedIssuers().length != 0
+          context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
+        }
+        catch (KeyManagementException e) {
+          LOG.error(e);
+        }
       }
-      catch (KeyManagementException e) {
-        LOG.error(e);
+      else {
+        // IDEA-124057 Do not touch default context at all if certificate manager was disabled.
+
+        // For some reason passing `null` as first parameter of SSLContext#init is not enough to
+        // use -Djavax.net.ssl.keyStore VM parameters, although -Djavax.net.ssl.trustStore is used
+        // successfully. See this question on Stackoverflow for details
+        // http://stackoverflow.com/questions/23205266/java-key-store-is-not-found-when-default-ssl-context-is-redefined
+        context = getDefaultSslContext();
       }
       mySslContext = context;
     }
@@ -184,6 +197,17 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     catch (KeyManagementException e) {
       LOG.error(e);
       throw new AssertionError("Cannot initialize system SSL context");
+    }
+  }
+
+  @NotNull
+  private static SSLContext getDefaultSslContext() {
+    try {
+      return SSLContext.getDefault();
+    }
+    catch (NoSuchAlgorithmException e) {
+      LOG.error("Default SSL context not available. Using system instead.");
+      return getSystemSslContext();
     }
   }
 

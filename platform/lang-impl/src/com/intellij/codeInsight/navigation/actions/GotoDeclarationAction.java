@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -83,9 +82,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-
-          if (element != null) {
-            startFindUsages(editor, project, element);
+          if (startFindUsages(editor, project, element)) {
             return;
           }
 
@@ -97,8 +94,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
 
       PsiElement element = elements[0];
-      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset())) {
-        startFindUsages(editor, project, element);
+      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
+          startFindUsages(editor, project, element)) {
         return;
       }
 
@@ -116,7 +113,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  public static void startFindUsages(@NotNull Editor editor, @NotNull Project project, @NotNull PsiElement element) {
+  private static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
@@ -126,6 +126,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
     }
+    return true;
   }
 
   static <T> T underModalProgress(@NotNull Project project,
@@ -134,8 +135,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       DumbService.getInstance(project).setAlternativeResolveEnabled(true);
       try {
-        ThrowableComputable<T, RuntimeException> inRead = () -> ApplicationManager.getApplication().runReadAction(computable);
-        return ProgressManager.getInstance().computePrioritized(inRead);
+        return ApplicationManager.getApplication().runReadAction(computable);
       }
       finally {
         DumbService.getInstance(project).setAlternativeResolveEnabled(false);
@@ -178,7 +178,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
     if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);

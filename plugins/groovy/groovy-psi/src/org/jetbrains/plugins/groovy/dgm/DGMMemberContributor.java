@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -60,7 +59,7 @@ public class DGMMemberContributor {
 
   @NotNull
   private static List<GdkMethodHolder> calcGdkMethods(Project project, GlobalSearchScope resolveScope) {
-    List<GdkMethodHolder> gdkMethods = new ArrayList<>();
+    List<GdkMethodHolder> gdkMethods = ContainerUtil.newArrayList();
 
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     Couple<List<String>> extensions = collectExtensions(project, resolveScope);
@@ -81,8 +80,8 @@ public class DGMMemberContributor {
 
   @NotNull
   private static Couple<List<String>> collectExtensions(@NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
-    List<String> instanceClasses = new ArrayList<>(DEFAULT_INSTANCE_EXTENSIONS);
-    List<String> staticClasses = new ArrayList<>(DEFAULT_STATIC_EXTENSIONS);
+    List<String> instanceClasses = ContainerUtil.newArrayList(DEFAULT_INSTANCE_EXTENSIONS);
+    List<String> staticClasses = ContainerUtil.newArrayList(DEFAULT_STATIC_EXTENSIONS);
     doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.groovy");
     doCollectExtensions(project, resolveScope, instanceClasses, staticClasses, "META-INF.services");
     return Couple.of(instanceClasses, staticClasses);

@@ -85,7 +85,7 @@ public class AsyncEditorLoader {
     ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
-        Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> myTextEditor.loadEditorInBackground());
+        Runnable runnable = myTextEditor.loadEditorInBackground();
         future.complete(runnable);
         return runnable;
       })

@@ -1,8 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -19,8 +34,8 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProvider;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
+import org.jetbrains.idea.maven.onlinecompletion.central.MavenCentralOnlineSearch;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -28,24 +43,17 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
+public class MavenProjectIndicesManager extends MavenSimpleProjectComponent implements BaseComponent {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
   private volatile boolean offlineIndexes = false;
-  private volatile OfflineSearchService myOfflineSearchService;
-  private volatile DependencySearchService myDependencySearchService;
+  private volatile DependencySearchService mySearchService;
   private final MergingUpdateQueue myUpdateQueue;
 
   public boolean hasOfflineIndexes() {
@@ -59,9 +67,11 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public MavenProjectIndicesManager(Project project) {
     super(project);
     myUpdateQueue = new MavenMergingUpdateQueue(getClass().getSimpleName(), 1000, true, project);
-    myOfflineSearchService = new OfflineSearchService(project, Collections.emptyList());
-    myDependencySearchService = new DependencySearchService(project, myOfflineSearchService);
+    mySearchService = new DependencySearchService(project, Collections.emptyList());
+  }
 
+  @Override
+  public void initComponent() {
     if (!isNormalProject()) return;
     doInit();
   }
@@ -92,12 +102,16 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     });
   }
 
+  public void scheduleUpdateRepositoryList() {
+    scheduleUpdateIndicesList();
+  }
+
   private void scheduleUpdateIndicesList() {
     scheduleUpdateIndicesList(null);
   }
 
-  public void scheduleUpdateIndicesList(@Nullable final Consumer<? super List<MavenIndex>> consumer) {
-    myUpdateQueue.queue(new Update(this) {
+  public void scheduleUpdateIndicesList(@Nullable final Consumer<List<MavenIndex>> consumer) {
+    myUpdateQueue.queue(new Update(MavenProjectIndicesManager.this) {
       @Override
       public void run() {
         Set<Pair<String, String>> remoteRepositoriesIdsAndUrls;
@@ -110,13 +124,22 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
         Set<DependencyCompletionProvider> providers = new HashSet<>();
         MavenIndex localIndex = indicesManager.createIndexForLocalRepo(myProject, localRepository);
-        if (localIndex != null) {
-          providers.add(new IndexBasedCompletionProvider(localIndex));
-        } else {
-          MavenLog.LOG.warn("Cannot create local maven index for " + localRepository);
-        }
+        providers.add(new IndexBasedCompletionProvider(localIndex));
         providers.add(new ProjectModulesCompletionProvider(myProject));
 
+
+        Iterator<Pair<String, String>> iterator = remoteRepositoriesIdsAndUrls.iterator();
+
+        while (iterator.hasNext()) {
+          Pair<String, String> pair = iterator.next();
+          //todo - need stub server
+          if (pair.second.contains("repo.maven.apache.org/maven2") || "central".equals(pair.first)) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              providers.add(new MavenCentralOnlineSearch());
+            }
+            iterator.remove();
+          }
+        }
 
         List<MavenIndex> offlineIndices =
           MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
@@ -126,16 +149,12 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
             providers.add(new IndexBasedCompletionProvider((MavenIndex)index));
           }
         }
-
         List<MavenIndex> newIndices = new ArrayList<>(offlineIndices);
-        if (localIndex != null) {
-          newIndices.add(localIndex);
-        }
+        newIndices.add(localIndex);
         synchronized (this) {
           offlineIndexes = !remoteRepositoriesIdsAndUrls.isEmpty();
           myProjectIndices = newIndices;
-          myOfflineSearchService = new OfflineSearchService(myProject, new ArrayList<>(providers));
-          myDependencySearchService = new DependencySearchService(myProject, myOfflineSearchService);
+          mySearchService = new DependencySearchService(myProject, new ArrayList<>(providers));
         }
 
         if (consumer != null) {
@@ -164,10 +183,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     return result;
   }
 
-  /**
-   * @deprecated use {@link #getOfflineSearchService()}
-   */
   @Deprecated
+  /* @deprecated use getSearchService */
   public List<MavenIndex> getIndices() {
     return new ArrayList<>(myProjectIndices);
   }
@@ -189,53 +206,42 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
 
-  public synchronized OfflineSearchService getOfflineSearchService() {
-    return myOfflineSearchService;
+  public synchronized DependencySearchService getSearchService() {
+    return mySearchService;
   }
 
-  public synchronized DependencySearchService getDependencySearchService() {
-    return myDependencySearchService;
-  }
-
-  /**
-   * @deprecated use {@link OfflineSearchService#findGroupCandidates} or{@link OfflineSearchService#findByTemplate} instead
-   **/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findGroupCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getGroupIds() {
     return getGroupIds("");
   }
 
-  /**
-   * @deprecated use {@link OfflineSearchService#findGroupCandidates} or{@link OfflineSearchService#findByTemplate} instead
-   **/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findGroupCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getGroupIds(String pattern) {
     pattern = pattern == null ? "" : pattern;
     //todo fix
-    return getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(pattern))
+    return getSearchService().findGroupCandidates(new MavenDependencyCompletionItem(pattern))
       .stream().map(d -> d.getArtifactId())
       .collect(
         Collectors.toSet());
   }
 
-  /**
-   * @deprecated use {@link OfflineSearchService#findArtifactCandidates} or{@link OfflineSearchService#findByTemplate} instead
-   **/
   @Deprecated
+  /** @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findArtifactCandidates} or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead**/
   public Set<String> getArtifactIds(String groupId) {
     ProgressIndicatorProvider.checkCanceled();
-    return getOfflineSearchService().findArtifactCandidates(new MavenDependencyCompletionItem(groupId)).stream().map(d -> d.getArtifactId())
+    return getSearchService().findArtifactCandidates(new MavenDependencyCompletionItem(groupId)).stream().map(d -> d.getArtifactId())
       .collect(
         Collectors.toSet());
   }
 
   /**
-   * @deprecated use {@link OfflineSearchService#findAllVersions or{@link OfflineSearchService#findByTemplate} instead
+   * @deprecated use {@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findAllVersions or{@link org.jetbrains.idea.maven.onlinecompletion.DependencySearchService#findByTemplate} instead
    **/
-  @Deprecated
   public Set<String> getVersions(String groupId, String artifactId) {
     ProgressIndicatorProvider.checkCanceled();
-    return getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream()
+    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream()
       .map(d -> d.getVersion()).collect(
         Collectors.toSet());
   }
@@ -244,7 +250,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public boolean hasGroupId(String groupId) {
     ProgressIndicatorProvider.checkCanceled();
     if (hasProjectGroupId(groupId)) return true;
-    return getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(groupId)).stream()
+    return getSearchService().findGroupCandidates(new MavenDependencyCompletionItem(groupId)).stream()
       .anyMatch(p -> StringUtil.equals(groupId, p.getGroupId()));
   }
 
@@ -267,14 +273,14 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   @Deprecated
   public boolean hasArtifactId(String groupId, String artifactId) {
     if (hasProjectArtifactId(groupId, artifactId)) return true;
-    return !getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null),
-                                                      SearchParameters.DEFAULT).isEmpty();
+    return !getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null),
+                                               SearchParameters.DEFAULT).isEmpty();
   }
 
   @Deprecated
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
-    return getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
+    return getSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
       s -> version.equals(s.getVersion())
     );
   }

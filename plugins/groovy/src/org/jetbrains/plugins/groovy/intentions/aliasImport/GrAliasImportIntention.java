@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
 import com.intellij.codeInsight.template.Template;
@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
@@ -220,7 +221,7 @@ public class GrAliasImportIntention extends Intention {
     LocalSearchScope scope = new LocalSearchScope(file);
 
     final ArrayList<UsageInfo> infos = new ArrayList<>();
-    final HashSet<Object> usedRefs = new HashSet<>();
+    final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
 
     final Processor<PsiReference> consumer = reference -> {
       if (usedRefs.add(reference)) {

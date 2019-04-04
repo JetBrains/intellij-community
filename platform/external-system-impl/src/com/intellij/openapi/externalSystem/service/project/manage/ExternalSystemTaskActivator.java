@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -24,13 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.task.ModuleBuildTask;
-import com.intellij.task.ProjectTaskContext;
-import com.intellij.task.ProjectTaskManager;
-import com.intellij.task.ProjectTaskResult;
-import com.intellij.task.impl.ProjectTaskManagerImpl;
-import com.intellij.task.impl.ProjectTaskManagerListener;
-import com.intellij.task.impl.ProjectTaskScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -59,22 +55,27 @@ public class ExternalSystemTaskActivator {
   }
 
   public void init() {
-    ProjectTaskManagerImpl projectTaskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(myProject);
-    projectTaskManager.addListener(new ProjectTaskManagerListener() {
-      @Override
-      public void beforeRun(@NotNull ProjectTaskContext context) throws ExecutionException {
-        if (!doExecuteBuildPhaseTriggers(true, context)) {
-          throw new ExecutionException("Before build triggering task failed");
-        }
+    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    // todo extract to "java" external system module
+    if (compilerManager == null) {
+      return;
+    }
+
+    class MyCompileTask implements CompileTask {
+      private final boolean myBefore;
+
+      MyCompileTask(boolean before) {
+        myBefore = before;
       }
 
       @Override
-      public void afterRun(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult result) throws ExecutionException {
-        if (!doExecuteBuildPhaseTriggers(false, context)) {
-          throw new ExecutionException("After build triggering task failed");
-        }
+      public boolean execute(@NotNull CompileContext context) {
+        return doExecuteCompileTasks(myBefore, context);
       }
-    });
+    }
+
+    compilerManager.addBeforeTask(new MyCompileTask(true));
+    compilerManager.addAfterTask(new MyCompileTask(false));
 
     fireTasksChanged();
   }
@@ -96,43 +97,25 @@ public class ExternalSystemTaskActivator {
     return StringUtil.join(result, ", ");
   }
 
-  private boolean doExecuteBuildPhaseTriggers(boolean myBefore, @NotNull ProjectTaskContext context) {
-    ProjectTaskScope taskScope = context.getUserData(ProjectTaskScope.KEY);
-    if (taskScope == null) {
-      return true;
-    }
+  private boolean doExecuteCompileTasks(boolean myBefore, @NotNull CompileContext context) {
+    List<String> modules = ReadAction.compute(
+      () -> ContainerUtil.mapNotNull(context.getCompileScope().getAffectedModules(),
+                                     module -> ExternalSystemApiUtil.getExternalProjectPath(module)));
 
-    Set<String> modulesToBuild = new LinkedHashSet<>();
-    Set<String> modulesToRebuild = new LinkedHashSet<>();
-    for (ModuleBuildTask task : taskScope.getRequestedTasks(ModuleBuildTask.class)) {
-      String projectPath = ExternalSystemApiUtil.getExternalProjectPath(task.getModule());
-      if (projectPath == null) continue;
-      if (task.isIncrementalBuild()) {
-        modulesToBuild.add(projectPath);
-      }
-      else {
-        modulesToRebuild.add(projectPath);
-      }
-    }
-
-    boolean result = true;
+    final Collection<Phase> phases = ContainerUtil.newArrayList();
     if (myBefore) {
-      if (!modulesToBuild.isEmpty()) {
-        result = runTasks(modulesToBuild, Phase.BEFORE_COMPILE);
+      if(context.isRebuild()) {
+        phases.add(Phase.BEFORE_REBUILD);
       }
-      if (result && !modulesToRebuild.isEmpty()) {
-        result = runTasks(modulesToRebuild, Phase.BEFORE_COMPILE, Phase.BEFORE_REBUILD);
-      }
+      phases.add(Phase.BEFORE_COMPILE);
     }
     else {
-      if (!modulesToBuild.isEmpty()) {
-        result = runTasks(modulesToBuild, Phase.AFTER_COMPILE);
-      }
-      if (result && !modulesToRebuild.isEmpty()) {
-        result = runTasks(modulesToRebuild, Phase.AFTER_COMPILE, Phase.AFTER_REBUILD);
+      phases.add(Phase.AFTER_COMPILE);
+      if(context.isRebuild()) {
+        phases.add(Phase.AFTER_REBUILD);
       }
     }
-    return result;
+    return runTasks(modules, phases.toArray(new Phase[0]));
   }
 
   public boolean runTasks(@NotNull String modulePath, @NotNull Phase... phases) {
@@ -160,7 +143,7 @@ public class ExternalSystemTaskActivator {
     for (final ExternalProjectsStateProvider.TasksActivation activation : stateProvider.getAllTasksActivation()) {
       final boolean hashPath = modules.contains(activation.projectPath);
 
-      final Set<String> tasks = new LinkedHashSet<>();
+      final Set<String> tasks = ContainerUtil.newLinkedHashSet();
       for (Phase phase : phases) {
         List<String> activationTasks = activation.state.getTasks(phase);
         if (hashPath || (phase.isSyncPhase() && !activationTasks.isEmpty() &&  isShareSameRootPath(modules, activation))) {
@@ -272,7 +255,7 @@ public class ExternalSystemTaskActivator {
     return taskActivationState.getTasks(phase).contains(taskData.getName());
   }
 
-  public void addTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
+  public void addTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
@@ -281,7 +264,7 @@ public class ExternalSystemTaskActivator {
     fireTasksChanged();
   }
 
-  public void addTasks(@NotNull Collection<? extends TaskActivationEntry> entries) {
+  public void addTasks(@NotNull Collection<TaskActivationEntry> entries) {
     if (entries.isEmpty()) {
       return;
     }
@@ -295,14 +278,14 @@ public class ExternalSystemTaskActivator {
     fireTasksChanged();
   }
 
-  public void removeTasks(@NotNull Collection<? extends TaskData> tasks, @NotNull final Phase phase) {
+  public void removeTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) {
       return;
     }
     removeTasks(ContainerUtil.map(tasks, data -> new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName())));
   }
 
-  public void removeTasks(@NotNull Collection<? extends TaskActivationEntry> entries) {
+  public void removeTasks(@NotNull Collection<TaskActivationEntry> entries) {
     if (entries.isEmpty()) {
       return;
     }
@@ -324,7 +307,7 @@ public class ExternalSystemTaskActivator {
   }
 
 
-  public void moveTasks(@NotNull Collection<? extends TaskActivationEntry> entries, int increment) {
+  public void moveTasks(@NotNull Collection<TaskActivationEntry> entries, int increment) {
     LOG.assertTrue(increment == -1 || increment == 1);
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider();
@@ -348,7 +331,7 @@ public class ExternalSystemTaskActivator {
 
     final ExternalProjectsStateProvider stateProvider = ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider();
     final Map<String, TaskActivationState> activationMap = stateProvider.getProjectsTasksActivationMap(systemId);
-    final List<String> currentPaths = new ArrayList<>(activationMap.keySet());
+    final List<String> currentPaths = ContainerUtil.newArrayList(activationMap.keySet());
     if (pathsGroup != null) {
       currentPaths.retainAll(pathsGroup);
     }
@@ -361,7 +344,7 @@ public class ExternalSystemTaskActivator {
       }
     }
 
-    Map<String, TaskActivationState> rearrangedMap = new LinkedHashMap<>();
+    Map<String, TaskActivationState> rearrangedMap = ContainerUtil.newLinkedHashMap();
     for (String path : currentPaths) {
       rearrangedMap.put(path, activationMap.get(path));
       activationMap.remove(path);

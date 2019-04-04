@@ -19,20 +19,20 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
+import com.intellij.util.Alarm;
 import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.newImpl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.newImpl.table.TableLayout;
-import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
+import com.jetbrains.rd.util.reactive.PropertyCombinatorsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,16 +50,17 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.rd.DisposableExKt.createLifetime;
+import static com.intellij.openapi.rd.RdIdeaKt.childAtMouse;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
              UISettingsListener, QuickActionProvider, Accessible {
 
   @NonNls public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
-  static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
-  public static final int DEFAULT_MAX_TAB_WIDTH = JBUIScale.scale(300);
+  static final int MIN_TAB_WIDTH = JBUI.scale(75);
+  public static final int DEFAULT_MAX_TAB_WIDTH = JBUI.scale(300);
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
@@ -127,6 +128,8 @@ public class JBTabsImpl extends JComponent
   final Set<TabInfo> myAttractions = new HashSet<>();
   private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
+  private boolean myPaintBlocked;
+  private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
 
@@ -152,7 +155,7 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
-  private final JBTabsBorder myBorder = createTabBorder();
+  private final JBTabsBackgroundAndBorder myBorder = createTabBorder();
   private final BaseNavigationAction myNextAction;
   private final BaseNavigationAction myPrevAction;
 
@@ -179,11 +182,11 @@ public class JBTabsImpl extends JComponent
   private boolean myMouseInsideTabsArea = false;
 
   protected JBTabPainter createTabPainter() {
-    return JBTabPainter.getDEFAULT();
+    return JBTabPainter.Companion.getDEFAULT();
   }
 
-  protected JBTabsBorder createTabBorder() {
-    return new JBDefaultTabsBorder(this);
+  protected JBTabsBackgroundAndBorder createTabBorder() {
+    return new JBDefaultTabsBackgroundAndBorder(this);
   }
 
   public JBTabPainter getTabPainter() {
@@ -230,10 +233,15 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
-    if(JBTabsFactory.getUseNewTabs()) {
-      OnePixelDivider divider = mySplitter.getDivider();
-      divider.setOpaque(false);
-    }
+    PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
+      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
+
+      tabLabelAtMouse = (TabLabel)label;
+
+      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
+
+      return null;
+    });
 
     myPopupListener = new PopupMenuListener() {
       @Override
@@ -274,15 +282,14 @@ public class JBTabsImpl extends JComponent
       }
     });
     AWTEventListener listener = new AWTEventListener() {
-      final Alarm afterScroll = new Alarm(com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
+      Alarm afterScroll = new Alarm(com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (mySingleRowLayout.myLastSingRowLayout == null) return;
-
         MouseEvent me = (MouseEvent)event;
         Point point = me.getPoint();
         SwingUtilities.convertPointToScreen(point, me.getComponent());
         Rectangle rect = com.intellij.ui.tabs.newImpl.JBTabsImpl.this.getVisibleRect();
+        if (mySingleRowLayout.myLastSingRowLayout == null) return;
         rect = rect.intersection(mySingleRowLayout.myLastSingRowLayout.tabRectangle);
         Point p = rect.getLocation();
         SwingUtilities.convertPointToScreen(p, com.intellij.ui.tabs.newImpl.JBTabsImpl.this);
@@ -296,7 +303,8 @@ public class JBTabsImpl extends JComponent
               @Override
               public void run() {
                 if (!myMouseInsideTabsArea) {
-                  doLayoutTwice();
+                  mySingleRowLayout.scrollSelectionInView();
+                  doLayout();
                 }
               }
             }, 500);
@@ -391,29 +399,26 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
+    myImage = null;
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
     }
-    boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
-    if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
-      updateRowLayout();
-    }
-  }
-
-  private void updateRowLayout() {
+    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
     boolean wasSingleRow = isSingleRow();
-    if (mySingleRowLayout != null) {
-      remove(mySingleRowLayout.myLeftGhost);
-      remove(mySingleRowLayout.myRightGhost);
+    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+      if (mySingleRowLayout != null) {
+        remove(mySingleRowLayout.myLeftGhost);
+        remove(mySingleRowLayout.myRightGhost);
+      }
+      mySingleRowLayout = createSingleRowLayout();
+      if (wasSingleRow) {
+        myLayout = mySingleRowLayout;
+      }
+      add(mySingleRowLayout.myLeftGhost);
+      add(mySingleRowLayout.myRightGhost);
+      relayout(true, true);
     }
-    mySingleRowLayout = createSingleRowLayout();
-    if (wasSingleRow) {
-      myLayout = mySingleRowLayout;
-    }
-    add(mySingleRowLayout.myLeftGhost);
-    add(mySingleRowLayout.myRightGhost);
-    relayout(true, true);
   }
 
   protected SingleRowLayout createSingleRowLayout() {
@@ -431,26 +436,6 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
-  }
-
-  public void setHovered(TabLabel label) {
-    TabLabel old = tabLabelAtMouse;
-    tabLabelAtMouse = label;
-
-    if(old != null) {
-      old.repaint();
-    }
-
-    if(tabLabelAtMouse != null) {
-      tabLabelAtMouse.repaint();
-    }
-  }
-
-  public void unHover(TabLabel label) {
-    if(tabLabelAtMouse == label) {
-      tabLabelAtMouse = null;
-      label.repaint();
-    }
   }
 
   protected boolean isHoveredTab(TabLabel label) {
@@ -507,6 +492,7 @@ public class JBTabsImpl extends JComponent
     myAttractions.clear();
     myVisibleInfos.clear();
     myUiDecorator = null;
+    myImage = null;
     myActivePopup = null;
     myInfo2Label.clear();
     myInfo2Page.clear();
@@ -724,7 +710,7 @@ public class JBTabsImpl extends JComponent
     }
 
     if (changed.get()) {
-      revalidateAndRepaint();
+      updateTabs();
     }
   }
 
@@ -852,7 +838,6 @@ public class JBTabsImpl extends JComponent
 
     info.getChangeSupport().addPropertyChangeListener(this);
     final TabLabel label = createTabLabel(info);
-    Disposer.register(this, label);
     myInfo2Label.put(info, label);
     myInfo2Page.put(info, new AccessibleTabPage(info));
 
@@ -893,16 +878,6 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(false);
 
     return info;
-  }
-
-  // Looks hacky but makes selected tab scrolled to visible area precisely
-  private void doLayoutTwice() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      doLayout();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        doLayout();
-      });
-    });
   }
 
   protected TabLabel createTabLabel(TabInfo info) {
@@ -1179,7 +1154,6 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
-      doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       updateColor(tabInfo);
@@ -1270,18 +1244,20 @@ public class JBTabsImpl extends JComponent
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    revalidateAndRepaint();
+    updateTabs();
   }
 
   private void updateColor(final TabInfo tabInfo) {
-    revalidateAndRepaint();
+    updateTabs();
   }
 
-  public void revalidateAndRepaint() {
-    revalidateAndRepaint(true);
+  public void updateTabs() {
+    revalidate();
+    repaint();
   }
 
   void revalidateAndRepaint(final boolean layoutNow) {
+
     if (myVisibleInfos.isEmpty()) {
       setOpaque(false);
       final Component nonOpaque = UIUtil.findUltimateParent(this);
@@ -1300,6 +1276,7 @@ public class JBTabsImpl extends JComponent
     else {
       revalidate();
     }
+
     repaint();
   }
 
@@ -1327,7 +1304,7 @@ public class JBTabsImpl extends JComponent
     label.setText(tabInfo.getColoredText());
     label.setToolTipText(tabInfo.getTooltipText());
 
-    revalidateAndRepaint();
+    updateTabs();
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -1480,7 +1457,29 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void setPaintBlocked(boolean blocked, final boolean takeSnapshot) {
+    if (blocked && !myPaintBlocked) {
+      if (takeSnapshot) {
+        if (getWidth() > 0 && getHeight() > 0) {
+          myImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+          final Graphics2D g = myImage.createGraphics();
+          super.paint(g);
+          g.dispose();
+        }
+      }
+    }
+
+    myPaintBlocked = blocked;
+
+    if (!myPaintBlocked) {
+      if (myImage != null) {
+        myImage.flush();
+      }
+
+      myImage = null;
+      repaint();
+    }
   }
+
 
   private void addToDeferredRemove(final Component c) {
     if (!myDeferredToRemove.containsKey(c)) {
@@ -1563,7 +1562,6 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isSingleRow()) {
-        mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
@@ -1717,7 +1715,7 @@ public class JBTabsImpl extends JComponent
   }
 
   /**
-   * @deprecated You should implement {@link JBTabsBorder} interface
+   * @deprecated You should implement {@link JBTabsBackgroundAndBorder} interface
    */
   @Deprecated
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
@@ -1732,14 +1730,11 @@ public class JBTabsImpl extends JComponent
         UISettings.setupAntialiasing(g);
         UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
       }
-      return;
     }
-
-    myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
-    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
-
-    if (!isStealthModeEffective() && !isHideTabs()) {
-      myLastPaintedSelection = getSelectedInfo();
+    else {
+      if (!isStealthModeEffective() && !isHideTabs()) {
+        myLastPaintedSelection = getSelectedInfo();
+      }
     }
   }
 
@@ -1780,6 +1775,23 @@ public class JBTabsImpl extends JComponent
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
+  public void paint(final Graphics g) {
+    Rectangle clip = g.getClipBounds();
+    if (clip == null) {
+      return;
+    }
+
+    if (myPaintBlocked) {
+      if (myImage != null) {
+        g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
+      }
+      return;
+    }
+
+    super.paint(g);
   }
 
   @Override
@@ -2014,11 +2026,6 @@ public class JBTabsImpl extends JComponent
     }
     else {
       queueForRemove(tabComponent);
-    }
-
-    TabLabel tabLabel = myInfo2Label.get(info);
-    if (tabLabel != null) {
-      Disposer.dispose(tabLabel);
     }
 
     myVisibleInfos.remove(info);
@@ -2659,7 +2666,7 @@ public class JBTabsImpl extends JComponent
     @Override
     @NotNull
     public UiDecoration getDecoration() {
-        return new UiDecoration(null, new JBInsets(6, 12, 8, 12));
+      return new UiDecoration(null, new Insets(0, 4, 0, 5));
     }
   }
 
@@ -2746,7 +2753,6 @@ public class JBTabsImpl extends JComponent
   @Override
   public JBTabsPresentation setSupportsCompression(boolean supportsCompression) {
     mySupportsCompression = supportsCompression;
-    updateRowLayout();
     return this;
   }
 
@@ -2778,6 +2784,11 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  public void setUseBufferedPaint(boolean useBufferedPaint) {
+    myUseBufferedPaint = useBufferedPaint;
+    revalidate();
+    repaint();
+  }
 
   @Override
   public void resetDropOver(TabInfo tabInfo) {

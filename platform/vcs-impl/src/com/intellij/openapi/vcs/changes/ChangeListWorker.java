@@ -973,7 +973,8 @@ public class ChangeListWorker {
       if (revision == null) return true;
       return ReadAction.compute(() -> {
         if (project.isDisposed()) return false;
-        return ProjectLevelVcsManager.getInstance(project).isIgnored(revision.getFile());
+        VirtualFile vFile = revision.getFile().getVirtualFile();
+        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
       });
     }
 

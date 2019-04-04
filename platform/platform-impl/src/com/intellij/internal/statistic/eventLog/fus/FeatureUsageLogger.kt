@@ -72,10 +72,6 @@ object FeatureUsageLogger {
     ourLoggerProvider.logger.cleanup()
   }
 
-  fun rollOver() {
-    ourLoggerProvider.logger.rollOver()
-  }
-
   fun getConfig() : StatisticsEventLoggerProvider {
     return ourLoggerProvider
   }

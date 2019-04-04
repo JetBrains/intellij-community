@@ -2,23 +2,17 @@
 package com.intellij.debugger.memory.agent.extractor
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
+import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Files
-import java.nio.file.Path
 
 class AgentExtractor {
-  fun extract(agentType: AgentLibraryType, directory: File): Path {
-    Files.createTempFile(directory.toPath(), "${agentType.prefix}memory_agent", agentType.suffix)
-    val file = FileUtilRt.createTempFile(directory, "${agentType.prefix}memory_agent", agentType.suffix, true).toPath()
+  fun extract(agentType: AgentLibraryType, directory: File): File {
+    val file = FileUtil.createTempFile(directory, "${agentType.prefix}memory_agent", agentType.suffix, true)
     val agentFileName = "${agentType.prefix}memory_agent${agentType.suffix}"
-    val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName") ?: throw FileNotFoundException(agentFileName)
-    inputStream.use { input ->
-      Files.newOutputStream(file).use { output ->
-        FileUtil.copy(input, output)
-      }
-    }
+    val inputStream = AgentExtractor::class.java.classLoader.getResourceAsStream("bin/$agentFileName")
+    if (inputStream == null) throw FileNotFoundException(agentFileName)
+    FileUtils.copyToFile(inputStream, file)
     return file
   }
 

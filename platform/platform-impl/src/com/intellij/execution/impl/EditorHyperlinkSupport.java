@@ -258,14 +258,14 @@ public class EditorHyperlinkSupport {
   }
 
   @Deprecated
-  public void highlightHyperlinks(@NotNull Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
+  public void highlightHyperlinks(final Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
     highlightHyperlinks((line, entireLength) -> {
       Filter.Result result = customFilter.applyFilter(line, entireLength);
       return result != null ? result : predefinedMessageFilter.applyFilter(line, entireLength);
     }, line1, endLine);
   }
 
-  public void highlightHyperlinks(@NotNull Filter customFilter, final int line1, final int endLine) {
+  public void highlightHyperlinks(final Filter customFilter, final int line1, final int endLine) {
     myFilterRunner.highlightHyperlinks(customFilter, Math.max(0, line1), endLine);
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -56,7 +57,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    Map<String, LibraryData> processedLibraries = new HashMap<>();
+    Map<String, LibraryData> processedLibraries = ContainerUtil.newHashMap();
     for (DataNode<LibraryData> dataNode: toImport) {
       LibraryData libraryData = dataNode.getData();
       String libraryName = libraryData.getInternalName();
@@ -90,7 +91,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
-    Map<OrderRootType, Collection<File>> result = new HashMap<>();
+    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType: LibraryPathType.values()) {
       Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
@@ -162,12 +163,12 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     // do not cleanup orphan project libraries if import runs from Project Structure Dialog
     // since libraries order entries cannot be imported for modules in that case
     // and hence orphans will be detected incorrectly
-    if (modelsProvider instanceof ProjectStructureUIModifiableModelsProvider) return;
+    if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    final Map<String, Library> namesToLibs = new HashMap<>();
-    final Set<Library> potentialOrphans = new HashSet<>();
+    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
+    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
       @Override
       public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
@@ -232,7 +233,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if(pathType != LibraryPathType.BINARY && toAddPerType.isEmpty()) {
         continue;
       }
-      HashSet<String> toRemovePerType = new HashSet<>();
+      HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
       toRemove.put(ideType, toRemovePerType);
 
       for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
@@ -254,7 +255,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
 
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
-      Map<OrderRootType, Collection<File>> roots = new HashMap<>();
+      Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }

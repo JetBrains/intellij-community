@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +26,14 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public interface SourcePathsBuilder {
-
   @Nullable
   String getContentEntryPath();
 
   void setContentEntryPath(String moduleRootPath);
 
-  /**
-   * Pair: {@code first=sourceRoot, second=packagePrefix}.
-   */
-  List<Pair<String, String>> getSourcePaths() throws ConfigurationException;
+  List<Pair<String,String>> getSourcePaths() throws ConfigurationException;
 
-  /**
-   * Pair: {@code first=sourceRoot, second=packagePrefix}.
-   */
-  void setSourcePaths(List<Pair<String, String>> sourcePaths);
+  void setSourcePaths(List<Pair<String,String>> sourcePaths);
 
-  /**
-   * Pair: {@code first=sourceRoot, second=packagePrefix}.
-   */
-  void addSourcePath(Pair<String, String> sourcePathInfo);
+  void addSourcePath(Pair<String,String> sourcePathInfo);
 }

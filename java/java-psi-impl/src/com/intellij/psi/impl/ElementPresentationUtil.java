@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,23 +8,21 @@ import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-public final class ElementPresentationUtil implements PlatformIcons {
+public class ElementPresentationUtil implements PlatformIcons {
   private ElementPresentationUtil() {
   }
+
 
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
     final boolean isEnum = element instanceof PsiClass && ((PsiClass)element).isEnum();
@@ -47,10 +45,8 @@ public final class ElementPresentationUtil implements PlatformIcons {
     return flags;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static com.intellij.ui.RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
-    return (com.intellij.ui.RowIcon)IconManager.getInstance().createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
+  public static RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
+    return ElementBase.createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
 
   private static final int CLASS_KIND_INTERFACE     = 10;
@@ -188,42 +184,35 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   private static String getFlagsDescription(final PsiModifierListOwner aClass) {
     int flags = getFlags(aClass, false);
-    StringBuilder adj = new StringBuilder();
+    String adj = "";
     for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
       if (provider.getLayerIcon(aClass, false) != null) {
-        adj.append(" ").append(provider.getLayerDescription());
+        adj += " " + provider.getLayerDescription();
       }
     }
-    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(CodeInsightBundle.message("node.abstract.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(CodeInsightBundle.message("node.final.flag.tooltip"));
-    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(CodeInsightBundle.message("node.static.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj.append(" ").append(StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
+        adj += " " + StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level)));
       }
     }
-    return adj.toString();
+    return adj;
   }
 
 
   static {
-    IconManager iconManager = IconManager.getInstance();
-    iconManager.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
-    iconManager.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
-    iconManager.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
-    iconManager.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static Icon addVisibilityIcon(PsiModifierListOwner element, final int flags, com.intellij.ui.RowIcon baseIcon) {
-    return addVisibilityIcon(element, flags, ((RowIcon)baseIcon));
+    ElementBase.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
+    ElementBase.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
+    ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
+    ElementBase.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {
-    if (Registry.is("ide.completion.show.visibility.icon") && BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(element.getModifierList(), baseIcon);
     }
     return baseIcon;

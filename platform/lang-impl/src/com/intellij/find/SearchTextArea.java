@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -160,7 +159,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         } else {
           int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : UIUtil.isUnderDarcula() ? 2 : 1;
           int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
-          if (JBUIScale.isUsrHiDPI()) {
+          if (JBUI.isUsrHiDPI()) {
             bottom = 2;
             top = 2;
           }
@@ -222,7 +221,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     add(myScrollPane, "ay top, growx, pushx");
     //TODO combine icons/info modes
     if (myInfoMode) {
-      add(myInfoLabel, "gapright " + JBUIScale.scale(4));
+      add(myInfoLabel, "gapright " + JBUI.scale(4));
     }
     add(myIconsPanel, myHelper.getIconsPanelConstraints());
     updateIconsLayout();
@@ -435,24 +434,24 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private class MacLafHelper extends LafHelper {
     @Override
     Border getBorder() {
-      return new EmptyBorder(3 + Math.max(0, JBUIScale.scale(16) - UIUtil.getLineHeight(myTextArea)) / 2, 6, 4, 4);
+      return new EmptyBorder(3 + Math.max(0, JBUI.scale(16) - UIUtil.getLineHeight(myTextArea)) / 2, 6, 4, 4);
     }
 
     @Override
     String getLayoutConstraints() {
-      return "flowx, ins 0, gapx " + JBUIScale.scale(4);
+      return "flowx, ins 0, gapx " + JBUI.scale(4);
     }
 
     @Override
     String getHistoryButtonConstraints() {
       int extraGap = getExtraGap();
-      return "ay top, gaptop " + extraGap + ", gapleft" + (JBUIScale.isUsrHiDPI() ? 4 : 0);
+      return "ay top, gaptop " + extraGap + ", gapleft" + (JBUI.isUsrHiDPI() ? 4 : 0);
     }
 
     private int getExtraGap() {
       int height = UIUtil.getLineHeight(myTextArea);
       Insets insets = myTextArea.getInsets();
-      return Math.max(JBUIScale.isUsrHiDPI() ? 0 : 1, (height + insets.top + insets.bottom - JBUIScale.scale(16)) / 2);
+      return Math.max(JBUI.isUsrHiDPI() ? 0 : 1, (height + insets.top + insets.bottom - JBUI.scale(16)) / 2);
     }
 
 
@@ -491,12 +490,12 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     String getLayoutConstraints() {
       Insets i = SystemInfo.isLinux ? JBUI.insets(2) : JBUI.insets(3);
-      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUIScale.scale(3);
+      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
     @Override
     String getHistoryButtonConstraints() {
-      return "ay baseline, gaptop " + JBUIScale.scale(1);
+      return "ay baseline, gaptop " + JBUI.scale(1);
     }
 
     @Override
@@ -541,7 +540,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     String getLayoutConstraints() {
       Insets i = JBUI.insets(1, 1, 2, 1);
-      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUIScale.scale(3);
+      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
     @Override
@@ -564,7 +563,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override public Insets getBorderInsets(Component c) {
-      return JBInsets.create(1, 0).asUIResource();
+      return JBUI.insets(1, 0).asUIResource();
     }
 
     @Override
@@ -584,7 +583,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
           g2.setColor(UIManager.getColor("TextField.borderColor"));
         }
 
-        int bw = JBUIScale.scale(1);
+        int bw = JBUI.scale(1);
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new Rectangle2D.Float(0, 0, width, height), false);
         border.append(new Rectangle2D.Float(bw, bw, width - bw*2, height - bw*2), false);
