@@ -53,7 +53,9 @@ def _is_managed_arg(arg):
     return False
 
 
-def _has_bytes_args(args):
+def _is_py3_and_has_bytes_args(args):
+    if not isinstance('', type(u'')):
+        return False
     for arg in args:
         if isinstance(arg, bytes):
             return True
@@ -361,7 +363,7 @@ def create_execl(original_name):
         os.execlpe(file, arg0, arg1, ..., env)
         """
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -378,7 +380,7 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -395,7 +397,7 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -412,7 +414,7 @@ def create_spawnl(original_name):
         os.spawnlp(mode, file, arg0, arg1, ...)
         """
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -428,7 +430,7 @@ def create_spawnv(original_name):
         os.spawnvp(mode, file, args)
         """
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -444,7 +446,7 @@ def create_spawnve(original_name):
     """
     def new_spawnve(mode, path, args, env):
         import os
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
@@ -459,7 +461,7 @@ def create_fork_exec(original_name):
     """
     def new_fork_exec(args, *other_args):
         import _posixsubprocess  # @UnresolvedImport
-        if _has_bytes_args(args):
+        if _is_py3_and_has_bytes_args(args):
             warn_bytes_args(original_name)
         else:
             args = patch_args(args)
