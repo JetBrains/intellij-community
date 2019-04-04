@@ -12,18 +12,18 @@ public class QueryDefaults {
 
   @NotNull
   static <I, O> Query<O> map(@NotNull Query<? extends I> base, @NotNull Function<? super I, ? extends O> transformation) {
-    return new CustomProcessorQuery<>(base, PostProcessor.mapping(transformation));
+    return new PostProcessingQuery<>(base, PostProcessor.mapping(transformation));
   }
 
   @NotNull
   static <R> Query<R> filter(@NotNull Query<R> base, @NotNull Predicate<? super R> predicate) {
-    return new CustomProcessorQuery<>(base, PostProcessor.filtering(predicate));
+    return new PostProcessingQuery<>(base, PostProcessor.filtering(predicate));
   }
 
   @NotNull
   static <B, R> Query<R> flatMap(@NotNull Query<? extends B> base,
                                  @NotNull Function<? super B, ? extends Query<? extends R>> mapper) {
-    return new CustomProcessorQuery<>(
+    return new PostProcessingQuery<>(
       base,
       (PostProcessor<R, B>)
         (Processor<? super R> resultProcessor) ->

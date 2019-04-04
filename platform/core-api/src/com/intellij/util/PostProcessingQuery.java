@@ -3,12 +3,12 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
-public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
+public class PostProcessingQuery<B, R> extends AbstractQuery<R> {
 
   protected final Query<? extends B> myBaseQuery;
   private final PostProcessor<R, B> myPostProcessor;
 
-  public CustomProcessorQuery(@NotNull Query<? extends B> query, @NotNull PostProcessor<R, B> provider) {
+  public PostProcessingQuery(@NotNull Query<? extends B> query, @NotNull PostProcessor<R, B> provider) {
     myBaseQuery = query;
     myPostProcessor = provider;
   }
@@ -23,7 +23,7 @@ public class CustomProcessorQuery<B, R> extends AbstractQuery<R> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    CustomProcessorQuery<?, ?> query = (CustomProcessorQuery<?, ?>)o;
+    PostProcessingQuery<?, ?> query = (PostProcessingQuery<?, ?>)o;
 
     if (!myBaseQuery.equals(query.myBaseQuery)) return false;
     if (!myPostProcessor.equals(query.myPostProcessor)) return false;
