@@ -123,8 +123,10 @@ private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent 
 
 private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
-    val scheme = findExternalizableSchemeByFileName(fileName, schemeManager) ?: return
-    schemeManager.removeScheme(scheme)
+    // do not schedule scheme file removing because file was already removed
+    val scheme = schemeManager.removeFirstScheme(isScheduleToDelete = false) {
+      fileName == getSchemeFileName(schemeManager, it)
+    } ?: return
     schemeManager.processor.onSchemeDeleted(scheme)
   }
 }
