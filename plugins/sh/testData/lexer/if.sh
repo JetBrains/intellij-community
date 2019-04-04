@@ -13,6 +13,14 @@ if [ -e /etc/software.properties ]; then
     rm /etc/software.properties
 fi
 
+if [ "$key" = "" ] ; then
+    # Use default initialization logic based on configuration in '/etc/inittab'.
+    echo -e "Executing \\e[32m/sbin/init\\e[0m as PID 1."
+else
+    # Print second message on screen.
+    cat /etc/msg/03_init_02.txt
+fi
+
 if [[ "$VERSION_ID" !=  16.04 ]]
 then
     dpkg --list | awk '{ print $2 }' | grep 'linux-image-.*-generic' | grep -v `uname -r` | xargs apt-get -y purge --auto-remove

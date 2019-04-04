@@ -27,6 +27,14 @@ else
     echo 2
 fi
 
+if [ "$key" = "" ] ; then
+    # Use default initialization logic based on configuration in '/etc/inittab'.
+    echo -e "Executing \\e[32m/sbin/init\\e[0m as PID 1."
+else
+    # Print second message on screen.
+    cat /etc/msg/03_init_02.txt
+fi
+
 if [ "$PACKER_BUILD_NAME" == "virtualbox" ]; then
 #  SERVER_URL="${TEAMCITY_SERVER}"
     echo 1

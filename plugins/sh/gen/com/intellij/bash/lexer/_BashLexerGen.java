@@ -1164,14 +1164,15 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 136: break;
           case 22: 
-            { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE;
+            { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE;
             } 
             // fall through
           case 137: break;
           case 23: 
             { switch (yystate()) {
                                       case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
-                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE; }
+                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE;
+                                      default: return RIGHT_SQUARE; }
             } 
             // fall through
           case 138: break;
@@ -1418,7 +1419,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 184: break;
           case 70: 
-            { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET;
+            { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET;
             } 
             // fall through
           case 185: break;
