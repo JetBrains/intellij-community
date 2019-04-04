@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHome
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -39,7 +40,8 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(getEnumUsage("pluginUpdatePolicy", generalSettings.pluginUpdatePolicy))
     usages.add(getEnumUsage("loggingLevel", generalSettings.loggingLevel))
     try {
-      val mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null))
+      var mavenVersion = MavenUtil.getMavenVersion(resolveMavenHome(generalSettings, project, null))
+      mavenVersion = mavenVersion?.let { Version.parseVersion(it)?.toCompactString() } ?: "unknown"
       usages.add(UsageDescriptor("mavenVersion.$mavenVersion"))
     }
     catch (ignore: Exception) {
