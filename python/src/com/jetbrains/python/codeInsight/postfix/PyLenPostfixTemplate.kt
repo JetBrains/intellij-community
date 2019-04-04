@@ -12,16 +12,13 @@ import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.refactoring.surround.surrounders.expressions.PyLenExpressionStatementSurrounder
 
-class PyLenPostfixTemplate : SurroundPostfixTemplateBase("len", DESCR, PyPostfixUtils.PY_PSI_INFO,
+class PyLenPostfixTemplate : SurroundPostfixTemplateBase("len", "len(expr)", PyPostfixUtils.PY_PSI_INFO,
                                                          PyPostfixUtils.selectorAllExpressionsWithCurrentOffset(sizedFilter)) {
 
   override fun getSurrounder(): Surrounder = PyLenExpressionStatementSurrounder()
 
   companion object {
-    const val DESCR = "len(expr)"
-
     val sizedFilter: Condition<PsiElement> = Condition { element ->
-
       if (!DumbService.isDumb(element.project)) {
         val expression = element as PyExpression
         val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)

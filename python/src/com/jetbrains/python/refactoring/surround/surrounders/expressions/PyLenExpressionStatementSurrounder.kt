@@ -12,20 +12,13 @@ class PyLenExpressionStatementSurrounder : PyExpressionSurrounder() {
 
   @Throws(IncorrectOperationException::class)
   override fun surroundExpression(project: Project, editor: Editor, element: PyExpression): TextRange {
-    val range = element.textRange
-    val statement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyExpressionStatement::class.java, "len(a)")
-    val callExpression = statement.expression as PyCallExpression
-    val arg = callExpression.arguments[0]
-    arg.replace(element)
-    element.replace(callExpression)
-    return TextRange.from(range.endOffset + FUNCTION_LENGTH, 0)
+    val generator = PyElementGenerator.getInstance(project)
+    val callExpression = generator.createExpressionFromText(LanguageLevel.forElement(element), "len(${element.text})")
+    val replacement = element.replace(callExpression)
+    return TextRange.from(replacement.textRange.endOffset, 0)
   }
 
   override fun isApplicable(expr: PyExpression) = true
 
   override fun getTemplateDescription()= "len(expr)"
-
-  companion object {
-    const val FUNCTION_LENGTH = "len()".length
-  }
 }
