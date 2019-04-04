@@ -290,11 +290,11 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
   override fun toString() = fileName
 }
 
-internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runNonUndoableWriteAction(this) { createChildData(requestor, fileName) }
+internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {
+  return findChild(fileName) ?: runAsWriteActionIfNeeded { createChildData(requestor, fileName) }
 }
 
-internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {
+internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   ioDir.createDirectories()
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))

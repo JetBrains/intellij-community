@@ -46,7 +46,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      val presentableName: String? = null,
                                                      private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                      private val fileChangeSubscriber: ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(
-  processor), SafeWriteRequestor {
+  processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUseVfs: Boolean
     get() = fileChangeSubscriber != null
 
@@ -333,7 +333,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       val dir = virtualDirectory
       cachedVirtualDirectory = null
       if (dir != null) {
-        runNonUndoableWriteAction(dir) {
+        runWriteAction {
           try {
             dir.delete(this)
           }
@@ -413,7 +413,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           if (oldFile != null) {
             // VFS doesn't allow to rename to existing file, so, check it
             if (dir.findChild(fileName) == null) {
-              runNonUndoableWriteAction(oldFile) {
+              runWriteAction {
                 oldFile.rename(this, fileName)
               }
               file = oldFile
@@ -428,7 +428,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           file = dir.getOrCreateChild(fileName, this)
         }
 
-        runNonUndoableWriteAction(file) {
+        runWriteAction {
           file.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
@@ -517,9 +517,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         if (childrenToDelete.isNotEmpty()) {
           runWriteAction {
             for (file in childrenToDelete) {
-              runNonUndoableAction(file) {
-                errors.catch { file.delete(this) }
-              }
+              errors.catch { file.delete(this) }
             }
           }
         }

@@ -217,7 +217,7 @@ open class FileBasedStorage(file: Path,
 }
 
 internal fun writeFile(file: Path?,
-                       requestor: Any,
+                       requestor: StorageManagerFileWriteRequestor,
                        virtualFile: VirtualFile?,
                        dataWriter: DataWriter,
                        lineSeparator: LineSeparator,
@@ -265,7 +265,7 @@ private fun isEqualContent(result: VirtualFile,
   return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
 }
 
-private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
+private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
   LOG.debugOrInfoIfTestMode { "Save ${file.presentableUrl}" }
 
   if (!file.isWritable) {
@@ -281,19 +281,17 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
     })
   }
 
-  runNonUndoableAction(file) {
-    runAsWriteActionIfNeeded {
-      file.getOutputStream(requestor).use { output ->
-        if (prependXmlProlog) {
-          output.write(XML_PROLOG)
-          output.write(lineSeparator.separatorBytes)
-        }
-        if (dataWriterOrByteArray is DataWriter) {
-          dataWriterOrByteArray.write(output, lineSeparator.separatorString)
-        }
-        else {
-          (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
-        }
+  runAsWriteActionIfNeeded {
+    file.getOutputStream(requestor).use { output ->
+      if (prependXmlProlog) {
+        output.write(XML_PROLOG)
+        output.write(lineSeparator.separatorBytes)
+      }
+      if (dataWriterOrByteArray is DataWriter) {
+        dataWriterOrByteArray.write(output, lineSeparator.separatorString)
+      }
+      else {
+        (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
       }
     }
   }
@@ -312,7 +310,7 @@ internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSep
   return defaultSeparator ?: LineSeparator.getSystemLineSeparator()
 }
 
-private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
+private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
   if (virtualFile == null) {
     try {
       Files.delete(file)
@@ -335,8 +333,8 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
   }
 }
 
-internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
-  runNonUndoableAction(virtualFile) { virtualFile.delete(requestor) }
+internal fun deleteFile(requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile) {
+  virtualFile.delete(requestor)
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")

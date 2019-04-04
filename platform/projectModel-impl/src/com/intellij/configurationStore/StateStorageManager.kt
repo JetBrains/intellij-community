@@ -60,10 +60,8 @@ fun saveComponentManager(componentManager: ComponentManager, forceSavingAllSetti
 // better to reduce message bus usage
 fun isFireStorageFileChangedEvent(event: VFileEvent): Boolean {
   // ignore VFilePropertyChangeEvent because doesn't affect content
-  if (event is VFilePropertyChangeEvent) {
-    return false
+  return when (event) {
+    is VFilePropertyChangeEvent -> false
+    else -> event.requestor !is StorageManagerFileWriteRequestor
   }
-
-  val requestor = event.requestor
-  return requestor !is SaveSession && requestor !is StateStorage && requestor !is SaveSessionProducer
 }
