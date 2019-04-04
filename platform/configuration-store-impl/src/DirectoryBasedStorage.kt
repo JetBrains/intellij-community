@@ -205,9 +205,7 @@ open class DirectoryBasedStorage(private val dir: Path,
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
             if (file.isWritable) {
-              runNonUndoableAction(file) {
-                file.delete(this)
-              }
+              file.delete(this)
             }
             else {
               throw ReadOnlyModificationException(file, null)

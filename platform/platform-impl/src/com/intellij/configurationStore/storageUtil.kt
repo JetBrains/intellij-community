@@ -7,9 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.impl.UndoManagerImpl
-import com.intellij.openapi.command.undo.DocumentReferenceManager
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -118,7 +115,7 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
-fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
+fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
   if (virtualFile != null) {
     return virtualFile
@@ -131,10 +128,8 @@ fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
   val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
-  return runNonUndoableAction(parentVirtualFile) {
-    runAsWriteActionIfNeeded {
-      parentVirtualFile.createChildData(requestor, file.fileName.toString())
-    }
+  return runAsWriteActionIfNeeded {
+    parentVirtualFile.createChildData(requestor, file.fileName.toString())
   }
 }
 
@@ -149,20 +144,4 @@ inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
 @Throws(IOException::class)
 fun readProjectNameFile(nameFile: Path): String? {
   return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
-}
-
-inline fun <T> runNonUndoableAction(file: VirtualFile, task: () -> T): T {
-  // must be before task (maybe renamed or deleted)
-  val documentReference = DocumentReferenceManager.getInstance().create(file)
-  val result = task()
-  val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
-  undoManager.nonundoableActionPerformed(documentReference, true)
-  undoManager.invalidateActionsFor(documentReference)
-  return result
-}
-
-inline fun <T> runNonUndoableWriteAction(file: VirtualFile, crossinline task: () -> T): T {
-  return runNonUndoableAction(file) {
-    runWriteAction(task)
-  }
 }
