@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
@@ -48,15 +50,19 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
 
       val gradleVersion = setting.resolveGradleVersion()
       if(gradleVersion.isSnapshot) {
-        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.baseVersion.version + ".SNAPSHOT", 1))
+        usages.add(UsageDescriptor("gradleVersion." + anonymizeGradleVersion(gradleVersion.baseVersion) + ".SNAPSHOT", 1))
       } else {
-        usages.add(UsageDescriptor("gradleVersion." + gradleVersion.version, 1))
+        usages.add(UsageDescriptor("gradleVersion." + anonymizeGradleVersion(gradleVersion), 1))
       }
 
       usages.add(getBooleanUsage("delegateBuildRun", settingsService.isDelegatedBuildEnabled(projectPath)))
       usages.add(getEnumUsage("preferredTestRunner", settingsService.getTestRunner(projectPath)))
     }
     return usages
+  }
+
+  private fun anonymizeGradleVersion(version : GradleVersion) : String {
+    return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
   private fun getYesNoUsage(key: String, value: Boolean): UsageDescriptor {
