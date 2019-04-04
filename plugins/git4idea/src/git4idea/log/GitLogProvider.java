@@ -34,6 +34,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
+import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
 public class GitLogProvider implements VcsLogProvider {
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
@@ -319,8 +321,8 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
-                                                                   GitCommitRequirements.DiffRenameLimit.REGISTRY,
-                                                                   true, false);
+                                                                   DiffRenameLimit.REGISTRY,
+                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, false);
     GitLogUtil.readFullDetails(myProject, root, commitConsumer, requirements, true, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
@@ -334,8 +336,8 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root),
-                                                                   GitCommitRequirements.DiffRenameLimit.GIT_CONFIG,
-                                                                   true, true);
+                                                                   DiffRenameLimit.GIT_CONFIG,
+                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, true);
     GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, false, commitConsumer);
   }
 
@@ -348,9 +350,9 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitCommitRequirements.DiffRenameLimit renameLimit = isForIndexing ? GitCommitRequirements.DiffRenameLimit.REGISTRY : GitCommitRequirements.DiffRenameLimit.INFINITY;
+    DiffRenameLimit renameLimit = isForIndexing ? DiffRenameLimit.REGISTRY : DiffRenameLimit.INFINITY;
     GitCommitRequirements requirements = new GitCommitRequirements(shouldIncludeRootChanges(root), renameLimit,
-                                                                   true, false);
+                                                                   DiffInMergeCommits.DIFF_TO_PARENTS, false);
     GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, hashes, requirements, isForIndexing, commitConsumer);
   }
 

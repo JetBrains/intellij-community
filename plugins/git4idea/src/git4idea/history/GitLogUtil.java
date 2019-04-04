@@ -249,7 +249,7 @@ public class GitLogUtil {
     }
 
     String[] commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters()), parameters);
-    if (requirements.getDiffToParentsInMerges()) {
+    if (requirements.getDiffInMergeCommits().equals(GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS)) {
       Consumer<List<GitLogRecord>> consumer = records -> {
         GitLogRecord firstRecord = notNull(getFirstItem(records));
         String[] parents = firstRecord.getParentsHashes();
