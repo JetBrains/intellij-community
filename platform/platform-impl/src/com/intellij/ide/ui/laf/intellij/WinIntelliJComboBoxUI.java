@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -550,6 +551,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   protected ComboPopup createPopup() {
+    if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+        @Override
+        protected void configureList(@NotNull JList<Object> list) {
+          super.configureList(list);
+          list.setBackground(UIManager.getColor("TextField.background"));
+        }
+      };
+    }
     return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
@@ -564,6 +574,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         putClientProperty("JComboBox.isCellEditor", DarculaUIUtil.isTableCellEditor(comboBox));
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       protected void configureList() {
         super.configureList();
