@@ -33,7 +33,8 @@ class MPSProperties extends ProductProperties {
                 "intellij.java.remoteServers.git",
                 "intellij.vcs.svn",
                 "intellij.vcs.github",
-                "intellij.terminal"
+                "intellij.terminal",
+                "intellij.java.coverage"
                 /*, "properties", "ant"*/
         ]
 
@@ -60,6 +61,8 @@ class MPSProperties extends ProductProperties {
                     withModule(it, "java-impl.jar", "java_resources_en.jar")
                 }
                 // end of copy from BaseIdeaProperties
+
+                withModule("intellij.platform.coverage", productLayout.mainJarName)
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
                 withProjectLibrary("Eclipse")
