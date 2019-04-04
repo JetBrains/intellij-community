@@ -35,8 +35,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
     final Presentation presentation = e.getPresentation();
 
     if ((project == null) || (myCheckUseCase) && ((useCase == null) || (! CommittedChangesBrowserUseCase.COMMITTED.equals(useCase)))) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 

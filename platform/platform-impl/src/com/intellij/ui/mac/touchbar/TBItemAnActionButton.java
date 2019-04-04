@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -88,8 +88,7 @@ class TBItemAnActionButton extends TBItemButton {
     try {
       ActionUtil.performFastUpdate(false, myAnAction, e, forceUseCached);
     } catch (IndexNotReadyException e1) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
 
     return presentation;

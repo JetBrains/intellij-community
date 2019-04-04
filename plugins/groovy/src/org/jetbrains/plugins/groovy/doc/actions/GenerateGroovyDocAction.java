@@ -54,12 +54,10 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     Module module = event.getData(LangDataKeys.MODULE);
 
     if (module == null || !LibrariesUtil.hasGroovySdk(module)) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
     else {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 
