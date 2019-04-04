@@ -185,11 +185,9 @@ public abstract class VirtualFileVisitor<T> {
     }
 
     VirtualFile target = file.getCanonicalFile();
-    boolean isValidLink = target != null && !target.equals(file) && !VfsUtilCore.isAncestor(target, file, true);
-    if (!isValidLink) {
-      return false;
+    if (target == null || VfsUtilCore.isAncestor(target, file, false)) {
+      return false;  // invalid or recursive link
     }
-
     List<VirtualFile> links = myVisitedTargets.get(target);
     if (links == null) {
       myVisitedTargets.put(target, ContainerUtil.newSmartList(file));
