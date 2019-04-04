@@ -99,12 +99,6 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public PsiElement getAssignmentWord() {
-    return findChildByType(ASSIGNMENT_WORD);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getHex() {
     return findChildByType(HEX);
   }

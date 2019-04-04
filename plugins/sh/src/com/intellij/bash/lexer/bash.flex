@@ -277,16 +277,15 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-    "[[ "                         { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-    "[ "                          { pushState(CONDITIONAL_EXPRESSION); return EXPR_CONDITIONAL_LEFT; }
+    "[["                          { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+    "["                           { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
                                     else return RIGHT_DOUBLE_PAREN; }
-    {WhiteSpace}+ "]]"            { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET; }
-    {WhiteSpace}+ "]"             { switch (yystate()) {
+    "]]"                          { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET; }
+    "]"                           { switch (yystate()) {
                                       case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
-                                      case CONDITIONAL_EXPRESSION: popState(); return EXPR_CONDITIONAL_RIGHT;
-                                      default: return RIGHT_SQUARE; }
+                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE; }
                                   }
 
     /***** General operators *****/
@@ -298,12 +297,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
                                     if (yystate() == COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
-    "["                           { return LEFT_SQUARE; }
-    "]"                           { switch (yystate()) {
-                                      case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
-                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE;
-                                      default: return RIGHT_SQUARE; }
-                                  }
+
     "!"                           { return BANG; }
     "`"                           { if (yystate() == COMMAND_SUBSTITUTION) popState(); else pushState(COMMAND_SUBSTITUTION);
                                   return BACKQUOTE; }

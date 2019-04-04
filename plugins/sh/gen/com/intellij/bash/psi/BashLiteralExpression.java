@@ -38,9 +38,6 @@ public interface BashLiteralExpression extends BashExpression {
   PsiElement getFiledescriptor();
 
   @Nullable
-  PsiElement getAssignmentWord();
-
-  @Nullable
   PsiElement getHex();
 
   @Nullable

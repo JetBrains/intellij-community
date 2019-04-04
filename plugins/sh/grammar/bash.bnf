@@ -141,9 +141,9 @@ bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
 
-conditional_command ::= cond_left (<<condOp>> | lit | vars)* (cond_right | ']' <<addSpace>>) {pin(".*")=1}
-private cond_right ::= ' ]' | ']]'
-private cond_left ::= '[ ' | '[[' | ('[' <<addSpace>>)
+conditional_command ::= cond_left (<<condOp>> | lit | vars)* cond_right {pin(".*")=1}
+private cond_right ::= ']' | ']]'
+private cond_left ::= '[' | '[['
 private lit ::= literal | '(' lit ')' {pin(".*")=1}
 
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}
@@ -170,7 +170,7 @@ arithmetic_expansion ::= '((' expression '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
-assignment_command ::= (assignment_word | w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+assignment_command ::= (w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
                        {'=' <<parseUntilSpace literal >>}* {pin=0}
 
 redirection_list ::= redirection redirection*
@@ -187,7 +187,7 @@ command ::= shell_command redirection_list?
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
-private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 shell_command ::=   for_command
                   | case_command
@@ -322,4 +322,4 @@ index_expression ::= expression '[' expression ']'
 array_expression ::= '[' expression ']'
 parentheses_expression ::= '(' expression ')' {pin=1}
 
-literal_expression ::= literal | assignment_word
+literal_expression ::= literal

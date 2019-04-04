@@ -24,7 +24,8 @@ BASH_FILE
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
                   PsiElement(octal)('007')
-              PsiElement(ARITH_SQUARE_RIGHT)(' ]')
+              PsiWhiteSpace(' ')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -52,7 +53,8 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiErrorElement:'007' unexpected
                 PsiElement(octal)('007')
-              PsiElement(ARITH_SQUARE_RIGHT)(' ]')
+              PsiWhiteSpace(' ')
+              PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

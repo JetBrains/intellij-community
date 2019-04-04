@@ -8,8 +8,6 @@ if test -a foo.txt; then
   echo "foo"
 fi;
 
-echo [ "foo" = "foo" ]
-
 if [ !a == $a ]; then
     echo 1
 fi;

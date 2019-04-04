@@ -407,12 +407,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiErrorElement:Add space
-                <empty list>
               PsiElement(word)('0-9')
               PsiElement(])(']')
-              PsiErrorElement:Add space
-                <empty list>
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -426,12 +422,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiErrorElement:Add space
-                <empty list>
               PsiElement(word)('a-zA-Z')
               PsiElement(])(']')
-              PsiErrorElement:Add space
-                <empty list>
           SIMPLE_COMMAND_ELEMENT
             PsiElement(word)('*')
   PsiElement(\n)('\n')
@@ -439,20 +431,23 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement([ )('[ ')
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
           PsiElement(word)('\$')
           BASH_EXPANSION
             PsiElement({)('{')
             PsiElement(word)('a')
             PsiElement(})('}')
-          PsiElement( ])(' ]')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement([ )('[ ')
-          PsiElement( ])(' ]')
+          PsiElement([)('[')
+          PsiWhiteSpace('  ')
+          PsiElement(])(']')
   PsiElement(\n)('\n')
   PsiComment(Comment)('#[ ] # todo')
   PsiElement(\n)('\n')
@@ -460,13 +455,15 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         CONDITIONAL_COMMAND
-          PsiElement([[)('[[ ')
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
           PsiElement(word)('a')
           PsiWhiteSpace(' ')
           PsiElement(||)('||')
           PsiWhiteSpace(' ')
           PsiElement(word)('b')
-          PsiElement(]])(' ]]')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

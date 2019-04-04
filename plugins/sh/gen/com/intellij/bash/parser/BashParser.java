@@ -294,7 +294,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (assignment_word | w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+  // (w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
   //                        {'=' <<parseUntilSpace literal >>}*
   public static boolean assignment_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command")) return false;
@@ -309,12 +309,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // assignment_word | w | variable
+  // w | variable
   private static boolean assignment_command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command_0")) return false;
     boolean r;
-    r = consumeToken(b, ASSIGNMENT_WORD);
-    if (!r) r = w(b, l + 1);
+    r = w(b, l + 1);
     if (!r) r = variable(b, l + 1);
     return r;
   }
@@ -627,7 +626,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+  // !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
   static boolean command_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_recover")) return false;
     boolean r;
@@ -637,7 +636,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | assignment_word | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word
+  // '!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word
   private static boolean command_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_recover_0")) return false;
     boolean r;
@@ -712,7 +711,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, HEREDOC_MARKER_IGNORING_TABS_END);
     if (!r) r = consumeToken(b, HEREDOC_MARKER_TAG);
     if (!r) r = consumeToken(b, RAW_STRING);
-    if (!r) r = consumeToken(b, ASSIGNMENT_WORD);
     if (!r) r = consumeToken(b, CASE);
     if (!r) r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, ELIF);
@@ -1046,52 +1044,42 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '[ ' | '[[' | ('[' <<addSpace>>)
+  // '[' | '[['
   static boolean cond_left(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cond_left")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
-    if (!r) r = consumeToken(b, LEFT_DOUBLE_BRACKET);
-    if (!r) r = cond_left_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '[' <<addSpace>>
-  private static boolean cond_left_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cond_left_2")) return false;
+    if (!nextTokenIs(b, "", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LEFT_SQUARE);
-    r = r && addSpace(b, l + 1);
+    if (!r) r = consumeToken(b, LEFT_DOUBLE_BRACKET);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // ' ]' | ']]'
+  // ']' | ']]'
   static boolean cond_right(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cond_right")) return false;
-    if (!nextTokenIs(b, "", EXPR_CONDITIONAL_RIGHT, RIGHT_DOUBLE_BRACKET)) return false;
+    if (!nextTokenIs(b, "", RIGHT_DOUBLE_BRACKET, RIGHT_SQUARE)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, EXPR_CONDITIONAL_RIGHT);
+    r = consumeToken(b, RIGHT_SQUARE);
     if (!r) r = consumeToken(b, RIGHT_DOUBLE_BRACKET);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // cond_left (<<condOp>> | lit | vars)* (cond_right | ']' <<addSpace>>)
+  // cond_left (<<condOp>> | lit | vars)* cond_right
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
+    if (!nextTokenIs(b, "<conditional command>", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _COLLAPSE_, CONDITIONAL_COMMAND, "<conditional command>");
     r = cond_left(b, l + 1);
     p = r; // pin = 1
     r = r && report_error_(b, conditional_command_1(b, l + 1));
-    r = p && conditional_command_2(b, l + 1) && r;
+    r = p && cond_right(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -1117,29 +1105,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = vars(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // cond_right | ']' <<addSpace>>
-  private static boolean conditional_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_command_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = cond_right(b, l + 1);
-    if (!r) r = conditional_command_2_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ']' <<addSpace>>
-  private static boolean conditional_command_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_command_2_1")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, RIGHT_SQUARE);
-    p = r; // pin = 1
-    r = r && addSpace(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
   }
 
   /* ********************************************************** */
@@ -2924,13 +2889,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // literal | assignment_word
+  // literal
   public static boolean literal_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_expression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LITERAL_EXPRESSION, "<literal expression>");
     r = literal(b, l + 1);
-    if (!r) r = consumeTokenSmart(b, ASSIGNMENT_WORD);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

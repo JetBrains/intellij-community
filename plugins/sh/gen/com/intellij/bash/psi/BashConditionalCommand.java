@@ -26,12 +26,6 @@ public interface BashConditionalCommand extends BashCommand {
   List<BashVariable> getVariableList();
 
   @Nullable
-  PsiElement getExprConditionalLeft();
-
-  @Nullable
-  PsiElement getExprConditionalRight();
-
-  @Nullable
   PsiElement getLeftDoubleBracket();
 
   @Nullable

@@ -44,9 +44,6 @@ public interface BashAssignmentCommand extends BashCommand {
   PsiElement getPlusAssign();
 
   @Nullable
-  PsiElement getAssignmentWord();
-
-  @Nullable
   PsiElement getHex();
 
   @Nullable

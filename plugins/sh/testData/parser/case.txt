@@ -802,13 +802,15 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   CONDITIONAL_COMMAND
-                    PsiElement([ )('[ ')
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
                     STRING
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$3')
                       PsiElement(")('"')
-                    PsiElement( ])(' ]')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
               PsiWhiteSpace(' ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -1128,13 +1130,15 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   CONDITIONAL_COMMAND
-                    PsiElement([ )('[ ')
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
                     STRING
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$function')
                       PsiElement(")('"')
-                    PsiElement( ])(' ]')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
               PsiWhiteSpace(' ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -1179,13 +1183,15 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   CONDITIONAL_COMMAND
-                    PsiElement([ )('[ ')
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
                     STRING
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$name')
                       PsiElement(")('"')
-                    PsiElement( ])(' ]')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
               PsiWhiteSpace('     ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -1230,13 +1236,15 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   CONDITIONAL_COMMAND
-                    PsiElement([ )('[ ')
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
                     STRING
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$keys')
                       PsiElement(")('"')
-                    PsiElement( ])(' ]')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
               PsiWhiteSpace('     ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -1286,13 +1294,15 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   CONDITIONAL_COMMAND
-                    PsiElement([ )('[ ')
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
                     STRING
                       PsiElement(")('"')
                       VARIABLE
                         PsiElement(var)('$entry')
                       PsiElement(")('"')
-                    PsiElement( ])(' ]')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
               PsiWhiteSpace('    ')
               PsiElement(||)('||')
               PsiWhiteSpace(' ')
@@ -1505,7 +1515,8 @@ BASH_FILE
                                 PIPELINE_COMMAND
                                   PIPELINE
                                     CONDITIONAL_COMMAND
-                                      PsiElement([ )('[ ')
+                                      PsiElement([)('[')
+                                      PsiWhiteSpace(' ')
                                       STRING
                                         PsiElement(")('"')
                                         VARIABLE
@@ -1518,7 +1529,8 @@ BASH_FILE
                                         PsiElement(")('"')
                                         PsiElement(word)('members')
                                         PsiElement(")('"')
-                                      PsiElement( ])(' ]')
+                                      PsiWhiteSpace(' ')
+                                      PsiElement(])(']')
                                 PsiElement(;)(';')
                               PsiWhiteSpace(' ')
                               THEN_CLAUSE
@@ -1651,7 +1663,8 @@ BASH_FILE
                                 PIPELINE_COMMAND
                                   PIPELINE
                                     CONDITIONAL_COMMAND
-                                      PsiElement([ )('[ ')
+                                      PsiElement([)('[')
+                                      PsiWhiteSpace(' ')
                                       STRING
                                         PsiElement(")('"')
                                         VARIABLE
@@ -1664,7 +1677,8 @@ BASH_FILE
                                         PsiElement(")('"')
                                         PsiElement(word)('printVals')
                                         PsiElement(")('"')
-                                      PsiElement( ])(' ]')
+                                      PsiWhiteSpace(' ')
+                                      PsiElement(])(']')
                                 PsiElement(;)(';')
                               PsiWhiteSpace(' ')
                               THEN_CLAUSE
@@ -1698,7 +1712,8 @@ BASH_FILE
                                   PIPELINE_COMMAND
                                     PIPELINE
                                       CONDITIONAL_COMMAND
-                                        PsiElement([ )('[ ')
+                                        PsiElement([)('[')
+                                        PsiWhiteSpace(' ')
                                         STRING
                                           PsiElement(")('"')
                                           VARIABLE
@@ -1711,7 +1726,8 @@ BASH_FILE
                                           PsiElement(")('"')
                                           PsiElement(word)('setVars')
                                           PsiElement(")('"')
-                                        PsiElement( ])(' ]')
+                                        PsiWhiteSpace(' ')
+                                        PsiElement(])(']')
                                   PsiElement(;)(';')
                                 PsiWhiteSpace(' ')
                                 THEN_CLAUSE
@@ -1807,7 +1823,8 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           CONDITIONAL_COMMAND
-                            PsiElement([ )('[ ')
+                            PsiElement([)('[')
+                            PsiWhiteSpace(' ')
                             STRING
                               PsiElement(")('"')
                               VARIABLE
@@ -1820,7 +1837,8 @@ BASH_FILE
                               PsiElement(")('"')
                               PsiElement(word)('printVals')
                               PsiElement(")('"')
-                            PsiElement( ])(' ]')
+                            PsiWhiteSpace(' ')
+                            PsiElement(])(']')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     THEN_CLAUSE

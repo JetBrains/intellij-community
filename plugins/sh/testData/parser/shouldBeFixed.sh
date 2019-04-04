@@ -10,3 +10,5 @@ echo [foo[1]]
 [[ ((1+1)) ]]
 
 values[indx]=1
+
+echo [ "foo" = "foo" ]
