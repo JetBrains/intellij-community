@@ -145,9 +145,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       if (element != null) {
-        val digest = getDigest()
-        serializeElementToBinary(element, DigestOutputStream(digest))
-        info.digest = digest.digest()
+        info.digest = element.digest(getDigest())
       }
       info.schemeKey = schemeName
       return info
