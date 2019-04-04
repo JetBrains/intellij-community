@@ -295,6 +295,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (assignment_word | w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+  //                        {'=' <<parseUntilSpace literal >>}*
   public static boolean assignment_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command")) return false;
     boolean r;
@@ -303,6 +304,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && assignment_command_1(b, l + 1);
     r = r && assignment_command_2(b, l + 1);
     r = r && assignment_command_3(b, l + 1);
+    r = r && assignment_command_4(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -359,6 +361,28 @@ public class BashParser implements PsiParser, LightPsiParser {
     boolean r;
     r = literal(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
+    return r;
+  }
+
+  // {'=' <<parseUntilSpace literal >>}*
+  private static boolean assignment_command_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_4")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!assignment_command_4_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "assignment_command_4", c)) break;
+    }
+    return true;
+  }
+
+  // '=' <<parseUntilSpace literal >>
+  private static boolean assignment_command_4_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_4_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, ASSIGN);
+    r = r && parseUntilSpace(b, l + 1, literal_parser_);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2898,6 +2922,11 @@ public class BashParser implements PsiParser, LightPsiParser {
   static final Parser command_substitution_command_2_1_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_substitution_command_2_1(b, l + 1);
+    }
+  };
+  static final Parser literal_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return literal(b, l + 1);
     }
   };
   static final Parser old_arithmetic_expansion_expression_recover_parser_ = new Parser() {

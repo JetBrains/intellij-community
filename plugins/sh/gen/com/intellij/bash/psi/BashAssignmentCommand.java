@@ -29,9 +29,6 @@ public interface BashAssignmentCommand extends BashCommand {
   BashVariable getVariable();
 
   @Nullable
-  PsiElement getAssign();
-
-  @Nullable
   PsiElement getAt();
 
   @Nullable

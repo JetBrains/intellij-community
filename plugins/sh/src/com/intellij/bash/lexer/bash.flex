@@ -327,7 +327,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "&>>"                         { return REDIRECT_AMP_GREATER_GREATER; }
 
     "<<<"                         { return REDIRECT_HERE_STRING; }
-    "<<-" |
+    "<<-"                         |
     "<<"                          { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
                                     { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }

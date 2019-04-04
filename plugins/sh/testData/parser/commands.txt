@@ -1,0 +1,118 @@
+BASH_FILE
+  PsiComment(Comment)('# Try to join an new cluster')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('/usr/local/bin/etcd')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--name')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('NAME')
+              PsiElement(})('}')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--debug')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--log-package-levels')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_COMMAND
+              PsiElement(word)('etcdmain')
+              PsiElement(=)('=')
+              PsiElement(word)('DEBUG,etcdserver')
+              PsiElement(=)('=')
+              PsiElement(word)('DEBUG')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--data-dir')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            VARIABLE
+              PsiElement(var)('$DATADIR')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--initial-advertise-peer-urls')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('http://')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('IP')
+              PsiElement(})('}')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)(':2380')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--listen-peer-urls')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('http://')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('IP')
+              PsiElement(})('}')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)(':2380')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--listen-client-urls')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('http://')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('IP')
+              PsiElement(})('}')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)(':2379,http://127.0.0.1:2379')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--advertise-client-urls')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('http://')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('IP')
+              PsiElement(})('}')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)(':2379')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--initial-cluster-token')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('etcd-cluster-1')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--initial-cluster')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('INIT_CLUSTER')
+              PsiElement(})('}')
+          PsiWhiteSpace(' \\n    ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('--initial-cluster-state')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('new')

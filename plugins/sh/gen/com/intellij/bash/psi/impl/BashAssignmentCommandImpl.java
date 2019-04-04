@@ -69,12 +69,6 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public PsiElement getAssign() {
-    return findChildByType(ASSIGN);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getAt() {
     return findChildByType(AT);
   }

@@ -170,7 +170,8 @@ arithmetic_expansion ::= '((' expression '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
-assignment_command ::= (assignment_word | w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>] {pin=0}
+assignment_command ::= (assignment_word | w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+                       {'=' <<parseUntilSpace literal >>}* {pin=0}
 
 redirection_list ::= redirection redirection*
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
