@@ -38,7 +38,6 @@ public final class EnterAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (ThumbnailViewActionUtil.setEnabled(e)) {
             Presentation presentation = e.getPresentation();
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);

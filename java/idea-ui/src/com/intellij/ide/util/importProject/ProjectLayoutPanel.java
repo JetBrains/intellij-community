@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.icons.AllIcons;
@@ -340,7 +340,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
     }
 
@@ -423,7 +422,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
     }
   }

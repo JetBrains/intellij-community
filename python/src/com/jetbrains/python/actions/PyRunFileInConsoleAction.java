@@ -28,7 +28,6 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     final Project project = e.getProject();
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     final Presentation presentation = e.getPresentation();

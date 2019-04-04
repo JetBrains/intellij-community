@@ -176,7 +176,6 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-      super.update(event);
       origAction.update(event);
     }
 
