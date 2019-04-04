@@ -1166,6 +1166,12 @@
              <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
+        <option name="CODE_LENS_BORDER_COLOR">
+          <value>
+            <option name="EFFECT_COLOR" value="595959"/>
+            <option name="EFFECT_TYPE" value="0"/>
+          </value>
+        </option>
     </attributes>
 
   </scheme>
@@ -2375,6 +2381,12 @@
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
          </value>
+      </option>
+      <option name="CODE_LENS_BORDER_COLOR">
+        <value>
+          <option name="EFFECT_COLOR" value="999999"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
       </option>
     </attributes>
   </scheme>
