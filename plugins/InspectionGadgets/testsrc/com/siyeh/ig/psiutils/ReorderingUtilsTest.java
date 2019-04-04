@@ -16,7 +16,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
                                        "import java.util.List;\n" +
                                        "/** @noinspection all*/\n" +
                                        "class X {Object test(Object obj, String str, int x, int y, String[] arr, " +
-                                       "Optional<String> opt, List<String> list) { return ";
+                                       "Optional<String> opt, List<String> list, Integer boxed) { return ";
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";
@@ -35,6 +35,8 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("obj != null && /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
     checkCanBeReordered("obj == null || /*<*/obj.hashCode() > 10/*>*/", ThreeState.NO);
     checkCanBeReordered("arr != null && /*<*/obj.hashCode() > 10/*>*/", ThreeState.UNSURE);
+    checkCanBeReordered("boxed != null && /*<*/boxed > 10/*>*/", ThreeState.NO);
+    checkCanBeReordered("x != null && /*<*/x > 10/*>*/", ThreeState.YES); // compilation error at null-check actually
   }
 
   public void testCast() {
