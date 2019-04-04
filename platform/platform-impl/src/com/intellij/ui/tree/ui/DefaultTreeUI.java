@@ -3,6 +3,8 @@ package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.tree.TreeNodeBackgroundSupplier;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -54,11 +56,18 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   @Nullable
-  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, boolean selected) {
+  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
     if (selected) return UIUtil.getTreeSelectionBackground(tree.hasFocus());
-    if (tree instanceof Tree) {
-      Tree custom = (Tree)tree;
-      if (custom.isFileColorsEnabled()) return custom.getFileColorForPath(path);
+    Object node = TreeUtil.getLastUserObject(path);
+    if (node instanceof TreeNodeBackgroundSupplier) {
+      TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
+      Color background = supplier.getNodeBackground(row);
+      if (background != null) return background;
+    }
+    if (tree instanceof TreePathBackgroundSupplier) {
+      TreePathBackgroundSupplier supplier = (TreePathBackgroundSupplier)tree;
+      Color background = supplier.getPathBackground(path, row);
+      if (background != null) return background;
     }
     return null;
   }
@@ -185,7 +194,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
           boolean focused = tree.hasFocus();
           boolean lead = focused && row == getLeadSelectionRow();
 
-          Color background = getBackground(tree, path, selected);
+          Color background = getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
             g.fillRect(viewportX, bounds.y, viewportWidth, bounds.height);
