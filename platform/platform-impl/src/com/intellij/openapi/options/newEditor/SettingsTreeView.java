@@ -759,6 +759,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     @Override
     public void setUI(TreeUI ui) {
       super.setUI(ui instanceof MyTreeUi ? ui : new MyTreeUi());
+      setRowHeight(UIManager.getInt("SettingsTree.rowHeight"));
     }
 
     @Override

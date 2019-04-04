@@ -558,6 +558,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
                                            "Tree.rowHeight",
+                                           "SettingsTree.rowHeight",
                                            "Table.rowHeight",
                                            "List.rowHeight");
 
