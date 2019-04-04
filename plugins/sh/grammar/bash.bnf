@@ -216,7 +216,7 @@ block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
 
 select_command ::= select w (';'? newlines any_block | newlines in_clause any_block)
 
-case_command ::= case w newlines "in" (case_clause_list newlines) esac {pin(".*")=1}
+case_command ::= case w newlines "in" case_clause_list newlines esac {pin(".*")=1}
 
 function_def ::=           word argument_list  newlines block
                 | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
@@ -234,12 +234,13 @@ else_clause ::= else compound_list
 then_clause ::= then compound_list
 
 private case_clause_list ::= case_clause (';;' (case_clause | &(esac|newlines)))+ {pin(".*")=1}
-case_clause ::= newlines '('? pattern ')' (list|newlines) {pin=3}
+case_clause ::= newlines '('? pattern ')' (compound_case_list|newlines) {pin=3}
 
 pattern ::= w+ ('|' w+)* {pin('.*')=1}
 
-compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1}
-list ::=          (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1}
+list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
 

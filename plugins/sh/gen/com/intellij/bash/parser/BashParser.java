@@ -473,7 +473,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // newlines '('? pattern ')' (list|newlines)
+  // newlines '('? pattern ')' (compound_case_list|newlines)
   public static boolean case_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause")) return false;
     boolean r, p;
@@ -495,11 +495,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // list|newlines
+  // compound_case_list|newlines
   private static boolean case_clause_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_4")) return false;
     boolean r;
-    r = list(b, l + 1);
+    r = compound_case_list(b, l + 1);
     if (!r) r = newlines(b, l + 1);
     return r;
   }
@@ -575,7 +575,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // case w newlines "in" (case_clause_list newlines) esac
+  // case w newlines "in" case_clause_list newlines esac
   public static boolean case_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_command")) return false;
     if (!nextTokenIs(b, CASE)) return false;
@@ -586,20 +586,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = r && report_error_(b, w(b, l + 1));
     r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, "in")) && r;
-    r = p && report_error_(b, case_command_4(b, l + 1)) && r;
+    r = p && report_error_(b, case_clause_list(b, l + 1)) && r;
+    r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && consumeToken(b, ESAC) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // case_clause_list newlines
-  private static boolean case_command_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_command_4")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = case_clause_list(b, l + 1);
-    p = r; // pin = 1
-    r = r && newlines(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -966,6 +955,57 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = command_substitution(b, l + 1);
     if (!r) r = shell_parameter_expansion(b, l + 1);
     return r;
+  }
+
+  /* ********************************************************** */
+  // (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines
+  public static boolean compound_case_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<compound case list>");
+    r = compound_case_list_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, compound_case_list_1(b, l + 1));
+    r = p && newlines(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // nl pipeline_command_list?| pipeline_command_list
+  private static boolean compound_case_list_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = compound_case_list_0_0(b, l + 1);
+    if (!r) r = pipeline_command_list(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // nl pipeline_command_list?
+  private static boolean compound_case_list_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_0_0")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = nl(b, l + 1);
+    p = r; // pin = 1
+    r = r && compound_case_list_0_0_1(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // pipeline_command_list?
+  private static boolean compound_case_list_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_0_0_1")) return false;
+    pipeline_command_list(b, l + 1);
+    return true;
+  }
+
+  // end_of_list?
+  private static boolean compound_case_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compound_case_list_1")) return false;
+    end_of_list(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */

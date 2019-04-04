@@ -655,6 +655,49 @@ BASH_FILE
           STRING
             PsiElement(")('"')
             VARIABLE
+              PsiElement(var)('$3')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('in')
+          CASE_CLAUSE
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('\t')
+            PATTERN
+              PsiElement(word)('-')
+            PsiElement())(')')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t  ')
+              PsiComment(Comment)('#\toutput goes to standard output')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('    ')
+          PsiElement(;;)(';;')
+          CASE_CLAUSE
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('\t')
+            PATTERN
+              PsiElement(word)('*')
+            PsiElement())(')')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t\t')
+              PsiComment(Comment)('#\toutput goes to a file')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('\t  ')
+          PsiElement(;;)(';;')
+          PsiElement(\n)('\n')
+          PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            VARIABLE
               PsiElement(var)('$PACKER_BUILDER_TYPE')
             PsiElement(")('"')
           PsiWhiteSpace(' ')

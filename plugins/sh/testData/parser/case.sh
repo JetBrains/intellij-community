@@ -45,6 +45,15 @@ monthnoToName()
    return 0
 }
 
+case "$3" in
+	-)
+	  #	output goes to standard output
+    ;;
+	*)
+		#	output goes to a file
+	  ;;
+esac
+
 case "$PACKER_BUILDER_TYPE" in
 *)
     echo "Unknown Packer Builder Type >>$PACKER_BUILDER_TYPE<< selected."
