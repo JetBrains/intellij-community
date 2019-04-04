@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -132,7 +132,7 @@ public class PinActiveTabAction extends DumbAwareAction implements Toggleable {
   @Nullable
   private static Content getToolWindowContent(@NotNull AnActionEvent e) {
     // note to future readers: TW tab "pinned" icon is shown when content.getUserData(TW.SHOW_CONTENT_ICON) is true
-    ToolWindow window = PlatformDataKeys.TOOL_WINDOW.getData(e.getDataContext());
+    ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
     Content result = window != null ? window.getContentManager().getSelectedContent() : null;
     return result != null && result.isPinnable() ? result : null;
   }

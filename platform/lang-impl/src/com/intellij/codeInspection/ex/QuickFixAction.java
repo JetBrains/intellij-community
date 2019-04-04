@@ -55,7 +55,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   protected final InspectionToolWrapper myToolWrapper;
 
   protected static InspectionResultsView getInvoker(@NotNull AnActionEvent e) {
-    return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
+    return e.getData(InspectionResultsView.DATA_KEY);
   }
 
   protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {

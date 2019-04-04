@@ -62,7 +62,7 @@ public abstract class XPathAction extends AnAction {
       return false;
     }
 
-    Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       FileEditorManager fem = FileEditorManager.getInstance(project);
       editor = fem.getSelectedTextEditor();

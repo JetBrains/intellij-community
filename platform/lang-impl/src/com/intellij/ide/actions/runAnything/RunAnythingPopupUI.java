@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -825,7 +825,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
+    myProject = ObjectUtils.notNull(myActionEvent.getData(CommonDataKeys.PROJECT));
     myDataContext = createDataContext(actionEvent);
     myModule = myActionEvent.getData(LangDataKeys.MODULE);
 

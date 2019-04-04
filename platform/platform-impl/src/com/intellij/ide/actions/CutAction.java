@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.CutProvider;
@@ -23,7 +23,7 @@ public class CutAction extends AnAction implements DumbAware {
   }
 
   private static CutProvider getAvailableCutProvider(@NotNull AnActionEvent e) {
-    CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(e.getDataContext());
+    CutProvider provider = e.getData(PlatformDataKeys.CUT_PROVIDER);
     Project project = e.getProject();
     if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
       return null;

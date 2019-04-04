@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -36,7 +36,7 @@ import java.util.*;
 public class UsedIconsListingAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getData(LangDataKeys.PROJECT);
 
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 

@@ -156,8 +156,8 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFile(@NotNull AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    return files == null || files.length == 1 ? e.getData(CommonDataKeys.VIRTUAL_FILE) : null;
   }
 
   public static void show(@NotNull VirtualFile file, @NotNull MouseEvent e) {
