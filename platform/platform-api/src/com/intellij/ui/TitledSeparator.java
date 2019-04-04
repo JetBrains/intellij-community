@@ -58,6 +58,7 @@ public class TitledSeparator extends JPanel {
 
     setText(text);
     setLabelFor(labelFor);
+    setOpaque(false);
   }
 
   public String getText() {
