@@ -1482,11 +1482,16 @@ DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
 DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
 DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
 
+
+def _should_use_existing_connection(setup):
+    return setup.get('multiproc', False)
+
+
 def dispatch():
     setup = SetupHolder.setup
     host = setup['client']
     port = setup['port']
-    if setup.get('multiproc'):
+    if _should_use_existing_connection(setup):
         dispatcher = Dispatcher()
         try:
             dispatcher.connect(host, port)
