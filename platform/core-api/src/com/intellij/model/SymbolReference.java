@@ -26,7 +26,7 @@ public interface SymbolReference {
   @NotNull
   Collection<? extends SymbolResolveResult> resolveReference();
 
-  default boolean references(@NotNull Symbol target) {
+  default boolean refersTo(@NotNull Symbol target) {
     return ContainerUtil.or(resolveReference(), it -> it.getTarget().equals(target));
   }
 }

@@ -143,8 +143,8 @@ public interface PsiReference extends PsiSymbolReference {
   }
 
   @Override
-  default boolean references(@NotNull Symbol target) {
+  default boolean refersTo(@NotNull Symbol target) {
     PsiElement psi = SymbolService.getPsiElement(target);
-    return psi == null ? PsiSymbolReference.super.references(target) : isReferenceTo(psi);
+    return psi == null ? PsiSymbolReference.super.refersTo(target) : isReferenceTo(psi);
   }
 }

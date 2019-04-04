@@ -36,7 +36,7 @@ final class SingleTargetOccurrenceProcessor implements Function<TextOccurrence, 
     return ContainerUtil.filter(references, reference -> {
       ProgressManager.checkCanceled();
       if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) return false;
-      if (!reference.references(myTarget)) return false;
+      if (!reference.refersTo(myTarget)) return false;
       return true;
     });
   }
