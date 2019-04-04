@@ -132,6 +132,7 @@ private data class RemoveScheme(private val fileName: String) : SchemeChangeEven
 private class RemoveAllSchemes : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
     schemeManager.cachedVirtualDirectory = null
-    schemeManager.removeExternalizableSchemes()
+    // do not schedule scheme file removing because files were already removed
+    schemeManager.removeExternalizableSchemesFromRuntimeState()
   }
 }

@@ -230,11 +230,13 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun reload() {
     processor.beforeReloaded(this)
     // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
-    removeExternalizableSchemes()
+    // do not schedule scheme file removing because we just need to update our runtime state, not state on disk
+    removeExternalizableSchemesFromRuntimeState()
     processor.reloaded(this, loadSchemes())
   }
 
-  internal fun removeExternalizableSchemes() {
+  // method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
+  internal fun removeExternalizableSchemesFromRuntimeState() {
     // todo check is bundled/read-only schemes correctly handled
     val iterator = schemes.iterator()
     for (scheme in iterator) {
@@ -254,7 +256,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       @Suppress("UNCHECKED_CAST")
       processor.onSchemeDeleted(scheme as MUTABLE_SCHEME)
     }
-    retainExternalInfo()
+    retainExternalInfo(isScheduleToDelete = false)
   }
 
   internal fun getFileName(scheme: T) = schemeToInfo.get(scheme)?.fileNameWithoutExtension
@@ -540,7 +542,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
   }
 
-  internal fun retainExternalInfo() {
+  internal fun retainExternalInfo(isScheduleToDelete: Boolean) {
     if (schemeToInfo.isEmpty()) {
       return
     }
@@ -559,7 +561,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       iterator.remove()
-      info.scheduleDelete(filesToDelete)
+      if (isScheduleToDelete) {
+        info.scheduleDelete(filesToDelete)
+      }
     }
   }
 
