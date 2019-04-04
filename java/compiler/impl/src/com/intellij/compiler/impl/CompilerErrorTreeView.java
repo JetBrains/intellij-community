@@ -82,8 +82,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       final Project project = e.getProject();
       if (project == null) {
         return;

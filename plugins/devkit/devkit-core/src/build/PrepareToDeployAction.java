@@ -380,8 +380,7 @@ public class PrepareToDeployAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
     boolean enabled = module != null && PluginModuleType.isOfType(module);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
       e.getPresentation().setText(DevKitBundle.message("prepare.for.deployment", module.getName()));
     }
