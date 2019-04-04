@@ -113,7 +113,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
     GradleCommandLineOptionsConverter commandLineConverter = new GradleCommandLineOptionsConverter();
     commandLineConverter.configure(gradleCmdParser);
-    ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true));
+    ParsedCommandLine parsedCommandLine = gradleCmdParser.parse(ParametersListUtil.parse(fullCommandLine, true, true));
 
     final Map<String, List<String>> optionsMap =
       commandLineConverter.convert(parsedCommandLine, new HashMap<>());
