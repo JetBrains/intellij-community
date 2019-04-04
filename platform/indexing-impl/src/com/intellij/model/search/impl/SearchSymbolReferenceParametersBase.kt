@@ -11,13 +11,14 @@ abstract class SearchSymbolReferenceParametersBase : SearchSymbolReferenceParame
 
   final override fun getEffectiveSearchScope(): SearchScope = myEffectiveScope.value
 
-  private val myEffectiveScope: Lazy<SearchScope> =
+  private val myEffectiveScope: Lazy<SearchScope> = lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (isIgnoreUseScope) {
-      lazy(LazyThreadSafetyMode.PUBLICATION) { doGetEffectiveSearchScope() }
+      originalSearchScope
     }
     else {
-      lazyOf(originalSearchScope)
+      doGetEffectiveSearchScope()
     }
+  }
 
   private fun doGetEffectiveSearchScope(): SearchScope {
     val target = target as? PsiElement ?: return originalSearchScope
