@@ -21,8 +21,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
@@ -138,25 +136,11 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       protected void configureList() {
         super.configureList();
         list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
-        wrapRenderer();
-      }
-
-      @Override
-      protected PropertyChangeListener createPropertyChangeListener() {
-        final PropertyChangeListener listener = super.createPropertyChangeListener();
-        return new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            listener.propertyChange(evt);
-            if ("renderer".equals(evt.getPropertyName())) {
-              wrapRenderer();
-            }
-          }
-        };
       }
 
       @SuppressWarnings("unchecked")
-      private void wrapRenderer() {
+      @Override
+      protected void wrapRenderer() {
         ListCellRenderer<Object> renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWrapper(renderer));

@@ -654,7 +654,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     @SuppressWarnings("unchecked")
-    private void wrapRenderer() {
+    protected void wrapRenderer() {
       ListCellRenderer<Object> renderer = list.getCellRenderer();
       if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
         list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
