@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -142,16 +143,15 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     updateQueue.queue(object : Update(updateIdentity) {
       override fun canEat(update: Update) = isFullRescan
 
-      override fun run() {
-        if (repository.project.isDisposed) return
-
-        if (inUpdateMode.compareAndSet(false, true)) {
-          fireUpdateStarted()
-          val ignored = action()
-          inUpdateMode.set(false)
-          fireUpdateFinished(ignored)
-        }
-      }
+      override fun run() =
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(repository.project, Runnable {
+          if (inUpdateMode.compareAndSet(false, true)) {
+            fireUpdateStarted()
+            val ignored = action()
+            inUpdateMode.set(false)
+            fireUpdateFinished(ignored)
+          }
+        })
     })
   }
 
