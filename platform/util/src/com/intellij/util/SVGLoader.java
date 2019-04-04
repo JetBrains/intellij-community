@@ -232,16 +232,16 @@ public class SVGLoader {
     if (document == null) {
       throw new IOException("document not created");
     }
-    patchColors(document);
+    patchColors(url, document);
     myTranscoderInput = new TranscoderInput(document);
     myOverriddenWidth = width;
     myOverriddenHeight = height;
     myScale = scale;
   }
 
-  private static void patchColors(Document document) {
+  private static void patchColors(URL url, Document document) {
     if (ourColorPatcher != null) {
-      ourColorPatcher.patchColors(document.getDocumentElement());
+      ourColorPatcher.patchColors(url, document.getDocumentElement());
     }
   }
 
@@ -299,7 +299,12 @@ public class SVGLoader {
   }
 
   public interface SvgColorPatcher {
-    void patchColors(Element svg);
+    @Deprecated
+    default void patchColors(Element svg) {}
+
+    default void patchColors(URL url, Element svg) {
+      patchColors(svg);
+    }
   }
 
   /**
