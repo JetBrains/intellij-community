@@ -2,6 +2,7 @@
   <id>test</id>
   <vendor>JetBrains</vendor>
   <version>1.0</version>
+  <name>Using plugins with -s is valid</name>
 
   <product-descriptor code="012345678901234"
                       release-date="20180509"
