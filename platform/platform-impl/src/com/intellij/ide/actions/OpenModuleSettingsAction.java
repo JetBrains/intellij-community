@@ -32,9 +32,9 @@ public class OpenModuleSettingsAction extends EditSourceAction {
 
   public static boolean isModuleInContext(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
-    final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    final Module module = e.getData(LangDataKeys.MODULE);
     if (project != null && module != null) {
-      final VirtualFile moduleFolder = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      final VirtualFile moduleFolder = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (moduleFolder == null) {
         return false;
       }

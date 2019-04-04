@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.execution.Executor;
@@ -44,7 +44,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   @Override
   protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!super.isVisible(e)) return false;
-    final ExternalProjectsView projectsView = ExternalSystemDataKeys.VIEW.getData(e.getDataContext());
+    final ExternalProjectsView projectsView = e.getData(ExternalSystemDataKeys.VIEW);
     return projectsView == null || GradleConstants.SYSTEM_ID.equals(getSystemId(e));
   }
 

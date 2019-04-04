@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -33,7 +33,7 @@ public abstract class RowColumnAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
+    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (editor == null || selection == null || !editor.ensureEditable()) {
       return;
     }
@@ -47,7 +47,7 @@ public abstract class RowColumnAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
+    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (selection == null) {
       presentation.setEnabled(false);
     }
