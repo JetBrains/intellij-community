@@ -37,6 +37,8 @@ public class MavenImportingSettings implements Cloneable {
     "generate-test-resources",
     "process-test-resources"};
   public static final String UPDATE_FOLDERS_DEFAULT_PHASE = PROCESS_RESOURCES_PHASE;
+  public static final String DEFAULT_DEPENDENCY_TYPES =
+    "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
@@ -56,7 +58,7 @@ public class MavenImportingSettings implements Cloneable {
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
-  private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
+  private String dependencyTypes = DEFAULT_DEPENDENCY_TYPES;
   private Set<String> myDependencyTypesAsSet;
 
   @NotNull private String vmOptionsForImporter = "";
