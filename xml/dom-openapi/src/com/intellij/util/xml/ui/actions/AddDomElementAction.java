@@ -133,9 +133,6 @@ public abstract class AddDomElementAction extends AnAction {
       if (actions.size() > 1) {
         actions.add(Separator.getInstance());
       }
-      else if (actions.size() == 1) {
-
-      }
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
