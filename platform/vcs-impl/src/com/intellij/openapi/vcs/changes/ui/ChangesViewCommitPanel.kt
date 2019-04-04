@@ -27,6 +27,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
@@ -141,6 +142,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   override fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext) {
     val commitOptionsPanel = CommitOptionsPanel { defaultCommitActionName }.apply {
       setOptions(options)
+      border = empty(0, 10)
       MnemonicHelper.init(this)
     }
     val commitOptionsPopup = JBPopupFactory.getInstance()
