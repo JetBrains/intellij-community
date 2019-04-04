@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 
@@ -23,7 +24,14 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
   assert(packageName.isNotBlank() && packageName.matches(alphaNumeric)) { "Only alphanumeric packages are supported" }
   val command = "powershell.exe -Command \"Get-AppxPackage | Where-Object {\$_.Name -like '*$packageName*'} | Select-Object {\$_.InstallLocation} | Format-List\""
 
-  val process = Runtime.getRuntime().exec(command)
+  val process: Process
+  try {
+    process = Runtime.getRuntime().exec(command)
+  }
+  catch (e: IOException) {
+    logger.warn(e)
+    return null
+  }
   val result = process.waitFor(5, TimeUnit.SECONDS)
   if (!result) {
     reportError(command, "Process still runs after timeout", process, logger)
@@ -40,7 +48,7 @@ fun findInstallLocationForPackage(packageName: String): VirtualFile? {
     logger.warn("Strange output: $line")
     return null
   }
-  return LocalFileSystem.getInstance().findFileByPath(groupValues[1])
+  return LocalFileSystem.getInstance().refreshAndFindFileByPath(groupValues[1])
 }
 
 private fun reportError(command: String, error: String, process: Process, logger: Logger) {
