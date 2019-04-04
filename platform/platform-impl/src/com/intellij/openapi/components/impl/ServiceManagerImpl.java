@@ -41,8 +41,6 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
-
 public final class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
@@ -69,7 +67,7 @@ public final class ServiceManagerImpl implements Disposable {
   }
 
   @TestOnly
-  public static void processAllDescriptors(@NotNull Consumer<ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
+  public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
       List<ServiceDescriptor> serviceDescriptors;
@@ -102,7 +100,7 @@ public final class ServiceManagerImpl implements Disposable {
     return result;
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager,
+  public static void processAllImplementationClasses(@NotNull ComponentManager componentManager,
                                                      @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {
     @SuppressWarnings("unchecked")
     Collection<ComponentAdapter> adapters = componentManager.getPicoContainer().getComponentAdapters();
@@ -142,7 +140,7 @@ public final class ServiceManagerImpl implements Disposable {
         }
       }
       else if (!(o instanceof ExtensionComponentAdapter)) {
-        PluginId pluginId = componentManager.getConfig(o);
+        PluginId pluginId = ComponentManagerImpl.getConfig(o);
         // allow InstanceComponentAdapter without pluginId to test
         if (pluginId != null || o instanceof InstanceComponentAdapter) {
           try {
@@ -166,7 +164,7 @@ public final class ServiceManagerImpl implements Disposable {
   }
 
   private static class MyComponentAdapter implements AssignableToComponentAdapter, DefaultPicoContainer.LazyComponentAdapter {
-    private ComponentAdapter myDelegate = null;
+    private ComponentAdapter myDelegate;
     private final PluginDescriptor myPluginDescriptor;
     private final ServiceDescriptor myDescriptor;
     private final ComponentManagerEx myComponentManager;
@@ -240,7 +238,7 @@ public final class ServiceManagerImpl implements Disposable {
       }
 
       myComponentManager.initializeComponent(instance, true);
-      ParallelActivity.SERVICE.record(startTime, instance.getClass(), getActivityLevel(container));
+      ParallelActivity.SERVICE.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(container));
       return instance;
     }
 

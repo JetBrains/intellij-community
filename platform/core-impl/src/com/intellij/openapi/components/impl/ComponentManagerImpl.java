@@ -45,8 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.pico.DefaultPicoContainer.getActivityLevel;
-
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
@@ -218,7 +216,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public void initializeComponent(@NotNull Object component, boolean service) {
   }
 
-  protected void handleInitComponentError(Throwable ex, String componentClassName, PluginId pluginId) {
+  protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
     LOG.error(ex);
   }
 
@@ -237,7 +235,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     picoContainer.registerComponent(new ComponentConfigComponentAdapter(componentKey, componentImplementation, null, false));
   }
 
-  @SuppressWarnings("unchecked")
   @TestOnly
   public synchronized <T> T registerComponentInstance(@NotNull Class<T> componentKey, @NotNull T componentImplementation) {
     MutablePicoContainer picoContainer = getPicoContainer();
@@ -247,6 +244,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Object oldInstance = componentAdapter.myInitializedComponentInstance;
     // we don't update pluginId - method is test only
     componentAdapter.myInitializedComponentInstance = componentImplementation;
+    //noinspection unchecked
     return (T)oldInstance;
   }
 
@@ -349,12 +347,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myParentComponentManager;
   }
 
-  protected final int getComponentConfigCount() {
+  private int getComponentConfigCount() {
     return myComponentConfigCount;
   }
 
   @Nullable
-  public final PluginId getConfig(@NotNull ComponentAdapter adapter) {
+  static PluginId getConfig(@NotNull ComponentAdapter adapter) {
     return adapter instanceof ComponentConfigComponentAdapter ? ((ComponentConfigComponentAdapter)adapter).myPluginId : null;
   }
 
@@ -510,7 +508,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               ((BaseComponent)instance).initComponent();
             }
 
-            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), getActivityLevel(picoContainer));
+            ParallelActivity.COMPONENT.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(picoContainer));
           }
           finally {
             myInitializing = false;
