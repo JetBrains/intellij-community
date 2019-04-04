@@ -260,6 +260,14 @@ class VariableExtractor {
   private static PsiElement correctAnchor(PsiExpression expr,
                                           @NotNull PsiElement anchor,
                                           PsiExpression[] occurrences) {
+    if (anchor instanceof PsiSwitchLabelStatementBase) {
+      PsiSwitchBlock block = ((PsiSwitchLabelStatementBase)anchor).getEnclosingSwitchBlock();
+      if (block == null) return anchor;
+      anchor = block;
+      if (anchor instanceof PsiExpression) {
+        expr = (PsiExpression)anchor;
+      }
+    }
     PsiExpression firstOccurrence = StreamEx.of(occurrences).append(expr)
       .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
     if (anchor instanceof PsiWhileStatement) {
@@ -294,12 +302,6 @@ class VariableExtractor {
     }
     if (anchor.getParent() instanceof PsiSwitchLabeledRuleStatement) {
       return ExpressionUtils.getTopLevelExpression(expr);
-    }
-    if (anchor instanceof PsiSwitchLabelStatement) {
-      PsiSwitchBlock block = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchBlock();
-      if (block instanceof PsiSwitchStatement) {
-        return block;
-      }
     }
     if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
     PsiElement child = locateAnchor(anchor);
