@@ -51,10 +51,10 @@ class CurrentBranchComponent(
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()
 
   private fun refresh() {
-    isVisible = !isGroupedByRepository
-    if (isVisible) {
-      setData(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
-    }
+    val needShowBranch = !isGroupedByRepository
+    if (needShowBranch) setData(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
+
+    isVisible = needShowBranch && branches.isNotEmpty()
   }
 
   private fun setData(changes: Iterable<Change>, unversioned: Iterable<VirtualFile>) {
