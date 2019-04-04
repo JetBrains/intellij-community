@@ -5,11 +5,11 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHome
 import org.jetbrains.idea.maven.execution.MavenRunner
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -70,7 +70,8 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(getBooleanUsage("customDependencyTypes",
                                MavenImportingSettings.DEFAULT_DEPENDENCY_TYPES != importingSettings.dependencyTypes))
 
-    usages.add(getJREUsage("jdkForImporter", importingSettings.jdkForImporter))
+    usages.add(ExternalSystemUsagesCollector.getJRETypeUsage("jdkTypeForImporter", importingSettings.jdkForImporter))
+    usages.add(ExternalSystemUsagesCollector.getJREVersionUsage(project, "jdkVersionForImporter", importingSettings.jdkForImporter))
     usages.add(getBooleanUsage("hasVmOptionsForImporter", importingSettings.vmOptionsForImporter.isNotBlank()))
 
     // Ignored Files page
@@ -81,23 +82,13 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     val runnerSettings = MavenRunner.getInstance(project).settings
     usages.add(getBooleanUsage("delegateBuildRun", runnerSettings.isDelegateBuildToMaven));
     usages.add(getBooleanUsage("runMavenInBackground", runnerSettings.isRunMavenInBackground));
-    usages.add(getJREUsage("runnerJreName", runnerSettings.jreName));
+    usages.add(ExternalSystemUsagesCollector.getJRETypeUsage("runnerJreType", runnerSettings.jreName));
+    usages.add(ExternalSystemUsagesCollector.getJREVersionUsage(project, "runnerJreVersion", runnerSettings.jreName));
     usages.add(getBooleanUsage("hasRunnerVmOptions", runnerSettings.vmOptions.isNotBlank()));
     usages.add(getBooleanUsage("hasRunnerEnvVariables", !runnerSettings.environmentProperties.isNullOrEmpty()));
     usages.add(getBooleanUsage("passParentEnv", runnerSettings.isPassParentEnv));
     usages.add(getBooleanUsage("skipTests", runnerSettings.isSkipTests));
     usages.add(getBooleanUsage("hasRunnerMavenProperties", !runnerSettings.mavenProperties.isNullOrEmpty()));
     return usages
-  }
-
-  private fun getJREUsage(key: String, jreName: String?): UsageDescriptor {
-    val anonymizedName = when {
-      jreName.isNullOrBlank() -> "empty"
-      jreName in listOf(MavenRunnerSettings.USE_INTERNAL_JAVA,
-                        MavenRunnerSettings.USE_PROJECT_JDK,
-                        MavenRunnerSettings.USE_JAVA_HOME) -> jreName
-      else -> "custom"
-    }
-    return UsageDescriptor("$key.$anonymizedName", 1)
   }
 }
