@@ -163,9 +163,6 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         LOG.info("bin directory of Conda not found in " + condaFolder.getPath());
       }
     }
-    else {
-      LOG.info("Conda folder not found");
-    }
     return null;
   }
 
