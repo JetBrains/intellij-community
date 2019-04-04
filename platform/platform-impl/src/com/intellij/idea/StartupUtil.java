@@ -160,12 +160,12 @@ public class StartupUtil {
       activity.end();
     }));
 
+    addInitUiTasks(futures, executorService, log, initLafTask);
+
     if (!newConfigFolder) {
       installPluginUpdates();
       runPreAppClass(log);
     }
-
-    addInitUiTasks(futures, executorService, log, initLafTask);
 
     if (isParallelExecution) {
       executorService.submit(() -> loadSystemLibraries(log));  /* no need to wait */
