@@ -158,13 +158,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       return current;
     }
 
-    Set<String> toAdd = ContainerUtil.newHashSet(delegateNames);
+    Set<String> toAdd = new THashSet<>(Arrays.asList(delegateNames));
     for (FSRecords.NameId nameId : current) {
       toAdd.remove(nameId.name.toString());
     }
 
     final TIntArrayList childrenIds = new TIntArrayList(current.length + toAdd.size());
-    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithCapacity(current.length + toAdd.size());
+    final List<FSRecords.NameId> nameIds = new ArrayList<>(current.length + toAdd.size());
     for (FSRecords.NameId nameId : current) {
       childrenIds.add(nameId.id);
       nameIds.add(nameId);
@@ -1183,7 +1183,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   @NotNull
   public VirtualFile[] getLocalRoots() {
-    List<VirtualFile> roots = ContainerUtil.newSmartList();
+    List<VirtualFile> roots = new SmartList<>();
 
     for (NewVirtualFile root : myRoots.values()) {
       if (root.isInLocalFileSystem() && !(root.getFileSystem() instanceof TempFileSystem)) {
