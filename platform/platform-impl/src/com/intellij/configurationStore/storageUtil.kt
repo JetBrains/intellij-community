@@ -132,12 +132,17 @@ fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
   return runNonUndoableAction(parentVirtualFile) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+    runAsWriteActionIfNeeded {
       parentVirtualFile.createChildData(requestor, file.fileName.toString())
     }
-    else {
-      runWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
-    }
+  }
+}
+
+// runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
+  return when {
+    ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
+    else -> runWriteAction(runnable)
   }
 }
 

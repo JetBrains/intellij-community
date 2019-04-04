@@ -282,16 +282,18 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
   }
 
   runNonUndoableAction(file) {
-    file.getOutputStream(requestor).use { output ->
-      if (prependXmlProlog) {
-        output.write(XML_PROLOG)
-        output.write(lineSeparator.separatorBytes)
-      }
-      if (dataWriterOrByteArray is DataWriter) {
-        dataWriterOrByteArray.write(output, lineSeparator.separatorString)
-      }
-      else {
-        (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
+    runAsWriteActionIfNeeded {
+      file.getOutputStream(requestor).use { output ->
+        if (prependXmlProlog) {
+          output.write(XML_PROLOG)
+          output.write(lineSeparator.separatorBytes)
+        }
+        if (dataWriterOrByteArray is DataWriter) {
+          dataWriterOrByteArray.write(output, lineSeparator.separatorString)
+        }
+        else {
+          (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
+        }
       }
     }
   }

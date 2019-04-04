@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.ServiceManagerImpl
@@ -156,9 +155,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   // .idea component configuration files uses XML prolog due to historical reasons
   if (file.fileSystem == FileSystems.getDefault()) {
     // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-    runWriteAction {
-      writeFile(file, fakeSaveSession, null, createDataWriterForElement(wrapper, "default project"), LineSeparator.LF, prependXmlProlog = true)
-    }
+    writeFile(file, fakeSaveSession, null, createDataWriterForElement(wrapper, "default project"), LineSeparator.LF, prependXmlProlog = true)
   }
   else {
     file.outputStream().use {
