@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -49,8 +49,7 @@ public abstract class GroovyShellActionBase extends AnAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean enabled = project != null && hasGroovyCompatibleModule(project);
 
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   private boolean hasGroovyCompatibleModule(final Project project) {

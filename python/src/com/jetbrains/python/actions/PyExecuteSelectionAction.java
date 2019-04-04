@@ -162,8 +162,7 @@ public class PyExecuteSelectionAction extends AnAction {
       enabled = !StringUtil.isEmpty(text);
     }
 
-    presentation.setEnabled(enabled);
-    presentation.setVisible(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   public static boolean isPython(Editor editor) {

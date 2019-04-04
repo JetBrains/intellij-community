@@ -45,8 +45,7 @@ public class JdkPopupAction extends AnAction {
         enabled = false;
       }
     }
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
