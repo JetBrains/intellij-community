@@ -33,7 +33,7 @@ import java.util.List;
 public final class ConcatenationInjectorManager extends SimpleModificationTracker {
   public static final ProjectExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");
 
-  public ConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
+  public ConcatenationInjectorManager(@NotNull Project project, @NotNull PsiManagerEx psiManagerEx) {
     CONCATENATION_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
       @Override
       public void extensionAdded(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {

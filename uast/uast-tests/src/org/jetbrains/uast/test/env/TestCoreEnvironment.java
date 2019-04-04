@@ -195,8 +195,7 @@ public class TestCoreEnvironment extends AbstractCoreEnvironment {
                                 ((CoreJavaFileManager)ServiceManager.getService(myProject, JavaFileManager.class)));
 
       //noinspection TestOnlyProblems
-      PsiElementFinder.EP
-        .getPoint(null).registerExtension(new PsiElementFinderImpl(myProject), mDisposable);
+      PsiElementFinder.EP.getPoint(myProject).registerExtension(new PsiElementFinderImpl(myProject), mDisposable);
     }
   }
 }
