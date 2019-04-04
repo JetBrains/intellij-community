@@ -195,7 +195,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "        myTaskName = taskName\n" +
                           "     }\n" +
                           "     void beforeActions(Task task) {\n" +
-                          "        if(task.name != myTaskName) return \n" +
+                          "        if(!(task instanceof JavaExec) || task.name != myTaskName) return \n" +
                           "        myClasspathFile = patchTaskClasspath(task)\n" +
                           "     }\n" +
                           "     void afterActions(Task task) {\n" +
@@ -216,10 +216,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "       Manifest manifest = new Manifest()\n" +
                           "       Attributes attributes = manifest.getMainAttributes()\n" +
                           "       attributes.put(Attributes.Name.MANIFEST_VERSION, '1.0')\n" +
-                          "       attributes.putValue('Class-Path', task.classpath.files.collect {it.toURL().toString()}.join(' '))\n" +
-                          "       def dir = task.project.buildDir.absolutePath + File.separator + 'generated' + File.separator + 'classpathFiles'\n" +
-                          "       File file = new File(dir, myTaskName.replace(' ', '_') + new Random().nextInt(100))\n" +
-                          "       file.getParentFile().mkdirs()\n" +
+                          "       attributes.putValue('Class-Path', task.classpath.files.collect {it.toURI().toURL().toString()}.join(' '))\n" +
+                          "       File file = File.createTempFile('generated-', '-manifest')\n" +
                           "       def oStream = new JarOutputStream(new FileOutputStream(file), manifest)\n" +
                           "       oStream.putNextEntry(new ZipEntry('META-INF/'))\n" +
                           "       oStream.close()\n" +
@@ -234,11 +232,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "        super(taskName)\n" +
                           "     }\n" +
                           "     File patchTaskClasspath(JavaExec task) {\n" +
-                          "       def dir = task.project.buildDir.absolutePath + File.separator + 'generated' + File.separator + 'classpathFiles'\n" +
-                          "       File file = new File(dir, myTaskName.replace(' ', '_') + new Random().nextInt(100))\n" +
-                          "       file.getParentFile().mkdirs()\n" +
+                          "       File file = File.createTempFile('generated-', '-argFile')\n" +
                           "       def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))\n" +
-                          "       def pathSep = System.getProperty('path.separator')\n" +
                           "       def lineSep = System.getProperty('line.separator')\n" +
                           "       writer.print('-classpath' + lineSep)\n" +
                           "       writer.print(quoteArg(task.classpath.asPath))\n" +
@@ -272,15 +267,14 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "        super(taskName)\n" +
                           "     }\n" +
                           "     File patchTaskClasspath(JavaExec task) {\n" +
-                          "       def dir = task.project.buildDir.absolutePath + File.separator + 'generated' + File.separator + 'classpathFiles'\n" +
-                          "       File file = new File(dir, myTaskName.replace(' ', '_') + new Random().nextInt(100))\n" +
-                          "       file.getParentFile().mkdirs()\n" +
+                          "       File file = File.createTempFile('generated-', '-classpathFile')\n" +
                           "       def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))\n" +
                           "       task.classpath.files.each { writer.println(it.path) }\n" +
                           "       writer.close()\n" +
-                          "       task.argumentProviders.add(new CommandLineArgumentProvider() {\n" +
-                          "            Iterable<String> asArguments() { return [file.absolutePath, '" + mainClass.getQualifiedName() + "'] as List }\n" +
-                          "       })\n" +
+                          "       List args = [file.absolutePath, '" + mainClass.getQualifiedName() + "'] as List \n" +
+                          "       args.addAll(task.args)\n" +
+                          "       task.args = []\n" +
+                          "       task.argumentProviders.add({ return args } as CommandLineArgumentProvider)\n" +
                           "       task.main = 'com.intellij.rt.execution.CommandLineWrapper'\n" +
                           "       task.classpath = task.project.files([ '" + intelliJRtPath + "'])\n" +
                           "       return file\n" +
@@ -304,7 +298,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
   private static String createEscapedParameters(List<String> parameters, String prefix) {
     StringBuilder result = new StringBuilder();
-    for (String parameter: parameters) {
+    for (String parameter : parameters) {
       if (StringUtil.isEmpty(parameter)) continue;
       String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
       result.append(prefix).append(" '").append(escaped).append("'\n");
