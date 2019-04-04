@@ -82,6 +82,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUI.scale(300));
     combo.setRenderer(new MyRenderer());
+    combo.putClientProperty("ComboBox.jbPopup", true);
+    combo.updateUI();
 
     rebuildModel();
 
@@ -277,7 +279,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     final TitledSeparator separator = new TitledSeparator();
     {
       separator.setBorder(new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
-      UIUtil.setNotOpaqueRecursively(separator);
     }
   }
 
