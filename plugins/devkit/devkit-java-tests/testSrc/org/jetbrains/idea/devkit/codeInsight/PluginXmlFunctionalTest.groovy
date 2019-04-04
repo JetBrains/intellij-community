@@ -611,7 +611,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testProductDescriptor() {
-    doHighlightingTest("productDescriptorInvalid.xml")
+    doHighlightingTest("productDescriptor.xml")
   }
 
   void testProductDescriptorInvalid() {
