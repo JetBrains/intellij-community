@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -258,10 +259,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
+  public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom,
+                                                                           @NotNull TextRange range,
+                                                                           @NotNull EditorColorsManager colorsManager) {
     LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(
       startFrom,
-      startFrom.getTextRange(),
+      range,
       null,
       Pass.LINE_MARKERS,
       FunctionUtil.<Object, String>nullConstant(),
@@ -272,6 +275,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
     info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
     info.separatorPlacement = SeparatorPlacement.TOP;
     return info;
+  }
+
+  @NotNull
+  public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom,
+                                                                           @NotNull EditorColorsManager colorsManager) {
+    return createMethodSeparatorLineMarker(startFrom, startFrom.getTextRange(), colorsManager);
   }
 
   @Override

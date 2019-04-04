@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,31 +31,38 @@ public class PyLineSeparatorUtil {
       if (!provider.isSeparatorAllowed(element)) {
         return;
       }
-      boolean hasSeparableBefore = false;
-      final PsiElement parent = element.getParent();
-      if (parent == null) {
-        return;
+      //boolean hasSeparableBefore = false;
+      //final PsiElement parent = element.getParent();
+      //if (parent == null) {
+      //  return;
+      //}
+      //for (PsiElement child : parent.getChildren()) {
+      //  if (child == element){
+      //    break;
+      //  }
+      //  if (provider.isSeparatorAllowed(child)) {
+      //    hasSeparableBefore = true;
+      //    break;
+      //  }
+      //}
+      //if (!hasSeparableBefore) {
+      //  return;
+      //}
+      PsiElement nextChild = PsiTreeUtil.nextChildAfter(element);
+      if (nextChild != null) {
+        info.set(createLineSeparatorByElement(element, nextChild));
       }
-      for (PsiElement child : parent.getChildren()) {
-        if (child == element){
-          break;
-        }
-        if (provider.isSeparatorAllowed(child)) {
-          hasSeparableBefore = true;
-          break;
-        }
-      }
-      if (!hasSeparableBefore) {
-        return;
-      }
-      info.set(createLineSeparatorByElement(element));
     });
     return info.get();
   }
 
   @NotNull
-  private static LineMarkerInfo<PsiElement> createLineSeparatorByElement(@NotNull PsiElement element) {
-    PsiElement anchor = PsiTreeUtil.getDeepestFirst(element);
-    return LineMarkersPass.createMethodSeparatorLineMarker(anchor, EditorColorsManager.getInstance());
+  private static LineMarkerInfo<PsiElement> createLineSeparatorByElement(@NotNull PsiElement element,
+                                                                         @NotNull PsiElement nextChild) {
+    PsiElement anchor = PsiTreeUtil.getDeepestLast(element);
+    return LineMarkersPass.createMethodSeparatorLineMarker(anchor,
+                                                           new TextRange(anchor.getTextRange().getEndOffset(),
+                                                                         nextChild.getTextRange().getStartOffset()),
+                                                           EditorColorsManager.getInstance());
   }
 }

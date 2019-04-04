@@ -1092,6 +1092,20 @@ public class PsiTreeUtil {
     return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
+  public static PsiElement nextChildAfter(@NotNull final PsiElement el) {
+    PsiElement[] children = el.getParent().getChildren();
+
+    int i = 0;
+    while (!children[i].equals(el)) {
+      i++;
+    }
+
+    if (i == children.length - 1) // We are the last child.
+      return null;
+
+    return children[i + 1];
+  }
+
   @NotNull
   public static PsiElement[] filterAncestors(@NotNull PsiElement[] elements) {
     if (LOG.isDebugEnabled()) {
