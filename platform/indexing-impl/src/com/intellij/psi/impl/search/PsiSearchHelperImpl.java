@@ -566,7 +566,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return CacheManager.SERVICE.getInstance(myManager.getProject()).processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
-  private static class RequestWithProcessor {
+  private static class RequestWithProcessor implements WordRequestInfo {
     @NotNull private final PsiSearchRequest request;
     @NotNull private Processor<? super PsiReference> refProcessor;
 
@@ -589,6 +589,34 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     @Override
     public String toString() {
       return request.toString();
+    }
+
+    @NotNull
+    @Override
+    public String getWord() {
+      return request.word;
+    }
+
+    @NotNull
+    @Override
+    public SearchScope getSearchScope() {
+      return request.searchScope;
+    }
+
+    @Override
+    public short getSearchContext() {
+      return request.searchContext;
+    }
+
+    @Override
+    public boolean isCaseSensitive() {
+      return request.caseSensitive;
+    }
+
+    @Nullable
+    @Override
+    public String getContainerName() {
+      return request.containerName;
     }
   }
 
@@ -682,15 +710,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     }
 
+    return processGlobalRequests(singles, progress, localProcessors);
+  }
+
+  <T extends WordRequestInfo> boolean processGlobalRequests(@NotNull Map<Set<IdIndexEntry>, Collection<T>> singles,
+                                                            @NotNull ProgressIndicator progress,
+                                                            @NotNull Map<T, Processor<? super PsiElement>> localProcessors) {
     progress.pushState();
     progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     boolean result;
 
     try {
       // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
-      final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionCandidateFiles = new HashMap<>();
+      final Map<VirtualFile, Collection<T>> intersectionCandidateFiles = new HashMap<>();
       // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
-      final Map<VirtualFile, Collection<RequestWithProcessor>> restCandidateFiles = new HashMap<>();
+      final Map<VirtualFile, Collection<T>> restCandidateFiles = new HashMap<>();
       collectFiles(singles, intersectionCandidateFiles, restCandidateFiles);
 
       if (intersectionCandidateFiles.isEmpty() && restCandidateFiles.isEmpty()) {
@@ -698,9 +732,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       final Set<String> allWords = new TreeSet<>();
-      for (RequestWithProcessor singleRequest : localProcessors.keySet()) {
+      for (T singleRequest : localProcessors.keySet()) {
         ProgressManager.checkCanceled();
-        allWords.add(singleRequest.request.word);
+        allWords.add(singleRequest.getWord());
       }
       progress.setText(PsiBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords)));
 
@@ -798,17 +832,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
-                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionResult,
-                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> restResult) {
-    for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
+  private <T extends WordRequestInfo> void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<T>> singles,
+                                                        @NotNull final Map<VirtualFile, Collection<T>> intersectionResult,
+                                                        @NotNull final Map<VirtualFile, Collection<T>> restResult) {
+    for (Map.Entry<Set<IdIndexEntry>, Collection<T>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       final Set<IdIndexEntry> keys = entry.getKey();
       if (keys.isEmpty()) {
         continue;
       }
 
-      final Collection<RequestWithProcessor> processors = entry.getValue();
+      final Collection<T> processors = entry.getValue();
       final GlobalSearchScope commonScope = uniteScopes(processors);
       final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, processors, keys);
 
@@ -822,11 +856,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           myDumbService.runReadActionInSmartMode(
             () -> FileBasedIndex.getInstance().processValues(IdIndex.NAME, indexEntry, file, (file1, value) -> {
               int mask = value.intValue();
-              for (RequestWithProcessor single : processors) {
+              for (T single : processors) {
                 ProgressManager.checkCanceled();
-                final PsiSearchRequest request = single.request;
-                if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
-                  Map<VirtualFile, Collection<RequestWithProcessor>> result1 =
+                if ((mask & single.getSearchContext()) != 0 && single.getSearchScope().contains(file1)) {
+                  Map<VirtualFile, Collection<T>> result1 =
                     intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file1) ? restResult : intersectionResult;
                   result1.computeIfAbsent(file1, __ -> new SmartList<>()).add(single);
                 }
@@ -840,23 +873,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Nullable("null means we did not find common container files")
   private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
-                                                              @NotNull Collection<? extends RequestWithProcessor> data,
+                                                              @NotNull Collection<? extends WordRequestInfo> data,
                                                               @NotNull Set<IdIndexEntry> keys) {
     String commonName = null;
     short searchContext = 0;
     boolean caseSensitive = true;
-    for (RequestWithProcessor r : data) {
+    for (WordRequestInfo r : data) {
       ProgressManager.checkCanceled();
-      String containerName = r.request.containerName;
+      String containerName = r.getContainerName();
       if (containerName != null) {
         if (commonName == null) {
           commonName = containerName;
-          searchContext = r.request.searchContext;
-          caseSensitive = r.request.caseSensitive;
+          searchContext = r.getSearchContext();
+          caseSensitive = r.isCaseSensitive();
         }
         else if (commonName.equals(containerName)) {
-          searchContext |= r.request.searchContext;
-          caseSensitive &= r.request.caseSensitive;
+          searchContext |= r.getSearchContext();
+          caseSensitive &= r.isCaseSensitive();
         }
         else {
           return null;
@@ -879,8 +912,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
-    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.request.searchScope);
+  private static GlobalSearchScope uniteScopes(@NotNull Collection<? extends WordRequestInfo> requests) {
+    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.getSearchScope());
     return GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
