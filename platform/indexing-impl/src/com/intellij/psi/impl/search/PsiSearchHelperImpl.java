@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -690,9 +689,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     try {
       // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
-      final MultiMap<VirtualFile, RequestWithProcessor> intersectionCandidateFiles = createMultiMap();
+      final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionCandidateFiles = new HashMap<>();
       // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
-      final MultiMap<VirtualFile, RequestWithProcessor> restCandidateFiles = createMultiMap();
+      final Map<VirtualFile, Collection<RequestWithProcessor>> restCandidateFiles = new HashMap<>();
       collectFiles(singles, intersectionCandidateFiles, restCandidateFiles);
 
       if (intersectionCandidateFiles.isEmpty() && restCandidateFiles.isEmpty()) {
@@ -725,7 +724,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private boolean processCandidates(@NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
-                                    @NotNull final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles,
+                                    @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> candidateFiles,
                                     @NotNull ProgressIndicator progress,
                                     int totalSize,
                                     int alreadyProcessedFiles) {
@@ -801,8 +800,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private void collectFiles(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                            @NotNull final MultiMap<VirtualFile, RequestWithProcessor> intersectionResult,
-                            @NotNull final MultiMap<VirtualFile, RequestWithProcessor> restResult) {
+                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionResult,
+                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> restResult) {
     for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       final Set<IdIndexEntry> keys = entry.getKey();
@@ -828,9 +827,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 ProgressManager.checkCanceled();
                 final PsiSearchRequest request = single.request;
                 if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
-                  MultiMap<VirtualFile, RequestWithProcessor> result1 =
+                  Map<VirtualFile, Collection<RequestWithProcessor>> result1 =
                     intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file1) ? restResult : intersectionResult;
-                  result1.putValue(file1, single);
+                  result1.computeIfAbsent(file1, __ -> new SmartList<>()).add(single);
                 }
               }
               return true;
@@ -878,12 +877,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, processor);
 
     return containerFiles;
-  }
-
-  @NotNull
-  private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
-    // usually there is just one request
-    return MultiMap.createSmart();
   }
 
   @NotNull
