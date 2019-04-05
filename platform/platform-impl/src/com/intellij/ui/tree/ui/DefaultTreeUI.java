@@ -233,8 +233,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void installDefaults() {
     super.installDefaults();
     JTree tree = getTree();
-    if (tree != null && tree.isForegroundSet()) {
-      tree.setForeground(null);
+    if (tree != null) {
+      if (tree.isForegroundSet()) tree.setForeground(null);
+      if (UIManager.get("Tree.showsRootHandles") == null) {
+        LookAndFeel.installProperty(tree, JTree.SHOWS_ROOT_HANDLES_PROPERTY, Boolean.TRUE);
+      }
     }
   }
 
