@@ -28,13 +28,11 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
   public DesignerToolWindowManager(@NotNull Project project) {
     super(project);
 
-    myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new DesignerToolWindow(project);
-    if (myToolWindowPanel != null) {
-      Disposer.register(this, () -> myToolWindowPanel.dispose());
-    }
+    myToolWindowPanel = new DesignerToolWindow(project);
+    Disposer.register(this, () -> myToolWindowPanel.dispose());
   }
 
-  public static DesignerToolWindow getInstance(GuiEditor designer) {
+  public static DesignerToolWindow getInstance(@NotNull GuiEditor designer) {
     DesignerToolWindowManager manager = getInstance(designer.getProject());
     if (manager.isEditorMode()) {
       return (DesignerToolWindow)manager.getContent(designer);
@@ -42,7 +40,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     return manager.myToolWindowPanel;
   }
 
-  public static DesignerToolWindowManager getInstance(Project project) {
+  public static DesignerToolWindowManager getInstance(@NotNull Project project) {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
@@ -64,9 +62,8 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
     initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
-    Content content =
-      contentManager.getFactory()
-        .createContent(myToolWindowPanel.getToolWindowPanel(), UIDesignerBundle.message("toolwindow.ui.designer.title"), false);
+    Content content = contentManager.getFactory()
+      .createContent(myToolWindowPanel.getToolWindowPanel(), UIDesignerBundle.message("toolwindow.ui.designer.title"), false);
     content.setCloseable(false);
     content.setPreferredFocusableComponent(myToolWindowPanel.getComponentTree());
     contentManager.addContent(content);
