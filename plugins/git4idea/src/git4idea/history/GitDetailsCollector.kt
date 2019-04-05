@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
@@ -16,15 +17,14 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 
-internal class GitDetailsCollector(private val project: Project, private val root: VirtualFile,
-                                   private val recordBuilder: GitLogRecordBuilder<GitLogFullRecord>) {
+internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
+                                                                                     protected val root: VirtualFile,
+                                                                                     private val recordBuilder: GitLogRecordBuilder<R>) {
   private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
   private val vcs = GitVcs.getInstance(project)
 
-  constructor(project: Project, root: VirtualFile) : this(project, root, DefaultGitLogFullRecordBuilder())
-
   @Throws(VcsException::class)
-  fun readFullDetails(commitConsumer: Consumer<in GitCommit>,
+  fun readFullDetails(commitConsumer: Consumer<in C>,
                       requirements: GitCommitRequirements,
                       lowPriorityProcess: Boolean,
                       vararg parameters: String) {
@@ -37,7 +37,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
   fun readFullDetailsForHashes(hashes: List<String>,
                                requirements: GitCommitRequirements,
                                lowPriorityProcess: Boolean,
-                               commitConsumer: Consumer<in GitCommit>) {
+                               commitConsumer: Consumer<in C>) {
     if (hashes.isEmpty()) return
     val handler = GitLogUtil.createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess)
     GitLogUtil.sendHashesToStdin(vcs, hashes, handler)
@@ -46,7 +46,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
   }
 
   @Throws(VcsException::class)
-  private fun readFullDetailsFromHandler(commitConsumer: Consumer<in GitCommit>,
+  private fun readFullDetailsFromHandler(commitConsumer: Consumer<in C>,
                                          handler: GitLineHandler,
                                          requirements: GitCommitRequirements,
                                          vararg parameters: String) {
@@ -54,7 +54,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
 
     val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters()), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
-      val consumer = { records: List<GitLogFullRecord> ->
+      val consumer = { records: List<R> ->
         val firstRecord = records.first()
         val parents = firstRecord.parentsHashes
 
@@ -70,7 +70,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
       recordCollector.finish()
     }
     else {
-      val consumer = Consumer<GitLogFullRecord> { record ->
+      val consumer = Consumer<R> { record ->
         commitConsumer.consume(createCommit(ContainerUtil.newArrayList(record), factory,
                                             requirements.diffRenameLimit))
       }
@@ -80,7 +80,7 @@ internal class GitDetailsCollector(private val project: Project, private val roo
   }
 
   @Throws(VcsException::class)
-  private fun readRecordsFromHandler(handler: GitLineHandler, converter: Consumer<GitLogFullRecord>, vararg parameters: String) {
+  private fun readRecordsFromHandler(handler: GitLineHandler, converter: Consumer<R>, vararg parameters: String) {
     val parser = GitLogParser(project, recordBuilder, GitLogParser.NameStatus.STATUS, *GitLogUtil.COMMIT_METADATA_OPTIONS)
     handler.setStdoutSuppressed(true)
     handler.addParameters(*parameters)
@@ -90,15 +90,39 @@ internal class GitDetailsCollector(private val project: Project, private val roo
 
     val sw = StopWatch.start("loading details in [" + root.name + "]")
 
-    val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+    val handlerListener = GitLogOutputSplitter<R>(handler, parser, converter)
     Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
     handlerListener.reportErrors()
 
     sw.report()
   }
 
-  private fun createRecordsCollector(preserveOrder: Boolean,
-                                     consumer: (List<GitLogFullRecord>) -> Unit): GitLogRecordCollector<GitLogFullRecord> {
+  protected abstract fun createRecordsCollector(preserveOrder: Boolean, consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
+
+  protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory,
+                                      renameLimit: GitCommitRequirements.DiffRenameLimit): C
+}
+
+internal class GitFullDetailsCollector(project: Project, root: VirtualFile,
+                                       recordBuilder: GitLogRecordBuilder<GitLogFullRecord>) :
+  GitDetailsCollector<GitLogFullRecord, GitCommit>(project, root, recordBuilder) {
+
+  internal constructor(project: Project, root: VirtualFile) : this(project, root, DefaultGitLogFullRecordBuilder())
+
+  override fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory,
+                            renameLimit: GitCommitRequirements.DiffRenameLimit): GitCommit {
+    val record = records.last()
+    val parents = record.parentsHashes.map { factory.createHash(it) }
+
+    return GitCommit(project, HashImpl.build(record.hash), parents, record.commitTime, root, record.subject,
+                     factory.createUser(record.authorName, record.authorEmail), record.fullMessage,
+                     factory.createUser(record.committerName, record.committerEmail), record.authorTimeStamp,
+                     records.map { it.statusInfos },
+                     renameLimit)
+  }
+
+  override fun createRecordsCollector(preserveOrder: Boolean,
+                                      consumer: (List<GitLogFullRecord>) -> Unit): GitLogRecordCollector<GitLogFullRecord> {
     return if (preserveOrder)
       object : GitLogRecordCollector<GitLogFullRecord>(project, root, consumer) {
         override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
@@ -108,17 +132,5 @@ internal class GitDetailsCollector(private val project: Project, private val roo
         override fun getSize(r: GitLogFullRecord) = r.statusInfos.size
         override fun createEmptyCopy(r: GitLogFullRecord): GitLogFullRecord = GitLogFullRecord(r.options, listOf(), r.isSupportsRawBody)
       }
-  }
-
-  private fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory,
-                           renameLimit: GitCommitRequirements.DiffRenameLimit): GitCommit {
-    val record = records.last()
-    val parents = record.parentsHashes.map { factory.createHash(it) }
-
-    return GitCommit(project, HashImpl.build(record.hash), parents, record.commitTime, root, record.subject,
-                     factory.createUser(record.authorName, record.authorEmail), record.fullMessage,
-                     factory.createUser(record.committerName, record.committerEmail), record.authorTimeStamp,
-                     records.map { it.statusInfos },
-                     renameLimit)
   }
 }

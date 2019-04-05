@@ -207,7 +207,8 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      @NotNull String... parameters) throws VcsException {
-    new GitDetailsCollector(project, root, new InternedGitLogRecordBuilder()).readFullDetails(commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
+    new GitFullDetailsCollector(project, root, new InternedGitLogRecordBuilder())
+      .readFullDetails(commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
   }
 
   public static void readFullDetailsForHashes(@NotNull Project project,
@@ -215,7 +216,7 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
-    new GitDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
+    new GitFullDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
   }
 
   @NotNull

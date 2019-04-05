@@ -64,7 +64,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     git("mv fileToRename.txt renamedFile.txt")
     repo.addCommit("Rename fileToRename.txt")
 
-    GitDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
                                                               GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NO_RENAMES), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
@@ -109,7 +109,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.commit("merge")
 
     val details = ContainerUtil.newArrayList<VcsFullCommitDetails>()
-    GitDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
+    GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
                                                               GitCommitRequirements(diffInMergeCommits = diffInMergeCommits), false)
     val lastCommit = ContainerUtil.getFirstItem(details)
 
