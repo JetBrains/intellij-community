@@ -526,6 +526,7 @@ class _RegExLexer implements FlexLexer {
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
     private boolean whitespaceInClass;
+    private boolean allowCommentMode;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -536,7 +537,7 @@ class _RegExLexer implements FlexLexer {
       this.allowOmitBothNumbersInQuantifiers = capabilities.contains(OMIT_BOTH_NUMBERS_IN_QUANTIFIERS);
       this.allowNestedCharacterClasses = capabilities.contains(NESTED_CHARACTER_CLASSES);
       this.allowOctalNoLeadingZero = capabilities.contains(OCTAL_NO_LEADING_ZERO);
-      this.commentMode = capabilities.contains(COMMENT_MODE);
+      this.allowCommentMode = capabilities.contains(COMMENT_MODE);
       this.allowHexDigitClass = capabilities.contains(ALLOW_HEX_DIGIT_CLASS);
       this.allowHorizontalWhitespaceClass = capabilities.contains(ALLOW_HORIZONTAL_WHITESPACE_CLASS);
       this.allowEmptyCharacterClass = capabilities.contains(ALLOW_EMPTY_CHARACTER_CLASS);
@@ -917,7 +918,7 @@ class _RegExLexer implements FlexLexer {
             // fall through
           case 140: break;
           case 19: 
-            { if (commentMode) { yypushstate(COMMENT); } else return RegExpTT.CHARACTER;
+            { if (allowCommentMode) { yypushstate(COMMENT); commentMode = true; } else return RegExpTT.CHARACTER;
             } 
             // fall through
           case 141: break;
