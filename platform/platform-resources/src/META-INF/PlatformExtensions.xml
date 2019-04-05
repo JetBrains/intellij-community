@@ -380,6 +380,7 @@
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
     <applicationConfigurable
         groupId="editor"
