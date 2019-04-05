@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.Property;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -28,7 +15,6 @@ import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -998,8 +984,8 @@ public class CommonCodeStyleSettings {
       serialize(element, DEFAULT_INDENT_OPTIONS);
     }
 
-    public void serialize(Element indentOptionsElement, final IndentOptions defaultOptions) {
-      XmlSerializer.serializeInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
+    public void serialize(@NotNull Element indentOptionsElement, @Nullable IndentOptions defaultOptions) {
+      XmlSerializer.serializeObjectInto(this, indentOptionsElement, new SkipDefaultValuesSerializationFilters() {
         @Override
         protected void configure(@NotNull Object o) {
           if (o instanceof IndentOptions && defaultOptions != null) {
@@ -1010,7 +996,7 @@ public class CommonCodeStyleSettings {
     }
 
     public void deserialize(Element indentOptionsElement) {
-      XmlSerializer.deserializeInto(this, indentOptionsElement);
+      XmlSerializer.deserializeInto(indentOptionsElement, this);
     }
 
     @Override
@@ -1087,7 +1073,7 @@ public class CommonCodeStyleSettings {
 
     /**
      * @return True if the options can override the ones defined in language settings.
-     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean) 
+     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean)
      */
     public boolean isOverrideLanguageOptions() {
       return myOverrideLanguageOptions;
@@ -1096,7 +1082,7 @@ public class CommonCodeStyleSettings {
     /**
      * Make the indent options override options defined for a language block if the block implements {@code BlockEx.getLanguage()}
      * Useful when indent options provider must take a priority over any language settings for a formatter block.
-     * 
+     *
      * @param overrideLanguageOptions True if language block options should be ignored.
      * @see FileIndentOptionsProvider
      */
