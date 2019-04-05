@@ -47,17 +47,15 @@ public abstract class LightToolWindowManager implements Disposable {
     myProject = project;
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
-    ProjectUtil.runWhenProjectOpened(project, () -> projectOpened());
-  }
+    ProjectUtil.runWhenProjectOpened(project, () -> {
+      initToolWindow();
 
-  protected void projectOpened() {
-    initToolWindow();
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      if (getEditorMode() == null) {
-        initListeners();
-        bindToDesigner(getActiveDesigner());
-      }
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        if (getEditorMode() == null) {
+          initListeners();
+          bindToDesigner(getActiveDesigner());
+        }
+      });
     });
   }
 
