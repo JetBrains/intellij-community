@@ -135,8 +135,11 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
-        settings.withArgument("--info");
+      if (!settings.getArguments().contains("--quiet")) {
+        if (!settings.getArguments().contains("--debug")){
+          settings.withArgument("--info");
+        }
+        settings.withArgument("--stacktrace");
       }
     }
 
