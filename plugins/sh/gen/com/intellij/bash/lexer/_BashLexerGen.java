@@ -1255,6 +1255,7 @@ public class _BashLexerGen implements FlexLexer {
             { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
                                       heredocMarker = yytext().subSequence(1, yylength()-1).toString();
                                     else heredocMarker = yytext().toString();
+                                    heredocMarker = heredocMarker.replaceAll("(\\\\)(.)", "$2");
                                     yybegin(HERE_DOC_PIPELINE);
                                     return HEREDOC_MARKER_START;
             } 

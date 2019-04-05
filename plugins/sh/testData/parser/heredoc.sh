@@ -98,3 +98,7 @@ EOF
 cat << EOF > exp || framework_failure_
   text example
 EOF
+
+cat <<EO\\F
+ginstall: creating directory 'sub3'
+EO\F

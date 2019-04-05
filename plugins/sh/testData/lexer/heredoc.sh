@@ -3,4 +3,8 @@
 cat <<EO\+\\F >> /opt/buildAgent/conf/buildAgent.properties
 intellij.can.build.default.branch=true
 intellij.build.branch.pattern=master
-EO\+\\F
+EO+\F
+
+cat <<EO\\F
+ginstall: creating directory 'sub3'
+EO\F
