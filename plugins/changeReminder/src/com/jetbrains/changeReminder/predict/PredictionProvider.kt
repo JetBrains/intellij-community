@@ -18,7 +18,6 @@ class PredictionProvider(private val minProb: Double = 0.3) {
     private const val HISTORY_DEPTH = 20
     private const val MAX_RELATED_FILES_COUNT = 150
     private const val MAX_HISTORY_COMMIT_SIZE = 15
-    private const val DEFAULT_MIN_VALUE = 470_000_000_000.0
   }
 
   private class FactorCounter {
@@ -26,7 +25,7 @@ class PredictionProvider(private val minProb: Double = 0.3) {
       private set
     var max = 0.0
       private set
-    var min = DEFAULT_MIN_VALUE
+    var min = Double.MAX_VALUE
       private set
 
     fun append(newValue: Number): FactorCounter {
