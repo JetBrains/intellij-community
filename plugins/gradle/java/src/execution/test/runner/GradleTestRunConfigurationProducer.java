@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -108,6 +110,27 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   protected abstract boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context);
+
+  @Nullable
+  @Override
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
+                                                                  @NotNull ConfigurationContext context) {
+    RunManager runManager = RunManager.getInstance(context.getProject());
+    String commandLine = toCommandLine(configuration.getSettings());
+    for (RunnerAndConfigurationSettings it : getConfigurationSettingsList(runManager)) {
+      ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)it.getConfiguration();
+      ExternalSystemTaskExecutionSettings settings = runConfiguration.getSettings();
+      if (toCommandLine(settings).equals(commandLine)) return it;
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String toCommandLine(@NotNull ExternalSystemTaskExecutionSettings settings) {
+    String scriptParameters = settings.getScriptParameters();
+    return StringUtil.join(settings.getTaskNames(), " ") +
+           (StringUtil.isEmpty(scriptParameters) ? "" : " " + scriptParameters);
+  }
 
   @Nullable
   protected String resolveProjectPath(@NotNull Module module) {

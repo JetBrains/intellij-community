@@ -171,6 +171,20 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   }
 
   /**
+   * Called before the configuration created from context is first executed. Can be used to show additional UI for customizing the
+   * created configuration.
+   *
+   * @param configuration a configuration created by this producer.
+   * @param context       the context
+   * @param startRunnable the runnable that needs to be called after additional customization is complete.
+   */
+  public void onSetup(@NotNull ConfigurationFromContext configuration,
+                      @NotNull ConfigurationContext context,
+                      @NotNull Runnable startRunnable) {
+    startRunnable.run();
+  }
+
+  /**
    * Searches the list of existing run configurations to find one created from this context. Returns one if found, or tries to create
    * a new configuration from this context if not found.
    *
@@ -223,6 +237,18 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       }
     }
     return null;
+  }
+
+  /**
+   * Find same existing configuration to running.
+   *
+   * @param configuration a configuration created by this producer.
+   * @param context       the context
+   * @return found existing configurations
+   */
+  @Nullable
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull T configuration, @NotNull ConfigurationContext context) {
+    return findExistingConfiguration(context);
   }
 
   /**

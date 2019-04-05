@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
@@ -248,6 +250,47 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
         assertExistingConfigurationType(TestRunner.PLATFORM, platformType, psiClass)
         assertExistingConfigurationType(TestRunner.CHOOSE_PER_TEST, platformType, psiClass)
       }
+    }
+  }
+
+  @Test
+  fun `test run configuration action`() {
+    val projectData = generateAndImportTemplateProject()
+    runReadActionAndWait {
+      val psiClass = projectData["project"]["AutomationTestCase"].element
+      val runManager = RunManager.getInstance(myProject) as RunManagerImpl
+      runManager.clearAll()
+      assertExistingConfigurations()
+      currentExternalProjectSettings.testRunner = TestRunner.GRADLE
+      val gradleType = getConfigurationType(psiClass)
+      val autoSettings = """:cleanAutoTest :autoTest --tests "AutomationTestCase""""
+      val automationSettings = """:cleanAutomationTest :automationTest --tests "AutomationTestCase""""
+      val automationConfiguration = assertConfigurationFromAction("AutomationTestCase", gradleType, psiClass) { it == "automationTest" }
+      assertExternalConfiguration(automationSettings, automationConfiguration)
+      val autoConfiguration = assertConfigurationFromAction("AutomationTestCase (1)", gradleType, psiClass) { it == "autoTest" }
+      assertExternalConfiguration(autoSettings, autoConfiguration)
+      assertExternalConfiguration(automationSettings, automationConfiguration)
+      assertConfigurationFromAction(automationConfiguration, psiClass) { it == "automationTest" }
+      assertExternalConfiguration(autoSettings, autoConfiguration)
+      assertExternalConfiguration(automationSettings, automationConfiguration)
+      runManager.makeStable(automationConfiguration)
+      assertConfigurationFromAction(automationConfiguration, psiClass) { it == "automationTest" }
+      assertExternalConfiguration(autoSettings, autoConfiguration)
+      assertExternalConfiguration(automationSettings, automationConfiguration)
+      assertConfiguration("AutomationTestCase (1)", gradleType, true, autoConfiguration)
+      assertConfiguration("AutomationTestCase", gradleType, false, automationConfiguration)
+      assertExistingConfigurations(autoConfiguration, automationConfiguration)
+      currentExternalProjectSettings.testRunner = TestRunner.PLATFORM
+      val platformType = getConfigurationType(psiClass)
+      val platformConfiguration = assertConfigurationFromAction("AutomationTestCase", platformType, psiClass)
+      assertConfiguration("AutomationTestCase", platformType, true, platformConfiguration)
+      assertConfigurationFromAction(platformConfiguration, psiClass)
+      assertExternalConfiguration(autoSettings, autoConfiguration)
+      assertExternalConfiguration(automationSettings, automationConfiguration)
+      assertConfiguration("AutomationTestCase", platformType, true, platformConfiguration)
+      assertConfiguration("AutomationTestCase (1)", gradleType, true, autoConfiguration)
+      assertConfiguration("AutomationTestCase", gradleType, false, automationConfiguration)
+      assertExistingConfigurations(autoConfiguration, automationConfiguration, platformConfiguration)
     }
   }
 }

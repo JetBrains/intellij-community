@@ -18,11 +18,9 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.LocatableConfiguration;
-import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -172,13 +170,68 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       return;
     }
 
-    perform(context);
+    perform(existing, context);
   }
 
   private void perform(final ConfigurationFromContext configurationFromContext, final ConfigurationContext context) {
     RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
     context.setConfiguration(configurationSettings);
-    configurationFromContext.onFirstRun(context, () -> perform(context));
+    configurationFromContext.onSetup(context, () -> configurationFromContext.onFirstRun(context, () -> perform(context)));
+  }
+
+  protected void perform(@NotNull RunnerAndConfigurationSettings existing, @NotNull ConfigurationContext context) {
+    ConfigurationFromContext configurationFromContext = createConfigurationFromContext(existing, context);
+    if (configurationFromContext == null) {
+      context.setConfiguration(existing);
+      perform(context);
+      return;
+    }
+    RunnerAndConfigurationSettings configurationSettings =
+      cloneConfigurationSettings(configurationFromContext.getConfigurationSettings(), context);
+    configurationFromContext.setConfigurationSettings(configurationSettings);
+    context.setConfiguration(configurationSettings);
+    configurationFromContext.onSetup(context, () -> {
+      RunnerAndConfigurationSettings configuration = configurationFromContext.findExistingConfiguration(context);
+      if (configuration == null) {
+        RunManager runManager = context.getRunManager();
+        configuration = configurationFromContext.getConfigurationSettings();
+        runManager.setUniqueNameIfNeed(configuration);
+      }
+      context.setConfiguration(configuration);
+      perform(context);
+    });
+  }
+
+  @NotNull
+  private static RunnerAndConfigurationSettings cloneConfigurationSettings(@NotNull RunnerAndConfigurationSettings configuration,
+                                                                           @NotNull ConfigurationContext context) {
+    RunManager runManager = context.getRunManager();
+    RunConfiguration runConfiguration = configuration.getConfiguration();
+    ConfigurationFactory configurationFactory = configuration.getFactory();
+    return runManager.createConfiguration(runConfiguration.clone(), configurationFactory);
+  }
+
+  @Nullable
+  @SuppressWarnings("unchecked")
+  private static RunConfigurationProducer findConfigurationProducer(@NotNull RunnerAndConfigurationSettings configuration,
+                                                                    @NotNull ConfigurationContext context) {
+    for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(context.getProject())) {
+      if (!producer.getConfigurationType().equals(configuration.getType())) continue;
+      if (!producer.isConfigurationFromContext(configuration.getConfiguration(), context)) continue;
+      return producer;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ConfigurationFromContext createConfigurationFromContext(@NotNull RunnerAndConfigurationSettings configuration,
+                                                                         @NotNull ConfigurationContext context) {
+    RunConfigurationProducer producer = findConfigurationProducer(configuration, context);
+    if (producer == null) return null;
+    ConfigurationFromContext configurationFromContext = producer.createConfigurationFromContext(context);
+    if (configurationFromContext == null) return null;
+    configurationFromContext.setConfigurationSettings(configuration);
+    return configurationFromContext;
   }
 
   protected abstract void perform(ConfigurationContext context);

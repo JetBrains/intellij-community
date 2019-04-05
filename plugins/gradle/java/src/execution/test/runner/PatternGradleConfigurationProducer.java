@@ -64,7 +64,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     Module module = getModuleFromContext(context);
     if (module == null) return false;
     if (!applyTestConfiguration(settings, module, tests, findTestSource, createFilter)) return false;
-    configuration.setName(suggestConfigurationName(tests));
+    configuration.setName(suggestConfigurationName(tests, testMappings));
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
     return true;
   }
@@ -75,9 +75,9 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
   }
 
   @Override
-  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
-                         @NotNull ConfigurationContext context,
-                         @NotNull Runnable performRunnable) {
+  public void onSetup(@NotNull ConfigurationFromContext fromContext,
+                      @NotNull ConfigurationContext context,
+                      @NotNull Runnable performRunnable) {
     if (!isMultipleElementsSelected(context)) {
       super.onFirstRun(fromContext, context, performRunnable);
       return;
@@ -107,16 +107,27 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         performRunnable.run();
         return;
       }
-      configuration.setName(suggestConfigurationName(tests));
+      configuration.setName(suggestConfigurationName(tests, testMappings));
       performRunnable.run();
     });
   }
 
   @NotNull
-  private static String suggestConfigurationName(List<String> tests) {
+  private static String suggestConfigurationName(@NotNull List<String> tests, @NotNull TestMappings testMappings) {
     if (tests.isEmpty()) return "";
-    if (tests.size() == 1) return tests.get(0);
-    return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", tests.get(0), tests.size() - 1);
+    String testName = suggestTestName(tests.get(0), testMappings);
+    if (tests.size() == 1) return testName;
+    return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", testName, tests.size() - 1);
+  }
+
+  @NotNull
+  private static String suggestTestName(@NotNull String test, @NotNull TestMappings testMappings) {
+    PsiClass psiClass = testMappings.classes.get(test);
+    String aMethod = testMappings.methods.get(test);
+    String aClass = psiClass == null ? null : psiClass.getName();
+    if (StringUtil.isEmpty(aClass)) return test;
+    if (StringUtil.isEmpty(aMethod)) return aClass;
+    return aClass + "." + aMethod;
   }
 
   @Nullable

@@ -75,9 +75,9 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
   }
 
   @Override
-  public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
-                         @NotNull ConfigurationContext context,
-                         @NotNull Runnable performRunnable) {
+  public void onSetup(@NotNull ConfigurationFromContext fromContext,
+                      @NotNull ConfigurationContext context,
+                      @NotNull Runnable performRunnable) {
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) {
       LOG.warn("Cannot extract configuration data from context, uses raw run configuration");

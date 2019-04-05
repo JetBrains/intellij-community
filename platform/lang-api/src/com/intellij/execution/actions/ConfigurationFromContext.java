@@ -89,6 +89,27 @@ public abstract class ConfigurationFromContext {
   }
 
   /**
+   * Called before running with this configuration. Can be used to show additional UI for customizing the
+   * created configuration.
+   *
+   * @param context       the context
+   * @param startRunnable the runnable that needs to be called after additional customization is complete.
+   */
+  public void onSetup(ConfigurationContext context, Runnable startRunnable) {
+    startRunnable.run();
+  }
+
+  /**
+   * Find same existing configuration to running.
+   *
+   * @param context the context
+   * @return found existing configurations
+   */
+  public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
+    return context.findExisting();
+  }
+
+  /**
    * Checks if this configuration should be discarded in favor of another configuration created from the same context.
    *
    * @param other another configuration created from the same context.

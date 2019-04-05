@@ -71,6 +71,18 @@ public class ConfigurationFromContextImpl extends ConfigurationFromContext {
     myConfigurationProducer.onFirstRun(this, context, startRunnable);
   }
 
+  @Override
+  public void onSetup(ConfigurationContext context, Runnable startRunnable) {
+    myConfigurationProducer.onSetup(this, context, startRunnable);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
+    assert myConfigurationProducer.getConfigurationType().equals(getConfigurationType());
+    return myConfigurationProducer.findExistingConfiguration(getConfiguration(), context);
+  }
+
   @TestOnly
   public RunConfigurationProducer getConfigurationProducer() {
     return myConfigurationProducer;

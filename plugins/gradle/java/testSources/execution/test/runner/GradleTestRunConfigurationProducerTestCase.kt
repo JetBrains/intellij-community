@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
-import com.intellij.execution.RunManager
+import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.actions.RunContextAction
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.TestActionEvent
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.TestRunner
@@ -29,18 +29,101 @@ import java.util.function.Consumer
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
 
-  protected fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
+  private fun getDataContext(vararg elements: PsiElement): DataContext {
     assertTrue(elements.isNotEmpty())
-    val dataContext = MapDataContext().apply {
+    return MapDataContext().apply {
       put(LangDataKeys.PROJECT, myProject)
       put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(elements[0]))
       put(Location.DATA_KEY, PsiLocation.fromPsiElement(elements[0]))
       put(LangDataKeys.PSI_ELEMENT_ARRAY, elements)
     }
+  }
+
+  protected fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
+    val dataContext = getDataContext(*elements)
     return object : ConfigurationContext(elements[0]) {
       override fun getDataContext() = dataContext
       override fun containsMultipleSelection() = elements.size > 1
     }
+  }
+
+  private fun preformRunConfigurationAction(vararg elements: PsiElement, onResult: (RunnerAndConfigurationSettings) -> Unit) {
+    val action = object : RunContextAction(Executor.EXECUTOR_EXTENSION_NAME.extensionList.first()) {
+      override fun execute(configuration: RunnerAndConfigurationSettings, context: ConfigurationContext) {
+        onResult(configuration)
+      }
+    }
+    action.actionPerformed(TestActionEvent(getDataContext(*elements)))
+  }
+
+  protected fun assertConfigurationFromAction(
+    name: String,
+    type: ConfigurationType,
+    vararg elements: PsiClass,
+    testTasksFilter: (TestName) -> Boolean
+  ): RunnerAndConfigurationSettings {
+    setTestTasksChooser(testTasksFilter)
+    return assertConfigurationFromAction(name, type, *elements)
+  }
+
+  protected fun assertConfigurationFromAction(
+    configuration: RunnerAndConfigurationSettings,
+    vararg elements: PsiClass,
+    testTasksFilter: (TestName) -> Boolean
+  ) {
+    setTestTasksChooser(testTasksFilter)
+    assertConfigurationFromAction(configuration, *elements)
+  }
+
+  protected fun assertConfigurationFromAction(
+    name: String,
+    type: ConfigurationType,
+    vararg elements: PsiClass
+  ): RunnerAndConfigurationSettings {
+    lateinit var configuration: RunnerAndConfigurationSettings
+    preformRunConfigurationAction(*elements) {
+      assertTrue(it.isTemporary)
+      assertEquals(type, it.type)
+      assertEquals(name, it.name)
+      configuration = it
+    }
+    return configuration
+  }
+
+  protected fun assertConfigurationFromAction(
+    configuration: RunnerAndConfigurationSettings,
+    vararg elements: PsiClass
+  ) {
+    preformRunConfigurationAction(*elements) {
+      assertEquals(configuration, it)
+    }
+  }
+
+  protected fun assertConfiguration(
+    name: String,
+    type: ConfigurationType,
+    isTemporary: Boolean,
+    configuration: RunnerAndConfigurationSettings
+  ) {
+    assertEquals(type, configuration.type)
+    assertEquals(name, configuration.name)
+    assertEquals(isTemporary, configuration.isTemporary)
+  }
+
+  protected fun assertExternalConfiguration(settings: String, configuration: RunnerAndConfigurationSettings) {
+    val runConfiguration = configuration.configuration as ExternalSystemRunConfiguration
+    assertEquals(settings, runConfiguration.settings.toString())
+  }
+
+  protected fun assertExistingConfigurations(vararg configurations: RunnerAndConfigurationSettings) {
+    val runManager = RunManager.getInstance(myProject)
+    assertUnorderedElementsAreEqual(runManager.allSettings, *configurations)
+  }
+
+  protected fun getConfigurationType(vararg elements: PsiClass): ConfigurationType {
+    val context = getContextByLocation(*elements)
+    val configurationFromContext = getConfigurationFromContext(context)
+    return configurationFromContext.configurationType
   }
 
   protected fun withConfiguration(runner: TestRunner, vararg elements: PsiClass, action: (ConfigurationType) -> Unit) {
@@ -100,8 +183,15 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     if (producer !is PatternGradleConfigurationProducer) {
       assertTrue(producer.isConfigurationFromContext(configuration, context))
     }
+    producer.onSetup(configurationFromContext, context, Runnable {})
     producer.onFirstRun(configurationFromContext, context, Runnable {})
     assertEquals(expectedSettings, configuration.settings.toString().trim())
+  }
+
+  private fun setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
+    RunConfigurationProducer.getProducers(myProject)
+      .filterIsInstance(GradleTestRunConfigurationProducer::class.java)
+      .forEach { it.setTestTasksChooser(testTasksFilter) }
   }
 
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {

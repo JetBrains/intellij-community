@@ -40,19 +40,20 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   @Override
   protected void perform(final ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
+    RunnerAndConfigurationSettings configuration = context.getConfiguration();
+    if (configuration == null) return;
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
-    if (configuration == null) {
-      configuration = context.getConfiguration();
-      if (configuration == null) {
-        return;
-      }
+    if (!runManager.hasSettings(configuration)) {
       runManager.setTemporaryConfiguration(configuration);
     }
     if (Registry.is("select.run.configuration.from.context")) {
       runManager.setSelectedConfiguration(configuration);
     }
 
+    execute(configuration, context);
+  }
+
+  protected void execute(@NotNull RunnerAndConfigurationSettings configuration, @NotNull ConfigurationContext context) {
     ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
   }
 

@@ -144,7 +144,9 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
   }
 
   @Override
-  public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
+  public void onSetup(@NotNull final ConfigurationFromContext fromContext,
+                      @NotNull final ConfigurationContext context,
+                      @NotNull final Runnable performRunnable) {
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
