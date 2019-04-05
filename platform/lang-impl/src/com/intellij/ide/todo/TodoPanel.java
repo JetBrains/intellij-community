@@ -166,7 +166,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, Project project);
 
   private void initUI() {
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
     myTree.setRowHeight(0); // enable variable-height rows

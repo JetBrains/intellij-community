@@ -442,7 +442,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override

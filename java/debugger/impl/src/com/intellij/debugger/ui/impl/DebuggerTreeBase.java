@@ -78,7 +78,6 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
 
     Disposer.register(this, myTipManager);
 
-    UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new DebuggerTreeRenderer());

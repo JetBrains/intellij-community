@@ -518,7 +518,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
-    UIUtil.setLineStyleAngled(myTreeTable.getTree());
     TreeUtil.installActions(myTreeTable.getTree());
 
 

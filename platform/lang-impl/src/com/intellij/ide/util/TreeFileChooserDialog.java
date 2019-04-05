@@ -157,7 +157,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new NodeRenderer());
-    UIUtil.setLineStyleAngled(myTree);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));

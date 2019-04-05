@@ -163,7 +163,6 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myTree.expandRow(0);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setCellRenderer(new NodeRenderer());
-    UIUtil.setLineStyleAngled(myTree);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
