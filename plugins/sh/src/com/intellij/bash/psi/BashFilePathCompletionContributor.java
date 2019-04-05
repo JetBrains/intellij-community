@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,25 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public class BashFilePathCompletionContributor extends CompletionContributor implements DumbAware {
+
+  public static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
+    File file = (File) item.getObject();
+    String name = item.getLookupString();
+    Document document = context.getEditor().getDocument();
+    int start = context.getStartOffset();
+    int end = context.getSelectionEndOffset();
+    boolean alreadyFollowedBySlash = document.getTextLength() < end && document.getCharsSequence().charAt(end) == '/';
+    document.deleteString(start, end);
+    boolean isDirectory = file.isDirectory();
+    String newName = name.replaceAll(" ", "\\\\ ") + (isDirectory && !alreadyFollowedBySlash ? "/" : "");
+    document.insertString(start, newName);
+    int caretOffset = context.getEditor().getCaretModel().getOffset();
+    context.getEditor().getCaretModel().moveToOffset(caretOffset + newName.length());
+    if (isDirectory) {
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
+    }
+  };
+
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     Caret caret = context.getCaret();
@@ -89,20 +109,15 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
 
   private static LookupElement createFileLookupElement(File file) {
     String name = file.getName();
-    return LookupElementBuilder.create(name)
-        .withInsertHandler((context, item) -> {
-          Document document = context.getEditor().getDocument();
-          int start = context.getStartOffset();
-          int end = context.getSelectionEndOffset();
-          boolean alreadyFollowedBySlash = document.getTextLength() < end && document.getCharsSequence().charAt(end) == '/';
-          document.deleteString(start, end);
-          String newName = name.replaceAll(" ", "\\\\ ") + (file.isDirectory() && !alreadyFollowedBySlash ? "/" : "");
-          document.insertString(start, newName);
-          int caretOffset = context.getEditor().getCaretModel().getOffset();
-          context.getEditor().getCaretModel().moveToOffset(caretOffset + newName.length());
-          if (file.isDirectory()) {
-            AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
-          }
-        });
+    boolean isDirectory = file.isDirectory();
+    return LookupElementBuilder.create(file, name)
+        .withIcon(isDirectory ? PlatformIcons.FOLDER_ICON : null)
+        .withInsertHandler(getLookupElementInsertHandler())
+        ;
+  }
+
+  @NotNull
+  private static InsertHandler<LookupElement> getLookupElementInsertHandler() {
+    return FILE_INSERT_HANDLER;
   }
 }
