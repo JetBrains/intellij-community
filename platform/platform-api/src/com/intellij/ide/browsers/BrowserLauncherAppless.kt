@@ -46,19 +46,21 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
 
-  protected open fun browseUsingNotSystemDefaultBrowserPolicy(url: String, settings: GeneralSettings, project: Project?) {
+  protected open fun openWithExplicitBrowser(url: String, settings: GeneralSettings, project: Project?) {
     browseUsingPath(url, settings.browserPath, project = project)
   }
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
+    LOG.debug("opening [$url]")
 
     if (url.startsWith("mailto:") && Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
       try {
+        LOG.debug("Trying Desktop#mail")
         Desktop.getDesktop().mail(URI(url))
       }
       catch (e: Exception) {
-        LOG.warn("failed to open: $url", e)
+        LOG.warn("[$url]", e)
       }
       return
     }
@@ -67,16 +69,17 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       val file = File(url)
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
-          showError(IdeBundle.message("error.file.does.not.exist", file.path), null, null, null, null)
+          showError(IdeBundle.message("error.file.does.not.exist", file.path), project = project)
           return
         }
 
         try {
+          LOG.debug("Trying Desktop#open")
           Desktop.getDesktop().open(file)
           return
         }
         catch (e: IOException) {
-          LOG.debug(e)
+          LOG.warn("[$url]", e)
         }
       }
 
@@ -84,38 +87,42 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
-    LOG.debug("Launch browser: [$url]")
     val settings = generalSettings
     if (settings.isUseDefaultBrowser) {
+      openWithDefaultBrowser(url, project)
+    }
+    else {
+      openWithExplicitBrowser(url, settings, project = project)
+    }
+  }
+
+  private fun openWithDefaultBrowser(url: String, project: Project?) {
+    if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
       val uri = VfsUtil.toUri(url)
       if (uri == null) {
         showError(IdeBundle.message("error.malformed.url", url), project = project)
         return
       }
 
-      var tryToUseCli = true
-      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-        try {
-          Desktop.getDesktop().browse(uri)
-          LOG.debug("Browser launched using JDK 1.6 API")
-          return
-        }
-        catch (e: Exception) {
-          LOG.warn("Error while using Desktop API, fallback to CLI", e)
-          // if "No application knows how to open", then we must not try to use OS open
-          tryToUseCli = !e.message!!.contains("Error code: -10814")
-        }
+      try {
+        LOG.debug("Trying Desktop#browse")
+        Desktop.getDesktop().browse(uri)
+        return
       }
-
-      if (tryToUseCli) {
-        defaultBrowserCommand?.let {
-          doLaunch(url, it, null, project)
-          return
+      catch (e: Exception) {
+        LOG.warn("[$url]", e)
+        if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
+          return  // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
         }
       }
     }
 
-    browseUsingNotSystemDefaultBrowserPolicy(url, settings, project = project)
+    val command = defaultBrowserCommand
+    if (command == null) {
+      showError(IdeBundle.message("browser.default.not.supported"), project = project)
+      return
+    }
+    doLaunch(url, command, null, project)
   }
 
   protected open fun signUrl(url: String): String = url
