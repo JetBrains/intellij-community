@@ -7,31 +7,65 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 
 data class CaretStop
-@JvmOverloads constructor(@Attribute("start") val atStart: Boolean = false,
-                          @Attribute("end") val atEnd: Boolean = false) { // @formatter:off
-  companion object {
-    @JvmField val NONE  = CaretStop(atStart = false, atEnd = false)
-    @JvmField val START = CaretStop(atStart = true,  atEnd = false)
-    @JvmField val END   = CaretStop(atStart = false, atEnd = true)
-    @JvmField val BOTH  = CaretStop(atStart = true,  atEnd = true)
-  }
-} // @formatter:on
+@JvmOverloads constructor(@Attribute("start") val isAtStart: Boolean = false,
+                          @Attribute("end") val isAtEnd: Boolean = false) {
+  companion object { // @formatter:off
+    @JvmField val NONE  = CaretStop(isAtStart = false, isAtEnd = false)
+    @JvmField val START = CaretStop(isAtStart = true,  isAtEnd = false)
+    @JvmField val END   = CaretStop(isAtStart = false, isAtEnd = true)
+    @JvmField val BOTH  = CaretStop(isAtStart = true,  isAtEnd = true)
+  } // @formatter:on
+}
 
-data class CaretStopPolicy
-@JvmOverloads constructor(@OptionTag("BACKWARD") val backward: CaretStop = CaretStop.NONE,
-                          @OptionTag("FORWARD") val forward: CaretStop = CaretStop.NONE) { // @formatter:off
-  companion object {
-    @JvmField val NONE      = CaretStopPolicy(backward = CaretStop.NONE,  forward = CaretStop.NONE)
-    @JvmField val CURRENT   = CaretStopPolicy(backward = CaretStop.START, forward = CaretStop.END)
-    @JvmField val NEIGHBOR  = CaretStopPolicy(backward = CaretStop.END,   forward = CaretStop.START)
-    @JvmField val START     = CaretStopPolicy(backward = CaretStop.START, forward = CaretStop.START)
-    @JvmField val END       = CaretStopPolicy(backward = CaretStop.END,   forward = CaretStop.END)
-    @JvmField val BOTH      = CaretStopPolicy(backward = CaretStop.BOTH,  forward = CaretStop.BOTH)
-  }
-} // @formatter:on
+data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretStop.NONE,
+                           @OptionTag("LINE") val lineStop: CaretStop = CaretStop.NONE)
 
-data class CaretStopOptions(@OptionTag("WORD_BOUNDARY") val wordBoundaryPolicy: CaretStopPolicy = CaretStopPolicy.NONE,
-                            @OptionTag("LINE_BOUNDARY") val lineBoundaryPolicy: CaretStopPolicy = CaretStopPolicy.NONE) {
-  constructor() : this(if (SystemInfo.isWindows) CaretStopPolicy.START else CaretStopPolicy.CURRENT,
-                       if (SystemInfo.isWindows) CaretStopPolicy.BOTH else CaretStopPolicy.NONE)
+data class CaretStopOptions(@OptionTag("BACKWARD") val backwardPolicy: CaretStopPolicy,
+                            @OptionTag("FORWARD") val forwardPolicy: CaretStopPolicy) {
+  private constructor(other: CaretStopOptions) : this(backwardPolicy = other.backwardPolicy,
+                                                      forwardPolicy = other.forwardPolicy)
+
+  // for deserializing
+  constructor() : this(CaretStopOptionsTransposed.DEFAULT.toCaretStopOptions())
+}
+
+// transposed human-friendly options view and constants
+
+data class CaretStopBoundary(val backward: CaretStop = CaretStop.NONE,
+                             val forward: CaretStop = CaretStop.NONE) {
+  companion object { // @formatter:off
+    @JvmField val NONE = CaretStopBoundary(backward = CaretStop.NONE, forward = CaretStop.NONE)
+    @JvmField val CURRENT = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.END)
+    @JvmField val NEIGHBOR = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.START)
+    @JvmField val START = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.START)
+    @JvmField val END = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.END)
+    @JvmField val BOTH = CaretStopBoundary(backward = CaretStop.BOTH, forward = CaretStop.BOTH)
+  } // @formatter:on
+}
+
+/**
+ * While using CaretStopOptions is more convenient from the code point of view (chain: backward/forward -> word/line -> start/end),
+ * it is more easy to reason about when the direction and boundary axes are switched (word/line -> backward/forward -> start/end).
+ */
+data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
+                                      val lineBoundary: CaretStopBoundary) {
+  fun toCaretStopOptions() =
+    CaretStopOptions(backwardPolicy = CaretStopPolicy(wordStop = wordBoundary.backward,
+                                                      lineStop = lineBoundary.backward),
+                     forwardPolicy = CaretStopPolicy(wordStop = wordBoundary.forward,
+                                                     lineStop = lineBoundary.forward))
+
+  companion object {
+    @JvmField
+    val DEFAULT = CaretStopOptionsTransposed(if (SystemInfo.isWindows) CaretStopBoundary.START else CaretStopBoundary.CURRENT,
+                                             if (SystemInfo.isWindows) CaretStopBoundary.BOTH else CaretStopBoundary.NONE)
+
+    @JvmStatic
+    fun fromCaretStopOptions(caretStopOptions: CaretStopOptions) = with(caretStopOptions) {
+      CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary(backward = backwardPolicy.wordStop,
+                                                                  forward = forwardPolicy.wordStop),
+                                 lineBoundary = CaretStopBoundary(backward = backwardPolicy.lineStop,
+                                                                  forward = forwardPolicy.lineStop))
+    }
+  }
 }
