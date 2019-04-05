@@ -490,6 +490,7 @@ noinline
 noinspection
 noinspections
 nolint
+nolintnextline
 nologging
 nomapping
 nomaxvalue
