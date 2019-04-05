@@ -28,7 +28,7 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
                             "Adapted for OS X<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
                             "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Generate</td></tr>" +
                             "<tr><td style=\"text-align:right;\">&#8984;O</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                            "<tr><td style=\"text-align:right;\">&#8984;&#9003;</td><td style=\"text-align:left;\">Delete line</td></tr>" +
+                            "<tr><td style=\"text-align:right;\">&#8997;&#8593;</td><td style=\"text-align:left;\">Extend selection</td></tr>" +
                             "</table></body></html>"));
     add(macPanel);
 
@@ -41,7 +41,7 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
                                 "Default for all platforms<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
                                 "<tr><td style=\"text-align:right;\">^N</td><td style=\"text-align:left;\">Generate</td></tr>" +
                                 "<tr><td style=\"text-align:right;\">&#8984;N</td><td style=\"text-align:left;\">Go to class</td></tr>" +
-                                "<tr><td style=\"text-align:right;\">&#8984;Y</td><td style=\"text-align:left;\">Delete line</td></tr>" +
+                                "<tr><td style=\"text-align:right;\">&#8984;W</td><td style=\"text-align:left;\">Extend selection</td></tr>" +
                                 "</table></body></html>"));
     add(defaultPanel);
 
