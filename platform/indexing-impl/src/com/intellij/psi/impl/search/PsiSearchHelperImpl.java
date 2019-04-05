@@ -37,7 +37,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
@@ -603,7 +602,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return false;
     }
     do {
-      MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
+      final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals = new HashMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
       final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
       Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors = new THashMap<>();
@@ -668,7 +667,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return changed ? QueryRequestsRunResult.CHANGED : QueryRequestsRunResult.UNCHANGED;
   }
 
-  private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+  private boolean processGlobalRequestsOptimized(@NotNull Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
                                                  @NotNull ProgressIndicator progress,
                                                  @NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors) {
     if (singles.isEmpty()) {
@@ -676,7 +675,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     if (singles.size() == 1) {
-      final Collection<? extends RequestWithProcessor> requests = singles.values();
+      final Collection<? extends RequestWithProcessor> requests = singles.values().iterator().next();
       if (requests.size() == 1) {
         final RequestWithProcessor theOnly = requests.iterator().next();
         return processSingleRequest(theOnly.request, theOnly.refProcessor);
@@ -799,7 +798,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private void collectFiles(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+  private void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
                             @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionResult,
                             @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> restResult) {
     for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
@@ -887,7 +886,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
-                                           @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
+                                           @NotNull Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals,
                                            @NotNull List<? super Computable<Boolean>> customs,
                                            @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
@@ -903,7 +902,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         else {
           Set<IdIndexEntry> key = new HashSet<>(getWordEntries(primitive.word, primitive.caseSensitive));
-          registerRequest(globals.getModifiable(key), primitive, processor);
+          registerRequest(globals.computeIfAbsent(key, __ -> new SmartList<>()), primitive, processor);
         }
       }
       for (final Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
