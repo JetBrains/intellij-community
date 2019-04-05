@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-@State(name = "XSLT-Support.Configuration", storages = {@Storage(StoragePathMacros.NOT_ROAMABLE_FILE)})
+@State(name = "XSLT-Support.Configuration", storages = {@Storage(StoragePathMacros.NON_ROAMABLE_FILE)})
 class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl>, BaseComponent {
   public boolean SHOW_LINKED_FILES = true;
 

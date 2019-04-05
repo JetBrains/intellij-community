@@ -24,7 +24,7 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage(StoragePathMacros.NOT_ROAMABLE_FILE)
+  storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE)
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;

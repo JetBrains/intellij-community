@@ -119,7 +119,7 @@ class ConfigImportHelperTest {
       val path = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs, "DataGrip")))
       path.createDirectories()
       if (millis > 0) {
-        val child = path.resolve(PathManager.OPTIONS_DIRECTORY + "/" + StoragePathMacros.NOT_ROAMABLE_FILE)
+        val child = path.resolve(PathManager.OPTIONS_DIRECTORY + "/" + StoragePathMacros.NON_ROAMABLE_FILE)
         child.parent.createDirectories()
         Files.createFile(child)
         Files.setLastModifiedTime(child, FileTime.fromMillis(millis))
@@ -158,7 +158,7 @@ class ConfigImportHelperTest {
 
   private fun writeStorageFile(version: String, lastModified: Long, isMacOs: Boolean) {
     val dir = fsRule.fs.getPath("/data/" + (constructConfigPath(version, isMacOs)))
-    val file = dir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE)
+    val file = dir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE)
     Files.setLastModifiedTime(file.write(version), FileTime.fromMillis(lastModified))
   }
 }
