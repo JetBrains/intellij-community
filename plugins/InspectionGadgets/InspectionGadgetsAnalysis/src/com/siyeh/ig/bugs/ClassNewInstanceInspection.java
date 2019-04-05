@@ -90,9 +90,6 @@ public class ClassNewInstanceInspection extends BaseInspection {
         final PsiMethod method = (PsiMethod)parentOfType;
         addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
-      else {
-        assert false;
-      }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       @NonNls final String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, new CommentTracker());
