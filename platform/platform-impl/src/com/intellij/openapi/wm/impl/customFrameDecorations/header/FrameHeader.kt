@@ -61,7 +61,7 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
         pane.isOpaque = false
         pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
-        pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP")
+        pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
 
         add(pane, "wmin 0, growx")
         add(buttonPanes.getView(), "top, wmin pref")
