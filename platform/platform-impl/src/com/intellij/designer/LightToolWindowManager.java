@@ -37,7 +37,6 @@ public abstract class LightToolWindowManager implements Disposable {
   protected final Project myProject;
   protected volatile ToolWindow myToolWindow;
 
-  private final PropertiesComponent myPropertiesComponent;
   public final String myEditorModeKey;
   private ToggleEditorModeAction myLeftEditorModeAction;
   private ToggleEditorModeAction myRightEditorModeAction;
@@ -46,7 +45,6 @@ public abstract class LightToolWindowManager implements Disposable {
 
   protected LightToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
     ProjectUtil.runWhenProjectOpened(project, () -> projectOpened());
@@ -190,7 +188,6 @@ public abstract class LightToolWindowManager implements Disposable {
                                getEditorMode(),
                                this,
                                myProject,
-                               myPropertiesComponent,
                                getComponentName(),
                                defaultWidth,
                                actions);
@@ -229,7 +226,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   @Nullable
   public final ToolWindowAnchor getEditorMode() {
-    String value = myPropertiesComponent.getValue(myEditorModeKey);
+    String value = PropertiesComponent.getInstance(myProject).getValue(myEditorModeKey);
     if (value == null) {
       return getAnchor();
     }
@@ -238,7 +235,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   protected final void setEditorMode(@Nullable ToolWindowAnchor newState) {
     ToolWindowAnchor oldState = getEditorMode();
-    myPropertiesComponent.setValue(myEditorModeKey, newState == null ? "ToolWindow" : newState.toString());
+    PropertiesComponent.getInstance(myProject).setValue(myEditorModeKey, newState == null ? "ToolWindow" : newState.toString());
 
     if (oldState != null && newState != null) {
       runUpdateContent(myUpdateAnchorAction);
