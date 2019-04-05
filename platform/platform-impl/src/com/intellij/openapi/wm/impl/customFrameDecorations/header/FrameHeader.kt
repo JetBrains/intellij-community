@@ -4,10 +4,15 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel.CustomDecorationPath
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -19,7 +24,6 @@ import java.awt.event.WindowStateListener
 import java.util.ArrayList
 import javax.swing.*
 import javax.swing.border.Border
-import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
 class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
@@ -61,6 +65,13 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
 
         add(pane, "wmin 0, growx")
         add(buttonPanes.getView(), "top, wmin pref")
+
+        val borderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+        border = SideBorder(borderColor, SideBorder.BOTTOM, JBUI.scale(1))
+    }
+
+    fun setProject(project: Project) {
+        mySelectedEditorFilePath.setProject(project)
     }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = ResizableCustomFrameTitleButtons.create(myCloseAction,
@@ -68,15 +79,18 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
 
 
     override fun installListeners() {
-        frame.addWindowStateListener(windowStateListener)
         myIdeMenu.selectionModel.addChangeListener(changeListener)
         super.installListeners()
     }
 
     override fun uninstallListeners() {
-        frame.removeWindowStateListener(windowStateListener)
         myIdeMenu.selectionModel.removeChangeListener(changeListener)
         super.uninstallListeners()
+    }
+
+    override fun windowStateChanged() {
+        super.windowStateChanged()
+        updateActions()
     }
 
     private fun iconify() {

@@ -102,10 +102,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     glassPane.setVisible(false);
 
     if (IdeFrameDecorator.isCustomDecoration()) {
-      JdkEx.setHasCustomDecoration(this);
-
-      CustomFrameDialogContent content = new CustomFrameDialogContent(this, myScreen.getWelcomePanel());
-      setContentPane(content.getView());
+      setContentPane(CustomFrameDialogContent.Companion.getContent(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background")));
     } else {
       setContentPane(myScreen.getWelcomePanel());
     }

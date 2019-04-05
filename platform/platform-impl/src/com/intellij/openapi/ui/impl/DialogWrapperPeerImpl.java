@@ -392,6 +392,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
+
+    Container contentPane = getContentPane();
+    if (IdeFrameDecorator.isCustomDecoration() && contentPane instanceof JComponent) {
+      setContentPane(CustomFrameDialogContent.Companion.getContent(getWindow(), (JComponent) contentPane));
+    }
+
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
@@ -941,23 +947,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void setContentPane(Container contentPane) {
-        Container container;
-        if (IdeFrameDecorator.isCustomDecoration() && contentPane != null) {
-          JdkEx.setHasCustomDecoration(getWindow());
-
-          CustomFrameDialogContent content = new CustomFrameDialogContent(getWindow(), contentPane);
-          container = content.getView();
-        }
-        else {
-          container = contentPane;
-        }
-
-        super.setContentPane(container);
-        if (container != null) {
-          container.addMouseMotionListener(new MouseMotionAdapter() {
-          }); // listen to mouse motino events for a11y
+        super.setContentPane(contentPane);
+        if (contentPane != null) {
+          contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motino events for a11y
         }
       }
+
 
       @Override
       public Object getData(@NotNull @NonNls String dataId) {
