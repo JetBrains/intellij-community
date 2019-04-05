@@ -10,7 +10,17 @@ internal data class SearchWordRequest internal constructor(
   internal val caseSensitive: Boolean,
   internal val searchContext: Short,
   internal val containerName: String?
-) {
+) : WordRequestInfo {
 
   fun shouldProcessInjectedPsi(): Boolean = searchScope !is LocalSearchScope || !searchScope.isIgnoreInjectedPsi
+
+  override fun getWord(): String = word
+
+  override fun getSearchScope(): SearchScope = searchScope
+
+  override fun isCaseSensitive(): Boolean = caseSensitive
+
+  override fun getSearchContext(): Short = searchContext
+
+  override fun getContainerName(): String? = containerName
 }

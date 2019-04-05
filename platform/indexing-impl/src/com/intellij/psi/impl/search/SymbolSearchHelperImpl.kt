@@ -1,43 +1,38 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
-import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
-import com.intellij.model.search.*
-import com.intellij.model.search.impl.*
+import com.intellij.model.search.SearchSymbolReferenceParameters
+import com.intellij.model.search.SymbolSearchHelper
+import com.intellij.model.search.TextOccurrence
+import com.intellij.model.search.impl.SubqueryRequest
+import com.intellij.model.search.impl.TransformingQuery
+import com.intellij.model.search.impl.WordRequest
+import com.intellij.model.search.impl.decompose
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.search.PsiSearchHelperImpl.*
-import com.intellij.psi.search.*
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.TextOccurenceProcessor
 import com.intellij.util.Processor
-import com.intellij.util.Processors.cancelableCollectProcessor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
 import com.intellij.util.containers.cancellable
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.text.StringSearcher
 import gnu.trove.THashMap
-import gnu.trove.THashSet
 import java.util.*
-import java.util.function.BinaryOperator
-import java.util.stream.Stream
-import kotlin.collections.LinkedHashSet
-import kotlin.experimental.or
 
 typealias OccurrenceProcessor = Processor<in TextOccurrence>
 
-class SymbolSearchHelperImpl(private val myProject: Project,
-                             private val myDumbService: DumbService,
-                             helper: PsiSearchHelper) : SymbolSearchHelper {
+class SymbolSearchHelperImpl(private val myDumbService: DumbService, helper: PsiSearchHelper) : SymbolSearchHelper {
   private val myHelper: PsiSearchHelperImpl = helper as PsiSearchHelperImpl
 
   override fun runSearch(parameters: SearchSymbolReferenceParameters, processor: Processor<in SymbolReference>): Boolean {
@@ -153,142 +148,10 @@ class SymbolSearchHelperImpl(private val myProject: Project,
       }
     }
 
-    try {
-      progress.pushState()
-      progress.text = PsiBundle.message("psi.scanning.files.progress")
-      return doProcessGlobalRequests(progress, globals)
-    }
-    finally {
-      progress.popState()
-    }
-  }
-
-  private fun doProcessGlobalRequests(progress: ProgressIndicator,
-                                      globals: Map<SearchWordRequest, Collection<OccurrenceProcessor>>): Boolean {
     val globalsIds: Map<Set<IdIndexEntry>, List<SearchWordRequest>> = globals.keys.groupBy {
       getWordEntries(it.word, it.caseSensitive).toSet()
     }
-
-    // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
-    val intersectionCandidateFiles = HashMap<VirtualFile, MutableCollection<SearchWordRequest>>()
-    // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
-    val restCandidateFiles = HashMap<VirtualFile, MutableCollection<SearchWordRequest>>()
-    collectFiles(progress, globalsIds, intersectionCandidateFiles, restCandidateFiles)
-
-    if (intersectionCandidateFiles.isEmpty() && restCandidateFiles.isEmpty()) {
-      return true
-    }
-
-    val localProcessors = buildLocalProcessors(progress, globals)
-    val allWords = getAllWords(progress, localProcessors.keys)
-    progress.text = PsiBundle.message("psi.search.for.word.progress", getPresentableWordsDescription(allWords))
-
-    if (intersectionCandidateFiles.isEmpty()) {
-      return processCandidates(progress, localProcessors, restCandidateFiles, restCandidateFiles.size, 0)
-    }
-    else {
-      val totalSize = restCandidateFiles.size + intersectionCandidateFiles.size
-      return processCandidates(progress, localProcessors, intersectionCandidateFiles, totalSize, 0) &&
-             processCandidates(progress, localProcessors, restCandidateFiles, totalSize, intersectionCandidateFiles.size)
-    }
-  }
-
-  private fun collectFiles(progress: ProgressIndicator,
-                           globalsIds: Map<Set<IdIndexEntry>, Collection<SearchWordRequest>>,
-                           intersectionResult: MutableMap<VirtualFile, MutableCollection<SearchWordRequest>>,
-                           restResult: MutableMap<VirtualFile, MutableCollection<SearchWordRequest>>) {
-    for ((keys, requests) in globalsIds) {
-      progress.checkCanceled()
-      if (keys.isEmpty()) {
-        continue
-      }
-      val commonScope = uniteScopes(requests)
-      val intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, requests, keys)
-
-      val files = ArrayList<VirtualFile>()
-      processFilesContainingAllKeys(myProject, commonScope, null, keys, cancelableCollectProcessor(files))
-      for (file in files) {
-        progress.checkCanceled()
-        for (indexEntry in keys) {
-          progress.checkCanceled()
-          myDumbService.runReadActionInSmartMode<Boolean> {
-            FileBasedIndex.getInstance().processValues(
-              IdIndex.NAME, indexEntry, file, { file1, mask ->
-              for (request in requests) {
-                progress.checkCanceled()
-                if (mask and request.searchContext.toInt() != 0 && request.searchScope.contains(file1)) {
-                  val result = if (intersectionWithContainerNameFiles != null && intersectionWithContainerNameFiles.contains(file1))
-                    intersectionResult
-                  else
-                    restResult
-                  result.computeIfAbsent(file1) { SmartList() }.add(request)
-                }
-              }
-              true
-            },
-              commonScope
-            )
-          }
-        }
-      }
-    }
-  }
-
-  private fun intersectionWithContainerNameFiles(commonScope: GlobalSearchScope,
-                                                 requests: Collection<SearchWordRequest>,
-                                                 keys: Set<IdIndexEntry>): Set<VirtualFile>? {
-    var commonName: String? = null
-    var searchContext: Short = 0
-    var caseSensitive = true
-    for (request in requests) {
-      ProgressManager.checkCanceled()
-      val containerName = request.containerName
-      if (containerName != null) {
-        if (commonName == null) {
-          commonName = containerName
-          searchContext = request.searchContext
-          caseSensitive = request.caseSensitive
-        }
-        else if (commonName == containerName) {
-          searchContext = searchContext or request.searchContext
-          caseSensitive = caseSensitive and request.caseSensitive
-        }
-        else {
-          return null
-        }
-      }
-    }
-    if (commonName == null) return null
-
-    val entries = getWordEntries(commonName, caseSensitive)
-    if (entries.isEmpty()) return null
-    entries.addAll(keys) // should find words from both text and container names
-
-    val finalSearchContext = searchContext.toInt()
-    val contextMatches = { context: Int -> context and finalSearchContext != 0 }
-    val containerFiles = THashSet<VirtualFile>()
-    val processor = cancelableCollectProcessor(containerFiles)
-    processFilesContainingAllKeys(myProject, commonScope, Condition { contextMatches(it) }, entries, processor)
-    return containerFiles
-  }
-
-  private fun processCandidates(progress: ProgressIndicator,
-                                localProcessors: Map<SearchWordRequest, Processor<PsiElement>>,
-                                candidateFiles: Map<VirtualFile, Collection<SearchWordRequest>>,
-                                totalSize: Int,
-                                alreadyProcessedFiles: Int): Boolean {
-    val files = ArrayList(candidateFiles.keys)
-    return myHelper.processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress) { psiRoot ->
-      val vfile = psiRoot.virtualFile
-      for (request in candidateFiles.getValue(vfile)) {
-        ProgressManager.checkCanceled()
-        val localProcessor = localProcessors.getValue(request)
-        if (!localProcessor.process(psiRoot)) {
-          return@processPsiFileRoots false
-        }
-      }
-      true
-    }
+    return myHelper.processGlobalRequests(globalsIds, progress, buildLocalProcessors(progress, globals))
   }
 
   private fun processLocalRequests(progress: ProgressIndicator, locals: Map<SearchWordRequest, Collection<OccurrenceProcessor>>): Boolean {
@@ -316,22 +179,6 @@ class SymbolSearchHelperImpl(private val myProject: Project,
       adaptProcessors(request.shouldProcessInjectedPsi(), occurenceProcessors)
     )
   }
-}
-
-private fun getAllWords(progress: ProgressIndicator, requests: Collection<SearchWordRequest>): Set<String> {
-  val allWords = TreeSet<String>()
-  for (request in requests) {
-    progress.checkCanceled()
-    allWords.add(request.word)
-  }
-  return allWords
-}
-
-private fun uniteScopes(requests: Collection<SearchWordRequest>): GlobalSearchScope {
-  val scopes = requests.mapTo(LinkedHashSet()) {
-    it.searchScope as GlobalSearchScope
-  }
-  return GlobalSearchScope.union(scopes)
 }
 
 private fun <T> processQueryRequests(progress: ProgressIndicator,
