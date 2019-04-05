@@ -72,6 +72,11 @@ else
   sudo easy_install sh
 fi
 
+if [ -f ${NANO_KERNEL} ] ; then
+	KERNCONFDIR="$(realpath $(dirname ${NANO_KERNEL}))"
+else
+	export KERNCONF="${NANO_KERNEL}"
+fi
 
 array=(*.sh)
 a=array[1]

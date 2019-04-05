@@ -285,8 +285,9 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "[["                          { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
     "["                           { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
-                                    else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
-                                    else return RIGHT_DOUBLE_PAREN; }
+                                    else if (shouldCloseSingleParen()) {
+                                      if (yystate() == COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
+                                    } else return RIGHT_DOUBLE_PAREN; }
     "]]"                          { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET; }
     "]"                           { switch (yystate()) {
                                       case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;

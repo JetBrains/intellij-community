@@ -1420,8 +1420,9 @@ public class _BashLexerGen implements FlexLexer {
           case 184: break;
           case 68: 
             { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
-                                    else if (shouldCloseSingleParen()) { yypushback(1); popParentheses(); return RIGHT_PAREN; }
-                                    else return RIGHT_DOUBLE_PAREN;
+                                    else if (shouldCloseSingleParen()) {
+                                      if (yystate() == COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
+                                    } else return RIGHT_DOUBLE_PAREN;
             } 
             // fall through
           case 185: break;

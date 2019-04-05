@@ -31,6 +31,12 @@ if [ $(sysctl -n kern.features.ufs_acl 2>/dev/null || echo 0) -eq 0 ]; then
 	exit 0
 fi
 
+if [ -f ${NANO_KERNEL} ] ; then
+	KERNCONFDIR="$(realpath $(dirname ${NANO_KERNEL}))"
+else
+	export KERNCONF="${NANO_KERNEL}"
+fi
+
 [ ! -d "$1" ]
 
 [ ! ! ! 1 == 1 ]
