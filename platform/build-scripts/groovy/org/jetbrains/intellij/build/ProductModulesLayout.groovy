@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 import java.util.function.Consumer
+import java.util.function.Function
 
 /**
  * @author nik
@@ -60,7 +61,7 @@ class ProductModulesLayout {
     return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
   }
 
-  private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
+  private LinkedHashMap<String, Function<PluginLayout, PluginPublishingSpec>> pluginsToPublish = []
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
@@ -71,7 +72,7 @@ class ProductModulesLayout {
   void setPluginModulesToPublish(List<String> plugins) {
     pluginsToPublish = new LinkedHashMap<>()
     for (String each : plugins) {
-      pluginsToPublish[each] = new PluginPublishingSpec()
+      pluginsToPublish[each] = { PluginLayout layout -> layout.defaultPublishingSpec ?: new PluginPublishingSpec()} as Function<PluginLayout, PluginPublishingSpec>
     }
   }
 
@@ -83,19 +84,20 @@ class ProductModulesLayout {
   }
 
   /**
-   * Specification ({@link PluginPublishingSpec}) for the published plugin. 
+   * Specifies that a plugin with main module name {@code mainModule} should be prepared for publishing under 'plugins' directory in the build
+   * artifacts. The passed {@code spec} overrides {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#setDefaultPublishingSpec the plugin's defaults}.
    * @see #setPluginModulesToPublish
    */
   void setPluginPublishingSpec(String mainModule, PluginPublishingSpec spec) {
-    pluginsToPublish[mainModule] = spec
+    pluginsToPublish[mainModule] = {spec} as Function<PluginLayout, PluginPublishingSpec>
   }
 
   /**
    * @see #setPluginPublishingSpec
    * @see #setPluginModulesToPublish 
    */
-  PluginPublishingSpec getPluginPublishingSpec(String mainModule) {
-    return pluginsToPublish[mainModule]
+  PluginPublishingSpec getPluginPublishingSpec(PluginLayout pluginLayout) {
+    return pluginsToPublish[pluginLayout.mainModule]?.apply(pluginLayout)
   }
 
   /**
@@ -175,8 +177,8 @@ class ProductModulesLayout {
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
-   * subdirectory and may be automatically uploaded to plugins.jetbrains.com; use {@link #setPluginPublishingSpec} to override this behavior
-   * for specific plugins if needed.
+   * subdirectory and may be automatically uploaded to plugins.jetbrains.com; use {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#setDefaultPublishingSpec}
+   * or {@link #setPluginPublishingSpec} to override this behavior for specific plugins if needed.
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    * 

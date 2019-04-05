@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PluginPublishingSpec
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.util.function.Function
@@ -33,6 +34,7 @@ class PluginLayout extends BaseLayout {
   private boolean doNotCreateSeparateJarForLocalizableResources
   Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
   boolean directoryNameSetExplicitly
+  PluginPublishingSpec defaultPublishingSpec
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -217,6 +219,14 @@ class PluginLayout extends BaseLayout {
      */
     void doNotCopyModuleLibrariesAutomatically(List<String> moduleNames) {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+    }
+
+    /**
+     * Specifies {@link PluginPublishingSpec} which should be used by default in all IDEs which include this plugin.
+     * {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec} can be used to override this for a particular product.
+     */
+    void setDefaultPublishingSpec(PluginPublishingSpec publishingSpec) {
+      layout.defaultPublishingSpec = publishingSpec
     }
   }
 }
