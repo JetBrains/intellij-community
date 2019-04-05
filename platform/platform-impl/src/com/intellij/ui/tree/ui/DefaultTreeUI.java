@@ -25,7 +25,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.util.ReflectionUtil.getMethod;
@@ -43,8 +42,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   private static boolean isEventDispatchThread() {
     if (EventQueue.isDispatchThread()) return true;
     logStackTrace("unexpected thread");
-    // allow in simple tests temporarily
-    return null == getApplication();
+    return false;
   }
 
   @NotNull
