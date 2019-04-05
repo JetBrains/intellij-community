@@ -58,8 +58,7 @@ public interface BashTokenTypes extends BashTypes {
   IElementType HEREDOC_LINE = new BashTokenType("heredoc line (temporary)");
 
   // test Operators
-  IElementType COND_OP = new BashTokenType("cond_op");//all the test operators, e.g. -z, != ...
-  TokenSet conditionalOperators = TokenSet.create(COND_OP, OR_OR, AND_AND, BANG, EQ, REGEXP);
+  TokenSet conditionalOperators = TokenSet.create(OR_OR, AND_AND, BANG, EQ, REGEXP, GT, LT);
 
   //Bash 4:
   IElementType REDIRECT_AMP_GREATER_GREATER = new BashTokenType("&>>");
