@@ -722,16 +722,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
-  private boolean processCandidates(@NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
-                                    @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> candidateFiles,
-                                    @NotNull ProgressIndicator progress,
-                                    int totalSize,
-                                    int alreadyProcessedFiles) {
+  private <X> boolean processCandidates(@NotNull final Map<X, Processor<? super PsiElement>> localProcessors,
+                                        @NotNull final Map<VirtualFile, Collection<X>> candidateFiles,
+                                        @NotNull ProgressIndicator progress,
+                                        int totalSize,
+                                        int alreadyProcessedFiles) {
     List<VirtualFile> files = new ArrayList<>(candidateFiles.keySet());
 
     return processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress, psiRoot -> {
       final VirtualFile vfile = psiRoot.getVirtualFile();
-      for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
+      for (final X singleRequest : candidateFiles.get(vfile)) {
         ProgressManager.checkCanceled();
         Processor<? super PsiElement> localProcessor = localProcessors.get(singleRequest);
         if (!localProcessor.process(psiRoot)) {
