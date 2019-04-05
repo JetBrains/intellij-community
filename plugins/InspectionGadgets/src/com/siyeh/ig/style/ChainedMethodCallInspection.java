@@ -121,12 +121,10 @@ public class ChainedMethodCallInspection extends BaseInspection {
             return;
           }
         }
-        else {
-          PsiClass callClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-          PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
-          if (qualifierClass == null || qualifierClass.equals(callClass)) {
-            return;
-          }
+        PsiClass callClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+        PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+        if (qualifierClass == null || qualifierClass.equals(callClass)) {
+          return;
         }
       }
       registerMethodCallError(expression);
