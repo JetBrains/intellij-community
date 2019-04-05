@@ -5,10 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UIThemeProvider;
+import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -63,7 +60,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
@@ -106,9 +102,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Invoked via reflection.
    */
   LafManagerImpl() {
-    List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
-
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
+
+    List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     if (SystemInfo.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
@@ -130,11 +126,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(new DarculaLookAndFeelInfo());
 
 
-    lafList.addAll(UIThemeProvider.EP_NAME.getExtensionList().stream()
-                         .map(UIThemeProvider::createTheme)
-                         .filter(x -> x != null)
-                         .map(UIThemeBasedLookAndFeelInfo::new)
-                         .collect(Collectors.toList()));
+    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
+      UITheme x = provider.createTheme();
+      if (x != null) {
+        lafList.add(new UIThemeBasedLookAndFeelInfo(x));
+      }
+    }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
     if (!SystemInfo.isMac) {
