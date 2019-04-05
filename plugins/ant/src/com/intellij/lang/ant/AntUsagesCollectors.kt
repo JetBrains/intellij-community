@@ -2,12 +2,12 @@
 package com.intellij.lang.ant
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator
 import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.ant.config.AntConfiguration
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -42,16 +42,11 @@ class AntActionsUsagesCollector {
     fun trigger(project: Project?, action: AnAction, event: AnActionEvent?) {
       if (project == null) return
 
-      // preserve context data ordering
-      val context = FUSUsageContext.create(
-        event?.place ?: "undefined.place",
-        "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}"
-      )
+      val data = FeatureUsageData()
+      event?.let { data.addInputEvent(it).addPlace(it.place).addData("context_menu", it.isFromContextMenu) }
 
-      val actionClassName = UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName)
-
-      FUCounterUsageLogger.getInstance().logEvent(project, "build.ant.actions", actionClassName,
-                                                  FeatureUsageData().addFeatureContext(context))
+      val toReport = ActionsCollectorImpl.toReportedId(getPluginInfo(action.javaClass), action, data)
+      FUCounterUsageLogger.getInstance().logEvent("build.ant.actions", toReport, data)
     }
 
     @JvmStatic
