@@ -207,7 +207,7 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      @NotNull String... parameters) throws VcsException {
-    readFullDetails(project, root, commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
+    new GitDetailsCollector(project, root).readFullDetails(commitConsumer, GitCommitRequirements.DEFAULT, false, parameters);
   }
 
   public static void readFullDetails(@NotNull Project project,
