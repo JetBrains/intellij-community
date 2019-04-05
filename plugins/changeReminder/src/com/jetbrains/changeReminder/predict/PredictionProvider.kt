@@ -42,7 +42,7 @@ class PredictionProvider(private val minProb: Double = 0.3) {
     }
   }
 
-  private fun collectFileFactors(commit: Commit, fileToPredict: FilePath, fileToPredictCommits: Set<Commit>): DoubleArray {
+  private fun collectFileFactors(newCommit: Commit, candidateFile: FilePath, candidateFileHistory: Set<Commit>): DoubleArray {
     val factors = DoubleArray(Factor.values().size)
 
     val timeDistanceCounter = FactorCounter()
@@ -52,15 +52,15 @@ class PredictionProvider(private val minProb: Double = 0.3) {
     val pathPrefixCounter = FactorCounter()
     var authorCommitted = 0.0
 
-    fileToPredictCommits.forEach { fileToPredictCommit ->
-      val filesFromCommit = fileToPredictCommit.files.filter { file -> file in commit.files }
+    candidateFileHistory.forEach { oldCommit ->
+      val filesFromCommit = oldCommit.files.filter { file -> file in newCommit.files }
 
       countFilesCounter.append(filesFromCommit.size)
       if (filesFromCommit.isNotEmpty()) {
-        timeDistanceCounter.append(commit.time - fileToPredictCommit.time)
+        timeDistanceCounter.append(newCommit.time - oldCommit.time)
       }
 
-      if (authorCommitted != 1.0 && fileToPredictCommit.author.startsWith(commit.author)) {
+      if (authorCommitted != 1.0 && oldCommit.author.startsWith(newCommit.author)) {
         authorCommitted = 1.0
       }
 
@@ -69,19 +69,19 @@ class PredictionProvider(private val minProb: Double = 0.3) {
       }
     }
 
-    val fileToPredictPath = fileToPredict.path
-    val fileToPredictName = fileToPredict.name
-    commit.files.forEach {
-      pathPrefixCounter.append(StringUtil.commonPrefixLength(fileToPredictPath, it.path))
-      filePrefixCounter.append(StringUtil.commonPrefixLength(fileToPredictName, it.name))
+    val candidateFilePath = candidateFile.path
+    val candidateFileName = candidateFile.name
+    newCommit.files.forEach {
+      pathPrefixCounter.append(StringUtil.commonPrefixLength(candidateFilePath, it.path))
+      filePrefixCounter.append(StringUtil.commonPrefixLength(candidateFileName, it.name))
     }
 
     factors[Factor.MAX_INTERSECTION.ordinal] = intersectionCounters.values.maxBy { it.sum }?.sum ?: 0.0
     factors[Factor.SUM_INTERSECTION.ordinal] = intersectionCounters.values.sumByDouble { it.sum }
     factors[Factor.MIN_DISTANCE_TIME.ordinal] = timeDistanceCounter.min
-    factors[Factor.COMMIT_SIZE.ordinal] = commit.files.size.toDouble()
+    factors[Factor.COMMIT_SIZE.ordinal] = newCommit.files.size.toDouble()
     factors[Factor.MAX_DISTANCE_TIME.ordinal] = timeDistanceCounter.max
-    factors[Factor.AVG_DISTANCE_TIME.ordinal] = timeDistanceCounter.sum / fileToPredictCommits.size.toDouble()
+    factors[Factor.AVG_DISTANCE_TIME.ordinal] = timeDistanceCounter.sum / candidateFileHistory.size.toDouble()
     factors[Factor.MAX_COUNT.ordinal] = countFilesCounter.max
     factors[Factor.MIN_COUNT.ordinal] = countFilesCounter.min
     factors[Factor.AUTHOR_COMMITTED_THE_FILE.ordinal] = authorCommitted
@@ -102,10 +102,10 @@ class PredictionProvider(private val minProb: Double = 0.3) {
       }
       sortedFilesHistory.values.forEach { commits ->
         if (depth < commits.size) {
-          val commitFromHistory = commits[depth]
-          if (commitFromHistory.files.size > MAX_HISTORY_COMMIT_SIZE) {
-            commitFromHistory.files.filter { it !in commitFiles }.forEach { relatedFile ->
-              relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(commitFromHistory)
+          val oldCommit = commits[depth]
+          if (oldCommit.files.size > MAX_HISTORY_COMMIT_SIZE) {
+            oldCommit.files.filter { it !in commitFiles }.forEach { relatedFile ->
+              relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
             }
           }
         }
@@ -126,9 +126,9 @@ class PredictionProvider(private val minProb: Double = 0.3) {
   fun predictForgottenFiles(commit: Commit, filesHistory: Map<FilePath, Set<Commit>>, maxPredictedFileCount: Int = 5): List<FilePath> =
     getRelatedFiles(filesHistory.mapValues { it.value.sortedByDescending { commit -> commit.time } })
       .asSequence()
-      .map { (fileToPredict, fileToPredictCommits) ->
-        val fileScore = MLWhiteBox.makePredict(collectFileFactors(commit, fileToPredict, fileToPredictCommits))
-        fileToPredict to fileScore
+      .map { (candidateFile, candidateFileHistory) ->
+        val fileScore = MLWhiteBox.makePredict(collectFileFactors(commit, candidateFile, candidateFileHistory))
+        candidateFile to fileScore
       }
       .filter { it.second > minProb }
       .sortedByDescending { it.second }
