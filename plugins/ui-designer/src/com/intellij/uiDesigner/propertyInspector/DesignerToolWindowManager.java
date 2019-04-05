@@ -23,13 +23,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class DesignerToolWindowManager extends AbstractToolWindowManager implements Disposable {
-  private final DesignerToolWindow myToolWindowPanel;
+  private DesignerToolWindow myToolWindowPanel;
 
   public DesignerToolWindowManager(@NotNull Project project) {
     super(project);
-
-    myToolWindowPanel = new DesignerToolWindow(project);
-    Disposer.register(this, () -> myToolWindowPanel.dispose());
   }
 
   public static DesignerToolWindow getInstance(@NotNull GuiEditor designer) {
@@ -51,6 +48,9 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
 
   @Override
   protected void initToolWindow() {
+    myToolWindowPanel = new DesignerToolWindow(myProject);
+    Disposer.register(this, () -> myToolWindowPanel.dispose());
+
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer.name"),
                                                                                false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
