@@ -334,20 +334,6 @@ private fun uniteScopes(requests: Collection<SearchWordRequest>): GlobalSearchSc
   return GlobalSearchScope.union(scopes)
 }
 
-fun getRestrictedScope(optimizers: Array<SearchScopeOptimizer>, project: Project, symbol: Symbol): SearchScope? {
-  return Stream.of(*optimizers)
-    .peek { ProgressManager.checkCanceled() }
-    .map<SearchScope> { it.getRestrictedUseScope(project, symbol) }
-    .reduce(BinaryOperator<SearchScope?> { scope1, scope2 -> intersectNullable(scope1, scope2) })
-    .orElse(null)
-}
-
-private fun intersectNullable(scope1: SearchScope?, scope2: SearchScope?): SearchScope? {
-  if (scope1 == null) return scope2
-  return if (scope2 == null) scope1 else scope1.intersectWith(scope2)
-}
-
-
 private fun <T> processQueryRequests(progress: ProgressIndicator,
                                      queryRequests: Map<Query<*>, Collection<Transformation<*, T>>>,
                                      processor: Processor<in T>): Boolean {

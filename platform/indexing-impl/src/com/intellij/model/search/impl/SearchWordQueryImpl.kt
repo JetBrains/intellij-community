@@ -7,6 +7,7 @@ import com.intellij.model.search.SearchScopeOptimizer
 import com.intellij.model.search.SearchWordParameters
 import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.search.idTransform
 import com.intellij.psi.search.GlobalSearchScope
@@ -74,6 +75,18 @@ private fun mask(contexts: Set<SearchContext>): Short {
 
 private fun getRestrictedScope(project: Project, symbol: Symbol): SearchScope? {
   return runReadAction {
-    com.intellij.psi.impl.search.getRestrictedScope(SearchScopeOptimizer.CODE_USE_SCOPE_EP.extensions, project, symbol)
+    getRestrictedScope(SearchScopeOptimizer.CODE_USE_SCOPE_EP.extensions, project, symbol)
   }
+}
+
+private fun getRestrictedScope(optimizers: Array<SearchScopeOptimizer>, project: Project, symbol: Symbol): SearchScope? {
+  return optimizers.map {
+    ProgressManager.checkCanceled()
+    it.getRestrictedUseScope(project, symbol)
+  }.fold(null, ::intersectNullable)
+}
+
+private fun intersectNullable(scope1: SearchScope?, scope2: SearchScope?): SearchScope? {
+  if (scope1 == null) return scope2
+  return if (scope2 == null) scope1 else scope1.intersectWith(scope2)
 }
