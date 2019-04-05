@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -60,7 +61,12 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
 
-  SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter, final ISettingsTreeViewFactory factory) {
+  SettingsEditor(Disposable parent,
+                 Project project,
+                 ConfigurableGroup[] groups,
+                 Configurable configurable,
+                 final String filter,
+                 final ISettingsTreeViewFactory factory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -214,6 +220,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(left);
     mySplitter.setSecondComponent(right);
+
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      mySplitter.getDivider().setOpaque(false);
+    }
+
     mySpotlightPainter = new SpotlightPainter(myEditor, this) {
       @Override
       void updateNow() {
