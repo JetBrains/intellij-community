@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
@@ -75,7 +75,6 @@ public class LightToolWindow extends JPanel {
                          @Nullable ToolWindowAnchor anchor,
                          @NotNull LightToolWindowManager manager,
                          @NotNull Project project,
-                         @NotNull PropertiesComponent propertiesComponent,
                          @NotNull String key,
                          int defaultWidth,
                          @Nullable AnAction[] actions) {
@@ -86,7 +85,7 @@ public class LightToolWindow extends JPanel {
     myAnchor = anchor;
     myProject = project;
     myManager = manager;
-    myPropertiesComponent = propertiesComponent;
+    myPropertiesComponent = PropertiesComponent.getInstance(myProject);
 
     myShowStateKey = LightToolWindowManager.EDITOR_MODE + key + ".SHOW";
     myWidthKey = LightToolWindowManager.EDITOR_MODE + key + ".WIDTH";
