@@ -1221,8 +1221,8 @@
                         serviceImplementation="com.intellij.util.QueriesImpl"/>
     <applicationService serviceInterface="com.intellij.model.search.SearchService"
                         serviceImplementation="com.intellij.model.search.impl.SearchServiceImpl"/>
-    <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
-                    serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
+    <applicationService serviceInterface="com.intellij.model.search.SearchHelper"
+                        serviceImplementation="com.intellij.psi.impl.search.SearchHelperImpl"/>
   </extensions>
 </idea-plugin>
 

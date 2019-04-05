@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public interface SymbolSearchHelper {
+public interface SearchHelper {
 
   @NotNull
-  static SymbolSearchHelper getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SymbolSearchHelper.class);
+  static SearchHelper getInstance() {
+    return ServiceManager.getService(SearchHelper.class);
   }
 
   <R> boolean runSearch(@NotNull SearchParameters<R> parameters, @NotNull Processor<? super R> processor);
