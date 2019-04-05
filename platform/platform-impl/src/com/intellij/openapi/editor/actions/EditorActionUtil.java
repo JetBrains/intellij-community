@@ -270,7 +270,6 @@ public class EditorActionUtil {
   public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
     char prev = offset > 0 ? text.charAt(offset - 1) : 0;
     char current = text.charAt(offset);
-    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
 
     final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
@@ -278,14 +277,8 @@ public class EditorActionUtil {
       return true;
     }
 
-    if (isCamel) {
-      if (firstIsIdentifierPart
-          && (Character.isLowerCase(prev) && Character.isUpperCase(current)
-              || prev != '_' && current == '_'
-              || Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next)))
-      {
-        return true;
-      }
+    if (isCamel && firstIsIdentifierPart && isHumpBound(text, offset, false)) {
+      return true;
     }
 
     return !Character.isWhitespace(prev) && !firstIsIdentifierPart &&
