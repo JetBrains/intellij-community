@@ -504,7 +504,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // case_clause (';;' (case_clause | &(esac|newlines)))+
+  // case_clause (';;' (case_clause | newlines))*
   static boolean case_clause_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_list")) return false;
     boolean r, p;
@@ -516,22 +516,18 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (';;' (case_clause | &(esac|newlines)))+
+  // (';;' (case_clause | newlines))*
   private static boolean case_clause_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_list_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = case_clause_list_1_0(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!case_clause_list_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "case_clause_list_1", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
-  // ';;' (case_clause | &(esac|newlines))
+  // ';;' (case_clause | newlines)
   private static boolean case_clause_list_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_list_1_0")) return false;
     boolean r, p;
@@ -543,38 +539,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // case_clause | &(esac|newlines)
+  // case_clause | newlines
   private static boolean case_clause_list_1_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_clause_list_1_0_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = case_clause(b, l + 1);
-    if (!r) r = case_clause_list_1_0_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // &(esac|newlines)
-  private static boolean case_clause_list_1_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_clause_list_1_0_1_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _AND_);
-    r = case_clause_list_1_0_1_1_0(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // esac|newlines
-  private static boolean case_clause_list_1_0_1_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_clause_list_1_0_1_1_0")) return false;
-    boolean r;
-    r = consumeToken(b, ESAC);
     if (!r) r = newlines(b, l + 1);
     return r;
   }
 
   /* ********************************************************** */
-  // case w newlines "in" case_clause_list newlines esac
+  // case w newlines "in" case_clause_list esac
   public static boolean case_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_command")) return false;
     if (!nextTokenIs(b, CASE)) return false;
@@ -586,7 +561,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, "in")) && r;
     r = p && report_error_(b, case_clause_list(b, l + 1)) && r;
-    r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && consumeToken(b, ESAC) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;

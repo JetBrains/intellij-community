@@ -60,6 +60,12 @@ case "$PACKER_BUILDER_TYPE" in
  ;;  # <- One more issue
 esac
 
+case "$@" in
+"-d "*)	echo DEBUGGING 1>&2
+	debug=-d
+	shift
+
+esac
 
 
 echo *""*
