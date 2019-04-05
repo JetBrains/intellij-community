@@ -44,7 +44,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   private MessageBusConnection myConnection;
 
-  protected LightToolWindowManager(Project project) {
+  protected LightToolWindowManager(@NotNull Project project) {
     myProject = project;
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
