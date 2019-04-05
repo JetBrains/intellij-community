@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
@@ -204,13 +205,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = viewportX + viewportWidth - insets.left - offset - vsbWidth;
-            if (width < bounds.width && (hsbVisible || expandedRow == row)) {
-              width = bounds.width;
-            }
             if (width > 0) {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
+                if (width < bounds.width && (expandedRow == row || hsbVisible && component instanceof DefaultTreeCellRenderer)) {
+                  width = bounds.width; // disable shrinking a long nodes
+                }
                 setBackground(tree, component, background, false);
                 rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
               }
