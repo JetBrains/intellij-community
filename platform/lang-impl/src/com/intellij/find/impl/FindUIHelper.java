@@ -24,8 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,22 +47,12 @@ public class FindUIHelper implements Disposable {
   }
 
   private FindUI getOrCreateUI() {
-    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !showAsPopup() ||
-                                  myUI instanceof FindDialog && showAsPopup() ||
-                                  myUI == null;
-    if (newInstanceRequired) {
+    if (myUI == null) {
       JComponent component;
-      if (showAsPopup()) {
-        FindPopupPanel panel = new FindPopupPanel(this);
-        component = panel;
-        myUI = panel;
-      }
-      else {
-        FindDialog findDialog = new FindDialog(this);
-        component = ((JDialog)findDialog.getWindow()).getRootPane();
-        myUI = findDialog;
-      }
-      
+      FindPopupPanel panel = new FindPopupPanel(this);
+      component = panel;
+      myUI = panel;
+
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
@@ -72,10 +60,6 @@ public class FindUIHelper implements Disposable {
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
     return myUI;
-  }
-
-  private static boolean showAsPopup() {
-    return Registry.is("ide.find.as.popup") && SystemInfo.isJetBrainsJvm;
   }
 
   private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
