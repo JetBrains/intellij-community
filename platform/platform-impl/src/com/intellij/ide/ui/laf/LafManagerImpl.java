@@ -113,12 +113,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
-      if (isIntelliJLafEnabled()) {
-        lafList.add(new IntelliJLookAndFeelInfo());
-      }
-      else {
-        lafList.add(new IdeaLookAndFeelInfo());
-      }
+      lafList.add(new IntelliJLookAndFeelInfo());
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name)
@@ -154,10 +149,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     myCurrentLaf = getDefaultLaf();
-  }
-
-  private static boolean isIntelliJLafEnabled() {
-    return !Registry.is("idea.4.5.laf.enabled");
   }
 
   @Override
@@ -294,7 +285,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find app L&F: " + appLafName);
     }
 
-    String defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
+    String defaultLafName = IntelliJLaf.class.getName();
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) return laf;
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
