@@ -85,6 +85,11 @@ public class BashParserUtil extends GeneratedParserUtilBase {
     return true;
   }
 
+  static boolean differentBracketsWarning(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    b.error("Expected similar close bracket");
+    return true;
+  }
+
   static boolean parseUntilSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
     PsiBuilder.Marker mark = b.mark();
     while (true) {

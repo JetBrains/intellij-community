@@ -141,9 +141,9 @@ bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
 
-conditional_command ::= cond_left (<<condOp>> | lit | vars)* cond_right {pin(".*")=1}
-private cond_right ::= ']' | ']]'
-private cond_left ::= '[' | '[['
+conditional_command ::=  '[['conditional_body* (']]'|']'<<differentBracketsWarning>>)
+                        |'['conditional_body*(']'|']]' <<differentBracketsWarning>>){pin(".*")=1}
+private conditional_body ::= <<condOp>> | lit | vars
 private lit ::= literal | '(' lit ')' {pin(".*")=1}
 
 process_substitution ::= ('<' | '>') '(' compound_list ')' {pin=1}

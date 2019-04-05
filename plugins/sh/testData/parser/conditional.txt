@@ -740,6 +740,51 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            VARIABLE
+              PsiElement(var)('$key')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+          PsiErrorElement:Expected similar close bracket
+            <empty list>
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            VARIABLE
+              PsiElement(var)('$key')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+          PsiErrorElement:Expected similar close bracket
+            <empty list>
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
