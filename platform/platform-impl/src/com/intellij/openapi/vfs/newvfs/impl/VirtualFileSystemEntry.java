@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
@@ -19,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Collection;
 
 /**
  * @author max
@@ -42,6 +46,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static final int ALL_FLAGS_MASK =
     DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
+  @NotNull
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
   final int myId;
@@ -55,6 +60,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     mySegment = segment;
     myId = id;
     myParent = parent;
+  }
+
+  // for NULL_FILE
+  private VirtualFileSystemEntry() {
+    //noinspection ConstantConditions
+    mySegment = null;
+    myParent = null;
+    myId = -42;
   }
 
   void updateLinkStatus() {
@@ -151,7 +164,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-  protected static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
+  private static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
     int length = s.length();
     CharArrayUtil.getChars(s, chars, 0, pos, length);
     return pos + length;
@@ -400,4 +413,69 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
     return this;
   }
+
+  static final VirtualFileSystemEntry NULL_VIRTUAL_FILE =
+    new VirtualFileSystemEntry() {
+      @Override
+      public String toString() {
+        return "NULL";
+      }
+
+      @NotNull
+      @Override
+      public NewVirtualFileSystem getFileSystem() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Nullable
+      @Override
+      public NewVirtualFile findChild(@NotNull String name) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Nullable
+      @Override
+      public NewVirtualFile refreshAndFindChild(@NotNull String name) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Nullable
+      @Override
+      public NewVirtualFile findChildIfCached(@NotNull String name) {
+        throw new UnsupportedOperationException();
+      }
+
+      @NotNull
+      @Override
+      public Collection<VirtualFile> getCachedChildren() {
+        throw new UnsupportedOperationException();
+      }
+
+      @NotNull
+      @Override
+      public Iterable<VirtualFile> iterInDbChildren() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean isDirectory() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public VirtualFile[] getChildren() {
+        throw new UnsupportedOperationException();
+      }
+
+      @NotNull
+      @Override
+      public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public InputStream getInputStream() {
+        throw new UnsupportedOperationException();
+      }
+    };
 }
