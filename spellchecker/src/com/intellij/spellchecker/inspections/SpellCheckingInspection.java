@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
-  private static final int TOKEN_LENGTH_LIMIT = Registry.intValue("spellchecker.token.limit", 200000);
+  private static final int TOKEN_LENGTH_LIMIT = Registry.intValue("spellchecker.token.limit", 400000);
 
   @NotNull
   @Override
