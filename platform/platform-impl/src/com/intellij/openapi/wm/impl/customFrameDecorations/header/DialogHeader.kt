@@ -9,8 +9,6 @@ import java.util.ArrayList
 import javax.swing.*
 
 class DialogHeader(val window: Window) : CustomHeader(window) {
-    private val myInactiveForeground = UIManager.getColor("inactiveCaptionText")
-    private val myDefaultActiveForeground = UIManager.getColor("activeCaptionText")
     private val titleLabel = JLabel()
 
     init {
@@ -27,14 +25,17 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
     override fun setActive(value: Boolean) {
-        titleLabel.foreground = if (value) getActiveColor() else myInactiveForeground
+        //titleLabel.foreground = if (value) getActiveColor() else UIManager.getColor("inactiveCaptionText")
         super.setActive(value)
     }
 
-    private fun getActiveColor(): Color? {
-        if (window is JFrame) {
+    override fun windowStateChanged() {
+        super.windowStateChanged()
+        titleLabel.text = getTitle()
+    }
 
-            when (window.rootPane.windowDecorationStyle) {
+    private fun getActiveColor(): Color? {
+        when (windowRootPane?.windowDecorationStyle) {
                 JRootPane.ERROR_DIALOG -> return UIManager.getColor("OptionPane.errorDialog.titlePane.foreground")
                 JRootPane.QUESTION_DIALOG,
                 JRootPane.COLOR_CHOOSER_DIALOG,
@@ -42,9 +43,8 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
                 JRootPane.WARNING_DIALOG -> return UIManager.getColor("OptionPane.warningDialog.titlePane.foreground")
                 JRootPane.PLAIN_DIALOG,
                 JRootPane.INFORMATION_DIALOG -> return UIManager.getColor("activeCaptionText")
-            }
         }
-        return myDefaultActiveForeground
+        return UIManager.getColor("activeCaptionText")
     }
 
     override fun addNotify() {

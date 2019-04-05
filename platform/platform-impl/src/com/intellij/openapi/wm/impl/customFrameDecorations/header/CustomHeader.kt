@@ -5,12 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
-import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import com.intellij.util.ObjectUtils
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUIScale
 import java.awt.*
@@ -31,10 +33,10 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-        fun createFrameHeader(frame: JFrame): CustomHeader = FrameHeader(frame)
+        fun createFrameHeader(frame: JFrame): FrameHeader = FrameHeader(frame)
     }
 
-    private var windowListener: WindowListener
+    private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
     private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
         ObjectUtils.notNull(
@@ -42,6 +44,12 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected var myActive = false
+    protected val windowRootPane: JRootPane? = when (window) {
+        is JWindow -> window.rootPane
+        is JDialog -> window.rootPane
+        is JFrame -> window.rootPane
+        else -> null
+    }
 
     private val icon: Icon
         get() {
@@ -79,7 +87,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             override fun windowClosed(e: WindowEvent?) {
                 onClose()
             }
+
+            override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
+                windowStateChanged()
+            }
         }
+
+
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
@@ -89,6 +103,10 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     abstract fun createButtonsPane(): CustomFrameTitleButtons
+
+    open fun windowStateChanged() {
+
+    }
 
     override fun addNotify() {
         super.addNotify()
@@ -102,11 +120,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     protected open fun installListeners() {
         window.addWindowListener(windowListener)
+        window.addWindowStateListener(windowListener)
         window.addComponentListener(myComponentListener)
     }
 
     protected open fun uninstallListeners() {
         window.removeWindowListener(windowListener)
+        window.removeWindowStateListener(windowListener)
         window.removeComponentListener(myComponentListener)
     }
 
