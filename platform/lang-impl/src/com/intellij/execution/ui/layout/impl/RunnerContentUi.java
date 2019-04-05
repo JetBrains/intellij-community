@@ -966,6 +966,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       myOriginal.saveUiState();
       return;
     }
+    if (!myUiLastStateWasRestored) return;
+
     int offset = updateTabsIndices(myTabs, 0);
     for (RunnerContentUi child : myChildren) {
       offset = updateTabsIndices(child.myTabs, offset);
