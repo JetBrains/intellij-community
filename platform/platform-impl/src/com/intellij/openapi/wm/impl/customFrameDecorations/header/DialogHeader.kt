@@ -25,7 +25,7 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
     override fun setActive(value: Boolean) {
-        //titleLabel.foreground = if (value) getActiveColor() else UIManager.getColor("inactiveCaptionText")
+        titleLabel.foreground = if (value) getActiveColor() else UIManager.getColor("Label.disabledForeground")
         super.setActive(value)
     }
 
@@ -42,9 +42,9 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
                 JRootPane.FILE_CHOOSER_DIALOG -> return UIManager.getColor("OptionPane.questionDialog.titlePane.foreground")
                 JRootPane.WARNING_DIALOG -> return UIManager.getColor("OptionPane.warningDialog.titlePane.foreground")
                 JRootPane.PLAIN_DIALOG,
-                JRootPane.INFORMATION_DIALOG -> return UIManager.getColor("activeCaptionText")
+                JRootPane.INFORMATION_DIALOG -> return UIManager.getColor("Panel.foreground")
         }
-        return UIManager.getColor("activeCaptionText")
+        return UIManager.getColor("Panel.foreground")
     }
 
     override fun addNotify() {
