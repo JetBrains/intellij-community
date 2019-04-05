@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,26 +86,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
-    @Tag("caretStopOptions")
-    public static class CaretStops {
-      public boolean AT_WORD_START = false;
-      public boolean AT_WORD_END = false;
-      public boolean AT_LINE_START = SystemInfo.isWindows;
-      public boolean AT_LINE_END = SystemInfo.isWindows;
-    }
-
-    public CaretStops MOVE_TO_PREVIOUS_WORD_CARET_STOPS = new CaretStops();
-    public CaretStops MOVE_TO_NEXT_WORD_CARET_STOPS = new CaretStops();
-
-    {
-      if (SystemInfo.isWindows) {
-        MOVE_TO_NEXT_WORD_CARET_STOPS.AT_WORD_START = true;
-      }
-      else {
-        MOVE_TO_NEXT_WORD_CARET_STOPS.AT_WORD_END = true;
-      }
-      MOVE_TO_PREVIOUS_WORD_CARET_STOPS.AT_WORD_START = true;
-    }
+    public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions(SystemInfo.isWindows ? CaretStopPolicy.START
+                                                                                           : CaretStopPolicy.CURRENT,
+                                                                      SystemInfo.isWindows ? CaretStopPolicy.BOTH
+                                                                                           : CaretStopPolicy.NONE);
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
@@ -673,55 +656,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SOFT_WRAP_FILE_MASKS = value;
   }
 
-  /**
-   * @return whether "Move Caret to Next/Previous Word" action should stop at word start.
-   */
-  public boolean isCaretStopAtWordStart(boolean next) {
-    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_START;
+  @NotNull
+  public CaretStopOptions getCaretStopOptions() {
+    return myOptions.CARET_STOP_OPTIONS;
   }
 
-  /**
-   * @return whether "Move Caret to Next/Previous Word" action should stop at word end.
-   */
-  public boolean isCaretStopAtWordEnd(boolean next) {
-    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_END;
-  }
-
-  public void setCaretStopAtWordStart(boolean next, boolean value) {
-    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_START = value;
-  }
-
-  public void setCaretStopAtWordEnd(boolean next, boolean value) {
-    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_WORD_END = value;
-  }
-
-  /**
-   * @return whether "Move Caret to Next/Previous Word" action should stop at line start.
-   */
-  public boolean isCaretStopAtLineStart(boolean next) {
-    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_START;
-  }
-
-  /**
-   * @return whether "Move Caret to Next/Previous Word" action should stop at line end.
-   */
-  public boolean isCaretStopAtLineEnd(boolean next) {
-    return (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-                 : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_END;
-  }
-
-  public void setCaretStopAtLineStart(boolean next, boolean value) {
-    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_START = value;
-  }
-
-  public void setCaretStopAtLineEnd(boolean next, boolean value) {
-    (next ? myOptions.MOVE_TO_NEXT_WORD_CARET_STOPS
-          : myOptions.MOVE_TO_PREVIOUS_WORD_CARET_STOPS).AT_LINE_END = value;
+  public void setCaretStopOptions(@NotNull CaretStopOptions options) {
+    myOptions.CARET_STOP_OPTIONS = options;
   }
 }
