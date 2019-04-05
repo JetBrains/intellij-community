@@ -43,7 +43,10 @@ public class SdkLeakTracker {
         // Note that AndroidTestCase gave up on leak checking by clearing the ProjectJdkTable during teardown, so this code is only
         // reachable for tests extending IdeaTestCase or PlatformTestCase directly.
         if (PlatformUtils.isAndroidStudio()) {
-          exemptGradleJdk(leaked);
+          exemptKotlinJdk(leaked);
+          if (!leaked.isEmpty()) {
+            exemptGradleJdk(leaked);
+          }
         }
 
         try {
@@ -77,6 +80,21 @@ public class SdkLeakTracker {
         } catch (ReflectiveOperationException ignored) {
         }
       }
+    }
+  }
+
+  private static void exemptKotlinJdk(Set<Sdk> leaked) {
+    Sdk kotlinSdk = null;
+    for (Sdk sdk : leaked) {
+      if ("Kotlin SDK".equals(sdk.getName())) {
+        kotlinSdk = sdk;
+        break;
+      }
+    }
+    if (kotlinSdk != null) {
+      final Sdk sdk = kotlinSdk;
+      leaked.remove(sdk);
+      WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
     }
   }
 }
