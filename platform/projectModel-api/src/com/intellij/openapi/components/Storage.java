@@ -12,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
   @Deprecated
-  String NOT_ROAMABLE_FILE = StoragePathMacros.NOT_ROAMABLE_FILE;
+  String NOT_ROAMABLE_FILE = StoragePathMacros.NON_ROAMABLE_FILE;
 
   /**
    * @deprecated Use {@link #value()}.

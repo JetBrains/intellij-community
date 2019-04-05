@@ -7,7 +7,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 
 @State(name = "PropertiesComponent", storages = {
-  @Storage(value = StoragePathMacros.NOT_ROAMABLE_FILE, roamingType = RoamingType.DISABLED),
+  @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED),
   @Storage(value = "options.xml", roamingType = RoamingType.DISABLED, deprecated = true)
 })
 public class AppPropertiesComponentImpl extends PropertiesComponentImpl {

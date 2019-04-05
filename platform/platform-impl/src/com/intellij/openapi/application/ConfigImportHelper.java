@@ -54,7 +54,7 @@ public class ConfigImportHelper {
 
   public static final String CONFIG = "config";
   private static final String[] OPTIONS = {
-    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
     OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
