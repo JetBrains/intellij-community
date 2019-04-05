@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest {
+public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
   public void testCompilerConfigurationSettingsImport() throws Exception {
 
