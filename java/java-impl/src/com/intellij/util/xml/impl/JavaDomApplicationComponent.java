@@ -18,7 +18,7 @@ import com.intellij.util.xml.ui.PsiTypeControl;
  * @author peter
  */
 final class JavaDomApplicationComponent implements Consumer<DomUIFactory> {
-  private static final class Initializer implements ApplicationInitializedListener {
+  static final class Initializer implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
       ConverterManager converterManager = ServiceManager.getService(ConverterManager.class);
