@@ -52,7 +52,7 @@ class PredictionProvider(private val minProb: Double = 0.3) {
     var authorCommitted = 0.0
 
     candidateFileHistory.forEach { oldCommit ->
-      val filesFromCommit = oldCommit.files.filter { file -> file in newCommit.files }
+      val filesFromCommit = oldCommit.files.intersect(newCommit.files)
 
       countFilesCounter.append(filesFromCommit.size)
       if (filesFromCommit.isNotEmpty()) {
