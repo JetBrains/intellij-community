@@ -16,9 +16,12 @@ import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 
-class GitDetailsCollector(private val project: Project, private val root: VirtualFile) {
+internal class GitDetailsCollector(private val project: Project, private val root: VirtualFile,
+                                   private val recordBuilder: GitLogRecordBuilder) {
   private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
   private val vcs = GitVcs.getInstance(project)
+
+  constructor(project: Project, root: VirtualFile) : this(project, root, DefaultGitLogRecordBuilder())
 
   @Throws(VcsException::class)
   fun readFullDetails(commitConsumer: Consumer<in GitCommit>,
@@ -81,7 +84,7 @@ class GitDetailsCollector(private val project: Project, private val root: Virtua
 
   @Throws(VcsException::class)
   private fun readRecordsFromHandler(handler: GitLineHandler, converter: Consumer<GitLogRecord>, vararg parameters: String) {
-    val parser = GitLogParser(project, GitLogParser.NameStatus.STATUS, *GitLogUtil.COMMIT_METADATA_OPTIONS)
+    val parser = GitLogParser(project, recordBuilder, GitLogParser.NameStatus.STATUS, *GitLogUtil.COMMIT_METADATA_OPTIONS)
     handler.setStdoutSuppressed(true)
     handler.addParameters(*parameters)
     handler.addParameters(parser.pretty, "--encoding=UTF-8")
