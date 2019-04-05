@@ -83,7 +83,8 @@ public class CreateWithTemplatesDialogPanel extends JBPanel implements Disposabl
       Point point = new Point(0, insets.top - JBUI.scale(6) - hintSize.height);
       myErrorShowPoint = new RelativePoint(myNameField, point);
     }).setCancelOnWindowDeactivation(false)
-      .setCancelOnClickOutside(true);
+      .setCancelOnClickOutside(true)
+      .addUserData("SIMPLE_WINDOW");
 
     myErrorPopup = popupBuilder.createPopup();
     myErrorPopup.show(myErrorShowPoint);
