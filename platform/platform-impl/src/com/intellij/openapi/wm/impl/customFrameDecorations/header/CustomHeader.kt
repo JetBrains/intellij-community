@@ -5,25 +5,25 @@ import com.intellij.icons.AllIcons
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import com.intellij.ui.SideBorder
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUIScale
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
+import javax.swing.border.Border
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
         const val H_GAP = 7
         const val MIN_HEIGHT = 24
-        val HIT_TEST_RESIZE_GAP = JBUI.scale(3);
+        val HIT_TEST_RESIZE_GAP = JBUI.scale(3)
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame && window.rootPane is IdeRootPane) {
@@ -51,6 +51,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         else -> null
     }
 
+    private var customFrameTopBorder: CustomFrameTopBorder? = null
+
     private val icon: Icon
         get() {
             val ctx = JBUIScale.ScaleContext.create(window)
@@ -66,6 +68,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     protected val buttonPanes: CustomFrameTitleButtons by lazy {
         createButtonsPane()
     }
+
+
 
     init {
         isOpaque = true
@@ -93,14 +97,20 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-
-
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
                 setCustomDecorationHitTestSpots()
             }
         }
+
+        setCustomFrameTopBorder()
     }
+
+    protected fun setCustomFrameTopBorder(isTopNeeded: ()-> Boolean = {true}, isBottomNeeded: ()-> Boolean = {false}) {
+        customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
+        border = customFrameTopBorder
+    }
+
 
     abstract fun createButtonsPane(): CustomFrameTitleButtons
 
@@ -140,6 +150,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         myActive = value
         buttonPanes.isSelected = value
         buttonPanes.updateVisibility()
+        customFrameTopBorder?.repaintBorder()
     }
 
     protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }
@@ -189,6 +200,43 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     open fun addMenuItems(menu: JMenu) {
         val closeMenuItem = menu.add(myCloseAction)
         closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+    }
+
+    inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
+        val thickness = 1
+        private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+        private val activeColor = ObjectUtils.notNull(Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color
+        ) { Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color }
+        val inactiveColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor") as Color
+
+        fun repaintBorder() {
+            val borderInsets = getBorderInsets(this@CustomHeader)
+
+            repaint(0, 0, width, borderInsets.top)
+            repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
+        }
+
+        override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+            if (isTopNeeded()) {
+                g.color = if (myActive) activeColor else inactiveColor
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
+            }
+
+            if (isBottomNeeded()) {
+                g.color = menuBarBorderColor
+                val y1 = y + height - JBUI.scale(thickness)
+                LinePainter2D.paint(g as Graphics2D, x.toDouble(), y1.toDouble(), width.toDouble(), y1.toDouble())
+            }
+        }
+
+        override fun getBorderInsets(c: Component): Insets {
+            val scale = JBUI.scale(thickness)
+            return Insets(if (isTopNeeded()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
+        }
+
+        override fun isBorderOpaque(): Boolean {
+            return true
+        }
     }
 }
 

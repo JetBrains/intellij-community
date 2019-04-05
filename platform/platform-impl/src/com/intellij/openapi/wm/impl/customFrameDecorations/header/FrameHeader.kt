@@ -66,8 +66,7 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         add(pane, "wmin 0, growx")
         add(buttonPanes.getView(), "top, wmin pref")
 
-        val borderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
-        border = SideBorder(borderColor, SideBorder.BOTTOM, JBUI.scale(1))
+        setCustomFrameTopBorder({myState != MAXIMIZED_VERT && myState != MAXIMIZED_BOTH}, {true})
     }
 
     fun setProject(project: Project) {
