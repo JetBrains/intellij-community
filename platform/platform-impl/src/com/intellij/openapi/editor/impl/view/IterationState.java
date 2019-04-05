@@ -15,6 +15,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,6 @@ import java.util.List;
  * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes 
  * (font style, foreground and background color, effect type and color).  
  */
-// This class should replace com.intellij.openapi.editor.impl.IterationState when new editor rendering engine will become default
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
@@ -573,7 +573,7 @@ public class IterationState {
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
-    int fontType = 0;
+    @JdkConstants.FontStyle int fontType = Font.PLAIN;
 
     TextAttributesEffectsBuilder effectsBuilder = null;
     //noinspection ForLoopReplaceableByForEach
