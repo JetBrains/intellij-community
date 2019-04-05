@@ -7,19 +7,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
@@ -30,6 +31,13 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   @Before
   public void setUp() {
     IoTestUtil.assumeSymLinkCreationIsSupported();
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    VirtualFile root = refreshAndFind(myTempDir.getRoot());
+    // purge VFS to avoid persisting these specific file names through to the next launch
+    VfsTestUtil.deleteFile(root);
   }
 
   @Test
@@ -109,16 +117,16 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
   @Test
   public void testSidewaysRecursiveLink() throws Exception {
-    File target = myTempDir.newFolder("dir_a");
-    File link1Home = createTestDir(target, "dir_b");
-    File link1 = createSymLink(SystemInfo.isWindows ? target.getPath() : "../../" + target.getName(), link1Home.getPath() + "/link1");
-    File mainDir = myTempDir.newFolder("project");
-    File subDir = createTestDir(mainDir, "dir_c");
-    File link2Home = createTestDir(subDir, "dir_d");
-    File link2 = createSymLink(SystemInfo.isWindows ? target.getPath() : "../../../" + target.getName(), link2Home.getPath() + "/link2");
-    assertVisitedPaths(mainDir,
-                       subDir.getPath(), link2Home.getPath(), link2.getPath(), link2.getPath() + "/" + link1Home.getName(),
-                       link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());
+    File a = myTempDir.newFolder("a");
+    File b = createTestDir(a, "b");
+    File link1 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../" + a.getName(), b.getPath() + "/link1");
+    File project = myTempDir.newFolder("project");
+    File c = createTestDir(project, "c");
+    File d = createTestDir(c, "d");
+    File link2 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../../" + a.getName(), d.getPath() + "/link2");
+    assertVisitedPaths(project,
+                       c.getPath(), d.getPath(), link2.getPath(), link2.getPath() + "/" + b.getName(),
+                       link2.getPath() + "/" + b.getName() + "/" + link1.getName());
   }
 
   @Test
@@ -313,7 +321,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     VfsUtilCore.loadText(vLink2);
     assertEquals(vLink1, vLink2);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink1));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
     assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
@@ -333,8 +341,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     assertNotNull(subChild.getPath(), vSubChild);
 
     String relPath = "../" + subDir2.getName() + "/" + subChild.getName();
-    VirtualFile vSubChildRel;
-    vSubChildRel = vLink.findFileByRelativePath(relPath);
+    VirtualFile vSubChildRel = vLink.findFileByRelativePath(relPath);
     assertEquals(vSubChild, vSubChildRel);
     vSubChildRel = LocalFileSystem.getInstance().findFileByPath(vLink.getPath() + "/" + relPath);
     assertEquals(vSubChild, vSubChildRel);
@@ -358,7 +365,8 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     tempDir.getChildren();
     tempDir.refresh(false, true);
-    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() { });
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() {
+    });
   }
 
   private static void assertBrokenLink(@NotNull VirtualFile link) {
@@ -388,6 +396,11 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
       }
     });
 
-    assertEquals(expectedSet, actualSet);
+    List<String> exp = new ArrayList<>(expectedSet);
+    Collections.sort(exp);
+    List<String> act = new ArrayList<>(actualSet);
+    Collections.sort(act);
+
+    assertEquals(StringUtil.join(exp, "\n"), StringUtil.join(act, "\n"));
   }
 }

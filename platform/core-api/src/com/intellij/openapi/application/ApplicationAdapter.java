@@ -2,7 +2,7 @@
 package com.intellij.openapi.application;
 
 /**
- * @deprecated Use {@link ApplicationListener} directly.
+ * @deprecated Use {@link ApplicationListener} instead.
  */
 @Deprecated
 public abstract class ApplicationAdapter implements ApplicationListener {
