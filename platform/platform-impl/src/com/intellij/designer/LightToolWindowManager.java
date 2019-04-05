@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -49,7 +35,6 @@ public abstract class LightToolWindowManager implements Disposable {
 
   private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null, this);
   protected final Project myProject;
-  protected final FileEditorManager myFileEditorManager;
   protected volatile ToolWindow myToolWindow;
 
   private final PropertiesComponent myPropertiesComponent;
@@ -59,9 +44,8 @@ public abstract class LightToolWindowManager implements Disposable {
 
   private MessageBusConnection myConnection;
 
-  protected LightToolWindowManager(Project project, FileEditorManager fileEditorManager) {
+  protected LightToolWindowManager(Project project) {
     myProject = project;
-    myFileEditorManager = fileEditorManager;
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
@@ -109,7 +93,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   @Nullable
   public DesignerEditorPanelFacade getActiveDesigner() {
-    for (FileEditor editor : myFileEditorManager.getSelectedEditors()) {
+    for (FileEditor editor : FileEditorManager.getInstance(myProject).getSelectedEditors()) {
       DesignerEditorPanelFacade designer = getDesigner(editor);
       if (designer != null) {
         return designer;
@@ -231,7 +215,7 @@ public abstract class LightToolWindowManager implements Disposable {
   private final Consumer<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);
 
   private void runUpdateContent(Consumer<? super DesignerEditorPanelFacade> action) {
-    for (FileEditor editor : myFileEditorManager.getAllEditors()) {
+    for (FileEditor editor : FileEditorManager.getInstance(myProject).getAllEditors()) {
       DesignerEditorPanelFacade designer = getDesigner(editor);
       if (designer != null) {
         action.accept(designer);
