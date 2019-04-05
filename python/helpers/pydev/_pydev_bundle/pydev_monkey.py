@@ -9,6 +9,8 @@ except:
     xrange = range
 
 
+PYTHON_NAMES = ['python', 'jython', 'pypy']
+
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
@@ -68,15 +70,31 @@ def is_python_args(args):
     return len(args) > 0 and is_python(args[0])
 
 
+def is_executable(path):
+    return os.access(os.path.abspath(path), os.EX_OK)
+
+
+def starts_with_python_shebang(path):
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            for name in PYTHON_NAMES:
+                if line.startswith('#!/usr/bin/env %s' % name):
+                    return True
+            if line:
+                False
+    return False
+
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
-    for name in ['python', 'jython', 'pypy']:
+    python_names = ['python', 'jython', 'pypy']
+    for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-
-    return False
+    return is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
@@ -135,6 +153,10 @@ def patch_args(args):
             return args
 
         if is_python(args[0]):
+
+            if len(args) == 1:  # Executable file with Python shebang.
+                args.insert(0, sys.executable)
+
             ind_c = get_c_option_index(args)
 
             if ind_c != -1:
@@ -306,6 +328,21 @@ def patch_arg_str_win(arg_str):
     log_debug("New args: %s" % arg_str)
     return arg_str
 
+
+def patch_fork_exec_executable_list(args, other_args):
+    i = 0
+    for arg in args:
+        i += 1
+        if arg == '--file':
+            break
+    else:
+        return other_args
+    executable_list = other_args[0]
+    if args[i].encode() in executable_list:
+        return ((sys.executable.encode(),),) + other_args[1:]
+    return other_args
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
         original_name = 'original_' + funcname
@@ -421,7 +458,7 @@ def create_fork_exec(original_name):
         import _posixsubprocess  # @UnresolvedImport
         args = patch_args(args)
         send_process_created_message()
-        return getattr(_posixsubprocess, original_name)(args, *other_args)
+        return getattr(_posixsubprocess, original_name)(args, *patch_fork_exec_executable_list(args, other_args))
     return new_fork_exec
 
 
