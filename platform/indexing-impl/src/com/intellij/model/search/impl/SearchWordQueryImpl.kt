@@ -9,6 +9,7 @@ import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.impl.search.SearchWordRequest
 import com.intellij.psi.impl.search.idTransform
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope

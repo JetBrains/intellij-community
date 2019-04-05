@@ -4,10 +4,7 @@ package com.intellij.model.search.impl
 import com.intellij.model.SymbolReference
 import com.intellij.model.search.SearchSymbolReferenceParameters
 import com.intellij.model.search.TextOccurrence
-import com.intellij.psi.impl.search.Transformation
-import com.intellij.psi.impl.search.bind
-import com.intellij.psi.impl.search.idTransform
-import com.intellij.psi.impl.search.transform
+import com.intellij.psi.impl.search.*
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import java.util.function.Function
