@@ -273,11 +273,18 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    final FileStatus status = changeListManager.getStatus(file);
     LOG.debug("Checking moved file ", file, "; status=", status);
 
     String newPath = newParentPath + "/" + newName;
-    if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
+    VirtualFile newParentFile = LocalFileSystem.getInstance().findFileByPath(newParentPath);
+    FileStatus newParentStatus = null;
+    if (newParentFile != null) {
+      newParentStatus = changeListManager.getStatus(newParentFile);
+    }
+    if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) &&
+        (newParentStatus == null || newParentStatus != FileStatus.IGNORED)) {
       MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, info -> Comparing.equal(info.myFile, file));
       if (existingMovedFile != null) {
         LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
@@ -411,7 +418,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event)) return;
+      if (!isMoveToNotIgnoredParent(event) && isEventIgnored(event)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
       LOG.debug("beforeFileMovement ", event, " into ", newVcs);
@@ -421,6 +428,10 @@ public abstract class VcsVFSListener implements Disposable {
       else {
         addFileToDelete(event.getFile());
       }
+    }
+
+    private boolean isMoveToNotIgnoredParent(VirtualFileMoveEvent event) {
+      return !myChangeListManager.isIgnoredFile(event.getNewParent());
     }
 
     @Override
