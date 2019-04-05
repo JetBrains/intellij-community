@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
@@ -27,9 +28,14 @@ public class BashCompletionContributor extends CompletionContributor implements 
     extend(CompletionType.BASIC, psiElement().inFile(instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
-        Collection<String> kws = suggestKeywords(parameters.getPosition());
-        for (String keywords : kws) {
-          result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
+
+        Collection<String> kws = Collections.emptyList();
+        PsiElement original = parameters.getOriginalPosition();
+        if (original == null || !original.getText().contains("/")) {
+          kws = suggestKeywords(parameters.getPosition());
+          for (String keywords : kws) {
+            result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
+          }
         }
 
         String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
