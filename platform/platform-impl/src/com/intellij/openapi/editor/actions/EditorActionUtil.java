@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -202,6 +203,14 @@ public class EditorActionUtil {
   private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
+  }
+
+  protected static boolean isCaretStopPlace(@NotNull Editor editor,
+                                            int newOffset,
+                                            boolean camel,
+                                            @NotNull CaretStop wordStop) {
+    return wordStop.isAtStart() && isWordOrLexemeStart(editor, newOffset, camel) ||
+           wordStop.isAtEnd() && isWordOrLexemeEnd(editor, newOffset, camel);
   }
 
   public static boolean isWordOrLexemeStart(@NotNull Editor editor, int offset, boolean isCamel) {
@@ -596,6 +605,14 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
+    moveCaretToNextWord(editor, isWithSelection, camel,
+                        EditorSettingsExternalizable.getInstance().getCaretStopOptions().getForwardPolicy());
+  }
+
+  public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel,
+                                         @NotNull CaretStopPolicy caretStopPolicy) {
+    if (caretStopPolicy.equals(CaretStopPolicy.NONE)) return;
+
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -614,6 +631,8 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getEndOffset();
     }
     else {
+      final CaretStop wordStop = caretStopPolicy.getWordStop();
+
       newOffset = offset + 1;
       int lineNumber = caretModel.getLogicalPosition().line;
       if (lineNumber >= document.getLineCount()) return;
@@ -625,9 +644,7 @@ public class EditorActionUtil {
         maxOffset = document.getLineEndOffset(lineNumber + 1);
       }
       for (; newOffset < maxOffset; newOffset++) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) {
-          break;
-        }
+        if (isCaretStopPlace(editor, newOffset, camel, wordStop)) break;
       }
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null) {
@@ -695,6 +712,14 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
+    moveCaretToPreviousWord(editor, isWithSelection, camel,
+                            EditorSettingsExternalizable.getInstance().getCaretStopOptions().getBackwardPolicy());
+  }
+
+  public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel,
+                                             @NotNull CaretStopPolicy caretStopPolicy) {
+    if (caretStopPolicy.equals(CaretStopPolicy.NONE)) return;
+
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -711,11 +736,12 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getStartOffset();
     }
     else {
+      final CaretStop wordStop = caretStopPolicy.getWordStop();
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       newOffset = offset - 1;
       int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
       for (; newOffset > minOffset; newOffset--) {
-        if (isWordOrLexemeStart(editor, newOffset, camel)) break;
+        if (isCaretStopPlace(editor, newOffset, camel, wordStop)) break;
       }
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
       if (foldRegion != null && newOffset > foldRegion.getStartOffset()) {
