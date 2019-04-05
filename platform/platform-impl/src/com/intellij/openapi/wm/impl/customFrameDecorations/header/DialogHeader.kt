@@ -35,7 +35,7 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     }
 
     private fun getActiveColor(): Color? {
-        when (windowRootPane?.windowDecorationStyle) {
+/*        when (windowRootPane?.windowDecorationStyle) {
                 JRootPane.ERROR_DIALOG -> return UIManager.getColor("OptionPane.errorDialog.titlePane.foreground")
                 JRootPane.QUESTION_DIALOG,
                 JRootPane.COLOR_CHOOSER_DIALOG,
@@ -43,7 +43,7 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
                 JRootPane.WARNING_DIALOG -> return UIManager.getColor("OptionPane.warningDialog.titlePane.foreground")
                 JRootPane.PLAIN_DIALOG,
                 JRootPane.INFORMATION_DIALOG -> return UIManager.getColor("Panel.foreground")
-        }
+        }*/
         return UIManager.getColor("Panel.foreground")
     }
 
