@@ -86,7 +86,7 @@ private class DigestOutputStream(private val digest: MessageDigest) : OutputStre
   fun digest(): ByteArray = digest.digest()
 }
 
-private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { MessageDigest.getInstance("SHA-1") }
+private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { MessageDigest.getInstance("SHA-1", java.security.Security.getProvider("SUN")) }
 
 // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
 fun createDataDigest(): MessageDigest {
