@@ -369,10 +369,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       @Override
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        UIUtil.setLineStyleAngled(tableRenderer);
         tableRenderer.setRootVisible(false);
         tableRenderer.setShowsRootHandles(true);
-
         return tableRenderer;
       }
 

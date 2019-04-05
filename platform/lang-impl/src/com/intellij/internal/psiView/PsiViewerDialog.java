@@ -431,7 +431,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   public static void initTree(JTree tree) {
-    UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.updateUI();

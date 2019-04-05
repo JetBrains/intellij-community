@@ -1368,12 +1368,12 @@ public class UIUtil {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final ClientPropertyHolder component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final JTree component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
   public static Color getTableFocusCellForeground() {

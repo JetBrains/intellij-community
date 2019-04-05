@@ -185,10 +185,8 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
     TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-    UIUtil.setLineStyleAngled(tableRenderer);
     tableRenderer.setRootVisible(false);
     tableRenderer.setShowsRootHandles(true);
-
     return tableRenderer;
   }
 
