@@ -377,10 +377,10 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWindowsHiddenDirectory() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeTrue("Windows expected", SystemInfo.isWindows);
 
     File file = new File("C:\\Documents and Settings\\desktop.ini");
-    assumeTrue(file.exists());
+    assumeTrue("Documents and Settings assumed to exist", file.exists());
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), parent);
@@ -430,8 +430,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBadFileName() throws IOException {
-    assumeTrue(SystemInfo.isUnix);
+  public void testBadFileNameUnderUnix() throws IOException {
+    assumeTrue("Unix expected", SystemInfo.isUnix);
 
     File file = tempDir.newFile("test\\file.txt");
     VirtualFile vDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
@@ -498,7 +498,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileCaseChange() throws IOException {
-    assumeFalse(SystemInfo.isFileSystemCaseSensitive);
+    assumeFalse("Case-insensitive FS expected", SystemInfo.isFileSystemCaseSensitive);
 
     File file = tempDir.newFile("file.txt");
 
