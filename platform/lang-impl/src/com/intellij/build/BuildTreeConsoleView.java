@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -86,8 +85,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final Tree myTree;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
-  @NotNull private final BuildViewGroupingSupport myGroupingSupport;
-  private final ConcurrentLinkedDeque<Pair<BuildEvent, ExecutionNode>> myGroupingEvents = new ConcurrentLinkedDeque<>();
   @Nullable
   private volatile Predicate<ExecutionNode> myExecutionTreeFilter;
 
@@ -97,8 +94,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                               @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    myGroupingSupport = new BuildViewGroupingSupport(this);
-    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping());
 
     myRootNode = new ExecutionNode(myProject, null);
     myRootNode.setAutoExpandNode(true);
@@ -139,17 +134,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                              buildViewSettingsProvider);
     myThreeComponentsSplitter.setLastComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
-  }
-
-  private static Tree initTree(@NotNull AsyncTreeModel model) {
-    Tree tree = new MyTree(model);
-    UIUtil.putClientProperty(tree, ANIMATION_IN_RENDERER_ALLOWED, true);
-    tree.setRootVisible(false);
-    EditSourceOnDoubleClickHandler.install(tree);
-    EditSourceOnEnterKeyHandler.install(tree, null);
-    new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
-    TreeUtil.installActions(tree);
-    return tree;
   }
 
   private void installContextMenu(@NotNull StartBuildEvent startBuildEvent) {
@@ -230,7 +214,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   public void onEventInternal(@NotNull BuildEvent event) {
     final ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
-    final Object eventId = myGroupingSupport.getGroupedId(event);
+    final Object eventId = event.getId();
     ExecutionNode currentNode = nodesMap.get(eventId);
     ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
     if (event instanceof StartEvent || event instanceof MessageEvent) {
@@ -253,7 +237,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             currentNode.setNavigatable(messageEventNavigatable);
             final MessageEventResult messageEventResult = messageEvent.getResult();
             currentNode.setResult(messageEventResult);
-            myGroupingEvents.add(Pair.pair(event, currentNode));
             if (messageEvent.getKind() == MessageEvent.Kind.ERROR) {
               if (messageEventNavigatable != null && myShownFirstError.compareAndSet(false, true)) {
                 GuiUtils.invokeLaterIfNeeded(() -> messageEventNavigatable.navigate(false),
@@ -443,31 +426,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         parentsPath = myWorkingDir;
       }
 
-      boolean groupBySourceRoot = myGroupingSupport.get(BuildViewGroupingSupport.SOURCE_ROOT_GROUPING);
-      if (groupBySourceRoot && relativePath != null) {
-        String nodeId = groupNodeId + myWorkingDir;
-        ExecutionNode workingDirNode = getOrCreateMessagesNode(messageEvent, nodeId, messagesGroupNode, myWorkingDir, null, false,
-                                                               () -> AllIcons.Nodes.Module, null, nodesMap, myProject);
-        parentsPath = myWorkingDir;
-        fileParentNode = workingDirNode;
-      }
-
-      VirtualFile sourceRootForFile;
       VirtualFile ioFile = VfsUtil.findFileByIoFile(new File(filePath), false);
-      if (groupBySourceRoot && ioFile != null &&
-          (sourceRootForFile = ProjectFileIndex.SERVICE.getInstance(myProject).getSourceRootForFile(ioFile)) != null) {
-        relativePath = FileUtil.getRelativePath(parentsPath, sourceRootForFile.getPath(), '/');
-        if (relativePath != null) {
-          parentsPath += ("/" + relativePath);
-          String contentRootNodeId = groupNodeId + sourceRootForFile.getPath();
-          fileParentNode = getOrCreateMessagesNode(messageEvent, contentRootNodeId, fileParentNode, relativePath, null, false,
-                                                   () -> ProjectFileIndex.SERVICE.getInstance(myProject).isInTestSourceContent(ioFile)
-                                                         ? AllIcons.Modules.TestRoot
-                                                         : AllIcons.Modules.SourceRoot, null, nodesMap, myProject);
-        }
-      }
 
-      String fileNodeId = groupNodeId + filePath + groupBySourceRoot;
+      String fileNodeId = groupNodeId + filePath;
       relativePath = StringUtil.isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
       parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, fileParentNode, relativePath, null, true,
                                            () -> {
@@ -502,54 +463,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     });
   }
 
-  private void changeGrouping() {
-    for (Pair<BuildEvent, ExecutionNode> pair : myGroupingEvents) {
-      BuildEvent event = pair.first;
-      ExecutionNode originalNode = pair.second;
-      Object id = myGroupingSupport.getGroupedId(event);
-      ExecutionNode node = nodesMap.get(id);
-      if (node == null && event instanceof MessageEvent) {
-        ExecutionNode parentNode = getOrMaybeCreateParentNode(event);
-        if (parentNode != null) {
-          node = originalNode.copy(parentNode);
-          nodesMap.put(id, node);
-          parentNode.add(node);
-        }
-      }
-
-      Collection<Object> allGroupedIds = myGroupingSupport.getAllGroupedIds(event);
-      for (Object _id : allGroupedIds) {
-        if (_id == id) continue;
-        ExecutionNode _node = nodesMap.get(_id);
-        _node.setVisible(false);
-        ExecutionNode p = (ExecutionNode)_node.getParent();
-        while (p.getParent() instanceof ExecutionNode) {
-          p.setVisible(false);
-          p = (ExecutionNode)p.getParent();
-        }
-        scheduleUpdate(p);
-      }
-
-      if (node != null) {
-        node.setVisible(true);
-        ExecutionNode p = (ExecutionNode)node.getParent();
-        while (p.getParent() instanceof ExecutionNode) {
-          p.setVisible(true);
-          scheduleUpdate(p);
-          p = (ExecutionNode)p.getParent();
-        }
-        scheduleUpdate(node);
-      }
-    }
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
-    if (BuildViewGroupingSupport.KEY.is(dataId)) return myGroupingSupport;
     return null;
   }
 
@@ -575,6 +494,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   @TestOnly
   JTree getTree() {
     return myTree;
+  }
+
+  private static Tree initTree(@NotNull AsyncTreeModel model) {
+    Tree tree = new MyTree(model);
+    UIUtil.putClientProperty(tree, ANIMATION_IN_RENDERER_ALLOWED, true);
+    tree.setRootVisible(false);
+    EditSourceOnDoubleClickHandler.install(tree);
+    EditSourceOnEnterKeyHandler.install(tree, null);
+    new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
+    TreeUtil.installActions(tree);
+    return tree;
   }
 
   private static void updateSplitter(@NotNull ThreeComponentsSplitter myThreeComponentsSplitter) {
