@@ -9,7 +9,9 @@ enum class UIEventId {
   NavBarShowPopup,
   NavBarNavigate,
   LookupShowElementActions,
-  LookupExecuteElementAction
+  LookupExecuteElementAction,
+  DaemonEditorPopupInvoked,
+  HectorPopupDisplayed
 }
 
 fun logUIEvent(eventId: UIEventId) {
