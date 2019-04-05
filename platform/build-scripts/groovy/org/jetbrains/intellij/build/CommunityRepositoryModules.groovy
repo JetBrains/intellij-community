@@ -184,6 +184,8 @@ class CommunityRepositoryModules {
       withProjectLibrary("Gradle")
     },
     plugin("intellij.platform.testGuiFramework") {
+      //the plugin is for internal use for now so it shouldn't be published
+      defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
       mainJarName = "testGuiFramework"
       withModule("intellij.platform.testGuiFramework")
       withProjectLibrary("fest")

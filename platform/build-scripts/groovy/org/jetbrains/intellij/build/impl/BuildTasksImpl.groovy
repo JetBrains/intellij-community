@@ -266,7 +266,7 @@ idea.fatal.error.notification=disabled
 
     def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
-      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
+      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
       if (publishingSpec == null) {
         buildContext.messages.error("buildContext.productProperties.productLayout.pluginModulesToPublish doesn't have info for $plugin.mainModule")
       }
@@ -281,8 +281,8 @@ idea.fatal.error.notification=disabled
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
-            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
+            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
+            pluginsToPublish.put(plugin, spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {
