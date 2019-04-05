@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
-import org.jetbrains.annotations.Contract
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
@@ -31,13 +30,10 @@ private val LOG = logger<BrowserLauncherAppless>()
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
     @JvmStatic
-    fun canUseSystemDefaultBrowserPolicy(): Boolean {
-      return isDesktopActionSupported(Desktop.Action.BROWSE) ||
-             SystemInfo.isMac || SystemInfo.isWindows ||
-             SystemInfo.isUnix && SystemInfo.hasXdgOpen()
-    }
+    fun canUseSystemDefaultBrowserPolicy(): Boolean =
+      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.isUnix && SystemInfo.hasXdgOpen()
 
-    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)
@@ -141,41 +137,25 @@ open class BrowserLauncherAppless : BrowserLauncher() {
                                project: Project?,
                                openInNewWindow: Boolean,
                                additionalParameters: Array<String>): Boolean {
-    var browserPathEffective = browserPath
-    var launchTask: (() -> Unit)? = null
-    if (browserPath == null && browser != null) {
-      browserPathEffective = PathUtil.toSystemDependentName(browser.path)
-      launchTask = { browseUsingPath(url, null, browser, project, openInNewWindow, additionalParameters) }
+    val byName = browserPath == null && browser != null
+    val effectivePath = if (byName) PathUtil.toSystemDependentName(browser!!.path) else browserPath
+    val launchTask: (() -> Unit)? = if (byName) { -> browseUsingPath(url, null, browser!!, project, openInNewWindow, additionalParameters) } else null
+
+    if (effectivePath.isNullOrBlank()) {
+      val message = browser?.browserNotFoundMessage ?: IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath())
+      showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask)
+      return false
     }
-    return doLaunch(url, browserPathEffective, browser, project, openInNewWindow, additionalParameters, launchTask)
+
+    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow), browser, project, additionalParameters, launchTask)
   }
 
   private fun doLaunch(url: String?,
-                       browserPath: String?,
+                       command: List<String>,
                        browser: WebBrowser?,
                        project: Project?,
-                       openInNewWindow: Boolean,
-                       additionalParameters: Array<String>,
-                       launchTask: (() -> Unit)?): Boolean {
-    if (!checkPath(browserPath, browser, project, launchTask)) {
-      return false
-    }
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath!!, openInNewWindow), browser, project, additionalParameters,
-                    launchTask)
-  }
-
-  @Contract("null, _, _, _ -> false")
-  fun checkPath(browserPath: String?, browser: WebBrowser?, project: Project?, launchTask: (() -> Unit)?): Boolean {
-    if (!browserPath.isNullOrBlank()) {
-      return true
-    }
-
-    val message = browser?.browserNotFoundMessage ?: IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath())
-    showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask)
-    return false
-  }
-
-  private fun doLaunch(url: String?, command: List<String>, browser: WebBrowser?, project: Project?, additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY, launchTask: (() -> Unit)? = null): Boolean {
+                       additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY,
+                       launchTask: (() -> Unit)? = null): Boolean {
     if (url != null && url.startsWith("jar:")) {
       return false
     }
@@ -202,13 +182,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       showError(e.message, browser, project, null, null)
       false
     }
-
   }
 
-  protected open fun checkCreatedProcess(browser: WebBrowser?, project: Project?, commandLine: GeneralCommandLine, process: Process, launchTask: (() -> Unit)?) {
-  }
+  protected open fun checkCreatedProcess(browser: WebBrowser?,
+                                         project: Project?,
+                                         commandLine: GeneralCommandLine,
+                                         process: Process,
+                                         launchTask: (() -> Unit)?) { }
 
-  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, launchTask: (() -> Unit)? = null) {
+  protected open fun showError(error: String?,
+                               browser: WebBrowser? = null,
+                               project: Project? = null,
+                               title: String? = null,
+                               launchTask: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }
@@ -216,29 +202,18 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }
 
-private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
-  return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
-}
+private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
+  !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
 
 private val generalSettings: GeneralSettings
-  get() {
-    if (ApplicationManager.getApplication() != null) {
-      GeneralSettings.getInstance()?.let {
-        return it
-      }
-    }
-
-    return GeneralSettings()
-  }
+  get() = (if (ApplicationManager.getApplication() != null) GeneralSettings.getInstance() else null) ?: GeneralSettings()
 
 private val defaultBrowserCommand: List<String>?
-  get() {
-    return when {
-      SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
-      SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
-      SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
-      else -> null
-    }
+  get() = when {
+    SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+    SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
+    SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
+    else -> null
   }
 
 private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
