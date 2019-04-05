@@ -414,6 +414,29 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return this;
   }
 
+  @Override
+  public boolean isRecursiveOrCircularSymLink() {
+    if (!is(VFileProperty.SYMLINK)) return false;
+    NewVirtualFile resolved = getCanonicalFile();;
+    // invalid symlink
+    if (resolved == null) return false;
+    // if it's recursive
+    if (VfsUtilCore.isAncestor(resolved, this, false)) return true;
+
+    // check if it's circular - any symlink above resolves to my target too
+    for (VirtualFileSystemEntry p = getParent(); p != null ; p = p.getParent()) {
+      // optimization: when the file has no symlinks up the hierarchy, it's not circular
+      if (!p.getFlagInt(HAS_SYMLINK_FLAG)) return false;
+      if (p.is(VFileProperty.SYMLINK)) {
+        VirtualFile parentResolved = p.getCanonicalFile();
+        if (resolved.equals(parentResolved)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   static final VirtualFileSystemEntry NULL_VIRTUAL_FILE =
     new VirtualFileSystemEntry() {
       @Override

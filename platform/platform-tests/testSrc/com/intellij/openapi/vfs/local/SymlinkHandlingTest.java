@@ -403,4 +403,61 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     assertEquals(StringUtil.join(exp, "\n"), StringUtil.join(act, "\n"));
   }
+
+  @Test
+  public void testCircularSymlinksMustBeDetected() throws IOException {
+    File top = myTempDir.newFolder("top");
+    File sub1 = createTestDir(top, "sub1");
+    File link = createSymLink(top.getPath(), sub1.getPath() + "/link");
+    VirtualFile vLink = refreshAndFind(link);
+    assertNotNull(link.getPath(), vLink);
+
+    String path = sub1.getPath() + StringUtil.repeat("/" + link.getName() + "/" + sub1.getName(), 10);
+    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
+    assertNotNull(f);
+    while (!FileUtil.pathsEqual(f.getPath(), sub1.getPath())) {
+      if (f.getName().equals(link.getName())) {
+        assertTrue(f.getPath(),f.is(VFileProperty.SYMLINK));
+        assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+      }
+      else {
+        assertEquals(f.getPath(), sub1.getName(), f.getName());
+        assertFalse(f.getPath(),f.is(VFileProperty.SYMLINK));
+        assertFalse(f.isRecursiveOrCircularSymLink());
+      }
+      f = f.getParent();
+    }
+  }
+
+  @Test
+  public void testCircularSymlinksMustBeDetectedEvenForAsideLinks() throws IOException {
+    File top = myTempDir.newFolder("top");
+    File sub1 = createTestDir(top, "s1");
+    File ss1 = createTestDir(sub1, "ss1");
+    File link1 = createSymLink(sub1.getPath(), ss1.getPath() + "/l1");
+    File sub2 = createTestDir(top, "s2");
+    File ss2 = createTestDir(sub2, "ss2");
+    File link2 = createSymLink(sub1.getPath(), ss2.getPath() + "/l2");
+
+    VirtualFile vl1 = refreshAndFind(link1);
+    assertNotNull(link1.getPath(), vl1);
+    VirtualFile vl2 = refreshAndFind(link2);
+    assertNotNull(link2.getPath(), vl2);
+
+    String path = link2.getPath() +"/"+ss1.getName()+"/"+link1.getName()+ "/" + ss1.getName()+"/"+link1.getName();
+    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
+    assertNotNull(f);
+
+    assertEquals(link1.getName(), f.getName());
+    assertTrue(f.getPath(), f.is(VFileProperty.SYMLINK));
+    assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+    f = f.getParent();
+    assertEquals(ss1.getName(), f.getName());
+    assertFalse(f.getPath(), f.is(VFileProperty.SYMLINK));
+    assertFalse(f.getPath(), f.isRecursiveOrCircularSymLink());
+    f = f.getParent();
+    assertEquals(link1.getName(), f.getName());
+    assertTrue(f.getPath(), f.is(VFileProperty.SYMLINK));
+    assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+  }
 }

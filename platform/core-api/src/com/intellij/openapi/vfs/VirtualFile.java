@@ -730,4 +730,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setPreloadedContentHint(byte[] preloadedContentHint) { }
+
+  /**
+   * @return true if this file is a symlink which is
+   * - recursive, i.e. points to this file' parent or
+   * - circular, i.e. has a loop. It means its path has a form of "/.../linkX/.../linkX"
+   */
+  public boolean isRecursiveOrCircularSymLink() {
+    if (!is(VFileProperty.SYMLINK)) return false;
+    VirtualFile resolved = getCanonicalFile();;
+    // invalid symlink
+    if (resolved == null) return false;
+    // if it's recursive
+    if (VfsUtilCore.isAncestor(resolved, this, false)) return true;
+
+    // check if it's circular - any symlink above resolves to my target too
+    for (VirtualFile p = getParent(); p != null ; p = p.getParent()) {
+      if (p.is(VFileProperty.SYMLINK)) {
+        VirtualFile parentResolved = p.getCanonicalFile();
+        if (resolved.equals(parentResolved)) return true;
+      }
+    }
+    return false;
+  }
 }
