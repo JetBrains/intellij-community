@@ -265,7 +265,10 @@
 
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="symbolReferenceSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="searchRequestor" interface="com.intellij.model.search.SearchRequestor"/>
+    <extensionPoint name="searchRequestor" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="psiElementClass" implements="com.intellij.model.search.SearchParameters"/>
+      <with attribute="implementationClass" implements="com.intellij.model.search.SearchRequestor"/>
+    </extensionPoint>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
 

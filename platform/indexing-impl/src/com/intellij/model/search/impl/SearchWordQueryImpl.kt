@@ -28,7 +28,7 @@ internal class SearchWordQueryImpl(
   override fun decompose(): FlatRequests<TextOccurrence> {
     val words: Collection<SearchWordRequest> = createRequests(myParameters)
     val wordRequests: Collection<WordRequest<TextOccurrence>> = words.map { WordRequest(it, idTransform()) }
-    return FlatRequests(myWordRequests = wordRequests)
+    return FlatRequests(wordRequests = wordRequests)
   }
 }
 

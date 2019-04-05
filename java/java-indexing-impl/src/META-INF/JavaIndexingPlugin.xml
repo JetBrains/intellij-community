@@ -77,7 +77,8 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
-    <searchRequestor implementation="com.intellij.psi.impl.search.ConstructorReferencesRequestor"/>
+    <searchRequestor forClass="com.intellij.model.search.SearchSymbolReferenceParameters"
+                     implementationClass="com.intellij.psi.impl.search.ConstructorReferencesRequestor"/>
     <symbolReferenceSearch implementation="com.intellij.psi.impl.search.EnumConstructorReferencesSearcher"/>
     <symbolReferenceSearch implementation="com.intellij.psi.impl.search.ImplicitConstructorCallSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>

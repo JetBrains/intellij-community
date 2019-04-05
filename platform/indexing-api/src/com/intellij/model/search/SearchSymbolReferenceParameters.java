@@ -4,11 +4,16 @@ package com.intellij.model.search;
 import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
 import com.intellij.openapi.application.DumbAwareSearchParameters;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public interface SearchSymbolReferenceParameters extends DumbAwareSearchParameters {
+public interface SearchSymbolReferenceParameters extends DumbAwareSearchParameters, SearchParameters<SymbolReference> {
+
+  @NotNull
+  @Override
+  Project getProject();
 
   @NotNull
   Symbol getTarget();

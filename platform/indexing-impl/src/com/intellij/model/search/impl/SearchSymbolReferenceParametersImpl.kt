@@ -3,6 +3,7 @@ package com.intellij.model.search.impl
 
 import com.intellij.model.Symbol
 import com.intellij.model.SymbolReference
+import com.intellij.model.search.SearchService
 import com.intellij.model.search.SearchSymbolReferenceParameters.Builder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
@@ -35,6 +36,6 @@ data class SearchSymbolReferenceParametersImpl(
   override fun ignoreUseScope(ignore: Boolean): Builder = copy(myIgnoreUseScope = ignore)
 
   override fun build(): Query<out SymbolReference> {
-    return SymbolReferenceQueryImpl(this)
+    return SearchService.getInstance().searchTarget(this)
   }
 }

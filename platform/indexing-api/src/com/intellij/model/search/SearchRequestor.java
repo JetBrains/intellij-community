@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
-import com.intellij.model.SymbolReference;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +16,8 @@ import java.util.Collection;
  * <p/>
  * Implementations should be registered at {@code com.intellij.searchRequestor} extension point.
  */
-public interface SearchRequestor {
+public interface SearchRequestor<P extends SearchParameters<R>, R> {
 
   @NotNull
-  Collection<? extends Query<? extends SymbolReference>> collectSearchRequests(@NotNull SearchSymbolReferenceParameters parameters);
+  Collection<? extends Query<? extends R>> collectSearchRequests(@NotNull P parameters);
 }

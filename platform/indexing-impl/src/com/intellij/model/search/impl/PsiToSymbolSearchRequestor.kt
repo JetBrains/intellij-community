@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Query
 
-class PsiToSymbolSearchRequestor : SearchRequestor {
+class PsiToSymbolSearchRequestor : SearchRequestor<SearchSymbolReferenceParameters, SymbolReference> {
 
   override fun collectSearchRequests(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
     if (parameters is SymbolToPsiReferenceSearcher.PsiToSymbolParameters) {

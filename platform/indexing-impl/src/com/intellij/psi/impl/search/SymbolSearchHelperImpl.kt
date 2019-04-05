@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
-import com.intellij.model.SymbolReference
-import com.intellij.model.search.SearchSymbolReferenceParameters
+import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.SymbolSearchHelper
 import com.intellij.model.search.TextOccurrence
-import com.intellij.model.search.impl.SubqueryRequest
-import com.intellij.model.search.impl.TransformingQuery
-import com.intellij.model.search.impl.WordRequest
-import com.intellij.model.search.impl.decompose
+import com.intellij.model.search.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -29,17 +25,18 @@ import com.intellij.util.containers.cancellable
 import com.intellij.util.text.StringSearcher
 import gnu.trove.THashMap
 import java.util.*
-
-typealias OccurrenceProcessor = Processor<in TextOccurrence>
+import java.util.function.Consumer
 
 class SymbolSearchHelperImpl(private val myDumbService: DumbService, helper: PsiSearchHelper) : SymbolSearchHelper {
+
   private val myHelper: PsiSearchHelperImpl = helper as PsiSearchHelperImpl
 
-  override fun runSearch(parameters: SearchSymbolReferenceParameters, processor: Processor<in SymbolReference>): Boolean {
-    return runSearch(paramsQueries(parameters), processor)
+  override fun <R> runSearch(parameters: SearchParameters<R>, processor: Processor<in R>): Boolean {
+    val initialQueries = paramsQueries(parameters)
+    return runSearch(initialQueries, processor)
   }
 
-  private fun runSearch(queries: Collection<Query<out SymbolReference>>, processor: Processor<in SymbolReference>): Boolean {
+  private fun <R> runSearch(queries: Collection<Query<out R>>, processor: Processor<in R>): Boolean {
     val progress = indicatorOrEmpty
     var currentQueries = queries
     while (currentQueries.isNotEmpty()) {
@@ -60,32 +57,39 @@ class SymbolSearchHelperImpl(private val myDumbService: DumbService, helper: Psi
     val subqueryRequests: Collection<SubqueryRequest<*, *, out T>>
   )
 
-  private fun buildLayer(progress: ProgressIndicator, queries: Collection<Query<out SymbolReference>>): Layer<out SymbolReference> {
-    val queue = LinkedList<Query<out SymbolReference>>()
+  private fun <R> buildLayer(progress: ProgressIndicator, queries: Collection<Query<out R>>): Layer<out R> {
+    val queue = LinkedList<Query<out R>>()
     queue.addAll(queries)
 
-    val queryRequests = THashMap<Query<*>, MutableCollection<Transformation<*, SymbolReference>>>()
-    val wordRequests = LinkedList<WordRequest<out SymbolReference>>()
-    val subqueryRequests = LinkedList<SubqueryRequest<*, *, out SymbolReference>>()
+    val queryRequests = HashMap<Query<*>, MutableCollection<Transformation<*, R>>>()
+    val wordRequests = LinkedList<WordRequest<out R>>()
+    val subqueryRequests = LinkedList<SubqueryRequest<*, *, out R>>()
 
     while (queue.isNotEmpty()) {
       progress.checkCanceled()
       val query = queue.remove()
       val flatRequests = decompose(query)
-      for (queryRequest in flatRequests.myQueryRequests) {
+      for (queryRequest in flatRequests.queryRequests) {
         queryRequests.getOrPut(queryRequest.query) { SmartList() }.add(queryRequest.transformation)
       }
-      wordRequests.addAll(flatRequests.myWordRequests)
-      subqueryRequests.addAll(flatRequests.mySubQueryRequests)
-      for (paramsRequest in flatRequests.myParamsRequests.cancellable(progress)) {
-        val paramsQueries = paramsQueries(paramsRequest.params)
-        for (paramsQuery in paramsQueries.cancellable(progress)) {
-          queue.offer(TransformingQuery(paramsQuery, paramsRequest.transformation))
-        }
+      wordRequests.addAll(flatRequests.wordRequests)
+      subqueryRequests.addAll(flatRequests.subqueryRequests)
+      for (parametersRequest: ParametersRequest<*, out R> in flatRequests.parametersRequests.cancellable(progress)) {
+        handleParamRequest(progress, parametersRequest) { queue.offer(it) }
       }
     }
 
     return Layer(queryRequests, wordRequests, subqueryRequests)
+  }
+
+  private fun <B, R> handleParamRequest(progress: ProgressIndicator,
+                                        request: ParametersRequest<B, out R>,
+                                        queue: (Query<out R>) -> Unit) {
+    val parameters: SearchParameters<B> = request.params
+    val paramsQueries: Collection<Query<out B>> = paramsQueries(parameters)
+    for (paramsQuery in paramsQueries.cancellable(progress)) {
+      queue(TransformingQuery(paramsQuery, request.transformation))
+    }
   }
 
   private sealed class Result<out T> {
@@ -109,12 +113,12 @@ class SymbolSearchHelperImpl(private val myDumbService: DumbService, helper: Psi
     return Result.Ok(subQueries)
   }
 
-  private fun paramsQueries(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
-    val subQueries = LinkedList<Query<out SymbolReference>>()
+  private fun <R> paramsQueries(parameters: SearchParameters<R>): Collection<Query<out R>> {
+    val subQueries = LinkedList<Query<out R>>()
     myDumbService.runReadActionInSmartMode {
-      SearchRequestors.collectSearchRequests(parameters) {
+      SearchRequestors.collectSearchRequests(parameters, Consumer {
         subQueries.add(it)
-      }
+      })
     }
     return subQueries
   }
@@ -180,6 +184,8 @@ class SymbolSearchHelperImpl(private val myDumbService: DumbService, helper: Psi
     )
   }
 }
+
+private typealias OccurrenceProcessor = Processor<in TextOccurrence>
 
 private fun <T> processQueryRequests(progress: ProgressIndicator,
                                      queryRequests: Map<Query<*>, Collection<Transformation<*, T>>>,

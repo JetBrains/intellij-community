@@ -4,27 +4,27 @@ package com.intellij.model.search.impl
 import com.intellij.psi.impl.search.Transformation
 
 internal class FlatRequests<T>(
-  val myQueryRequests: Collection<QueryRequest<*, T>> = emptyList(),
-  val myParamsRequests: Collection<ParamsRequest<T>> = emptyList(),
-  val myWordRequests: Collection<WordRequest<T>> = emptyList(),
-  val mySubQueryRequests: Collection<SubqueryRequest<*, *, T>> = emptyList()
+  val queryRequests: Collection<QueryRequest<*, T>> = emptyList(),
+  val parametersRequests: Collection<ParametersRequest<*, T>> = emptyList(),
+  val wordRequests: Collection<WordRequest<T>> = emptyList(),
+  val subqueryRequests: Collection<SubqueryRequest<*, *, T>> = emptyList()
 ) {
 
   internal fun <R> apply(transformation: Transformation<T, R>): FlatRequests<R> {
-    require(mySubQueryRequests.isEmpty())
+    require(subqueryRequests.isEmpty())
     return FlatRequests(
-      myQueryRequests.map { it.apply(transformation) },
-      myParamsRequests.map { it.apply(transformation) },
-      myWordRequests.map { it.apply(transformation) }
+      queryRequests.map { it.apply(transformation) },
+      parametersRequests.map { it.apply(transformation) },
+      wordRequests.map { it.apply(transformation) }
     )
   }
 
   internal fun <R> layer(subqueries: Subqueries<T, R>): FlatRequests<R> {
-    require(myParamsRequests.isEmpty())
-    require(myWordRequests.isEmpty())
-    require(mySubQueryRequests.isEmpty())
+    require(parametersRequests.isEmpty())
+    require(wordRequests.isEmpty())
+    require(subqueryRequests.isEmpty())
     return FlatRequests(
-      mySubQueryRequests = myQueryRequests.map { it.layer(subqueries) }
+      subqueryRequests = queryRequests.map { it.layer(subqueries) }
     )
   }
 }

@@ -12,7 +12,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Query
 
-class ConstructorReferencesRequestor : SearchRequestor {
+class ConstructorReferencesRequestor : SearchRequestor<SearchSymbolReferenceParameters, SymbolReference> {
 
   override fun collectSearchRequests(parameters: SearchSymbolReferenceParameters): Collection<Query<out SymbolReference>> {
     val target = parameters.target as? PsiMethod ?: return emptyList()

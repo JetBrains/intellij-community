@@ -16,7 +16,7 @@ class SearchServiceImpl : SearchService {
   }
 
   override fun searchTarget(parameters: SearchSymbolReferenceParameters): Query<out SymbolReference> {
-    return SymbolReferenceQueryImpl(parameters)
+    return CompositeQuery(SymbolReferenceSearch.createQuery(parameters), SearchParametersQuery(parameters))
   }
 
   override fun searchWord(project: Project, word: String): SearchWordParameters.Builder {
