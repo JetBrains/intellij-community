@@ -6,13 +6,13 @@ import com.intellij.util.containers.WeakStringInterner
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import git4idea.history.GitLogParser.GitLogOption
 
-internal interface GitLogRecordBuilder<R: GitLogRecord> {
+internal interface GitLogRecordBuilder<R : GitLogRecord> {
   fun addPath(type: Change.Type, firstPath: String, secondPath: String?)
   fun build(options: MutableMap<GitLogOption, String>, supportsRawBody: Boolean): R
   fun clear()
 }
 
-internal class DefaultGitLogRecordBuilder: GitLogRecordBuilder<GitLogRecord> {
+internal class DefaultGitLogRecordBuilder : GitLogRecordBuilder<GitLogRecord> {
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
     throw UnsupportedOperationException("Can not add paths to GitLogRecord")
   }
@@ -48,3 +48,4 @@ internal class InternedGitLogRecordBuilder : DefaultGitLogFullRecordBuilder() {
     super.addPath(type, interner.intern(firstPath), secondPath?.let { interner.intern(it) })
   }
 }
+

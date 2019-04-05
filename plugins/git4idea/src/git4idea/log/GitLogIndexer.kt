@@ -13,7 +13,7 @@ import git4idea.GitVcs
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenameLimit
-import git4idea.history.GitDetailsCollector
+import git4idea.history.GitFullDetailsCollector
 import git4idea.history.GitLogUtil
 import git4idea.log.GitLogProvider.isRepositoryReady
 import git4idea.log.GitLogProvider.shouldIncludeRootChanges
@@ -30,8 +30,8 @@ class GitLogIndexer(private val project: Project,
 
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
                                              DiffInMergeCommits.DIFF_TO_PARENTS, false)
-    GitDetailsCollector(project, root).readFullDetails(commitConsumer, requirements, true,
-                                                       *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
+    GitFullDetailsCollector(project, root).readFullDetails(commitConsumer, requirements, true,
+                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
   }
 
   @Throws(VcsException::class)
@@ -46,7 +46,7 @@ class GitLogIndexer(private val project: Project,
     val renameLimit = if (fast) DiffRenameLimit.REGISTRY else DiffRenameLimit.INFINITY
     val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), renameLimit,
                                              DiffInMergeCommits.DIFF_TO_PARENTS, false)
-    GitDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, fast, commitConsumer)
+    GitFullDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, fast, commitConsumer)
   }
 
   override fun getSupportedVcs(): VcsKey {
