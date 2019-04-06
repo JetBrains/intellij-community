@@ -250,6 +250,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   private static class MyRenderer extends ColoredListCellRenderer<ScopeDescriptor> {
+    final TitledSeparator separator = new TitledSeparator();
+
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends ScopeDescriptor> list,
                                          ScopeDescriptor value,
@@ -269,16 +271,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                                   boolean hasFocus) {
       if (value instanceof ScopeSeparator) {
         separator.setText(value.getDisplayName());
+        separator.setBorder(index == -1 ? null : new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
         return separator;
       }
       super.getListCellRendererComponent(list, value, index, selected, hasFocus);
       setIpad(index == -1 ? JBUI.emptyInsets() : JBUI.insets(1, UIUtil.LARGE_VGAP + 2, 1, 0));
       return this;
-    }
-
-    final TitledSeparator separator = new TitledSeparator();
-    {
-      separator.setBorder(new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
     }
   }
 
