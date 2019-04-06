@@ -108,6 +108,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
     myProxyList.setCellRenderer(list.getCellRenderer());
     myProxyList.setModel(list.getModel());
+    myPopup.setMinimumSize(myComboBox.getSize());
     myPopup.showUnderneathOf(myComboBox);
   }
 
