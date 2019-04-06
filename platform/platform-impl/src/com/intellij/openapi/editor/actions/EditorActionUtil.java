@@ -246,43 +246,11 @@ public class EditorActionUtil {
   }
 
   public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
-    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
-    char current = text.charAt(offset);
-
-    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (!firstIsIdentifierPart && secondIsIdentifierPart) {
-      return true;
-    }
-
-    if (isCamel && firstIsIdentifierPart && secondIsIdentifierPart && isHumpBound(text, offset, true)) {
-      return true;
-    }
-
-    return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
-           !Character.isWhitespace(current) && !secondIsIdentifierPart;
-  }
-  
-  private static boolean isLowerCaseOrDigit(char c) {
-    return Character.isLowerCase(c) || Character.isDigit(c);
+    return isWordBound(text, offset, isCamel, true);
   }
 
   public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
-    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
-    char current = text.charAt(offset);
-
-    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (firstIsIdentifierPart && !secondIsIdentifierPart) {
-      return true;
-    }
-
-    if (isCamel && firstIsIdentifierPart && isHumpBound(text, offset, false)) {
-      return true;
-    }
-
-    return !Character.isWhitespace(prev) && !firstIsIdentifierPart &&
-           (Character.isWhitespace(current) || secondIsIdentifierPart);
+    return isWordBound(text, offset, isCamel, false);
   }
 
   /**
@@ -854,6 +822,24 @@ public class EditorActionUtil {
     }
   }
 
+  public static boolean isWordBound(@NotNull CharSequence text, int offset, boolean isCamel, boolean isStart) {
+    if (offset < 0 || offset > text.length()) return false;
+
+    final char prev = offset > 0 ? text.charAt(offset - 1) : 0;
+    final char curr = offset < text.length() ? text.charAt(offset) : 0;
+
+    final char word = isStart ? curr : prev;
+    final char neighbor = isStart ? prev : curr;
+
+    if (Character.isJavaIdentifierPart(word)) {
+      if (!Character.isJavaIdentifierPart(neighbor)) return true;
+      if (isCamel && isHumpBound(text, offset, isStart)) return true;
+    }
+    if (isPunctuation(word) && !isPunctuation(neighbor)) return true;
+
+    return false;
+  }
+
   public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
     if (offset <= 0 || offset >= editorText.length()) return false;
     final char prevChar = editorText.charAt(offset - 1);
@@ -866,6 +852,14 @@ public class EditorActionUtil {
         start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
         !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
         Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
+  }
+
+  private static boolean isLowerCaseOrDigit(char c) {
+    return Character.isLowerCase(c) || Character.isDigit(c);
+  }
+
+  private static boolean isPunctuation(char c) {
+    return !(Character.isJavaIdentifierPart(c) || Character.isWhitespace(c));
   }
 
   /**
