@@ -39,7 +39,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.*;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.Disposable;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -463,9 +466,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     @Override
-    public Object getComponentInstance(@NotNull PicoContainer picoContainer)
-      throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
-
+    public Object getComponentInstance(@NotNull PicoContainer picoContainer) {
       Object instance = myInitializedComponentInstance;
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       if (instance != null || myDisposed) {
