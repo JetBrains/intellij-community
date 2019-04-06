@@ -151,7 +151,6 @@ class ServiceView extends JPanel implements Disposable {
     // look
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    myTree.setLineStyleAngled();
     myTree.setCellRenderer(new MyTreeCellRenderer());
     UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
 

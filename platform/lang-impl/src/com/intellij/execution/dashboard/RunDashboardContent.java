@@ -111,7 +111,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setLineStyleAngled();
 
     myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
     RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);

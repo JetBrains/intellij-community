@@ -82,7 +82,6 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
 
     getTree().setShowsRootHandles(true);
-    getTree().setLineStyleAngled();
     getTree().setRootVisible(showProjectNode);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {

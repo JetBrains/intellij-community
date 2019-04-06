@@ -103,7 +103,6 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.setLineStyleAngled();
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree, path -> {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
