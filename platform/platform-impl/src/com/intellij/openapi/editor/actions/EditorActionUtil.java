@@ -842,19 +842,22 @@ public class EditorActionUtil {
     return false;
   }
 
-  public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
-    if (offset <= 0 || offset >= editorText.length()) return false;
-    final char prevChar = editorText.charAt(offset - 1);
-    final char curChar = editorText.charAt(offset);
-    final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+  public static boolean isHumpBound(@NotNull CharSequence text, int offset, boolean isStart) {
+    if (offset <= 0 || offset >= text.length()) return false;
 
-    return isLowerCaseOrDigit(prevChar) && isUpperCase(curChar) ||
-        start && prevChar == '_' && curChar != '_' ||
-        !start && prevChar != '_' && curChar == '_' ||
-        start && prevChar == '$' && isLetterOrDigit(curChar) ||
-        !start && isLetterOrDigit(prevChar) && curChar == '$' ||
-        isUpperCase(prevChar) && isUpperCase(curChar) && isLowerCase(nextChar);
+    final char prev = text.charAt(offset - 1);
+    final char curr = text.charAt(offset);
+    final char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0; // 0x00 is not lowercase.
+
+    final char hump = isStart ? curr : prev;
+    final char neighbor = isStart ? prev : curr;
+
+    return isLowerCaseOrDigit(prev) && isUpperCase(curr) ||
+           neighbor == '_' && hump != '_' ||
+           neighbor == '$' && isLetterOrDigit(hump) ||
+           isUpperCase(prev) && isUpperCase(curr) && isLowerCase(next);
   }
+
 
   private static boolean isLowerCaseOrDigit(char c) {
     return isLowerCase(c) || isDigit(c);
