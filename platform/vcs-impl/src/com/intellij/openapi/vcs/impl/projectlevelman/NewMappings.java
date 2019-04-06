@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.unmodifiableList;
@@ -195,19 +194,23 @@ public class NewMappings {
 
       VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
 
-      if (vcsRoot != null && vcsRoot.isDirectory()) {
-        mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+      if (vcsRoot == null || !vcsRoot.isDirectory()) {
+        invalidMappings.add(mapping.getDirectory());
+      }
+      else if (vcs == null || !vcs.validateMappedRoot(vcsRoot)) {
+        mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
       }
       else {
-        invalidMappings.add(mapping.getDirectory());
+        mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
       }
     }
 
     for (VcsDirectoryMapping mapping : mappings) {
       if (!mapping.isDefaultMapping()) continue;
-      AbstractVcs vcs = getMappingsVcs(mapping, allVcsesI);
+      AbstractVcs<?> vcs = getMappingsVcs(mapping, allVcsesI);
+      if (vcs == null) continue;
 
-      List<VirtualFile> defaultRoots = getActualDefaultRootsFor(vcs, myDefaultVcsRootPolicy);
+      List<VirtualFile> defaultRoots = vcs.detectVcsRootsFor(new ArrayList<>(myDefaultVcsRootPolicy.getDefaultVcsRoots()));
 
       for (VirtualFile vcsRoot : defaultRoots) {
         if (vcsRoot != null && vcsRoot.isDirectory()) {
@@ -224,15 +227,6 @@ public class NewMappings {
   private static AbstractVcs getMappingsVcs(@NotNull VcsDirectoryMapping mapping, @NotNull AllVcsesI allVcsesI) {
     String vcsName = mapping.getVcs();
     return vcsName != null ? allVcsesI.getByName(vcsName) : null;
-  }
-
-  @NotNull
-  private static List<VirtualFile> getActualDefaultRootsFor(@Nullable AbstractVcs<?> vcs,
-                                                            @NotNull DefaultVcsRootPolicy defaultVcsRootPolicy) {
-    List<VirtualFile> defaultRoots = new ArrayList<>(defaultVcsRootPolicy.getDefaultVcsRoots());
-    if (vcs == null) return AbstractVcs.filterUniqueRootsDefault(defaultRoots, Function.identity());
-
-    return vcs.filterUniqueRoots(defaultRoots, Function.identity());
   }
 
   public void mappingsChanged() {
@@ -363,9 +357,8 @@ public class NewMappings {
         return vf == null ? null : Pair.create(vf, dm);
       });
 
-      Function<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor = pair -> pair.getFirst();
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
-        filteredMappings.addAll(map(AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor), Functions.pairSecond()));
+        filteredMappings.addAll(map(objects, Functions.pairSecond()));
       }
       else {
         AbstractVcs<?> vcs = myVcsManager.findVcsByName(vcsName);
@@ -375,7 +368,7 @@ public class NewMappings {
           filteredMappings.addAll(mappings);
         }
         else {
-          filteredMappings.addAll(map(vcs.filterUniqueRoots(objects, fileConvertor), Functions.pairSecond()));
+          filteredMappings.addAll(map(vcs.filterUniqueRoots(objects, pair -> pair.getFirst()), Functions.pairSecond()));
         }
       }
     }

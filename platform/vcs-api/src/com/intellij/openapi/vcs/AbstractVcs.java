@@ -18,7 +18,9 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -29,6 +31,8 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -42,9 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -456,17 +458,52 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @NotNull
+  @Deprecated
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+    if (!allowsNestedRoots()) {
+      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+    }
     return in;
   }
 
+  /**
+   * Detect VCS roots for default vcs mapping aka "&lt;Project&gt;".
+   *
+   * @param files Project directories to detect VCS roots for (ex: content roots for all modules in the project).
+   * @see com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
+   */
   @NotNull
-  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
-    FilterDescendantVirtualFileConvertible<S> convertible =
-      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance());
-    convertible.doFilter(in);
-    return in;
+  public List<VirtualFile> detectVcsRootsFor(@NotNull List<VirtualFile> files) {
+    VcsDescriptor descriptor = AllVcsesI.getInstance(myProject).getDescriptor(getName());
+    if (descriptor == null) return Collections.emptyList();
+    return defaultDetectVcsRootsFor(files, file -> descriptor.probablyUnderVcs(file));
+  }
+
+  @NotNull
+  public static List<VirtualFile> defaultDetectVcsRootsFor(@NotNull List<VirtualFile> files,
+                                                           @NotNull Condition<? super VirtualFile> isVcsRoot) {
+    HashSet<VirtualFile> checkedDirs = new HashSet<>();
+
+    List<VirtualFile> gitRoots = new ArrayList<>();
+    for (VirtualFile f : files) {
+      while (f != null) {
+        ProgressManager.checkCanceled();
+        if (!checkedDirs.add(f)) break;
+        if (isVcsRoot.value(f)) {
+          gitRoots.add(f);
+          break;
+        }
+        f = f.getParent();
+      }
+    }
+    return gitRoots;
+  }
+
+  /**
+   * Check if registered vcs mapping is valid.
+   */
+  public boolean validateMappedRoot(@NotNull VirtualFile root) {
+    return true;
   }
 
   @Nullable
