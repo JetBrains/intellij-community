@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,24 @@ import java.util.stream.Stream;
 /**
  * A general interface to perform PsiElement's search scope optimization. The interface should be used only for optimization purposes.
  * It's used in:
- *
- * 1. {@link PsiSearchHelper#getUseScope(PsiElement)},
- *    {@link PsiSearchHelperImpl#USE_SCOPE_OPTIMIZER_EP_NAME}
+ * <ol>
+ * <li>
+ * {@link PsiSearchHelper#getUseScope(PsiElement)},
+ * {@link com.intellij.psi.impl.search.PsiSearchHelperImpl#USE_SCOPE_OPTIMIZER_EP_NAME}
  * to perform optimization of PsiElement's use scope.
- *
- * 2. {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, PsiElement)},
- *    {@link SearchRequestCollector#CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME}
+ * </li>
+ * <li>
+ * {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, PsiElement)},
+ * {@link SearchRequestCollector#CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME}
  * to exclude a scope without references in code from a usages search when the search with {@link UsageSearchContext#IN_CODE} or {@link UsageSearchContext#ANY}
- *  context was requested.
- *
+ * context was requested.
+ * </li>
+ * </ol>
  */
 public interface ScopeOptimizer {
 
   /**
-   * Please use {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)} instead
+   * @deprecated use {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)} instead.
    */
   @Deprecated
   @Nullable("is null when given optimizer can't provide a scope to exclude")

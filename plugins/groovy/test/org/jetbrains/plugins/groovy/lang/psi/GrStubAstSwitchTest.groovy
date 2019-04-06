@@ -12,13 +12,14 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.GCWatcher
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex 
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
 /**
  * Created by Max Medvedev on 12/4/13
  */
@@ -367,7 +368,7 @@ class C {
     for (i in 1..2) {
       assert PsiAnchor.create(decl) instanceof PsiAnchor.StubIndexReference
 
-      GCUtil.tryGcSoftlyReachableObjects()
+      GCWatcher.tracking(file.node).tryGc()
 
       WriteCommandAction.runWriteCommandAction(project) {
         file.viewProvider.document.insertString(0, ' ')

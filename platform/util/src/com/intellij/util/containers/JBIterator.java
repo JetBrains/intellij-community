@@ -52,7 +52,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public static <E extends JBIterator<?>> JBIterable<E> cursor(@NotNull E iterator) {
-    return JBIterable.generate(iterator, Functions.<E>id()).intercept(CURSOR_NEXT);
+    return JBIterable.generate(iterator, Functions.id()).intercept(CURSOR_NEXT);
   }
 
   @NotNull
@@ -176,7 +176,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   @NotNull
   public final JBIterator<E> take(int count) {
     // add first so that the underlying iterator stay on 'count' position
-    return addOp(!(myLastOp instanceof NextOp), new WhileOp<E>(new CountDown<E>(count)));
+    return addOp(!(myLastOp instanceof NextOp), new WhileOp<>(new CountDown<>(count)));
   }
 
   @NotNull
@@ -186,7 +186,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterator<E> skip(int count) {
-    return skipWhile(new CountDown<E>(count));
+    return skipWhile(new CountDown<>(count));
   }
 
   @NotNull
@@ -228,22 +228,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterable<Function<Object, Object>> getTransformations() {
-    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(new Function<Op, Object>() {
-      @Override
-      public Object fun(Op op) {
-        return op.impl;
-      }
-    }).filter(Function.class);
+    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(op -> op.impl).filter(Function.class);
   }
 
   @NotNull
   private JBIterable<Op> operationsImpl() {
-    return JBIterable.generate(myFirstOp, new Function<Op, Op>() {
-      @Override
-      public Op fun(Op op) {
-        return op.nextOp;
-      }
-    });
+    return JBIterable.generate(myFirstOp, op -> op.nextOp);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.messages
 
 import com.intellij.ide.util.PropertiesComponent
@@ -26,10 +26,9 @@ import java.util.*
 class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
   override fun getKey() = KEY
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
+  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     fileEditor as? TextEditor ?: return null
     val editor = fileEditor.editor
-    val project = editor.project ?: return null
     if (editor.getUserData(HIDDEN_KEY) != null) return null
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null

@@ -38,7 +38,7 @@ class CpuTimings {
 
     StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
-      long time = TimeoutUtil.runAndGetExecutionTime(CpuTimings::addBigIntegers);
+      long time = TimeoutUtil.measureExecutionTime(CpuTimings::addBigIntegers);
       if (time < minTime) {
         //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;

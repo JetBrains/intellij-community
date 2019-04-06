@@ -257,9 +257,7 @@ public abstract class SelectLocationStep extends WizardStep {
       updatePathFromTree(myFileSystemTree.getSelectedFile(), true);
       myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.SOUTH);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true));
 
     myNorthPanel.revalidate();
     myNorthPanel.repaint();

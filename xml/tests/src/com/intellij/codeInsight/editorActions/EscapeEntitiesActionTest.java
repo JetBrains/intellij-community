@@ -92,7 +92,7 @@ public class EscapeEntitiesActionTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(String text, final String extension, final String expected) {
     String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
-    PlatformTestUtil.withEncoding("UTF8", () -> {
+    PlatformTestUtil.withEncoding("UTF-8", () -> {
       myFixture.configureByText(getTestName(true) + "." + extension, finalText);
       myFixture.performEditorAction("EscapeEntities");
       myFixture.checkResult(expected);

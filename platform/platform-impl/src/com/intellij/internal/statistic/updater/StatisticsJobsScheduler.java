@@ -3,15 +3,19 @@ package com.intellij.internal.statistic.updater;
 
 import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.*;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -27,15 +31,15 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class StatisticsJobsScheduler implements BaseComponent {
-  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 20 * 60 * 1000;
-  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 60 * 60 * 1000;
-  private static final int SEND_STATISTICS_DELAY_IN_MIN = 5;
+public class StatisticsJobsScheduler implements ApplicationInitializedListener {
+  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
+  private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 20;
 
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
@@ -45,7 +49,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
   private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
   @Override
-  public void initComponent() {
+  public void componentsInitialized() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
@@ -54,7 +58,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
-            final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService();
+            final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
             ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             Disposer.dispose(disposable);
           }
@@ -68,11 +72,15 @@ public class StatisticsJobsScheduler implements BaseComponent {
   }
 
   private static void runEventLogStatisticsService() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      if (FeatureUsageLogger.INSTANCE.isEnabled()) {
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+    JobScheduler.getScheduler().schedule(() -> {
+      final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();
+      for (StatisticsEventLoggerProvider provider : providers) {
+        if (provider.isSendEnabled()) {
+          final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService(provider.getRecorderId());
+          runStatisticsServiceWithDelay(statisticsService, provider.getSendFrequencyMs());
+        }
       }
-    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
+    }, CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 
   private static void runStatesLogging() {
@@ -111,8 +119,10 @@ public class StatisticsJobsScheduler implements BaseComponent {
     }, 1, TimeUnit.MINUTES);
   }
 
-  private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
-    JobScheduler.getScheduler().schedule(statisticsService::send, delayInMin, TimeUnit.MINUTES);
+  private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, long delayInMs) {
+    JobScheduler.getScheduler().scheduleWithFixedDelay(
+      statisticsService::send, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, delayInMs, TimeUnit.MILLISECONDS
+    );
   }
 
   public StatisticsJobsScheduler() {

@@ -164,6 +164,7 @@ public class PatchProjectUtil {
         for (VirtualFile includeRoot : included) {
           if (VfsUtilCore.isAncestor(toExclude, includeRoot, false)) {
             toExcludeSibling = false;
+            break;
           }
         }
         if (toExcludeSibling) {

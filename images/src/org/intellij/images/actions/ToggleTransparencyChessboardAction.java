@@ -29,13 +29,13 @@ import org.jetbrains.annotations.NotNull;
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
+    ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
+    ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
       decorator.setTransparencyChessboardVisible(state);
     }
@@ -44,7 +44,7 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
-    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
+    ImageComponentDecorator decorator = e.getData(ImageComponentDecorator.DATA_KEY);
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
     e.getPresentation().setText(isSelected(e) ? "Hide Chessboard" : "Show Chessboard");
   }

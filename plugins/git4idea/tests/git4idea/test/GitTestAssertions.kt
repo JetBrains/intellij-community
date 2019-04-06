@@ -50,7 +50,7 @@ fun GitRepository.assertLatestSubjects(vararg expectedMessages: String) {
 }
 
 private fun GitRepository.assertLatestHistory(mapping: (VcsCommitMetadata) -> String, vararg expectedMessages: String) {
-  val actualMessages = GitLogUtil.collectMetadata(project, root, false).commits
+  val actualMessages = GitLogUtil.collectMetadata(project, root).commits
     .map(mapping)
     .subList(0, expectedMessages.size)
   assertOrderedEquals("History is incorrect", actualMessages, expectedMessages.asList())

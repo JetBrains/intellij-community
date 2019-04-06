@@ -45,18 +45,15 @@ public class NewInstanceFactory<T> implements Factory<T> {
 
   public static <T> Factory<T> fromClass(@NotNull final Class<? extends T> clazz) {
     try {
-      return new NewInstanceFactory<T>(clazz.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY), ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return new NewInstanceFactory<>(clazz.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY), ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     catch (NoSuchMethodException e) {
-      return new Factory<T>() {
-        @Override
-        public T create() {
-          try {
-            return clazz.newInstance();
-          } catch (Exception e) {
-            LOG.error(e);
-            return null;
-          }
+      return () -> {
+        try {
+          return clazz.newInstance();
+        } catch (Exception e1) {
+          LOG.error(e1);
+          return null;
         }
       };
     }

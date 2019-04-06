@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstan
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Objects;
@@ -100,11 +101,10 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
 
   @Nullable
   @Override
-  public String getVariableName() {
+  public VariableDescriptor getVariableDescriptor() {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();
-    if (instanceOf == null) return null;
-
-    return instanceOf.getFirst().getText();
+    if (instanceOf == null || !(instanceOf.first instanceof GrReferenceExpression)) return null;
+    return VariableDescriptorFactory.createDescriptor((GrReferenceExpression)instanceOf.first);
   }
 
   @Nullable

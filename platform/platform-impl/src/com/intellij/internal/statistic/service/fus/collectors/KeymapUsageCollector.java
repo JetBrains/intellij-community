@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,8 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
 
   @Nullable
   @Override
-  public FUSUsageContext getContext() {
-    return FUSUsageContext.OS_CONTEXT;
+  public FeatureUsageData getData() {
+    return new FeatureUsageData().addOS();
   }
 
   @NotNull

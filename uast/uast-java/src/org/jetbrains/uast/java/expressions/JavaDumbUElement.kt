@@ -16,15 +16,14 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.JvmDeclarationUElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.internal.log
 
 class JavaDumbUElement(
-  override val psi: PsiElement,
+  override val sourcePsi: PsiElement,
   givenParent: UElement?,
   private val customRenderString: String? = null
-) : JavaAbstractUElement(givenParent), JvmDeclarationUElement {
+) : JavaAbstractUElement(givenParent) {
   override fun asLogString(): String = log()
-  override fun asRenderString(): String = customRenderString ?: "<stub@$psi>"
+  override fun asRenderString(): String = customRenderString ?: "<stub@$sourcePsi>"
 }

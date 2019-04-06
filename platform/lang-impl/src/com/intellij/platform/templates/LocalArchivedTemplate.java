@@ -7,11 +7,11 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +51,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String s = readEntry(TEMPLATE_DESCRIPTOR);
     if (s != null) {
       try {
-        Element templateElement = JdomKt.loadElement(s);
+        Element templateElement = JDOMUtil.load(s);
         populateFromElement(templateElement);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
@@ -66,7 +66,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
     if (meta != null) {
       try {
-        Element templateElement = JdomKt.loadElement(meta);
+        Element templateElement = JDOMUtil.load(meta);
         String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
         if (unencoded != null) {
           myEscaped = !Boolean.valueOf(unencoded);
@@ -155,7 +155,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
-      String type = JdomKt.loadElement(iml).getAttributeValue(Module.ELEMENT_TYPE);
+      String type = JDOMUtil.load(iml).getAttributeValue(Module.ELEMENT_TYPE);
       return ModuleTypeManager.getInstance().findByID(type);
     }
     catch (Exception e) {

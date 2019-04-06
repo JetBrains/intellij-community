@@ -88,9 +88,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
       memoryHelperProvider.value.get(attributes)?.let {
-        if (!it.isEmpty()) {
-          return it
-        }
+        return it
       }
     }
     return value

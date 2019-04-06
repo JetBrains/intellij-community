@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.*;
@@ -20,8 +20,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     removeAll();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     presentation.setEnabled(true);

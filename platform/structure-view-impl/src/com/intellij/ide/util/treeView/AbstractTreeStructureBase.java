@@ -35,7 +35,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
-    if (elements.stream().anyMatch(Objects::isNull)) LOG.error("node contains null child: " + treeNode);
+    if (elements.stream().anyMatch(Objects::isNull)) LOG.error("node contains null child: " + treeNode + "; " + treeNode.getClass());
     List<TreeStructureProvider> providers = is("allow.tree.structure.provider.in.dumb.mode") ? getProviders() : getProvidersDumbAware();
     if (providers != null && !providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof SettingsProvider ? ((SettingsProvider)treeNode).getSettings() : ViewSettings.DEFAULT;

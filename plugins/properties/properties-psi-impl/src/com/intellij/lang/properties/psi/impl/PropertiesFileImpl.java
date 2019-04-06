@@ -67,7 +67,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     if (stub != null) {
       PropertiesListStub propertiesListStub = stub.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
       propertiesList = propertiesListStub == null ? null : propertiesListStub.getPsi();
-    } else {
+    }
+    else {
       propertiesList = PsiTreeUtil.findChildOfType(this, PropertiesList.class);
     }
     return Collections.unmodifiableList(PsiTreeUtil.getStubChildrenOfTypeAsList(propertiesList, Property.class));
@@ -123,10 +124,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     List<IProperty> properties = getProperties();
     ASTNode anchorBefore = anchor == null ? properties.isEmpty() ? null : properties.get(0).getPsiElement().getNode()
                            : anchor.getPsiElement().getNode().getTreeNext();
-    if (anchorBefore != null) {
-      if (anchorBefore.getElementType() == TokenType.WHITE_SPACE) {
-        anchorBefore = anchorBefore.getTreeNext();
-      }
+    if (anchorBefore != null && anchorBefore.getElementType() == TokenType.WHITE_SPACE) {
+      anchorBefore = anchorBefore.getTreeNext();
     }
     if (anchorBefore == null && haveToAddNewLine()) {
       insertLineBreakBefore(null);
@@ -140,21 +139,22 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   @Override
-  public IProperty addProperty(String key, String value) {
+  public IProperty addProperty(@NotNull String key, @NotNull String value) {
     return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value, null));
   }
 
   @NotNull
   @Override
-  public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor) {
+  public IProperty addPropertyAfter(@NotNull String key, @NotNull String value, @Nullable IProperty anchor) {
     return (IProperty)addPropertyAfter(PropertiesElementFactory.createProperty(getProject(), key, value, null), anchor);
   }
 
-  private void insertLineBreakBefore(final ASTNode anchorBefore) {
+  private void insertLineBreakBefore(ASTNode anchorBefore) {
     ASTNode propertiesList = getPropertiesList();
     if (anchorBefore == null && propertiesList.getFirstChildNode() == null) {
       getNode().addChild(ASTFactory.whitespace("\n"), propertiesList);
-    } else {
+    }
+    else {
       propertiesList.addChild(ASTFactory.whitespace("\n"), anchorBefore);
     }
   }
@@ -199,14 +199,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ContainerUtil.getLastItem(properties);
   }
 
+  @NotNull
   private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
     if (shouldReadIndex()) {
       return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
     }
-    else {
-      // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
-      return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
-    }
+    // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
+    return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
   }
 
   private boolean shouldReadIndex() {

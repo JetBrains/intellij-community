@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.BuildConsoleUtils;
@@ -470,7 +470,6 @@ public class ExternalSystemUtil {
             AnAction rerunImportAction = new AnAction() {
               @Override
               public void update(@NotNull AnActionEvent e) {
-                super.update(e);
                 Presentation p = e.getPresentation();
                 p.setEnabled(processHandler.isProcessTerminated());
               }
@@ -845,7 +844,10 @@ public class ExternalSystemUtil {
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
     ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
-    if (environment == null) return;
+    if (environment == null) {
+      LOG.warn("Execution environment for " + externalSystemId + " is null" );
+      return;
+    }
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;

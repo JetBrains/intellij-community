@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.build;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Base64;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +16,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
 
 import java.io.File;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +73,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       if (myProperties.manifest != null) {
         try {
           File output = new File(myArtifact.getOutputPath(), JarFile.MANIFEST_NAME);
-          FileUtil.writeToFile(output, Base64.decode(myProperties.manifest));
+          FileUtil.writeToFile(output, Base64.getDecoder().decode(myProperties.manifest));
         }
         // do not fail the whole 'Make' if there is an invalid manifest cached
         catch (Exception e) {
@@ -97,7 +97,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         for (Map.Entry<String, String> entry : myProperties.additionalFiles.entrySet()) {
           try {
             File output = new File(entry.getKey());
-            FileUtil.writeToFile(output, Base64.decode(entry.getValue()));
+            FileUtil.writeToFile(output, Base64.getDecoder().decode(entry.getValue()));
           }
           // do not fail the whole 'Make' if there is an invalid file cached
           catch (Exception e) {

@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,19 +29,9 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
   private static final CallMatcher HASH_CODE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
   private static final CallMatcher VALUE_OF = getValueOfMatcher();
 
-  private static final Map<String, String> ourReplacementMap = new HashMap<>();
-
   private static final Set<String> ourAllowedInstanceCalls = new HashSet<>();
 
   static {
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_INTEGER, "parseInt");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_LONG, "parseLong");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "parseBoolean");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_SHORT, "parseShort");
-    ourReplacementMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
-
     ourAllowedInstanceCalls.add("isInfinite");
     ourAllowedInstanceCalls.add("isNaN");
     ourAllowedInstanceCalls.add("byteValue");
@@ -340,7 +331,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiExpression argument = arguments[0];
       if (containingClass == null) return;
       String containingClassName = containingClass.getQualifiedName();
-      String replacementMethodCall = ourReplacementMap.get(containingClassName);
+      String replacementMethodCall = JavaPsiBoxingUtils.getParseMethod(containingClassName);
       if (replacementMethodCall == null) return;
       CommentTracker tracker = new CommentTracker();
       String argumentText = tracker.text(argument);

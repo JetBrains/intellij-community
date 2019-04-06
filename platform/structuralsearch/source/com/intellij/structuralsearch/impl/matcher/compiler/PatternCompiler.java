@@ -54,7 +54,7 @@ public class PatternCompiler {
   private static boolean ourLastCompileSuccessful = true;
   private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project,MatchOptions options, boolean checkForErrors)
+  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors)
     throws MalformedPatternException, NoMatchFoundException {
     if (!checkForErrors) {
       synchronized (LOCK) {

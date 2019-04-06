@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImportUtil;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,12 @@ public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
     String preferredName = scheme.getName();
     scheme.readExternal(root);
     scheme.setName(preferredName);
+    try {
+      EditorColorsManager.getInstance().resolveSchemeParent(scheme);
+    }
+    catch (InvalidDataException e) {
+      throw new SchemeImportException("Required " + e.getMessage() + " base scheme is missing or is not a bundled (read-only) scheme.");
+    }
     return scheme;
   }
 

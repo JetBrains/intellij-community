@@ -59,7 +59,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
       }
     }
 
-    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return null;
     }

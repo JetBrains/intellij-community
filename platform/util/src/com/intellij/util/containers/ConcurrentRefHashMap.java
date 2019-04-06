@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
-  final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
+  final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
   private final TObjectHashingStrategy<? super K> myHashingStrategy;
@@ -169,12 +169,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return myHash;
     }
   }
-  private static final ThreadLocal<HardKey> HARD_KEY = new ThreadLocal<HardKey>() {
-    @Override
-    protected HardKey initialValue() {
-      return new HardKey();
-    }
-  };
+  private static final ThreadLocal<HardKey> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
 
   @NotNull
   private HardKey<K, V> createHardKey(@Nullable Object o) {
@@ -249,15 +244,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return ent.setValue(value);
     }
 
-    private static boolean valEquals(Object o1, Object o2) {
-      return o1 == null ? o2 == null : o1.equals(o2);
-    }
-
     @Override
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry)o;
-      return valEquals(key, e.getKey()) && valEquals(getValue(), e.getValue());
+      return Objects.equals(key, e.getKey()) && Objects.equals(getValue(), e.getValue());
     }
 
     @Override
@@ -288,7 +279,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
               /* Weak key has been cleared by GC */
               continue;
             }
-            next = new RefEntry<K, V>(ent, k);
+            next = new RefEntry<>(ent, k);
             return true;
           }
           return false;

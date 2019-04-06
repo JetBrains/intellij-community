@@ -22,8 +22,8 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
-    final JComponent customComponent = super.createCustomComponent(presentation);
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    JComponent customComponent = super.createCustomComponent(presentation, place);
     customComponent.setFocusable(false);
     customComponent.setOpaque(false);
     return customComponent;

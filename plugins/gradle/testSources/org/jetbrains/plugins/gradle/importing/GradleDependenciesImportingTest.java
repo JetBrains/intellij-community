@@ -559,7 +559,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertModules("project", "project.main", "project.test");
-    final String path = pathFromBasedir("build/generated-resources/main");
+    final String path = path("build/generated-resources/main");
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.main", depName, "file://" + path);
     assertModuleLibDepScope("project.main", depName, DependencyScope.RUNTIME);
@@ -596,7 +596,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
     assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.RUNTIME);
 
-    final String path = pathFromBasedir("projectA/build/generated-resources/main");
+    final String path = path("projectA/build/generated-resources/main");
     final String classesPath = "file://" + path;
     final String depName = PathUtil.toPresentableUrl(path);
     assertModuleLibDep("project.projectA.main", depName, classesPath);
@@ -882,6 +882,48 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.project2.test", "project.project2.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.project2.test", "project.project1.test", DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
+    createSettingsFile("include 'project1', 'project2'");
+    createProjectSubFile("project1/build.gradle",
+                         new GradleBuildScriptBuilderEx()
+                           .withJavaPlugin()
+                           .addPostfix(
+                             "configurations {",
+                             "  aParentCfg",
+                             "  compile.extendsFrom aParentCfg",
+                             "}",
+                             "sourceSets {",
+                             "  aParentSrc { java.srcDirs = ['src/aParent/java'] }",
+                             "  main { java { compileClasspath += aParentSrc.output } }",
+                             "}",
+                             "task aParentSrcJar(type:Jar) {",
+                             "    appendix 'parent'",
+                             "    from sourceSets.aParentSrc.output",
+                             "}",
+                             "artifacts {",
+                             "  aParentCfg aParentSrcJar",
+                             "}"
+                           )
+                           .generate()
+    );
+
+    createProjectSubFile("project2/build.gradle",
+                         new GradleBuildScriptBuilderEx().withJavaPlugin().addPostfix(
+                           "dependencies {",
+                           "  compile project(':project1')",
+                           "}"
+                         ).generate());
+
+    importProject("");
+
+    assertModules("project",
+                  "project.project1", "project.project1.main", "project.project1.test", "project.project1.aParentSrc",
+                  "project.project2", "project.project2.main", "project.project2.test");
+
+    assertModuleModuleDeps("project.project2.main", "project.project1.main", "project.project1.aParentSrc");
   }
 
 

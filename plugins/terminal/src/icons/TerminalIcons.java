@@ -14,10 +14,7 @@ public final class TerminalIcons {
     return IconLoader.getIcon(path, TerminalIcons.class);
   }
 
-  /**
-   * 13x13
-   */
-  public static final Icon OpenTerminal_13x13 = load("/icons/OpenTerminal_13x13.svg");
+  /** 13x13 */ public static final Icon OpenTerminal_13x13 = load("/icons/OpenTerminal_13x13.svg");
 
   /** @deprecated to be removed in IDEA 2020 */
   @SuppressWarnings("unused")

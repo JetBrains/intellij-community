@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,12 +45,14 @@ import java.util.Set;
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     boolean[] foundLeaksBeforeTest = new boolean[1];
-    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, file -> {
-      if (!file.isPhysical()) return false;
-      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles!");
+    Condition<Object> isReallyLeak = file -> {
+      if (file instanceof PsiFile && !((PsiFile)file).isPhysical()) return false;
+      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles/Documents!");
       foundLeaksBeforeTest[0] = true;
       return true;
-    });
+    };
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, isReallyLeak);
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), Document.class, isReallyLeak);
 
     if (foundLeaksBeforeTest[0]) {
       fail("Can't start the test: leaking PsiFiles found");

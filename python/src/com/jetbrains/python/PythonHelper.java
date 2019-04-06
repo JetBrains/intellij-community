@@ -87,7 +87,9 @@ public enum PythonHelper implements HelperPackage {
 
   REST_RUNNER("rest_runners/rst2smth.py"),
 
-  SPHINX_RUNNER("rest_runners/sphinx_runner.py");
+  SPHINX_RUNNER("rest_runners/sphinx_runner.py"),
+
+  JUPYTER("pycharm", "jupyter");
 
   public static final String PY3_HELPER_DEPENDENCIES_DIR = "py3only";
   public static final String PY2_HELPER_DEPENDENCIES_DIR = "py2only";

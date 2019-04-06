@@ -37,7 +37,6 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private JPanel myPanel;
@@ -198,7 +198,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
   @NotNull
   @Override
-  protected List<Trinity<String, Producer<Charset>, Consumer<Charset>>> getDefaultMappings() {
+  protected List<Trinity<String, Supplier<Charset>, Consumer<Charset>>> getDefaultMappings() {
     EncodingManager app = EncodingManager.getInstance();
     EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
     return Arrays.asList(

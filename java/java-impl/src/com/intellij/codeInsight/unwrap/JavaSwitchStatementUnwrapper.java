@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,20 +37,6 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
     return e.getParent().getParent();
   }
 
-  @NotNull
-  @Override
-  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) {
-    final List<PsiElement> result = super.unwrap(editor, element);
-    for (PsiElement e : result) {
-      for (PsiBreakStatement breakStatement : PsiTreeUtil.findChildrenOfType(e, PsiBreakStatement.class)) {
-        if (breakStatement.getExpression() == null) {
-          breakStatement.delete();
-        }
-      }
-    }
-    return result;
-  }
-
   @Override
   protected void doUnwrap(PsiElement element, Context context) {
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)element.getParent().getParent();
@@ -84,11 +69,13 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
                 if (start instanceof PsiBreakStatement && ((PsiBreakStatement)start).getExpression() == null) {
                   break outer;
                 }
+                removeBreakStatements(start, switchStatement);
                 context.extractElement(start, switchStatement);
                 start = start.getNextSibling();
               }
             }
             else {
+              removeBreakStatements(element, switchStatement);
               context.extractElement(element, switchStatement);
             }
           }
@@ -107,5 +94,13 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
       }
     }
     context.delete(switchStatement);
+  }
+
+  private static void removeBreakStatements(PsiElement element, PsiSwitchStatement switchStatement) {
+    for (PsiBreakStatement breakStatement : PsiTreeUtil.findChildrenOfType(element, PsiBreakStatement.class)) {
+      if (breakStatement.getExpression() == null && breakStatement.findExitedElement() == switchStatement) {
+        breakStatement.delete();
+      }
+    }
   }
 }

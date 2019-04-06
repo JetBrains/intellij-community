@@ -283,7 +283,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
               if(pI != null){
                 pI.checkCanceled();
               }
-              FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
+              FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
               String text = new String(content, CharsetToolkit.UTF8_CHARSET);
               consumer.setCurrentFile(file.getName(), text);
               return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
@@ -369,7 +369,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Nullable
   @Override
-  public Project createProject(String name, final String path) {
+  public Project createProject(String name, @NotNull String path) {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
@@ -389,7 +389,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         try {
           myProjectMode = true;
           unzip(name, path, false, indicator, false);
-          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
         }
         catch (IOException e) {
           LOG.error(e);

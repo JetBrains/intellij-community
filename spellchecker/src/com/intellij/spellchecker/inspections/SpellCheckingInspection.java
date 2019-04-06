@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
+  private static final int TOKEN_LENGTH_LIMIT = Registry.intValue("ide.spellchecker.token.limit", 400000);
 
   @NotNull
   @Override
@@ -102,6 +104,9 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
+        if (element.getTextLength() > TOKEN_LENGTH_LIMIT) {
+          return;
+        }
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
       }
     };

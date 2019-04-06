@@ -37,6 +37,9 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
   }
 
   override fun ignoreMethodParameters(function: PyFunction, context: TypeEvalContext): Boolean {
-    return function.name == DUNDER_POST_INIT && function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
+    return function.name == "__prepare__" &&
+           function.getParameters(context).let { it.size == 3 && !it.any { p -> p.isKeywordContainer || p.isPositionalContainer } } ||
+           function.name == DUNDER_POST_INIT &&
+           function.containingClass?.let { parseStdDataclassParameters(it, context) != null } == true
   }
 }

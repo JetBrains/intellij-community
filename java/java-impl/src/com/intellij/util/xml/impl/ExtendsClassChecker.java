@@ -84,7 +84,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       else if (!allowNonPublic && !value.hasModifierProperty(PsiModifier.PUBLIC)) {
         list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
       }
-      else if (!PsiUtil.hasDefaultConstructor(value, true, false)) {
+      else if (!PsiUtil.hasDefaultConstructor(value, true, true)) {
         if (canBeDecorator) {
           boolean hasConstructor = false;
 

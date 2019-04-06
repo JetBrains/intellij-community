@@ -32,12 +32,6 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
   private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Local variable naming convention";
-  }
-
-  @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return GroovyQuickFixFactory.getInstance().createRenameFix();
   }

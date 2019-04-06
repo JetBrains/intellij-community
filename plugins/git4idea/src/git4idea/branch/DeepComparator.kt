@@ -221,9 +221,10 @@ class DeepComparator(private val project: Project,
 
     private fun getCommitsByIndexReliable(root: VirtualFile, sourceBranch: String, targetBranch: String): TIntHashSet {
       val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
+      if (dataPack == null || !dataPack.isFull) return resultFromGit
 
       val resultFromIndex = measureTimeMillis(root, "Getting non picked commits with index reliable") {
-        val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return resultFromGit
+        val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return resultFromGit
         val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
       }
@@ -232,10 +233,10 @@ class DeepComparator(private val project: Project,
     }
 
     private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): TIntHashSet? {
-      if (!vcsLogData.index.isIndexed(root)) return null
+      if (!vcsLogData.index.isIndexed(root) || dataPack == null || !dataPack.isFull) return null
 
       return measureTimeMillis(root, "Getting non picked commits with index fast") {
-        val sourceBranchRef = dataPack?.refsModel?.findBranch(sourceBranch, root) ?: return null
+        val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
         val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
         val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)

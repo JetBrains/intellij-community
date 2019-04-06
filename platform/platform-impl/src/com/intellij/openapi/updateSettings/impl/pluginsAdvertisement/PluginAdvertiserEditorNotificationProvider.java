@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -36,14 +22,7 @@ import java.util.Set;
 
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
-  private final Project myProject;
-  private final EditorNotifications myNotifications;
   private final Set<String> myEnabledExtensions = new HashSet<>();
-
-  public PluginAdvertiserEditorNotificationProvider(Project project, final EditorNotifications notifications) {
-    myProject = project;
-    myNotifications = notifications;
-  }
 
   @NotNull
   @Override
@@ -53,48 +32,48 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
   @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (file.getFileType() != PlainTextFileType.INSTANCE && !(file.getFileType() instanceof AbstractFileType)) return null;
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
-    if (extension != null && isIgnored("*." + extension) || isIgnored(fileName)) return null;
+    if (extension != null && isIgnored("*." + extension, project) || isIgnored(fileName, project)) return null;
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
-      final EditorNotificationPanel panel = extension != null ? createPanel("*." + extension, knownExtensions) : null;
+      final EditorNotificationPanel panel = extension != null ? createPanel("*." + extension, knownExtensions, project) : null;
       if (panel != null) {
         return panel;
       }
-      return createPanel(fileName, knownExtensions);
+      return createPanel(fileName, knownExtensions, project);
     }
     return null;
   }
 
-  private boolean isIgnored(String extension) {
+  private boolean isIgnored(String extension, @NotNull Project project) {
     return myEnabledExtensions.contains(extension) ||
-           UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension));
+           UnknownFeaturesCollector.getInstance(project).isIgnored(createExtensionFeature(extension));
   }
 
-  private EditorNotificationPanel createPanel(String extension, PluginsAdvertiser.KnownExtensions knownExtensions) {
+  private EditorNotificationPanel createPanel(String extension, PluginsAdvertiser.KnownExtensions knownExtensions, @NotNull Project project) {
     final Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
     if (plugins != null && !plugins.isEmpty()) {
-      return createPanel(extension, plugins);
+      return createPanel(extension, plugins, project);
     }
     return null;
   }
 
   @Nullable
-  private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
+  private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    
+
     panel.setText("Plugins supporting " + extension + " files found.");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
         myEnabledExtensions.add(extension);
-        myNotifications.updateAllNotifications();
-        PluginsAdvertiser.enablePlugins(myProject, Collections.singletonList(disabledPlugin));
+        EditorNotifications.getInstance(project).updateAllNotifications();
+        PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin));
       });
     } else if (hasNonBundledPlugin(plugins)) {
       panel.createActionLabel("Install plugins", () -> {
@@ -104,7 +83,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         }
         PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
           myEnabledExtensions.add(extension);
-          myNotifications.updateAllNotifications();
+          EditorNotifications.getInstance(project).updateAllNotifications();
         });
       });
     } else if (PluginsAdvertiser.hasBundledPluginToInstall(plugins) != null){
@@ -120,14 +99,14 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
       panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
         PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
-        myNotifications.updateAllNotifications();
+        EditorNotifications.getInstance(project).updateAllNotifications();
       });
     } else {
       return null;
     }
     panel.createActionLabel("Ignore extension", () -> {
-      UnknownFeaturesCollector.getInstance(myProject).ignoreFeature(createExtensionFeature(extension));
-      myNotifications.updateAllNotifications();
+      UnknownFeaturesCollector.getInstance(project).ignoreFeature(createExtensionFeature(extension));
+      EditorNotifications.getInstance(project).updateAllNotifications();
     });
     return panel;
   }

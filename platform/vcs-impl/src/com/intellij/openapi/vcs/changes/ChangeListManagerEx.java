@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
+  private static final Logger LOG = Logger.getInstance(ChangeListManagerEx.class);
+
   public abstract boolean isInUpdate();
 
   @NotNull
@@ -53,4 +57,12 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   public abstract void freeze(@NotNull String reason);
   public abstract void unfreeze();
+
+  /**
+   * Simulate synchronous task execution.
+   * Do not execute such methods from EDT - cause CLM update can trigger synchronous VFS refresh,
+   * that is waiting for EDT.
+   */
+  @CalledInBackground
+  public abstract void waitForUpdate(@Nullable String operationName);
 }

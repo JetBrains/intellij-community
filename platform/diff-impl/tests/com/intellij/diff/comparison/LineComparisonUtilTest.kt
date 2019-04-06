@@ -323,13 +323,13 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test prefer smaller amount of chunks`() {
-    lines() {
+    lines {
       ("X_A_X_Y_" - "X_Y_")
       ("-_-_ _ _" - " _ _").default()
       testAll()
     }
 
-    lines() {
+    lines {
       (" __x___y" - "__y")
       ("-**-*__ " - "__ ").default()
       default(del(0, 0, 3))
@@ -387,7 +387,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    splitter() {
+    splitter {
       ("M===_X===_Y===" - " Y===_X===_N")
       // TODO: default(mod(0, 0, 1, 1), mod(2, 2, 1, 1))
       default(mod(0, 0, 1, 1), mod(1, 1, 1, 1), mod(2, 2, 1, 1))
@@ -413,7 +413,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test trim changed blocks after second step correction`() {
-    lines() {
+    lines {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       ("     _------_ _     " - "     _ _     ").default() // result after second step correction
       ("     _      _-_-----" - "     _-_     ").ignore()  // result looks strange because of 'diff.unimportant.line.char.count'
@@ -430,20 +430,20 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test ignore whitespace policy does not applies two-step correction`() {
-    lines() {
+    lines {
       ("1_ _  1" - "  1")
       ("-_-_   " - "   ").default()
       (" _-_---" - "   ").trim()
       testAll()
     }
 
-    lines() {
+    lines {
       ("  1_ _1" - "  1")
       ("   _-_-" - "   ").default()
       testAll()
     }
 
-    lines() {
+    lines {
       ("X_ Y_X" - "Y ")
       ("-_--_-" - "--").default()
       ("-_  _-" - "  ").trim()
@@ -466,7 +466,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
 
-    lines() {
+    lines {
       ("X_X __Y" - "X__Z")
       (" _--__-" - " __-").default()
       ("-_  __-" - " __-").trim()

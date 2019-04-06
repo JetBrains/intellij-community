@@ -270,6 +270,8 @@
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
   </action>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="shift control O"/>
   </action>

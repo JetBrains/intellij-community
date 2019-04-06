@@ -32,7 +32,7 @@ public class JetBrainsProtocolHandler {
   private static String ourMainParameter = null;
   private static String ourCommand = null;
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
-  private static final Map<String, String> ourParameters = new HashMap<String, String>(0);
+  private static final Map<String, String> ourParameters = new HashMap<>(0);
   private static boolean initialized = false;
 
   public static void processJetBrainsLauncherParameters(String url) {

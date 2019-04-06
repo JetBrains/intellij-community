@@ -22,12 +22,8 @@ public class ColorUtil {
 
   @NotNull
   public static Color marker(@NotNull final String name) {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        throw new AssertionError(name);
-      }
+    return new JBColor(() -> {
+      throw new AssertionError(name);
     }) {
       @Override
       public boolean equals(Object obj) {
@@ -98,17 +94,12 @@ public class ColorUtil {
 
   @NotNull
   public static Color dimmer(@NotNull final Color color) {
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+    NotNullProducer<Color> func = () -> {
+      float[] rgb = color.getRGBColorComponents(null);
 
-      @NotNull
-      @Override
-      public Color produce() {
-        float[] rgb = color.getRGBColorComponents(null);
-
-        float alpha = 0.80f;
-        float rem = 1 - alpha;
-        return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
-      }
+      float alpha = 0.80f;
+      float rem = 1 - alpha;
+      return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
     };
     return wrap(color, func);
   }
@@ -124,13 +115,7 @@ public class ColorUtil {
 
   @NotNull
   public static Color shift(@NotNull final Color c, final double d) {
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
-      }
-    };
+    NotNullProducer<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
     return wrap(c, func);
   }
 
@@ -163,13 +148,7 @@ public class ColorUtil {
   @NotNull
   public static Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    NotNullProducer<Color> func = new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
-      }
-    };
+    NotNullProducer<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     return wrap(c, func);
   }
 
@@ -255,16 +234,32 @@ public class ColorUtil {
     return ((getLuminance(c) + 0.05) / 0.05) < 4.5;
   }
 
+  public static boolean areContrasting(@NotNull Color c1, @NotNull Color c2) {
+    return Double.compare(getContrast(c1, c2), 4.5) >= 0;
+  }
+
+  /**
+   * Contrast ratios can range from 1 to 21 (commonly written 1:1 to 21:1).
+   * Text foreground and background colors shall have contrast ration of at least 4.5:1, large-scale text - of at least 3:1.
+   * @see <a href="https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef">W3C contrast ratio definition<a/>
+   */
+  public static double getContrast(@NotNull Color c1, @NotNull Color c2) {
+    double l1 = getLuminance(c1);
+    double l2 = getLuminance(c2);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l2, l1) + 0.05);
+  }
+
+  /**
+   * @see <a href="https://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef">W3C relative luminance definition<a/>
+   */
   public static double getLuminance(@NotNull Color color) {
     return getLinearRGBComponentValue(color.getRed() / 255.0) * 0.2126 +
            getLinearRGBComponentValue(color.getGreen() / 255.0) * 0.7152 +
            getLinearRGBComponentValue(color.getBlue() / 255.0) * 0.0722;
   }
 
-  public static double getLinearRGBComponentValue(double colorValue) {
-    if (colorValue <= 0.03928) {
-      return colorValue / 12.92;
-    }
+  private static double getLinearRGBComponentValue(double colorValue) {
+    if (colorValue <= 0.03928) return colorValue / 12.92;
     return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 

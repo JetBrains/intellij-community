@@ -169,7 +169,7 @@ public class SliceLeafAnalyzer {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 
-    SliceNodeGuide(@NotNull AbstractTreeStructure treeStructure) {
+    public SliceNodeGuide(@NotNull AbstractTreeStructure treeStructure) {
       myTreeStructure = treeStructure;
     }
 

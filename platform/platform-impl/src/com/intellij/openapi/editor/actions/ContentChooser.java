@@ -55,6 +55,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private final boolean    myAllowMultipleSelections;
   private final Alarm      myUpdateAlarm;
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
+  private boolean myUseNumbering = true;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
@@ -90,6 +91,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   public void setSplitterOrientation(boolean vertical) {
     mySplitter.setOrientation(vertical);
+  }
+
+  public void setUseNumbering(boolean useNumbering) {
+    myUseNumbering = useNumbering;
   }
 
   @Override
@@ -146,7 +151,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
         }
-        else {
+        else if (myUseNumbering) {
           SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myList);
           if (supply != null && supply.isPopupActive()) return;
           char aChar = e.getKeyChar();
@@ -329,7 +334,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Item value, int index, boolean selected, boolean hasFocus) {
       setIcon(myListEntryIcon);
-      if (myUseIdeaEditor) {
+      if (myUseIdeaEditor && myUseNumbering) {
         int max = list.getModel().getSize();
         String indexString = String.valueOf(index + 1);
         int count = String.valueOf(max).length() - indexString.length();

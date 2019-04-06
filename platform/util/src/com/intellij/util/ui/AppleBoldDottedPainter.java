@@ -34,7 +34,7 @@ public class AppleBoldDottedPainter {
   private static final int HEIGHT = 3;
   private static final int WIDTH = 4;
 
-  private static final Map<Color, AppleBoldDottedPainter> myPainters = new HashMap<Color, AppleBoldDottedPainter>();
+  private static final Map<Color, AppleBoldDottedPainter> myPainters = new HashMap<>();
   private static final int PATTERN_WIDTH = 4000;
 
   private final BufferedImage myImage;

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -137,7 +138,7 @@ public class CtrlMouseHandler {
           }
           myStoredModifiers = modifiers;
           cancelPreviousTooltip();
-          myTooltipProvider = new TooltipProvider(tooltipProvider.myHostEditor, tooltipProvider.myHostPosition);
+          myTooltipProvider = new TooltipProvider(tooltipProvider);
           myTooltipProvider.execute(browseMode);
         }
       }
@@ -654,7 +655,8 @@ public class CtrlMouseHandler {
 
   private class TooltipProvider {
     @NotNull private final EditorEx myHostEditor;
-    @NotNull private final LogicalPosition myHostPosition;
+    private final int myHostOffset;
+    private final boolean myInVirtualSpace;
     private BrowseMode myBrowseMode;
     private boolean myDisposed;
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
@@ -662,7 +664,15 @@ public class CtrlMouseHandler {
 
     TooltipProvider(@NotNull EditorEx hostEditor, @NotNull LogicalPosition hostPos) {
       myHostEditor = hostEditor;
-      myHostPosition = hostPos;
+      myHostOffset = hostEditor.logicalPositionToOffset(hostPos);
+      myInVirtualSpace = EditorUtil.inVirtualSpace(hostEditor, hostPos);
+    }
+
+    @SuppressWarnings("CopyConstructorMissesField")
+    TooltipProvider(@NotNull TooltipProvider source) {
+      myHostEditor = source.myHostEditor;
+      myHostOffset = source.myHostOffset;
+      myInVirtualSpace = source.myInVirtualSpace;
     }
 
     void dispose() {
@@ -679,17 +689,15 @@ public class CtrlMouseHandler {
 
       if (PsiDocumentManager.getInstance(myProject).getPsiFile(myHostEditor.getDocument()) == null) return;
 
-      if (EditorUtil.inVirtualSpace(myHostEditor, myHostPosition)) {
+      if (myInVirtualSpace) {
         disposeHighlighter();
         return;
       }
 
-      final int offset = myHostEditor.logicalPositionToOffset(myHostPosition);
-
       int selStart = myHostEditor.getSelectionModel().getSelectionStart();
       int selEnd = myHostEditor.getSelectionModel().getSelectionEnd();
 
-      if (offset >= selStart && offset < selEnd) {
+      if (myHostOffset >= selStart && myHostOffset < selEnd) {
         disposeHighlighter();
         return;
       }
@@ -720,7 +728,7 @@ public class CtrlMouseHandler {
       if (isTaskOutdated(myHostEditor)) return null;
 
       EditorEx editor = getPossiblyInjectedEditor();
-      int offset = editor.logicalPositionToOffset(getPosition(editor));
+      int offset = getOffset(editor);
 
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return createDisposalContinuation();
@@ -740,7 +748,7 @@ public class CtrlMouseHandler {
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
         if (isTaskOutdated(editor)) return;
-        showHint(info, docInfo, editor);
+        addHighlighterAndShowHint(info, docInfo, editor);
       });
     }
 
@@ -749,8 +757,7 @@ public class CtrlMouseHandler {
       final Document document = myHostEditor.getDocument();
       if (PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        return (EditorEx)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile,
-                                                                                   myHostEditor.logicalPositionToOffset(myHostPosition));
+        return (EditorEx)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile, myHostOffset);
       }
       return myHostEditor;
     }
@@ -760,11 +767,11 @@ public class CtrlMouseHandler {
              !ApplicationManager.getApplication().isUnitTestMode() && !editor.getComponent().isShowing();
     }
 
-    private LogicalPosition getPosition(@NotNull Editor editor) {
-      return editor instanceof EditorWindow ? ((EditorWindow)editor).hostToInjected(myHostPosition) : myHostPosition;
+    private int getOffset(@NotNull Editor editor) {
+      return editor instanceof EditorWindow ? ((EditorWindow)editor).getDocument().hostToInjected(myHostOffset) : myHostOffset;
     }
 
-    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
+    private void addHighlighterAndShowHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
       if (myDisposed || editor.isDisposed()) return;
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
@@ -783,9 +790,12 @@ public class CtrlMouseHandler {
         return;
       }
 
-      myHighlighter = installHighlighterSet(info, editor);
+      boolean highlighterOnly = EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement() &&
+                                DocumentationManager.getInstance(myProject).getDocInfoHint() != null;
 
-      if (docInfo.text == null) return;
+      myHighlighter = installHighlighterSet(info, editor, highlighterOnly);
+
+      if (highlighterOnly || docInfo.text == null) return;
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
@@ -867,13 +877,19 @@ public class CtrlMouseHandler {
                 updating.set(false);
                 return null;
               }
-              DocInfo newDocInfo = info.getInfo();
-              return new Continuation(() -> {
-                updating.set(false);
-                if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
-                  updateText(newDocInfo.text, textConsumer, hint, editor);
-                }
-              });
+              try {
+                DocInfo newDocInfo = info.getInfo();
+                return new Continuation(() -> {
+                  updating.set(false);
+                  if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
+                    updateText(newDocInfo.text, textConsumer, hint, editor);
+                  }
+                });
+              }
+              catch (IndexNotReadyException e) {
+                showDumbModeNotification(myProject);
+                return createDisposalContinuation();
+              }
             }
 
             @Override
@@ -889,10 +905,11 @@ public class CtrlMouseHandler {
       if (ApplicationManager.getApplication().isUnitTestMode() || editor.isDisposed()) return;
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       short constraint = HintManager.ABOVE;
-      Point p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
+      LogicalPosition position = editor.offsetToLogicalPosition(getOffset(editor));
+      Point p = HintManagerImpl.getHintPosition(hint, editor, position, constraint);
       if (p.y - hint.getComponent().getPreferredSize().height < 0) {
         constraint = HintManager.UNDER;
-        p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
+        p = HintManagerImpl.getHintPosition(hint, editor, position, constraint);
       }
       hintManager.showEditorHint(hint, editor, p,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
@@ -901,7 +918,7 @@ public class CtrlMouseHandler {
   }
 
   @NotNull
-  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor) {
+  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor, boolean highlighterOnly) {
     editor.getContentComponent().addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     if (info.isNavigatable()) {
@@ -910,16 +927,19 @@ public class CtrlMouseHandler {
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<>();
-    TextAttributes attributes = info.isNavigatable()
-                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
-                                : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
-    for (TextRange range : info.getRanges()) {
-      TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
-      final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.HYPERLINK,
-                                                                                       attr,
-                                                                                       HighlighterTargetArea.EXACT_RANGE);
-      highlighters.add(highlighter);
+
+    if (!highlighterOnly || info.isNavigatable()) {
+      TextAttributes attributes = info.isNavigatable()
+                                  ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
+                                  : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
+      for (TextRange range : info.getRanges()) {
+        TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
+        final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                                                         HighlighterLayer.HYPERLINK,
+                                                                                         attr,
+                                                                                         HighlighterTargetArea.EXACT_RANGE);
+        highlighters.add(highlighter);
+      }
     }
 
     return new HighlightersSet(highlighters, editor, info);

@@ -193,9 +193,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                   ensureFilesWritable(files).hasReadonlyFiles()) {
                   return;
                 }
-                WriteCommandAction.writeCommandAction(myProject).run(() -> {
-                  TypeMigrationProcessor.change(usages, myLabeler, myProject);
-                });
+                WriteCommandAction.writeCommandAction(myProject).run(() -> TypeMigrationProcessor.change(usages, myLabeler, myProject));
               }, myProject.getDisposed());
             }, "Type Migration", false, myProject);
           }
@@ -365,7 +363,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     @Nullable
     private TypeMigrationUsageInfo[] getUsages(AnActionEvent context) {
-      return MIGRATION_USAGES_KEYS.getData(context.getDataContext());
+      return context.getData(MIGRATION_USAGES_KEYS);
     }
 
     @Override

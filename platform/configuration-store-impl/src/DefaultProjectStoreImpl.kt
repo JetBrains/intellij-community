@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import org.jdom.Element
 import java.io.Writer
 import java.nio.file.Path
@@ -57,10 +58,6 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
 
   private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
-  init {
-    service<DefaultProjectExportableAndSaveTrigger>().project = project
-  }
-
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
@@ -99,14 +96,11 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
 internal class DefaultProjectExportableAndSaveTrigger {
-  @Suppress("StatefulEp")
-  @Volatile
-  var project: Project? = null
-
-  suspend fun save(isForceSavingAllSettings: Boolean): SaveResult {
-    val project = project ?: return SaveResult.EMPTY
+  suspend fun save(forceSavingAllSettings: Boolean): SaveResult {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = if (projectManager.isDefaultProjectInitialized) projectManager.defaultProject else return SaveResult.EMPTY
     val result = SaveResult()
-    (project.stateStore as ComponentStoreImpl).doSave(result, isForceSavingAllSettings)
+    (project.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
     return result
   }
 }

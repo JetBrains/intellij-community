@@ -59,7 +59,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
       items.add(WHOLE_PROJECT);
       myModuleCombo.setModel(new CollectionComboBoxModel(items, WHOLE_PROJECT));
     }
-    myDescription.setFileType(FileTypeManager.getInstance().getFileTypeByExtension(".html"));
+    myDescription.setFileType(FileTypeManager.getInstance().getFileTypeByExtension("html"));
     if (descriptionFile != null) {
       try {
         String s = VfsUtilCore.loadText(descriptionFile);

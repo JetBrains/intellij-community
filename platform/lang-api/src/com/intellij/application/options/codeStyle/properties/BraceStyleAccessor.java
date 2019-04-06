@@ -15,6 +15,7 @@ class BraceStyleAccessor extends ExternalStringAccessor<Integer> implements Code
 
   public static final String VALUE_END_OF_LINE = "end_of_line";
   public static final String VALUE_NEXT_LINE = "next_line";
+  public static final String VALUE_NEXT_LINE_IF_WRAPPED = "next_line_if_wrapped";
   public static final String VALUE_WHITESMITHS = "whitesmiths";
   public static final String VALUE_GNU = "gnu";
 
@@ -23,6 +24,7 @@ class BraceStyleAccessor extends ExternalStringAccessor<Integer> implements Code
   static {
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.END_OF_LINE, VALUE_END_OF_LINE);
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE, VALUE_NEXT_LINE);
+    BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED, VALUE_NEXT_LINE_IF_WRAPPED);
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, VALUE_WHITESMITHS);
     BRACE_STYLE_MAP.put(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, VALUE_GNU);
   }

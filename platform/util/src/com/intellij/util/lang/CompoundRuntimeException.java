@@ -44,69 +44,38 @@ public class CompoundRuntimeException extends RuntimeException {
   }
 
   public List<Throwable> getExceptions() {
-    return new ArrayList<Throwable>(myExceptions);
+    return new ArrayList<>(myExceptions);
   }
 
   @Override
   public String getMessage() {
-    return processAll(new Function<Throwable, String>() {
-      @Override
-      public String fun(Throwable throwable) {
-        return throwable.getMessage();
-      }
-    }, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getMessage, EmptyConsumer.getInstance());
   }
 
   @Override
   public String getLocalizedMessage() {
-    return processAll(new Function<Throwable, String>() {
-      @Override
-      public String fun(Throwable throwable) {
-        return throwable.getLocalizedMessage();
-      }
-    }, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::getLocalizedMessage, EmptyConsumer.getInstance());
   }
 
   @Override
   public String toString() {
-    return processAll(new Function<Throwable, String>() {
-      @Override
-      public String fun(Throwable throwable) {
-        return throwable.toString();
-      }
-    }, EmptyConsumer.<String>getInstance());
+    return processAll(Throwable::toString, EmptyConsumer.getInstance());
   }
 
   @Override
   public void printStackTrace(final PrintStream s) {
-    processAll(new Function<Throwable, String>() {
-      @Override
-      public String fun(Throwable throwable) {
-        throwable.printStackTrace(s);
-        return "";
-      }
-    }, new Consumer<String>() {
-      @Override
-      public void consume(String str) {
-        s.print(str);
-      }
-    });
+    processAll(throwable -> {
+      throwable.printStackTrace(s);
+      return "";
+    }, s::print);
   }
 
   @Override
   public void printStackTrace(final PrintWriter s) {
-    processAll(new Function<Throwable, String>() {
-      @Override
-      public String fun(Throwable throwable) {
-        throwable.printStackTrace(s);
-        return "";
-      }
-    }, new Consumer<String>() {
-      @Override
-      public void consume(String str) {
-        s.print(str);
-      }
-    });
+    processAll(throwable -> {
+      throwable.printStackTrace(s);
+      return "";
+    }, s::print);
   }
 
   private String processAll(@NotNull Function<? super Throwable, String> exceptionProcessor, @NotNull Consumer<? super String> stringProcessor) {

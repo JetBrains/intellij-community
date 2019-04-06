@@ -151,10 +151,6 @@ class A {
 
   void testMethodDuplicates() { doTest() }
 
-  void testAmbiguousCodeBlock() { doTest() }
-
-  void testAmbiguousCodeBlockInMethodCall() { doTest() }
-
   void testNotAmbiguousClosableBlock() { doTest() }
 
   void testDuplicateParameterInClosableBlock() { doTest() }
@@ -577,6 +573,11 @@ print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 @CompileStatic
 def bar() {
 print <error descr="Cannot resolve symbol 'abc'">abc</error>
+  new Object() {
+    def baz() {
+      print(<error descr="Cannot resolve symbol 'unknown'">unknown</error>)
+    }
+  }
 }
 }
 ''', true, false, false, GrUnresolvedAccessInspection)
@@ -697,42 +698,6 @@ $IMPORT_COMPILE_STATIC
 @CompileStatic
 def test() {
     def cl = {
-        def var
-        var = new Date()
-    }
-    def var = "abc"
-
-    cl()
-    var.toUpperCase()  //no errors
-}
-""", GrUnresolvedAccessInspection)
-  }
-
-  void testReassignedVarInLambda() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def var = "abc"
-    def cl = () -> {
-        var = new Date()
-    }
-    cl()
-    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
-}
-""", GrUnresolvedAccessInspection)
-  }
-
-  void testReassignedVarInLambda2() {
-    addCompileStatic()
-    testHighlighting("""
-$IMPORT_COMPILE_STATIC
-
-@CompileStatic
-def test() {
-    def cl = () -> {
         def var
         var = new Date()
     }
@@ -891,6 +856,15 @@ new Base() {
   String value3()
 }
 ''')
+  }
+
+  void testAnnotationMethodThrowsList() {
+    testHighlighting '''\
+@interface A {
+  int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
+  int aab() throws<error descr="<type> expected, got ';'"> </error>;
+}
+'''
   }
 
   void testAnnotationAttributeTypes() {
@@ -1211,12 +1185,6 @@ def mm2() {
     })
 }
 
-def mm3() {
-    return new Foo()
-    <error descr="Ambiguous code block">{
-    }</error>
-}
-
 def mm4() {
     return (new Foo()
     {
@@ -1270,11 +1238,6 @@ foo(new Foo()
 {
 
 }.identity { it })
-
-foo new Foo()
-<error descr="Ambiguous code block">{
-
-}</error>
 
 foo 1 + (new Foo()
 {
@@ -1430,8 +1393,8 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
-''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></weak_warning>
+''', true, false, true, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   void testGStringInjectionLFs() {
@@ -1874,7 +1837,9 @@ class A {
   }
 
   void testUnresolvedPropertyWhenGetPropertyDeclared() {
-    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    def inspection = new GrUnresolvedAccessInspection()
+    inspection.myHighlightIfGroovyObjectOverridden = false
+    myFixture.enableInspections(inspection)
     myFixture.configureByText('_.groovy', '''\
 class DelegatesToTest {
     void ideSupport() {
@@ -1902,8 +1867,6 @@ class DslDelegate {
 print new DslDelegate().foo   //resolved
 print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warning>() //unresolved
 ''')
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -2179,5 +2142,21 @@ import java.util.Map<error descr="Type argument list is not allowed here"><Integ
 import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
 import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
 ''', false
+  }
+
+  void 'test assign collection to an array in @CS'() {
+    testHighlighting '''\
+Collection<? extends Runnable> foo() {}
+
+@groovy.transform.CompileStatic
+def usage() {
+  Runnable[] ar = foo()
+}
+
+@groovy.transform.CompileStatic
+def usage(Collection<? extends Runnable> cr) {
+  Runnable[] ar = cr //https://issues.apache.org/jira/browse/GROOVY-8983
+}
+'''
   }
 }

@@ -31,8 +31,9 @@ public class CommonUiProperties {
   public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");
 
   static {
-    COLUMN_WIDTH.put(GraphTableModel.AUTHOR_COLUMN, new TableColumnProperty("Author", GraphTableModel.AUTHOR_COLUMN));
-    COLUMN_WIDTH.put(GraphTableModel.DATE_COLUMN, new TableColumnProperty("Date", GraphTableModel.DATE_COLUMN));
+    for (int columnIndex : GraphTableModel.DYNAMIC_COLUMNS) {
+      COLUMN_WIDTH.put(columnIndex, new TableColumnProperty(GraphTableModel.COLUMN_NAMES[columnIndex], columnIndex));
+    }
   }
 
   public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, int column, int width) {

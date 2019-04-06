@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName")
 
 package com.intellij.ui.components
@@ -18,20 +18,18 @@ import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
+import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.util.regex.Pattern
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
-
-private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
 
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
   get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor())
@@ -66,7 +64,7 @@ fun Link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit)
 
 @JvmOverloads
 fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
-  val matcher = HREF_PATTERN.matcher(note)
+  val matcher = URLUtil.HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
     return Label(note)
   }
@@ -120,6 +118,12 @@ fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPan
   return panel
 }
 
+fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+  val panel = DialogPanel(layout)
+  title?.let { setTitledBorder(it, panel) }
+  return panel
+}
+
 private fun setTitledBorder(title: String, panel: JPanel) {
   val border = IdeBorderFactory.createTitledBorder(title, false)
   panel.border = border
@@ -161,7 +165,7 @@ fun dialog(title: String,
       return if (createActions == null) super.createActions() else createActions(this).toTypedArray()
     }
 
-    override fun getPreferredFocusedComponent() = focusedComponent
+    override fun getPreferredFocusedComponent() = focusedComponent ?: super.getPreferredFocusedComponent()
 
     override fun doOKAction() {
       if (okAction.isEnabled) {

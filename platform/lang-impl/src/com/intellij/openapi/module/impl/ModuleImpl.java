@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.ModuleServiceManagerImpl;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
@@ -72,9 +72,9 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@Nullable Runnable beforeComponentCreation) {
-    init(null, () -> {
-      // create ServiceManagerImpl at first to force extension classes registration
-      getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
+    // do not measure (activityNamePrefix method not overridden by this class)
+    // because there are a lot of modules and no need to measure each one
+    init(PluginManagerCore.getLoadedPlugins(null), null, () -> {
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
@@ -96,10 +96,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    if (!super.isComponentSuitable(options)) {
+  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
+    if (!super.isComponentSuitable(componentConfig)) {
       return false;
     }
+
+    Map<String, String> options = componentConfig.options;
     if (options == null || options.isEmpty()) {
       return true;
     }
@@ -155,6 +157,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getModuleComponents();
+  }
+
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getModuleServices();
   }
 
   @Override
@@ -311,11 +319,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
-  @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
   @NotNull
   @Override
   protected MutablePicoContainer createPicoContainer() {
@@ -327,7 +330,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     return getOptionManager().getModificationCount();
   }
 
-  @State(name = "DeprecatedModuleOptionManager")
+  @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false /* doesn't make sense to check it */)
   static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State>,
                                                                                           ProjectModelElement {
     private final Module module;

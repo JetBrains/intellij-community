@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -303,7 +289,7 @@ public class JBZipEntry implements Cloneable {
    */
   public void setMethod(int method) {
     if (method != ZipEntry.STORED && method != ZipEntry.DEFLATED) {
-      throw new IllegalArgumentException("invalid compression method");
+      throw new IllegalArgumentException("invalid compression method: " + method);
     }
     this.method = method;
   }
@@ -451,12 +437,8 @@ public class JBZipEntry implements Cloneable {
   }
 
   void doSetDataFromFile(File file) throws IOException {
-    InputStream input = new BufferedInputStream(new FileInputStream(file));
-    try {
+    try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
-    }
-    finally {
-      input.close();
     }
   }
 
@@ -470,12 +452,8 @@ public class JBZipEntry implements Cloneable {
   public byte[] getData() throws IOException {
     if (size == -1) throw new IOException("no data");
 
-    final InputStream stream = getInputStream();
-    try {
+    try (InputStream stream = getInputStream()) {
       return FileUtil.loadBytes(stream, (int)size);
-    }
-    finally {
-      stream.close();
     }
   }
 

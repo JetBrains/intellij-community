@@ -27,7 +27,7 @@ class MissingRecentApiVisitor(
 ) : ApiUsageVisitorBase() {
 
   companion object {
-    val AVAILABLE_SINCE_ANNOTATION: String = ApiStatus.AvailableSince::class.qualifiedName!!
+    val AVAILABLE_SINCE_ANNOTATION: String = ApiStatus.AvailableSince::class.java.canonicalName
   }
 
   override fun shouldProcessReferences(element: PsiElement) = !element.isInsideImportStatement()

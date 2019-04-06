@@ -349,9 +349,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       doAddIgnoredResources(urls, disposable);
     }
     else {
-      app.runWriteAction(() -> {
-        doAddIgnoredResources(urls, disposable);
-      });
+      app.runWriteAction(() -> doAddIgnoredResources(urls, disposable));
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -320,8 +320,12 @@ public class TypeConversionUtil {
     final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
     final PsiClass superClass = result.getElement();
     if (superClass != null) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(typeParameter.getProject());
+      if (superClass instanceof PsiTypeParameter && InheritanceUtil.getCircularClass(superClass) != null) {
+        return factory.createTypeByFQClassName(JAVA_LANG_OBJECT, typeParameter.getResolveScope());
+      }
       final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, null);
-      return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(superClass, substitutor);
+      return factory.createType(superClass, substitutor);
     }
     return superType;
   }
@@ -390,7 +394,6 @@ public class TypeConversionUtil {
 
   @Contract("null -> false")
   public static boolean isPrimitiveAndNotNull(PsiType type) {
-    type = uncapture(type);
     return type instanceof PsiPrimitiveType && !isNullType(type);
   }
 

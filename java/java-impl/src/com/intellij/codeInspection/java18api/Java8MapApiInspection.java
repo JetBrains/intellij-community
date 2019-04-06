@@ -12,8 +12,11 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +35,8 @@ import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromCo
 public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8MapApiInspection.class);
   public static final String SHORT_NAME = "Java8MapApi";
+  private static final CallMatcher KEY_VALUE_GET_METHODS =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getKey", "getValue").parameterCount(0);
 
   @SuppressWarnings("PublicField")
   public boolean mySuggestMapGetOrDefault = true;
@@ -40,6 +46,8 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean mySuggestMapPutIfAbsent = true;
   @SuppressWarnings("PublicField")
   public boolean mySuggestMapMerge = true;
+  @SuppressWarnings("PublicField")
+  public boolean mySuggestMapReplaceAll = true;
   @SuppressWarnings("PublicField")
   public boolean myTreatGetNullAsContainsKey = false;
   @SuppressWarnings("PublicField")
@@ -53,6 +61,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
     panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
     panel.addCheckbox("Suggest conversion to Map.merge", "mySuggestMapMerge");
+    panel.addCheckbox("Suggest conversion to Map.replaceAll", "mySuggestMapReplaceAll");
     panel.addCheckbox("Treat 'get(k) != null' the same as 'containsKey(k)' (may change semantics)", "myTreatGetNullAsContainsKey");
     panel.addCheckbox("Suggest replacement even if lambda may have side effects", "mySideEffects");
     return panel;
@@ -91,6 +100,39 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
 
           processGetPut(condition, existsBranch, match.getRightDiff(), match.getLeftDiff());
         }
+      }
+
+      @Override
+      public void visitForeachStatement(PsiForeachStatement statement) {
+        if (!mySuggestMapReplaceAll) return;
+        MapLoopCondition condition = MapLoopCondition.create(statement);
+        if (condition == null) return;
+        PsiMethodCallExpression putCall = condition.extractPut(statement);
+        if (putCall == null) return;
+        PsiExpression[] args = putCall.getArgumentList().getExpressions();
+        if (args.length != 2) return;
+        PsiExpression key = args[0];
+        if (!condition.isKeyAccess(key)) return;
+        PsiExpression value = args[1];
+        if (condition.isEntrySet() && isUsedAsReference(value, condition)) return;
+        if (hasMapUsages(condition, value)) return;
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(value, variable -> condition.getMap().equals(variable))) return;
+
+        ReplaceWithSingleMapOperation fix = ReplaceWithSingleMapOperation.create("replaceAll", putCall, value);
+        holder.registerProblem(statement.getFirstChild(),
+                               QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
+      }
+
+      private boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
+        return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
+          .map(ExpressionUtils::getCallForQualifier)
+          .allMatch(call -> condition.isValueAccess(call));
+      }
+
+      private boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
+        return !VariableAccessUtils.getVariableReferences(condition.getIterParam(), value).stream()
+          .map(ExpressionUtils::getCallForQualifier)
+          .allMatch(KEY_VALUE_GET_METHODS);
       }
 
       private void processMerge(MapCheckCondition condition,
@@ -237,16 +279,19 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement conditional = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class, PsiConditionalExpression.class);
-      if(conditional == null) return;
-      MapCheckCondition condition = fromConditional(conditional, true);
+      PsiElement outerElement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class,
+                                                            PsiConditionalExpression.class, PsiForeachStatement.class);
+      if (outerElement == null) return;
+      MapCondition condition = outerElement instanceof PsiForeachStatement ?
+                               MapLoopCondition.create((PsiForeachStatement)outerElement) :
+                               fromConditional(outerElement, true);
       if(condition == null) return;
       PsiMethodCallExpression call = myCallPointer.getElement();
       if (call == null) return;
       PsiExpressionList argsList = call.getArgumentList();
       PsiExpression[] args = argsList.getExpressions();
       if(args.length == 0) return;
-      if(myMethodName.equals("merge") && args.length != 2) return;
+      if ((myMethodName.equals("merge") || myMethodName.equals("replaceAll")) && args.length != 2) return;
       PsiExpression value = myValuePointer.getElement();
       if (value == null) return;
       PsiElement result = myResultPointer.getElement();
@@ -285,21 +330,33 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         replacement = factory.createExpressionFromText(varName + " -> " + ct.text(value), value);
       } else if (myMethodName.equals("merge")) {
+        MapCheckCondition checkCondition = ObjectUtils.tryCast(condition, MapCheckCondition.class);
+        if (checkCondition == null) return;
         PsiExpression absentValue = args[1];
         String aVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("a", value, true);
         String bVar = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("b", value, true);
         for(PsiElement e : PsiTreeUtil.collectElements(value, e -> PsiEquivalenceUtil.areElementsEquivalent(e, absentValue))) {
           ct.replace(e, factory.createIdentifier(bVar));
         }
-        for(PsiElement e : PsiTreeUtil.collectElements(value, e -> condition.extractGetCall(e) != null || condition.isValueReference(e))) {
+        for (PsiElement e : PsiTreeUtil
+          .collectElements(value, e -> checkCondition.extractGetCall(e) != null || checkCondition.isValueReference(e))) {
           ct.replace(e, factory.createIdentifier(aVar));
         }
         replacement = factory.createExpressionFromText("("+aVar+","+bVar+") -> "+ct.text(value), value);
-      } else {
+      }
+      else if (myMethodName.equals("replaceAll")) {
+        MapLoopCondition loopCondition = ObjectUtils.tryCast(condition, MapLoopCondition.class);
+        if (loopCondition == null) return;
+        String kVar = suggestKeyName(loopCondition, value);
+        String vVar = new VariableNameGenerator(value, VariableKind.PARAMETER).byName("v", "value").generate(true);
+        replacement = createLambdaForLoopReplacement(factory, kVar, vVar, loopCondition, value, ct);
+        ct.delete(args);
+      }
+      else {
         replacement = ct.markUnchanged(value);
       }
       PsiElement newArg;
-      if(args.length == 2 && !myMethodName.equals("merge")) {
+      if (args.length == 2 && !myMethodName.equals("merge") && !myMethodName.equals("replaceAll")) {
         newArg = ct.replace(args[1], replacement);
       } else {
         newArg = argsList.add(replacement);
@@ -307,16 +364,57 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       if(newArg instanceof PsiLambdaExpression) {
         LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)newArg);
       }
-      if(PsiTreeUtil.isAncestor(conditional, result, true)) {
-        result = ct.replaceAndRestoreComments(conditional, result);
+      if (PsiTreeUtil.isAncestor(outerElement, result, true)) {
+        result = ct.replaceAndRestoreComments(outerElement, result);
       } else {
-        ct.deleteAndRestoreComments(conditional);
+        ct.deleteAndRestoreComments(outerElement);
       }
-      PsiVariable variable = condition.extractDeclaration();
+      PsiVariable variable = condition instanceof MapCheckCondition ? ((MapCheckCondition)condition).extractDeclaration() : null;
       if (variable != null && !PsiTreeUtil.isAncestor(result, variable, true) && ReferencesSearch.search(variable).findFirst() == null) {
         new CommentTracker().deleteAndRestoreComments(variable);
       }
       CodeStyleManager.getInstance(project).reformat(result);
+    }
+
+    @NotNull
+    private static String suggestKeyName(@NotNull MapLoopCondition loopCondition, @NotNull PsiElement value) {
+      VariableNameGenerator generator = new VariableNameGenerator(value, VariableKind.PARAMETER);
+      if (!loopCondition.isEntrySet()) {
+        String origName = loopCondition.getIterParam().getName();
+        if (origName != null) {
+          String nameCandidate = getNameCandidate(origName);
+          if (origName.equals(nameCandidate)) return nameCandidate;
+          generator.byName(nameCandidate);
+        }
+      }
+      return generator.byName("k", "key").generate(true);
+    }
+
+    @NotNull
+    private static PsiExpression createLambdaForLoopReplacement(@NotNull PsiElementFactory factory,
+                                                                @NotNull String kVar,
+                                                                @NotNull String vVar,
+                                                                @NotNull MapLoopCondition loopCondition,
+                                                                @NotNull PsiExpression value,
+                                                                @NotNull CommentTracker tracker) {
+      if (value instanceof PsiMethodCallExpression) {
+        if (loopCondition.isKeyAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + kVar, value);
+        if (loopCondition.isValueAccess(value)) return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + vVar, value);
+      }
+      if (!loopCondition.isEntrySet()) {
+        PsiParameter param = loopCondition.getIterParam();
+        VariableAccessUtils.getVariableReferences(param, value).forEach(ref -> ExpressionUtils.bindReferenceTo(ref, kVar));
+      }
+      Collection<PsiMethodCallExpression> calls = PsiTreeUtil.collectElementsOfType(value, PsiMethodCallExpression.class);
+      for (PsiMethodCallExpression call : calls) {
+        if (loopCondition.isKeyAccess(call)) {
+          tracker.replace(call, kVar);
+        }
+        else if (loopCondition.isValueAccess(call)) {
+          tracker.replace(call, vVar);
+        }
+      }
+      return factory.createExpressionFromText("(" + kVar + "," + vVar + ") ->" + tracker.text(value), value);
     }
 
     @Nls
@@ -336,6 +434,11 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     @NotNull
     static ReplaceWithSingleMapOperation fromIf(String methodName, MapCheckCondition condition, PsiExpression value) {
       PsiMethodCallExpression call = condition.getCheckCall();
+      return create(methodName, call, value);
+    }
+
+    @NotNull
+    static ReplaceWithSingleMapOperation create(String methodName, PsiMethodCallExpression call, PsiExpression value) {
       PsiStatement result = PsiTreeUtil.getParentOfType(call, PsiStatement.class);
       LOG.assertTrue(result != null);
       return new ReplaceWithSingleMapOperation(methodName, call, value, result);

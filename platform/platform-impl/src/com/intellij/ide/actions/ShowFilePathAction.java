@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -8,6 +8,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -155,8 +156,8 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFile(@NotNull AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    return files == null || files.length == 1 ? e.getData(CommonDataKeys.VIRTUAL_FILE) : null;
   }
 
   public static void show(@NotNull VirtualFile file, @NotNull MouseEvent e) {
@@ -308,7 +309,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   private static String shortPath(String path) {
-    if (path.contains("  ")) {
+    if (path.contains("  ") && JnaLoader.isLoaded()) {
       // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
       // which breaks paths containing a sequence of two or more spaces.
       // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.

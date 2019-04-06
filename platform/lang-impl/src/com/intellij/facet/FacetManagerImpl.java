@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -41,7 +41,7 @@ import java.util.function.Predicate;
 /**
  * @author nik
  */
-@State(name = FacetManagerImpl.COMPONENT_NAME)
+@State(name = FacetManagerImpl.COMPONENT_NAME, useLoadedStateAsExisting = false)
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "FacetManager";

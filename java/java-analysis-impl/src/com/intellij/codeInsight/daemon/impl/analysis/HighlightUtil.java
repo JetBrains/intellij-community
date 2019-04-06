@@ -1333,7 +1333,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final int idx = ArrayUtilRt.find(allCatchSections, catchSection);
     if (idx <= 0) return null;
 
-    final Collection<PsiClassType> thrownTypes = ContainerUtil.newHashSet(thrownInTryStatement);
+    final Collection<PsiClassType> thrownTypes = new java.util.HashSet<>(thrownInTryStatement);
     final PsiManager manager = containingFile.getManager();
     final GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
     thrownTypes.add(PsiType.getJavaLangError(manager, parameterResolveScope));
@@ -1350,7 +1350,7 @@ public class HighlightUtil extends HighlightUtilBase {
       final Collection<PsiClassType> caught =
         ContainerUtil.findAll(thrownTypes, type -> catchType.isAssignableFrom(type) || type.isAssignableFrom(catchType));
       if (caught.isEmpty()) continue;
-      final Collection<PsiClassType> caughtCopy = ContainerUtil.newHashSet(caught);
+      final Collection<PsiClassType> caughtCopy = new java.util.HashSet<>(caught);
 
       // exclude all which are caught by previous catch sections
       for (int i = 0; i < idx; i++) {

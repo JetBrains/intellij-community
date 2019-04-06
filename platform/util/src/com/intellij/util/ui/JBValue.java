@@ -130,7 +130,7 @@ public abstract class JBValue {
    * This can be a better choice when values are used multiple times in a code block.
    */
   public static class JBValueGroup {
-    private final List<CachedFloat> group = new LinkedList<CachedFloat>();
+    private final List<CachedFloat> group = new LinkedList<>();
     private final PropertyChangeListener listener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {

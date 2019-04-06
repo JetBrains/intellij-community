@@ -114,7 +114,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS));
+    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * getPreferredRowsCount()));
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
@@ -126,6 +126,9 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 
     getEmptyText().setText(UIBundle.message("no.patterns"));
+  }
+  protected int getPreferredRowsCount() {
+    return JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS;
   }
 
   @NotNull
@@ -181,7 +184,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     private final List<com.intellij.ui.classFilter.ClassFilter> myFilters = new LinkedList<>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
-    public static final int INCLUDE_MARK = 2;
 
     public final void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters) {
       myFilters.clear();
@@ -243,9 +245,6 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       if (columnIndex == CHECK_MARK) {
         return filter.isEnabled();
       }
-      if (columnIndex == INCLUDE_MARK) {
-        return filter.isInclude();
-      }
       return null;
     }
 
@@ -258,16 +257,13 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       else if (columnIndex == CHECK_MARK) {
         filter.setEnabled(aValue == null || ((Boolean)aValue).booleanValue());
       }
-      else if (columnIndex == INCLUDE_MARK) {
-        filter.setInclude(aValue == null || ((Boolean)aValue).booleanValue());
-      }
 //      fireTableCellUpdated(rowIndex, columnIndex);
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
 
     @Override
     public Class getColumnClass(int columnIndex) {
-      if (columnIndex == CHECK_MARK || columnIndex == INCLUDE_MARK) {
+      if (columnIndex == CHECK_MARK) {
         return Boolean.class;
       }
       return super.getColumnClass(columnIndex);
@@ -335,9 +331,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         myTable.getSelectionModel().setSelectionInterval(row, row);
         myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
       }
     }
   }
@@ -354,9 +348,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
       myTable.getSelectionModel().setSelectionInterval(row, row);
       myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
     }
   }
 

@@ -1,23 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
@@ -35,18 +28,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes;
+
 public class QuickfixUtil {
   @Nullable
-  public static PsiClass findTargetClass(GrReferenceExpression refExpr, boolean compileStatic) {
+  public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
     if (refExpr.getQualifier() == null) {
       return PsiUtil.getContextClass(refExpr);
     }
 
     PsiType type = PsiImplUtil.getQualifierType(refExpr);
-
-    if (type == null && compileStatic) {
-      return JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, refExpr.getResolveScope());
-    }
 
     if (ResolveUtil.resolvesToClass(refExpr.getQualifierExpression())) {
       PsiType classType = ResolveUtil.unwrapClassType(type);
@@ -123,7 +114,7 @@ public class QuickfixUtil {
 
   public static DynamicElementSettings createSettings(GrReferenceExpression referenceExpression) {
     DynamicElementSettings settings = new DynamicElementSettings();
-    final PsiClass containingClass = findTargetClass(referenceExpression, false);
+    final PsiClass containingClass = findTargetClass(referenceExpression);
 
     assert containingClass != null;
     String className = containingClass.getQualifiedName();
@@ -164,5 +155,20 @@ public class QuickfixUtil {
     settings.setName(label.getName());
 
     return settings;
+  }
+
+  @NotNull
+  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix[] fixes) {
+    InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
+    // dummy problem descriptor, highlight element is only used
+    ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
+      highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY
+    );
+    return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
+  }
+
+  @NotNull
+  public static LocalQuickFix[] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+    return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

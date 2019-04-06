@@ -28,7 +28,9 @@ class Auto {
         {
             Integer i = null;
             int[] ia = new int[0];
-            int i2 = ia[<warning descr="Array index is out of bounds"><warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning></warning>];
+            if (Math.random() > 0.5) {
+              int i2 = ia[<warning descr="Array index is out of bounds"><warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning></warning>];
+            }
         }
         {
             Integer i = null;

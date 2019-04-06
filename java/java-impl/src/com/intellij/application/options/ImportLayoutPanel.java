@@ -381,9 +381,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     TableUtil.editCellAt(table, selectedRow, 0);
     Component editorComp = table.getEditorComponent();
     if (editorComp != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true));
     }
   }
 }

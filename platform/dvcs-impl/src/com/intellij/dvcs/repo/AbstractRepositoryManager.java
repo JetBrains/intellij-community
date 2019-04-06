@@ -60,7 +60,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   /**
-   * @Deprecated to delete in 2017.X
+   * @deprecated to delete in 2017.X
    */
   @Nullable
   @Deprecated

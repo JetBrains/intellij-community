@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
@@ -17,7 +17,6 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
@@ -173,52 +172,48 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return new GrMember[]{this};
   }
 
-  private static final Function<GrMethodBaseImpl, PsiType> ourTypesCalculator = new NullableFunction<GrMethodBaseImpl, PsiType>() {
-    private boolean hasTypeParametersToInfer(PsiClassType classType) {
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) return false;
+  private static boolean hasTypeParametersToInfer(PsiClassType classType) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    PsiClass aClass = resolveResult.getElement();
+    if (aClass == null) return false;
 
-      final Iterable<PsiTypeParameter> iterable = com.intellij.psi.util.PsiUtil.typeParametersIterable(aClass);
-      if (!iterable.iterator().hasNext()) {
-        return false;
-      }
-
-      for (PsiTypeParameter parameter : iterable) {
-        PsiType type = resolveResult.getSubstitutor().substitute(parameter);
-        if (type != null) {
-          if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
-            return false;
-          }
-        }
-      }
-      return true;
+    final Iterable<PsiTypeParameter> iterable = com.intellij.psi.util.PsiUtil.typeParametersIterable(aClass);
+    if (!iterable.iterator().hasNext()) {
+      return false;
     }
 
-    @Override
-    public PsiType fun(GrMethodBaseImpl method) {
-      PsiType nominal = method.getNominalType();
-      if (nominal != null) {
-        if (!(nominal instanceof PsiClassType && hasTypeParametersToInfer((PsiClassType)nominal))) {
-          return nominal;
+    for (PsiTypeParameter parameter : iterable) {
+      PsiType type = resolveResult.getSubstitutor().substitute(parameter);
+      if (type != null) {
+        if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
+          return false;
         }
       }
+    }
+    return true;
+  }
 
-      final GrOpenBlock block = method.getBlock();
-      if (block != null) {
-        PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
-        if (inferred != null) {
-          if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
-            return inferred;
-          }
-        }
-      }
-      if (nominal != null) {
+  private static final Function<GrMethodBaseImpl, PsiType> ourTypesCalculator = method -> {
+    PsiType nominal = method.getNominalType();
+    if (nominal != null) {
+      if (!(nominal instanceof PsiClassType && hasTypeParametersToInfer((PsiClassType)nominal))) {
         return nominal;
       }
-
-      return TypesUtil.getJavaLangObject(method);
     }
+
+    final GrOpenBlock block = method.getBlock();
+    if (block != null) {
+      PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
+      if (inferred != null) {
+        if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
+          return inferred;
+        }
+      }
+    }
+    if (nominal != null) {
+      return nominal;
+    }
+    return TypesUtil.getJavaLangObject(method);
   };
 
   @Override

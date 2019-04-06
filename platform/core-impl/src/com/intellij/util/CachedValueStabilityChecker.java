@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -91,6 +92,8 @@ class CachedValueStabilityChecker {
    * we can neither avoid that nor check equivalence in this case.
    */
   private static boolean seemConcurrentlyCreatedLambdas(Class<?> c1, Class<?> c2) {
+    if (c1 == c2) return false;
+
     String name1 = c1.getName();
     String name2 = c2.getName();
     int index = name1.indexOf("$$Lambda");
@@ -121,6 +124,10 @@ class CachedValueStabilityChecker {
 
       if (areEqual(v1, v2)) continue;
 
+      if (v1 != null && v2 != null && seemConcurrentlyCreatedLambdas(v1.getClass(), v2.getClass())) {
+        continue;
+      }
+
       if (v1 != null && v2 != null && v1.getClass() == v2.getClass() && shouldGoDeeper(v1)) {
         if (!checkFieldEquivalence(v1, v2, key, depth + 1)) {
           return false;
@@ -144,11 +151,11 @@ class CachedValueStabilityChecker {
   }
 
   @NotNull
-  private static String nonEquivalence(Class<?> objectClass, Field field, Object v1, Object v2) {
+  private static String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
     return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
-           "\n  " + v1 + " and" +
-           "\n  " + v2 +
+           "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
+           "\n  " + v2 + (v2 == null ? "" : " (" + v2.getClass().getName() + ")") +
            "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
   }
 

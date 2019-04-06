@@ -617,8 +617,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (constValue != null) return constValue;
       DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
       LongRangeSet range = state != null ? state.getFact(DfaFactType.RANGE) : null;
-      if (range != null && !range.isEmpty() && range.min() == range.max()) {
-        return myFactory.getConstFactory().createFromValue(range.min(), PsiType.LONG);
+      Long constantValue = range == null ? null : range.getConstantValue();
+      if (constantValue != null) {
+        return myFactory.getConstFactory().createFromValue(constantValue, PsiType.LONG);
       }
     }
     return null;
@@ -764,8 +765,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         rightConstraint = leftRange.minus(appliedRange, isLong);
         break;
       case REM:
-        if (rightRange.min() == rightRange.max()) {
-          leftConstraint = LongRangeSet.fromRemainder(rightRange.min(), appliedRange.intersect(result));
+        Long value = rightRange.getConstantValue();
+        if (value != null) {
+          leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
         }
         break;
     }
@@ -955,7 +957,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0 
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? 
+                                       Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0 
@@ -1085,14 +1088,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = getEqClass(value);
     if (eqClass != null) {
       if (!applyRelationRangeToClass(eqClass, appliedRange, RelationType.EQ)) return false;
-      for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
+      for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
         if (pair.isOrdered()) {
           if (pair.getFirst() == eqClass) {
             if (!applyRelationRangeToClass(pair.getSecond(), appliedRange, RelationType.GT)) return false;
           } else if(pair.getSecond() == eqClass) {
             if (!applyRelationRangeToClass(pair.getFirst(), appliedRange, RelationType.LT)) return false;
           }
-        } else if(appliedRange.min() == appliedRange.max()) {
+        } else if(appliedRange.getConstantValue() != null) {
           EqClass other = pair.getFirst() == eqClass ? pair.getSecond() : pair.getSecond() == eqClass ? pair.getFirst() : null;
           if (other != null) {
             if (!applyRelationRangeToClass(other, appliedRange, RelationType.NE)) return false;
@@ -1131,19 +1134,35 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         dfaRight instanceof DfaVariableValue && !TypeConversionUtil.isPrimitiveWrapper(dfaRight.getType())) {
       return true;
     }
+    PsiType leftType = getPsiType(dfaLeft);
+    PsiType rightType = getPsiType(dfaRight);
+    if (TypeConversionUtil.isPrimitiveWrapper(leftType) && 
+        TypeConversionUtil.isPrimitiveWrapper(rightType) && !leftType.equals(rightType)) {
+      // Boxes of different type (e.g. Long and Integer), cannot be equal even if unboxed values are equal
+      return negated;
+    }
 
     DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
     DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
     DfaConstValue leftConst = getConstantValue(unboxedLeft);
     DfaConstValue rightConst = getConstantValue(unboxedRight);
     if (leftConst != null && rightConst != null) {
-      return leftConst.getValue().equals(rightConst.getValue()) != negated;
+      return Objects.equals(leftConst.getValue(), rightConst.getValue()) != negated;
     }
     if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
       // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
       return true;
     }
     return applyRelation(unboxedLeft, unboxedRight, negated);
+  }
+
+  @Nullable
+  private static PsiType getPsiType(@NotNull DfaValue value) {
+    if (value instanceof DfaFactMapValue) {
+      TypeConstraint constraint = ((DfaFactMapValue)value).get(DfaFactType.TYPE_CONSTRAINT);
+      return constraint == null ? null : constraint.getPsiType();
+    }
+    return value.getType();
   }
 
   private boolean checkCompareWithBooleanLiteral(DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
@@ -1363,6 +1382,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+      if (value instanceof DfaVariableValue) {
+        return getDefaultState((DfaVariableValue)value).myFactMap;
+      }
     }
     if (value instanceof DfaBinOpValue) {
       return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
@@ -1489,6 +1511,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = variable.getDependentVariables().isEmpty() ? null : getEqClass(variable);
     DfaVariableValue newCanonical =
       eqClass == null ? null : StreamEx.of(eqClass.getVariables(false)).without(variable).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)
+        .filter(candidate -> !candidate.dependsOn(variable))
         .orElse(null);
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, variable, newCanonical));
 
@@ -1530,7 +1553,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void removeEquivalence(DfaValue var) {
     int varID = var.getID();
     Integer varClassIndex = myIdToEqClassesIndices.get(varID);
-    if (varClassIndex == null) return;
+    if (varClassIndex == null) {
+      var = canonicalize(var);
+      varID = var.getID();
+      varClassIndex = myIdToEqClassesIndices.get(varID);
+      if (varClassIndex == null) return;
+    }
 
     EqClass varClass = myEqClasses.get(varClassIndex);
 
@@ -1563,7 +1591,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
       if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical && 
-          (ControlFlowAnalyzer.isTempVariable(previousCanonical) || newCanonical.getDepth() <= previousCanonical.getDepth())) {
+          (ControlFlowAnalyzer.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) || 
+           newCanonical.getDepth() <= previousCanonical.getDepth())) {
         // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
         // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
         boolean successfullyConverted = convertQualifiers(previousCanonical, newCanonical);
@@ -1642,7 +1671,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
+      DfaFactMap result = state.myFactMap.unite(otherState.myFactMap);
+      Nullability nullability = state.getNullability();
+      Nullability otherNullability = otherState.getNullability();
+      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE)) {
+        // When merging nullable with something we cannot warn about nullability violation anymore
+        // because we lose the information about coherent state, thus noise warnings could be produced
+        result = result.with(DfaFactType.NULLABILITY, DfaNullability.FLUSHED);
+      }
+      setVariableState(var, state.withFacts(result));
     }
   }
 

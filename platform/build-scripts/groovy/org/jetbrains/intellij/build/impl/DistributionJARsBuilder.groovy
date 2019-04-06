@@ -117,6 +117,7 @@ class DistributionJARsBuilder {
       }
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
+      withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
@@ -128,7 +129,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
-      if (allProductDependencies.contains("intellij.platform.coverage") && !productLayout.bundledPluginModules.contains("intellij.java.coverage")) {
+      if (allProductDependencies.contains("intellij.platform.coverage")) {
         withModule("intellij.platform.coverage", productLayout.mainJarName)
       }
 
@@ -187,7 +188,7 @@ class DistributionJARsBuilder {
   }
 
   Collection<String> getIncludedProjectArtifacts() {
-    platform.includedArtifacts.keySet() + pluginsToPublish.keySet().collectMany {it.includedArtifacts.keySet()}
+    platform.includedArtifacts.keySet() + getPluginsByModules(buildContext, getEnabledPluginModules()).collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
@@ -519,8 +520,8 @@ class DistributionJARsBuilder {
     }
 
     moduleNames.each {
-      if (containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
-        buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$mainPluginModule' plugin, because they are included into a platform JAR. " +
+      if (it != "intellij.java.guiForms.rt" && containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
+        buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$it' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
                                     "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
       }
     }

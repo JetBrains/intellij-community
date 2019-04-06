@@ -81,6 +81,11 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
 
     @Override
+    protected int getPreferredRowsCount() {
+      return 4;
+    }
+
+    @Override
     protected void addPatternFilter() {
       PackageChooser chooser =
         new PackageChooserDialog(CodeInsightBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
@@ -95,9 +100,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
           int row = myTableModel.getRowCount() - 1;
           myTable.getSelectionModel().setSelectionInterval(row, row);
           myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
         }
       }
     }
@@ -268,7 +271,15 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     panel.add(myClassFilterEditor, bagConstraints);
 
     panel.add(new TitledSeparator(ExecutionBundle.message("exclude.coverage.filters.title")), bagConstraints);
-    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject);
+    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject) {
+      @NotNull
+      @Override
+      protected ClassFilter createFilter(String pattern) {
+        ClassFilter filter = super.createFilter(pattern);
+        filter.setInclude(false);
+        return filter;
+      }
+    };
     panel.add(myExcludeClassFilterEditor, bagConstraints);
 
     bagConstraints.weighty = 0;

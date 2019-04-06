@@ -21,22 +21,22 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.uast.*
 import java.util.*
 
-class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
+class JavaUFile(override val sourcePsi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, UElement {
   override val packageName: String
-    get() = psi.packageName
+    get() = sourcePsi.packageName
 
   override val imports: List<JavaUImportStatement> by lz {
-    psi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
+    sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
 
   override val annotations: List<UAnnotation>
-    get() = psi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
+    get() = sourcePsi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
-  override val classes: List<UClass> by lz { psi.classes.map { JavaUClass.create(it, this) } }
+  override val classes: List<UClass> by lz { sourcePsi.classes.map { JavaUClass.create(it, this) } }
 
   override val allCommentsInFile: ArrayList<UComment> by lz {
     val comments = ArrayList<UComment>(0)
-    psi.accept(object : PsiRecursiveElementWalkingVisitor() {
+    sourcePsi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {
         comments += UComment(comment, this@JavaUFile)
       }
@@ -44,5 +44,8 @@ class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: Uast
     comments
   }
 
-  override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.psi == psi
+  override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.sourcePsi == sourcePsi
+
+  @Suppress("OverridingDeprecatedMember")
+  override val psi get() = sourcePsi
 }

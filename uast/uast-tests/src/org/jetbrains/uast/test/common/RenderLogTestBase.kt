@@ -15,7 +15,6 @@
  */
 package org.jetbrains.uast.test.common
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import junit.framework.TestCase
@@ -60,14 +59,14 @@ interface RenderLogTestBase {
 
         val parent = node.uastParent
         if (parent == null) {
-          Assert.assertTrue("Wrong null-parent of ${node.javaClass} '${node.psi?.text?.lineSequence()?.firstOrNull()}'",
+          Assert.assertTrue("Wrong null-parent of ${node.javaClass} '${node.sourcePsi?.text?.lineSequence()?.firstOrNull()}'",
                             parentStack.empty())
         }
         else {
-          Assert.assertEquals("Wrong parent of ${node.javaClass} '${node.psi?.text?.lineSequence()?.firstOrNull()}'", parentStack.peek(),
+          Assert.assertEquals("Wrong parent of ${node.javaClass} '${node.sourcePsi?.text?.lineSequence()?.firstOrNull()}'", parentStack.peek(),
                               parent)
         }
-        node.psi?.let {
+        node.sourcePsi?.let {
           if (it !in parentMap) {
             parentMap[it] = parentStack.reversed().joinToString { it.asLogString() }
           }
@@ -83,10 +82,9 @@ interface RenderLogTestBase {
     })
 
 
-    file.psi.accept(object : PsiRecursiveElementVisitor() {
+    file.sourcePsi.accept(object : PsiRecursiveElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val uElement = ServiceManager.getService(element.project, UastContext::class.java)
-          .convertElementWithParent(element, null)
+        val uElement = element.toUElement()
         val expectedParents = parentMap[element]
         if (expectedParents != null) {
           TestCase.assertNotNull("Expected to be able to convert PSI element $element", uElement)
@@ -105,7 +103,7 @@ interface RenderLogTestBase {
     accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
         if (node is PsiElement) {
-          val uElement = node.psi.toUElement()!!
+          val uElement = node.sourcePsi.toUElement()!!
           TestCase.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
                                 this@checkContainingFileForAllElements,
                                 uElement.getContainingUFile())
@@ -117,7 +115,7 @@ interface RenderLogTestBase {
                                 node.sourcePsiElement!!.containingFile!!, uastAnchor.sourcePsi?.containingFile)
         }
 
-        val anchorPsi = uastAnchor?.psi
+        val anchorPsi = uastAnchor?.sourcePsi
         if (anchorPsi != null) {
           TestCase.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
         }

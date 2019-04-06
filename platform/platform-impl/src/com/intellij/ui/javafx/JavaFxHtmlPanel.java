@@ -2,10 +2,14 @@
 package com.intellij.ui.javafx;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.webkit.Accessor;
 import com.sun.webkit.WebPage;
@@ -20,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +34,7 @@ public class JavaFxHtmlPanel implements Disposable {
   @NotNull
   private final List<Runnable> myInitActions = new ArrayList<>();
   @Nullable
-  private JFXPanel myPanel;
+  protected JFXPanel myPanel;
   @Nullable protected WebView myWebView;
   private Color background;
 
@@ -72,6 +76,9 @@ public class JavaFxHtmlPanel implements Disposable {
         myPanelWrapper.repaint();
       }));
     })));
+
+    LafManager.getInstance().addLafManagerListener(new JavaFXLafManagerListener());
+    runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
   }
 
   @NotNull
@@ -132,12 +139,37 @@ public class JavaFxHtmlPanel implements Disposable {
     });
   }
 
-  @Override
-  public void dispose() {
+  @Nullable
+  protected URL getStyle(boolean isDarcula) {
+    return null;
   }
 
-  public void addKeyListener(KeyListener l) {
-    runInPlatformWhenAvailable(() -> myPanel.addKeyListener(l));
+  private class JavaFXLafManagerListener implements LafManagerListener {
+    @Override
+    public void lookAndFeelChanged(@NotNull LafManager manager) {
+      updateLaf(manager.getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo);
+    }
+  }
+
+  private void updateLaf(boolean isDarcula) {
+    URL styleUrl = getStyle(isDarcula);
+    if (styleUrl == null) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeLater(
+      () -> runInPlatformWhenAvailable(
+        () -> {
+          final WebView webView = getWebViewGuaranteed();
+          webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
+        }
+      ));
+  }
+
+  @Override
+  public void dispose() {
+    runInPlatformWhenAvailable(
+      () -> getWebViewGuaranteed().getEngine().load(null)
+    );
   }
 
 

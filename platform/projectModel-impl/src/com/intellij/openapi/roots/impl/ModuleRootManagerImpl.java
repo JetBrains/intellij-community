@@ -154,6 +154,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   void commitModel(RootModelImpl rootModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
+    LOG.assertTrue(!myIsDisposed);
 
     boolean changed = rootModel.isChanged();
 

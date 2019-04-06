@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public abstract class ValueListPropertyAccessor<T> extends CodeStylePropertyAccessor<T, List<String>> {
+public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccessor<T, List<String>> {
   public ValueListPropertyAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
@@ -28,7 +28,7 @@ public abstract class ValueListPropertyAccessor<T> extends CodeStylePropertyAcce
   }
 
   @NotNull
-  protected static List<String> getValueList(@NotNull String string) {
+  public static List<String> getValueList(@NotNull String string) {
     return ContainerUtil.map(string.split(","), s -> s.trim());
   }
 }

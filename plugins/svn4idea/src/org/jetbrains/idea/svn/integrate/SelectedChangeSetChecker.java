@@ -1,33 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.addAll;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
-  private final List<Change> mySelectedChanges;
-
-  public SelectedChangeSetChecker() {
-    super();
-    mySelectedChanges = new ArrayList<>();
-  }
+  @NotNull private final Set<Change> mySelectedChanges = newHashSet();
 
   private void fillChanges(final AnActionEvent event) {
     mySelectedChanges.clear();
 
     final Change[] changes = event.getData(VcsDataKeys.CHANGES);
     if (changes != null) {
-      // bugfix: event.getData(VcsDataKeys.CHANGES) return list with duplicates.
-      // so the check is added here
-      for (Change change : changes) {
-        if (!mySelectedChanges.contains(change)) {
-          mySelectedChanges.add(change);
-        }
-      }
+      addAll(mySelectedChanges, changes);
     }
   }
 
@@ -42,7 +35,8 @@ public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
     return super.isValid() && (myChangeListsList.size() == 1) && (!mySelectedChanges.isEmpty());
   }
 
-  public List<Change> getSelectedChanges() {
+  @NotNull
+  public Collection<Change> getSelectedChanges() {
     return mySelectedChanges;
   }
 }

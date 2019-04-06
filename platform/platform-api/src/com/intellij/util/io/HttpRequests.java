@@ -530,7 +530,7 @@ public final class HttpRequests {
 
       if (builder.myThrowStatusCodeException) {
         URLConnection connection = request.myConnection;
-        if (connection.getDoOutput()) {
+        if (connection != null && connection.getDoOutput()) {
           // getResponseCode is not checked on connect, because write must be performed before read
           HttpURLConnection urlConnection = (HttpURLConnection)connection;
           int responseCode = urlConnection.getResponseCode();

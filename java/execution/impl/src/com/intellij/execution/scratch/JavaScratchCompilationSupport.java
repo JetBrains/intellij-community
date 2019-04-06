@@ -51,7 +51,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
   }
 
   @Override
-  public boolean execute(CompileContext context) {
+  public boolean execute(@NotNull CompileContext context) {
     final Project project = context.getProject();
 
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);
@@ -138,8 +138,10 @@ public class JavaScratchCompilationSupport implements CompileTask {
                                                                          : () -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-          cp.add(new File(s));
+        if (module != null || scratchConfig.isBuildProjectOnEmptyModuleList()) {
+          for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+            cp.add(new File(s));
+          }
         }
         for (String s : orderEnumerator.compute().compileOnly().sdkOnly().getPathsList().getPathList()) {
           platformCp.add(new File(s));

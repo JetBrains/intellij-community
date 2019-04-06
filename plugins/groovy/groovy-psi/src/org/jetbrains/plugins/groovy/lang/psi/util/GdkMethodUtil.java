@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.NullableComputable;
@@ -34,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import java.util.List;
@@ -79,7 +77,7 @@ public class GdkMethodUtil {
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
     for (final PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
-      final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(each, null, ClassHint.RESOLVE_KINDS_METHOD) {
+      final PsiScopeProcessor delegate = new DelegatingScopeProcessor(each) {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
           if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {

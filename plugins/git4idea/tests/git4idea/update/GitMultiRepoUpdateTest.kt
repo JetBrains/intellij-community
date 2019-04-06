@@ -117,7 +117,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val result = updateProcess.update(UpdateMethod.MERGE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
-    assertNoNotification()   // the notification is produced by the common code which we don't call
+    assertNoErrorNotification()   // the notification is produced by the common code which we don't call
   }
 
   fun `test notify error if all repos are in detached HEAD`() {

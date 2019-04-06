@@ -12,8 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
 import com.intellij.xdebugger.XDebugProcess;
@@ -45,16 +44,25 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
       SourcePosition position = debuggerContext.getSourcePosition();
       if (position != null && session != null) {
         PsiElement element = position.getElementAt();
-        PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-        if (block != null) {
-          TextRange textRange = block.getTextRange();
-          Document document = FileDocumentManager.getInstance().getDocument(position.getFile().getVirtualFile());
-          if (document != null) {
-            int startLine = document.getLineNumber(textRange.getStartOffset());
-            int endLine = document.getLineNumber(textRange.getEndOffset());
-            session.sessionResumed();
-            session.stepOver(false, new BlockFilter(startLine, endLine), StepRequest.STEP_LINE);
+        PsiElement block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class, PsiLambdaExpression.class);
+        if (block instanceof PsiCodeBlock) {
+          PsiElement parent = block.getParent();
+          if (parent instanceof PsiMethod || parent instanceof PsiLambdaExpression) {
+            xSession.stepOut();
           }
+          else {
+            TextRange textRange = block.getTextRange();
+            Document document = FileDocumentManager.getInstance().getDocument(position.getFile().getVirtualFile());
+            if (document != null) {
+              int startLine = document.getLineNumber(textRange.getStartOffset());
+              int endLine = document.getLineNumber(textRange.getEndOffset());
+              session.sessionResumed();
+              session.stepOver(false, new BlockFilter(startLine, endLine), StepRequest.STEP_LINE);
+            }
+          }
+        }
+        else {
+          xSession.stepOut();
         }
       }
     }

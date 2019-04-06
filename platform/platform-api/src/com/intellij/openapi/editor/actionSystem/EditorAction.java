@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.*;
@@ -53,8 +53,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
       for (int i = extensions.size() - 1; i >= 0; i--) {
         final EditorActionHandlerBean handlerBean = extensions.get(i);
         if (handlerBean.action.equals(id)) {
-          myHandler = handlerBean.getHandler(myHandler);
-          myHandler.setWorksInInjected(isInInjectedContext());
+          EditorActionHandler handler = handlerBean.getHandler(myHandler);
+          if (handler != null) {
+            myHandler = handler;
+            myHandler.setWorksInInjected(isInInjectedContext());
+          }
         }
       }
     }
@@ -124,7 +127,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     if (isInInjectedContext()) {
-      Editor editor = CommonDataKeys.HOST_EDITOR.getData(e.getDataContext());
+      Editor editor = e.getData(CommonDataKeys.HOST_EDITOR);
       if (editor != null) {
         for (Caret caret : editor.getCaretModel().getAllCarets()) {
           if (EditorActionHandler.ensureInjectionUpToDate(caret)) {

@@ -11,6 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -775,11 +776,13 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityPanel.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
                                                  JBUI.insets(10, 0), 0, 0));
-        final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(severityLevelChooser.getTemplatePresentation());
+        final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
+          severityLevelChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(severityLevelChooserComponent,
                           new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  JBUI.insets(10, 0), 0, 0));
-        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(scopesChooser.getTemplatePresentation());
+        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
+          scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(scopesChooserComponent,
                           new GridBagConstraints(2, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                                  JBUI.insets(10, 0), 0, 0));
@@ -917,12 +920,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myDisposable = null;
   }
 
-  private JPanel createInspectionProfileSettingsPanel() {
-
-    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
-    myBrowser.setEditable(false);
-    myBrowser.setBorder(JBUI.Borders.empty(5));
-    myBrowser.addHyperlinkListener(new HyperlinkAdapter() {
+  public static HyperlinkAdapter createSettingsHyperlinkListener(Project project){
+    return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         String description = e.getDescription();
@@ -930,9 +929,11 @@ public class SingleInspectionProfilePanel extends JPanel {
           DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
           if (context != null) {
             Settings settings = Settings.KEY.getData(context);
+            String configId = description.substring(SETTINGS.length());
             if (settings != null) {
-              String configId = description.substring(SETTINGS.length());
               settings.select(settings.find(configId));
+            } else {
+              ShowSettingsUtilImpl.showSettingsDialog(project, configId, "");
             }
           }
         }
@@ -940,7 +941,15 @@ public class SingleInspectionProfilePanel extends JPanel {
           BrowserUtil.browse(description);
         }
       }
-    });
+    };
+  }
+
+  private JPanel createInspectionProfileSettingsPanel() {
+
+    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
+    myBrowser.setEditable(false);
+    myBrowser.setBorder(JBUI.Borders.empty(5));
+    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(myProjectProfileManager.getProject()));
 
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);

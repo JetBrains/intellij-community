@@ -153,7 +153,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     add(myLastComponent = indicator.getComponent());
     doLayout();
 
-    myPluginModel.addProgress(myPlugin, indicator);
+    MyPluginModel.addProgress(myPlugin, indicator);
 
     if (repaint) {
       fullRepaint();
@@ -194,7 +194,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void setListeners(@NotNull LinkListener<IdeaPluginDescriptor> listener,
+  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
@@ -240,7 +240,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
   @Override
   public void close() {
     if (myIndicator != null) {
-      myPluginModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(myPlugin, myIndicator);
       myIndicator = null;
     }
     myPluginModel.removeComponent(this);

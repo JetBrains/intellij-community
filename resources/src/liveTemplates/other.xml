@@ -45,9 +45,14 @@
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
             name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
-      <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
-      <option name="GROOVY" value="false" />
+      <option name="GROOVY_DECLARATION" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
+            name="main" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
+    <context>
+      <option name="JAVA_DECLARATION" value="true" />
       <option name="GROOVY_DECLARATION" value="true" />
     </context>
   </template>

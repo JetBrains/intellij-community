@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -29,7 +30,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +170,9 @@ public final class PsiUtil extends PsiUtilCore {
   private static void addException(@NotNull PsiMethod method,
                                    @Nullable PsiClass exceptionClass,
                                    @Nullable String exceptionName) throws IncorrectOperationException {
-    assert exceptionClass != null || exceptionName != null : "One of exceptionName, exceptionClass must be not null";
+    if (exceptionClass == null && exceptionName == null) {
+      throw new IllegalArgumentException("One of exceptionName, exceptionClass must be not null");
+    }
     PsiReferenceList throwsList = method.getThrowsList();
     PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
     boolean replaced = false;
@@ -372,8 +374,8 @@ public final class PsiUtil extends PsiUtilCore {
     return Collections.emptyList();
   }
 
-  private static void collectSwitchResultExpressions(List<PsiExpression> result, PsiElement container) {
-    ArrayList<PsiBreakStatement> breaks = new ArrayList<>();
+  private static void collectSwitchResultExpressions(@NotNull List<? super PsiExpression> result, @NotNull PsiElement container) {
+    List<PsiBreakStatement> breaks = new ArrayList<>();
     addStatements(breaks, container, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
     for (PsiBreakStatement aBreak : breaks) {
       ContainerUtil.addIfNotNull(result, aBreak.getExpression());
@@ -403,7 +405,9 @@ public final class PsiUtil extends PsiUtilCore {
   @PsiModifier.ModifierConstant
   @NotNull
   public static String getAccessModifier(@AccessLevel int accessLevel) {
-    assert accessLevel > 0 && accessLevel <= accessModifiers.length : accessLevel;
+    if (accessLevel <= 0 || accessLevel > accessModifiers.length) {
+      throw new IllegalArgumentException("Unknown level:" + accessLevel);
+    }
     @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
     final String modifier =  accessModifiers[accessLevel - 1];
     return modifier;
@@ -562,12 +566,12 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
-                                          @NotNull final PsiSubstitutor substitutorForMethod,
-                                          @NotNull final PsiType[] args,
-                                          @NotNull final LanguageLevel languageLevel,
-                                          final boolean allowUncheckedConversion,
-                                          final boolean checkVarargs) {
+  private static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                           @NotNull final PsiSubstitutor substitutorForMethod,
+                                           @NotNull final PsiType[] args,
+                                           @NotNull final LanguageLevel languageLevel,
+                                           final boolean allowUncheckedConversion,
+                                           final boolean checkVarargs) {
     return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel,
                                  allowUncheckedConversion, checkVarargs, ApplicabilityChecker.ASSIGNABILITY_CHECKER);
   }
@@ -668,9 +672,9 @@ public final class PsiUtil extends PsiUtilCore {
    * {@code class Foo<T extends Number>{}} types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
-  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,
+  public static boolean equalOnEquivalentClasses(@NotNull PsiClassType thisClassType,
                                                  @NotNull PsiClass aClass,
-                                                 PsiClassType otherClassType,
+                                                 @NotNull PsiClassType otherClassType,
                                                  @NotNull PsiClass bClass) {
     final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
                                   ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
@@ -1080,7 +1084,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    PsiResolveHelper instance = PsiResolveHelper.SERVICE.getInstance(element.getProject());
+    PsiResolveHelper instance = ServiceManager.getService(element.getProject(), PsiResolveHelper.class);
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
@@ -1101,32 +1105,22 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected) {
-    return hasDefaultConstructor(clazz, allowProtected, true);
+    return hasDefaultConstructor(clazz, allowProtected, false);
   }
 
-  public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected, boolean checkModifiers) {
-    return hasDefaultCtrInHierarchy(clazz, allowProtected, checkModifiers, null);
-  }
-
-  private static boolean hasDefaultCtrInHierarchy(@NotNull PsiClass clazz, boolean allowProtected, boolean checkModifiers, @Nullable Set<PsiClass> visited) {
+  public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected, boolean allowPrivateAndPackagePrivate) {
     final PsiMethod[] constructors = clazz.getConstructors();
-    if (constructors.length > 0) {
-      for (PsiMethod cls: constructors) {
-        if ((!checkModifiers || cls.hasModifierProperty(PsiModifier.PUBLIC) ||
-             allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
-            cls.getParameterList().isEmpty()) {
-          return true;
-        }
-      }
+    if (constructors.length == 0) {
+      return true;
     }
-    else {
-      final PsiClass superClass = clazz.getSuperClass();
-      if (superClass == null) {
+
+    for (PsiMethod cls: constructors) {
+      if ((cls.hasModifierProperty(PsiModifier.PUBLIC)
+           || allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)
+           || allowPrivateAndPackagePrivate && !cls.hasModifierProperty(PsiModifier.PROTECTED))
+          && cls.getParameterList().isEmpty()) {
         return true;
       }
-      if (visited == null) visited = new THashSet<>();
-      if (!visited.add(clazz)) return false;
-      return hasDefaultCtrInHierarchy(superClass, true, true, visited);
     }
     return false;
   }
@@ -1347,14 +1341,17 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
-    ArrayList<PsiReturnStatement> vector = new ArrayList<>();
+    List<PsiReturnStatement> vector = new ArrayList<>();
     if (body != null) {
       addStatements(vector, body, PsiReturnStatement.class, statement -> false);
     }
     return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
-  private static <T extends PsiElement> void addStatements(List<? super T> vector, PsiElement element, Class<? extends T> clazz, Predicate<? super PsiElement> stopAt) {
+  private static <T extends PsiElement> void addStatements(@NotNull List<? super T> vector,
+                                                           @NotNull PsiElement element,
+                                                           @NotNull Class<? extends T> clazz,
+                                                           @NotNull Predicate<? super PsiElement> stopAt) {
     if (PsiTreeUtil.instanceOf(element, clazz)) {
       //noinspection unchecked
       vector.add((T)element);

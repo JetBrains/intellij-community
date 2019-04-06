@@ -1,4 +1,4 @@
-// "Split values of 'switch' rule" "false"
+// "Split values of 'switch' branch" "false"
 class C {
     void foo(int n) {
         String s = "";

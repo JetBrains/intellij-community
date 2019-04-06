@@ -40,19 +40,22 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
       if (c.isEnabled() && op != null) {
         paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
-      } else {
+      }
+      else {
         if (isFocused(c)) {
           paintFocusBorder(g2, r.width, r.height, arc, true);
         }
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        arc = arc > lw ? arc - lw : 0.0f;
         border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
         g2.setColor(getOutlineColor(c.isEnabled(), isFocused(c)));
         g2.fill(border);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

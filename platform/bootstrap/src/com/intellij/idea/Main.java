@@ -4,6 +4,7 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,7 +75,7 @@ public class Main {
     return isCommandLine;
   }
 
-  public static void setFlags(String[] args) {
+  public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
     if (isHeadless()) {
@@ -82,7 +83,7 @@ public class Main {
     }
   }
 
-  public static boolean isHeadless(String[] args) {
+  public static boolean isHeadless(@NotNull String[] args) {
     if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }

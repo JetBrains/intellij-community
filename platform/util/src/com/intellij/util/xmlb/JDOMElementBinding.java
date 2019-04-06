@@ -35,7 +35,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
       return targetElement;
     }
     if (value instanceof Element[]) {
-      ArrayList<Element> result = new ArrayList<Element>();
+      ArrayList<Element> result = new ArrayList<>();
       for (Element element : ((Element[])value)) {
         result.add(element.clone().setName(myTagName));
       }

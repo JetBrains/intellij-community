@@ -17,27 +17,30 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 class JavaUClassInitializer(
-  psi: PsiClassInitializer,
+  override val sourcePsi: PsiClassInitializer,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by psi {
-  override val psi: PsiClassInitializer
-    get() = javaPsi
+) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by sourcePsi {
 
-  override val javaPsi: PsiClassInitializer = unwrap<UClassInitializer, PsiClassInitializer>(psi)
+  @Suppress("OverridingDeprecatedMember")
+  override val psi get() = sourcePsi
+
+  override val javaPsi: PsiClassInitializer = sourcePsi
 
   override val uastAnchor: UIdentifier?
     get() = null
 
   override val uastBody: UExpression by lz {
-    getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
+    getLanguagePlugin().convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
-  override val annotations: List<JavaUAnnotation> by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+  override val annotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override fun equals(other: Any?): Boolean = this === other
-  override fun hashCode(): Int = psi.hashCode()
+  override fun hashCode(): Int = sourcePsi.hashCode()
+  override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }

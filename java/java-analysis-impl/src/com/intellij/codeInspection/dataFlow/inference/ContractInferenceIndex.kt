@@ -23,7 +23,7 @@ import kotlin.collections.HashMap
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 10, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 11, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -114,9 +114,10 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
                LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
     val statements = ContractInferenceInterpreter.getStatements(body, tree)
 
-    val contracts = ContractInferenceInterpreter(tree, method, body).inferContracts(statements)
+    val contractInference = ContractInferenceInterpreter(tree, method, body)
+    val contracts = contractInference.inferContracts(statements)
 
-    val nullityVisitor = MethodReturnInferenceVisitor(tree, body)
+    val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.getParameters(), body)
     val purityVisitor = PurityInferenceVisitor(tree, body, fieldMap, ctor)
     for (statement in statements) {
       walkMethodBody(statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }

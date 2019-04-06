@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptionDescriptorProvider {
 
@@ -35,24 +35,24 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     List<EditorConfigOptionDescriptor> descriptors = ContainerUtil.newArrayList();
     List<AbstractCodeStylePropertyMapper> mappers = ContainerUtil.newArrayList();
     CodeStylePropertiesUtil.collectMappers(CodeStyle.getDefaultSettings(), mapper -> mappers.add(mapper));
-    Map<String, EditorConfigDescriptor> propertyMap = ContainerUtil.newHashMap();
     for (AbstractCodeStylePropertyMapper mapper : mappers) {
       for (String property : mapper.enumProperties()) {
+        if (IntellijPropertyKindMap.getPropertyKind(property) == EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD) {
+          // Descriptions for standard properties are added separately
+          continue;
+        }
         List<String> ecNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, property);
-        final EditorConfigDescriptor descriptor = createValueDescriptor(property, mapper);
-        if (descriptor != null) {
+        final EditorConfigDescriptor valueDescriptor = createValueDescriptor(property, mapper);
+        if (valueDescriptor != null) {
           for (String ecName : ecNames) {
-            propertyMap.put(ecName, descriptor);
+            EditorConfigOptionDescriptor descriptor = new EditorConfigOptionDescriptor(
+              new EditorConfigConstantDescriptor(ecName, mapper.getPropertyDescription(property), null),
+              valueDescriptor,
+              null, null);
+            descriptors.add(descriptor);
           }
         }
       }
-    }
-    for (String property: propertyMap.keySet()) {
-      EditorConfigOptionDescriptor descriptor = new EditorConfigOptionDescriptor(
-        new EditorConfigConstantDescriptor(property, null, null),
-        propertyMap.get(property),
-        null, null);
-      descriptors.add(descriptor);
     }
     return descriptors;
   }
@@ -63,16 +63,30 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     if (accessor instanceof CodeStyleChoiceList) {
       return new EditorConfigUnionDescriptor(choicesToDescriptorList((CodeStyleChoiceList)accessor), null, null);
     }
+    else if (isFormatterOnOffTag(accessor)) {
+      return new EditorConfigPairDescriptor(
+        new EditorConfigStringDescriptor(null, null, ".*"),
+        new EditorConfigStringDescriptor(null, null, ".*"),
+        null, null);
+    }
     else if (accessor instanceof IntegerAccessor) {
       return new EditorConfigNumberDescriptor(null,  null);
     }
     else if (accessor instanceof ValueListPropertyAccessor) {
-      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null)), null,  null);
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null, null)), null,  null);
     }
     else if (accessor instanceof ExternalStringAccessor) {
-      return new EditorConfigStringDescriptor(null, null);
+      return new EditorConfigStringDescriptor(null, null, null);
+    }
+    else if (accessor instanceof VisualGuidesAccessor) {
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigNumberDescriptor(null, null)), null,  null);
     }
     return null;
+  }
+
+  private static boolean isFormatterOnOffTag(@NotNull CodeStylePropertyAccessor accessor) {
+    String name = accessor.getPropertyName();
+    return "formatter_on_tag".equals(name) || "formatter_off_tag".equals(name);
   }
 
   private static List<EditorConfigDescriptor> choicesToDescriptorList(@NotNull CodeStyleChoiceList list) {

@@ -9,19 +9,19 @@ public class GithubPullRequestMergeRequest {
   @NotNull private final String commitTitle;
   @NotNull private final String commitMessage;
   @NotNull private final String sha;
-  @NotNull private final GithubPullRequestMergeMethod method;
+  @NotNull private final GithubPullRequestMergeMethod mergeMethod;
 
   public GithubPullRequestMergeRequest(@NotNull String commitTitle,
                                        @NotNull String commitMessage,
                                        @NotNull String sha,
-                                       @NotNull GithubPullRequestMergeMethod method) {
-    if (method != GithubPullRequestMergeMethod.merge && method != GithubPullRequestMergeMethod.squash) {
+                                       @NotNull GithubPullRequestMergeMethod mergeMethod) {
+    if (mergeMethod != GithubPullRequestMergeMethod.merge && mergeMethod != GithubPullRequestMergeMethod.squash) {
       throw new IllegalArgumentException("Invalid merge method");
     }
 
     this.commitTitle = commitTitle;
     this.commitMessage = commitMessage;
     this.sha = sha;
-    this.method = method;
+    this.mergeMethod = mergeMethod;
   }
 }

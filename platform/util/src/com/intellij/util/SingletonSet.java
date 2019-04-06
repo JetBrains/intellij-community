@@ -19,7 +19,6 @@ import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class SingletonSet<E> implements Set<E> {
   @NotNull
   @Override
   public Iterator<E> iterator() {
-    return new SingletonIterator<E>(theElement);
+    return new SingletonIterator<>(theElement);
   }
 
   @NotNull
@@ -61,8 +60,7 @@ public class SingletonSet<E> implements Set<E> {
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
     if (a.length == 0) {
-      //noinspection unchecked
-      a = (T[]) Array.newInstance(a.getClass().getComponentType(), 1);
+      a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
     }
     //noinspection unchecked
     a[0] = (T)theElement;
@@ -125,7 +123,7 @@ public class SingletonSet<E> implements Set<E> {
 
   @NotNull
   public static <T> Set<T> withCustomStrategy(T o, @NotNull TObjectHashingStrategy<T> strategy) {
-    return new CustomStrategySingletonSet<T>(o, strategy);
+    return new CustomStrategySingletonSet<>(o, strategy);
   }
 
   private static class CustomStrategySingletonSet<E> extends SingletonSet<E> {

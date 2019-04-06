@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
@@ -183,40 +183,6 @@ public class DateFormatUtil {
     }
 
     return formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time);
-  }
-
-  @NotNull
-  public static String formatDuration(long delta) {
-    StringBuilder buf = new StringBuilder();
-    for (int i = 0; i < DENOMINATORS.length; i++) {
-      long denominator = DENOMINATORS[i];
-      int n = (int)(delta / denominator);
-      if (n != 0) {
-        buf.append(composeDurationMessage(PERIODS[i], n));
-        buf.append(' ');
-        delta = delta % denominator;
-      }
-    }
-
-    if (buf.length() == 0) return CommonBundle.message("date.format.less.than.a.minute");
-    return buf.toString().trim();
-  }
-
-  private static String composeDurationMessage(final Period period, final int n) {
-    switch (period) {
-      case DAY:
-        return CommonBundle.message("date.format.n.days", n);
-      case MINUTE:
-        return CommonBundle.message("date.format.n.minutes", n);
-      case HOUR:
-        return CommonBundle.message("date.format.n.hours", n);
-      case MONTH:
-        return CommonBundle.message("date.format.n.months", n);
-      case WEEK:
-        return CommonBundle.message("date.format.n.weeks", n);
-      default:
-        return CommonBundle.message("date.format.n.years", n);
-    }
   }
 
   @NotNull

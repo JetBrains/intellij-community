@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint.PicoContainerAwareInterfaceExtensionPoint;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -14,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.Collection;
@@ -28,7 +33,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
-  private final AreaPicoContainer myPicoContainer;
+  private final MutablePicoContainer myPicoContainer;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart(); // guarded by myAvailabilityListeners
@@ -40,11 +45,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     myAreaInstance = areaInstance;
     myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
     initialize();
-  }
-
-  @Nullable
-  AreaInstance getAreaInstance() {
-    return myAreaInstance;
   }
 
   @TestOnly
@@ -64,7 +64,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           //if listeners are "detached" for any EP we have to transfer them to the new area (otherwise it will affect area searching)
           for (ExtensionPointAvailabilityListener listener : entry.getValue()) {
             if (!newArea.hasAvailabilityListener(key, listener)) {
-              newArea.addAvailabilityListener(key, listener);
+              newArea.addAvailabilityListener(key, listener, null);
               wasAdded = true;
             }
           }
@@ -84,7 +84,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  public AreaPicoContainer getPicoContainer() {
+  public MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 
@@ -95,33 +95,49 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement) {
-    assert pluginDescriptor.getPluginId() != null;
-    final String pluginId = pluginDescriptor.getPluginId().getIdString();
     String pointName = extensionPointElement.getAttributeValue("qualifiedName");
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
       if (name == null) {
-        throw new RuntimeException("'name' attribute not specified for extension point in '" + pluginId + "' plugin");
+        throw new RuntimeException("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin");
       }
-      pointName = pluginId + '.' + name;
+      assert pluginDescriptor.getPluginId() != null;
+      pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
     }
 
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
     String interfaceClassName = extensionPointElement.getAttributeValue("interface");
     if (beanClassName == null && interfaceClassName == null) {
-      throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginId + "' plugin");
+      throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
     }
 
     if (beanClassName != null && interfaceClassName != null) {
-      throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginId + "' plugin");
+      throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + pluginDescriptor + "' plugin");
     }
 
     ExtensionPointImpl<Object> point;
     if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, this, pluginDescriptor);
+      point = new BeanExtensionPoint<>(pointName, beanClassName, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, this, pluginDescriptor);
+      boolean registerInPicoContainer;
+      String registerInPicoContainerValue = extensionPointElement.getAttributeValue("registerInPicoContainer");
+      if (registerInPicoContainerValue == null) {
+        String pluginId = pluginDescriptor.getPluginId().getIdString();
+        // https://github.com/mplushnikov/lombok-intellij-plugin/blob/master/src/main/resources/META-INF/plugin.xml (processor)
+        //noinspection SpellCheckingInspection
+        registerInPicoContainer = SystemProperties.getBooleanProperty("idea.register.ep.in.pico.container", !pluginId.equals("com.intellij")) || pluginId.equals("Lombook Plugin");
+      }
+      else {
+        registerInPicoContainer = Boolean.parseBoolean(registerInPicoContainerValue);
+      }
+
+      if (registerInPicoContainer) {
+        point = new PicoContainerAwareInterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      }
+      else {
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, myPicoContainer, pluginDescriptor);
+      }
     }
     registerExtensionPoint(point);
   }
@@ -135,7 +151,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   // Used in Upsource
   @Override
   public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
-    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor);
+    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myPicoContainer);
+  }
+
+  // don't want to expose clearCache directly
+  public void extensionsRegistered(@NotNull ExtensionPointImpl[] points) {
+    for (ExtensionPointImpl point : points) {
+      point.clearCache();
+    }
   }
 
   @NotNull
@@ -155,7 +178,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private void initialize() {
     InterfaceExtensionPoint<EPAvailabilityListenerExtension> point =
-      new InterfaceExtensionPoint<>(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class, this);
+      new InterfaceExtensionPoint<>(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class, myPicoContainer);
     registerExtensionPoint(point);
     point.addExtensionPointListener(new ExtensionPointListener<EPAvailabilityListenerExtension>() {
       @Override
@@ -185,9 +208,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           throw new RuntimeException(e);
         }
 
-        addAvailabilityListener(epName, listener);
+        addAvailabilityListener(epName, listener, null);
       }
-    });
+    }, false, null);
   }
 
   @NotNull
@@ -198,13 +221,22 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+  public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener, @Nullable Disposable parentDisposable) {
     synchronized (myAvailabilityListeners) {
       myAvailabilityListeners.putValue(extensionPointName, listener);
     }
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
     if (ep != null) {
       listener.extensionPointRegistered(ep);
+    }
+
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          removeAvailabilityListener(extensionPointName, listener);
+        }
+      });
     }
   }
 
@@ -221,14 +253,35 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public void registerExtensionPoint(@NotNull @NonNls String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
+  public void registerExtensionPoint(@NotNull @NonNls String extensionPointName,
+                                     @NotNull String extensionPointBeanClass,
+                                     @NotNull ExtensionPoint.Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
+  }
+
+  @Override
+  public void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
+                                     @NotNull String extensionPointBeanClass,
+                                     @NotNull ExtensionPoint.Kind kind,
+                                     @NotNull Disposable parentDisposable) {
+    String extensionPointName = extensionPoint.getName();
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterExtensionPoint(extensionPointName);
+      }
+    });
+  }
+
+  void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
     PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
     ExtensionPointImpl<Object> point;
     if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, this, pluginDescriptor);
+      point = new PicoContainerAwareInterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, this, pluginDescriptor);
+      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myPicoContainer, pluginDescriptor);
     }
     registerExtensionPoint(point);
   }
@@ -291,8 +344,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  public ExtensionPoint[] getExtensionPoints() {
-    return myExtensionPoints.values().toArray(new ExtensionPoint[0]);
+  public ExtensionPointImpl[] getExtensionPoints() {
+    return myExtensionPoints.values().toArray(new ExtensionPointImpl[0]);
   }
 
   @Override

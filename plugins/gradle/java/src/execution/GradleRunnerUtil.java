@@ -62,7 +62,7 @@ public class GradleRunnerUtil {
   public static Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
-      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement())) return methodLocation;
+      if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement(), false)) return methodLocation;
     }
     return null;
   }
@@ -151,10 +151,9 @@ public class GradleRunnerUtil {
       }
       GradleExtensionsSettings.GradleExtensionsData extensionsData = GradleExtensionsSettings.getInstance(project).getExtensionsFor(module);
       if (extensionsData != null) {
-        for (GradleExtensionsSettings.GradleTask task : extensionsData.tasks) {
-          if (taskNameCandidate.equals(task.name)) {
-            return Collections.singletonList(taskNameCandidate);
-          }
+        GradleExtensionsSettings.GradleTask gradleTask = extensionsData.tasksMap.get(taskNameCandidate);
+        if (gradleTask != null) {
+          return Collections.singletonList(taskNameCandidate);
         }
       }
     }

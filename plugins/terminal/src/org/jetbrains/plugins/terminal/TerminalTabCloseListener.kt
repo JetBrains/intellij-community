@@ -5,8 +5,13 @@ import com.intellij.execution.TerminateRemoteProcessDialog
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
 import com.intellij.execution.ui.RunContentManagerImpl
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
+import com.intellij.util.ObjectUtils
+import com.jediterm.terminal.ProcessTtyConnector
+import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 
 class TerminalTabCloseListener(val content: Content,
                                val project: Project) : BaseContentCloseListener(content, project) {
@@ -21,6 +26,15 @@ class TerminalTabCloseListener(val content: Content,
     if (widget == null || !widget.isSessionRunning) {
       return true
     }
+    val connector = widget.ttyConnector as? ProcessTtyConnector
+    try {
+      if (connector != null && !TerminalUtil.hasRunningCommands(connector)) {
+        return true
+      }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
     val proxy = NopProcessHandler().apply { startNotify() }
     // don't show 'disconnect' button
     proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
@@ -32,3 +46,5 @@ class TerminalTabCloseListener(val content: Content,
     return project === this.project && closeQuery(this.content, true)
   }
 }
+
+private val LOG = logger<TerminalTabCloseListener>()

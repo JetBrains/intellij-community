@@ -189,7 +189,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
     }
 
-    if (!isTooltipDefined(comp, me)) return;
+    if (!isTooltipDefined(comp, me)) {
+      hideCurrent(null);
+      return;
+    }
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
@@ -568,9 +571,6 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
-        if (!isShowing() && layeredPane != null) {
-          AppUIUtil.targetToDevice(this, layeredPane);
-        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
@@ -582,6 +582,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
           Dimension size;
           if (lp != null) {
+            AppUIUtil.targetToDevice(this, lp);
             size = lp.getSize();
             prefSizeWasComputed[0] = true;
           }

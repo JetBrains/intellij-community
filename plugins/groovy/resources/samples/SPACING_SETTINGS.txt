@@ -38,6 +38,7 @@ class Foo {
       operation()
     } while (condition)
     def cl = {Math.sin(it)}
+    def lambda = a->b
     print ckl(2)
     assert condition : message
   }

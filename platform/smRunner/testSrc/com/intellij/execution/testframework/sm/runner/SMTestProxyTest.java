@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.containers.ContainerUtil;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
@@ -1098,7 +1099,9 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
                                       @NotNull String path,
                                       @NotNull Project project,
                                       @NotNull GlobalSearchScope scope) {
-      myCalledSearchScopes.add(scope);
+      if (!IdempotenceChecker.isCurrentThreadInsideRandomCheck()) {
+        myCalledSearchScopes.add(scope);
+      }
       if (myLocation.getPsiElement().getText().contains(TEST_LOCATION_TEXT)) {
         return Collections.singletonList(myLocation);
       }

@@ -546,6 +546,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
     ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
     UIUtil.dispatchAllInvocationEvents();
+    disable("waitForAllCommits() called in the tearDown()");
   }
 
   private static final Key<Object> CANCEL_REASON = Key.create("CANCEL_REASON");

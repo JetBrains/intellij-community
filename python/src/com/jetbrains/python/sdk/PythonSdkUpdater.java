@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -122,8 +123,7 @@ public class PythonSdkUpdater implements StartupActivity {
     String sdkHome = sdk.getHomePath();
     if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
-        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
-                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+        PythonSdkType.activateVirtualEnv(sdk); // pre-cache virtualenv activated environment
       });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
@@ -385,10 +385,12 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     final List<VirtualFile> results = Lists.newArrayList();
+    // TODO: Refactor SDK so they can provide exclusions for root paths
+    final VirtualFile condaFolder = PythonSdkType.isConda(sdk) ? PyCondaPackageManagerImpl.getCondaDirectory(sdk) : null;
     for (String path : paths) {
       if (path != null && !FileUtilRt.extensionEquals(path, "egg-info")) {
         final VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(path);
-        if (virtualFile != null) {
+        if (virtualFile != null && !virtualFile.equals(condaFolder)) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
           if (!excludedPaths.contains(rootFile) && !moduleRoots.contains(rootFile)) {
             results.add(rootFile);

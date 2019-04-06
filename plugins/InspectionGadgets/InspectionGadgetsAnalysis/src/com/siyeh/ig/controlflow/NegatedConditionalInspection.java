@@ -29,6 +29,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,7 @@ public class NegatedConditionalInspection extends BaseInspection {
       "negated.conditional.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -111,7 +113,7 @@ public class NegatedConditionalInspection extends BaseInspection {
       assert elseBranch != null;
       assert thenBranch != null;
       final String newStatement = negatedCondition + '?' + tracker.text(elseBranch) + ':' + tracker.text(thenBranch);
-      PsiReplacementUtil.replaceExpression(conditionalExpression, newStatement);
+      PsiReplacementUtil.replaceExpression(conditionalExpression, newStatement, tracker);
     }
   }
 

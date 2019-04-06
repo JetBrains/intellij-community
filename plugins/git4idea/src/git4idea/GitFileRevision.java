@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
@@ -119,12 +119,8 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
 
   @Override
   public synchronized byte[] loadContent() throws VcsException {
-    VirtualFile root = getRoot();
+    VirtualFile root = myRoot != null ? myRoot : GitUtil.getRepositoryForFile(myProject, myPath).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
-  }
-
-  private VirtualFile getRoot() throws VcsException {
-    return myRoot != null ? myRoot : GitUtil.getGitRoot(myPath);
   }
 
   @Override

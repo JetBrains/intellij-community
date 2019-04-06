@@ -37,14 +37,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -377,9 +376,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       if (tracker != null) {
         List<LocalRange> ranges = tracker.getRanges();
         if (ranges != null) {
-          int rangesToCommit = ContainerUtil.count(ranges, it -> {
-            return it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit();
-          });
+          int rangesToCommit = ContainerUtil.count(ranges, it -> it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit());
           if (rangesToCommit != 0 && rangesToCommit != ranges.size()) {
             renderer.append(String.format(spaceAndThinSpace() + "%s of %s changes", rangesToCommit, ranges.size()),
                             SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
@@ -598,13 +595,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       myStateHolder.setChangelistId(changelistId);
     }
 
-    private void invalidateNodeSizes() {
-      TreeUI ui = getUI();
-      if (ui instanceof WideSelectionTreeUI) {
-        ((WideSelectionTreeUI)ui).invalidateNodeSizes();
-      }
-    }
-
     private class MyStateHolder extends PartiallyExcludedFilesStateHolder<Object> {
       MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
         super(project, changelistId);
@@ -619,9 +609,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       @Nullable
       @Override
       protected Object findElementFor(@NotNull PartialLocalLineStatusTracker tracker) {
-        return getTrackableElementsStream().filter(change -> {
-          return tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change));
-        }).findFirst().orElse(null);
+        return getTrackableElementsStream().filter(change -> tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change))).findFirst().orElse(null);
       }
 
       @Nullable
@@ -638,8 +626,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         super.updateExclusionStates();
 
         MyChangesBrowserTreeList.this.notifyInclusionListener();
-        MyChangesBrowserTreeList.this.invalidateNodeSizes();
-        MyChangesBrowserTreeList.this.repaint();
+        TreeUtil.invalidateCacheAndRepaint(MyChangesBrowserTreeList.this.getUI());
       }
     }
   }

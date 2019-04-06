@@ -208,7 +208,7 @@ object GuiTestUtilKt {
   }
 
   /**
-   * waits for 30 sec timeout when functionProbeToNull() not return null
+   * waits for  [timeout] when functionProbeToNull() not return null
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
@@ -279,9 +279,8 @@ object GuiTestUtilKt {
     }
   }
 
-  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean = ignoreComponentLookupException {
-    robot.findComponent(null, componentClass) { it.isShowing }
-  } != null
+  fun <T : Component> isComponentShowing(componentClass: Class<T>): Boolean =
+    robot.finder().findAll(typeMatcher(componentClass) { it.isShowing }).isNotEmpty()
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
     val result = LinkedList<ComponentType>()

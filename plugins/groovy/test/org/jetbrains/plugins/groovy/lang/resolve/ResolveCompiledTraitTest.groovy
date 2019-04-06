@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
+import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
 
@@ -329,6 +330,28 @@ def usage(ExternalConcrete ec) {
     assert method.containingClass.qualifiedName == 'java.lang.String'
   }
 
+  void 'test static trait method with @DelegatesTo(type) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.delegatesTo () -> <caret>toUpperCase()
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
+  void 'test static trait method with @ClosureParams(FromString) on lambda'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.closureParams (it) -> it.<caret>toUpperCase() 
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
   private PsiClass configureTraitInheritor() {
     myFixture.addFileToProject "inheritors.groovy", '''\
 class PojoInheritor extends somepackage.Pojo {}
@@ -340,5 +363,16 @@ class ExternalConcrete implements somepackage.GenericTrait<Pojo, String, PojoInh
   private testHighlighting(String text) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text)
     myFixture.testHighlighting(true, false, true)
+  }
+
+  void 'test trait with @Delegate'() {
+    def resolved = resolveByText '''\
+class Impl implements delegation.T {
+  void usage() {
+    <caret>hi()
+  }
+}
+'''
+    assert resolved instanceof DelegatedMethod
   }
 }

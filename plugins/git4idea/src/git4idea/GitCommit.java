@@ -22,11 +22,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
-import git4idea.history.GitChangesParser;
-import git4idea.history.GitLogUtil;
+import git4idea.history.GitCommitRequirements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -38,16 +38,16 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
-  @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
+  @NotNull private final GitCommitRequirements.DiffRenameLimit myRenameLimit;
 
-  public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
+  public GitCommit(@NotNull Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime,
                    @NotNull List<List<VcsFileStatusInfo>> reportedChanges,
-                   @NotNull GitLogUtil.DiffRenameLimit renameLimit) {
-    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
+                   @NotNull GitCommitRequirements.DiffRenameLimit renameLimit) {
+    super(project, hash, parents, commitTime, root, subject, author, message, committer, authorTime, reportedChanges,
+          new GitChangesParser());
     myRenameLimit = renameLimit;
-    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
   @Override
@@ -57,10 +57,14 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         return true;
       case GIT_CONFIG:
         return false; // need to know the value from git.config to give correct answer
+      case NO_RENAMES:
+        return false;
       case REGISTRY:
-        Changes changes = myChanges.get();
+        Changes changes = getChangesHolder();
         int estimate =
-          changes instanceof UnparsedChanges ? ((UnparsedChanges)changes).getRenameLimitEstimate() : getRenameLimitEstimate();
+          changes instanceof UnparsedChanges ?
+          getRenameLimitEstimate(((UnparsedChanges)changes).getChangesOutput()) :
+          getRenameLimitEstimate();
         return estimate <= Registry.intValue("git.diff.renameLimit");
     }
     return true;
@@ -85,39 +89,37 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     return size;
   }
 
-  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
-    private UnparsedChanges(@NotNull Project project,
-                            @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
-      super(project, changesOutput);
-    }
-
-    @NotNull
-    @Override
-    protected List<Change> parseStatusInfo(@NotNull List<VcsFileStatusInfo> changes, int parentIndex) throws VcsException {
-      String parentHash = null;
-      if (parentIndex < getParents().size()) {
-        parentHash = getParents().get(parentIndex).asString();
-      }
-      return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHash);
-    }
-
-    int getRenameLimitEstimate() {
-      int size = 0;
-      for (List<VcsFileStatusInfo> changesWithParent : myChangesOutput) {
-        int sources = 0;
-        int targets = 0;
-        for (VcsFileStatusInfo info : changesWithParent) {
-          Change.Type type = info.getType();
-          if (ContainerUtil.set(Change.Type.DELETED, Change.Type.MOVED).contains(type)) {
-            sources++;
-          }
-          if (ContainerUtil.set(Change.Type.NEW).contains(type)) {
-            targets++;
-          }
+  private static int getRenameLimitEstimate(@NotNull List<List<VcsFileStatusInfo>> changesOutput) {
+    int size = 0;
+    for (List<VcsFileStatusInfo> changesWithParent : changesOutput) {
+      int sources = 0;
+      int targets = 0;
+      for (VcsFileStatusInfo info : changesWithParent) {
+        Change.Type type = info.getType();
+        if (ContainerUtil.set(Change.Type.DELETED, Change.Type.MOVED).contains(type)) {
+          sources++;
         }
-        size = Math.max(Math.max(sources, targets), size);
+        if (ContainerUtil.set(Change.Type.NEW).contains(type)) {
+          targets++;
+        }
       }
-      return size;
+      size = Math.max(Math.max(sources, targets), size);
+    }
+    return size;
+  }
+
+  private static class GitChangesParser implements ChangesParser {
+    @Override
+    public List<Change> parseStatusInfo(@NotNull Project project,
+                                        @NotNull VcsShortCommitDetails commit,
+                                        @NotNull List<VcsFileStatusInfo> changes,
+                                        int parentIndex) throws VcsException {
+      String parentHash = null;
+      if (parentIndex < commit.getParents().size()) {
+        parentHash = commit.getParents().get(parentIndex).asString();
+      }
+      return git4idea.history.GitChangesParser.parse(project, commit.getRoot(), changes, commit.getId().asString(),
+                                                     new Date(commit.getCommitTime()), parentHash);
     }
   }
 }

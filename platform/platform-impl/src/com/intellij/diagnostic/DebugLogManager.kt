@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import org.apache.log4j.Level
@@ -12,10 +11,12 @@ import org.apache.log4j.LogManager
  * Allows to apply & persist custom log debug categories which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
-class DebugLogManager(private val properties: PropertiesComponent) : BaseComponent {
+class DebugLogManager {
   enum class DebugLogLevel { DEBUG, TRACE }
 
-  override fun initComponent() {
+  private val properties = PropertiesComponent.getInstance()
+
+  init {
     val categories =
       getSavedCategories() +
       // add categories from system properties (e.g. for tests on CI server)

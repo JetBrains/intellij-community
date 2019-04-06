@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -15,6 +15,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
+import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -205,11 +206,8 @@ fun clearBindingCache() {
 private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor?)
 
 private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
-  override fun deserialize(context: Any?, element: Element): Any {
-    val instance = newInstance()
-    deserializeInto(instance, element)
-    return instance
-  }
+  // kotlin data class constructor is never cached, because we have (and it is good) very limited number of such classes
+  private var constructor: Constructor<*>? = null
 
   // only for accessor, not field
   private fun findBindingIndex(name: String): Int {
@@ -266,17 +264,26 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     return element
   }
 
-  private fun newInstance(): Any {
+  override fun newInstance(): Any {
+    var constructor = constructor
+    if (constructor != null) {
+      return constructor.newInstance()
+    }
+
     val clazz = myBeanClass
     try {
-      val constructor = clazz.getDeclaredConstructor()
+      constructor = clazz.getDeclaredConstructor()!!
       try {
         constructor.isAccessible = true
       }
       catch (ignored: SecurityException) {
         return clazz.newInstance()
       }
-      return constructor.newInstance()
+
+      val instance = constructor.newInstance()
+      // cache only if constructor is valid and applicable
+      this.constructor = constructor
+      return instance
     }
     catch (e: RuntimeException) {
       return createUsingKotlin(clazz) ?: throw e
@@ -286,6 +293,8 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     }
   }
 
+  // ReflectionUtil uses another approach to do it - unreliable because located in util module, where Kotlin cannot be used.
+  // Here we use Kotlin reflection and this approach is more reliable because we are prepared for future Kotlin versions.
   private fun createUsingKotlin(clazz: Class<*>): Any? {
     // if cannot create data class
     val kClass = clazz.kotlin

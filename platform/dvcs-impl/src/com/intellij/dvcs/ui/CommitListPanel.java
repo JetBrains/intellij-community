@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -108,7 +107,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
       VcsFullCommitDetails commit = myCommits.get(row);
       // suppressing: inherited API
       //noinspection unchecked
-      sink.put(key, ArrayUtil.toObjectArray(commit.getChanges(), Change.class));
+      sink.put(key, commit.getChanges().toArray(new Change[0]));
     }
   }
 

@@ -43,35 +43,35 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
   private final List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
 
-  public OptimizeImportsProcessor(Project project) {
+  public OptimizeImportsProcessor(@NotNull Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);
   }
 
-  public OptimizeImportsProcessor(Project project, Module module) {
+  public OptimizeImportsProcessor(@NotNull Project project, Module module) {
     super(project, module, COMMAND_NAME, PROGRESS_TEXT, false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiDirectory directory, boolean includeSubdirs) {
     super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
     super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processOnlyVcsChangedFiles);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile file) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile file) {
     super(project, file, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile[] files, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile[] files, Runnable postRunnable) {
     this(project, files, COMMAND_NAME, postRunnable);
   }
 
-  public OptimizeImportsProcessor(Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile[] files, String commandName, Runnable postRunnable) {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
-  public OptimizeImportsProcessor(AbstractLayoutCodeProcessor processor) {
+  public OptimizeImportsProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
     super(processor, COMMAND_NAME, PROGRESS_TEXT);
   }
 

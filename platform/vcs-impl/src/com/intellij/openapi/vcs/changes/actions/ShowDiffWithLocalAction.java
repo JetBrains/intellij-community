@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
@@ -25,9 +25,11 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
+// via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
 public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnActionExtensionProvider {
   private final boolean myUseBeforeVersion;
 
+  @SuppressWarnings("unused")
   public ShowDiffWithLocalAction() {
     this(false);
     getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
@@ -60,7 +62,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
-    boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
+    boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(e.getData(CommittedChangesBrowserUseCase.DATA_KEY));
 
     e.getPresentation().setEnabled(project != null && selection != null && !isInAir && canShowDiff(selection.getList()));
   }
@@ -91,6 +93,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return revision != null && !revision.getFile().isNonLocal() && !revision.getFile().isDirectory();
   }
 
+  @SuppressWarnings("ComponentNotRegistered") // via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
   public static class ShowDiffBeforeWithLocalAction extends ShowDiffWithLocalAction {
     public ShowDiffBeforeWithLocalAction() {
       super(true);

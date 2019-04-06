@@ -57,8 +57,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                 @NotNull final DocumentCommitProcessor documentCommitThread) {
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
-    editorFactory.getEventMulticaster().addDocumentListener(this, project);
-    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), project);
+    editorFactory.getEventMulticaster().addDocumentListener(this, this);
+    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
     MessageBusConnection connection = bus.connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
@@ -73,7 +73,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         documentCommitThread.commitAsynchronously(project, doc, "Bulk update finished", TransactionGuard.getInstance().getContextTransaction());
       }
     });
-    Disposer.register(project, () -> ((DocumentCommitThread)myDocumentCommitThread).cancelTasksOnProjectDispose(project));
+    Disposer.register(this, () -> ((DocumentCommitThread)myDocumentCommitThread).cancelTasksOnProjectDispose(project));
   }
 
   @Nullable
@@ -203,7 +203,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+  public void reparseFiles(@NotNull Collection<? extends VirtualFile> files, boolean includeOpenFiles) {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 

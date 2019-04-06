@@ -11,7 +11,7 @@ class Test {
   }
 
   void test(Integer x, String[] data) {
-    if(x < 0 && data[<warning descr="Array index is out of bounds">x</warning>].isEmpty()) {}
+    if(<warning descr="Condition 'x < 0 && data[x].isEmpty()' is always 'false'">x < 0 && data[<warning descr="Array index is out of bounds">x</warning>].isEmpty()</warning>) {}
   }
   
   void testRangeOutOfThinAir(int x) {

@@ -11,7 +11,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 12
+version = 15
 
 if not hasattr(sys, '_current_frames'):
 
@@ -43,10 +43,10 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
-        
-    elif IS_IRONPYTHON: 
+
+    elif IS_IRONPYTHON:
         _tid_to_last_frame = {}
-        
+
         # IronPython doesn't have it. Let's use our workaround...
         def _current_frames():
             return _tid_to_last_frame
@@ -144,7 +144,7 @@ from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_thread_id, STATE_
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 
 try:
     from inspect import CO_GENERATOR
@@ -294,6 +294,7 @@ cdef class PyDBFrame:
             if trace is not None: #on jython trace is None on the first event
                 exception_breakpoint = get_exception_breakpoint(
                     exception, main_debugger.break_on_caught_exceptions)
+                is_real = is_real_file(frame.f_code.co_filename)
 
                 if exception_breakpoint is not None:
                     add_exception_to_frame(frame, (exception, value, trace))
@@ -324,7 +325,11 @@ cdef class PyDBFrame:
                             flag = True
                         else:
                             flag = False
-                else:
+
+                    if flag:
+                        info.pydev_message = "python-%s" % info.pydev_message
+
+                if exception_breakpoint is None or (not flag and not is_real):
                     try:
                         if main_debugger.plugin is not None:
                             result = main_debugger.plugin.exception_break(main_debugger, self, frame, self._args, arg)
@@ -511,6 +516,11 @@ cdef class PyDBFrame:
             main_debugger.remove_return_values_flag = False
             traceback.print_exc()
 
+    def clear_run_state(self, info):
+        info.pydev_step_stop = None
+        info.pydev_step_cmd = -1
+        info.pydev_state = STATE_RUN
+
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
     cpdef trace_dispatch(self, frame, str event, arg):
         cdef str filename;
@@ -610,7 +620,7 @@ cdef class PyDBFrame:
 
                     if can_skip:
                         if plugin_manager is not None and main_debugger.has_plugin_line_breaks:
-                            can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame)
+                            can_skip = not plugin_manager.can_not_skip(main_debugger, self, frame, info)
 
                         # CMD_STEP_OVER = 108
                         if can_skip and is_return and main_debugger.show_return_values and info.pydev_step_cmd == 108 and frame.f_back is info.pydev_step_stop:
@@ -753,7 +763,9 @@ cdef class PyDBFrame:
                     if breakpoint is None and not (is_return or is_exception_event):
                         # No stop from anyone and no breakpoint found in line (cache that).
                         frame_skips_cache[line_cache_key] = 0
-
+            except KeyboardInterrupt:
+                self.clear_run_state(info)
+                raise
             except:
                 traceback.print_exc()
                 raise
@@ -873,11 +885,10 @@ cdef class PyDBFrame:
                             self.do_wait_suspend(thread, back, event, arg)
                         else:
                             #in jython we may not have a back frame
-                            info.pydev_step_stop = None
-                            info.pydev_step_cmd = -1
-                            info.pydev_state = STATE_RUN
+                            self.clear_run_state(info)
 
             except KeyboardInterrupt:
+                self.clear_run_state(info)
                 raise
             except:
                 try:

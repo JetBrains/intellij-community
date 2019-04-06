@@ -29,6 +29,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    * @deprecated use {@link ProjectUsagesCollector#getData(Project)}
    */
   @Nullable
+  @Deprecated
   public FUSUsageContext getContext(@NotNull Project project) {
     return null;
   }

@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -143,7 +140,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
   @NotNull
   private Editor createEditor(){
-    Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
+    Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject, EditorKind.MAIN_EDITOR);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
 

@@ -220,9 +220,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       assert baseFile != null && targetFile != null;
 
       try {
-        WriteAction.run(() -> {
-          targetFile.setBinaryContent(baseFile.contentsToByteArray());
-        });
+        WriteAction.run(() -> targetFile.setBinaryContent(baseFile.contentsToByteArray()));
       }
       catch (IOException err) {
         LOG.warn(err);

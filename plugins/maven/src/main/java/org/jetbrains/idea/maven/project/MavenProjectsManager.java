@@ -184,7 +184,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
-        public boolean execute(CompileContext context) {
+        public boolean execute(@NotNull CompileContext context) {
           ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
           return true;
         }

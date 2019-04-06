@@ -320,6 +320,14 @@ object GithubApiRequests {
 
       private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
 
+      @JvmStatic
+      fun getListETag(server: GithubServerPath, repoPath: GithubFullPath) =
+        object : Get<String?>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix,
+                                     GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
+
+          override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
+        }.withOperationName("get pull request list ETag")
+
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
         fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
@@ -330,6 +338,25 @@ object GithubApiRequests {
         fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
                             GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+      }
+
+      object Commits : Entity("/commits") {
+        @JvmStatic
+        fun pages(server: GithubServerPath, username: String, repoName: String, number: Long) =
+          GithubApiPagesLoader.Request(get(server, username, repoName, number), ::get)
+
+        @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
+        fun get(server: GithubServerPath, username: String, repoName: String, number: Long,
+                pagination: GithubRequestPagination? = null) =
+          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+                     GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
+
+        @JvmStatic
+        fun get(url: String) = Get.jsonPage<GithubCommit>(url)
+          .withOperationName("get comments for pull request")
       }
     }
   }

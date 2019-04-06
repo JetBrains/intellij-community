@@ -92,9 +92,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     });
 
     myList.setSelectedIndex(0);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
 
     final int finalMinimumRightSize = minimumRightSize;
     new AdjustComponentWhenShown() {

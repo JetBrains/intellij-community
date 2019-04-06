@@ -2,6 +2,7 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -132,7 +133,8 @@ class FileTemplatesLoader {
     FileTemplateLoadResult result = new FileTemplateLoadResult(MultiMap.createSmart());
     Set<URL> processedUrls = new THashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
-    for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+    for (PluginDescriptor plugin : plugins) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
         if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty() ||

@@ -129,7 +129,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
-      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
+      Set<File> files = configurationEntry.getValue().getArtifacts().getFiles().getFiles()
       artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
@@ -157,7 +157,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
-        externalTask.test = task instanceof Test
+        def ext = task.getExtensions()?.extraProperties
+        externalTask.test = (task instanceof Test) || (ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test")))
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }
@@ -254,7 +255,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-
+      if(ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
+        resourcesDirectorySet.addGradleOutputDir(ideaPluginOutDir)
+      }
+      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
+        resourcesDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
+      }
       if (is4OrBetter) {
         if (sourceSet.output.resourcesDir) {
           resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
@@ -282,6 +288,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
+      if(ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
+        javaDirectorySet.addGradleOutputDir(ideaPluginOutDir)
+      }
+      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
+        javaDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
+      }
       if (is4OrBetter) {
         for (File outDir : sourceSet.output.classesDirs.files) {
           javaDirectorySet.addGradleOutputDir(outDir)
@@ -302,7 +314,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet generatedDirectorySet = null
       def hasExplicitlyDefinedGeneratedSources = generatedSourceDirs && !generatedSourceDirs.isEmpty()
       FileCollection generatedSourcesOutput = sourceSet.output.hasProperty("generatedSourcesDirs") ? sourceSet.output.generatedSourcesDirs : null
-      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !sourceSet.annotationProcessorPath.isEmpty()
+      def hasAnnotationProcessorClasspath = sourceSet.hasProperty("annotationProcessorPath") && !isEmpty(sourceSet.annotationProcessorPath)
       if (hasExplicitlyDefinedGeneratedSources || hasAnnotationProcessorClasspath) {
 
         def files = new HashSet<File>()
@@ -320,7 +332,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet = new DefaultExternalSourceDirectorySet()
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
           generatedDirectorySet.srcDirs = files
-          generatedDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
+          for (file in javaDirectorySet.gradleOutputDirs) {
+            generatedDirectorySet.addGradleOutputDir(file)
+          }
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
@@ -497,6 +511,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     cleanupSharedSourceFolders(result)
 
     result
+  }
+
+  private static boolean isEmpty(FileCollection collection) {
+    try {
+      return collection.isEmpty()
+    } catch (Throwable ignored) {
+    }
+    return true
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {

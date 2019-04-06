@@ -24,7 +24,7 @@ import java.lang.ref.SoftReference
 import java.util.*
 
 class MapBasedEvaluationContext(
-  override val uastContext: UastContext,
+  override val uastContext: UastLanguagePlugin,
   override val extensions: List<UEvaluatorExtension>
 ) : UEvaluationContext {
 
@@ -55,7 +55,7 @@ class MapBasedEvaluationContext(
   @Throws(ProcessCanceledException::class)
   private fun getOrCreateEvaluator(declaration: UDeclaration, state: UEvaluationState? = null): UEvaluator {
     val containingFile = declaration.getContainingUFile()
-    val modificationStamp = containingFile?.psi?.modificationStamp ?: -1L
+    val modificationStamp = containingFile?.sourcePsi?.modificationStamp ?: -1L
     val evaluatorWithStamp = evaluators[declaration]?.get()
     if (evaluatorWithStamp != null && evaluatorWithStamp.stamp == modificationStamp) {
       return evaluatorWithStamp.evaluator

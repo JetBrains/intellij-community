@@ -1,8 +1,20 @@
 <root>
+  <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 0'>
@@ -254,13 +266,85 @@
   <item name='java.nio.file.Files void delete(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...)'>
+  <item name='java.nio.file.Path boolean endsWith(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path boolean endsWith(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path boolean startsWith(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path boolean startsWith(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.io.File toFile()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.net.URI toUri()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.FileSystem getFileSystem()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path getName(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path relativize(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path relativize(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolveSibling(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path subpath(int, int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path toAbsolutePath()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path toRealPath(java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path toRealPath(java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.util.Iterator&lt;java.nio.file.Path&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Paths java.nio.file.Path get(java.net.URI)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.net.URI) 0'>

@@ -48,5 +48,6 @@
     <reference ref="myRecursiveAction"/>
     <reference ref="<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>"/>
 
+    <action id="WithDefaultConstructor" class="foo.ActionWithDefaultConstructor"/>
   </actions>
 </idea-plugin>

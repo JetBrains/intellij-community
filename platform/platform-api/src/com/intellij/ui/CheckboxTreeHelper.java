@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -33,7 +34,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -194,7 +194,7 @@ public class CheckboxTreeHelper {
         if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
         final CheckedTreeNode node = (CheckedTreeNode)o;
-        if (checkBounds.contains(e.getPoint())) {
+        if (checkBounds.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
           if (node.isEnabled()) {
             toggleNode(tree, node);
             tree.setSelectionRow(row);
@@ -218,7 +218,6 @@ public class CheckboxTreeHelper {
     if (remover != null) remover.run();
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<? super T> filter, final TreeModel model) {
     final ArrayList<T> nodes = new ArrayList<>();
     final Object root = model.getRoot();
@@ -227,11 +226,11 @@ public class CheckboxTreeHelper {
         "The root must be instance of the " + CheckedTreeNode.class.getName() + ": " + root.getClass().getName());
     }
     new Object() {
-      @SuppressWarnings("unchecked")
       public void collect(CheckedTreeNode node) {
         if (node.isLeaf()) {
           Object userObject = node.getUserObject();
           if (node.isChecked() && userObject != null && nodeType.isAssignableFrom(userObject.getClass())) {
+            //noinspection unchecked
             final T value = (T)userObject;
             if (filter != null && !filter.accept(value)) return;
             nodes.add(value);
@@ -247,7 +246,7 @@ public class CheckboxTreeHelper {
         }
       }
     }.collect((CheckedTreeNode)root);
-    T[] result = (T[])Array.newInstance(nodeType, nodes.size());
+    T[] result = ArrayUtil.newArray(nodeType, nodes.size());
     nodes.toArray(result);
     return result;
   }

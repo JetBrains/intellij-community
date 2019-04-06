@@ -104,9 +104,7 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       FilePath filePath = VcsUtil.getFilePath(myFile);
-      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath, () -> {
-        return myChangesProvider.getChangesIn(myLine);
-      });
+      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath, () -> myChangesProvider.getChangesIn(myLine));
     }
   }
 }

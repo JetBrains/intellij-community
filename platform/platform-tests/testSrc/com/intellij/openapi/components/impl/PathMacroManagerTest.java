@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -6,9 +6,12 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.module.Module;
@@ -82,15 +85,9 @@ public class PathMacroManagerTest {
     });
 
     final ExtensionsArea area = Extensions.getRootArea();
-    final String epName = PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getName();
+    final ExtensionPointName<PathMacroFilter> epName = PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME;
     if (!area.hasExtensionPoint(epName)) {
-      area.registerExtensionPoint(epName, "com.intellij.openapi.application.PathMacroFilter");
-      Disposer.register(myRootDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          area.unregisterExtensionPoint(epName);
-        }
-      });
+      area.registerExtensionPoint(epName, "com.intellij.openapi.application.PathMacroFilter", ExtensionPoint.Kind.INTERFACE, myRootDisposable);
     }
   }
 

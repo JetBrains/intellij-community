@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,9 +16,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
-import org.apache.commons.imaging.ImageWriteException;
+import com.sun.jna.platform.win32.WinDef;
 import org.apache.commons.imaging.common.BinaryOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -59,7 +47,7 @@ public abstract class AppIcon {
       if (SystemInfo.isMac) {
         ourIcon = new MacAppIcon();
       }
-      else if (SystemInfo.isWin7OrNewer) {
+      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
       }
       else {
@@ -78,10 +66,9 @@ public abstract class AppIcon {
 
   public abstract void setOkBadge(Project project, boolean visible);
 
-  public abstract void requestAttention(Project project, boolean critical);
+  public abstract void requestAttention(@Nullable Project project, boolean critical);
 
   public abstract void requestFocus(IdeFrame frame);
-
 
   private static abstract class BaseIcon extends AppIcon {
     private ApplicationActivationListener myAppListener;
@@ -125,7 +112,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public final void requestAttention(Project project, boolean critical) {
+    public final void requestAttention(@Nullable Project project, boolean critical) {
       if (!isAppActive() && Registry.is("ide.appIcon.requestAttention")) {
         _requestAttention(getIdeFrame(project), critical);
       }
@@ -141,7 +128,7 @@ public abstract class AppIcon {
 
     public abstract void _requestAttention(IdeFrame frame, boolean critical);
 
-    protected abstract IdeFrame getIdeFrame(Project project);
+    protected abstract IdeFrame getIdeFrame(@Nullable Project project);
 
     private boolean isAppActive() {
       Application app = ApplicationManager.getApplication();
@@ -161,7 +148,6 @@ public abstract class AppIcon {
       return app != null && app.isActive();
     }
   }
-
 
   @SuppressWarnings("UseJBColor")
   static class MacAppIcon extends BaseIcon {
@@ -230,7 +216,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected IdeFrame getIdeFrame(Project project) {
+    protected IdeFrame getIdeFrame(@Nullable Project project) {
       return null;
     }
 
@@ -380,7 +366,6 @@ public abstract class AppIcon {
     }
   }
 
-
   @SuppressWarnings("UseJBColor")
   private static class Win7AppIcon extends BaseIcon {
     @Override
@@ -426,7 +411,7 @@ public abstract class AppIcon {
     }
 
     private static byte[] writeTransparentIco(BufferedImage src)
-      throws ImageWriteException, IOException {
+      throws IOException {
 
       LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType() || BufferedImage.TYPE_4BYTE_ABGR == src.getType());
 
@@ -434,13 +419,13 @@ public abstract class AppIcon {
 
       try (ByteArrayOutputStream os = new ByteArrayOutputStream();
            BinaryOutputStream bos = new BinaryOutputStream(os, ByteOrder.LITTLE_ENDIAN)) {
-        int scanline_size = (bitCount * src.getWidth() + 7) / 8;
-        if ((scanline_size % 4) != 0)
-          scanline_size += 4 - (scanline_size % 4); // pad scanline to 4 byte size.
-        int t_scanline_size = (src.getWidth() + 7) / 8;
-        if ((t_scanline_size % 4) != 0)
-          t_scanline_size += 4 - (t_scanline_size % 4); // pad scanline to 4 byte size.
-        int imageSize = 40 + src.getHeight() * scanline_size + src.getHeight() * t_scanline_size;
+        int scan_line_size = (bitCount * src.getWidth() + 7) / 8;
+        if ((scan_line_size % 4) != 0)
+          scan_line_size += 4 - (scan_line_size % 4); // pad scan line to 4 byte size.
+        int t_scan_line_size = (src.getWidth() + 7) / 8;
+        if ((t_scan_line_size % 4) != 0)
+          t_scan_line_size += 4 - (t_scan_line_size % 4); // pad scan line to 4 byte size.
+        int imageSize = 40 + src.getHeight() * scan_line_size + src.getHeight() * t_scan_line_size;
 
         // ICONDIR
         bos.write2Bytes(0); // reserved
@@ -478,7 +463,7 @@ public abstract class AppIcon {
 
         int bit_cache = 0;
         int bits_in_cache = 0;
-        int row_padding = scanline_size - (bitCount * src.getWidth() + 7) / 8;
+        int row_padding = scan_line_size - (bitCount * src.getWidth() + 7) / 8;
         for (int y = src.getHeight() - 1; y >= 0; y--) {
           for (int x = 0; x < src.getWidth(); x++) {
             int argb = src.getRGB(x, y);
@@ -493,7 +478,7 @@ public abstract class AppIcon {
             bos.write(0);
         }
 
-        int t_row_padding = t_scanline_size - (src.getWidth() + 7) / 8;
+        int t_row_padding = t_scan_line_size - (src.getWidth() + 7) / 8;
         for (int y = src.getHeight() - 1; y >= 0; y--) {
           for (int x = 0; x < src.getWidth(); x++) {
             int argb = src.getRGB(x, y);
@@ -519,6 +504,7 @@ public abstract class AppIcon {
           for (int x = 0; x < t_row_padding; x++)
             bos.write(0);
         }
+
         return os.toByteArray();
       }
     }
@@ -533,7 +519,7 @@ public abstract class AppIcon {
         return;
       }
 
-      Object icon = null;
+      WinDef.HICON icon = null;
 
       if (text != null) {
         try {
@@ -579,7 +565,7 @@ public abstract class AppIcon {
       }
     }
 
-    private Object myOkIcon;
+    private WinDef.HICON myOkIcon;
 
     @Override
     public void _setOkBadge(IdeFrame frame, boolean visible) {
@@ -587,7 +573,7 @@ public abstract class AppIcon {
         return;
       }
 
-      Object icon = null;
+      WinDef.HICON icon = null;
 
       if (visible) {
         synchronized (Win7AppIcon.class) {
@@ -619,7 +605,7 @@ public abstract class AppIcon {
     public void _requestAttention(IdeFrame frame, boolean critical) {
       try {
         if (isValid(frame)) {
-          Win7TaskBar.attention(frame, critical);
+          Win7TaskBar.attention(frame);
         }
       }
       catch (Throwable e) {
@@ -628,7 +614,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected IdeFrame getIdeFrame(Project project) {
+    protected IdeFrame getIdeFrame(@Nullable Project project) {
       return WindowManager.getInstance().getIdeFrame(project);
     }
 
@@ -639,7 +625,6 @@ public abstract class AppIcon {
       return frame != null && ((Component)frame).isDisplayable();
     }
   }
-
 
   private static class EmptyIcon extends AppIcon {
     @Override
@@ -659,7 +644,7 @@ public abstract class AppIcon {
     public void setOkBadge(Project project, boolean visible) { }
 
     @Override
-    public void requestAttention(Project project, boolean critical) { }
+    public void requestAttention(@Nullable Project project, boolean critical) { }
 
     @Override
     public void requestFocus(IdeFrame frame) { }
@@ -667,13 +652,11 @@ public abstract class AppIcon {
 
   private static void assertIsDispatchThread() {
     Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      if (!app.isUnitTestMode()) {
-        app.assertIsDispatchThread();
-      }
-    }
-    else {
+    if (app == null) {
       assert EventQueue.isDispatchThread();
+    }
+    else if (!app.isUnitTestMode()) {
+      app.assertIsDispatchThread();
     }
   }
 }

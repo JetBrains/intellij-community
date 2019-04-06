@@ -14,8 +14,5 @@ public final class PropertiesIcons {
     return IconLoader.getIcon(path, PropertiesIcons.class);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon XmlProperties = load("/icons/xmlProperties.svg");
+  /** 16x16 */ public static final Icon XmlProperties = load("/icons/xmlProperties.svg");
 }

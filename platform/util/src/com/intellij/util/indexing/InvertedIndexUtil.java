@@ -62,12 +62,9 @@ public class InvertedIndexUtil {
           }
         }
         else {
-          mainIntersection.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int id) {
-              if (predicate.contains(id)) copy.add(id);
-              return true;
-            }
+          mainIntersection.forEach(id -> {
+            if (predicate.contains(id)) copy.add(id);
+            return true;
           });
         }
       }

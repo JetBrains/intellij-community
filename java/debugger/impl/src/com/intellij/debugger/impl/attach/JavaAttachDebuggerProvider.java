@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.engine.RemoteStateState;
@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -94,7 +95,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-      LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
+      LocalAttachInfo attachInfo = getAttachInfo(project, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
       String res;
       String executable = info.getExecutableDisplayName();
@@ -132,14 +133,15 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
-        LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
+        // no need to validate the process, it is already validated inside VirtualMachine.list()
+        LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids, false);
         if (address != null) {
           map.put(pid, address);
         }
       });
     }
 
-    LocalAttachInfo info = getAttachInfo(project, processInfo, addressMap);
+    LocalAttachInfo info = getAttachInfo(project, processInfo.getPid(), processInfo.getCommandLine(), addressMap);
     if (info != null && isDebuggerAttach(info)) {
       return Collections.singletonList(new JavaLocalAttachDebugger(project, info));
     }
@@ -151,19 +153,23 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  private static LocalAttachInfo getAttachInfo(Project project,
-                                               ProcessInfo processInfo,
+  private static LocalAttachInfo getAttachInfo(@Nullable Project project,
+                                               int pid,
+                                               String commandLine,
                                                @Nullable Map<String, LocalAttachInfo> addressMap) {
     LocalAttachInfo res;
-    String pidString = String.valueOf(processInfo.getPid());
+    String pidString = String.valueOf(pid);
     if (addressMap != null) {
       res = addressMap.get(pidString);
+      if (res != null) {
+        return res;
+      }
     }
-    else {
-      res = getProcessAttachInfo(pidString, project);
-    }
-    if (res == null) {
-      res = getProcessAttachInfo(ParametersListUtil.parse(processInfo.getCommandLine()), pidString);
+
+    res = getProcessAttachInfo(ParametersListUtil.parse(commandLine), pidString);
+    if (res == null && addressMap == null) {
+      res =
+        getProcessAttachInfo(pidString, project != null ? JavaDebuggerAttachUtil.getAttachedPids(project) : Collections.emptySet(), true);
     }
     return res;
   }
@@ -182,6 +188,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           if (param.startsWith("address")) {
             try {
               address = param.split("=")[1];
+              address = StringUtil.trimStart(address, "*:"); // handle java 9 format: *:5005
               return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
             }
             catch (Exception e) {
@@ -196,9 +203,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     return null;
   }
 
-  private static LocalAttachInfo getProcessAttachInfo(String pid, @NotNull Set<String> attachedPids) {
+  private static LocalAttachInfo getProcessAttachInfo(String pid, @NotNull Set<String> attachedPids, boolean validate) {
     if (!attachedPids.contains(pid)) {
-      Future<LocalAttachInfo> future = ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid));
+      Future<LocalAttachInfo> future =
+        ApplicationManager.getApplication().executeOnPooledThread(() -> getProcessAttachInfoInt(pid, validate));
       try {
         // attaching ang getting info may hang in some cases
         return future.get(5, TimeUnit.SECONDS);
@@ -214,20 +222,15 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
-    return getProcessAttachInfo(pid, JavaDebuggerAttachUtil.getAttachedPids(project));
+  static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
+    return getAttachInfo(null, OSProcessUtil.getProcessID(processHandler.getProcess()), processHandler.getCommandLine(), null);
   }
 
   @Nullable
-  static LocalAttachInfo getProcessAttachInfo(@NotNull String pid) {
-    return getProcessAttachInfo(pid, Collections.emptySet());
-  }
-
-  @Nullable
-  private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
+  private static LocalAttachInfo getProcessAttachInfoInt(String pid, boolean validate) {
     VirtualMachine vm = null;
     try {
-      vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
+      vm = validate ? JavaDebuggerAttachUtil.attachVirtualMachine(pid) : VirtualMachine.attach(pid);
       Properties agentProperties = vm.getAgentProperties();
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {

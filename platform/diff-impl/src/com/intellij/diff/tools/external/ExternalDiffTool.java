@@ -97,9 +97,7 @@ public class ExternalDiffTool {
       List<? extends DiffRequestProducer> allProducers = chain.getRequests();
       int index = chain.getIndex();
 
-      return loadInBackground(project, "Loading Requests", indicator -> {
-        return collectRequests(project, allProducers, index, indicator);
-      });
+      return loadInBackground(project, "Loading Requests", indicator -> collectRequests(project, allProducers, index, indicator));
     }
   }
 

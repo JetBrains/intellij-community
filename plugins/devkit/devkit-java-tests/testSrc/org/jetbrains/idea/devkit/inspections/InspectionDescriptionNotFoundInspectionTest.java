@@ -74,6 +74,8 @@ public class InspectionDescriptionNotFoundInspectionTest extends JavaCodeInsight
   public void testWithDescriptionCustomShortName() {
     myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
     myFixture.testHighlighting("MyWithDescriptionCustomShortNameInspection.java");
+    myFixture.testHighlighting("MyWithDescriptionCustomConstantShortNameInspection.java");
+    myFixture.testHighlighting("MyWithDescriptionCustomMethodInvokingShortNameInspection.java");
   }
 
   public void testWithDescriptionXmlRegisteredNotFound() {

@@ -183,21 +183,19 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
     if (helper == null) return;
 
-    CommandProcessor.getInstance().executeCommand(helper.getProject(), () -> {
-      WriteAction.run(() -> {
-        createMethod(helper, owner);
-        GrStatementOwner declarationOwner =
-          helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
-        GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
+    CommandProcessor.getInstance().executeCommand(helper.getProject(), () -> WriteAction.run(() -> {
+      createMethod(helper, owner);
+      GrStatementOwner declarationOwner =
+        helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
+      GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
 
-        // move to offset
-        if (editor != null) {
-          PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
-          editor.getSelectionModel().removeSelection();
-          editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
-        }
-      });
-    }, REFACTORING_NAME, null);
+      // move to offset
+      if (editor != null) {
+        PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
+      }
+    }), REFACTORING_NAME, null);
   }
 
   private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {

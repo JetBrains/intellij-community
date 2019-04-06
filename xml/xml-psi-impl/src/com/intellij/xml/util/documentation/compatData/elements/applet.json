@@ -42,7 +42,7 @@
             },
             "safari": {
               "version_added": true,
-              "notes": "Removal in Safari is <a href='https://bugs.webkit.org/show_bug.cgi?id=157926'>under consideration</a>."
+              "notes": "Removal in Safari is <a href='https://webkit.org/b/157926'>under consideration</a>."
             },
             "safari_ios": {
               "version_added": false

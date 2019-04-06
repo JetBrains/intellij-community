@@ -127,7 +127,8 @@ public class ExceptionWorker {
     else {
       virtualFiles = virtualFilesInContent;
     }
-    ToIntFunction<PsiFile> columnFinder = elementMatcher == null ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
+    ToIntFunction<PsiFile> columnFinder =
+      elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
     HyperlinkInfo linkInfo =
       HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
@@ -339,14 +340,12 @@ public class ExceptionWorker {
   private static class StackFrameMatcher implements PsiElementFilter {
     private final String myMethodName;
     private final String myClassName;
-    private final String mySimpleName;
     private final boolean myHasDollarInName;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
       myMethodName = info.methodNameRange.substring(line);
       myClassName = info.classFqnRange.substring(line);
-      mySimpleName = StringUtil.getShortName(myClassName);
-      myHasDollarInName = mySimpleName.contains("$");
+      myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
     }
 
     @Override

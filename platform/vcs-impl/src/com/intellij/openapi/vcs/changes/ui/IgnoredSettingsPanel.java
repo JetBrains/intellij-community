@@ -35,9 +35,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     myList.setCellRenderer(new MyCellRenderer());
     myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
 
-    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> {
-      return getBeanTextPresentation(bean);
-    });
+    new ListSpeedSearch<>(myList, (Function<IgnoredFileBean, String>)bean -> getBeanTextPresentation(bean));
     myProject = project;
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
   }

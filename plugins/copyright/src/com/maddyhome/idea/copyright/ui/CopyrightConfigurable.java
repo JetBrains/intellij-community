@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
@@ -99,6 +100,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
         }
       }
     });
+    myWholePanel.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
     return myWholePanel;
   }
 
@@ -143,8 +145,14 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   @Override
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
-    SwingUtilities.invokeLater(() -> DocumentUtil.writeInRunUndoTransparentAction(
-      () -> myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()))));
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      String notice = myCopyrightProfile.getNotice();
+      if (notice != null) {
+        myEditor.getDocument().setText(EntityUtil.decode(notice));
+        myEditor.setCaretPosition(0);
+        myEditor.revalidate();
+      }
+    });
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
     myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceRegexp());
   }

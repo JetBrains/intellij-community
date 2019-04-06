@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.testFramework.DisposeModulesRule
@@ -6,6 +7,7 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.Timeout
@@ -16,7 +18,14 @@ import java.util.concurrent.TimeUnit
 internal abstract class BuiltInServerTestCase {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
+
+    @BeforeClass
+    @JvmStatic
+    fun runServer() {
+      BuiltInServerManager.getInstance().waitForStart()
+    }
   }
 
   protected val tempDirManager = TemporaryDirectory()

@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -16,6 +13,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -36,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.task.ExecuteRunConfigurationTask;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
@@ -48,13 +48,13 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collections;
 import java.util.List;
-
 /**
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
  *
  * @author Vladislav.Soroka
  */
 public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvironmentProvider {
+  private static final Logger LOG = Logger.getInstance(GradleApplicationEnvironmentProvider.class);
 
   @Override
   public boolean isApplicable(ExecuteRunConfigurationTask task) {
@@ -131,15 +131,40 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       String parametersString = createEscapedParameters(params.getProgramParametersList().getParameters(), "args");
       String vmParametersString = createEscapedParameters(params.getVMParametersList().getParameters(), "jvmArgs");
 
+      boolean useManifestJar = applicationConfiguration.getShortenCommandLine() == ShortenCommandLine.MANIFEST;
+      boolean useArgsFile = applicationConfiguration.getShortenCommandLine() == ShortenCommandLine.ARGS_FILE;
+      boolean useClasspathFile = applicationConfiguration.getShortenCommandLine() == ShortenCommandLine.CLASSPATH_FILE;
+      String intelliJRtPath = null;
+      if (useClasspathFile) {
+        try {
+          intelliJRtPath = PathUtil.getCanonicalPath(
+            PathManager.getJarPathForClass(Class.forName("com.intellij.rt.execution.CommandLineWrapper")));
+        }
+        catch (Throwable t) {
+          LOG.warn("Unable to use classpath file", t);
+          useClasspathFile = false;
+        }
+      }
+
       // @formatter:off
       @Language("Groovy")
-      String initScript = "allprojects {\n" +
+      String initScript = "def gradlePath = '" + gradlePath + "'\n" +
+                          "def runAppTaskName = '" + runAppTaskName + "'\n" +
+                          "def javaExePath = '" + javaExePath + "'\n" +
+                          "def sourceSetName = '" + sourceSetName + "'\n" +
+                          "allprojects {\n" +
                           "    afterEvaluate { project ->\n" +
-                          "      if(project.path == '" + gradlePath + "' && project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
-                          "         project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
+                          "      if(project.path == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
+                                    (useManifestJar ?
+                          "         project.gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" : "") +
+                                    (useArgsFile ?
+                          "         project.gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" : "") +
+                                    (useClasspathFile ?
+                          "         project.gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName))\n" : "") +
+                          "         project.tasks.create(name: runAppTaskName, overwrite: true, type: JavaExec) {\n" +
                                       (javaExePath == null ? "" :
-                          "           executable = '" + javaExePath + "'\n") +
-                          "           classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
+                          "           executable = javaExePath\n") +
+                          "           classpath = project.sourceSets[sourceSetName].runtimeClasspath\n" +
                           "           main = '" + mainClass.getQualifiedName() + "'\n" +
                                       parametersString +
                                       vmParametersString +
@@ -158,7 +183,103 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "         }\n" +
                           "      }\n" +
                           "    }\n" +
-                          "}\n";
+                          "}\n" +
+                          (useManifestJar || useArgsFile || useClasspathFile ?
+                          "import org.gradle.api.execution.TaskActionListener\n" +
+                          "import org.gradle.api.Task\n" +
+                          "import org.gradle.api.tasks.JavaExec\n" +
+                          "abstract class RunAppTaskActionListener implements TaskActionListener {\n" +
+                          "     String myTaskName\n" +
+                          "     File myClasspathFile\n" +
+                          "     RunAppTaskActionListener(String taskName){\n" +
+                          "        myTaskName = taskName\n" +
+                          "     }\n" +
+                          "     void beforeActions(Task task) {\n" +
+                          "        if(!(task instanceof JavaExec) || task.name != myTaskName) return \n" +
+                          "        myClasspathFile = patchTaskClasspath(task)\n" +
+                          "     }\n" +
+                          "     void afterActions(Task task) {\n" +
+                          "       if(myClasspathFile != null) { myClasspathFile.delete() }\n" +
+                          "     }\n" +
+                          "     abstract File patchTaskClasspath(JavaExec task)\n" +
+                          "}\n" : "") +
+                          (useManifestJar ?
+                          "import java.util.jar.Attributes\n" +
+                          "import java.util.jar.JarOutputStream\n" +
+                          "import java.util.jar.Manifest\n" +
+                          "import java.util.zip.ZipEntry\n" +
+                          "class ManifestTaskActionListener extends RunAppTaskActionListener {\n" +
+                          "     ManifestTaskActionListener(String taskName){\n" +
+                          "        super(taskName)\n" +
+                          "     }\n" +
+                          "     File patchTaskClasspath(JavaExec task) {\n" +
+                          "       Manifest manifest = new Manifest()\n" +
+                          "       Attributes attributes = manifest.getMainAttributes()\n" +
+                          "       attributes.put(Attributes.Name.MANIFEST_VERSION, '1.0')\n" +
+                          "       attributes.putValue('Class-Path', task.classpath.files.collect {it.toURI().toURL().toString()}.join(' '))\n" +
+                          "       File file = File.createTempFile('generated-', '-manifest')\n" +
+                          "       def oStream = new JarOutputStream(new FileOutputStream(file), manifest)\n" +
+                          "       oStream.putNextEntry(new ZipEntry('META-INF/'))\n" +
+                          "       oStream.close()\n" +
+                          "       task.classpath = task.project.files(file.getAbsolutePath())\n" +
+                          "       return file\n" +
+                          "    }\n" +
+                          "}\n" : "") +
+                          (useArgsFile ?
+                          "import org.gradle.process.CommandLineArgumentProvider\n" +
+                          "class ArgFileTaskActionListener extends RunAppTaskActionListener {\n" +
+                          "     ArgFileTaskActionListener(String taskName){\n" +
+                          "        super(taskName)\n" +
+                          "     }\n" +
+                          "     File patchTaskClasspath(JavaExec task) {\n" +
+                          "       File file = File.createTempFile('generated-', '-argFile')\n" +
+                          "       def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))\n" +
+                          "       def lineSep = System.getProperty('line.separator')\n" +
+                          "       writer.print('-classpath' + lineSep)\n" +
+                          "       writer.print(quoteArg(task.classpath.asPath))\n" +
+                          "       writer.print(lineSep)\n" +
+                          "       writer.close()\n" +
+                          "       task.jvmArgs('@' + file.absolutePath)\n" +
+                          "       task.classpath = task.project.files([])\n" +
+                          "       return file\n" +
+                          "    }\n" +
+                            "  private static String quoteArg(String arg) {\n" +
+                            "    String specials = ' #\\\'\\\"\\n\\r\\t\\f' \n" +
+                            "    if (specials.find { arg.indexOf(it) != -1 } == null) return arg\n" +
+                            "    StringBuilder sb = new StringBuilder(arg.length() * 2) \n" +
+                            "    for (int i = 0; i < arg.length(); i++) {\n" +
+                            "      char c = arg.charAt(i) \n" +
+                            "      if (c == ' ' as char || c == '#' as char || c == '\\'' as char) sb.append('\"').append(c).append('\"') \n" +
+                            "      else if (c == '\"' as char) sb.append(\"\\\"\\\\\\\"\\\"\") \n" +
+                            "      else if (c == '\\n' as char) sb.append(\"\\\"\\\\n\\\"\") \n" +
+                            "      else if (c == '\\r' as char) sb.append(\"\\\"\\\\r\\\"\") \n" +
+                            "      else if (c == '\\t' as char) sb.append(\"\\\"\\\\t\\\"\") \n" +
+                            "      else if (c == '\\f' as char) sb.append(\"\\\"\\\\f\\\"\") \n" +
+                            "      else sb.append(c) \n" +
+                            "    }\n" +
+                            "    return sb.toString() \n" +
+                            "  }" +
+                          "}\n" : "") +
+                          (useClasspathFile ?
+                          "import org.gradle.process.CommandLineArgumentProvider\n" +
+                          "class ClasspathFileTaskActionListener extends RunAppTaskActionListener {\n" +
+                          "     ClasspathFileTaskActionListener(String taskName){\n" +
+                          "        super(taskName)\n" +
+                          "     }\n" +
+                          "     File patchTaskClasspath(JavaExec task) {\n" +
+                          "       File file = File.createTempFile('generated-', '-classpathFile')\n" +
+                          "       def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))\n" +
+                          "       task.classpath.files.each { writer.println(it.path) }\n" +
+                          "       writer.close()\n" +
+                          "       List args = [file.absolutePath, '" + mainClass.getQualifiedName() + "'] as List \n" +
+                          "       args.addAll(task.args)\n" +
+                          "       task.args = []\n" +
+                          "       task.argumentProviders.add({ return args } as CommandLineArgumentProvider)\n" +
+                          "       task.main = 'com.intellij.rt.execution.CommandLineWrapper'\n" +
+                          "       task.classpath = task.project.files([ '" + intelliJRtPath + "'])\n" +
+                          "       return file\n" +
+                          "    }\n" +
+                          "}\n" : "");
       // @formatter:on
 
       gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
@@ -177,7 +298,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
   private static String createEscapedParameters(List<String> parameters, String prefix) {
     StringBuilder result = new StringBuilder();
-    for (String parameter: parameters) {
+    for (String parameter : parameters) {
       if (StringUtil.isEmpty(parameter)) continue;
       String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
       result.append(prefix).append(" '").append(escaped).append("'\n");

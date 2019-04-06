@@ -48,7 +48,7 @@ public class ToolAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Tool tool = findTool(myActionId, e.getDataContext());
     if (tool != null) {
-      e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()));
+      e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()), false);
     }
   }
 

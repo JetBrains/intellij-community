@@ -8,11 +8,13 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -88,9 +90,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private boolean myModelUpdateInProgress;
 
-  public ChangesTree(@NotNull Project project,
-                     boolean showCheckboxes,
-                     boolean highlightProblems) {
+  public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    this(project, showCheckboxes, highlightProblems, false);
+  }
+
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -99,7 +103,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
+    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
@@ -214,12 +218,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void addSelectionListener(@NotNull Runnable runnable) {
-    addTreeSelectionListener(new TreeSelectionListener() {
+    addSelectionListener(runnable, null);
+  }
+
+  public void addSelectionListener(@NotNull Runnable runnable, @Nullable Disposable parent) {
+    TreeSelectionListener listener = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
-    });
+    };
+
+    addTreeSelectionListener(listener);
+    if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
   public void setInclusionListener(@Nullable Runnable runnable) {
@@ -323,7 +334,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myModelUpdateInProgress;
   }
 
-  private void resetTreeState() {
+  protected void resetTreeState() {
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;

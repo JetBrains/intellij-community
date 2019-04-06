@@ -146,7 +146,7 @@ public abstract class VcsLogUserFilterTest {
                                              @NotNull MultiMap<VcsUser, String> commits,
                                              @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
     throws VcsException {
-    Set<String> expectedCommits = ContainerUtil.newHashSet(commits.get(user));
+    Set<String> expectedCommits = new HashSet<>(commits.get(user));
     for (VcsUser synonym : synonymUsers) {
       expectedCommits.addAll(commits.get(synonym));
     }
@@ -211,7 +211,7 @@ public abstract class VcsLogUserFilterTest {
   }
 
   private static <T> boolean hasSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
-    return ContainerUtil.newHashSet(expected).equals(ContainerUtil.newHashSet(collection));
+    return new HashSet<>(expected).equals(new HashSet<>(collection));
   }
 
   @NotNull

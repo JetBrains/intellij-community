@@ -8,17 +8,16 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -39,9 +38,13 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -54,7 +57,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -96,6 +98,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
+    setMinimumSize(new Dimension(340, getMinimumSize().height));
 
     if (Registry.is("suppress.focus.stealing") &&
         Registry.is("suppress.focus.stealing.auto.request.focus") &&
@@ -141,6 +144,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
+
+    if (IdeFrameDecorator.isCustomDecoration()) JdkEx.setHasCustomDecoration(this);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
@@ -254,13 +259,26 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     super.setMaximizedBounds(null);
   }
 
+  @Override
+  public void setExtendedState(int state) {
+    if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
+      getRootPane().putClientProperty("normalBounds", getBounds());
+    }
+    super.setExtendedState(state);
+  }
+
   private void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
-        if (!isTemporaryDisposed()) {
+        if (isTemporaryDisposed() || LaterInvocator.isInModalContext()) {
+          return;
+        }
+
+        Application app = ApplicationManager.getApplication();
+        if (app != null && (!app.isDisposeInProgress() && !app.isDisposed())) {
           helper.windowClosing(myProject);
         }
       }
@@ -532,27 +550,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
     super.paint(g);
-    if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
-      final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());
-      g.drawImage(shadow, 0, 0, null);
-    }
-  }
-
-  @Override
-  public Color getBackground() {
-    return IdeRootPane.isFrameDecorated() ? Gray.x00.withAlpha(0) : super.getBackground();
-  }
-
-  @Override
-  public void doLayout() {
-    super.doLayout();
-    if (!isInFullScreen() && IdeRootPane.isFrameDecorated()) {
-      final int leftSide = AllIcons.Ide.Shadow.Left.getIconWidth();
-      final int rightSide = AllIcons.Ide.Shadow.Right.getIconWidth();
-      final int top = AllIcons.Ide.Shadow.Top.getIconHeight();
-      final int bottom = AllIcons.Ide.Shadow.Bottom.getIconHeight();
-      getRootPane().setBounds(leftSide, top, getWidth() - leftSide - rightSide, getHeight() - top - bottom);
-    }
   }
 
   @Override

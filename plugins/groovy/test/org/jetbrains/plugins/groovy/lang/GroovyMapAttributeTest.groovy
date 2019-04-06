@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -13,7 +12,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-
 /**
  * @author Sergey Evdokimov
  */
@@ -376,7 +374,7 @@ class CccList extends Ccc<ArrayList> {}
 println(new CccMap(foo: [:]))
 println(new CccList(foo: []))
 
-println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List<Object>'">[]</warning>))
+println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List'">[]</warning>))
 println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'LinkedHashMap<Object, Object>'">[:]</warning>))
 """
   }
@@ -439,13 +437,13 @@ class Test {
   }
 
   private doTestCompletionWithinMap(String text, String text2 = null) {
-    PlatformTestUtil.registerExtension GroovyNamedArgumentProvider.EP_NAME, new GroovyNamedArgumentProvider() {
+    GroovyNamedArgumentProvider.EP_NAME.getPoint(null).registerExtension(new GroovyNamedArgumentProvider() {
       @NotNull
       @Override
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
         ['foo': NamedArgumentDescriptor.SIMPLE_NORMAL, 'bar': NamedArgumentDescriptor.SIMPLE_NORMAL]
       }
-    }, myFixture.testRootDisposable
+    }, myFixture.testRootDisposable)
 
     myFixture.with {
       configureByText '_.groovy', text

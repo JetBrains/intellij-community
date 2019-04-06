@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -21,9 +23,8 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -90,17 +92,23 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     // Splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true);
-    myVerticalSplitter.setMinSize(JBUI.scale(30));
+    RegistryValue registryValue = Registry.get("ide.mainSplitter.min.size");
+    registryValue.addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        updateInnerMinSize(value);
+      }
+    }, this);
     Disposer.register(this, myVerticalSplitter);
     myVerticalSplitter.setDividerWidth(0);
     myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
-    myHorizontalSplitter.setMinSize(JBUI.scale(30));
     Disposer.register(this, myHorizontalSplitter);
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
+    updateInnerMinSize(registryValue);
     myWidescreen = UISettings.getInstance().getWideScreenSupport();
     myLeftHorizontalSplit = UISettings.getInstance().getLeftHorizontalSplit();
     myRightHorizontalSplit = UISettings.getInstance().getRightHorizontalSplit();
@@ -137,6 +145,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+  }
+
+  private void updateInnerMinSize(@NotNull RegistryValue value) {
+    int minSize = Math.max(0, Math.min(100, value.asInteger()));
+    myVerticalSplitter.setMinSize(JBUI.scale(minSize));
+    myHorizontalSplitter.setMinSize(JBUI.scale(minSize));
   }
 
   @Override

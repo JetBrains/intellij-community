@@ -6,20 +6,22 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiParameterList
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
-import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.convert
 import org.jetbrains.uast.getLanguagePlugin
 
-internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
+class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
@@ -35,12 +37,11 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       return null
     }
 
+    var extensionPoint: ExtensionPoint? = null
     // fast path - check by qualified name
     if (!isExtensionBean(aClass)) {
       // slow path - check using index
-      if (!isReferencedByExtension(aClass, manager.project)) {
-        return null
-      }
+      extensionPoint = findExtensionPoint(aClass, manager.project) ?: return null
     }
     else if (javaPsi.name == "VcsConfigurableEP") {
       // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
@@ -50,7 +51,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
       val parameters = method.parameterList
-      if (parameters.isEmpty || isAllowedParameters(parameters)) {
+      if (isAllowedParameters(parameters, extensionPoint)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -65,32 +66,37 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
         else -> aClass.getLanguagePlugin().convert<UMethod>(method, aClass).sourcePsi ?: continue@loop
       }
       errors.add(manager.createProblemDescriptor(anchorElement,
-                                                 "Bean extension class should not have constructor with parameters", true,
+                                                 "Extension class should not have constructor with parameters", true,
                                                  ProblemHighlightType.ERROR, isOnTheFly))
     }
     return errors?.toTypedArray()
   }
 }
 
-// cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
-private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
-  var isFound = false
-  val qualifiedNamed = clazz.qualifiedName ?: return false
-  processExtensionsByClassName(project, qualifiedNamed) { tag, point ->
-    // check only bean extensions
-    if (point.beanClass.value == null) {
-      return@processExtensionsByClassName true
+private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint? {
+  var result: ExtensionPoint? = null
+  val qualifiedNamed = clazz.qualifiedName ?: return null
+  processExtensionDeclarations(qualifiedNamed, project) { extension, tag ->
+    val point = extension.extensionPoint ?: return@processExtensionDeclarations true
+    if (point.beanClass.stringValue == null) {
+      if (tag.attributes.any { it.name == "implementation" && it.value == qualifiedNamed }) {
+        result = point
+        return@processExtensionDeclarations false
+      }
     }
-
-    if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
-      isFound = true
+    else {
+      // bean EP
+      if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
+        result = point
+        return@processExtensionDeclarations false
+      }
     }
-    !isFound
+    true
   }
-  return isFound
+  return result
 }
 
-// todo can we use attribute `with` to avoid hardcoding?
+// todo can we use attribute `with`?
 private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
 
 // problem - tag
@@ -108,7 +114,20 @@ private fun checkAttributes(tag: XmlTag, qualifiedNamed: String): Boolean {
   }
 }
 
-private fun isAllowedParameters(list: PsiParameterList): Boolean {
+private fun isAllowedParameters(list: PsiParameterList, extensionPoint: ExtensionPoint?): Boolean {
+  if (list.isEmpty) {
+    return true
+  }
+
+  val area = extensionPoint?.area?.value ?: ExtensionPoint.Area.IDEA_APPLICATION
+  val isAppLevelExtensionPoint = area == ExtensionPoint.Area.IDEA_APPLICATION
+
+  // hardcoded for now, later will be generalized
+  if (isAppLevelExtensionPoint || extensionPoint?.effectiveQualifiedName == "com.intellij.semContributor") {
+    // disallow any parameters
+    return false
+  }
+
   if (list.parametersCount != 1) {
     return false
   }
@@ -134,31 +153,17 @@ private val interfacesToCheck = THashSet<String>(listOf(
 ))
 
 private val classesToCheck = THashSet<String>(listOf(
-  "com.intellij.openapi.extensions.AbstractExtensionPointBean",
   "com.intellij.codeInsight.completion.CompletionContributor",
   "com.intellij.codeInsight.completion.CompletionConfidence",
   "com.intellij.psi.PsiReferenceContributor"
 ))
 
 private fun isExtensionBean(aClass: UClass): Boolean {
-  var p = aClass
-  while (true) {
-    if (checkInterfaces(p.javaPsi.interfaces)) {
-      return true
-    }
-
-    p = p.superClass ?: return false
-    if (classesToCheck.contains(p.qualifiedName)) {
-      return true
-    }
-  }
-}
-
-private fun checkInterfaces(list: Array<PsiClass>): Boolean {
-  for (interfaceClass in list) {
-    if (interfacesToCheck.contains(interfaceClass.qualifiedName) || checkInterfaces(interfaceClass.interfaces)) {
-      return true
-    }
-  }
-  return false
+  var found = false
+  InheritanceUtil.processSupers(aClass.javaPsi, true, Processor {
+    val qualifiedName = it.qualifiedName
+    found = (if (it.isInterface) interfacesToCheck else classesToCheck).contains(qualifiedName)
+    !found
+  })
+  return found
 }

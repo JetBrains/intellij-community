@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui.actions;
 
@@ -42,6 +42,8 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -128,7 +130,8 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       MultiMap<String, InspectionToolWrapper> shortName2Wrapper = new MultiMap<>();
       if (singleTool != null) {
         shortName2Wrapper.put(singleTool, getWrappersForAllScopes(singleTool));
-      } else {
+      }
+      else {
         InspectionTreeModel model = myView.getTree().getInspectionTreeModel();
         model
           .traverse(model.getRoot())
@@ -145,6 +148,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
 
       writeProfileName(outputDirectoryName);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
@@ -191,6 +197,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NotNull
   public static File getInspectionResultFile(String outputDirectoryName, String name) {
     return new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
+  }
+
+  @NotNull
+  public static Path getInspectionResultPath(String outputDirectoryName, String name) {
+    return Paths.get(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
   }
 
   @NotNull

@@ -141,9 +141,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-          fileTypeManager.associateExtension(fileType, extension);
-        });
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> fileTypeManager.associateExtension(fileType, extension));
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;

@@ -298,7 +298,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private void initTree() {
-    myTree = new SimpleTree();
+    myTree = new ExternalProjectTree(myProject);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
     final ActionManager actionManager = ActionManager.getInstance();

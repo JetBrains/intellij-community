@@ -51,12 +51,7 @@ public class RecentStringInterner {
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        clear();
-      }
-    }, parentDisposable);
+    LowMemoryWatcher.register(this::clear, parentDisposable);
   }
 
   public String get(String s) {

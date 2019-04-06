@@ -16,7 +16,6 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
@@ -59,7 +58,7 @@ public interface RunDashboardManager {
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
 
-  void updateDashboard(boolean withSStructure);
+  void updateDashboard(boolean withStructure);
 
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 
@@ -69,9 +68,6 @@ public interface RunDashboardManager {
 
   float getContentProportion();
 
-  @Nullable
-  RunDashboardAnimator getAnimator();
-
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
   @NotNull
@@ -79,8 +75,8 @@ public interface RunDashboardManager {
 
   void setTypes(Set<String> types);
 
-  @Nullable
-  RunDashboardContributor getContributor(@NotNull ConfigurationType type);
+  @NotNull
+  List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor);
 
   @NotNull
   Condition<Content> getReuseCondition();

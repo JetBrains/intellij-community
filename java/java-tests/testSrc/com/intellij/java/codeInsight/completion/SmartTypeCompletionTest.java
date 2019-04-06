@@ -16,10 +16,12 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -1328,5 +1330,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
                        "  final static public Level FATAL;" +
                        "}");
     doTest('\n');
+  }
+
+  public void testOldInferenceExponential() {
+    // This test specifically tests the problem in pre-Java-8 inference
+    assertTrue(PsiUtil.getLanguageLevel(getProject()).isLessThan(LanguageLevel.JDK_1_8));
+    doTest();
   }
 }

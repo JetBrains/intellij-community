@@ -20,6 +20,7 @@ import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
+import org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator;
 
 import java.util.Iterator;
 import java.util.List;
@@ -123,6 +124,12 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
     List<String> keys = separateCompositeKey(text);
     assert !keys.isEmpty();
+
+    for (String key: keys) {
+      if (!YamlKeyValueRenameInputValidator.IDENTIFIER_PATTERN.matcher(key).matches()) {
+        return null;
+      }
+    }
 
     PsiElement element = file.findElementAt(caretOffset);
     if (element != null) {

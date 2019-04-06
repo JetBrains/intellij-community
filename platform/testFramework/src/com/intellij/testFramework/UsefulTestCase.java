@@ -730,13 +730,12 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertOneOf(T value, @NotNull T... values) {
-    boolean found = false;
     for (T v : values) {
       if (Objects.equals(value, v)) {
-        found = true;
+        return;
       }
     }
-    Assert.assertTrue(value + " should be equal to one of " + Arrays.toString(values), found);
+    Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
   }
 
   public static void printThreadDump() {
@@ -770,11 +769,15 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSize(int expectedSize, @NotNull Object[] array) {
-    assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    if (array.length != expectedSize) {
+      assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    }
   }
 
   public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
-    assertEquals(toString(c), expectedSize, c.size());
+    if (c.size() != expectedSize) {
+      assertEquals(toString(c), expectedSize, c.size());
+    }
   }
 
   @NotNull

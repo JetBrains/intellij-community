@@ -483,6 +483,8 @@
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
   </action>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
   <action id="Back">
     <keyboard-shortcut first-keystroke="meta control LEFT"/>
     <mouse-shortcut keystroke="button4"/>

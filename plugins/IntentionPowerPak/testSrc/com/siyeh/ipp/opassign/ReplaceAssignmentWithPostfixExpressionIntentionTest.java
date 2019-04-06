@@ -13,7 +13,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntentionTest extends IPPTest
 
   @Override
   protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "i++");
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "++");
   }
 
   @Override

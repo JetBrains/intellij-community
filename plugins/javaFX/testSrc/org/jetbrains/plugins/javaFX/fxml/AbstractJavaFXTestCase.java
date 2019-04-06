@@ -46,7 +46,7 @@ public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTest
   public static void addJavaFxJarAsLibrary(@NotNull Module module, @Nullable ModifiableRootModel model) {
     final String libPath = System.getProperty("java.home") + File.separator + "lib" + File.separator + "ext";
     if (model != null) {
-      PsiTestUtil.addLibrary(module, model, "javafx", libPath, "jfxrt.jar");
+      PsiTestUtil.addLibrary(model, "javafx", libPath, "jfxrt.jar");
     }
     else {
       PsiTestUtil.addLibrary(module, "javafx", libPath, "jfxrt.jar");

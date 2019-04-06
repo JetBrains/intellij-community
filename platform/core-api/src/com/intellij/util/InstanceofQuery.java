@@ -4,15 +4,11 @@ package com.intellij.util;
 import com.intellij.concurrency.AsyncFuture;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-
 /**
  * @param <S> source type
  * @param <T> target type
  */
-public class InstanceofQuery<S, T> implements Query<T> {
+public class InstanceofQuery<S, T> extends AbstractQuery<T> {
   private final Class<? extends T>[] myClasses;
   private final Query<S> myDelegate;
 
@@ -22,44 +18,14 @@ public class InstanceofQuery<S, T> implements Query<T> {
   }
 
   @Override
-  @NotNull
-  public Collection<T> findAll() {
-    ArrayList<T> result = new ArrayList<>();
-    forEach((Processor<? super T>)o -> {
-      result.add(o);
-      return true;
-    });
-    return result;
-  }
-
-  @Override
-  public T findFirst() {
-    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>();
-    forEach(processor);
-    return processor.getFoundValue();
-  }
-
-  @Override
-  public boolean forEach(@NotNull final Processor<? super T> consumer) {
-    return myDelegate.forEach(new MyProcessor(consumer));
+  protected boolean processResults(@NotNull Processor<? super T> consumer) {
+    return delegateProcessResults(myDelegate, new MyProcessor(consumer));
   }
 
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
     return myDelegate.forEachAsync(new MyProcessor(consumer));
-  }
-
-  @NotNull
-  @Override
-  public T[] toArray(@NotNull T[] a) {
-    final Collection<T> all = findAll();
-    return all.toArray(a);
-  }
-
-  @Override
-  public Iterator<T> iterator() {
-    return new UnmodifiableIterator<>(findAll().iterator());
   }
 
   private class MyProcessor implements Processor<S> {

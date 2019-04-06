@@ -1,6 +1,7 @@
 import org.hamcrest.CoreMatchers;
 import org.jetbrains.annotations.Nullable;
 import org.assertj.core.api.Assertions;
+import java.util.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -65,5 +66,49 @@ class Contracts {
 
   Boolean getSomething() {
     return true;
+  }
+
+  void testOptional() {
+    Optional<String> id = obtainOptional();
+    Assertions.assertThat(id.isPresent()). isTrue();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = obtainOptional();
+    Assertions.assertThat(id).isNotEmpty();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = obtainOptional();
+    Assertions.assertThat(id).isPresent();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+  }
+
+  native Optional<String> obtainOptional();
+
+  void testArray(int[] array, int[] array2) {
+    if (Math.random() > 0.5) {
+      Assertions.assertThat(array).isEmpty();
+      System.out.println(array[<warning descr="Array index is out of bounds">0</warning>]);
+    }
+    Assertions.assertThat(array2).isNotEmpty();
+    if (<warning descr="Condition 'array2.length == 0' is always 'false'">array2.length == 0</warning>) {}
+    Assertions.<warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>(array2).isEmpty();
+  }
+
+  void testString(String str, String str2) {
+    if (Math.random() > 0.5) {
+      Assertions.assertThat(str).isEmpty();
+      System.out.println(str.<warning descr="The call to 'charAt' always fails as index is out of bounds">charAt</warning>(0));
+    }
+    Assertions.assertThat(str2).isNotEmpty();
+    if (<warning descr="Condition 'str2.length() == 0' is always 'false'">str2.length() == 0</warning>) {}
+    Assertions.<warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>(str2).isEmpty();
+  }
+
+  void testList(List<String> list, List<String> list2) {
+    if (Math.random() > 0.5) {
+      Assertions.assertThat(list).isEmpty();
+      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(0));
+    }
+    Assertions.assertThat(list2).isNotEmpty();
+    if (<warning descr="Condition 'list2.size() == 0' is always 'false'">list2.size() == 0</warning>) {}
+    Assertions.<warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>(list2).isEmpty();
   }
 }

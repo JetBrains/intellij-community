@@ -447,7 +447,11 @@ abstract class FunctionHelper {
           }
         }
       }
-      return functionalInterface.getPresentableText().toLowerCase(Locale.ENGLISH);
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(functionalInterface);
+      if (psiClass != null && psiClass.getName() != null) {
+        return psiClass.getName().toLowerCase(Locale.ENGLISH);
+      }
+      return "fn";
     }
 
     @Override

@@ -200,5 +200,11 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     }
   }
 
+  protected fun assertNoErrorNotification() {
+    vcsNotifier.notifications.find { it.type == NotificationType.ERROR }?.let { notification ->
+      fail("No error notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
+    }
+  }
+
   data class AsyncTask(val name: String, val indicator: ProgressIndicator, val future: Future<*>)
 }

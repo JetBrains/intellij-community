@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.Property;
@@ -132,14 +131,14 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
             elementToFold = callSourcePsi;
           }
           result.add(
-            new NamedFoldingDescriptor(ObjectUtils.assertNotNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
-                                       formatMethodCallExpression(expressions), isFoldingsOn(), set));
+            new FoldingDescriptor(ObjectUtils.assertNotNull(elementToFold.getNode()), elementToFold.getTextRange(), null,
+                                  formatMethodCallExpression(expressions), isFoldingsOn(), set));
           return;
         }
       }
     }
-    result.add(new NamedFoldingDescriptor(ObjectUtils.assertNotNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
-                                          getI18nMessage(expression), isFoldingsOn(), set));
+    result.add(new FoldingDescriptor(ObjectUtils.assertNotNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
+                                     getI18nMessage(expression), isFoldingsOn(), set));
   }
 
 

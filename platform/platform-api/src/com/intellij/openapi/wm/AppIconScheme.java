@@ -26,7 +26,7 @@ public class AppIconScheme {
 
   public interface Progress {
 
-    static final Progress TESTS = new Progress() {
+    Progress TESTS = new Progress() {
       @Override
       public Color getOkColor() {
         return TESTS_OK_COLOR;
@@ -38,7 +38,7 @@ public class AppIconScheme {
       }
     };
 
-    static final Progress BUILD = new Progress() {
+    Progress BUILD = new Progress() {
       @Override
       public Color getOkColor() {
         return BUILD_OK_COLOR;
@@ -50,7 +50,7 @@ public class AppIconScheme {
       }
     };
 
-    static final Progress INDEXING = new Progress() {
+    Progress INDEXING = new Progress() {
       @Override
       public Color getOkColor() {
         return INDEXING_OK_COLOR;

@@ -277,7 +277,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       public void ancestorRemoved(AncestorEvent event) {}
     };
     addAncestorListener(ancestorListener);
-    Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
+    Disposer.register(myHeader, () -> removeAncestorListener(ancestorListener));
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {
@@ -421,7 +421,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @NotNull
   private DefaultActionGroup createResizeActionGroup() {
-    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true);
+    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true) {
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
     resize.add(new ResizeToolWindowAction.Left(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
     resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));

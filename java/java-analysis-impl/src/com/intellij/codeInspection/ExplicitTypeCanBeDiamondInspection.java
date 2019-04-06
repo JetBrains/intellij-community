@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -52,6 +52,11 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();
           LOG.assertTrue(parameterList != null);
+          for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
+            if (typeElement.getAnnotations().length > 0) {
+              return;
+            }
+          }
           final PsiElement firstChild = parameterList.getFirstChild();
           final PsiElement lastChild = parameterList.getLastChild();
           final TextRange range = new TextRange(firstChild != null && firstChild.getNode().getElementType() == JavaTokenType.LT ? 1 : 0,

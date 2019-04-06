@@ -42,7 +42,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   private final TagBuilder myTagBuilder;
   private final LinkListener<String> mySearchListener;
   public final IdeaPluginDescriptor myPlugin;
-  private JLabel myNameComponent;
+  private final JLabel myNameComponent = new JLabel();
   private JLabel myIconLabel;
   private JButton myUpdateButton;
   private JButton myInstallButton;
@@ -107,7 +107,6 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         Insets insets = target.getInsets();
         int left = insets.left;
         int right = myButtonsPanel.getX() - offset;
-        int parentWidth = right - left;
         int versionWidth = myVersion == null ? 0 : myVersion.getPreferredSize().width;
         int nameWidth = myNameComponent.getPreferredSize().width;
         int nameWithVersionWidth = nameWidth + versionWidth;
@@ -115,6 +114,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
           nameWithVersionWidth += offset;
         }
 
+        int parentWidth = right - left;
         if (nameWithVersionWidth <= parentWidth) {
           myNameComponent.setToolTipText(null);
           return;
@@ -134,20 +134,6 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       }
     });
 
-    boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
-
-    if (bundled) {
-      myNameComponent = new JLabel();
-    }
-    else {
-      LinkComponent linkComponent = new LinkComponent();
-      linkComponent.setPaintUnderline(false);
-      //noinspection unchecked
-      linkComponent.setListener((_0, _1) -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())), null);
-      myNameComponent = linkComponent;
-    }
-
     myNameComponent.setOpaque(false);
     myNameComponent.setText(myPlugin.getName());
     Font font = myNameComponent.getFont();
@@ -162,6 +148,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     nameButtons.add(myButtonsPanel = createButtons(update), BorderLayout.EAST);
     centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
+    boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
     String version = bundled ? "bundled" : myPlugin.getVersion();
 
     if (!StringUtil.isEmptyOrSpaces(version)) {
@@ -200,7 +187,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     PluginId id = myPlugin.getPluginId();
 
-    if ((myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) ||
+    if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted() ||
         pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
       buttons.add(myRestartButton = new RestartButton(myPluginsModel));
     }
@@ -296,10 +283,10 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myCenterPanel.add(metrics);
 
       if (date != null) {
-        createRatingLabel(metrics, date, AllIcons.Plugins.Updated, CellPluginComponent.GRAY_COLOR);
+        createRatingLabel(metrics, date, AllIcons.Plugins.Updated);
       }
       if (downloads != null) {
-        createRatingLabel(metrics, downloads, AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR);
+        createRatingLabel(metrics, downloads, AllIcons.Plugins.Downloads);
       }
 
       if (rating != null) {
@@ -310,10 +297,10 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     }
   }
 
-  private static void createRatingLabel(@NotNull JPanel panel, @NotNull String text, @NotNull Icon icon, @NotNull Color color) {
+  private static void createRatingLabel(@NotNull JPanel panel, @NotNull String text, @NotNull Icon icon) {
     JLabel label = new JLabel(text, icon, SwingConstants.CENTER);
     label.setOpaque(false);
-    label.setForeground(color);
+    label.setForeground(CellPluginComponent.GRAY_COLOR);
     panel.add(PluginManagerConfigurableNew.installTiny(label));
   }
 
@@ -410,7 +397,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     myButtonsPanel.doLayout();
     myCenterPanel.add(myIndicator.getComponent());
 
-    myPluginsModel.addProgress(myPlugin, myIndicator);
+    MyPluginModel.addProgress(myPlugin, myIndicator);
 
     if (repaint) {
       doLayout();
@@ -444,7 +431,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   public void close() {
     if (myIndicator != null) {
-      myPluginsModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(myPlugin, myIndicator);
       myIndicator = null;
     }
   }
@@ -486,16 +473,23 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         bottomPanel.add(descriptionComponent, JBUI.scale(700), -1);
       }
 
+      boolean topBorder = false;
+
       if (!StringUtil.isEmptyOrSpaces(vendor) || !StringUtil.isEmptyOrSpaces(size)) {
         java.util.List<JLabel> labels = new ArrayList<>();
 
         if (!StringUtil.isEmptyOrSpaces(vendor)) {
           JPanel linePanel = createLabelsPanel(bottomPanel, labels, "Vendor:", vendor, myPlugin.getVendorUrl());
           linePanel.setBorder(JBUI.Borders.emptyTop(20));
+          topBorder = true;
         }
 
         if (!StringUtil.isEmptyOrSpaces(size)) {
-          createLabelsPanel(bottomPanel, labels, "Size:", PluginManagerColumnInfo.getFormattedSize(size), null);
+          JPanel linePanel = createLabelsPanel(bottomPanel, labels, "Size:", PluginManagerColumnInfo.getFormattedSize(size), null);
+          if (!topBorder) {
+            linePanel.setBorder(JBUI.Borders.emptyTop(20));
+            topBorder = true;
+          }
         }
 
         if (labels.size() > 1) {
@@ -506,6 +500,15 @@ public class DetailsPagePluginComponent extends OpaquePanel {
           for (JLabel label : labels) {
             label.setPreferredSize(new Dimension(width, label.getPreferredSize().height));
           }
+        }
+      }
+
+      if (!myPlugin.isBundled() || myPlugin.allowBundledUpdate()) {
+        JLabel link = createLink("Plugin homepage", "https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                    URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()));
+        bottomPanel.add(link);
+        if (!topBorder) {
+          link.setBorder(JBUI.Borders.emptyTop(20));
         }
       }
     }
@@ -528,13 +531,18 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       linePanel.add(new JLabel(text));
     }
     else {
-      LinkLabel<Object> linkLabel = new LinkLabel<>(text, AllIcons.Ide.External_link_arrow, (_0, _1) -> BrowserUtil.browse(link));
-      linkLabel.setIconTextGap(0);
-      linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-      linePanel.add(linkLabel);
+      linePanel.add(createLink(text, link));
     }
 
     return linePanel;
+  }
+
+  @NotNull
+  private static JLabel createLink(@NotNull String text, @NotNull String link) {
+    LinkLabel<Object> linkLabel = new LinkLabel<>(text, AllIcons.Ide.External_link_arrow, (_0, _1) -> BrowserUtil.browse(link));
+    linkLabel.setIconTextGap(0);
+    linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+    return linkLabel;
   }
 
   @Nullable
@@ -576,7 +584,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   private void doUninstall() {
-    if (myPluginsModel.showUninstallDialog(myPlugin.getName(), 1)) {
+    if (MyPluginModel.showUninstallDialog(myPlugin.getName(), 1)) {
       myPluginsModel.doUninstall(this, myPlugin, this::changeInstallOrUpdateToRestart);
     }
   }

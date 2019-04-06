@@ -30,6 +30,8 @@ import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 import javafx.application.Platform;
@@ -419,7 +421,7 @@ public class TipUIUtil {
                           BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                           Graphics2D graphics = buffer.createGraphics();
                           super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
-                          drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
+                          drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
                         }
 
                         @Override

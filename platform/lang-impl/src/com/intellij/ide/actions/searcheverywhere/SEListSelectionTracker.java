@@ -1,12 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class SEListSelectionTracker implements ListSelectionListener {
@@ -14,8 +18,9 @@ class SEListSelectionTracker implements ListSelectionListener {
   private final JBList<?> myList;
   private final SearchEverywhereUI.SearchListModel myListModel;
 
-  private boolean locked;
+  private int lockCounter;
   private final List<Object> selectedItems = new ArrayList<>();
+  private boolean moreSelected = false;
 
   SEListSelectionTracker(JBList<?> list, SearchEverywhereUI.SearchListModel model) {
     myList = list;
@@ -24,30 +29,50 @@ class SEListSelectionTracker implements ListSelectionListener {
 
   @Override
   public void valueChanged(ListSelectionEvent e) {
-    if (locked) return;
+    if (isLocked()) return;
 
     saveSelection();
   }
 
   void saveSelection() {
     selectedItems.clear();
-    selectedItems.addAll(myList.getSelectedValuesList());
+
+    int[] indices = myList.getSelectedIndices();
+    List<?> selectedItemsList;
+    if (indices.length == 1 && myListModel.isMoreElement(indices[0])) {
+      moreSelected = true;
+      selectedItemsList = Collections.singletonList(myListModel.getElementAt(indices[0] - 1));
+    }
+    else {
+      moreSelected = false;
+      selectedItemsList = Arrays.stream(indices)
+        .filter(i -> !myListModel.isMoreElement(i))
+        .mapToObj(i -> myListModel.getElementAt(i))
+        .collect(Collectors.toList());
+    }
+
+    selectedItems.addAll(selectedItemsList);
   }
 
   void restoreSelection() {
-    locked = true;
+    if (isLocked()) return;
+
+    lock();
     try {
       int[] indicesToSelect = calcIndicesToSelect();
+      if (moreSelected && indicesToSelect.length == 1) {
+        indicesToSelect[0] += 1;
+      }
 
-      if (indicesToSelect.length > 0) {
-        myList.setSelectedIndices(indicesToSelect);
+      if (indicesToSelect.length == 0) {
+        indicesToSelect = new int[]{0};
       }
-      else {
-        myList.setSelectedIndex(0);
-      }
+
+      myList.setSelectedIndices(indicesToSelect);
+      ScrollingUtil.ensureRangeIsVisible(myList, indicesToSelect[0], indicesToSelect[indicesToSelect.length - 1]);
     }
     finally {
-      locked = false;
+      unlock();
     }
   }
 
@@ -58,8 +83,16 @@ class SEListSelectionTracker implements ListSelectionListener {
     }
   }
 
-  void setLocked(boolean lock) {
-    locked = lock;
+  void lock() {
+    lockCounter++;
+  }
+
+  void unlock() {
+    if (lockCounter > 0) lockCounter--;
+  }
+
+  private boolean isLocked() {
+    return lockCounter > 0;
   }
 
   private int[] calcIndicesToSelect() {

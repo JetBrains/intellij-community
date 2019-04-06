@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,9 +46,9 @@ class Win7TaskBar {
   public interface User32Ex extends StdCallLibrary {
     User32Ex INSTANCE = Native.loadLibrary("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
-    int LookupIconIdFromDirectoryEx(Memory presbits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
+    int LookupIconIdFromDirectoryEx(Memory pResBits, boolean fIcon, int cxDesired, int cyDesired, int Flags);
 
-    WinDef.HICON CreateIconFromResourceEx(Pointer presbits,
+    WinDef.HICON CreateIconFromResourceEx(Pointer pResBits,
                                           WinDef.DWORD dwResSize,
                                           boolean fIcon,
                                           WinDef.DWORD dwVer,
@@ -70,37 +56,37 @@ class Win7TaskBar {
                                           int cyDesired,
                                           int Flags);
 
+    @SuppressWarnings("UnusedReturnValue")
     boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
   }
 
-  private static boolean ourInitialized = true;
-
+  private static final boolean ourInitialized;
   static {
+    boolean initialized = false;
     try {
-      initialize();
+      initialized = initialize();
     }
-    catch (Throwable e) {
-      LOG.error(e);
-      ourInitialized = false;
+    catch (Throwable t) {
+      LOG.error(t);
     }
+    ourInitialized = initialized;
   }
 
-  private static void initialize() {
+  private static boolean initialize() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+      return false;
     }
 
     Ole32 ole32 = Ole32.INSTANCE;
     ole32.CoInitializeEx(Pointer.NULL, 0);
 
-    Guid.GUID CLSID_TaskbarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
-    Guid.GUID IID_ITaskbarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
+    Guid.GUID CLSID_TaskBarList = Ole32Util.getGUIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}");
+    Guid.GUID IID_ITaskBarList3 = Ole32Util.getGUIDFromString("{EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF}");
     PointerByReference p = new PointerByReference();
-    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskbarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskbarList3, p);
-    if (!W32Errors.S_OK.equals(hr)) {
-      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskbarList3) hResult: " + hr);
-      ourInitialized = false;
-      return;
+    WinNT.HRESULT hr = ole32.CoCreateInstance(CLSID_TaskBarList, Pointer.NULL, ObjBase.CLSCTX_ALL, IID_ITaskBarList3, p);
+    if (!WinError.S_OK.equals(hr)) {
+      LOG.error("Win7TaskBar CoCreateInstance(IID_ITaskBarList3) hResult: " + hr);
+      return false;
     }
 
     myInterfacePointer = p.getValue();
@@ -111,10 +97,12 @@ class Win7TaskBar {
     mySetProgressValue = Function.getFunction(vTable[TaskBarList_SetProgressValue], Function.ALT_CONVENTION);
     mySetProgressState = Function.getFunction(vTable[TaskBarList_SetProgressState], Function.ALT_CONVENTION);
     mySetOverlayIcon = Function.getFunction(vTable[TaskBarList_SetOverlayIcon], Function.ALT_CONVENTION);
+
+    return true;
   }
 
   static void setProgress(IdeFrame frame, double value, boolean isOk) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return;
     }
 
@@ -123,35 +111,29 @@ class Win7TaskBar {
     mySetProgressValue.invokeInt(new Object[]{myInterfacePointer, handle, new WinDef.ULONGLONG((long)(value * 100)), TOTAL_PROGRESS});
   }
 
-  private static boolean isEnabled() {
-    return !ApplicationManager.getApplication().isUnitTestMode() && ourInitialized;
-  }
-
   static void hideProgress(IdeFrame frame) {
-    if (!isEnabled()) {
+    if (!ourInitialized) {
       return;
     }
 
     mySetProgressState.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), TBPF_NOPROGRESS});
   }
 
-  static void setOverlayIcon(IdeFrame frame, Object icon, boolean dispose) {
-    if (!isEnabled()) {
+  static void setOverlayIcon(IdeFrame frame, WinDef.HICON icon, boolean dispose) {
+    if (!ourInitialized) {
       return;
     }
 
-    if (icon == null) {
-      icon = Pointer.NULL;
-    }
     mySetOverlayIcon.invokeInt(new Object[]{myInterfacePointer, getHandle(frame), icon, Pointer.NULL});
+
     if (dispose) {
-      User32.INSTANCE.DestroyIcon((WinDef.HICON)icon);
+      User32.INSTANCE.DestroyIcon(icon);
     }
   }
 
-  static Object createIcon(byte[] ico) {
-    if (!isEnabled()) {
-      return new Object();
+  static WinDef.HICON createIcon(byte[] ico) {
+    if (!ourInitialized) {
+      return null;
     }
 
     DisposableMemory memory = new DisposableMemory(ico.length);
@@ -164,6 +146,7 @@ class Win7TaskBar {
       if (offset != 0) {
         return User32Ex.INSTANCE.CreateIconFromResourceEx(memory.share(offset), DWORD_ZERO, true, ICO_VERSION, nSize, nSize, 0);
       }
+
       return null;
     }
     finally {
@@ -171,8 +154,8 @@ class Win7TaskBar {
     }
   }
 
-  static void attention(IdeFrame frame, boolean critical) {
-    if (!isEnabled()) {
+  static void attention(IdeFrame frame) {
+    if (!ourInitialized) {
       return;
     }
 

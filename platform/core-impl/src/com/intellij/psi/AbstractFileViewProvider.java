@@ -133,13 +133,18 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Nullable
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
+    return createFile(file, fileType, getBaseLanguage());
+  }
+
+  @NotNull
+  protected PsiFile createFile(@NotNull VirtualFile file, @NotNull FileType fileType, @NotNull Language language) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return SingleRootFileViewProvider.isTooLargeForContentLoading(file) ?
              new PsiLargeBinaryFileImpl((PsiManagerImpl)getManager(), this) :
              new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
-      final PsiFile psiFile = createFile(getBaseLanguage());
+      final PsiFile psiFile = createFile(language);
       if (psiFile != null) return psiFile;
     }
 
@@ -398,7 +403,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NonNls
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
+    return getClass().getName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
   }
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);

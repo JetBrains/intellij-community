@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairEleme
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationMethodElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionBodyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrClassDefinitionElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType;
@@ -24,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrFieldElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImplementsClauseElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrInterfaceDefinitionElementType;
-import org.jetbrains.plugins.groovy.lang.parser.GrLambdaBlockElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrModifierListElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
@@ -62,6 +62,7 @@ public interface GroovyElementTypes {
   GroovyElementType AS_EXPRESSION = new GroovyElementType("AS_EXPRESSION");
   GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
+  GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY = new GrBlockLambdaBodyElementType("BLOCK_LAMBDA_BODY");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("BLOCK_STATEMENT");
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("BREAK_STATEMENT");
@@ -91,6 +92,7 @@ public interface GroovyElementTypes {
   GrEnumDefinitionElementType ENUM_TYPE_DEFINITION = new GrEnumDefinitionElementType("ENUM_TYPE_DEFINITION");
   GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("EQUALITY_EXPRESSION");
   GroovyElementType EXPRESSION = new GroovyElementType("EXPRESSION");
+  GroovyElementType EXPRESSION_LAMBDA_BODY = new GroovyElementType("EXPRESSION_LAMBDA_BODY");
   GroovyElementType EXPRESSION_LIST = new GroovyElementType("EXPRESSION_LIST");
   GrExtendsClauseElementType EXTENDS_CLAUSE = new GrExtendsClauseElementType("EXTENDS_CLAUSE");
   GrFieldElementType FIELD = new GrFieldElementType("FIELD");
@@ -107,7 +109,6 @@ public interface GroovyElementTypes {
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = new GrInterfaceDefinitionElementType("INTERFACE_TYPE_DEFINITION");
   GroovyElementType IN_EXPRESSION = new GroovyElementType("IN_EXPRESSION");
   GroovyElementType LABELED_STATEMENT = new GroovyElementType("LABELED_STATEMENT");
-  GrLambdaBlockElementType LAMBDA_BLOCK = new GrLambdaBlockElementType("LAMBDA_BLOCK");
   GroovyElementType LAMBDA_EXPRESSION = new GroovyElementType("LAMBDA_EXPRESSION");
   GroovyElementType LAND_EXPRESSION = new GroovyElementType("LAND_EXPRESSION");
   GroovyElementType LEFT_SHIFT_SIGN = new GroovyElementType("LEFT_SHIFT_SIGN");

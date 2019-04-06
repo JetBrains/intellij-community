@@ -8,7 +8,7 @@ PyFile:magicMultiline.py
     PsiWhiteSpace(' ')
     PsiElement(Py:SINGLE_QUOTED_STRING)('"My shell is:"')
     PsiWhiteSpace(' ')
-    PsiElement(BAD_CHARACTER)('$')
+    PsiElement(Py:DOLLAR)('$')
     PsiElement(Py:IDENTIFIER)('SHELL')
     PsiWhiteSpace('\n')
     PsiElement(Py:IDENTIFIER)('echo')

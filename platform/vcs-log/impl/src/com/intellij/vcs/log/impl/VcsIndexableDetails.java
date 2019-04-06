@@ -30,5 +30,7 @@ public interface VcsIndexableDetails extends VcsFullCommitDetails {
   @NotNull
   Collection<Couple<String>> getRenamedPaths(int parent);
 
+  int size();
+
   boolean hasRenames();
 }

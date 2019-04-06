@@ -30,15 +30,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 
 /**
- * @author yole
+ * Lang data keys.
  */
 public class LangDataKeys extends PlatformDataKeys {
+
   public static final DataKey<Module> MODULE = DataKey.create("module");
+
   /**
-   * Returns module if module node is selected (in module view)
+   * Returns current/selected module.
    */
   public static final DataKey<Module> MODULE_CONTEXT = DataKey.create("context.Module");
   public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create("context.Module.Array");
+
   public static final DataKey<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL = DataKey.create("modifiable.module.model");
 
   public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
@@ -46,10 +49,20 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 
   /**
-   * Returns {@link com.intellij.ide.IdeView} (one of project, packages, commander or favorites view).
+   * Returns {@link IdeView} (one of project, packages, commander or favorites view).
    */
   public static final DataKey<IdeView> IDE_VIEW = DataKey.create("IDEView");
+
+  /**
+   * Allows suppressing "New..." action.
+   *
+   * @see com.intellij.ide.actions.NewElementAction#isEnabled(AnActionEvent)
+   */
   public static final DataKey<Boolean> NO_NEW_ACTION = DataKey.create("IDEview.no.create.element.action");
+
+  /**
+   * Allows pre-selecting item in "New..." action.
+   */
   public static final DataKey<Condition<AnAction>> PRESELECT_NEW_ACTION_CONDITION = DataKey.create("newElementAction.preselect.id");
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
@@ -60,7 +73,6 @@ public class LangDataKeys extends PlatformDataKeys {
 
   public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
   public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
-
 
   public static final DataKey<Library> LIBRARY = DataKey.create("project.model.library");
 

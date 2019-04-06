@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -28,6 +30,22 @@ import static com.intellij.psi.CommonClassNames.*;
  */
 class SideEffectCalculator {
   private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
+
+  private static final Set<String> SIDE_EFFECTS_FREE_CLASSES = ContainerUtil.set(
+    JAVA_LANG_BOOLEAN,
+    JAVA_LANG_CHARACTER,
+    JAVA_LANG_SHORT,
+    JAVA_LANG_INTEGER,
+    JAVA_LANG_LONG,
+    JAVA_LANG_FLOAT,
+    JAVA_LANG_DOUBLE,
+    JAVA_LANG_BYTE,
+    JAVA_LANG_STRING,
+    "java.math.BigDecimal",
+    "java.math.BigInteger",
+    "java.math.MathContext",
+    "java.util.UUID",
+    JAVA_UTIL_OBJECTS);
 
   @Contract("null -> false")
   boolean mayHaveSideEffect(@Nullable PsiExpression expression) {
@@ -92,7 +110,7 @@ class SideEffectCalculator {
       return true;
     }
     PsiElement resolved = ref.resolve();
-    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || resolved instanceof PsiClass) {
       return false;
     }
     if (resolved instanceof PsiField) {
@@ -101,14 +119,14 @@ class SideEffectCalculator {
     }
     if (resolved instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)resolved;
-      return methodHasSideEffect(method);
+      return methodMayHaveSideEffect(method);
     }
     return true;
   }
 
   private boolean calculateCallSideEffect(@NotNull PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
-    return methodHasSideEffect(method) ||
+    return methodMayHaveSideEffect(method) ||
            calculateSideEffect(call, call.getMethodExpression().getQualifierExpression());
   }
 
@@ -140,27 +158,29 @@ class SideEffectCalculator {
   }
 
   @Contract("null -> true")
-  private static boolean methodHasSideEffect(@Nullable PsiMethod method) {
+  private static boolean methodMayHaveSideEffect(@Nullable PsiMethod method) {
     if (method == null) return true;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return true;
 
-    if (ClassUtils.isImmutableClass(psiClass) ||
-        MethodUtils.isEquals(method) ||
+    String className = psiClass.getQualifiedName();
+    if (className == null) return true;
+    if (MethodUtils.isEquals(method) ||
         MethodUtils.isHashCode(method) ||
         MethodUtils.isToString(method) ||
         MethodUtils.isCompareTo(method) ||
-        MethodUtils.isComparatorCompare(method)) {
+        MethodUtils.isComparatorCompare(method) ||
+        SIDE_EFFECTS_FREE_CLASSES.contains(className)) {
       return false;
     }
 
-    String className = psiClass.getQualifiedName();
-    if (JAVA_UTIL_OBJECTS.equals(className)) {
-      return false;
-    }
     if (JAVA_LANG_MATH.equals(className) ||
         JAVA_LANG_STRICT_MATH.equals(className)) {
       return "random".equals(method.getName()); // it's the only exception
+    }
+    if (JAVA_UTIL_COLLECTIONS.equals(className)) {
+      String name = method.getName();
+      return !name.equals("min") && !name.equals("max") && !name.startsWith("unmodifiable");
     }
     return true;
   }

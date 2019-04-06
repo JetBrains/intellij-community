@@ -218,4 +218,16 @@ class AdvancedArrayAccess {
     if(<warning descr="Condition 'arr2[32] == 32' is always 'true'">arr2[32] == 32</warning>) {}
     if(<warning descr="Condition 'arr2[33] == 33' is always 'true'">arr2[33] == 33</warning>) {}
   }
+
+  private static void change(Object[] x) {
+    ((String[]) x[0])[0] = "OK";
+  }
+
+  // IDEA-210027
+  public static void main(String[] args) {
+    String[] array = new String[] { null };
+    change(new Object[] { array });
+    System.out.println(array[0]); // <-- Value 'array[0]' was reported as always 'null'
+  }
+
 }

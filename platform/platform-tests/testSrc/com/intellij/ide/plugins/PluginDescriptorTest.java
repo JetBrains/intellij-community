@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Test;
 
@@ -11,6 +12,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
@@ -37,6 +39,17 @@ public class PluginDescriptorTest {
     IdeaPluginDescriptorImpl descriptor = loadDescriptor("family");
     assertNotNull(descriptor);
     assertEquals(1, descriptor.getOptionalDescriptors().size());
+  }
+
+  @Test
+  public void testMultipleOptionalDescriptors() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("multipleOptionalDescriptors");
+    assertNotNull(descriptor);
+    Set<PluginId> ids = descriptor.getOptionalDescriptors().keySet();
+    assertEquals(2, ids.size());
+    PluginId[] idsArray = ids.toArray(PluginId.EMPTY_ARRAY);
+    assertEquals("dep2", idsArray[0].getIdString());
+    assertEquals("dep1", idsArray[1].getIdString());
   }
 
   @Test

@@ -11,18 +11,16 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Used to transition onto JDK9 where the following {@code JComponent} client property:
+ * This utility class is used to multiplex AA requests addressing JDK8 or earlier JDK versions.
+ * Because since JDK9 the following {@code JComponent}'s client property mapping:
  * <pre>
- * {@code SwingUtilities2.AA_TEXT_PROPERTY_KEY -> SwingUtilities2.AATextInfo instance}
+ * {@code SwingUtilities2.AA_TEXT_PROPERTY_KEY -> SwingUtilities2.AATextInfo}
  * </pre>
- * was replaced with two properties:
+ * was split into the pair (see JDK-6302464):
  * <pre>
- * {@code RenderingHints.KEY_TEXT_ANTIALIASING -> Object value}
- * {@code RenderingHints.KEY_TEXT_LCD_CONTRAST -> Integer value}
+ * {@code RenderingHints.KEY_TEXT_ANTIALIASING -> Object}
+ * {@code RenderingHints.KEY_TEXT_LCD_CONTRAST -> Integer}
  * </pre>
- * <p>
- * [todo] All the references to {@link SwingUtilities2.AATextInfo} and {@link SwingUtilities2#AA_TEXT_PROPERTY_KEY}
- * should be removed when IDEA starts to compile with JDK9 (see JDK-6302464).
  *
  * @author tav
  */

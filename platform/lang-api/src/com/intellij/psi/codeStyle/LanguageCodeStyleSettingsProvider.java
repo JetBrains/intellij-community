@@ -3,12 +3,14 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,10 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -131,13 +131,27 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
+  /**
+   * @return A list of languages from which code style settings can be copied to this provider's language settings. By default all languages
+   *         with code style settings are returned. In UI the languages are shown in the same order they are in the list.
+   * @see #getLanguagesWithCodeStyleSettings()
+   */
+  public List<Language> getApplicableLanguages() {
+    return getLanguagesWithCodeStyleSettings();
+  }
+
+  /**
+   * @return A list of languages with code style settings, namely for which {@code LanguageCodeStyleSettingsProvider} exists.
+   *         The list is ordered by language names as returned by {@link #getLanguageName(Language)} method.
+   */
   @NotNull
-  public static Language[] getLanguagesWithCodeStyleSettings() {
+  public static List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       languages.add(provider.getLanguage());
     }
-    return languages.toArray(new Language[0]);
+    Collections.sort(languages, (l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
+    return languages;
   }
 
   @Nullable
@@ -359,8 +373,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       try {
-        provider.getClass().getDeclaredMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
-        settingsPagesProviders.add(provider);
+        Method configMethod = provider.getClass().getMethod("createConfigurable", CodeStyleSettings.class, CodeStyleSettings.class);
+        Class declaringClass = configMethod.getDeclaringClass();
+        if (!declaringClass.equals(LanguageCodeStyleSettingsProvider.class)) {
+          settingsPagesProviders.add(provider);
+        }
       }
       catch (NoSuchMethodException e) {
         // Do not add the provider.
@@ -377,7 +394,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @ApiStatus.Experimental
   @Nullable
-  public CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return null;
+  }
+
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    return Collections.emptyList();
   }
 }

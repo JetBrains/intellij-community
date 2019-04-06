@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
 import com.intellij.json.psi.*;
@@ -20,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,13 +42,7 @@ public class JsonCachedValues {
 
   @Nullable
   private static JsonSchemaObject computeSchemaObject(@NotNull PsiFile f) {
-    final JsonObject topLevelValue = AstLoadingFilter.forceAllowTreeLoading(
-      f,
-      () -> ObjectUtils.tryCast(((JsonFile)f).getTopLevelValue(), JsonObject.class));
-    if (topLevelValue != null) {
-      return new JsonSchemaReader().read(topLevelValue);
-    }
-    return null;
+    return new JsonSchemaReader(f.getVirtualFile()).read(f);
   }
 
   static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
@@ -98,24 +94,30 @@ public class JsonCachedValues {
                                       @NotNull Function<? super PsiFile, ? extends T> eval,
                                       @NotNull Key<CachedValue<T>> cacheKey) {
     final PsiFile psiFile = resolveFile(schemaFile, project);
-    if (!(psiFile instanceof JsonFile)) return null;
+    if (psiFile == null) return null;
     return getOrCompute(psiFile, eval, cacheKey);
   }
 
   static final String ID_PATHS_CACHE_KEY = "JsonSchemaIdToPointerCache";
   private static final Key<CachedValue<Map<String, String>>> SCHEMA_ID_PATHS_CACHE_KEY = Key.create(ID_PATHS_CACHE_KEY);
   public static Collection<String> getAllIdsInFile(PsiFile psiFile) {
-    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrComputeIdsMap(psiFile);
     return map == null ? ContainerUtil.emptyList() : map.keySet();
   }
   @Nullable
   public static String resolveId(PsiFile psiFile, String id) {
-    Map<String, String> map = getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+    Map<String, String> map = getOrComputeIdsMap(psiFile);
     return map == null ? null : map.get(id);
   }
 
+  @Nullable
+  public static Map<String, String> getOrComputeIdsMap(PsiFile psiFile) {
+    return getOrCompute(psiFile, JsonCachedValues::computeIdsMap, SCHEMA_ID_PATHS_CACHE_KEY);
+  }
+
+  @NotNull
   private static Map<String, String> computeIdsMap(PsiFile file) {
-    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class).filter(p -> "$id".equals(p.getName()))
+    return SyntaxTraverser.psiTraverser(file).filter(JsonProperty.class).filter(p -> "$id".equals(StringUtil.unquoteString(p.getNameElement().getText())))
       .filter(p -> p.getValue() instanceof JsonStringLiteral)
       .toMap(p -> ((JsonStringLiteral)Objects.requireNonNull(p.getValue())).getValue(),
              p -> JsonQualifiedNameProvider.generateQualifiedName(p.getParent(), JsonQualifiedNameKind.JsonPointer));
@@ -206,5 +208,22 @@ public class JsonCachedValues {
                                     @NotNull Function<? super PsiFile, ? extends T> eval,
                                     @NotNull Key<CachedValue<T>> key) {
     return CachedValuesManager.getCachedValue(psiFile, key, () -> CachedValueProvider.Result.create(eval.fun(psiFile), psiFile));
+  }
+
+  public static final Key<CachedValue<JsonSchemaObject>> OBJECT_FOR_FILE_KEY = new Key<>("JsonCachedValues.OBJ_KEY");
+  @Nullable
+  static JsonSchemaObject computeSchemaForFile(@NotNull PsiFile file, @NotNull JsonSchemaService service) {
+    final PsiFile originalFile = CompletionUtil.getOriginalOrSelf(file);
+    JsonSchemaObject value = CachedValuesManager.getCachedValue(originalFile, OBJECT_FOR_FILE_KEY, () -> {
+      VirtualFile virtualFile = originalFile.getVirtualFile();
+      JsonSchemaObject schemaObject = virtualFile == null ? null : service.getSchemaObject(virtualFile);
+      VirtualFile schemaFile = schemaObject == null ? null : service.resolveSchemaFile(schemaObject);
+      PsiFile psiFile = schemaFile == null ? null : originalFile.getManager().findFile(schemaFile);
+      JsonSchemaObject object = schemaObject == null ? JsonSchemaObject.NULL_OBJ : schemaObject;
+      return psiFile == null
+             ? CachedValueProvider.Result.create(object, originalFile)
+             : CachedValueProvider.Result.create(object, originalFile, psiFile);
+    });
+    return value == JsonSchemaObject.NULL_OBJ ? null : value;
   }
 }

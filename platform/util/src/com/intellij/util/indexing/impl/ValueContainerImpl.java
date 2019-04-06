@@ -71,14 +71,14 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   private THashMap<Value, Object> asMapping() {
+    //noinspection unchecked
     return myInputIdMapping instanceof THashMap ? (THashMap<Value, Object>)myInputIdMapping : null;
   }
 
-  @SuppressWarnings("unchecked")
   private Value nullValue() {
+    //noinspection unchecked
     return (Value)myNullValue;
   }
 
@@ -98,7 +98,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<IndexId> ourDebugIndexInfo = new ThreadLocal<IndexId>();
+  static final ThreadLocal<IndexId> ourDebugIndexInfo = new ThreadLocal<>();
 
   @Override
   public void removeAssociatedValue(int inputId) {
@@ -110,8 +110,8 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
       if (valueIterator.getValueAssociationPredicate().contains(inputId)) {
         if (fileSetObjects == null) {
-          fileSetObjects = new SmartList<Object>();
-          valueObjects = new SmartList<Value>();
+          fileSetObjects = new SmartList<>();
+          valueObjects = new SmartList<>();
         }
         else if (DebugAssertions.DEBUG) {
           LOG.error("Expected only one value per-inputId for " + ourDebugIndexInfo.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
@@ -410,7 +410,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       THashMap<Value, Object> mapping = asMapping();
       if (mapping == null) {
         Value oldMapping = (Value)myInputIdMapping;
-        myInputIdMapping = mapping = new THashMap<Value, Object>(2);
+        myInputIdMapping = mapping = new THashMap<>(2);
         mapping.put(oldMapping, myInputIdMappingValue);
         myInputIdMappingValue = null;
       }
@@ -467,7 +467,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         final int inputId = -valueCount;
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
-          mapping = new FileId2ValueMapping<Value>(this);
+          mapping = new FileId2ValueMapping<>(this);
         }
 
         boolean doCompact;

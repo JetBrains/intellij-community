@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -27,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +21,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TestDataHighlightingPassFactory implements ProjectComponent,  TextEditorHighlightingPassFactory {
+public class TestDataHighlightingPassFactory implements ProjectComponent, TextEditorHighlightingPassFactory {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
-  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList(
-    "js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj"
-  );
+  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
+    ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
   private static final int MAX_HOPES = 3;
   private static final String TEST_DATA = "testdata";
   private final Project myProject;
@@ -48,7 +34,7 @@ public class TestDataHighlightingPassFactory implements ProjectComponent,  TextE
     myProject = project;
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
   }
-  
+
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {

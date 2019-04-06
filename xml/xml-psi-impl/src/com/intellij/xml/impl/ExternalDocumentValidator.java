@@ -127,6 +127,8 @@ public class ExternalDocumentValidator {
     };
 
     myHandler.setErrorReporter(new ErrorReporter(myHandler) {
+
+      int unsupportedSchemeAt = -1;
       @Override
       public boolean isStopOnUndeclaredResource() {
         return true;
@@ -159,7 +161,7 @@ public class ExternalDocumentValidator {
             if (elementText.equals("</")) {
               currentElement = currentElement.getNextSibling();
             }
-            else if (elementText.equals(">") || elementText.equals("=")) {
+            else if (elementText.equals(">") || elementText.equals("/>") || elementText.equals("=")) {
               currentElement = currentElement.getPrevSibling();
             }
 
@@ -173,6 +175,21 @@ public class ExternalDocumentValidator {
             }
             String messageId = endIndex != -1 ? localizedMessage.substring(0, endIndex ):"";
             localizedMessage = localizedMessage.substring(endIndex + 1).trim();
+
+            if ("cvc-elt.1.a".equals(messageId)) {
+              XmlTag tag = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class);
+              if (tag != null && tag.getNamespace().isEmpty()) {
+                // "Cannot find the declaration of element" is not helpful without schema
+                return;
+              }
+            } else if ("SchemeUnsupported".equals(messageId)) {
+              unsupportedSchemeAt = offset;
+              return;
+            } else if (unsupportedSchemeAt == offset &&
+                       ("An 'include' failed, and no 'fallback' element was found.".equals(localizedMessage) ||
+                       (e.getLocalizedMessage().startsWith("Include operation failed, reverting to fallback.")))) {
+              return;
+            }
 
             if (localizedMessage.startsWith(CANNOT_FIND_DECLARATION_ERROR_PREFIX) ||
                 localizedMessage.startsWith(ELEMENT_ERROR_PREFIX) ||

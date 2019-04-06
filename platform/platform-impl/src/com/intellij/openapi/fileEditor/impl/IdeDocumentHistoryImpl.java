@@ -14,7 +14,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventListener;
@@ -212,7 +214,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         return new PlaceInfo(file,
                              fileEditor.getState(FileEditorStateLevel.NAVIGATION),
                              TextEditorProvider.getInstance().getEditorTypeId(),
-                             null);
+                             null,
+                             getCaretPosition(fileEditor));
       }
     }
     return null;
@@ -311,6 +314,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     removeInvalidFilesFromStacks();
     if (myBackPlaces.isEmpty()) return;
     final PlaceInfo info = myBackPlaces.removeLast();
+    myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
 
     PlaceInfo current = getCurrentPlaceInfo();
     if (current != null) myForwardPlaces.add(current);
@@ -383,8 +387,31 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  @NotNull
+  public List<PlaceInfo> getBackPlaces() {
+    return ContainerUtil.immutableList(myBackPlaces);
+  }
+
+  @Override
   public List<PlaceInfo> getChangePlaces() {
     return ContainerUtil.immutableList(myChangePlaces);
+  }
+
+  @Override
+  public void removeBackPlace(@NotNull PlaceInfo placeInfo) {
+    removePlaceInfo(placeInfo, myBackPlaces, false);
+  }
+
+  @Override
+  public void removeChangePlace(@NotNull PlaceInfo placeInfo) {
+    removePlaceInfo(placeInfo, myChangePlaces, true);
+  }
+
+  private void removePlaceInfo(@NotNull PlaceInfo placeInfo, @NotNull LinkedList<PlaceInfo> places, boolean changed) {
+    boolean removed = places.remove(placeInfo);
+    if (removed) {
+      myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, changed);
+    }
   }
 
   @Override
@@ -475,7 +502,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     final VirtualFile file = editorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
+
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor));
+  }
+
+  @Nullable
+  private static RangeMarker getCaretPosition(@NotNull FileEditor fileEditor) {
+    if (!(fileEditor instanceof TextEditor)) {
+      return null;
+    }
+
+    Editor editor = ((TextEditor)fileEditor).getEditor();
+    int offset = editor.getCaretModel().getOffset();
+
+    return editor.getDocument().createRangeMarker(offset, offset);
   }
 
   private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged) {
@@ -493,7 +533,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     list.add(next);
     listener.recentPlaceAdded(next, isChanged);
     if (list.size() > limit) {
-      list.removeFirst();
+      PlaceInfo first = list.removeFirst();
+      listener.recentPlaceRemoved(first, isChanged);
     }
   }
 
@@ -509,15 +550,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
+    @Nullable private final RangeMarker myCaretPosition;
 
     public PlaceInfo(@NotNull VirtualFile file,
                      @NotNull FileEditorState navigationState,
                      @NotNull String editorTypeId,
-                     @Nullable EditorWindow window) {
+                     @Nullable EditorWindow window,
+                     @Nullable RangeMarker caretPosition) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
       myWindow = new WeakReference<>(window);
+      myCaretPosition = caretPosition;
     }
 
     public EditorWindow getWindow() {
@@ -543,12 +587,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
-  }
 
-  @Override
-  @NotNull
-  public List<PlaceInfo> getBackPlaces() {
-    return ContainerUtil.immutableList(myBackPlaces);
+    @Nullable
+    public RangeMarker getCaretPosition() {
+      return myCaretPosition;
+    }
   }
 
   @Override
@@ -576,8 +619,22 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public interface RecentPlacesListener {
     Topic<RecentPlacesListener> TOPIC = Topic.create("RecentPlacesListener", RecentPlacesListener.class);
 
+    /**
+     * Fires on a new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos list
+     *
+     * @param changePlace new place info
+     * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};
+     *                    false if place info was added into the back infos list {@link #myBackPlaces}
+     */
     void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged);
 
+    /**
+     * Fires on a place info removing from the {@link #myChangePlaces} or the {@link #myBackPlaces} infos list
+     *
+     * @param changePlace place info that was removed
+     * @param isChanged   true if place info was removed from the changed infos list {@link #myChangePlaces};
+     *                    false if place info was removed from the back infos list {@link #myBackPlaces}
+     */
     void recentPlaceRemoved(@NotNull PlaceInfo changePlace, boolean isChanged);
   }
 }

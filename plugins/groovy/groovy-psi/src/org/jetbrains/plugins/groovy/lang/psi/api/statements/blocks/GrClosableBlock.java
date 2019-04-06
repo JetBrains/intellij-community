@@ -40,6 +40,7 @@ public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
   @Override
   GrParameter[] getAllParameters();
 
+  @Override
   @Nullable
   PsiElement getArrow();
 

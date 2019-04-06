@@ -38,12 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Conditional expression can be conditional call";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be call #loc";
   }

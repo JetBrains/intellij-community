@@ -41,7 +41,7 @@ public interface Git {
   }
 
   /**
-   * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, String, String, List, String...)}
+   * A generic method to run a Git command, when existing methods like {@link #fetch(GitRepository, GitRemote, List, String...)}
    * are not sufficient.
    *
    * @param handlerConstructor this is needed, since the operation may need to repeat (e.g. in case of authentication failure).

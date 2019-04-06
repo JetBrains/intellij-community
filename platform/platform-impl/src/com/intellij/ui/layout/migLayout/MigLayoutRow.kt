@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -15,6 +16,7 @@ import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
 
@@ -207,8 +209,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?) {
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
     addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
+    return CellBuilderImpl(builder, this)
   }
 
   // separate method to avoid JComponent as a receiver
@@ -316,6 +319,39 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun createRow(label: String?): Row {
     return createChildRow(label = label?.let { Label(it) })
+  }
+}
+
+class CellBuilderImpl<T : JComponent> internal constructor(
+  private val builder: MigLayoutBuilder,
+  override val component: T
+) : CellBuilder<T>, CheckboxCellBuilder {
+  override fun focused(): CellBuilder<T> {
+    builder.preferredFocusedComponent = component
+    return this
+  }
+
+  override fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T> {
+    builder.validateCallbacks.add { callback(component) }
+    return this
+  }
+
+  override fun onApply(callback: () -> Unit): CellBuilder<T> {
+    builder.applyCallbacks.add(callback)
+    return this
+  }
+
+  override fun enabled(isEnabled: Boolean) {
+    component.isEnabled = isEnabled
+  }
+
+  override fun enableIfSelected(button: AbstractButton) {
+    component.isEnabled = button.isSelected
+    button.addChangeListener { component.isEnabled = button.isSelected }
+  }
+
+  override fun actsAsLabel() {
+    builder.updateComponentConstraints(component) { spanX = 1 }
   }
 }
 

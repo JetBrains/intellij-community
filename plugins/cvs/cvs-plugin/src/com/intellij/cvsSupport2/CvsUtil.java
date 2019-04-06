@@ -727,7 +727,7 @@ public class CvsUtil {
     return dirTag.startsWith(STICKY_BRANCH_TAG_PREFIX) || dirTag.startsWith(STICKY_NON_BRANCH_TAG_PREFIX);
   }
 
-  private static interface FileCondition {
+  private interface FileCondition {
     boolean verify(File file);
   }
 

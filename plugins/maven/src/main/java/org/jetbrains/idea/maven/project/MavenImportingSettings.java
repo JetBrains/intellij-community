@@ -37,6 +37,8 @@ public class MavenImportingSettings implements Cloneable {
     "generate-test-resources",
     "process-test-resources"};
   public static final String UPDATE_FOLDERS_DEFAULT_PHASE = PROCESS_RESOURCES_PHASE;
+  public static final String DEFAULT_DEPENDENCY_TYPES =
+    "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
@@ -52,10 +54,11 @@ public class MavenImportingSettings implements Cloneable {
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
   private boolean downloadAnnotationsAutomatically = false;
+  private boolean autoDetectCompiler = true;
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
-  private String dependencyTypes = "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
+  private String dependencyTypes = DEFAULT_DEPENDENCY_TYPES;
   private Set<String> myDependencyTypesAsSet;
 
   @NotNull private String vmOptionsForImporter = "";
@@ -201,6 +204,14 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadAnnotationsAutomatically = value;
   }
 
+  public boolean isAutoDetectCompiler() {
+    return autoDetectCompiler;
+  }
+
+  public void setAutoDetectCompiler(boolean autoDetectCompiler) {
+    this.autoDetectCompiler = autoDetectCompiler;
+  }
+
   @Property
   @NotNull
   public GeneratedSourcesFolder getGeneratedSourcesFolder() {
@@ -245,6 +256,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
+    if (autoDetectCompiler != that.autoDetectCompiler) return false;
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
@@ -283,6 +295,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadDocsAutomatically) result++;
     result <<= 1;
     if (downloadAnnotationsAutomatically) result++;
+    result <<= 1;
+    if (autoDetectCompiler) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);

@@ -134,7 +134,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private final int myRebuildDelay;
 
   private final Alarm myHideAlarm = new Alarm();
-  private final boolean myShowListAfterCompletionKeyStroke = false;
+  private static final boolean myShowListAfterCompletionKeyStroke = false;
   protected JBPopup myTextPopup;
   protected JBPopup myDropdownPopup;
 
@@ -324,11 +324,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     @Override
     public void unregisterHint() {
       myHint = null;
-    }
-
-    @Override
-    public Component asComponent() {
-      return this;
     }
 
     public void hideHint() {

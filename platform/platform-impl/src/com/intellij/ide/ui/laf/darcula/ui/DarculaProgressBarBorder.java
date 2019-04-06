@@ -22,6 +22,6 @@ import javax.swing.plaf.BorderUIResource;
  */
 public class DarculaProgressBarBorder extends BorderUIResource.EmptyBorderUIResource {
   public DarculaProgressBarBorder() {
-    super(0,0,0,0);
+    super(0, 0, 0, 0);
   }
 }

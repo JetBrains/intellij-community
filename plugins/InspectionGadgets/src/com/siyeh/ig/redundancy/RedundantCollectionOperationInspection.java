@@ -60,12 +60,15 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static final CallMatcher LIST_SORT = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "sort").parameterTypes(
     CommonClassNames.JAVA_UTIL_COMPARATOR);
   private static final CallMatcher ITERABLE_ITERATOR = instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "iterator").parameterCount(0);
+  private static final CallMatcher MAP_KEY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet").parameterCount(0);
+  private static final CallMatcher MAP_VALUES = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "values").parameterCount(0);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
       .register(TO_ARRAY, AsListToArrayHandler::handler)
       .register(CONTAINS_ALL, ContainsAllSingletonHandler::handler)
       .register(CONTAINS, SingletonContainsHandler::handler)
+      .register(CONTAINS, MapKeySetContainsHandler::handler)
       .register(anyOf(CONTAINS, CONTAINS_KEY), ContainsBeforeAddRemoveHandler::handler)
       .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
       .register(AS_LIST, RedundantAsListForIterationHandler::handler)
@@ -400,6 +403,48 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (!SINGLETON.test(qualifierCall)) return null;
       return new SingletonContainsHandler();
+    }
+  }
+
+  private static class MapKeySetContainsHandler implements RedundantCollectionOperationHandler {
+    private final String myReplacementMethod;
+
+    private MapKeySetContainsHandler(String method) {
+      myReplacementMethod = method;
+    }
+
+    @NotNull
+    @Override
+    public String getReplacement() {
+      return "Map." + myReplacementMethod + "()";
+    }
+
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (qualifierCall == null) return;
+      PsiExpression mapExpression = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (mapExpression == null) return;
+      CommentTracker ct = new CommentTracker();
+      ct.replaceAndRestoreComments(qualifierCall, mapExpression);
+      ExpressionUtils.bindCallTo(call, myReplacementMethod);
+    }
+
+    static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      String replacementMethod;
+      if (MAP_KEY_SET.test(qualifierCall)) {
+        replacementMethod = "containsKey";
+      }
+      else if (MAP_VALUES.test(qualifierCall)) {
+        replacementMethod = "containsValue";
+      }
+      else {
+        return null;
+      }
+      PsiExpression mapExpression = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (mapExpression == null) return null;
+      return new MapKeySetContainsHandler(replacementMethod);
     }
   }
 

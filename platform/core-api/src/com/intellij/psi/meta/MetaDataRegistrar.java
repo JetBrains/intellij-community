@@ -17,10 +17,7 @@
 package com.intellij.psi.meta;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.filters.ElementFilter;
-
-import java.util.function.Supplier;
 
 /**
  * Provides association for elements matching given filter with metadata class.
@@ -31,19 +28,10 @@ public abstract class MetaDataRegistrar {
    * Associates elements matching given filter with metadata class.
    * @param filter on element for finding metadata matches
    * @param metadataDescriptorClass class of metadata, should be instantiable without parameters
-   * @deprecated use {@link #registerMetaData(ElementPattern, Supplier)}
    */
-  @Deprecated
   public abstract <T extends PsiMetaData> void registerMetaData(
     ElementFilter filter, Class<T> metadataDescriptorClass);
 
-  /**
-   * Associates elements matching given filter with metadata class.
-   * @param pattern on element for finding metadata matches
-   * @param metadataDescriptorClass class of metadata, should be instantiable without parameters
-   */
-  public abstract <T extends PsiMetaData> void registerMetaData(
-    ElementPattern<?> pattern, Supplier<? extends T> metadataDescriptorClass);
 
   public static MetaDataRegistrar getInstance() {
     return ServiceManager.getService(MetaDataRegistrar.class);

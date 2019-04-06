@@ -45,8 +45,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
 
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
-    myToken.setText(repository.getToken());
-    myToken.setText(repository.getToken());
+    myToken.setText(repository.getPassword());
     myShowNotAssignedIssues.setSelected(!repository.isAssignedIssuesOnly());
 
     DocumentListener buttonUpdater = new DocumentAdapter() {
@@ -113,11 +112,12 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
 
   @Override
   public void apply() {
+    super.apply();
     myRepository.setRepoName(getRepoName());
     myRepository.setRepoAuthor(getRepoAuthor());
-    myRepository.setToken(getToken());
+    myRepository.setPassword(getToken());
+    myRepository.storeCredentials();
     myRepository.setAssignedIssuesOnly(isAssignedIssuesOnly());
-    super.apply();
   }
 
   private void generateToken() {

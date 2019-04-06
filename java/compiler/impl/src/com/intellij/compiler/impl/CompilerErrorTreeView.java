@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
@@ -84,8 +82,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       final Project project = e.getProject();
       if (project == null) {
         return;
@@ -124,8 +121,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               final String id = text[0].substring(1, text[0].indexOf("]"));
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, context);
-              presentation.setEnabled(available);
-              presentation.setVisible(available);
+              presentation.setEnabledAndVisible(available);
               if (available) {
                 presentation.setText(suppressInspectionFix.getText());
               }

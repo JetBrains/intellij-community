@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,8 +74,7 @@ public class TreePathUtil {
                                                 @NotNull Class<T> type) {
     int count = path.getPathCount();
     if (count <= 0) return null;
-    //noinspection unchecked
-    T[] array = (T[])Array.newInstance(type, count);
+    T[] array = ArrayUtil.newArray(type, count);
     while (path != null && count > 0) {
       Object component = path.getLastPathComponent();
       if (component == null) return null;

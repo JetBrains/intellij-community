@@ -373,7 +373,7 @@
         "currentBranchBackground": "#0D0D40",
         "unmatchedForeground": "#E0861F"
       },
-      "Ref": {
+      "RefLabel": {
         "backgroundBase": "#3333FF",
         "backgroundBrightness": 0.7
       },

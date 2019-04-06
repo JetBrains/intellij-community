@@ -43,6 +43,10 @@ import org.jetbrains.annotations.Nullable;
  * to avoid index query by using alternative resolve (and findClass) strategy, which is significantly slower and might return null. To do this,
  * use {@link DumbService#setAlternativeResolveEnabled(boolean)}.
  *
+ * <li> If you're performing a long modal operation which leads to a root change in the middle (or otherwise causes indexing),
+ * but you need indices after that, you can call {@link DumbService#completeJustSubmittedTasks()} before performing
+ * those index queries.
+ *
  * <li> It's preferable to avoid the exception entirely by adding {@link DumbService#isDumb()} checks where necessary.
  * </ul>
  *

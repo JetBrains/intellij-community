@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -32,8 +18,6 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 
   /**
-   * Gets {@code ProjectManager} instance.
-   *
    * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
@@ -41,7 +25,7 @@ public abstract class ProjectManager {
   }
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
@@ -49,13 +33,13 @@ public abstract class ProjectManager {
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link Topic}
+   * @deprecated Use {@link #TOPIC} instead
    */
   @Deprecated
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
@@ -126,6 +110,7 @@ public abstract class ProjectManager {
    *
    * @param project the project to reload.
    */
+  @SuppressWarnings("unused")
   public abstract void reloadProject(@NotNull Project project);
 
   /**

@@ -30,7 +30,7 @@ public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBui
 
   public CollectionInputDataDiffBuilder(int inputId, @Nullable Collection<Key> seq) {
     super(inputId);
-    mySeq = seq == null ? Collections.<Key>emptySet() : seq;
+    mySeq = seq == null ? Collections.emptySet() : seq;
   }
 
   @Override

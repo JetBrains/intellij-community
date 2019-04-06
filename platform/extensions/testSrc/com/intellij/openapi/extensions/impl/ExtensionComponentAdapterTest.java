@@ -8,7 +8,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.io.IOException;
 
@@ -32,11 +31,11 @@ public class ExtensionComponentAdapterTest {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new XmlExtensionComponentAdapter(name, descriptor, null, LoadingOrder.ANY, element).getComponentInstance(new DefaultPicoContainer());
+    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element).createInstance(null);
   }
 
   @NotNull
   private static ExtensionComponentAdapter createAdapter(@NotNull LoadingOrder order) {
-    return new ExtensionComponentAdapter(Object.class.getName(), null, null, order);
+    return new XmlExtensionAdapter(Object.class.getName(), null, null, order, null);
   }
 }

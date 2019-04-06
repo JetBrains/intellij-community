@@ -52,9 +52,7 @@ public class ListEditForm {
             final Component component =
               editor.getTableCellEditorComponent(table,
                                                  null, true, lastRowIndex, 0);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
           });
         }
       })

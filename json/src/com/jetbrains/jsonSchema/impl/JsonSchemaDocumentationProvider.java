@@ -52,14 +52,14 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                                 @Nullable PsiElement originalElement,
                                                 final boolean preferShort,
                                                 @Nullable String forcedPropName) {
-    if (element instanceof FakeDocElement) return null;
+    if (element instanceof FakePsiElement) return null;
     element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) return null;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile);
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort, forcedPropName);
@@ -93,13 +93,20 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         position.replaceStep(position.size() - 1, forcedPropName);
       }
     }
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(element.getProject(), rootSchema, position).resolve();
 
     String htmlDescription = null;
+    boolean deprecated = false;
     List<JsonSchemaType> possibleTypes = ContainerUtil.newArrayList();
     for (JsonSchemaObject schema : schemas) {
       if (htmlDescription == null) {
         htmlDescription = getBestDocumentation(preferShort, schema);
+        String message = schema.getDeprecationMessage();
+        if (message != null) {
+          if (htmlDescription == null) htmlDescription = message;
+          else htmlDescription = message + "<br/>" + htmlDescription;
+          deprecated = true;
+        }
       }
       if (schema.getType() != null && schema.getType() != JsonSchemaType._any) {
         possibleTypes.add(schema.getType());
@@ -115,14 +122,16 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       }
     }
 
-    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, preferShort);
+    return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, deprecated, preferShort);
   }
 
   @Nullable
   private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
                                              @NotNull String apiInfo,
                                              @NotNull List<JsonSchemaType> possibleTypes,
-                                             @Nullable String htmlDescription, boolean preferShort) {
+                                             @Nullable String htmlDescription,
+                                             boolean deprecated,
+                                             boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
     String name = position.getLastName();
@@ -134,11 +143,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
+    String deprecationComment = deprecated ? " (deprecated)" : "";
     if (preferShort) {
-      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
+      htmlDescription = "<b>" + name + "</b>" + type + apiInfo + deprecationComment + (htmlDescription == null ? "" : ("<br/>" + htmlDescription));
     }
     else {
-      htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + DocumentationMarkup.DEFINITION_END +
+      htmlDescription = DocumentationMarkup.DEFINITION_START + name + type + apiInfo + deprecationComment + DocumentationMarkup.DEFINITION_END +
                         (htmlDescription == null ? "" : (DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END));
     }
     return htmlDescription;
@@ -149,7 +159,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                              @NotNull JsonSchemaObject rootSchema) {
     JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     String apiInfo = "";
-    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema.getSchemaFile());
+    JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema);
     if (provider != null) {
       String information = provider.getThirdPartyApiInformation();
       if (information != null) {

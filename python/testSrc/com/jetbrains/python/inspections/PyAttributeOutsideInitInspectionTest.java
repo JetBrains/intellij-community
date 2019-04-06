@@ -109,6 +109,16 @@ public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
                  "        self.test = value");
   }
 
+  // PY-31049
+  public void testAttributesOfProperty() {
+    doTest();
+  }
+
+  // PY-31376
+  public void testLocalVarInProperty() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -34,37 +34,34 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
 
   AppDelayQueue() {
     /* this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
-    scheduledToPooledTransferrer = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (!shutdown.get()) {
-          try {
-            final SchedulingWrapper.MyScheduledFutureTask task = take();
-            if (LOG.isTraceEnabled()) {
-              LOG.trace("Took "+BoundedTaskExecutor.info(task));
-            }
-            if (!task.isDone()) {  // can be cancelled already
-              try {
-                task.executeMeInBackendExecutor();
-              }
-              catch (Throwable e) {
-                try {
-                  LOG.error("Error executing "+task, e);
-                }
-                catch (Throwable ignored) {
-                  // do not let it stop the thread
-                }
-              }
-            }
+    scheduledToPooledTransferrer = new Thread(() -> {
+      while (!shutdown.get()) {
+        try {
+          final SchedulingWrapper.MyScheduledFutureTask task = take();
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Took "+BoundedTaskExecutor.info(task));
           }
-          catch (InterruptedException e) {
-            if (!shutdown.get()) {
-              LOG.error(e);
+          if (!task.isDone()) {  // can be cancelled already
+            try {
+              task.executeMeInBackendExecutor();
+            }
+            catch (Throwable e) {
+              try {
+                LOG.error("Error executing "+task, e);
+              }
+              catch (Throwable ignored) {
+                // do not let it stop the thread
+              }
             }
           }
         }
-        LOG.debug("scheduledToPooledTransferrer Stopped");
+        catch (InterruptedException e) {
+          if (!shutdown.get()) {
+            LOG.error(e);
+          }
+        }
       }
+      LOG.debug("scheduledToPooledTransferrer Stopped");
     }, "Periodic tasks thread");
     scheduledToPooledTransferrer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
     scheduledToPooledTransferrer.start();

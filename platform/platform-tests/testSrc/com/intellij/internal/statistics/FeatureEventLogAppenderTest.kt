@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageEventFileAppender
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogFileAppender
 import com.intellij.util.containers.ContainerUtil.newArrayList
 import org.junit.Test
 import java.io.File
@@ -12,7 +12,7 @@ class FeatureEventLogAppenderTest {
   private val MAX_AGE = (14 * 24 * 60 * 60 * 1000).toLong()
 
   private fun doTest(files: List<TestFile>, deleted: List<Boolean>, oldestAfterDelete: Long, secondQuick: Boolean) {
-    val appender = TestFeatureUsageFileAppender(files)
+    val appender = TestStatsLogFileAppender(files)
     appender.setMaxFileAge(MAX_AGE)
 
     appender.assertOldest(-1)
@@ -169,7 +169,7 @@ class FeatureEventLogAppenderTest {
   }
 }
 
-class TestFeatureUsageFileAppender(files: List<File>) : FeatureUsageEventFileAppender(Paths.get("tmp"), files) {
+class TestStatsLogFileAppender(files: List<File>) : StatisticsEventLogFileAppender(Paths.get("tmp"), files) {
   var quickCleanCheck: Boolean = false
 
   fun assertOldest(expected: Long) {

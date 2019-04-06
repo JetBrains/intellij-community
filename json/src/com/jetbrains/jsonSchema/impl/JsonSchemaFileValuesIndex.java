@@ -10,6 +10,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -104,7 +105,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     boolean idFound = false;
     boolean obsoleteIdFound = false;
     boolean schemaFound = false;
-    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
+    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getTokenStart() < lexer.getBufferEnd()) {
       IElementType token = lexer.getTokenType();
       // Nesting level can only change at curly braces.
       if (token == JsonElementTypes.L_CURLY) {
@@ -152,7 +153,8 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
       lexer.advance();
       token = skipWhitespacesAndGetTokenType(lexer);
       if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
-        destMap.put(key, lexer.getTokenText().substring(1, lexer.getTokenText().length() - 1));
+        String text = lexer.getTokenText();
+        destMap.put(key, StringUtil.isEmpty(text) ? text : text.substring(1, text.length() - 1));
         return true;
       }
     }

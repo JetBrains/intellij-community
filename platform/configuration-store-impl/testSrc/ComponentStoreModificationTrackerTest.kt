@@ -68,18 +68,18 @@ internal class ComponentStoreModificationTrackerTest {
 
     // test that store correctly set last modification count to component modification count on init
     component.lastGetStateStackTrace = null
-    saveStore()
+    componentStore.save()
     @Suppress("USELESS_CAST")
     assertThat(component.lastGetStateStackTrace as String?).isNull()
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("a.xml")
@@ -88,11 +88,11 @@ internal class ComponentStoreModificationTrackerTest {
     // update data but "forget" to update modification count
     component.options.foo = "new"
 
-    saveStore()
+    componentStore.save()
     assertThat(componentFile).doesNotExist()
 
     component.incModificationCount()
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
@@ -134,16 +134,16 @@ internal class ComponentStoreModificationTrackerTest {
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("b.xml")
@@ -152,11 +152,11 @@ internal class ComponentStoreModificationTrackerTest {
     // update data but "forget" to update modification count
     component.options.foo = "new"
 
-    saveStore()
+    componentStore.save()
     assertThat(componentFile).doesNotExist()
 
     component.incModificationCount()
-    saveStore()
+    componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
@@ -165,9 +165,6 @@ internal class ComponentStoreModificationTrackerTest {
     </application>""".trimIndent())
   }
 
-  private suspend fun saveStore() {
-    componentStore.save()
-  }
 }
 
 private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {

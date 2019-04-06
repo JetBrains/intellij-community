@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.Collections.unmodifiableMap;
@@ -51,15 +50,10 @@ public class EnvironmentUtil {
     if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
         SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
-      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
-        @Override
-        public Map<String, String> call() throws Exception {
-          return unmodifiableMap(setCharsetVar(getShellEnv()));
-        }
-      });
+      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
     }
     else {
-      ourEnvGetter = new FixedFuture<Map<String, String>>(getSystemEnv());
+      ourEnvGetter = new FixedFuture<>(getSystemEnv());
     }
   }
 
@@ -79,7 +73,7 @@ public class EnvironmentUtil {
 
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
-      return unmodifiableMap(new THashMap<String, String>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
+      return unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
       return System.getenv();
@@ -214,7 +208,7 @@ public class EnvironmentUtil {
     protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
       File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
       try {
-        List<String> cl = new ArrayList<String>();
+        List<String> cl = new ArrayList<>();
         cl.add(CommandLineUtil.getWinShellName());
         cl.add("/c");
         cl.add("call");
@@ -254,12 +248,12 @@ public class EnvironmentUtil {
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-      int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
+      int exitCode = waitAndTerminateAfter(process);
       gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
-      if (rv != 0 || lines.isEmpty()) {
-        throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
+      if (exitCode != 0 || lines.isEmpty()) {
+        throw new Exception("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
       return Pair.create(gobbler.getText(), parseEnv(lines));
     }
@@ -267,8 +261,11 @@ public class EnvironmentUtil {
     @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
       String shellScript = getShell();
-      if (shellScript == null || !new File(shellScript).canExecute()) {
-        throw new Exception("shell:" + shellScript);
+      if (StringUtil.isEmptyOrSpaces(shellScript)) {
+        throw new Exception("empty $SHELL");
+      }
+      if (!new File(shellScript).canExecute()) {
+        throw new Exception("$SHELL points to a missing or non-executable file: " + shellScript);
       }
       return buildShellProcessCommand(shellScript, true, true, false);
     }
@@ -282,7 +279,7 @@ public class EnvironmentUtil {
   /**
    * Builds a login shell command list from the {@code shellScript} path.
    *
-   * @param shellScript   path to the shell script, probably taken from envrionment variable {@code SHELL}
+   * @param shellScript   path to the shell script, probably taken from environment variable {@code SHELL}
    * @param isLogin       true iff it should be login shell, usually {@code -l} parameter
    * @param isInteractive true iff it should be interactive shell, usually {@code -i} parameter
    * @param isCommand     true iff command should accept a command, instead of script name, usually {@code -c} parameter
@@ -296,8 +293,7 @@ public class EnvironmentUtil {
                                                       boolean isCommand) {
     List<String> commands = ContainerUtil.newArrayList(shellScript);
     if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
-      // Act as a login shell
-      // tsch does allow to use -l with any other options
+      // *csh do not allow to use -l with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
     }
     if (isInteractive) {
@@ -311,9 +307,9 @@ public class EnvironmentUtil {
 
   @NotNull
   public static Map<String, String> parseEnv(String... lines) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
+    Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
-    Map<String, String> newEnv = new HashMap<String, String>();
+    Map<String, String> newEnv = new HashMap<>();
 
     for (String line : lines) {
       int pos = line.indexOf('=');
@@ -340,8 +336,8 @@ public class EnvironmentUtil {
     return parseEnv(lines);
   }
 
-  private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
-    Integer exitCode = waitFor(process, timeoutMillis);
+  private static int waitAndTerminateAfter(@NotNull Process process) {
+    Integer exitCode = waitFor(process, SHELL_ENV_READING_TIMEOUT);
     if (exitCode != null) {
       return exitCode;
     }

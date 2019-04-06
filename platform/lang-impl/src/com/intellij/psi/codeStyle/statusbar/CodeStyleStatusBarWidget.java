@@ -3,12 +3,9 @@ package com.intellij.psi.codeStyle.statusbar;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,12 +17,10 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -87,26 +82,16 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   private static WidgetState createWidgetState(@NotNull PsiFile psiFile,
                                                @NotNull final IndentOptions indentOptions,
                                                @Nullable CodeStyleStatusBarUIContributor uiContributor) {
-    String indentInfo = IndentStatusBarUIContributor.getTooltip(indentOptions);
-    StringBuilder widgetText = new StringBuilder();
-    widgetText.append(indentInfo);
-    IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
-    if (!projectIndentOptions.equals(indentOptions)) {
-      widgetText.append("*");
+    if (uiContributor != null) {
+      return new MyWidgetState(uiContributor.getTooltip(), uiContributor.getStatusText(psiFile), psiFile, indentOptions, uiContributor);
     }
-    return new MyWidgetState(getTooltip(uiContributor, indentInfo), widgetText.toString(), psiFile, indentOptions, uiContributor);
+    else {
+      String indentInfo = IndentStatusBarUIContributor.getIndentInfo(indentOptions);
+      String tooltip = IndentStatusBarUIContributor.createTooltip(indentInfo, null);
+      return new MyWidgetState(tooltip, indentInfo, psiFile, indentOptions, null);
+    }
   }
 
-  @NotNull
-  private static String getTooltip(@Nullable CodeStyleStatusBarUIContributor uiContributor, @NotNull String defaultTooltip) {
-    if (uiContributor != null) {
-      String contributorTooltip = uiContributor.getTooltip();
-      if (contributorTooltip != null) {
-        return contributorTooltip;
-      }
-    }
-    return defaultTooltip;
-  }
 
   @Nullable
   private PsiFile getPsiFile()  {
@@ -123,11 +108,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @Override
   protected ListPopup createPopup(DataContext context)
   {
-    MyWidgetState state = (MyWidgetState)getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
+    WidgetState state = getWidgetState(context.getData(CommonDataKeys.VIRTUAL_FILE));
     Editor editor = getEditor();
     PsiFile psiFile = getPsiFile();
-    if (state != WidgetState.HIDDEN && editor != null && psiFile != null) {
-      AnAction[] actions = getActions(state.getContributor(), psiFile);
+    if (state instanceof MyWidgetState && editor != null && psiFile != null) {
+      AnAction[] actions = getActions(((MyWidgetState)state).getContributor(), psiFile);
       ActionGroup actionGroup = new ActionGroup() {
         @NotNull
         @Override
@@ -228,33 +213,5 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   public void dispose() {
     CodeStyleSettingsManager.removeListener(myProject, this);
     super.dispose();
-  }
-
-  @Override
-  protected void afterVisibleUpdate(@NotNull WidgetState state) {
-    if (state instanceof MyWidgetState) {
-      MyWidgetState codeStyleWidgetState = (MyWidgetState)state;
-      CodeStyleStatusBarUIContributor uiContributor = codeStyleWidgetState.getContributor();
-      if (uiContributor != null) {
-        String message = uiContributor.getAdvertisementText(codeStyleWidgetState.getPsiFile());
-        if (message != null) {
-          advertise(message);
-        }
-      }
-    }
-  }
-
-  private void advertise(@NotNull String message) {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    alarm.addRequest(() -> {
-      BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message));
-      JComponent statusBarComponent = getComponent();
-      Balloon balloon = builder
-        .setCalloutShift(statusBarComponent.getHeight() / 2)
-        .setDisposable(this)
-        .setHideOnClickOutside(true)
-        .createBalloon();
-      balloon.showInCenterOf(statusBarComponent);
-    }, 500, ModalityState.NON_MODAL);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
@@ -191,8 +191,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static byte[] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
-    final InputStream stream = new FileInputStream(file);
-    try {
+    try (InputStream stream = new FileInputStream(file)) {
       final long len = file.length();
       if (len < 0) {
         throw new IOException("File length reported negative, probably doesn't exist");
@@ -203,9 +202,6 @@ public class FileUtil extends FileUtilRt {
       }
 
       bytes = loadBytes(stream, (int)len);
-    }
-    finally {
-      stream.close();
     }
     return bytes;
   }
@@ -251,7 +247,7 @@ public class FileUtil extends FileUtilRt {
       total += n;
       if (count == chars.length) {
         if (buffers == null) {
-          buffers = new ArrayList<char[]>();
+          buffers = new ArrayList<>();
         }
         buffers.add(chars);
         int newLength = Math.min(1024 * 1024, chars.length * 2);
@@ -284,7 +280,7 @@ public class FileUtil extends FileUtilRt {
       total += n;
       if (count == bytes.length) {
         if (buffers == null) {
-          buffers = new ArrayList<byte[]>();
+          buffers = new ArrayList<>();
         }
         buffers.add(bytes);
         int newLength = Math.min(1024 * 1024, bytes.length * 2);
@@ -310,7 +306,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
-    List<File> tempFiles = new ArrayList<File>();
+    List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
@@ -320,24 +316,21 @@ public class FileUtil extends FileUtilRt {
     if (!tempFiles.isEmpty()) {
       return startDeletionThread(tempFiles.toArray(new File[0]));
     }
-    return new FixedFuture<Void>(null);
+    return new FixedFuture<>(null);
   }
 
   private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<Void>(new Runnable() {
-      @Override
-      public void run() {
-        final Thread currentThread = Thread.currentThread();
-        final int priority = currentThread.getPriority();
-        currentThread.setPriority(Thread.MIN_PRIORITY);
-        try {
-          for (File tempFile : tempFiles) {
-            delete(tempFile);
-          }
+    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
+      final Thread currentThread = Thread.currentThread();
+      final int priority = currentThread.getPriority();
+      currentThread.setPriority(Thread.MIN_PRIORITY);
+      try {
+        for (File tempFile : tempFiles) {
+          delete(tempFile);
         }
-        finally {
-          currentThread.setPriority(priority);
-        }
+      }
+      finally {
+        currentThread.setPriority(priority);
       }
     }, null);
 
@@ -437,19 +430,11 @@ public class FileUtil extends FileUtilRt {
 
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
-    final FileOutputStream fos = openOutputStream(toFile);
 
-    try {
-      final FileInputStream fis = new FileInputStream(fromFile);
-      try {
+    try (FileOutputStream fos = openOutputStream(toFile)) {
+      try (FileInputStream fis = new FileInputStream(fromFile)) {
         copy(fis, fos);
       }
-      finally {
-        fis.close();
-      }
-    }
-    finally {
-      fos.close();
     }
 
     if (syncTimestamp) {
@@ -533,12 +518,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
-    copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File file) {
-        return !StringUtil.startsWithChar(file.getName(), '.');
-      }
-    });
+    copyDir(fromDir, toDir, copySystemFiles ? null : (FileFilter)file -> !StringUtil.startsWithChar(file.getName(), '.'));
   }
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable final FileFilter filter) throws IOException {
@@ -585,12 +565,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
-    return findSequentFile(parentFolder, filePrefix, extension, new Condition<File>() {
-      @Override
-      public boolean value(File file) {
-        return !file.exists();
-      }
-    });
+    return findSequentFile(parentFolder, filePrefix, extension, file -> !file.exists());
   }
 
   /**
@@ -669,182 +644,32 @@ public class FileUtil extends FileUtilRt {
     return toCanonicalPath(path, '/', false);
   }
 
-  @Contract("null, _, _ -> null")
-  private static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
-    return toCanonicalPath(path, separatorChar, removeLastSlash, false);
-  }
+  private static final SymlinkResolver SYMLINK_RESOLVER = new SymlinkResolver() {
+    @NotNull
+    @Override
+    public String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash) {
+      try {
+        return new File(path).getCanonicalPath().replace(separatorChar, '/');
+      }
+      catch (IOException ignore) {
+        // fall back to the default behavior
+        return toCanonicalPath(path, separatorChar, removeLastSlash, false);
+      }
+    }
+
+    @Override
+    public boolean isSymlink(@NotNull CharSequence path) {
+      return FileSystemUtil.isSymLink(new File(path.toString()));
+    }
+  };
 
   @Contract("null, _, _, _ -> null")
   private static String toCanonicalPath(@Nullable String path,
                                         final char separatorChar,
                                         final boolean removeLastSlash,
                                         final boolean resolveSymlinks) {
-    if (path == null || path.isEmpty()) {
-      return path;
-    }
-    if (StringUtil.startsWithChar(path, '.')) {
-      if (path.length() == 1) {
-        return "";
-      }
-      char c = path.charAt(1);
-      if (c == '/' || c == separatorChar) {
-        path = path.substring(2);
-      }
-    }
-
-    path = path.replace(separatorChar, '/');
-    // trying to speedup the common case when there are no "//" or "/."
-    int index = -1;
-    do {
-      index = path.indexOf('/', index+1);
-      char next = index == path.length() - 1 ? 0 : path.charAt(index + 1);
-      if (next == '.' || next == '/') {
-        break;
-      }
-    }
-    while (index != -1);
-    if (index == -1) {
-      if (removeLastSlash) {
-        int start = processRoot(path, NullAppendable.INSTANCE);
-        int slashIndex = path.lastIndexOf('/');
-        return slashIndex != -1 && slashIndex > start ? StringUtil.trimTrailing(path, '/') : path;
-      }
-      return path;
-    }
-
-    final String finalPath = path;
-    NotNullProducer<String> realCanonicalPath = resolveSymlinks ? new NotNullProducer<String>() {
-      @NotNull
-      @Override
-      public String produce() {
-        try {
-          return new File(finalPath).getCanonicalPath().replace(separatorChar, '/');
-        }
-        catch (IOException ignore) {
-          // fall back to the default behavior
-          return toCanonicalPath(finalPath, separatorChar, removeLastSlash, false);
-        }
-      }
-    } : null;
-
-    StringBuilder result = new StringBuilder(path.length());
-    int start = processRoot(path, result);
-    int dots = 0;
-    boolean separator = true;
-
-    for (int i = start; i < path.length(); ++i) {
-      char c = path.charAt(i);
-      if (c == '/') {
-        if (!separator) {
-          if (!processDots(result, dots, start, resolveSymlinks)) {
-            return realCanonicalPath.produce();
-          }
-          dots = 0;
-        }
-        separator = true;
-      }
-      else if (c == '.') {
-        if (separator || dots > 0) {
-          ++dots;
-        }
-        else {
-          result.append('.');
-        }
-        separator = false;
-      }
-      else {
-        if (dots > 0) {
-          StringUtil.repeatSymbol(result, '.', dots);
-          dots = 0;
-        }
-        result.append(c);
-        separator = false;
-      }
-    }
-
-    if (dots > 0) {
-      if (!processDots(result, dots, start, resolveSymlinks)) {
-        return realCanonicalPath.produce();
-      }
-    }
-
-    int lastChar = result.length() - 1;
-    if (removeLastSlash && lastChar >= 0 && result.charAt(lastChar) == '/' && lastChar > start) {
-      result.deleteCharAt(lastChar);
-    }
-
-    return result.toString();
-  }
-
-  private static int processRoot(@NotNull String path, @NotNull Appendable result) {
-    try {
-      if (SystemInfo.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
-        result.append("//");
-
-        int hostStart = 2;
-        while (hostStart < path.length() && path.charAt(hostStart) == '/') hostStart++;
-        if (hostStart == path.length()) return hostStart;
-        int hostEnd = path.indexOf('/', hostStart);
-        if (hostEnd < 0) hostEnd = path.length();
-        result.append(path, hostStart, hostEnd);
-        result.append('/');
-
-        int shareStart = hostEnd;
-        while (shareStart < path.length() && path.charAt(shareStart) == '/') shareStart++;
-        if (shareStart == path.length()) return shareStart;
-        int shareEnd = path.indexOf('/', shareStart);
-        if (shareEnd < 0) shareEnd = path.length();
-        result.append(path, shareStart, shareEnd);
-        result.append('/');
-
-        return shareEnd;
-      }
-      if (!path.isEmpty() && path.charAt(0) == '/') {
-        result.append('/');
-        return 1;
-      }
-      if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
-        result.append(path, 0, 3);
-        return 3;
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return 0;
-  }
-
-  @Contract("_, _, _, false -> true")
-  private static boolean processDots(@NotNull StringBuilder result, int dots, int start, boolean resolveSymlinks) {
-    if (dots == 2) {
-      int pos = -1;
-      if (!StringUtil.endsWith(result, "/../") && !StringUtil.equals(result, "../")) {
-        pos = StringUtil.lastIndexOf(result, '/', start, result.length() - 1);
-        if (pos >= 0) {
-          ++pos;  // separator found, trim to next char
-        }
-        else if (start > 0) {
-          pos = start;  // path is absolute, trim to root ('/..' -> '/')
-        }
-        else if (result.length() > 0) {
-          pos = 0;  // path is relative, trim to default ('a/..' -> '')
-        }
-      }
-      if (pos >= 0) {
-        if (resolveSymlinks && FileSystemUtil.isSymLink(new File(result.toString()))) {
-          return false;
-        }
-        result.delete(pos, result.length());
-      }
-      else {
-        result.append("../");  // impossible to traverse, keep as-is
-      }
-    }
-    else if (dots != 1) {
-      StringUtil.repeatSymbol(result, '.', dots);
-      result.append('/');
-    }
-    return true;
+    SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
+    return toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
   }
 
   /**
@@ -1259,12 +1084,8 @@ public class FileUtil extends FileUtilRt {
   private static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
 
-    OutputStream stream = new FileOutputStream(file, append);
-    try {
+    try (OutputStream stream = new FileOutputStream(file, append)) {
       stream.write(text, off, len);
-    }
-    finally {
-      stream.close();
     }
   }
 
@@ -1273,12 +1094,8 @@ public class FileUtil extends FileUtilRt {
     return FILE_TRAVERSER.withRoot(root);
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(new Function<File, Iterable<File>>() {
-    @Override
-    public Iterable<File> fun(File file) {
-      return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
-    }
-  });
+  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.empty());
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
@@ -1290,7 +1107,7 @@ public class FileUtil extends FileUtilRt {
   @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
                                                 @Nullable final Processor<? super File> directoryFilter) {
-    final LinkedList<File> queue = new LinkedList<File>();
+    final LinkedList<File> queue = new LinkedList<>();
     queue.add(root);
     while (!queue.isEmpty()) {
       final File file = queue.removeFirst();
@@ -1319,7 +1136,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<File>();
+    final ArrayList<File> found = new ArrayList<>();
     final File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -1336,7 +1153,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<File>();
+    final ArrayList<File> found = new ArrayList<>();
     final File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -1617,7 +1434,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> splitPath(@NotNull String path) {
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
     while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {

@@ -45,6 +45,7 @@ public class NamedScopeManager extends NamedScopesHolder {
     return state;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");

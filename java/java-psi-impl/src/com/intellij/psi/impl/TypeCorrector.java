@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -66,6 +67,7 @@ class TypeCorrector extends PsiTypeMapper {
     final PsiClass psiClass = classResolveResult.getElement();
     final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
     if (psiClass == null) return classType;
+    if (psiClass instanceof LightClass) return classType;
 
     PsiUtilCore.ensureValid(psiClass);
 

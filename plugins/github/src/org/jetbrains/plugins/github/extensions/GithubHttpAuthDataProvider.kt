@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.extensions
 
@@ -15,17 +15,14 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import java.io.IOException
 
-class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
-                                 private val requestExecutorFactory: GithubApiRequestExecutor.Factory,
-                                 private val requestExecutorManager: GithubApiRequestExecutorManager,
-                                 private val accountInformationProvider: GithubAccountInformationProvider) : GitHttpAuthDataProvider {
-  private val LOG = logger<GithubHttpAuthDataProvider>()
+private val LOG = logger<GithubHttpAuthDataProvider>()
 
+class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
-        val token = authenticationManager.getTokenForAccount(account) ?: return null
-        val username = accountInformationProvider.getInformation(requestExecutorFactory.create(token),
+        val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
+        val username = service<GithubAccountInformationProvider>().getInformation(GithubApiRequestExecutor.Factory.getInstance().create(token),
                                                                  DumbProgressIndicator(),
                                                                  account).login
         GithubAccountAuthData(account, username, token)
@@ -39,7 +36,7 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
 
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
-      return authenticationManager.getTokenForAccount(account)?.let { GithubAccountAuthData(account, login, it) }
+      return GithubAuthenticationManager.getInstance().getTokenForAccount(account)?.let { GithubAccountAuthData(account, login, it) }
     }
   }
 
@@ -51,6 +48,7 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
     val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
+    val authenticationManager = GithubAuthenticationManager.getInstance()
     var potentialAccounts = authenticationManager.getAccounts()
       .filter { it.server.matches(url) }
       .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
@@ -58,7 +56,7 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
         try {
-          accountInformationProvider.getInformation(requestExecutorManager.getExecutor(it),
+          service<GithubAccountInformationProvider>().getInformation(GithubApiRequestExecutorManager.getInstance().getExecutor(it),
                                                     DumbProgressIndicator(),
                                                     it).login == login
         }

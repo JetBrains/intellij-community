@@ -53,15 +53,10 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
 
   public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<? super Domain, ? extends Intermediate> convertor1,
                                                                                    final Convertor<? super Intermediate, ? extends Range> convertor2) {
-    return new Convertor<Domain, Range>() {
-      @Override
-      public Range convert(Domain domain) {
-        return convertor2.convert(convertor1.convert(domain));
-      }
-    };
+    return domain -> convertor2.convert(convertor1.convert(domain));
   }
 
   public static <Domain, Range> ConvertingIterator<Domain, Range> create(Iterator<? extends Domain> iterator, Convertor<? super Domain, ? extends Range> convertor) {
-    return new ConvertingIterator<Domain, Range>(iterator, convertor);
+    return new ConvertingIterator<>(iterator, convertor);
   }
 }

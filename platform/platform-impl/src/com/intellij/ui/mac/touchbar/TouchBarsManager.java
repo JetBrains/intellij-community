@@ -37,8 +37,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
@@ -48,6 +48,9 @@ public class TouchBarsManager {
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   public static void onApplicationInitialized() {
+    ApplicationManager.getApplication().executeOnPooledThread(TouchBarsManager::_onApplicationInitialized);
+  }
+  private static void _onApplicationInitialized() {
     if (!isTouchBarAvailable())
       return;
 
@@ -381,7 +384,7 @@ public class TouchBarsManager {
   public static void showStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = BuildUtils.createStopRunningBar(stoppableDescriptors);
     BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
-    container.setOnHideCallback(() -> { container.release(); });
+    container.setOnHideCallback(() -> container.release());
     ourStack.showContainer(container);
   }
 

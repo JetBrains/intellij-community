@@ -15,9 +15,13 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -27,8 +31,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -43,13 +48,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
+import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -669,9 +678,9 @@ public class MavenProjectsTree {
       long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
       VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
       long profilesTimestamp = getFileTimestamp(profilesXmlFile);
-      VirtualFile jvmConfigFile = getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+      VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
       long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
-      VirtualFile mavenConfigFile = getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
       long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
 
       long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
@@ -696,14 +705,6 @@ public class MavenProjectsTree {
            "myRootProjects=" + myRootProjects +
            ", myProject=" + myProject +
            '}';
-  }
-
-  private static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(mavenProject.getDirectoryFile()), false);
-    if (baseDir != null) {
-      return baseDir.findFileByRelativePath(fileRelativePath);
-    }
-    return null;
   }
 
   private static long getFileTimestamp(VirtualFile file) {
@@ -1265,6 +1266,7 @@ public class MavenProjectsTree {
       try {
         Properties userProperties = new Properties();
         for (MavenProject mavenProject : mavenProjects) {
+          mavenProject.setConfigFileError(null);
           for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
             mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
           }
@@ -1272,10 +1274,61 @@ public class MavenProjectsTree {
         embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
+      catch (Throwable t) {
+        MavenConfigParseException cause = findParseException(t);
+        if (cause != null) {
+          for (MavenProject mavenProject : mavenProjects) {
+            if (FileUtil.pathsEqual(mavenProject.getDirectory(), cause.getDirectory())) {
+              showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
+              mavenProject.setConfigFileError(cause.getMessage());
+            }
+          }
+        }
+        else {
+          throw t;
+        }
+      }
       finally {
         embeddersManager.release(embedder);
       }
+
+      MavenUtil.restartConfigHighlightning(mavenProjects);
     }
+  }
+
+
+  public static void showNotificationInvalidConfig(@NotNull Project project, @Nullable MavenProject mavenProject, String message) {
+    VirtualFile configFile = mavenProject == null ? null : MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+    if (configFile != null) {
+      NotificationListener listener = new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          FileEditorManager.getInstance(project).openFile(configFile, true);
+        }
+      };
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file.with.link", message),
+                       NotificationType.ERROR, listener).notify(project);
+    }
+    else {
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", RunnerBundle.message("maven.invalid.config.file", message),
+                       NotificationType.ERROR).notify(project);
+    }
+  }
+
+  private static MavenConfigParseException findParseException(Throwable t) {
+    MavenConfigParseException parseException = ExceptionUtil.findCause(t, MavenConfigParseException.class);
+    if (parseException != null) {
+      return parseException;
+    }
+
+    Throwable cause = ExceptionUtil.getRootCause(t);
+    if (cause instanceof InvocationTargetException) {
+      Throwable target = ((InvocationTargetException)cause).getTargetException();
+      if (target == null) {
+        return ExceptionUtil.findCause(target, MavenConfigParseException.class);
+      }
+    }
+    return null;
   }
 
   private void doResolve(@NotNull Project project,

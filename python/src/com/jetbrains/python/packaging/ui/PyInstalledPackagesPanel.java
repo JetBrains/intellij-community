@@ -45,7 +45,7 @@ import java.util.Set;
  * @author yole
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
-  private boolean myHasManagement = false;
+  private volatile boolean myHasManagement = false;
 
   public PyInstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(project, area);
@@ -98,6 +98,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       PyExecutionException exception = null;
       try {
         myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
+        application.invokeLater(() -> updateUninstallUpgrade(), ModalityState.any());
         if (!myHasManagement) {
           throw new PyExecutionException("Python packaging tools not found", "pip", Collections.emptyList(), "", "", 0,
                                          ImmutableList.of(new PyInstallPackageManagementFix()));

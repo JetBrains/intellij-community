@@ -19,6 +19,7 @@ package com.intellij.util;
 /**
  * @author peter
  */
+@FunctionalInterface
 public interface PairConsumer<S, T> {
   void consume(S s, T t);
 }

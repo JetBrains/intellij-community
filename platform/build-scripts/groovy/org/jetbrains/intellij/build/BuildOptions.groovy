@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -50,6 +50,8 @@ class BuildOptions {
   static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
   static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  /** Build Linux tar.gz artifact without bundled JRE. */
+  static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */
@@ -136,4 +138,9 @@ class BuildOptions {
    * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
    */
   int jdkVersion = System.getProperty("intellij.build.jdk.version", "8").toInteger()
+
+  /**
+   * Specifies an algorithm to build distribution checksums.
+   */
+  String hashAlgorithm = "SHA-384"
 }

@@ -16,12 +16,14 @@
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -395,10 +397,10 @@ public class ContainerUtilCollectionsTest extends Assert {
         assertTrue(remove instanceof Integer);
         assertEquals(i - 1, remove);
       }
-      assertEquals(map.size(), 1);
+      assertEquals(1, map.size());
     }
     map.clear();
-    assertEquals(map.size(), 0);
+    assertEquals(0, map.size());
     assertTrue(map.isEmpty());
   }
 
@@ -418,10 +420,10 @@ public class ContainerUtilCollectionsTest extends Assert {
         assertTrue(remove instanceof Integer);
         assertEquals(i - 1, remove);
       }
-      assertEquals(map.size(), 1);
+      assertEquals(1, map.size());
     }
     map.clear();
-    assertEquals(map.size(), 0);
+    assertEquals(0, map.size());
   }
 
   @Test(timeout = TIMEOUT)
@@ -451,15 +453,16 @@ public class ContainerUtilCollectionsTest extends Assert {
   @Test
   public void testConcurrentWeakValueSize() {
     Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
-    strong = new Object();
-    map.put("a", strong);
-    map.put("b", new Object());
+    Ref<Object> ref1 = Ref.create(new Object());
+    Ref<Object> ref2 = Ref.create(new Object());
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    map.put("a", ref1.get());
+    map.put("b", ref2.get());
+
+    GCWatcher.fromClearedRef(ref2).tryGc();
     assertEquals(1, map.size());
 
-    strong = null;
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.fromClearedRef(ref1).tryGc();
     assertTrue(map.toString(), map.isEmpty());
   }
 
@@ -575,18 +578,15 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   private void checkClearsEventuallyAfterGCPressure(Set<Object> set) {
     assertTrue(set.isEmpty());
-    set.add(new Object());
+    Ref<Object> ref = Ref.create(new Object());
+    set.add(ref.get());
 
-    //noinspection SizeReplaceableByIsEmpty
-    do {
-      set.add(this);  // to run processQueues();
-      assertFalse(set.isEmpty());
-      set.remove(this);
+    GCWatcher.fromClearedRef(ref).tryGc();
 
-      GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
-    }
-    while (set.size() != 0);
+    set.add(this);  // to run processQueues();
+    assertFalse(set.isEmpty());
+    set.remove(this);
+
     assertTrue(set.isEmpty());
     assertEquals(0, set.size());
     set.add(this);

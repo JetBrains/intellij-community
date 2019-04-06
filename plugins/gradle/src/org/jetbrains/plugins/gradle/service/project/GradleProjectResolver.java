@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -66,7 +64,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
 /**
  * @author Denis Zhdanov, Vladislav Soroka
@@ -197,11 +196,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
     }
 
-    executionSettings.withArgument("-Didea.version=" + getIdeaVersion());
+    executionSettings.withArgument("-Didea.sync.active=true");
     if(resolverCtx.isPreviewMode()){
       executionSettings.withArgument("-Didea.isPreviewMode=true");
       final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
-      projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
+      projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(previewLightWeightToolingModels));
     }
     if(resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
@@ -228,7 +227,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if(!resolverCtx.isPreviewMode()){
         // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
         try {
-          projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+          projectImportAction.addProjectImportExtraModelProvider(resolverExtension.getExtraModelProvider());
         }
         catch (Throwable t) {
           LOG.warn(t);
@@ -662,7 +661,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       ContentRootData mergedContentRoot = null;
       String rootPath = toCanonicalPath(root.getAbsolutePath());
-      Set<String> paths = ContainerUtil.newHashSet(sourceSetRoots.keySet());
+      Set<String> paths = new HashSet<>(sourceSetRoots.keySet());
       for (String path : paths) {
         if (FileUtil.isAncestor(rootPath, path, true)) {
           Collection<ContentRootData> values = sourceSetRoots.remove(path);
@@ -789,10 +788,5 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     return projectResolverChain;
-  }
-
-  private static String getIdeaVersion() {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }

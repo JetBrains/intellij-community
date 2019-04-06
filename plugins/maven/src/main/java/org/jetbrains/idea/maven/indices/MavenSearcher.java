@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 
 import java.util.*;
 
@@ -31,28 +31,24 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
 
   private List<RESULT_TYPE> sort(List<RESULT_TYPE> result) {
     for (RESULT_TYPE each : result) {
-      if (each.versions.size() > 1) {
-        TreeMap<MavenVersionComparable, MavenArtifactInfo> tree = new TreeMap<>(Collections.reverseOrder());
+      if (each.getSearchResults().size() > 1) {
+        TreeMap<MavenVersionComparable, MavenDependencyCompletionItem> tree = new TreeMap<>(Collections.reverseOrder());
 
-        for (MavenArtifactInfo artifactInfo : each.versions) {
+        for (MavenDependencyCompletionItem artifactInfo : each.getSearchResults()) {
           tree.put(new MavenVersionComparable(artifactInfo.getVersion()), artifactInfo);
         }
-
-        each.versions.clear();
-        each.versions.addAll(tree.values());
+        each.setResults(new ArrayList<>(tree.values()));
       }
     }
-
     Collections.sort(result, Comparator.comparing(this::makeSortKey));
-
     return result;
   }
 
   protected String makeSortKey(RESULT_TYPE result) {
-    return makeKey(result.versions.get(0));
+    return makeKey(result.getSearchResults().get(0));
   }
 
-  protected String makeKey(MavenArtifactInfo result) {
+  protected String makeKey(MavenDependencyCompletionItem result) {
     return result.getGroupId() + ":" + result.getArtifactId();
   }
 }

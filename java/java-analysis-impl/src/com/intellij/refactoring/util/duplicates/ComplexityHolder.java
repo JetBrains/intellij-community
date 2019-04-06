@@ -12,7 +12,7 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 class ComplexityHolder {
-  static final int MAX_ACCEPTABLE = 9;
+  static final int MAX_ACCEPTABLE = 12;
   static final int TOO_COMPLEX = 100;
 
   private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();

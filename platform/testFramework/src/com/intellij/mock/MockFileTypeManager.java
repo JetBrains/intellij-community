@@ -69,7 +69,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
+  public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
   }
 
   @Override

@@ -16,6 +16,8 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexExtension;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -26,13 +28,15 @@ public abstract class KeyCollectionBasedForwardIndex<Key, Value> extends MapBase
     super(indexExtension);
   }
 
+  @NotNull
   @Override
-  protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, Collection<Key> keys) {
-    return new CollectionInputDataDiffBuilder<Key, Value>(inputId, keys);
+  protected InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable Collection<Key> keys) {
+    return new CollectionInputDataDiffBuilder<>(inputId, keys);
   }
 
+  @NotNull
   @Override
-  protected Collection<Key> convertToMapValueType(int inputId, Map<Key, Value> map) {
+  protected Collection<Key> convertToMapValueType(int inputId, @NotNull Map<Key, Value> map) {
     return map.keySet();
   }
 }

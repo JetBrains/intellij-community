@@ -21,7 +21,7 @@ import java.awt.*;
 
 public class ScrollablePanel extends JPanel implements Scrollable {
   private int myUnitHeight = -1;
-  private final int myUnitWidth = 10;
+  private static final int myUnitWidth = 10;
 
   public ScrollablePanel() {
   }

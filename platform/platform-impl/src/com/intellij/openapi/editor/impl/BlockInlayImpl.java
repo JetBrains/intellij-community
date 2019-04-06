@@ -75,8 +75,8 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
 
   @NotNull
   @Override
-  public VerticalAlignment getVerticalAlignment() {
-    return myShowAbove ? VerticalAlignment.ABOVE_LINE : VerticalAlignment.BELOW_LINE;
+  public Placement getPlacement() {
+    return myShowAbove ? Placement.ABOVE_LINE : Placement.BELOW_LINE;
   }
 
   @NotNull
@@ -88,5 +88,14 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   @Override
   public int getAsInt() {
     return myHeightInPixels;
+  }
+
+  @Override
+  public String toString() {
+    return "[Block inlay, offset=" + getOffset() +
+           ", width=" + myWidthInPixels +
+           ", height=" + myHeightInPixels +
+           "renderer=" + myRenderer +
+           "]";
   }
 }

@@ -15,6 +15,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="CreateTargetTag.html" />
 
+    <statistics.projectUsagesCollector implementation="com.intellij.lang.ant.AntSettingsCollector"/>
+    <statistics.counterUsagesCollector groupId="build.ant.actions" version="1"/>
+
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
     <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 

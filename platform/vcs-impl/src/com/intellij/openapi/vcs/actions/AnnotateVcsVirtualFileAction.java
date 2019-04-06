@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +80,7 @@ public class AnnotateVcsVirtualFileAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
     List<Editor> editors = getEditors(project, file, e.getDataContext());
-    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
+    return ContainerUtil.exists(editors, editor -> AnnotateToggleAction.hasVcsAnnotations(editor));
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
@@ -89,7 +90,7 @@ public class AnnotateVcsVirtualFileAction {
 
     if (!selected) {
       for (Editor editor : editors) {
-        editor.getGutter().closeAllAnnotations();
+        AnnotateToggleAction.closeVcsAnnotations(editor);
       }
     }
     else {
@@ -109,7 +110,8 @@ public class AnnotateVcsVirtualFileAction {
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
 
-    VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
+    final BackgroundableActionLock actionLock = VcsAnnotateUtil.getBackgroundableLock(project, file);
+    actionLock.lock();
 
     final Task.Backgroundable annotateTask = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true) {
       @Override
@@ -135,8 +137,6 @@ public class AnnotateVcsVirtualFileAction {
 
       @Override
       public void onSuccess() {
-        VcsAnnotateUtil.getBackgroundableLock(project, file).unlock();
-
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
           AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
@@ -145,6 +145,11 @@ public class AnnotateVcsVirtualFileAction {
         if (!fileAnnotationRef.isNull()) {
           AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), data.vcs);
         }
+      }
+
+      @Override
+      public void onFinished() {
+        actionLock.unlock();
       }
     };
     ProgressManager.getInstance().run(annotateTask);

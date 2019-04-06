@@ -2,7 +2,13 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.InjectedLanguagePlaces
+import com.intellij.psi.LanguageInjector
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.testFramework.PlatformTestUtil
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
@@ -32,6 +38,28 @@ class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
     myTester.joinAutopopup()
     myTester.joinCompletion()
 
+    assert !lookup
+  }
+
+  void "test injectors are not run in EDT"() {
+    boolean injectorCalled = false
+    LanguageInjector injector = new LanguageInjector() {
+      @Override
+      void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+        injectorCalled = true
+        assert !ApplicationManager.application.dispatchThread
+      }
+    }
+    PlatformTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, [injector] as List<LanguageInjector>, myFixture.testRootDisposable)
+
+    myFixture.configureByText 'a.java', 'class Foo { String s = <caret>; }'
+    assert !injectorCalled
+    type '"'
+
+    injectorCalled = false
+    type 'abc'
+    
+    assert injectorCalled
     assert !lookup
   }
 }

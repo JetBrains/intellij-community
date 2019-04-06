@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -140,7 +140,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : gitRoots(asList(filesToCheckin))) {
+    for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -189,7 +189,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
-    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
 
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
@@ -243,9 +243,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
       if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
-        runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile));
-        });
+        runWithMessageFile(myProject, root, message, messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
         if (!exceptions.isEmpty()) return exceptions;
 
         callback.run();
@@ -580,9 +578,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<CommitChange> movedChanges = committedAndNewChanges.first;
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
-      runWithMessageFile(myProject, root, message, moveMessageFile -> {
-        exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
-      });
+      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile)));
 
       List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
       for (GitCheckinExplicitMovementProvider provider : providers) {
@@ -670,16 +666,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     // Commit leftovers as added/deleted files (ex: if git detected files movements in a conflicting way)
-    affectedBeforePaths.forEach((bPath, change) -> {
-      nextCommitChanges.add(new CommitChange(change.beforePath, null,
-                                             change.beforeRevision, null,
-                                             change.changelistId, change.virtualFile));
-    });
-    affectedAfterPaths.forEach((aPath, change) -> {
-      nextCommitChanges.add(new CommitChange(null, change.afterPath,
-                                             null, change.afterRevision,
-                                             change.changelistId, change.virtualFile));
-    });
+    affectedBeforePaths.forEach((bPath, change) -> nextCommitChanges.add(new CommitChange(change.beforePath, null,
+                                                                                        change.beforeRevision, null,
+                                                                                        change.changelistId, change.virtualFile)));
+    affectedAfterPaths.forEach((aPath, change) -> nextCommitChanges.add(new CommitChange(null, change.afterPath,
+                                                                                       null, change.afterRevision,
+                                                                                       change.changelistId, change.virtualFile)));
 
     if (movedChanges.isEmpty()) return null;
     return Pair.create(movedChanges, nextCommitChanges);
@@ -700,11 +692,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       addIfNotNull(beforePathsMultiSet, change.beforePath);
       addIfNotNull(afterPathsMultiSet, change.afterPath);
     }
-    return filter(explicitMoves, move -> {
-      return movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
-             beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
-             beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0;
-    });
+    return filter(explicitMoves, move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
+           beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
+           beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
   }
 
 
@@ -782,19 +772,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
-  /**
-   * Preform a merge commit
-   *
-   * @param project          a project
-   * @param root             a vcs root
-   * @param added            added files
-   * @param removed          removed files
-   * @param messageFile      a message file for commit
-   * @param author           an author
-   * @param exceptions       the list of exceptions to report
-   * @param partialOperation
-   * @return true if merge commit was successful
-   */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
@@ -1015,7 +992,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = sortFilePathsByGitRoot(files);
+      sortedFiles = sortFilePathsByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1070,7 +1047,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = sortFilesByGitRoot(files);
+      sortedFiles = sortFilesByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1105,28 +1082,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<? extends Change> changes, List<? super VcsException> exceptions) {
+  @NotNull
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
+                                                                           @NotNull List<? extends Change> changes,
+                                                                           @NotNull List<? super VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
-      // note that any path will work, because changes could happen within single vcs root
-      final FilePath filePath = getFilePath(change);
-      final VirtualFile vcsRoot;
       try {
+        // note that any path will work, because changes could happen within single vcs root
+        final FilePath filePath = getFilePath(change);
+
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        vcsRoot = getGitRoot(filePath.getParentPath());
+        GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
+        Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+        changeList.add(change);
       }
       catch (VcsException e) {
         exceptions.add(e);
-        continue;
       }
-      Collection<Change> changeList = result.get(vcsRoot);
-      if (changeList == null) {
-        changeList = new ArrayList<>();
-        result.put(vcsRoot, changeList);
-      }
-      changeList.add(change);
     }
     return result;
   }
@@ -1274,7 +1249,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       @NotNull
       @Override
       protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
-        return gitRoots(files);
+        return getRootsForFilePathsIfAny(myProject, files);
       }
 
       @Nullable

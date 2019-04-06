@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -94,27 +94,6 @@ def m() {
   }
 
   void 'test several signatures'() {
-    myFixture.configureByText 'a.groovy', '''
-import groovy.transform.CompileStatic
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.SimpleType
-
-def m1(String o, @ClosureParams(value=SimpleType.class, options="java.lang.String") Closure c) {}
-def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Double") Closure c) {}
-
-@CompileStatic
-def m() {
-    def a;
-    m1(a) {
-        double d -> println(d)
-    }
-}
-'''
-    myFixture.checkHighlighting()
-  }
-
-
-  void 'test several signatures error'() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)
     myFixture.configureByText 'a.groovy', '''
 import groovy.transform.CompileStatic
@@ -127,12 +106,12 @@ def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Doubl
 @CompileStatic
 def m() {
     def a;
-    m1<warning descr="Method call is ambiguous">(a)</warning> {
+    m1<error descr="'m1' in 'a' cannot be applied to '(java.lang.Object, groovy.lang.Closure<java.lang.Void>)'">(a)</error> {
         long l -> println(l)
     }
 }
 '''
-    myFixture.checkHighlighting(true, false, false)
+    myFixture.checkHighlighting()
   }
 
   void 'test cast several arguments'() {

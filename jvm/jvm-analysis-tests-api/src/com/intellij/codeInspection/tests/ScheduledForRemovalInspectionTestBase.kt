@@ -9,7 +9,7 @@ abstract class ScheduledForRemovalInspectionTestBase: AnnotatedElementUsageInspe
   private val inspection = ScheduledForRemovalInspection()
   override fun getInspection() = inspection
 
-  override fun getAnnotationFqn(): String = "org.jetbrains.annotations.ApiStatus.ScheduledForRemoval"
+  override fun getAnnotationString() = "@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = \"123.456\")"
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus::class.java))

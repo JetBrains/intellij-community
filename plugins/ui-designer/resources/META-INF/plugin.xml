@@ -136,6 +136,7 @@
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
     <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
+    <postStartupActivity implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 
@@ -272,7 +273,7 @@
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>
 
-    <group id="GuiDesigner.NewActions">
+    <group id="GuiDesigner.NewActions" popup="true">
       <separator/>
       <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
       <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>

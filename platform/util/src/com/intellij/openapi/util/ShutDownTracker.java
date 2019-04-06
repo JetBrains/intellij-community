@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ShutDownTracker implements Runnable {
-  private final List<Thread> myThreads = new ArrayList<Thread>();
-  private final LinkedList<Runnable> myShutdownTasks = new LinkedList<Runnable>();
+  private final List<Thread> myThreads = new ArrayList<>();
+  private final LinkedList<Runnable> myShutdownTasks = new LinkedList<>();
   private final Thread myThread;
 
   private ShutDownTracker() {

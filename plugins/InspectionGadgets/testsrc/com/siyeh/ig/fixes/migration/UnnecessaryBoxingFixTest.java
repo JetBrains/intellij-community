@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.UnnecessaryBoxingInspection;
@@ -86,6 +87,18 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
 
   public void testCast() {
     doFixTest();
+  }
+
+  public void testParseInt() {
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "parseInt"));
+  }
+
+  public void testStaticImport() {
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "parseInt"));
+  }
+
+  public void testShadowImport() {
+    assertQuickfixNotAvailable("Fix all 'Unnecessary boxing' problems in file");
   }
 
   private void doFixTest() {

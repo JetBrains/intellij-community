@@ -94,7 +94,7 @@ public class CompileDriver {
       startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -146,7 +146,7 @@ public class CompileDriver {
       startup(scope, false, true, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -155,7 +155,7 @@ public class CompileDriver {
       startup(compileScope, true, false, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -305,9 +305,6 @@ public class CompileDriver {
               if (outputToArtifact != null) {
                 Collection<Artifact> artifacts = outputToArtifact.get(root);
                 if (!artifacts.isEmpty()) {
-                  for (Artifact artifact : artifacts) {
-                    ArtifactsCompiler.addChangedArtifact(compileContext, artifact);
-                  }
                   writtenArtifactOutputPaths.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
                 }
               }
@@ -541,7 +538,7 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + StringUtil.formatDuration(duration);
+      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }
@@ -586,9 +583,16 @@ public class CompileDriver {
         progressIndicator.setText(
           CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
-          if (!task.execute(context)) {
-            return false;
+          try {
+            if (!task.execute(context)) {
+              return false;
+            }
           }
+          catch (Throwable t) {
+            LOG.error("Error executing task", t);
+            context.addMessage(CompilerMessageCategory.INFORMATION, "Task "  + task.toString()  + " failed, please see idea.log for details", null, -1, -1);
+          }
+
         }
       }
     }
@@ -695,7 +699,7 @@ public class CompileDriver {
       return true;
     }
     catch (Throwable e) {
-      LOG.info(e);
+      LOG.error(e);
       return false;
     }
   }

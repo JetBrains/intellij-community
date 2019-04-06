@@ -31,7 +31,7 @@ public class Enumerator<T> {
   private int myNextNumber = 1;
 
   public Enumerator(int expectNumber, @NotNull TObjectHashingStrategy<T> strategy) {
-    myNumbers = new TObjectIntHashMap<T>(expectNumber, strategy);
+    myNumbers = new TObjectIntHashMap<>(expectNumber, strategy);
   }
 
   public void clear() {

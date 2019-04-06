@@ -38,7 +38,7 @@ final class CommandLineParserUtil extends GeneratedParserUtilBase {
       return;
     }
 
-    /**
+    /*
      * At '=' position: if no whitespace to left and right, we move to argument.
      * And we report error if whitespace to the left.
      */

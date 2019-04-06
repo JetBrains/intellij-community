@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +23,7 @@ public class NonFinalUtilityClassInspectionTest extends LightCodeInsightFixtureT
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil
-      .registerExtension(ImplicitSubclassProvider.EP_NAME, myImplicitSubclassProvider, getTestRootDisposable());
+    ImplicitSubclassProvider.EP_NAME.getPoint(null).registerExtension(myImplicitSubclassProvider, getTestRootDisposable());
   }
 
   @NotNull

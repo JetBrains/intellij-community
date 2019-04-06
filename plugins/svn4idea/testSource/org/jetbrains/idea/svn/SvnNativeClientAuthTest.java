@@ -43,8 +43,8 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   private boolean mySaveCredentials = false;
   private boolean myCancelAuth = false;
 
-  private final String outHttpUser = "test";
-  private final String outHttpPassword = "test";
+  private static final String outHttpUser = "test";
+  private static final String outHttpPassword = "test";
 
   private final static Url ourHTTP_URL = parseUrl("http://svnsrvtest/stuff/autoTest", false);
   private final static Url ourHTTPS_URL = parseUrl("https://svnsrvtest:443/TestSSL/autoTest", false);

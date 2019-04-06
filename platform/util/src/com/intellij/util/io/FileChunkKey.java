@@ -62,6 +62,6 @@ class FileChunkKey<OwnerType> implements Comparable<FileChunkKey<OwnerType>>, Sh
 
   @Override
   public ShareableKey getStableCopy() {
-    return new FileChunkKey<OwnerType>(owner, offset);
+    return new FileChunkKey<>(owner, offset);
   }
 }

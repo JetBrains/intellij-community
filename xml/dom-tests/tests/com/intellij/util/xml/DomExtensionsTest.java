@@ -295,6 +295,6 @@ public class DomExtensionsTest extends DomTestCase {
     public MyStringBufferConverter(boolean b) {
     }
   }
-  public static interface MyAttribute extends GenericAttributeValue<Boolean> {}
+  public interface MyAttribute extends GenericAttributeValue<Boolean> {}
 }
 

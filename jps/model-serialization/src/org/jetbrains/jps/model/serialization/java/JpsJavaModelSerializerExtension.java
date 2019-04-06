@@ -98,6 +98,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Arrays.asList(new JavaProjectExtensionSerializer(),
                          new JpsJavaCompilerConfigurationSerializer(),
+                         new JpsValidationSerializer(),
                          new JpsJavaCompilerNotNullableSerializer(),
                          new JpsCompilerValidationExcludeSerializer(),
                          new JpsJavaCompilerWorkspaceConfigurationSerializer(),

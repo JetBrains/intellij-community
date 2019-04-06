@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
@@ -109,7 +108,7 @@ public class BraceHighlightingHandler {
               PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
                                  ? null
                                  : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-              ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 try {
                   if (isValidEditor(editor) && isValidFile(injected)) {
                     EditorEx newEditor = (EditorEx)InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);

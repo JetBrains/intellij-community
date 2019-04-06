@@ -27,6 +27,7 @@ import com.intellij.testGuiFramework.launcher.GradleLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.ide.Ide
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.IdeControl.closeIde
 import com.intellij.testGuiFramework.remote.IdeControl.ensureIdeIsRunning
 import com.intellij.testGuiFramework.remote.IdeControl.restartIde
@@ -37,6 +38,7 @@ import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
 import com.intellij.testGuiFramework.testCases.PluginTestCase.Companion.PLUGINS_INSTALLED
 import com.intellij.testGuiFramework.testCases.SystemPropertiesTestCase.Companion.SYSTEM_PROPERTIES
+import com.intellij.testGuiFramework.util.DisabledOnOs
 import com.intellij.util.io.exists
 import org.junit.Assert
 import org.junit.AssumptionViolatedException
@@ -76,15 +78,23 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
   private fun runOnServerSide(method: FrameworkMethod, notifier: RunNotifier) {
 
     val description = runner.describeChild(method)
+    SERVER_LOG.info("DEBUG_TEST_DESCRIPTION: ${description.displayName} ${description.className} ${description.testClass} ${description.methodName}")
     val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
     val systemProperties = getSystemPropertiesFromAnnotation(method.declaringClass)
 
     val eachNotifier = EachTestNotifier(notifier, description)
-    if (criticalError.get()) {
-      eachNotifier.fireTestIgnored(); return
-    }
 
     val testName = runner.getTestName(method.name)
+    if (testShouldBeIgnored(method)) {
+      SERVER_LOG.info("Test $testName ignored by @DisabledOnOs annotation")
+      return
+    }
+
+    if (criticalError.get()) {
+      eachNotifier.fireTestIgnored()
+      return
+    }
+
     SERVER_LOG.info("Starting test on server side: $testName")
 
     try {
@@ -161,9 +171,9 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
   private fun sendRunTestCommand(method: FrameworkMethod, testName: String) {
     val jUnitTestContainer = if (runner is GuiTestLocalRunnerParam)
-      JUnitTestContainer(method.declaringClass, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
+      JUnitTestContainer(method.declaringClass.canonicalName, testName, mapOf(Pair(PARAMETERS, (runner as GuiTestLocalRunnerParam).getParameters())))
     else
-      JUnitTestContainer(method.declaringClass, testName)
+      JUnitTestContainer(method.declaringClass.canonicalName, testName)
     runTest(jUnitTestContainer)
   }
 
@@ -269,6 +279,10 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
+
+    private fun testShouldBeIgnored(test: FrameworkMethod): Boolean =
+      test.getAnnotation(DisabledOnOs::class.java)?.os?.contains(SystemInfo.getSystemType()) ?: false ||
+      test.declaringClass.getAnnotation(DisabledOnOs::class.java)?.os?.contains(SystemInfo.getSystemType()) ?: false
   }
 
 }

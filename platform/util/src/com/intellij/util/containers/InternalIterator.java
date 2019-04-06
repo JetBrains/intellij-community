@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 
 import java.util.Collection;
 
+@FunctionalInterface
 public interface InternalIterator<T>{
   /**
    * @return false to stop iteration true to continue if more elements are avaliable.
@@ -38,7 +39,7 @@ public interface InternalIterator<T>{
     }
 
     public static <T> InternalIterator<T> create(Collection<? super T> collection) {
-      return new Collector<T>(collection);
+      return new Collector<>(collection);
     }
   }
 
@@ -57,11 +58,11 @@ public interface InternalIterator<T>{
     }
 
     public static <T> InternalIterator<T> create(InternalIterator<? super T> iterator, Condition<? super T> filter) {
-      return new Filtering<T>(iterator, filter);
+      return new Filtering<>(iterator, filter);
     }
 
     public static <T, V extends T> InternalIterator<T> createInstanceOf(InternalIterator<V> iterator, FilteringIterator.InstanceOf<V> filter) {
-      return new Filtering<T>((InternalIterator<T>)iterator, filter);
+      return new Filtering<>((InternalIterator<T>)iterator, filter);
     }
 
     public static <T> InternalIterator createInstanceOf(InternalIterator<T> iterator, Class<T> aClass) {

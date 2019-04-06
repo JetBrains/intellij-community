@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -524,6 +525,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           MoveFilesOrDirectoriesUtil.doMoveFile((PsiClassOwner)element, directory);
           PsiFile newElement = directory.findFile(((PsiClassOwner)element).getName());
           LOG.assertTrue(newElement != null);
+
+          DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
           final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);
           if (newPackage != null) {
             String qualifiedName = newPackage.getQualifiedName();
@@ -541,6 +545,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         elementListener.elementMoved(element);
         myElementsToMove[idx] = element;
       }
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
 

@@ -92,6 +92,13 @@ public abstract class LongRangeSet {
   public abstract long max();
 
   /**
+   * @return a constant value if this set represents a constant; null otherwise
+   */
+  public Long getConstantValue() {
+    return null;
+  }
+
+  /**
    * Checks if current set and other set have at least one common element
    *
    * @param other other set to check whether intersection exists
@@ -176,6 +183,9 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.OR)) {
       return bitwiseOr(right, isLong);
     }
+    if (token.equals(JavaTokenType.XOR)) {
+      return bitwiseXor(right, isLong);
+    }
     if (token.equals(JavaTokenType.PERC)) {
       return mod(right);
     }
@@ -254,6 +264,21 @@ public abstract class LongRangeSet {
   public LongRangeSet bitwiseOr(LongRangeSet other, boolean isLong) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     LongRangeSet result = fromBits(getBitwiseMask().or(other.getBitwiseMask()));
+    return isLong ? result : result.intersect(Range.INT_RANGE);
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x ^ y} operation for
+   * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
+   * some more values.
+   *
+   * @param other other set to perform bitwise-xor with
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet bitwiseXor(LongRangeSet other, boolean isLong) {
+    if (this.isEmpty() || other.isEmpty()) return empty();
+    LongRangeSet result = fromBits(getBitwiseMask().xor(other.getBitwiseMask()));
     return isLong ? result : result.intersect(Range.INT_RANGE);
   }
 
@@ -960,6 +985,11 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public Long getConstantValue() {
+      return myValue;
+    }
+
+    @Override
     public LongRangeSet unite(LongRangeSet other) {
       if (other.isEmpty() || other == this) return this;
       if (other.contains(myValue)) return other;
@@ -1272,7 +1302,7 @@ public abstract class LongRangeSet {
         return other.unite(this);
       }
       if (other instanceof Range) {
-        if (other.intersects(this) ||
+        if (other.min() <= max() && min() <= other.max() ||
             (other.max() < min() && other.max() + 1 == min()) ||
             (other.min() > max() && max() + 1 == other.min())) {
           return range(Math.min(min(), other.min()), Math.max(max(), other.max()));
@@ -1768,7 +1798,9 @@ public abstract class LongRangeSet {
           result = setBits;
         }
       }
-      return new BitString(result, mask).and(super.getBitwiseMask());
+      BitString intersection = new BitString(result, mask).intersect(super.getBitwiseMask());
+      assert intersection != null;
+      return intersection;
     }
 
     private long getMask() {

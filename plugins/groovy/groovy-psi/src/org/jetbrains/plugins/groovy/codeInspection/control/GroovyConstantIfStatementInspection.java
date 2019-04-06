@@ -32,17 +32,6 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Constant if statement";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... args) {
     return "#ref statement can be simplified #loc";
   }

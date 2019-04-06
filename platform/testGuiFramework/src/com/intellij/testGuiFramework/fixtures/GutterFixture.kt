@@ -24,7 +24,9 @@ open class GutterFixture(private val myIde: IdeFrameFixture) {
     IMPLEMENTATION,
     IMPLEMENTED,
     OVERRIDES,
-    OVERRIDDEN
+    OVERRIDDEN,
+    PASSED,
+    FAILED
   }
 
   val gutterIcons: Map<GutterIcon, List<Int>>
@@ -52,6 +54,8 @@ open class GutterFixture(private val myIde: IdeFrameFixture) {
               AllIcons.RunConfigurations.TestState.Run -> result[GutterIcon.RUN_SCRIPT]!!.add(lineNumber)
               AllIcons.Debugger.Db_set_breakpoint -> result[GutterIcon.BREAKPOINT]!!.add(lineNumber)
               AllIcons.Debugger.Db_disabled_breakpoint -> result[GutterIcon.DISABLED_BREAKPOINT]!!.add(lineNumber)
+              AllIcons.RunConfigurations.TestState.Green2  -> result[GutterIcon.PASSED]!!.add(lineNumber)
+              AllIcons.RunConfigurations.TestState.Red2 -> result[GutterIcon.FAILED]!!.add(lineNumber)
               else -> handleUnmatchedIcon(icon)?.let { result.getOrDefault(it, mutableListOf(lineNumber)).add(lineNumber) }
             }
           }

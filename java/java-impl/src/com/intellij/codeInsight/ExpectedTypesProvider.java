@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -73,7 +73,7 @@ public class ExpectedTypesProvider {
       GlobalSearchScope sources = GlobalSearchScope.projectScope(project);
       GlobalSearchScope libraries = GlobalSearchScope.notScope(sources);
       PsiMethod[] sourceMethods = cache.getMethodsByNameIfNotMoreThan(name, sources, MAX_COUNT);
-      if (sourceMethods.length == MAX_COUNT) return sourceMethods;
+      if (sourceMethods.length >= MAX_COUNT) return sourceMethods;
       PsiMethod[] libraryMethods = cache.getMethodsByNameIfNotMoreThan(name, libraries, MAX_COUNT-sourceMethods.length);
       return ArrayUtil.mergeArrays(sourceMethods, libraryMethods);
     }
@@ -104,6 +104,15 @@ public class ExpectedTypesProvider {
     return new ExpectedTypeInfoImpl(type, kind, defaultType, tailType, calledMethod, expectedName);
   }
 
+  @Nullable
+  public static ExpectedTypeInfo getSingleExpectedTypeForCompletion(@Nullable PsiExpression expr) {
+    ExpectedTypeInfo[] expectedTypes = getExpectedTypes(expr, true, ourGlobalScopeClassProvider, false, false, 1);
+    if (expectedTypes.length > 0) {
+      return expectedTypes[0];
+    }
+    return null;
+  }
+
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion) {
     return getExpectedTypes(expr, forCompletion, false, false);
@@ -124,6 +133,15 @@ public class ExpectedTypesProvider {
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
                                                     final boolean voidable, boolean usedAfter) {
+    return getExpectedTypes(expr, forCompletion, classProvider, voidable, usedAfter, Integer.MAX_VALUE);
+  }
+
+  @NotNull
+  private static ExpectedTypeInfo[] getExpectedTypes(@Nullable PsiExpression expr,
+                                                     boolean forCompletion,
+                                                     ExpectedClassProvider classProvider,
+                                                     boolean voidable,
+                                                     boolean usedAfter, int maxCandidates) {
     if (expr == null) return ExpectedTypeInfo.EMPTY_ARRAY;
     PsiElement parent = expr.getParent();
     PsiFunctionalExpression functionalExpression = extractFunctionalExpression(expr);
@@ -141,7 +159,7 @@ public class ExpectedTypesProvider {
         return result;
       }
     }
-    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
+    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter, maxCandidates);
     if (parent != null) {
       parent.accept(visitor);
     }
@@ -249,6 +267,7 @@ public class ExpectedTypesProvider {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
     private final boolean myUsedAfter;
+    private final int myMaxCandidates;
     private final ExpectedClassProvider myClassProvider;
     private final boolean myVoidable;
     final List<ExpectedTypeInfo> myResult = ContainerUtil.newArrayList();
@@ -258,16 +277,21 @@ public class ExpectedTypesProvider {
                             boolean forCompletion,
                             ExpectedClassProvider classProvider,
                             boolean voidable,
-                            boolean usedAfter) {
+                            boolean usedAfter, 
+                            int maxCandidates) {
       myExpr = expr;
       myForCompletion = forCompletion;
       myClassProvider = classProvider;
       myVoidable = voidable;
       myUsedAfter = usedAfter;
+      myMaxCandidates = maxCandidates;
     }
 
     @NotNull
     public ExpectedTypeInfo[] getResult() {
+      if (myResult.size() > myMaxCandidates) {
+        return myResult.subList(0, myMaxCandidates).toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+      }
       return myResult.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
@@ -275,7 +299,8 @@ public class ExpectedTypesProvider {
     public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       PsiElement parent = expression.getParent();
       if (parent != null) {
-        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
+        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable, myUsedAfter,
+                                                            myMaxCandidates);
         parent.accept(visitor);
         for (final ExpectedTypeInfo info : visitor.myResult) {
           myResult.add(createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailTypes.RPARENTH, info.getCalledMethod(),
@@ -297,7 +322,7 @@ public class ExpectedTypesProvider {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (myForCompletion) {
-        final MyParentVisitor visitor = new MyParentVisitor(expression, true, myClassProvider, myVoidable, myUsedAfter);
+        final MyParentVisitor visitor = new MyParentVisitor(expression, true, myClassProvider, myVoidable, myUsedAfter, myMaxCandidates);
         expression.getParent().accept(visitor);
         myResult.addAll(visitor.myResult);
         return;
@@ -326,10 +351,7 @@ public class ExpectedTypesProvider {
       if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock();
         if (block instanceof PsiSwitchExpression) {
-          if (myForCompletion) {
-            myExpr = (PsiSwitchExpression)block;
-          }
-          block.getParent().accept(this);
+          Collections.addAll(myResult, getExpectedTypes((PsiExpression)block, myForCompletion));
           return;
         }
       }
@@ -487,6 +509,8 @@ public class ExpectedTypesProvider {
       if (myExpr.equals(statement.getIteratedValue())) {
         PsiType type = statement.getIterationParameter().getType();
 
+        if (PsiType.NULL.equals(type)) return;
+          
         PsiType arrayType = type.createArrayType();
         myResult.add(createInfoImpl(arrayType, arrayType));
 
@@ -494,7 +518,7 @@ public class ExpectedTypesProvider {
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
-        if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
+        if (iterableClass != null && iterableClass.getTypeParameters().length == 1) {
           Map<PsiTypeParameter, PsiType> map = new HashMap<>();
           map.put(iterableClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, type));
           PsiType iterableType = factory.createType(iterableClass, factory.createSubstitutor(map));
@@ -567,7 +591,7 @@ public class ExpectedTypesProvider {
 
         PsiExpression rExpr = assignment.getRExpression();
         if (rExpr != null) {
-          PsiType type = rExpr.getType();
+          PsiType type = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(assignment, false, () -> rExpr.getType());
           if (type != null && type != PsiType.NULL) {
             if (type instanceof PsiClassType) {
               final PsiClass resolved = ((PsiClassType)type).resolve();
@@ -645,8 +669,9 @@ public class ExpectedTypesProvider {
       if (PsiDiamondType.hasDiamond(newExpr)) {
         final JavaResolveResult[] candidates = PsiDiamondTypeImpl.collectStaticFactories(newExpr, DuplicateConflictResolver.INSTANCE);
         if (candidates != null) {
-          final PsiExpressionList argumentList = newExpr.getArgumentList();
-          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(ContainerUtil.map(candidates, candidate -> (CandidateInfo)candidate, CandidateInfo.EMPTY_ARRAY), argumentList, myExpr, myForCompletion,
+          final PsiExpressionList argumentList = Objects.requireNonNull(newExpr.getArgumentList());
+          CandidateInfo[] converted = ContainerUtil.map(candidates, candidate -> (CandidateInfo)candidate, CandidateInfo.EMPTY_ARRAY);
+          Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(converted, argumentList, myExpr, myForCompletion, 
                                                                              newExpr.resolveMethod()));
         }
         return;
@@ -696,7 +721,7 @@ public class ExpectedTypesProvider {
         if (op == JavaTokenType.EQEQ || op == JavaTokenType.NE) {
           ContainerUtil.addIfNotNull(myResult, getEqualsType(anotherExpr));
         }
-        final MyParentVisitor visitor = new MyParentVisitor(expr, true, myClassProvider, myVoidable, myUsedAfter);
+        final MyParentVisitor visitor = new MyParentVisitor(expr, true, myClassProvider, myVoidable, myUsedAfter, myMaxCandidates);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
         myResult.addAll(visitor.myResult);
@@ -896,7 +921,7 @@ public class ExpectedTypesProvider {
         }
 
         PsiElement parent = expr.getParent();
-        MyParentVisitor visitor = new MyParentVisitor(expr, false, myClassProvider, myVoidable, myUsedAfter);
+        MyParentVisitor visitor = new MyParentVisitor(expr, false, myClassProvider, myVoidable, myUsedAfter, myMaxCandidates);
         myExpr = (PsiExpression)myExpr.getParent();
         parent.accept(visitor);
         ExpectedTypeInfo[] componentTypeInfo = visitor.getResult();
@@ -924,7 +949,7 @@ public class ExpectedTypesProvider {
         myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, TailType.NONE));
       }
       else if (myExpr.equals(expr.getThenExpression())) {
-        ExpectedTypeInfo[] types = getExpectedTypes(expr, myForCompletion);
+        ExpectedTypeInfo[] types = getExpectedTypes(expr, myForCompletion, ourGlobalScopeClassProvider, false, false, myMaxCandidates);
         for (int i = 0; i < types.length; i++) {
           final ExpectedTypeInfo info = types[i];
           types[i] = createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailType.COND_EXPR_COLON, info.getCalledMethod(),
@@ -936,7 +961,7 @@ public class ExpectedTypesProvider {
         if (!myExpr.equals(expr.getElseExpression())) {
           LOG.error(Arrays.asList(expr.getChildren()) + "; " + myExpr);
         }
-        Collections.addAll(myResult, getExpectedTypes(expr, myForCompletion));
+        Collections.addAll(myResult, getExpectedTypes(expr, myForCompletion, ourGlobalScopeClassProvider, false, false, myMaxCandidates));
       }
     }
 
@@ -1031,7 +1056,7 @@ public class ExpectedTypesProvider {
 
       ParameterTypeInferencePolicy policy = forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE;
 
-      Set<ExpectedTypeInfo> array = new LinkedHashSet<>();
+      Set<ExpectedTypeInfo> set = new LinkedHashSet<>();
       for (CandidateInfo candidateInfo : methodCandidates) {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();
         PsiSubstitutor substitutor;
@@ -1049,7 +1074,8 @@ public class ExpectedTypesProvider {
         if (substitutor == null) {
           return ExpectedTypeInfo.EMPTY_ARRAY;
         }
-        inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, array);
+        inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, set);
+        if (set.size() >= myMaxCandidates) break;
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
           Computable<PsiSubstitutor> computable = () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs);
@@ -1057,13 +1083,14 @@ public class ExpectedTypesProvider {
                         ? computable.compute()
                         : MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false, computable);
           if (substitutor != null) {
-            inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
+            inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, set);
+            if (set.size() >= myMaxCandidates) break;
           }
         }
       }
 
       // try to find some variants without considering previous argument PRIMITIVE_TYPES
-      if (forCompletion && array.isEmpty()) {
+      if (forCompletion && set.isEmpty()) {
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
@@ -1074,11 +1101,12 @@ public class ExpectedTypesProvider {
           TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, params);
           ExpectedTypeInfoImpl info = createInfoImpl(paramType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, paramType,
                                                      tailType, method, getPropertyName(param));
-          array.add(info);
+          set.add(info);
+          if (set.size() >= myMaxCandidates) break;
         }
       }
 
-      return array.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+      return set.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @NotNull

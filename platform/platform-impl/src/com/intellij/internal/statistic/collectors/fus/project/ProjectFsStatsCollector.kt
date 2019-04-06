@@ -2,13 +2,13 @@
 package com.intellij.internal.statistic.collectors.fus.project
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 
 object ProjectFsStatsCollector {
-  private val groupId = FeatureUsageGroup("project.fs", 1)
+  private val groupId = EventLogGroup("project.fs", 1)
 
   @JvmStatic
   fun caseSensitivity(project: Project, value: Boolean) {

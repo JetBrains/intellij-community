@@ -24,19 +24,18 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapReduceIndex;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,8 +44,8 @@ public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
   private volatile Throwable myRebuildThrowable;
   public StringIndex(String testName,
-                     final IndexStorage<String, String> storage,
-                     final PersistentHashMap<Integer, Collection<String>> inputIndex,
+                     IndexStorage<String, String> storage,
+                     File forwardIndexFile,
                      boolean failOnRebuildRequest)
     throws IOException {
     IndexId<String, String> id = IndexId.create(testName + "string_index");
@@ -80,13 +79,32 @@ public class StringIndex {
         return 0;
       }
     };
-    myIndex = new MapReduceIndex<String, String, PathContentPair>(extension, storage, new KeyCollectionBasedForwardIndex<String, String>(extension) {
-      @NotNull
+
+    DataExternalizer<Collection<String>> anotherStringExternalizer = new DataExternalizer<Collection<String>>() {
       @Override
-      public PersistentHashMap<Integer, Collection<String>> createMap() {
-        return inputIndex;
+      public void save(@NotNull DataOutput out, Collection<String> value)
+        throws IOException {
+        DataInputOutputUtil.writeINT(out, value.size());
+        for (String key : value) {
+          out.writeUTF(key);
+        }
       }
-    }) {
+
+      @Override
+      public Collection<String> read(@NotNull DataInput _in)
+        throws IOException {
+        final int size = DataInputOutputUtil.readINT(_in);
+        final List<String> list = new ArrayList<>();
+        for (int idx = 0; idx < size; idx++) {
+          list.add(_in.readUTF());
+        }
+        return list;
+      }
+    };
+    myIndex = new MapReduceIndex<String, String, PathContentPair>(extension,
+                                                                  storage,
+                                                                  new PersistentMapBasedForwardIndex(forwardIndexFile),
+                                                                  new KeyCollectionForwardIndexAccessor<>(anotherStringExternalizer)) {
       @Override
       public void checkCanceled() {
         ProgressManager.checkCanceled();

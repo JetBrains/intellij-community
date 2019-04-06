@@ -4,6 +4,7 @@ package com.siyeh.ig.logging;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightInspectionTestCase;
 
+@SuppressWarnings("PlaceholderCountMatchesArgumentCount")
 public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
@@ -17,9 +18,11 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
       "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}",
 
       "package org.apache.logging.log4j;" +
+      "import org.apache.logging.log4j.util.Supplier;" +
       "public interface Logger {" +
       "  void info(String message, Object... params);" +
       "  void fatal(String message, Object... params);" +
+      "  void error(Supplier<?> var1, Throwable var2);" +
       "}",
 
       "package org.apache.logging.log4j;" +
@@ -27,6 +30,11 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
       "  public static Logger getLogger() {" +
       "    return null;" +
       "  }" +
+      "}",
+
+      "package org.apache.logging.log4j.util;" +
+      "public interface Supplier<T> {" +
+      "    T get();" +
       "}"
     };
   }
@@ -38,6 +46,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "  void m(int i) {\n" +
            "    LOG.info(/*Fewer arguments provided (1) than placeholders specified (3)*/\"hello? {}{}{}\"/**/, i);\n" +
            "    LOG.fatal(/*More arguments provided (1) than placeholders specified (0)*/\"you got me \"/**/,  i);\n" +
+           "    LOG.error(() -> \"\", new Exception());\n" +
            "  }\n" +
            "}");
   }

@@ -1,7 +1,9 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LogStatementGuardedByLogConditionInspectionTest extends LightInspectionTestCase {
@@ -20,5 +22,11 @@ public class LogStatementGuardedByLogConditionInspectionTest extends LightInspec
     inspection.logConditionMethodNameList.clear();
     inspection.logConditionMethodNameList.add("isDebug");
     return inspection;
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

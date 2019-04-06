@@ -18,14 +18,8 @@ public final class TasksIcons {
     return IconLoader.getIcon(path, clazz);
   }
 
-  /**
-   * 16x16
-   */
-  public static final Icon Bug = load("/icons/bug.svg");
-  /**
-   * 16x16
-   */
-  public static final Icon Exception = load("/icons/exception.svg");
+  /** 16x16 */ public static final Icon Bug = load("/icons/bug.svg");
+  /** 16x16 */ public static final Icon Exception = load("/icons/exception.svg");
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
   @SuppressWarnings("unused")

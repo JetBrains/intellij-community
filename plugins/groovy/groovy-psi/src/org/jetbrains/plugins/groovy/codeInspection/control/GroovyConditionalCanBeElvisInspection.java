@@ -36,12 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Conditional expression can be elvis";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be elvis #loc";
   }

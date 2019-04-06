@@ -8,12 +8,15 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -30,9 +33,11 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +48,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -64,6 +70,7 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
+  public static final boolean JAVA_11_OR_LATER = SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -183,7 +190,8 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
-    if (Registry.is("keymap.windows.up.to.maximize.dialogs") && SystemInfo.isWin7OrNewer) {
+    if (SystemInfo.isWin7OrNewer && SystemProperties.getBooleanProperty("keymap.windows.up.to.maximize.dialogs", true)) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
       addDispatcher(new WindowsUpMaximizer(), null);
     }
     addDispatcher(new EditingCanceller(), null);
@@ -191,6 +199,36 @@ public class IdeEventQueue extends EventQueue {
     abracadabraDaberBoreh();
 
     IdeKeyEventDispatcher.addDumbModeWarningListener(() -> flushDelayedKeyEvents());
+
+    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
+      myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
+    }
+
+    ((IdeKeyboardFocusManager)KeyboardFocusManager.getCurrentKeyboardFocusManager()).setTypeaheadHandler(ke -> {
+      if (myKeyEventDispatcher.dispatchKeyEvent(ke)) {
+        ke.consume();
+      }
+    });
+  }
+
+  private static boolean skipMoveResizeEvents(AWTEvent event) {
+    // JList, JTable and JTree paint every cell/row/column using the following method:
+    //   CellRendererPane.paintComponent(Graphics, Component, Container, int, int, int, int, boolean)
+    // This method sets bounds to a renderer component and invokes the following internal method:
+    //   Component.notifyNewBounds
+    // All default and simple renderers do not post specified events,
+    // but panel-based renderers have to post events by contract.
+    switch (event.getID()) {
+      case ComponentEvent.COMPONENT_MOVED:
+      case ComponentEvent.COMPONENT_RESIZED:
+      case HierarchyEvent.ANCESTOR_MOVED:
+      case HierarchyEvent.ANCESTOR_RESIZED:
+        Object source = event.getSource();
+        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+          return true;
+        }
+    }
+    return false;
   }
 
   private void abracadabraDaberBoreh() {
@@ -331,6 +369,23 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent metaEvent = mapMetaState(e);
     if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
       e = metaEvent;
+    }
+    if (JAVA_11_OR_LATER && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH && !isAltGrExpected((KeyEvent)e)) {
+      ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+    }
+    if (JAVA_11_OR_LATER && e instanceof InputEvent && ((InputEvent)e).isAltGraphDown() && !isAltGrExpected((InputEvent)e)) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        int modifiers = field.getInt(e);
+        modifiers |= InputEvent.ALT_MASK;
+        modifiers |= InputEvent.ALT_DOWN_MASK;
+        modifiers &= ~InputEvent.ALT_GRAPH_MASK;
+        modifiers &= ~InputEvent.ALT_GRAPH_DOWN_MASK;
+        field.setInt(e, modifiers);
+      }
+      catch (Exception ignored) {
+      }
     }
 
     boolean wasInputEvent = myIsInInputEvent;
@@ -620,8 +675,15 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
-        ((KeyEvent)e).consume();
+      if (
+        !SystemInfo.isJetBrainsJvm ||
+        (JavaVersion.current().compareTo(JavaVersion.compose(8, 0, 202, 1504, false)) < 0 &&
+         JavaVersion.current().compareTo(JavaVersion.compose(9, 0, 0, 0, false)) < 0) ||
+        JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) > 0
+      ) {
+        if (myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+          ((KeyEvent)e).consume();
+        }
       }
       defaultDispatchEvent(e);
     }
@@ -1115,7 +1177,7 @@ public class IdeEventQueue extends EventQueue {
             && ((KeyboardShortcut)s).getSecondKeyStroke() == null
             && ((KeyboardShortcut)s).getFirstKeyStroke().equals(keyStrokeToFind));
 
-        if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
+        if (!isActionPopupShown() && thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
           if (TYPEAHEAD_LOG.isDebugEnabled()) {
             TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
                                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
@@ -1140,7 +1202,7 @@ public class IdeEventQueue extends EventQueue {
               break;
             case TRIGGERED:
               long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
-              if (timeDelta >= 100 && timeDelta <= 500) {
+              if (!isActionPopupShown() && timeDelta >= 100 && timeDelta <= 500) {
                 delayKeyEvents.set(true);
                 lastTypeaheadTimestamp = System.currentTimeMillis();
                 mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
@@ -1214,9 +1276,20 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void flushDelayedKeyEvents() {
-    if (delayKeyEvents.compareAndSet(true, false)) {
+    if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
+  }
+
+  private static boolean isActionPopupShown() {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+
+    ActionManager actionManager = ActionManager.getInstance();
+    return actionManager instanceof ActionManagerImpl &&
+           !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
+           !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();
   }
 
   private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
@@ -1228,6 +1301,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
+  private WeakReference<Keymap> lastActiveKeymap = new WeakReference<Keymap>(null);
 
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
@@ -1235,16 +1309,23 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private Set<Shortcut> getShortcutsShowingPopups () {
     KeymapManager keymapManager = KeymapManager.getInstance();
-    if (shortcutsShowingPopups.isEmpty() && keymapManager != null && keymapManager.getActiveKeymap() != null) {
-      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
-      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
-      actionsShowingPopupsList.forEach(actionId -> {
-        List<Shortcut> shortcuts = Arrays.asList(keymapManager.getActiveKeymap().getShortcuts(actionId));
-        if (TYPEAHEAD_LOG.isDebugEnabled()) {
-          shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      if (keymap != null) {
+        if (!keymap.equals(lastActiveKeymap.get())) {
+          String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+          shortcutsShowingPopups.clear();
+          actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
+          actionsShowingPopupsList.forEach(actionId -> {
+            List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
+            if (TYPEAHEAD_LOG.isDebugEnabled()) {
+              shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+            }
+            shortcutsShowingPopups.addAll(shortcuts);
+          });
+          lastActiveKeymap = new WeakReference<>(keymap);
         }
-        shortcutsShowingPopups.addAll(shortcuts);
-      });
+      }
     }
     return shortcutsShowingPopups;
   }
@@ -1327,5 +1408,13 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     r.run();
+  }
+
+  private static boolean isAltGrExpected(InputEvent event) {
+    if (SystemInfo.isMac) return false; // never use AltGr on Mac
+    if (!SystemInfo.isWindows) return true; // default behaviour on Linux
+    if (Registry.is("actionSystem.force.alt.gr")) return true;
+    if (!Registry.is("actionSystem.fix.alt.gr")) return false;
+    return IdeKeyEventDispatcher.isAltGrLayout(event.getComponent());
   }
 }

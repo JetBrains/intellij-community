@@ -71,7 +71,7 @@ public abstract class EditorComposite implements Disposable {
   /**
    * Editors which are opened in the composite
    */
-  protected FileEditor[] myEditors;
+  volatile FileEditor[] myEditors;
   /**
    * This is initial timestamp of the file. It uses to implement
    * "close non modified editors first" feature.
@@ -100,6 +100,7 @@ public abstract class EditorComposite implements Disposable {
   EditorComposite(@NotNull final VirtualFile file,
                   @NotNull final FileEditor[] editors,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditors = editors;
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
@@ -448,9 +449,7 @@ public abstract class EditorComposite implements Disposable {
     @Override
     public void requestFocus() {
       if (myFocusComponent != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFocusComponent, true));
       }
     }
 
@@ -492,6 +491,7 @@ public abstract class EditorComposite implements Disposable {
 
   void addEditor(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    //noinspection NonAtomicOperationOnVolatileField : field is modified only in EDT
     myEditors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors);

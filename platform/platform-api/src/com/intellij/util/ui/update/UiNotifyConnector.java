@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +51,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if (isDisposed()) return;
 
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      final Runnable runnable = (DumbAwareRunnable)() -> {
+      final Runnable runnable = () -> {
         final Component c = myComponent.get();
         if (isDisposed() || c == null) return;
 

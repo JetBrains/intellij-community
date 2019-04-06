@@ -63,7 +63,7 @@ public class DiffFragmentBuilder {
   @NotNull private final DiffString[] mySource2;
   private int myLastLine1 = 1;
   private int myLastLine2 = 1;
-  @NotNull private final List<DiffFragment> myData = new LinkedList<DiffFragment>();
+  @NotNull private final List<DiffFragment> myData = new LinkedList<>();
 
   public DiffFragmentBuilder(@NotNull DiffString[] source1, @NotNull DiffString[] source2) {
     mySource1 = source1;

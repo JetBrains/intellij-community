@@ -247,17 +247,8 @@ public class CoreApplicationEnvironment {
 
   public <T> void addExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
     final ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name);
-    extensionPoint.registerExtension(extension);
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        // There is a possible case that particular extension was replaced in particular environment, e.g. Upsource
-        // replaces some IntelliJ extensions.
-        if (extensionPoint.hasExtension(extension)) {
-          extensionPoint.unregisterExtension(extension);
-        }
-      }
-    });
+    //noinspection TestOnlyProblems
+    extensionPoint.registerExtension(extension, myParentDisposable);
   }
 
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
@@ -275,6 +266,7 @@ public class CoreApplicationEnvironment {
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
+      //noinspection TestOnlyProblems
       area.registerExtensionPoint(name, aClass.getName(), kind);
     }
   }

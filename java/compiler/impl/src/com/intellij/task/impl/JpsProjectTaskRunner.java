@@ -18,6 +18,7 @@ package com.intellij.task.impl;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompileScopeUtil;
+import com.intellij.compiler.impl.CompositeScope;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.compiler.*;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,12 +78,13 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     runModulesResourcesBuildTasks(project, context, compileNotification, taskMap);
     runModulesBuildTasks(project, context, compileNotification, taskMap);
     runFilesBuildTasks(project, compileNotification, taskMap);
+    runEmptyBuildTask(project, context, compileNotification, taskMap);
     runArtifactsBuildTasks(project, context, compileNotification, taskMap);
   }
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    return projectTask instanceof ModuleBuildTask ||
+    return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask || 
            (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
   }
 
@@ -91,6 +94,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
       if (o instanceof ModuleResourcesBuildTask) return ModuleResourcesBuildTask.class;
       if (o instanceof ModuleBuildTask) return ModuleBuildTask.class;
       if (o instanceof ProjectModelBuildTask) return ProjectModelBuildTask.class;
+      if (o instanceof EmptyCompileScopeBuildTask) return EmptyCompileScopeBuildTask.class;
       return o.getClass();
     }));
   }
@@ -118,6 +122,24 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
       else {
         compilerManager.compile(scope, compileNotification);
       }
+    }
+  }
+  private static void runEmptyBuildTask(@NotNull Project project,
+                                           @NotNull ProjectTaskContext context,
+                                           @NotNull CompileStatusNotification compileNotification,
+                                           @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
+    Collection<? extends ProjectTask> buildTasks = tasksMap.get(EmptyCompileScopeBuildTask.class);
+    if (ContainerUtil.isEmpty(buildTasks)) return;
+
+    CompilerManager compilerManager = CompilerManager.getInstance(project);
+    CompileScope scope = createScope(compilerManager, context, Collections.EMPTY_SET, false, false);
+    // this will effectively run all before- and after- compilation tasks registered within CompilerManager
+    EmptyCompileScopeBuildTask task = (EmptyCompileScopeBuildTask)buildTasks.iterator().next();
+    if (task.isIncrementalBuild()) {
+      compilerManager.make(scope, compileNotification);
+    }
+    else {
+      compilerManager.compile(scope, compileNotification);
     }
   }
 
@@ -219,8 +241,9 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                           Collection<Module> modules,
                                           boolean includeDependentModules,
                                           boolean includeRuntimeDependencies) {
-    CompileScope scope = compilerManager.createModulesCompileScope(
-      modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies);
+    CompileScope scope = !modules.isEmpty()?
+      compilerManager.createModulesCompileScope(modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies):
+      new CompositeScope(CompileScope.EMPTY_ARRAY);
 
     if (context.isAutoRun()) {
       CompileDriver.setCompilationStartedAutomatically(scope);

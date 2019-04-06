@@ -1,4 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.xml"/>
+
   <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -164,9 +166,6 @@
                                  id="editor.preferences.webOptions"
                                  key="web.editor.configuration.title"
                                  bundle="messages.XmlBundle"/>
-    <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"
-                                  id="WebEditorAppearanceConfigurable"/>
-
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
 
     <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"

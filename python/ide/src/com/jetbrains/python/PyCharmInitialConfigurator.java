@@ -65,9 +65,7 @@ public class PyCharmInitialConfigurator {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-          });
+          ApplicationManager.getApplication().invokeLater(() -> propertiesComponent.setValue(DISPLAYED_PROPERTY, "true"));
         }
       });
     }
@@ -75,9 +73,7 @@ public class PyCharmInitialConfigurator {
     Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
-  private static void disableRunAnything() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ActionManager.getInstance().unregisterAction("RunAnything");
-    }, ModalityState.any());
+  public static void disableRunAnything() {
+    ApplicationManager.getApplication().invokeLater(() -> ActionManager.getInstance().unregisterAction("RunAnything"), ModalityState.any());
   }
 }

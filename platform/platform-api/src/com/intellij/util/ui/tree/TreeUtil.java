@@ -29,11 +29,13 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,6 +43,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -1057,6 +1060,65 @@ public final class TreeUtil {
     }
     else {
       return aTree.getShowsRootHandles() ? 0 : -1;
+    }
+  }
+
+  public static int getNodeDepth(@NotNull JTree tree, @NotNull TreePath path) {
+    int depth = path.getPathCount();
+    if (!tree.isRootVisible()) depth--;
+    if (!tree.getShowsRootHandles()) depth--;
+    return depth;
+  }
+
+  private static final class LazyRowX {
+    static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "getRowX", int.class, int.class);
+  }
+
+  @Deprecated
+  public static int getNodeRowX(@NotNull JTree tree, int row) {
+    if (LazyRowX.METHOD == null) return -1; // system error
+    TreePath path = tree.getPathForRow(row);
+    if (path == null) return -1; // path does not exist
+    int depth = getNodeDepth(tree, path);
+    if (depth < 0) return -1; // root is not visible
+    try {
+      return (Integer)LazyRowX.METHOD.invoke(tree.getUI(), row, depth);
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return -1; // unexpected
+    }
+  }
+
+  private static final class LazyLocationInExpandControl {
+    static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
+  }
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null) return false; // system error
+    return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
+  }
+
+  @Deprecated
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
+    try {
+      return (Boolean)LazyLocationInExpandControl.METHOD.invoke(tree.getUI(), path, x, y);
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return false; // unexpected
+    }
+  }
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
+    if (ui instanceof BasicTreeUI) {
+      BasicTreeUI basic = (BasicTreeUI)ui;
+      basic.setLeftChildIndent(basic.getLeftChildIndent());
     }
   }
 

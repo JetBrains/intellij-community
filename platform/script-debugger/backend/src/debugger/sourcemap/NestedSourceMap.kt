@@ -51,10 +51,10 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
 
   override fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceFile, localFileUrlOnly)
 
-  override fun findSourceIndex(sourceUrls: List<Url>,
+  override fun findSourceIndex(sourceUrl: Url,
                                sourceFile: VirtualFile?,
                                resolver: Lazy<SourceFileResolver?>?,
-                               localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceUrls, sourceFile, resolver, localFileUrlOnly)
+                               localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceUrl, sourceFile, resolver, localFileUrlOnly)
 
   override fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean {
     val childSourceMappings = childMap.findSourceMappings(sourceIndex)

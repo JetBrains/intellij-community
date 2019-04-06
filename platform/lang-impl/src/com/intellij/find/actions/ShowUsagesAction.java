@@ -613,13 +613,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                      boolean findUsagesInProgress) {
     String s;
     String soFarSuffix = findUsagesInProgress ? " so far" : "";
+    title = StringUtil.escapeXmlEntities(title);
     if (hadMoreSeparator) {
       s = "<b>Some</b> " + title + " " + "<b>(Only " + visibleNodesCount + " usages shown" + soFarSuffix + ")</b>";
     }
     else {
       s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + soFarSuffix + ")";
     }
-    return "<html><nobr>" + s + "</nobr></html>";
+    return "<html><body><nobr>" + s + "</nobr></body></html>";
   }
 
   @NotNull

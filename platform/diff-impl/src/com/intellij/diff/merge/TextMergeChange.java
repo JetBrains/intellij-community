@@ -302,32 +302,20 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
     Icon icon = isOnesideAppliedConflict() ? DiffUtil.getArrowDownIcon(side) : DiffUtil.getArrowIcon(side);
-    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> {
-      myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> {
-        myViewer.replaceChange(this, side, modifier);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), () -> myViewer.executeMergeCommand("Accept change", Collections.singletonList(this), () -> myViewer.replaceChange(this, side, modifier)));
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer(@NotNull final Side side, final boolean modifier) {
     if (isResolved(side)) return null;
-    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> {
-      myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> {
-        myViewer.ignoreChange(this, side, modifier);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), () -> myViewer.executeMergeCommand("Ignore change", Collections.singletonList(this), () -> myViewer.ignoreChange(this, side, modifier)));
   }
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
     if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
-    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
-      myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {
-        myViewer.resolveChangeAutomatically(this, ThreeSide.BASE);
-      });
-    });
+    return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> myViewer.resolveChangeAutomatically(this, ThreeSide.BASE)));
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.designer.LightToolWindowContent;
@@ -30,7 +30,7 @@ public class DesignerToolWindow implements LightToolWindowContent {
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
 
-  public DesignerToolWindow(Project project) {
+  public DesignerToolWindow(@NotNull Project project) {
     myComponentTree = new ComponentTree(project);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);

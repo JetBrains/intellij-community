@@ -195,7 +195,11 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
           .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
-  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {
+  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>,
+                                        RunConfiguration,
+                                        ConfigurationWithCommandLineShortener,
+                                        RunProfileWithCompileBeforeLaunchOption,
+                                        ModuleRunProfile {
     private final Location<PsiMethod>[] myTestMethods;
     private final Module myModule;
     private final JavaTestConfigurationBase myConfiguration;

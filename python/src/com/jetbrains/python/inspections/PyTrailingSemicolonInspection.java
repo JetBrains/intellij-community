@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RemoveTrailingSemicolonQuickFix;
@@ -50,6 +51,10 @@ public class PyTrailingSemicolonInspection extends PyInspection {
             nextNode = nextNode.getTreeNext();
           }
           if (nextNode == null || nextNode.textContains('\n')) {
+            if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
+                                     extension -> extension.ignoreTrailingSemicolon(statement))) {
+              return;
+            }
             registerProblem(node.getPsi(), "Trailing semicolon in the statement", new RemoveTrailingSemicolonQuickFix());
           }
         }

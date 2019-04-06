@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -7,6 +7,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -256,10 +257,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
     Integer ordinal = getLambdaOrdinal(breakpoint);
     if (ordinal != null && ordinal > -1) {
-      SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
-      if (linePosition != null) {
-        return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
-      }
+      return ReadAction.compute(() -> {
+        SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
+        if (linePosition != null) {
+          return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
+        }
+        return null;
+      });
     }
     return null;
   }

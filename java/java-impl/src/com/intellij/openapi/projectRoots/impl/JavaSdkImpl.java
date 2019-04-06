@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -38,8 +38,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.suggestJavaSdkName;
 
 /**
  * @author Eugene Zhuravlev
@@ -220,8 +218,9 @@ public class JavaSdkImpl extends JavaSdk {
 
   @NotNull
   @Override
-  public String suggestSdkName(String currentSdkName, String sdkHome) {
-    return suggestJavaSdkName(this, currentSdkName, sdkHome);
+  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
+    return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
   }
 
   @Override
@@ -273,9 +272,19 @@ public class JavaSdkImpl extends JavaSdk {
     pathsChecked.add(path);
 
     if (root == null) { // build
-      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
-      root = VirtualFileManager.getInstance().findFileByUrl(url);
-      pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
+      String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
+      LOG.assertTrue(javaPluginClassesRootPath != null);
+      File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
+      if (javaPluginClassesRoot.isFile()) {
+        String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
+        root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath  + "!/");
+        pathsChecked.add(annotationsJarPath);
+      }
+      if (root == null) {
+        String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
+        root = VirtualFileManager.getInstance().findFileByUrl(url);
+        pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
+      }
     }
 
     if (root == null) {

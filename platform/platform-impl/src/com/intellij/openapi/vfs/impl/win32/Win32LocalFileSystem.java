@@ -21,6 +21,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = ThreadLocal.withInitial(Win32LocalFileSystem::new);
 
+  @NotNull
   public static Win32LocalFileSystem getWin32Instance() {
     if (!isAvailable()) throw new RuntimeException("Native filesystem for Windows is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
@@ -45,7 +46,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException();

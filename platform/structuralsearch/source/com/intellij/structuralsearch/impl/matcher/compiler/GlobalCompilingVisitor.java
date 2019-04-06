@@ -208,7 +208,7 @@ public class GlobalCompilingVisitor {
   }
 
   @Contract("null,_ -> false")
-  static boolean isSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
+  public static boolean isSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
     return predicate != null && handler.getMinOccurs() != 0 && predicate.couldBeOptimized();
   }
 

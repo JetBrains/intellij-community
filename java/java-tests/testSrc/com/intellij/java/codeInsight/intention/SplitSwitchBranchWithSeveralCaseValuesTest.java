@@ -2,12 +2,22 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_12;
 
 public class SplitSwitchBranchWithSeveralCaseValuesTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/splitSwitchBranchWithSeveralCaseValues";
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_12;
   }
 
   @Override

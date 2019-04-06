@@ -1,0 +1,5 @@
+interface Date {
+
+  <spot>@Range(from = 1, to = 12)</spot>
+  int getMonth();
+}

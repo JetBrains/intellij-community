@@ -66,7 +66,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
   private boolean myIsEnabledInTest;
   private final Map<VirtualFile,IndentOptions> myDiscardedOptions = ContainerUtil.createWeakMap();
-  private boolean hasBeenAdvertised;
 
   @Nullable
   @Override
@@ -224,7 +223,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       final VirtualFile virtualFile = file.getVirtualFile();
       final Project project = file.getProject();
       final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
-      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusBarUIContributor.getTooltip(projectOptions), true);
+      final String projectOptionsTip = StringUtil.capitalizeWords(IndentStatusBarUIContributor.getIndentInfo(projectOptions), true);
       if (indentOptions instanceof TimeStampedIndentOptions) {
         if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
           actions.add(
@@ -255,7 +254,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           actions.add(
             DumbAwareAction.create(
               ApplicationBundle
-                .message("code.style.indent.detector.apply", IndentStatusBarUIContributor.getTooltip(discardedOptions),
+                .message("code.style.indent.detector.apply", IndentStatusBarUIContributor.getIndentInfo(discardedOptions),
                          ColorUtil.toHex(JBColor.GRAY)),
               e -> {
                 myDiscardedOptions.remove(virtualFile);
@@ -294,19 +293,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return
         areDetected(getIndentOptions()) ||
         myDiscardedOptions.containsKey(file);
-    }
-
-    @Nullable
-    @Override
-    public String getAdvertisementText(@NotNull PsiFile psiFile) {
-      if (areDetected(getIndentOptions()) && !hasBeenAdvertised) {
-        String actualOptionsHint = IndentStatusBarUIContributor.getTooltip(getIndentOptions());
-        IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
-        String projectOptionsHint = IndentStatusBarUIContributor.getTooltip(projectOptions);
-        hasBeenAdvertised = true;
-        return ApplicationBundle.message("code.style.different.indent.size.detected", actualOptionsHint, projectOptionsHint);
-      }
-      return null;
     }
 
 

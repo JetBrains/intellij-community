@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CardActionsPanel extends JPanel {
-  private final boolean USE_ICONS = true;
+  private static final boolean USE_ICONS = true;
   private final JBCardLayout myLayout = new JBCardLayout();
   private final JPanel myContent = new JPanel(myLayout);
   private int nCards = 0;

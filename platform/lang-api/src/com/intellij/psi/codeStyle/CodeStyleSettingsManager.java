@@ -158,10 +158,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    * @see #dropTemporarySettings()
    */
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
+    updateSettingsTracker();
     myTemporarySettings = settings;
   }
 
   public void dropTemporarySettings() {
+    updateSettingsTracker();
     myTemporarySettings = null;
   }
 
@@ -197,6 +199,25 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     for (CodeStyleSettingsListener listener : myListeners) {
       listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(file));
     }
+  }
+
+  /**
+   * Increase current project's code style modification tracker and notify all the listeners on changed code style. The
+   * method must be called if project code style is changed programmatically so that editors and etc. are aware of
+   * code style update and refresh their settings accordingly.
+   *
+   * @see CodeStyleSettingsListener
+   * @see #addListener(CodeStyleSettingsListener)
+   */
+  public final void notifyCodeStyleSettingsChanged() {
+    updateSettingsTracker();
+    fireCodeStyleSettingsChanged(null);
+  }
+
+  private void updateSettingsTracker() {
+    @SuppressWarnings("deprecation") // allowed internally
+    CodeStyleSettings settings = getCurrentSettings();
+    settings.getModificationTracker().incModificationCount();
   }
 
 }

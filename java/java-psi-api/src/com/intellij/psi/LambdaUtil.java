@@ -12,7 +12,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -830,7 +829,16 @@ public class LambdaUtil {
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }
-    PsiType type = PsiTypesUtil.getExpectedTypeByParent(call);
+    PsiElement expressionForType = call;
+    while (true) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expressionForType.getParent());
+      if (!(parent instanceof PsiConditionalExpression) ||
+          PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expressionForType, false)) {
+        break;
+      }
+      expressionForType = parent;
+    }
+    PsiType type = PsiTypesUtil.getExpectedTypeByParent(expressionForType);
     if (type != null && PsiTypesUtil.isDenotableType(type, call)) {
       return (PsiCall)copyWithExpectedType(call, type);
     }
@@ -839,7 +847,7 @@ public class LambdaUtil {
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
                                                             final PsiSubstitutor substitutor,
-                                                            final Producer<? extends T> producer) {
+                                                            final Supplier<? extends T> producer) {
     try {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
@@ -851,7 +859,7 @@ public class LambdaUtil {
           getFunctionalTypeMap().put(parameter, upperBound);
         }
       }
-      return producer.produce();
+      return producer.get();
     }
     finally {
       for (PsiTypeParameter parameter : typeParameters) {
@@ -860,10 +868,10 @@ public class LambdaUtil {
     }
   }
 
-  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<? extends T> producer) {
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Supplier<? extends T> producer) {
     try {
       getFunctionalTypeMap().put(lambdaExpression, targetType);
-      return producer.produce();
+      return producer.get();
     }
     finally {
       getFunctionalTypeMap().remove(lambdaExpression);
@@ -1099,5 +1107,23 @@ public class LambdaUtil {
     CapturingLambdaVisitor visitor = new CapturingLambdaVisitor();
     body.accept(visitor);
     return visitor.capturing;
+  }
+
+  /**
+   * Resolves a functional interface class for given functional expression
+   * 
+   * @param expression functional expression
+   * @return resolved class or null if cannot be resolved
+   */
+  @Nullable
+  public static PsiClass resolveFunctionalInterfaceClass(@NotNull PsiFunctionalExpression expression) {
+    // First try to avoid substitution
+    PsiType type = expression.getGroundTargetType(getFunctionalInterfaceType(expression, false));
+    PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (actualClass instanceof PsiTypeParameter) {
+      // Rare case when function is resolved to a type parameter: perform substitution then
+      return PsiUtil.resolveClassInClassTypeOnly(expression.getFunctionalInterfaceType());
+    }
+    return actualClass;
   }
 }

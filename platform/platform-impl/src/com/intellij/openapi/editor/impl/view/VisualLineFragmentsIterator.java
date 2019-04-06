@@ -10,7 +10,8 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentStartLogicalLine;
   private int myCurrentEndLogicalLine;
   private int myNextWrapOffset;
-  private JBUI.ScaleContext myScaleContext;
+  private ScaleContext myScaleContext;
 
   private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
     EditorImpl editor = view.getEditor();
@@ -118,7 +119,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     myQuickEvaluationListener = quickEvaluationListener;
     myView = view;
     EditorImpl editor = view.getEditor();
-    myScaleContext = JBUI.ScaleContext.create(editor.getContentComponent());
+    myScaleContext = ScaleContext.create(editor.getContentComponent());
     if (align && visualLine != -1 && editor.isRightAligned()) {
       myFragment = new RightAlignedFragment(view.getRightAlignmentLineStartX(visualLine) - myView.getInsets().left);
     }

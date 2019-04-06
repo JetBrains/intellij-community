@@ -26,7 +26,9 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -44,6 +46,7 @@ import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 /**
  * Standard implementation of help context tooltip.
@@ -68,7 +71,7 @@ import java.util.Map;
  *
  * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
  * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
- * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/ or &lt;p&gt; tags between paragraphs.
+ * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/&gt; or &lt;p&gt; tags between paragraphs.
  * Paragraphs will be rendered with the standard (10px) offset from the title, from one another and from the link.
  * To force the line break in a paragraph use &lt;br/&gt;. Standard font coloring and styling is also available.</p>
  *
@@ -118,8 +121,10 @@ public class HelpTooltip {
   private boolean neverHide;
   private Alignment alignment = Alignment.BOTTOM;
 
-  private JBPopup masterPopup;
+  private BooleanSupplier masterPopupOpenCondition;
+
   private ComponentPopupBuilder myPopupBuilder;
+  private Dimension myPopupSize;
   private JBPopup myPopup;
   private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
@@ -133,27 +138,27 @@ public class HelpTooltip {
    */
   public enum Alignment {
     RIGHT {
-      @Override public Point getPointFor(JComponent owner) {
+      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
         Dimension size = owner.getSize();
         return new Point(size.width + JBUI.scale(5) - X_OFFSET.get(), JBUI.scale(1) + Y_OFFSET.get());
       }
     },
 
     BOTTOM {
-      @Override public Point getPointFor(JComponent owner) {
+      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
         Dimension size = owner.getSize();
         return new Point(JBUI.scale(1) + X_OFFSET.get(), JBUI.scale(5) + size.height - Y_OFFSET.get());
       }
     },
 
     HELP_BUTTON {
-      @Override public Point getPointFor(JComponent owner) {
-        Dimension size = owner.getSize();
-        return new Point(X_OFFSET.get() - JBUI.scale(5), JBUI.scale(5) + size.height - Y_OFFSET.get());
+      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
+        Insets i  = owner.getInsets();
+        return new Point(X_OFFSET.get() - JBUI.scale(40), i.top + Y_OFFSET.get() - JBUI.scale(6) - popupSize.height);
       }
     };
 
-    public abstract Point getPointFor(JComponent owner);
+    public abstract Point getPointFor(JComponent owner, Dimension popupSize);
   }
 
   /**
@@ -262,8 +267,10 @@ public class HelpTooltip {
   }
 
   private void initPopupBuilder() {
+    JComponent tipPanel = createTipPanel();
+    myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(createTipPanel(), null).setBorderColor(BORDER_COLOR).setShowShadow(false);
+        createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(false);
   }
 
   private JPanel createTipPanel() {
@@ -335,7 +342,7 @@ public class HelpTooltip {
         instance.uninstallMouseListeners(component);
 
         component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopup = null;
+        instance.masterPopupOpenCondition = null;
       }
     }
   }
@@ -367,7 +374,25 @@ public class HelpTooltip {
     if (owner instanceof JComponent) {
       HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null && instance.myPopup != master) {
-        instance.masterPopup = master;
+        instance.masterPopupOpenCondition = () -> master == null || !master.isVisible();
+      }
+    }
+  }
+
+  /**
+   * Sets master popup open condition supplier for the current {@code HelpTooltip}.
+   * This method is more general than {@link HelpTooltip#setMasterPopup(Component, JBPopup)} so that
+   * it's possible to create master popup condition for any types of popups such as {@code JPopupMenu}
+   *
+   * @param owner possible owner
+   * @param condition a {@code BooleanSupplier} for open condition
+   */
+  @ApiStatus.Experimental
+  public static void setMasterPopupOpenCondition(@NotNull Component owner, @Nullable BooleanSupplier condition) {
+    if (owner instanceof JComponent) {
+      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) {
+        instance.masterPopupOpenCondition = condition;
       }
     }
   }
@@ -375,18 +400,14 @@ public class HelpTooltip {
   private void scheduleShow(JComponent owner, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
-      if (canShow()) {
+      if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
+        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
         if (!neverHide) {
           scheduleHide(true, myDismissDelay);
         }
       }
     }, delay);
-  }
-
-  private boolean canShow() {
-    return masterPopup == null || !masterPopup.isVisible();
   }
 
   private void scheduleHide(boolean force, int delay) {

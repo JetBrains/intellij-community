@@ -193,22 +193,14 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  @Throws(IOException::class)
+  @Throws(IOException::class, JDOMException::class)
   fun getUpdatesInfo(settings: UpdateSettings): UpdatesInfo? {
     val updateUrl = Urls.newFromEncoded(updateUrl)
-    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
     return HttpRequests.request(updateUrl)
       .forceHttps(settings.canUseSecureConnection())
       .connect {
-        try {
-          UpdatesInfo(JDOMUtil.load(it.reader))
-        }
-        catch (e: JDOMException) {
-          // corrupted content, don't bother telling user
-          LOG.info(e)
-          null
-        }
+        UpdatesInfo(JDOMUtil.load(it.reader))
       }
   }
 

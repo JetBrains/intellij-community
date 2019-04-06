@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,7 +21,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
 
   @Override
   protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
-    final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
+    final PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
     assert property != null;
@@ -53,7 +53,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
 
   @Override
   protected void update(final GuiEditor editor, final ArrayList<? extends RadComponent> selection, final AnActionEvent e) {
-    PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
+    PropertyInspectorTable inspector = e.getData(PropertyInspectorTable.DATA_KEY);
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();
       e.getPresentation().setEnabled(selectedProperty != null &&

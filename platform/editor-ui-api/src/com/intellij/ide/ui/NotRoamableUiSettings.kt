@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Pair
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
@@ -12,7 +9,7 @@ import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@State(name = "NotRoamableUiSettings", storages = [(Storage(Storage.NOT_ROAMABLE_FILE))], reportStatistic = true)
+@State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))], reportStatistic = true)
 class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
   private var state = NotRoamableUiOptions()
 
@@ -23,7 +20,11 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 
     state.fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     state.fontScale = UISettings.defFontScale
-    state.initDefFont()
+    fixFontSettings()
+  }
+
+  internal fun fixFontSettings() {
+    val state = state
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
@@ -49,35 +50,26 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
   }
 }
 
-internal fun NotRoamableUiOptions.initDefFont() {
-  val fontData = systemFontFaceAndSize
-  if (fontFace == null) {
-    fontFace = fontData.first
-  }
-  if (fontSize <= 0) {
-    fontSize = fontData.second
-  }
-  if (fontScale <= 0) {
-    fontScale = UISettings.defFontScale
-  }
-}
-
 class NotRoamableUiOptions : BaseState() {
   var ideAAType by property(AntialiasingType.SUBPIXEL)
 
   var editorAAType by property(AntialiasingType.SUBPIXEL)
 
-  // These font properties should not be set in the default ctor,
-  // so that to make the serialization logic judge if a property
-  // should be stored or shouldn't by the provided filter only.
   @get:Property(filter = FontFilter::class)
   var fontFace by string()
 
   @get:Property(filter = FontFilter::class)
-  var fontSize by property(UISettingsState.defFontSize)
+  var fontSize by property(0)
 
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
+
+  init {
+    val fontData = systemFontFaceAndSize
+    fontFace = fontData.first
+    fontSize = fontData.second
+    fontScale = UISettings.defFontScale
+  }
 }
 
 private class FontFilter : SerializationFilter {
@@ -93,12 +85,5 @@ private class FontFilter : SerializationFilter {
   }
 }
 
-internal val systemFontFaceAndSize: Pair<String, Int>
-  get() {
-    val fontData = UIUtil.getSystemFontData()
-    if (fontData != null) {
-      return fontData
-    }
-
-    return Pair.create("Dialog", 12)
-  }
+private val systemFontFaceAndSize: Pair<String, Int>
+  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)

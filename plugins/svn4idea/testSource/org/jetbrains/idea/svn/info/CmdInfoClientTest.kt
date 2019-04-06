@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info
 
 import com.intellij.testFramework.TestDataPath
@@ -51,7 +51,7 @@ class CmdInfoClientTest : AbstractSvnClientTest() {
 
   /* "revision" attribute does not contain long value */
   @Test
-  fun `parse info for unversioned`() {
+  fun `parse info for just added`() {
     val actual = parseTestData()
 
     assertEquals(File(base, "folder"), actual.file)

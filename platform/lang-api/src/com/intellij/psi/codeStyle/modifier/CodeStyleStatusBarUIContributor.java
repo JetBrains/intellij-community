@@ -40,9 +40,13 @@ public interface CodeStyleStatusBarUIContributor {
    *
    * @param psiFile A PSI file to show the advertisement text for.
    * @return The text to be shown or null for no popup.
+   * @deprecated Dropped. The returned text is ignored.
    */
   @Nullable
-  String getAdvertisementText(@NotNull PsiFile psiFile);
+  @Deprecated
+  default String getAdvertisementText(@NotNull PsiFile psiFile) {
+    return null;
+  }
 
   /**
    * Creates an action which can be used to disable the code style source.
@@ -59,5 +63,14 @@ public interface CodeStyleStatusBarUIContributor {
    */
   default Icon getIcon() {
     return null;
+  }
+
+  /**
+   * @param psiFile The currently open {@code PsiFile}.
+   * @return A status text to be shown in code style widget for the given {@code PsiFile}
+   */
+  @NotNull
+  default String getStatusText(@NotNull PsiFile psiFile) {
+    return "*";
   }
 }

@@ -36,7 +36,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -455,12 +455,10 @@ public class ClsPsiTest extends LightIdeaTestCase {
   public void testClsPsiDoesNotHoldStrongReferencesToMirrorAST() {
     PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
     assertNotNull(dbl);
-    int hash1 = ((ClsClassImpl)dbl).getMirror().hashCode();
     assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(((ClsClassImpl)dbl).getMirror()).tryGc();
     LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
-    assertFalse(hash1 == ((ClsClassImpl)dbl).getMirror().hashCode());
   }
 
   public void testMirrorBecomesInvalidTogetherWithCls() throws IOException {

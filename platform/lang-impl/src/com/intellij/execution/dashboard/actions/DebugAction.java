@@ -28,12 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author konstantin.aleev
  */
 public class DebugAction extends ExecutorAction {
-  public DebugAction() {
-    super(ExecutionBundle.message("run.dashboard.debug.action.name"),
-          ExecutionBundle.message("run.dashboard.debug.action.description"),
-          AllIcons.Actions.StartDebugger);
-  }
-
   @Override
   protected Executor getExecutor() {
     return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);

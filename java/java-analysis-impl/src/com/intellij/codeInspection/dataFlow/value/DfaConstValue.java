@@ -175,6 +175,7 @@ public class DfaConstValue extends DfaValue {
     return myType;
   }
 
+  @Nullable
   public Object getValue() {
     return myValue;
   }

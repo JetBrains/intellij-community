@@ -9,11 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsLogUsageTriggerCollector {
 
-  public static void triggerUsage(@NotNull AnActionEvent e) {
-    String text = e.getPresentation().getText();
-    if (text != null) {
-      triggerUsage(e, text);
-    }
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action) {
+    String name = action.getClass().getName();
+    if (name.contains(".")) name = name.substring(name.lastIndexOf(".") + 1);
+    triggerUsage(e, name);
   }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {
@@ -21,11 +20,14 @@ public class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull String text) {
-    triggerUsage(text, false);
+    triggerUsage(text, "");
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String prefix = isFromHistory ? "history." : "log.";
+    triggerUsage(text, isFromHistory ? "history." : "log.");
+  }
+
+  private static void triggerUsage(@NotNull String text, @NotNull String prefix) {
     String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
     FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature);
   }

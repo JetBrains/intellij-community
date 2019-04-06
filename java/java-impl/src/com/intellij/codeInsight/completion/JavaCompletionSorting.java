@@ -142,7 +142,9 @@ public class JavaCompletionSorting {
       @NotNull
       @Override
       public Comparable weigh(@NotNull LookupElement element) {
-        final Object o = element.getObject();
+        JavaConstructorCallElement call = element.as(JavaConstructorCallElement.class);
+        Object o = call != null ? call.getConstructedClass() : element.getObject();
+
         if (o instanceof PsiKeyword) return -3;
         if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
           return 0;

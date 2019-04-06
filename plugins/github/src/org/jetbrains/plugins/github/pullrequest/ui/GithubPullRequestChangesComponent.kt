@@ -44,7 +44,7 @@ internal class GithubPullRequestChangesComponent(project: Project,
     Disposer.register(this, changesBrowser)
   }
 
-  override fun reset() {
+  override fun resetUI() {
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.commits = emptyList()
   }
@@ -101,7 +101,7 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun buildTreeModel(): DefaultTreeModel {
       val builder = MyTreeModelBuilder(myProject, grouping)
       if (projectUiSettings.zipChanges) {
-        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.reversed().flatMap { it.changes })
+        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes })
         builder.setChanges(zipped, null)
       }
       else {

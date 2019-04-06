@@ -81,7 +81,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
         else if (SystemProperties.getBooleanProperty("remove.extra.icon.robots.files", false)) {
           // under flag because not required for regular usage (to avoid FS call)
           try {
-            Files.delete(rootDir.resolve("icon-robots.txt"))
+            Files.delete(rootDir.resolve(ROBOTS_FILE_NAME))
           }
           catch (ignored: NoSuchFileException) {
           }

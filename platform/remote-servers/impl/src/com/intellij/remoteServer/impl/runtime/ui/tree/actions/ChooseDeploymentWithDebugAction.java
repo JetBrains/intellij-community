@@ -15,30 +15,25 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
-public class ChooseDeploymentWithDebugAction extends ServersTreeAction<ServersTreeStructure.RemoteServerNode> {
+import static com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeActionUtils.getRemoteServerTarget;
 
-  public ChooseDeploymentWithDebugAction() {
-    super("Debug", "Deploy and debug a chosen item on the selected remote server", AllIcons.Actions.StartDebugger);
+public class ChooseDeploymentWithDebugAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    e.getPresentation().setEnabledAndVisible(node != null && node.getServer().getType().createDebugConnector() != null);
   }
 
   @Override
-  protected Class<ServersTreeStructure.RemoteServerNode> getTargetNodeClass() {
-    return ServersTreeStructure.RemoteServerNode.class;
-  }
-
-  @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
-    node.deployWithDebug(e);
-  }
-
-  @Override
-  protected boolean isVisible4(ServersTreeStructure.RemoteServerNode node) {
-    return node.getServer().getType().createDebugConnector() != null;
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    if (node != null) {
+      node.deployWithDebug(e);
+    }
   }
 }

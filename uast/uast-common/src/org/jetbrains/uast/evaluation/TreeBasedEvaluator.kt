@@ -15,6 +15,8 @@
  */
 package org.jetbrains.uast.evaluation
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
@@ -28,7 +30,7 @@ import org.jetbrains.uast.values.UNothingValue.JumpKind.CONTINUE
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 class TreeBasedEvaluator(
-  override val context: UastContext,
+  override val context: UastLanguagePlugin,
   val extensions: List<UEvaluatorExtension>
 ) : UEvaluator {
 
@@ -41,6 +43,8 @@ class TreeBasedEvaluator(
   private val resultCache = mutableMapOf<UExpression, UEvaluationInfo>()
 
   private val maxAnalyzeDepth get() = Registry.intValue("uast.evaluator.depth.limit", 15)
+
+  private val loopIterationLimit get() = Registry.intValue("uast.evaluator.loop.iteration.limit", 20)
 
   override fun analyze(method: UMethod, state: UEvaluationState) {
     method.uastBody?.accept(DepthLimitingEvaluatorVisitor(maxAnalyzeDepth, this::EvaluatingVisitor), state)
@@ -175,7 +179,7 @@ class TreeBasedEvaluator(
       if (this is UResolvable) {
         val resolvedElement = resolve()
         if (resolvedElement is PsiVariable) {
-          val variable = context.getVariable(resolvedElement)
+          val variable = context.convertWithParent<UVariable>(resolvedElement)!!
           val currentValue = valueInfo.state[variable]
           val result = when (operator) {
             UastBinaryOperator.ASSIGN -> valueInfo.value
@@ -589,10 +593,16 @@ class TreeBasedEvaluator(
         condition?.accept(chain, inputState)
         ?: (if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState
 
-      ProgressManager.checkCanceled()
-
       var resultInfo = UUndeterminedValue to inputState
+      var iterationsAllowed = loopIterationLimit
       do {
+        ProgressManager.checkCanceled()
+        iterationsAllowed--
+        if (iterationsAllowed <= 0) {
+          LOG.error("evaluateLoop iterations count exceeded the limit $loopIterationLimit", Attachment("loop.txt", loop.sourcePsi?.text ?: "<no-info>"))
+          return UUndeterminedValue to inputState storeResultFor loop
+        }
+
         val previousInfo = resultInfo
         resultInfo = evaluateCondition(resultInfo.state)
         val conditionConstant = resultInfo.value.toConstant()
@@ -711,3 +721,5 @@ fun Any?.toConstant(node: ULiteralExpression? = null): UValueBase = when (this) 
   is String -> UStringConstant(this, node)
   else -> UUndeterminedValue
 }
+
+private val LOG = Logger.getInstance(TreeBasedEvaluator::class.java)

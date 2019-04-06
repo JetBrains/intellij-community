@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
@@ -21,7 +21,7 @@ private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("Co
 /**
  * @author Dmitry Avdeev
  */
-class ExecutorAction private constructor(private val origin: AnAction,
+class ExecutorAction private constructor(val origin: AnAction,
                                          private val executor: Executor,
                                          private val order: Int) : ActionGroup() {
   init {

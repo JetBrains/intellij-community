@@ -115,7 +115,7 @@
             "description": "<code>&lt;hr&gt;</code> creates a separator",
             "support": {
               "chrome": {
-                "version_added": null
+                "version_added": false
               },
               "chrome_android": {
                 "version_added": false

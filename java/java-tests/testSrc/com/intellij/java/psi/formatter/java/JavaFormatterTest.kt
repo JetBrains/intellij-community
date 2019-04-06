@@ -13,6 +13,7 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.IncorrectOperationException
@@ -3681,6 +3682,153 @@ public class Test {
               } while (longCountVar <= 1000);
           }
       }""".trimIndent()
+    )
+  }
+
+  fun testIdeaIDEA203464() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent(),
+
+      """
+/**
+ * javadoc
+ */
+public enum EnumApplyChannel {
+
+    C;
+
+    public String method() {
+        return null;
+    }
+}""".trimIndent()
+    )
+  }
+
+
+  fun testIdeaIDEA198408() {
+    getSettings().apply{
+      ENUM_CONSTANTS_WRAP = WRAP_ALWAYS
+      KEEP_LINE_BREAKS = false
+    }
+    doTextTest(
+        """
+/** JavaDoc */
+public enum LevelCode {HIGH(3),
+   MEDIUM(2),
+   LOW(1);
+
+   private final int levelCode;
+
+   LevelCode(int levelCode) {
+       this.levelCode = levelCode;
+   }
+}""".trimIndent(),
+
+      """
+/**
+ * JavaDoc
+ */
+public enum LevelCode {
+    HIGH(3),
+    MEDIUM(2),
+    LOW(1);
+
+    private final int levelCode;
+
+    LevelCode(int levelCode) {
+        this.levelCode = levelCode;
+    }
+}""".trimIndent()
+    )
+  }
+
+
+  fun testIdea195707() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = true
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE:
+                      return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE:
+                      return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea195707_1() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = false
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE: return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE: return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
     )
   }
 

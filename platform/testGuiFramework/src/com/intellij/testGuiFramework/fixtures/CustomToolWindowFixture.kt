@@ -100,8 +100,8 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   /**----------EXTENSION FUNCTIONS FOR GuiTestCase APi----------**/
 
-  fun content(tabName: String, timeoutInSeconds: Timeout = Timeouts.seconds30, func: ContentFixture.() -> Unit) {
-    func.invoke(findContent(tabName, timeoutInSeconds))
+  fun content(tabName: String, timeout: Timeout = Timeouts.seconds30, func: ContentFixture.() -> Unit) {
+    func.invoke(findContent(tabName, timeout))
   }
 
   fun content(func: ContentFixture.() -> Unit) {

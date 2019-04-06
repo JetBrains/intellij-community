@@ -27,7 +27,7 @@ public class HideCoverageInfoAction extends IconWithTextAction {
 
   @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new LinkLabel(presentation.getText(), null) {
       @Override
       public void doClick() {

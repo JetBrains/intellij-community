@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
+import org.jetbrains.annotations.NotNull;
 
 public class ApplyFilePatchFactory {
   private ApplyFilePatchFactory() {
@@ -36,7 +37,7 @@ public class ApplyFilePatchFactory {
     return new ApplyBinaryShelvedFilePatch(patch);
   }
 
-  public static ApplyFilePatchBase<?> createGeneral(final FilePatch patch) {
+  public static ApplyFilePatchBase<?> createGeneral(@NotNull FilePatch patch) {
     if (patch instanceof TextFilePatch) {
       return create((TextFilePatch) patch);
     } else if (patch instanceof BinaryFilePatch) {

@@ -166,16 +166,18 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (parentComponent instanceof JTextComponent) {
       ((JTextComponent)parentComponent).getDocument().addDocumentListener(myDocumentListener);
     }
+    else if (parentComponent instanceof EditorTextComponent) {
+      ((EditorTextComponent)parentComponent).addDocumentListener(myIdeaDocumentListener);
+    }
     else if (parentComponent instanceof ItemSelectable) {
       ((ItemSelectable)parentComponent).addItemListener(myItemListener);
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
       ((JList)parentComponent).addListSelectionListener(myListSelectionListener);
-    } else if (parentComponent instanceof JTree) {
+    }
+    else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
-    } else if (parentComponent instanceof DocumentBasedComponent) {
-      ((DocumentBasedComponent)parentComponent).getDocument().addDocumentListener(myIdeaDocumentListener);
     }
 
     if (parentComponent instanceof JComboBox) {
@@ -209,12 +211,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     if (component instanceof JTextComponent) {
       ((JTextComponent)component).getDocument().removeDocumentListener(myDocumentListener);
     }
+    else if (component instanceof EditorTextComponent) {
+      ((EditorTextComponent)component).removeDocumentListener(myIdeaDocumentListener);
+    }
     else if (component instanceof ItemSelectable) {
       ((ItemSelectable)component).removeItemListener(myItemListener);
-    } else if (component instanceof JTree) {
+    }
+    else if (component instanceof JTree) {
       ((JTree)component).getModel().removeTreeModelListener(myTreeModelListener);
-    } else if (component instanceof DocumentBasedComponent) {
-      ((DocumentBasedComponent)component).getDocument().removeDocumentListener(myIdeaDocumentListener);
     }
 
     if (component instanceof JTable) {

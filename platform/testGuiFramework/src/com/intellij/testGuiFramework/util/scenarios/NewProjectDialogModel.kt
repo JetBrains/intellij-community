@@ -107,15 +107,15 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
-    const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
-    const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
-    const val itemKotlinMppMobileAndroidIos = "Kotlin (Mobile Android/iOS)"
-    const val itemKotlinMppMobileSharedLibrary = "Kotlin (Mobile Shared Library)"
+    const val itemKotlinMppLibrary = "Multiplatform Library | Gradle"
+    const val itemKotlinMppClientServer = "JS Client and JVM Server | Gradle"
+    const val itemKotlinMppMobileAndroidIos = "Mobile Android/iOS | Gradle"
+    const val itemKotlinMppMobileSharedLibrary = "Mobile Shared Library | Gradle"
     const val itemKotlinJvm = "Kotlin/JVM"
     const val itemKotlinJs = "Kotlin/JS"
-    const val itemKotlinNative = "Kotlin/Native"
-    const val itemGradleKotlinJvm = "Kotlin (Java)"
-    const val itemGradleKotlinJs = "Kotlin (JavaScript)"
+    const val itemKotlinNative = "Native | Gradle"
+    const val itemGradleKotlinJvm = "JVM | IDEA"
+    const val itemGradleKotlinJs = "JS | IDEA"
   }
 
   enum class Groups(private val title: String) {
@@ -171,7 +171,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  class LibraryOrFramework(vararg val mainPath: String) : Serializable {
+  class LibraryOrFramework(vararg val mainPath: String, val options: Map<String, String> = emptyMap()) : Serializable {
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
@@ -250,7 +250,9 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         checkDownloadingDialog()
       }
     }
-    waitAMoment()
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+    }
   }
 }
 
@@ -522,6 +524,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(group)
+      selectSdk(projectSdk)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
@@ -534,7 +537,6 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     }
     ideFrame {
       this.waitForBackgroundTasksToFinish()
-      waitAMoment()
     }
   }
 }
@@ -564,6 +566,22 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
           pathStrings = *lib.mainPath,
           predicate = Predicate.withVersion
         ).check()
+        if(lib.options.isNotEmpty()){
+          for((option, value) in lib.options)
+            step("Set option '$option' to value '$value' ")innerStep@{
+              when {
+                guiTestCase.exists {checkbox(option, Timeouts.seconds05)} -> {
+                  val component = checkbox(option, Timeouts.noTimeout)
+                  if(component.isSelected != value.toBoolean())
+                    component.click()
+                }
+                guiTestCase.exists { combobox(option, Timeouts.seconds05) } -> combobox(option, Timeouts.noTimeout).selectItem(value)
+                guiTestCase.exists { radioButton(option, Timeouts.seconds05) } -> radioButton(option, Timeouts.noTimeout).select()
+                else -> throw IllegalStateException("Unsupported kind of option '$option' - not checkbox, radiobutton or combobox")
+              }
+              return@innerStep
+            }
+        }
       }
     }
   }
@@ -599,7 +617,7 @@ fun NewProjectDialogModel.selectSdk(sdk: String, sdkField: String = "Project SDK
 
 fun NewProjectDialogModel.checkDownloadingDialog() {
   val progressDownloadingDialog = "Downloading"
-  GuiTestUtilKt.waitUntil("Wait for downloading finishing", timeout = Timeouts.minutes05) {
+  GuiTestUtilKt.waitUntil("Wait for downloading finishing", timeout = Timeouts.minutes10) {
     val dialog = try {
       guiTestCase.dialog(
         title = progressDownloadingDialog,

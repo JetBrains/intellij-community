@@ -37,6 +37,12 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     StandardLocation.SOURCE_PATH,
     StandardLocation.ANNOTATION_PROCESSOR_PATH
   );
+  private static final FileObjectKindFilter<File> ourKindFilter = new FileObjectKindFilter<File>(new Function<File, String>() {
+    @Override
+    public String fun(File file) {
+      return file.getName();
+    }
+  });
   private final Context myContext;
   private final boolean myJavacBefore9;
   private final Collection<JavaSourceTransformer> mySourceTransformers;
@@ -48,7 +54,13 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       return new InputFileObject(file, myEncodingName);
     }
   };
-  protected Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
+  private static final Function<String, File> ourPathToFileConverter = new Function<String, File>() {
+    @Override
+    public File fun(String s) {
+      return new File(s);
+    }
+  };
+  private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
   @Nullable
   private String myEncodingName;
   private int myChecksCounter = 0;
@@ -242,7 +254,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     return name.toString().replace('.', File.separatorChar);
   }
 
-  interface Context {
+  public interface Context {
     boolean isCanceled();
 
     @NotNull
@@ -313,12 +325,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
-    return wrapJavaFileObjects(convert(files, new Function<File, JavaFileObject>() {
-      @Override
-      public JavaFileObject fun(File file) {
-        return new InputFileObject(file, myEncodingName);
-      }
-    }));
+    return wrapJavaFileObjects(convert(files, myFileToInputFileObjectConverter));
   }
 
   @Override
@@ -328,12 +335,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(final Iterable<String> names) {
-    return getJavaFileObjectsFromFiles(convert(names, new Function<String, File>() {
-      @Override
-      public File fun(String s) {
-        return new File(s);
-      }
-    }));
+    return getJavaFileObjectsFromFiles(convert(names, ourPathToFileConverter));
   }
 
   @Override
@@ -348,10 +350,12 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
 
   @Override
   public boolean isSameFile(FileObject a, FileObject b) {
-    if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
-      return a.equals(b);
+    final FileObject _a = unwrapFileObject(a);
+    final FileObject _b = unwrapFileObject(b);
+    if (_a instanceof JpsFileObject || _b instanceof JpsFileObject) {
+      return _a.equals(_b);
     }
-    return super.isSameFile(unwrapFileObject(a), unwrapFileObject(b));
+    return super.isSameFile(_a, _b);
   }
 
   private static FileObject unwrapFileObject(FileObject a) {
@@ -430,20 +434,14 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
           else {
             // is a directory or does not exist
             final File dir = new File(root, packageName.replace('.', '/'));
-            final BooleanFunction<File> filter = recurse?
-              new BooleanFunction<File>() {
-                @Override
-                public boolean fun(File file) {
-                  return kinds.contains(getKind(file.getName()));
-                }
-              }:
-              new BooleanFunction<File>() {
-                final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
-                @Override
-                public boolean fun(File file) {
-                  return kinds.contains(getKind(file.getName())) && (!acceptUnknownFiles || myFileOperations.isFile(file));
-                }
-              };
+            final BooleanFunction<File> kindsFilter = ourKindFilter.getFor(kinds);
+            final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
+            final BooleanFunction<File> filter = recurse || !acceptUnknownFiles? kindsFilter : new BooleanFunction<File>() {
+              @Override
+              public boolean fun(File file) {
+                return kindsFilter.fun(dir) && myFileOperations.isFile(file);
+              }
+            };
             result.add(convert(filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
           }
         }

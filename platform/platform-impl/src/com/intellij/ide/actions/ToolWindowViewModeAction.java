@@ -148,6 +148,11 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
     }
 
     @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isInitialized) {
         ActionManager actionManager = ActionManager.getInstance();

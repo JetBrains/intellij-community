@@ -38,7 +38,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
   public OpenChannelsCache(final int cacheSizeLimit, @NonNls String accessMode) {
     myCacheSizeLimit = cacheSizeLimit;
     myAccessMode = accessMode;
-    myCache = new LinkedHashMap<File, ChannelDescriptor>(cacheSizeLimit, 0.5f, true);
+    myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
   public synchronized RandomAccessFile getChannel(File ioFile) throws FileNotFoundException {
@@ -56,7 +56,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     int dropCount = myCache.size() - myCacheSizeLimit;
 
     if (dropCount >= 0) {
-      List<File> keysToDrop = new ArrayList<File>();
+      List<File> keysToDrop = new ArrayList<>();
       for (Map.Entry<File, ChannelDescriptor> entry : myCache.entrySet()) {
         if (dropCount < 0) break;
         if (!entry.getValue().isLocked()) {
@@ -84,15 +84,12 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     if (descriptor != null) {
       assert !descriptor.isLocked();
 
-      AntivirusDetector.getInstance().execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            descriptor.getChannel().close();
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+      AntivirusDetector.getInstance().execute(() -> {
+        try {
+          descriptor.getChannel().close();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
         }
       });
     }

@@ -3,10 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inUndoTransparentAction
-import com.intellij.openapi.application.async.inWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
@@ -23,11 +20,13 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
       return SaveResult.EMPTY
     }
 
-    val saveResult = withContext(AppUIExecutor.onUiThread().inTransaction(project).inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
-      val r = SaveResult()
-      saveSessions(extraSessions, r)
-      saveSessions(saveSessions, r)
-      r
+    val saveResult = withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
+      runWriteAction {
+        val r = SaveResult()
+        saveSessions(extraSessions, r)
+        saveSessions(saveSessions, r)
+        r
+      }
     }
     validate(saveResult)
     return saveResult
@@ -55,12 +54,14 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    withContext(AppUIExecutor.onUiThread().inUndoTransparentAction().inWriteAction().coroutineDispatchingContext()) {
-      val r = SaveResult()
-      for (entry in oldList) {
-        executeSave(entry.session, r)
+    withContext(storeEdtCoroutineContext) {
+      runWriteAction {
+        val r = SaveResult()
+        for (entry in oldList) {
+          executeSave(entry.session, r)
+        }
+        r
       }
-      r
     }.appendTo(saveResult)
 
     if (!readonlyFiles.isEmpty()) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,7 +40,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
@@ -52,7 +51,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +132,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
     LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher.tracking(documentManager.getCachedDocument(findFile(vFile))).tryGc();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
@@ -635,17 +634,24 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testReparseDoesNotModifyDocument() throws Exception {
     VirtualFile file = createTempFile("txt", null, "1\n2\n3\n", Charset.forName("UTF-8"));
-    file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    assertNotNull(document);
-    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(document.getTextLength(), " "));
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    String stripSpacesBefore = editorSettings.getStripTrailingSpaces();
+    try {
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      assertNotNull(document);
+      WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(document.getTextLength(), " "));
 
-    PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
-    assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
+      PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
+      assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
 
-    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "-"));
-    FileDocumentManager.getInstance().saveDocument(document);
-    assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
+      WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "-"));
+      FileDocumentManager.getInstance().saveDocument(document);
+      assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
+    }
+    finally {
+      editorSettings.setStripTrailingSpaces(stripSpacesBefore);
+    }
   }
 
   public void testPerformWhenAllCommittedMustNotNest() {
@@ -864,8 +870,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     return file.getViewProvider().getDocument();
   }
 
-  private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
-    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
+  private void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
+    Charset charset = EncodingProjectManager.getInstance(getProject()).getEncoding(vFile, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
     int contentSize = (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
     String substring = content.substring(0, contentSize);

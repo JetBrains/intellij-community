@@ -2,6 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +12,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
@@ -18,7 +20,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
@@ -57,6 +59,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.*;
+import java.awt.print.PrinterGraphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
@@ -67,6 +70,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
@@ -82,24 +86,30 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
-
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
-  private static final StyleSheet DEFAULT_HTML_KIT_CSS;
+  private static StyleSheet DEFAULT_HTML_KIT_CSS;
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  static {
-    blockATKWrapper();
-    // save the default JRE CSS and ..
-    HTMLEditorKit kit = new HTMLEditorKit();
-    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
-    // .. erase global ref to this CSS so no one can alter it
-    kit.setStyleSheet(null);
+  // should be here and not in JBUI to avoid dependency on JBUI class in initSystemFontData method
+  public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
-    // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
-    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
+  static {
+    // static init it is hell - if this UIUtil static init is not called, null stylesheet added and it leads to NPE on some UI tests
+    // e.g. workaround is used in UiDslTest, where UIUtil is not called at all, so, UI tasks like "set comment text" failed because of NPE.
+    // (e.g. configurable tests - DatasourceConfigurableTest). It should be fixed, but for now old behaviour is preserved.
+    // StartupUtil set it to false, to ensure that init logic is predictable and called in a reliable manner
+    if (SystemProperties.getBooleanProperty("idea.ui.util.static.init.enabled", true)) {
+      blockATKWrapper();
+      configureHtmlKitStylesheet();
+    }
+  }
+
+  @NotNull
+  // cannot be static because logging maybe not configured yet
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.util.ui.UIUtil");
   }
 
   @Deprecated
@@ -131,17 +141,20 @@ public class UIUtil {
     return isWindowClientPropertyTrue(dialog, "PossibleOwner");
   }
 
+  /*
+   * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
+   * which is called from Toolkit.getDefaultToolkit().
+   */
   private static void blockATKWrapper() {
-    /*
-     * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
-     * which is called from Toolkit.getDefaultToolkit().
-     */
-    if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
+    // registry must be not used here, because this method called before application loading
+    if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
+      return;
+    }
 
     if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
       // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
+      getLogger().info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
@@ -491,12 +504,12 @@ public class UIUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
-  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+  public static boolean isJreHiDPI(@Nullable JBUIScale.ScaleContext ctx) {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
   // accessed from com.intellij.util.ui.TestScaleHelper via reflect
-  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<Boolean>();
+  private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<>();
   private static volatile boolean jreHiDPI_earlierVersion;
 
   @TestOnly
@@ -510,7 +523,7 @@ public class UIUtil {
    * Returns whether the JRE-managed HiDPI mode is enabled.
    * (True for macOS JDK >= 7.10 versions)
    *
-   * @see JBUI.ScaleType
+   * @see JBUIScale.ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
     if (jreHiDPI.get() != null) return jreHiDPI.get();
@@ -575,26 +588,25 @@ public class UIUtil {
       Method getScaleFactorMethod = null;
       try {
         getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
-      } catch (ClassNotFoundException e) {
+      } catch (ClassNotFoundException | NoSuchMethodException e) {
         // not an Oracle Mac JDK or API has been changed
-        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
-      } catch (NoSuchMethodException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
-      } catch (Exception e) {
-        LOG.debug(e);
-        LOG.debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
+      }
+      catch (Exception e) {
+        getLogger().debug(e);
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
       }
 
       try {
         isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
       } catch (IllegalAccessException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): Access issue");
         isRetina = false;
       } catch (InvocationTargetException e) {
-        LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        getLogger().debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
         isRetina = false;
       } catch (IllegalArgumentException e) {
-        LOG.debug("object is not an instance of declaring class: " + device.getClass().getName());
+        getLogger().debug("object is not an instance of declaring class: " + device.getClass().getName());
         isRetina = false;
       }
 
@@ -680,8 +692,7 @@ public class UIUtil {
               return true;
             }
           }
-          catch (AWTError ignore) { }
-          catch (Exception ignore) { }
+          catch (AWTError | Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -909,12 +920,7 @@ public class UIUtil {
 
   public static void setEnabled(@NotNull Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? new Condition<Component>() {
-        @Override
-        public boolean value(Component c) {
-          return c.isVisible();
-        }
-      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
+      visibleOnly ? (Condition<Component>)Component::isVisible : Conditions.alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -956,7 +962,7 @@ public class UIUtil {
 
   @NotNull
   public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     String currentLine = "";
     StringBuilder currentAtom = new StringBuilder();
 
@@ -1043,7 +1049,7 @@ public class UIUtil {
     return defColor;
   }
 
-  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
+  private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
     // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
@@ -1125,7 +1131,7 @@ public class UIUtil {
 
   @NotNull
   public static Color getContextHelpForeground() {
-    return JBColor.namedColor("Label.infoForeground", Gray.x78);
+    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
   @NotNull
@@ -1183,12 +1189,6 @@ public class UIUtil {
   @NotNull
   public static Color getInactiveTextColor() {
     return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
-  }
-
-  @NotNull
-  public static Color getSlightlyDarkerColor(@NotNull Color c) {
-    float[] hsl = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), new float[3]);
-    return new Color(Color.HSBtoRGB(hsl[0], hsl[1], hsl[2] - .08f > 0 ? hsl[2] - .08f : hsl[2]));
   }
 
   /**
@@ -1707,7 +1707,7 @@ public class UIUtil {
 
   @NotNull
   public static String[] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<String>();
+    Set<String> result = new TreeSet<>();
 
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
     for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
@@ -2263,12 +2263,7 @@ public class UIUtil {
       }
     }
     final double _scale = scale;
-    Function<Integer, Integer> size = new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer size) {
-        return (int)Math.round(size * _scale);
-      }
-    };
+    Function<Integer, Integer> size = size1 -> (int)Math.round(size1 * _scale);
     try {
       if (op != null && image instanceof BufferedImage) {
         image = op.filter((BufferedImage)image, null);
@@ -2382,7 +2377,7 @@ public class UIUtil {
         ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
       }
       catch (Exception e) {
-        LOG.error(e);
+        getLogger().error(e);
       }
 
       if (i % 10000 == 0) {
@@ -2408,19 +2403,16 @@ public class UIUtil {
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        //noinspection CollectionAddedToSelf
-        queue.offer(queue);
-      }
+    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+    SwingUtilities.invokeLater(() -> {
+      //noinspection CollectionAddedToSelf
+      queue.offer(queue);
     });
     try {
       queue.take();
     }
     catch (InterruptedException e) {
-      LOG.error(e);
+      getLogger().error(e);
     }
   }
 
@@ -2564,12 +2556,7 @@ public class UIUtil {
 
   @Nullable
   public static Component findNearestOpaque(Component c) {
-    return findParentByCondition(c, new Condition<Component>() {
-      @Override
-      public boolean value(Component component) {
-        return component.isOpaque();
-      }
-    });
+    return findParentByCondition(c, Component::isOpaque);
   }
 
   @Nullable
@@ -2684,12 +2671,7 @@ public class UIUtil {
       c.requestFocus();
     }
     else {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          c.requestFocus();
-        }
-      });
+      SwingUtilities.invokeLater(c::requestFocus);
     }
   }
 
@@ -2724,12 +2706,7 @@ public class UIUtil {
   public static void disposeProgress(@NotNull final JProgressBar progress) {
     if (!isUnderNativeMacLookAndFeel()) return;
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        progress.setUI(null);
-      }
-    });
+    SwingUtilities.invokeLater(() -> progress.setUI(null));
   }
 
   @Nullable
@@ -2805,11 +2782,11 @@ public class UIUtil {
     if (url == null) return null;
     try {
       StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
       return styleSheet;
     }
     catch (IOException e) {
-      LOG.warn(url + " loading failed", e);
+      getLogger().warn(url + " loading failed", e);
       return null;
     }
   }
@@ -2909,10 +2886,15 @@ public class UIUtil {
       pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent e) {
-          Font font = getLabelFont();
           // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
           // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
-          pane.setFont(font);
+
+          // The default JEditorPane's font is the label font, seems there's no need to reset it here.
+          // If the default font is overridden, more so we should not reset it.
+          // However, if the new font is not UIResource - it won't be auto-scaled.
+          // [tav] dodo: remove the next two lines in case there're no regressions
+          //Font font = getLabelFont();
+          //pane.setFont(font);
 
           // let CSS font properties inherit from the pane's font
           pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
@@ -2936,12 +2918,7 @@ public class UIUtil {
 
     @NotNull
     private static List<LinkController> filterLinkControllerListeners(@NotNull Object[] listeners) {
-      return ContainerUtil.mapNotNull(listeners, new Function<Object, LinkController>() {
-        @Override
-        public LinkController fun(Object o) {
-          return ObjectUtils.tryCast(o, LinkController.class);
-        }
-      });
+      return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
     }
 
     @Override
@@ -3140,7 +3117,7 @@ public class UIUtil {
         EdtInvocationManager.getInstance().invokeAndWait(runnable);
       }
       catch (Exception e) {
-        LOG.error(e);
+        getLogger().error(e);
       }
     }
   }
@@ -3159,12 +3136,7 @@ public class UIUtil {
    */
   public static <T> T invokeAndWaitIfNeeded(@NotNull final Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    });
+    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
     return result.get();
   }
 
@@ -3186,15 +3158,12 @@ public class UIUtil {
     }
     else {
       final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            runnable.run();
-          }
-          catch (Throwable throwable) {
-            ref.set(throwable);
-          }
+      EdtInvocationManager.getInstance().invokeAndWait(() -> {
+        try {
+          runnable.run();
+        }
+        catch (Throwable throwable) {
+          ref.set(throwable);
         }
       });
       if (!ref.isNull()) throw ref.get();
@@ -3258,27 +3227,54 @@ public class UIUtil {
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
-  public static void initDefaultLAF() {
-    try {
-      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-      initSystemFontData();
-    }
-    catch (Exception ignore) {}
+  public static void initDefaultLaF()
+    throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
+    blockATKWrapper();
+
+    // separate activity to make clear that it is not our code takes time
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
+    Toolkit.getDefaultToolkit();
+    activity = activity.endAndStart("configure html kit");
+
+    // this will use toolkit, order of code is critically important
+    configureHtmlKitStylesheet();
+
+    activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
+    UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
+    activity.end();
   }
 
-  public static void initSystemFontData() {
+  private static void configureHtmlKitStylesheet() {
+    // save the default JRE CSS and ..
+    HTMLEditorKit kit = new HTMLEditorKit();
+    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
+    // .. erase global ref to this CSS so no one can alter it
+    kit.setStyleSheet(null);
+
+    // Applied to all JLabel instances, including subclasses. Supported in JBR only.
+    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
+  }
+
+  public static void initSystemFontData(@NotNull Logger log) {
     if (ourSystemFontData != null) return;
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    if (JBUI.SCALE_VERBOSE) {
-      LOG.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
+    if (SystemInfo.isMacOSElCapitan) {
+      // Text family should be used for relatively small sizes (<20pt), don't change to Display
+      // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
+      font = new Font(".SF NS Text", font.getStyle(), font.getSize());
+    }
+
+    boolean isScaleVerbose = SCALE_VERBOSE;
+    if (isScaleVerbose) {
+      log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      if (JBUI.SCALE_VERBOSE) {
-        LOG.info(String.format("gnome.Xft/DPI: %s", value));
+      if (isScaleVerbose) {
+        log.info(String.format("gnome.Xft/DPI: %s", value));
       }
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -3288,16 +3284,16 @@ public class UIUtil {
         if (dpi < 50) dpi = 50;
         float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
+        if (isScaleVerbose) {
+          log.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
+        if (isScaleVerbose) {
+          log.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
         }
       }
     }
@@ -3306,14 +3302,14 @@ public class UIUtil {
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
       if (winFont != null) {
         font = winFont; // comes scaled
-        if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
+        if (isScaleVerbose) {
+          log.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
         }
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
-    if (JBUI.SCALE_VERBOSE) {
-      LOG.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
+    if (isScaleVerbose) {
+      log.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
     }
   }
 
@@ -3417,7 +3413,7 @@ public class UIUtil {
   }
 
   public static boolean isPrinting(Graphics g) {
-    return g instanceof PrintGraphics;
+    return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
   public static int getSelectedButton(@NotNull ButtonGroup group) {
@@ -3526,34 +3522,31 @@ public class UIUtil {
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from(new Function<Component, JBIterable<Component>>() {
-    @Override
-    public JBIterable<Component> fun(@NotNull Component c) {
-      JBIterable<Component> result;
-      if (c instanceof JMenu) {
-        result = JBIterable.of(((JMenu)c).getMenuComponents());
-      }
-      else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
-        // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-        // Disabling these children results in ugly UI: WEB-10733
-        result = JBIterable.empty();
-      }
-      else {
-        result = uiChildren(c);
-      }
-      if (c instanceof JComponent) {
-        JComponent jc = (JComponent)c;
-        Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
-        if (orphans != null) {
-          result = result.append(orphans);
-        }
-        JPopupMenu jpm = jc.getComponentPopupMenu();
-        if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
-          result = result.append(Collections.singletonList(jpm));
-        }
-      }
-      return result;
+  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
+    JBIterable<Component> result;
+    if (c instanceof JMenu) {
+      result = JBIterable.of(((JMenu)c).getMenuComponents());
     }
+    else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
+      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+      // Disabling these children results in ugly UI: WEB-10733
+      result = JBIterable.empty();
+    }
+    else {
+      result = uiChildren(c);
+    }
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      Iterable<? extends Component> orphans = getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+      if (orphans != null) {
+        result = result.append(orphans);
+      }
+      JPopupMenu jpm = jc.getComponentPopupMenu();
+      if (jpm != null && jpm.isVisible() && jpm.getInvoker() == jc) {
+        result = result.append(Collections.singletonList(jpm));
+      }
+    }
+    return result;
   });
 
   private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
@@ -3565,16 +3558,13 @@ public class UIUtil {
 
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final int selectedIndex = list.getSelectedIndex();
-        if (selectedIndex >= 0) {
-          final Rectangle visibleRect = list.getVisibleRect();
-          final Rectangle cellBounds = list.getCellBounds(selectedIndex, selectedIndex);
-          if (!visibleRect.contains(cellBounds)) {
-            list.scrollRectToVisible(cellBounds);
-          }
+    SwingUtilities.invokeLater(() -> {
+      final int selectedIndex = list.getSelectedIndex();
+      if (selectedIndex >= 0) {
+        final Rectangle visibleRect = list.getVisibleRect();
+        final Rectangle cellBounds = list.getCellBounds(selectedIndex, selectedIndex);
+        if (!visibleRect.contains(cellBounds)) {
+          list.scrollRectToVisible(cellBounds);
         }
       }
     });
@@ -3582,9 +3572,8 @@ public class UIUtil {
 
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
-    if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings("unchecked") final T t = (T)parent;
-      return t;
+    if (parent == null || cls.isInstance(parent)) {
+      return cls.cast(parent);
     }
     for (Component component : parent.getComponents()) {
       if (component instanceof JComponent) {
@@ -3597,7 +3586,7 @@ public class UIUtil {
 
   @NotNull
   public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    final ArrayList<T> result = new ArrayList<T>();
+    final ArrayList<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
@@ -3616,7 +3605,7 @@ public class UIUtil {
   }
 
   public static class TextPainter {
-    private final List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
+    private final List<Pair<String, LineInfo>> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
@@ -3736,116 +3725,110 @@ public class UIUtil {
         final int[] maxWidth = {0};
         final int[] height = {0};
         final int[] maxBulletWidth = {0};
-        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-          @Override
-          public boolean process(final Pair<String, LineInfo> pair) {
-            final LineInfo info = pair.getSecond();
-            Font old = null;
-            if (info.smaller) {
-              old = g.getFont();
-              g.setFont(old.deriveFont(old.getSize() * 0.70f));
-            }
-
-            final FontMetrics fm = g.getFontMetrics();
-
-            final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
-            maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-
-            maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
-            height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-            if (old != null) {
-              g.setFont(old);
-            }
-
-            return true;
+        ContainerUtil.process(myLines, pair -> {
+          final LineInfo info = pair.getSecond();
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
+
+          final FontMetrics fm = g.getFontMetrics();
+
+          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
+          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
+
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
+          height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+          if (old != null) {
+            g.setFont(old);
+          }
+
+          return true;
         });
 
         final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
         assert position != null;
 
         final int[] yOffset = {position.getSecond()};
-        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-          @Override
-          public boolean process(final Pair<String, LineInfo> pair) {
-            final LineInfo info = pair.getSecond();
-            String text = pair.first;
-            String shortcut = "";
-            if (pair.first.contains("<shortcut>")) {
-              shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
-              text = text.substring(0, text.indexOf("<shortcut>"));
+        ContainerUtil.process(myLines, pair -> {
+          final LineInfo info = pair.getSecond();
+          String text = pair.first;
+          String shortcut = "";
+          if (pair.first.contains("<shortcut>")) {
+            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+            text = text.substring(0, text.indexOf("<shortcut>"));
+          }
+
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
+          }
+
+          final int x = position.getFirst() + maxBulletWidth[0] + 10;
+
+          final FontMetrics fm = g.getFontMetrics();
+          int xOffset = x;
+          if (info.center) {
+            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
+          }
+
+          if (myDrawShadow) {
+            int xOff = isUnderDarcula() ? 1 : 0;
+            Color oldColor1 = g.getColor();
+            g.setColor(myShadowColor);
+
+            int yOff = 1;
+            if (info.withBullet) {
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
             }
 
-            Font old = null;
-            if (info.smaller) {
-              old = g.getFont();
-              g.setFont(old.deriveFont(old.getSize() * 0.70f));
+            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+            g.setColor(oldColor1);
+          }
+
+          if (info.withBullet) {
+            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+          }
+
+          g.drawString(text, xOffset, yOffset[0]);
+          if (!StringUtil.isEmpty(shortcut)) {
+            Color oldColor1 = g.getColor();
+            g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
+            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.setColor(oldColor1);
+          }
+
+          if (info.underlined) {
+            Color c = null;
+            if (info.underlineColor != null) {
+              c = g.getColor();
+              g.setColor(info.underlineColor);
             }
 
-            final int x = position.getFirst() + maxBulletWidth[0] + 10;
-
-            final FontMetrics fm = g.getFontMetrics();
-            int xOffset = x;
-            if (info.center) {
-              xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
+            drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+            if (c != null) {
+              g.setColor(c);
             }
 
             if (myDrawShadow) {
-              int xOff = isUnderDarcula() ? 1 : 0;
-              Color oldColor = g.getColor();
+              c = g.getColor();
               g.setColor(myShadowColor);
-
-              int yOff = 1;
-              if (info.withBullet) {
-                g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
-              }
-
-              g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
-              g.setColor(oldColor);
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                         yOffset[0] + fm.getDescent() + 1);
+              g.setColor(c);
             }
-
-            if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
-            }
-
-            g.drawString(text, xOffset, yOffset[0]);
-            if (!StringUtil.isEmpty(shortcut)) {
-              Color oldColor = g.getColor();
-              g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
-              g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
-              g.setColor(oldColor);
-            }
-
-            if (info.underlined) {
-              Color c = null;
-              if (info.underlineColor != null) {
-                c = g.getColor();
-                g.setColor(info.underlineColor);
-              }
-
-              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-              if (c != null) {
-                g.setColor(c);
-              }
-
-              if (myDrawShadow) {
-                c = g.getColor();
-                g.setColor(myShadowColor);
-                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                           yOffset[0] + fm.getDescent() + 1);
-                g.setColor(c);
-              }
-            }
-
-            yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-            if (old != null) {
-              g.setFont(old);
-            }
-
-            return true;
           }
+
+          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+          if (old != null) {
+            g.setFont(old);
+          }
+
+          return true;
         });
       }
       finally {
@@ -3882,7 +3865,7 @@ public class UIUtil {
   }
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
-    c.putClientProperty(ROOT_PANE, new WeakReference<JRootPane>(pane));
+    c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
   }
 
   public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
@@ -4005,12 +3988,9 @@ public class UIUtil {
 
     if (!newSize.equals(size)) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (window.isShowing()) {
-            window.setSize(newSize);
-          }
+      SwingUtilities.invokeLater(() -> {
+        if (window.isShowing()) {
+          window.setSize(newSize);
         }
       });
     }
@@ -4133,10 +4113,20 @@ public class UIUtil {
       try {
         onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
-      catch (NoSuchMethodException e) { LOG.debug(e); }
-      catch (InvocationTargetException e) { LOG.debug(e); }
-      catch (IllegalAccessException e) { LOG.debug(e); }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        getLogger().debug(e);
+      }
     }
+  }
+
+  public static void runWhenWindowOpened(@NotNull Window window, @NotNull Runnable runnable) {
+    window.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        e.getWindow().removeWindowListener(this);
+        runnable.run();
+      }
+    });
   }
 
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
@@ -4193,12 +4183,7 @@ public class UIUtil {
           UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
           for (final UndoableEditListener listener : undoableEditListeners) {
             if (listener instanceof UndoManager) {
-              Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                  ((UndoManager)listener).discardAllEdits();
-                }
-              };
+              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(runnable);
               return;
@@ -4235,34 +4220,26 @@ public class UIUtil {
   public static void playSoundFromResource(@NotNull final String resourceName) {
     final Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return;
-    playSoundFromStream(new Factory<InputStream>() {
-      @Override
-      public InputStream create() {
-        return callerClass.getResourceAsStream(resourceName);
-      }
-    });
+    playSoundFromStream(() -> callerClass.getResourceAsStream(resourceName));
   }
 
   public static void playSoundFromStream(@NotNull final Factory<? extends InputStream> streamProducer) {
-    new Thread(new Runnable() {
-      // The wrapper thread is unnecessary, unless it blocks on the
-      // Clip finishing; see comments.
-      @Override
-      public void run() {
-        try {
-          Clip clip = AudioSystem.getClip();
-          InputStream stream = streamProducer.create();
-          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
-          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
-          clip.open(inputStream);
+    // The wrapper thread is unnecessary, unless it blocks on the
+    // Clip finishing; see comments.
+    new Thread(() -> {
+      try {
+        Clip clip = AudioSystem.getClip();
+        InputStream stream = streamProducer.create();
+        if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+        AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
+        clip.open(inputStream);
 
-          clip.start();
-        }
-        catch (Exception e) {
-          LOG.info(e);
-        }
+        clip.start();
       }
-    },"play sound").start();
+      catch (Exception e) {
+        getLogger().info(e);
+      }
+    }, "play sound").start();
   }
 
   // Experimental!!!
@@ -4304,7 +4281,7 @@ public class UIUtil {
       graphics.setFont(new Font(family, Font.PLAIN, patternSize));
       if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
         if (ourRealFontFamilies == null) {
-          ourRealFontFamilies = new HashMap<String, String>();
+          ourRealFontFamilies = new HashMap<>();
         }
         ourRealFontFamilies.put(genericFontFamily, family);
         return family;
@@ -4343,10 +4320,7 @@ public class UIUtil {
             leftGap += ((Icon)o).getIconWidth();
           }
         }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
+        catch (IllegalAccessException | InvocationTargetException e) {
           e.printStackTrace();
         }
       }
@@ -4545,7 +4519,7 @@ public class UIUtil {
     Window c1Ancestor = findWindowAncestor(c1);
     Window c2Ancestor = findWindowAncestor(c2);
 
-    Set <Window> ownerSet = new HashSet<Window>();
+    Set <Window> ownerSet = new HashSet<>();
 
     Window owner = c1Ancestor;
 
@@ -4573,7 +4547,7 @@ public class UIUtil {
   }
 
   public static void typeAheadUntilFocused(InputEvent event, @NotNull Component component) {
-    LOG.assertTrue(component.isFocusable());
+    getLogger().assertTrue(component.isFocusable());
     Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
     try {
       if (enqueueKeyEventsMethod != null) {
@@ -4581,11 +4555,8 @@ public class UIUtil {
                                       event != null ? event.getWhen() : System.currentTimeMillis(), component);
       }
     }
-    catch (IllegalAccessException e) {
-      LOG.debug(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.debug(e);
+    catch (IllegalAccessException | InvocationTargetException e) {
+      getLogger().debug(e);
     }
   }
 
@@ -4628,15 +4599,28 @@ public class UIUtil {
 
   // background
 
+  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", new JBColor(0xffffff, 0x3c3f41));
+
   @NotNull
   public static Color getListBackground() {
-    return UIManager.getColor("List.background");
+    return LIST_BACKGROUND;
   }
+
+  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
 
   @NotNull
   public static Color getListSelectionBackground(boolean focused) {
     if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
-    return UIManager.getColor("List.selectionBackground");
+    Color color = UIManager.getColor("List.selectionBackground");
+    double alpha = SELECTED_ITEM_ALPHA.getFloat() / 100.0;
+    //noinspection UseJBColor
+    return isUnderDefaultMacTheme() && alpha >= 0 && alpha <= 1.0 ? ColorUtil.mix(Color.WHITE, color, alpha) : color;
+  }
+
+  @NotNull
+  public static Dimension updateListRowHeight(@NotNull Dimension size) {
+    size.height = Math.max(size.height, UIManager.getInt("List.rowHeight"));
+    return size;
   }
 
   @NotNull

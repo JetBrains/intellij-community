@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SyntaxTraverser;
@@ -49,7 +50,12 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoBlacklistFilter filter = MethodInfoBlacklistFilter.forLanguage(element.getLanguage());
     ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
-    pass.doCollectInformation(new ProgressIndicatorBase());
+    try {
+      pass.doCollectInformation(new ProgressIndicatorBase());
+    }
+    catch (IndexNotReadyException e) {
+      return; // cannot update synchronously, hints will be updated after indexing ends by the complete pass
+    }
     pass.applyInformationToEditor();
   }
 

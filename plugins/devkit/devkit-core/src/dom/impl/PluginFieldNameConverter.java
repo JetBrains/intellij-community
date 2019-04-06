@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
@@ -87,7 +86,7 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
     final PsiMethod setter = PropertyUtilBase.findSetterForField(psiField);
     final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(annotationClass, psiField, getter, setter);
     if (attrAnno != null) {
-      return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
+      return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper, null);
     }
     return null;
   }

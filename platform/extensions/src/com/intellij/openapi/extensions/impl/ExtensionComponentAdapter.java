@@ -8,17 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-/**
- * @author Alexander Kireyev
- */
-public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
+public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
-  protected Object myComponentInstance;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
-  private boolean myNotificationSent;
 
   private final String myOrderId;
   private final LoadingOrder myOrder;
@@ -34,20 +29,18 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     myOrder = order;
   }
 
-  public Object getComponentInstance(@Nullable PicoContainer container) {
-    Object instance = myComponentInstance;
-    if (instance != null) {
-      return instance;
-    }
+  abstract boolean isInstanceCreated();
 
+  @NotNull
+  public Object createInstance(@Nullable PicoContainer container) {
+    Object instance;
     try {
-      Class<?> impl = getComponentImplementation();
+      Class<?> impl = getImplementationClass();
 
       ExtensionPointImpl.CHECK_CANCELED.run();
 
-      instance = createComponent(container, impl);
-      initComponent(instance);
-      myComponentInstance = instance;
+      instance = instantiateClass(impl, container);
+      initInstance(instance);
     }
     catch (ProcessCanceledException | ExtensionNotApplicableException e) {
       throw e;
@@ -64,16 +57,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   }
 
   @NotNull
-  protected Object createComponent(@Nullable PicoContainer container, @NotNull Class<?> clazz) {
+  protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
     return ReflectionUtil.newInstance(clazz);
   }
 
-  protected void initComponent(@NotNull Object instance) {
-  }
-
-  @NotNull
-  public Object getExtension(@Nullable PicoContainer container) {
-    return getComponentInstance(container);
+  protected void initInstance(@NotNull Object instance) {
   }
 
   @Override
@@ -92,7 +80,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   }
 
   @NotNull
-  public Class<?> getComponentImplementation() {
+  public final Class<?> getImplementationClass() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       try {
@@ -118,16 +106,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     return ((Class)implementationClassOrName).getName();
   }
 
-  boolean isNotificationSent() {
-    return myNotificationSent;
-  }
-
-  void setNotificationSent() {
-    myNotificationSent = true;
-  }
-
   @Override
   public String toString() {
-    return "ExtensionComponentAdapter[" + getAssignableToClassName() + "]: plugin=" + myPluginDescriptor;
+    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + myPluginDescriptor + ")";
   }
 }

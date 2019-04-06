@@ -239,6 +239,8 @@
     <keyboard-shortcut first-keystroke="control alt LEFT"/>
     <keyboard-shortcut first-keystroke="control PAGE_DOWN"/>
   </action>
+  <action id="Diff.ApplyLeftSide"/>
+  <action id="Diff.ApplyRightSide"/>
   <action id="NextOccurence"/>
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="control F6"/>

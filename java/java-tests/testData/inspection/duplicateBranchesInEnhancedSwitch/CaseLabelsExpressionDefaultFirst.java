@@ -7,7 +7,7 @@ class C {
       case 2:
         break "b";
       case 3:
-        <weak_warning descr="Branch in 'switch' expression is a duplicate of the default branch">break "a";</weak_warning>
+        <weak_warning descr="Branch in 'switch' is a duplicate of the default branch">break "a";</weak_warning>
     };
   }
 }

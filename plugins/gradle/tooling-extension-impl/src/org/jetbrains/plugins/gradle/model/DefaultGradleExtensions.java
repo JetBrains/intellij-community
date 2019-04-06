@@ -18,8 +18,8 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,27 +27,33 @@ import java.util.List;
  */
 public class DefaultGradleExtensions implements GradleExtensions {
   private static final long serialVersionUID = 1L;
-  private File myParentProjectDir;
-  @NotNull
-  private final List<GradleExtension> myExtensions = new ArrayList<GradleExtension>();
-  @NotNull
-  private final List<GradleProperty> myGradleProperties = new ArrayList<GradleProperty>();
-  @NotNull
-  private final List<ExternalTask> myTasks = new ArrayList<ExternalTask>();
-
-  private final List<GradleConfiguration> myConfigurations = new ArrayList<GradleConfiguration>();
+  private final List<GradleExtension> myExtensions;
+  private final List<GradleConvention> myConventions;
+  private final List<GradleProperty> myGradleProperties;
+  private final List<ExternalTask> myTasks;
+  private final List<GradleConfiguration> myConfigurations;
+  private String myParentProjectPath;
 
   public DefaultGradleExtensions() {
+    myExtensions = new ArrayList<GradleExtension>();
+    myConventions = new ArrayList<GradleConvention>();
+    myGradleProperties = new ArrayList<GradleProperty>();
+    myTasks = new ArrayList<ExternalTask>();
+    myConfigurations = new ArrayList<GradleConfiguration>();
   }
 
   public DefaultGradleExtensions(GradleExtensions extensions) {
-    myParentProjectDir = extensions.getParentProjectDir();
+    this();
+    myParentProjectPath = extensions.getParentProjectPath();
     for (GradleExtension extension : extensions.getExtensions()) {
       myExtensions.add(new DefaultGradleExtension(extension));
     }
+    for (GradleConvention convention : extensions.getConventions()) {
+      myConventions.add(new DefaultGradleConvention(convention));
+    }
     for (GradleProperty property : extensions.getGradleProperties()) {
       myGradleProperties.add(new DefaultGradleProperty(property));
-   }
+    }
     for (ExternalTask entry : extensions.getTasks()) {
       myTasks.add(new DefaultExternalTask(entry));
     }
@@ -58,35 +64,41 @@ public class DefaultGradleExtensions implements GradleExtensions {
 
   @Nullable
   @Override
-  public File getParentProjectDir() {
-    return myParentProjectDir;
+  public String getParentProjectPath() {
+    return myParentProjectPath;
   }
 
-  public void setParentProjectDir(File parentProjectDir) {
-    myParentProjectDir = parentProjectDir;
+  public void setParentProjectPath(String parentProjectPath) {
+    myParentProjectPath = parentProjectPath;
   }
 
   @NotNull
   @Override
   public List<GradleExtension> getExtensions() {
-    return myExtensions;
+    return myExtensions == null ? Collections.<GradleExtension>emptyList() : myExtensions;
+  }
+
+  @Override
+  @NotNull
+  public List<GradleConvention> getConventions() {
+    return myConventions == null ? Collections.<GradleConvention>emptyList() : myConventions;
   }
 
   @NotNull
   @Override
   public List<GradleProperty> getGradleProperties() {
-    return myGradleProperties;
+    return myGradleProperties == null ? Collections.<GradleProperty>emptyList() : myGradleProperties;
   }
 
   @NotNull
   @Override
   public List<ExternalTask> getTasks() {
-    return myTasks;
+    return myTasks == null ? Collections.<ExternalTask>emptyList() : myTasks;
   }
 
   @NotNull
   @Override
   public List<GradleConfiguration> getConfigurations() {
-    return myConfigurations;
+    return myConfigurations == null ? Collections.<GradleConfiguration>emptyList() : myConfigurations;
   }
 }

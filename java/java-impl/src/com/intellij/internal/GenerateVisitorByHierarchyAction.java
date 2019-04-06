@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -118,7 +118,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         return labeledComponent;
       }
     };
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
     if (element instanceof PsiPackage) {
       dialog.selectPackage(((PsiPackage)element).getQualifiedName());
     }
@@ -136,7 +136,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       return;
     }
     final String visitorQName = generateEverything(dialog.getSelectedPackage(), parentClassRef.get(), visitorNameRef.get());
-    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
+    final IdeView ideView = e.getData(LangDataKeys.IDE_VIEW);
     final PsiClass visitorClass = JavaPsiFacade.getInstance(project).findClass(visitorQName, GlobalSearchScope.projectScope(project));
     if (ideView != null && visitorClass != null) {
       ideView.selectElement(visitorClass);

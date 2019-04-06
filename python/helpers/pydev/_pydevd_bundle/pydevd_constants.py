@@ -9,6 +9,7 @@ STATE_SUSPEND = 2
 PYTHON_SUSPEND = 1
 DJANGO_SUSPEND = 2
 JINJA2_SUSPEND = 3
+JUPYTER_SUSPEND = 4
 
 
 class DebugInfoHolder:
@@ -62,11 +63,11 @@ else:
     if python_implementation == 'CPython' and not IS_PYTHON_STACKLESS:
         # Only available for CPython!
         if (
-            (sys.version_info[0] == 2 and sys.version_info[1] >= 6)
-            or (sys.version_info[0] == 3 and sys.version_info[1] >= 3)
+            (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
+            or (sys.version_info[0] == 3 and sys.version_info[1] >= 4)
             or (sys.version_info[0] > 3)
             ):
-            # Supported in 2.6,2.7 or 3.3 onwards (32 or 64)
+            # Supported in 2.7 or 3.4 onwards (32 or 64)
             CYTHON_SUPPORTED = True
 
 

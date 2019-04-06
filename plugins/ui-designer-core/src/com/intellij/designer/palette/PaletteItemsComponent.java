@@ -230,9 +230,7 @@ public class PaletteItemsComponent extends JBList {
     else if (getModel().getSize() == 0) {
       indexToSelect = -1;
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
     setSelectedIndex(indexToSelect);
     if (indexToSelect >= 0) {
       ensureIndexIsVisible(indexToSelect);
@@ -300,9 +298,7 @@ public class PaletteItemsComponent extends JBList {
                        : policy.getComponentBefore(container, PaletteItemsComponent.this);
       if (next instanceof PaletteGroupComponent) {
         clearSelection();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         ((PaletteGroupComponent)next).scrollRectToVisible(next.getBounds());
       }
     }

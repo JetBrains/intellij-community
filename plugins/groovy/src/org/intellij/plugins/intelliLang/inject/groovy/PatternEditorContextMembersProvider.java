@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -162,7 +163,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         return true;
       }, searcher.getPattern(), UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, searcher.isCaseSensitive());
     }
-    return ContainerUtil.newHashSet(roots);
+    return new HashSet<>(roots);
   }
 
 }

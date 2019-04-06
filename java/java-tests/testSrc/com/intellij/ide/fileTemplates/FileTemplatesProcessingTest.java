@@ -27,7 +27,7 @@ public class FileTemplatesProcessingTest extends LightPlatformCodeInsightFixture
                  " */\n" +
                  "public class Bar {\n" +
                  "}",
-           "/** Special Velocity symbols \\# and \\$ should be escaped */\n" +
+           "/** Special Velocity symbols \\# and #[[\\$]]# should be escaped */\n" +
            "\n" +
            "/**\n" +
            " * Created by ${USER} on ${DATE}.\n" +

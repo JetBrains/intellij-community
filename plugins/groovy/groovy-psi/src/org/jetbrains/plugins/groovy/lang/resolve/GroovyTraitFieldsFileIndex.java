@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -21,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -34,10 +21,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.text.StringCharacterIterator;
 import java.util.Collection;
+import java.util.List;
 
+import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
+import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
-import static com.intellij.util.io.DataInputOutputUtil.readINT;
-import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 import static com.intellij.util.io.IOUtil.readUTF;
 import static com.intellij.util.io.IOUtil.writeUTF;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
@@ -101,7 +89,7 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   private static Collection<TraitFieldDescriptor> index(FileContent inputData) {
@@ -110,11 +98,22 @@ public class GroovyTraitFieldsFileIndex
     new ClassReader(inputData.getContent()).accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        processField(access, name, desc, signature);
-        return null;
+        return new FieldVisitor(Opcodes.API_VERSION) {
+          private final List<String> annotations = new SmartList<>();
+
+          @Override
+          public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+            return StubBuildingVisitor.getAnnotationTextCollector(descriptor, annotations::add);
+          }
+
+          @Override
+          public void visitEnd() {
+            processField(access, name, desc, signature, annotations);
+          }
+        };
       }
 
-      private void processField(int access, String name, String desc, String signature) {
+      private void processField(int access, String name, String desc, String signature, List<String> annotations) {
         if ((access & ACC_SYNTHETIC) == 0) return;
 
         final boolean isStatic;
@@ -144,7 +143,7 @@ public class GroovyTraitFieldsFileIndex
         }
 
         byte flags = (byte)((isPublic ? TraitFieldDescriptor.PUBLIC : 0) | (isStatic ? TraitFieldDescriptor.STATIC : 0));
-        values.add(new TraitFieldDescriptor(flags, typeString, name));
+        values.add(new TraitFieldDescriptor(flags, typeString, name, annotations));
       }
 
       private Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
@@ -177,22 +176,17 @@ public class GroovyTraitFieldsFileIndex
 
   @Override
   public void save(@NotNull DataOutput out, Collection<TraitFieldDescriptor> values) throws IOException {
-    writeINT(out, values.size());
-    for (TraitFieldDescriptor descriptor : values) {
+    writeSeq(out, values, descriptor -> {
       out.writeByte(descriptor.flags);
       writeUTF(out, descriptor.typeString);
       writeUTF(out, descriptor.name);
-    }
+      writeSeq(out, descriptor.annotations, it -> writeUTF(out, it));
+    });
   }
 
   @Override
   public Collection<TraitFieldDescriptor> read(@NotNull DataInput in) throws IOException {
-    int size = readINT(in);
-    Collection<TraitFieldDescriptor> result = ContainerUtil.newArrayListWithCapacity(size);
-    for (int i = 0; i < size; i++) {
-      result.add(new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in)));
-    }
-    return result;
+    return readSeq(in, () -> new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in), readSeq(in, () -> readUTF(in))));
   }
 
   public static class TraitFieldDescriptor {
@@ -202,11 +196,13 @@ public class GroovyTraitFieldsFileIndex
     public final byte flags;
     public final String typeString;
     public final String name;
+    public final List<String> annotations;
 
-    private TraitFieldDescriptor(byte flags, @NotNull String typeString, @NotNull String name) {
+    private TraitFieldDescriptor(byte flags, @NotNull String typeString, @NotNull String name, @NotNull List<String> annotations) {
       this.flags = flags;
       this.typeString = typeString;
       this.name = name;
+      this.annotations = annotations;
     }
 
     @Override

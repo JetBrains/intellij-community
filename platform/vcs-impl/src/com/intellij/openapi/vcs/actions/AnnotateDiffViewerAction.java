@@ -364,7 +364,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public boolean isAnnotationShown(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side) {
-      return viewer.getEditor(side).getGutter().isAnnotationsShown();
+      return AnnotateToggleAction.hasVcsAnnotations(viewer.getEditor(side));
     }
 
     @Override
@@ -375,7 +375,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void hideAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side) {
-      viewer.getEditor(side).getGutter().closeAllAnnotations();
+      AnnotateToggleAction.closeVcsAnnotations(viewer.getEditor(side));
     }
   }
 
@@ -396,7 +396,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public boolean isAnnotationShown(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side) {
       if (side != viewer.getSide()) return false;
-      return viewer.getEditor().getGutter().isAnnotationsShown();
+      return AnnotateToggleAction.hasVcsAnnotations(viewer.getEditor());
     }
 
     @Override
@@ -408,7 +408,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void hideAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side) {
-      viewer.getEditor().getGutter().closeAllAnnotations();
+      AnnotateToggleAction.closeVcsAnnotations(viewer.getEditor());
     }
   }
 
@@ -429,7 +429,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public boolean isAnnotationShown(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
       if (side != viewer.getMasterSide()) return false;
-      return viewer.getEditor().getGutter().isAnnotationsShown();
+      return AnnotateToggleAction.hasVcsAnnotations(viewer.getEditor());
     }
 
     @Override
@@ -442,7 +442,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void hideAnnotation(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
-      viewer.getEditor().getGutter().closeAllAnnotations();
+      AnnotateToggleAction.closeVcsAnnotations(viewer.getEditor());
     }
   }
 
@@ -505,7 +505,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public boolean isAnnotationShown(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side) {
-      return viewer.getEditor(side).getGutter().isAnnotationsShown();
+      return AnnotateToggleAction.hasVcsAnnotations(viewer.getEditor(side));
     }
 
     @Override
@@ -516,7 +516,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void hideAnnotation(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side) {
-      viewer.getEditor(side).getGutter().closeAllAnnotations();
+      AnnotateToggleAction.closeVcsAnnotations(viewer.getEditor(side));
     }
   }
 
@@ -671,6 +671,8 @@ public class AnnotateDiffViewerAction {
       Project project = viewer.getProject();
       assert project != null;
 
+      BackgroundableActionLock actionLock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, viewer, side);
+
       return new ViewerAnnotator() {
         @NotNull
         @Override
@@ -702,7 +704,7 @@ public class AnnotateDiffViewerAction {
         @Override
         @NotNull
         public BackgroundableActionLock getBackgroundableLock() {
-          return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
+          return actionLock;
         }
       };
     }

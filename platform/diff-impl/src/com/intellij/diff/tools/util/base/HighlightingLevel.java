@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public enum HighlightingLevel {
-  INSPECTIONS("Inspections", AllIcons.Ide.HectorOn, rangeHighlighter -> {
-    return true;
-  }),
+  INSPECTIONS("Inspections", AllIcons.Ide.HectorOn, rangeHighlighter -> true),
 
   ADVANCED("Syntax", AllIcons.Ide.HectorSyntax, rangeHighlighter -> {
     if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
@@ -24,9 +22,7 @@ public enum HighlightingLevel {
     return true;
   }),
 
-  SIMPLE("None", AllIcons.Ide.HectorOff, rangeHighlighter -> {
-    return rangeHighlighter.getLayer() <= HighlighterLayer.SYNTAX;
-  });
+  SIMPLE("None", AllIcons.Ide.HectorOff, rangeHighlighter -> rangeHighlighter.getLayer() <= HighlighterLayer.SYNTAX);
 
   @NotNull private final String myText;
   @Nullable private final Icon myIcon;

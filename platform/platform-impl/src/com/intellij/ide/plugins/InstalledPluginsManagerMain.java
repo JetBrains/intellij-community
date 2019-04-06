@@ -85,11 +85,11 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     installFromDisk.setMnemonic('d');
     installFromDisk.addActionListener(e -> {
       final InstalledPluginsTableModel model = (InstalledPluginsTableModel)pluginsModel;
-      chooseAndInstall(model, pair -> {
+      chooseAndInstall(model, myActionsPanel, pair -> {
         model.appendOrUpdateDescriptor(pair.second);
         setRequireShutdown(true);
         select(pair.second);
-      }, myActionsPanel);
+      });
     });
     myActionsPanel.add(installFromDisk);
 
@@ -98,9 +98,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                      @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
-                                      @Nullable final Component parent) {
+  static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                               @Nullable final Component parent, @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -132,7 +131,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
-        MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
+        MessagesEx.showWarningDialog(parent, message, "Install Plugin");
         return false;
       }
 
@@ -181,7 +180,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     if (!notInstalled.isEmpty()) {
       String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
-      MessagesEx.showWarningDialog(parent, message, CommonBundle.getWarningTitle());
+      MessagesEx.showWarningDialog(parent, message, "Install Plugin");
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();
@@ -193,7 +192,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       String part = "disabled plugin" + (dependencies.size() > 1 ? "s " : " ");
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
       String message = "Plugin " + pluginDescriptor.getName() + " depends on " + part + deps + ". Enable " + part.trim() + "?";
-      if (MessagesEx.showOkCancelDialog(parent, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
+      if (MessagesEx.showOkCancelDialog(parent, message, "Install Plugin", Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }
@@ -292,6 +291,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return this;
   }
 
+  @NotNull
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -436,8 +436,8 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation) {
-      final JComponent component = super.createCustomComponent(presentation);
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      final JComponent component = super.createCustomComponent(presentation, place);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(false);
       panel.add(component, BorderLayout.CENTER);
@@ -493,7 +493,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
+      chooseAndInstall(new InstalledPluginsTableModel(), null, pair -> PluginManagerConfigurable.shutdownOrRestartApp());
     }
   }
 

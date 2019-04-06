@@ -3,8 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
@@ -670,17 +668,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   protected void paintComponent(final Graphics g) {
     try {
-      _doPaint(g);
+      doPaint((Graphics2D)g);
     }
     catch (RuntimeException e) {
       LOG.error(logSwingPath(), e);
       throw e;
     }
-  }
-
-  private void _doPaint(final Graphics g) {
-    checkCanPaint(g);
-    doPaint((Graphics2D)g);
   }
 
   protected void doPaint(final Graphics2D g) {
@@ -999,23 +992,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     // adding leading to ascent, just like in editor (leads to bad presentation for certain fonts with Oracle JDK, see IDEA-167541)
     return (height - metrics.getHeight()) / 2 + metrics.getAscent() +
            (SystemInfo.isJetBrainsJvm ? metrics.getLeading() : 0);
-  }
-
-  private static void checkCanPaint(Graphics g) {
-    if (UIUtil.isPrinting(g)) return;
-
-    /* wtf??
-    if (!isDisplayable()) {
-      LOG.assertTrue(false, logSwingPath());
-    }
-    */
-    final Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      application.assertIsDispatchThread();
-    }
-    else if (!SwingUtilities.isEventDispatchThread()) {
-      throw new RuntimeException(Thread.currentThread().toString());
-    }
   }
 
   @NotNull

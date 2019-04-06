@@ -59,7 +59,7 @@ public class PrepareToDeployAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    final Module module = e.getData(LangDataKeys.MODULE);
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Arrays.asList(module), e.getProject());
     }
@@ -378,10 +378,9 @@ public class PrepareToDeployAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    final Module module = e.getData(LangDataKeys.MODULE);
     boolean enabled = module != null && PluginModuleType.isOfType(module);
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
       e.getPresentation().setText(DevKitBundle.message("prepare.for.deployment", module.getName()));
     }

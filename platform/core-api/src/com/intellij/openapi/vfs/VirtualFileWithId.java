@@ -20,5 +20,9 @@
 package com.intellij.openapi.vfs;
 
 public interface VirtualFileWithId {
+  /**
+   * @return a unique number identifying the file in VFS. This id shouldn't change during the lifetime of the file.
+   * For "real" files (stored in and managed by VFS) it's a positive number.
+   */
   int getId();
 }

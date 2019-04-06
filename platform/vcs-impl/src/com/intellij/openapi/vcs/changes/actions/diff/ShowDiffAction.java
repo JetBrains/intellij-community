@@ -113,9 +113,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   public static void showDiffForChange(@Nullable Project project,
                                        @NotNull ListSelection<? extends Change> changes,
                                        @NotNull ShowDiffContext context) {
-    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> {
-      return ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
-    });
+    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
     if (presentables.isEmpty()) return;
 
     DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());

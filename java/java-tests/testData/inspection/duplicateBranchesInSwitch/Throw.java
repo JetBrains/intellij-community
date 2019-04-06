@@ -6,7 +6,7 @@ class C {
       case 2:
         throw new IllegalStateException("A");
       case 3:
-        <weak_warning descr="Duplicate branch in 'switch' statement">throw new IllegalArgumentException("A");</weak_warning>
+        <weak_warning descr="Duplicate branch in 'switch'">throw new IllegalArgumentException("A");</weak_warning>
     }
     return "";
   }

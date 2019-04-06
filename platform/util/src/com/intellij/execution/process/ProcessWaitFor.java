@@ -28,7 +28,7 @@ public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
 
   private final Future<?> myWaitForThreadFuture;
-  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
+  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);
   private volatile boolean myDetached;
 
   /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead (to be removed in IDEA 2018) */
@@ -38,40 +38,34 @@ public class ProcessWaitFor {
   }
 
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {
-    myWaitForThreadFuture = executor.executeTask(new Runnable() {
-      @Override
-      public void run() {
-        String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
-        ConcurrencyUtil.runUnderThreadName(threadName, new Runnable() {
-          @Override
-          public void run() {
-            int exitCode = 0;
+    myWaitForThreadFuture = executor.executeTask(() -> {
+      String threadName = StringUtil.isEmptyOrSpaces(presentableName) ? Thread.currentThread().getName() : presentableName;
+      ConcurrencyUtil.runUnderThreadName(threadName, () -> {
+        int exitCode = 0;
+        try {
+          while (!myDetached) {
             try {
-              while (!myDetached) {
-                try {
-                  exitCode = process.waitFor();
-                  break;
-                }
-                catch (InterruptedException e) {
-                  if (!myDetached) {
-                    LOG.debug(e);
-                  }
-                }
-              }
+              exitCode = process.waitFor();
+              break;
             }
-            finally {
+            catch (InterruptedException e) {
               if (!myDetached) {
-                try {
-                  myTerminationCallback.take().consume(exitCode);
-                }
-                catch (InterruptedException e) {
-                  LOG.info(e);
-                }
+                LOG.debug(e);
               }
             }
           }
-        });
-      }
+        }
+        finally {
+          if (!myDetached) {
+            try {
+              myTerminationCallback.take().consume(exitCode);
+            }
+            catch (InterruptedException e) {
+              LOG.info(e);
+            }
+          }
+        }
+      });
     });
   }
 
@@ -101,8 +95,7 @@ public class ProcessWaitFor {
     catch (ExecutionException e) {
       LOG.error(e);
     }
-    catch (CancellationException ignored) { }
-    catch (TimeoutException ignored) { }
+    catch (CancellationException | TimeoutException ignored) { }
 
     return myWaitForThreadFuture.isDone();
   }

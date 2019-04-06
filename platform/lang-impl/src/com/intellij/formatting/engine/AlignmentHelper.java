@@ -47,7 +47,7 @@ public class AlignmentHelper {
     LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(context.document));
   }
 
-  public LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {
+  LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {
     BlockAlignmentProcessor alignmentProcessor = ALIGNMENT_PROCESSORS.get(alignment.getAnchor());
     if (alignmentProcessor == null) {
       LOG.error(String.format("Can't find alignment processor for alignment anchor %s", alignment.getAnchor()));
@@ -94,7 +94,7 @@ public class AlignmentHelper {
     }
   }
 
-  public boolean shouldSkip(AlignmentImpl alignment) {
+  boolean shouldSkip(AlignmentImpl alignment) {
     return myAlignmentsToSkip.contains(alignment);
   }
 
@@ -126,8 +126,4 @@ public class AlignmentHelper {
     }
   }
 
-  public void reset() {
-    myBackwardShiftedAlignedBlocks.clear();
-    myAlignmentMappings.clear();
-  }
 }

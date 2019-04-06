@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +48,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
     NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
-    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
+    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }
     finally {
       super.tearDown();
-      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
+      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed;
     }
   }
 

@@ -1,0 +1,9 @@
+UAnnotation (fqName = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation
+        UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation
+    UAnnotation (fqName = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> PsiClass:AnnotationArray: AnnotationArray
+    UAnnotation (fqName = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation
+    UAnnotation (fqName = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> PsiClass:AnnotationArray: AnnotationArray
+    UAnnotation (fqName = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation
+        UTypeReferenceExpression (name = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation
+    UAnnotation (fqName = AnnotationArray) -> USimpleNameReferenceExpression (identifier = AnnotationArray) -> PsiClass:AnnotationArray: AnnotationArray
+    UAnnotation (fqName = Annotation) -> USimpleNameReferenceExpression (identifier = Annotation) -> PsiClass:Annotation: Annotation

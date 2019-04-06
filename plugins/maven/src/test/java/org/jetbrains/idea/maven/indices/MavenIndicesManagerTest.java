@@ -49,40 +49,19 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     }
   }
 
-  public void testEnsuringLocalRepositoryIndex() {
-    File dir1 = myIndicesFixture.getRepositoryHelper().getTestData("dir/foo");
-    File dir2 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo");
-    File dir3 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo\\");
-    File dir4 = myIndicesFixture.getRepositoryHelper().getTestData("dir/bar");
-
-    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1,
-                                                                                        Collections.emptyList());
-    assertEquals(1, indices1.size());
-    assertTrue(myIndicesFixture.getIndicesManager().getIndices().contains(indices1.get(0)));
-
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2,
-                                                                                   Collections.emptyList()));
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3,
-                                                                                   Collections.emptyList()));
-
-    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4,
-                                                                                        Collections.emptyList());
-    assertFalse(indices1.get(0).equals(indices2.get(0)));
-  }
 
   public void testEnsuringRemoteRepositoryIndex() {
-    File local = myIndicesFixture.getRepositoryHelper().getTestData("dir");
     Pair<String, String> remote1 = Pair.create("id1", "http://foo/bar");
     Pair<String, String> remote2 = Pair.create("id1", "  http://foo\\bar\\\\  ");
     Pair<String, String> remote3 = Pair.create("id3", "http://foo\\bar\\baz");
     Pair<String, String> remote4 = Pair.create("id4", "http://foo/bar"); // same url
     Pair<String, String> remote5 = Pair.create("id4", "http://foo/baz"); // same id
 
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, Collections.singleton(remote1)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4)).size());
-    assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, local, asList(remote1, remote2, remote3, remote4, remote5)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, Collections.singleton(remote1)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2)).size());
+    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3)).size());
+    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4)).size());
+    assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4, remote5)).size());
   }
 
   public void testDefaultArchetypes() {
@@ -91,7 +70,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
+    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
                                                             Collections.emptyList());
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
@@ -99,7 +78,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testIndexedArchetypesWithSeveralIndicesAfterReopening() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
+    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
                                                             Collections.singleton(Pair.create("id", "foo://bar.baz")));
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");

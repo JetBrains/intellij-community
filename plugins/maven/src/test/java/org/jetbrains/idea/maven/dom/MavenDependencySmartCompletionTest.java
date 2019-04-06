@@ -11,6 +11,9 @@ import java.util.Arrays;
 public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
 
   public void testCompletion() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -25,6 +28,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testInsertDependency() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -51,6 +57,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testInsertManagedDependency() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -93,6 +102,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testInsertManagedDependencyWithTypeAndClassifier() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -151,6 +163,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdThenVersion() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -227,6 +242,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdThenGroupIdThenCompleteVersion() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -268,6 +286,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdWithFullInsert() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -303,6 +324,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdInsideManagedDependency() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -341,6 +365,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdWithManagedDependency() {
+    if(!onlineCompletionFinished()){
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>\n" +

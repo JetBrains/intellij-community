@@ -39,7 +39,7 @@ class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   private static LightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR)
+      PsiTestUtil.addLibrary(model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR)
     }
   }
 

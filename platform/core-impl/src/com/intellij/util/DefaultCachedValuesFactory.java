@@ -28,49 +28,25 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultCachedValuesFactory implements CachedValuesFactory {
   private final Project myProject;
 
-  public DefaultCachedValuesFactory(Project project) {
+  DefaultCachedValuesFactory(@NotNull Project project) {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    return trackValue ? new CachedValueImpl<T>(provider) {
+    return new CachedValueImpl<T>(provider, trackValue) {
       @Override
-      protected Object[] getDependencies(CachedValueProvider.Result<T> result) {
-        return getDependenciesPlusValue(result);
-      }
-
-      @Override
-      public boolean isFromMyProject(Project project) {
-        return myProject == project;
-      }
-    } : new CachedValueImpl<T>(provider) {
-
-      @Override
-      public boolean isFromMyProject(Project project) {
+      public boolean isFromMyProject(@NotNull Project project) {
         return myProject == project;
       }
     };
   }
 
+  @NotNull
   @Override
   public <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
                                                                               boolean trackValue) {
-    return trackValue ? new ParameterizedCachedValueImpl<T, P>(provider) {
-      @Override
-      public boolean isFromMyProject(Project project) {
-        return myProject == project;
-      }
-
-      @Override
-      protected Object[] getDependencies(CachedValueProvider.Result<T> tResult) {
-        return getDependenciesPlusValue(tResult);
-      }
-    } : new ParameterizedCachedValueImpl<T, P>(provider) {
-      @Override
-      public boolean isFromMyProject(Project project) {
-        return myProject == project;
-      }
-    };
+    return new ParameterizedCachedValueImpl<T, P>(myProject, provider, trackValue);
   }
 }

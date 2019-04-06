@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * @author Eugene Zhuravlev
@@ -130,23 +116,15 @@ public class CompilerMessage extends BuildMessage {
     return new CompilerMessage(compilerName, Kind.INTERNAL_BUILDER_ERROR, getTextFromThrowable(t));
   }
 
-  public static String getTextFromThrowable(Throwable internalError) {
-    StringBuilder text = new StringBuilder();
-    text.append("Error: ");
-    final String msg = internalError.getMessage();
-    if (!StringUtil.isEmptyOrSpaces(msg)) {
-      text.append(msg);
+  public static String getTextFromThrowable(Throwable t) {
+    String message = t.getMessage();
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      message = t.getClass().getName();
     }
-    else {
-      text.append(internalError.getClass().getName());
-    }
-    text.append("\n");
 
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    internalError.printStackTrace(new PrintStream(out));
-    text.append(out.toString());
+    StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
 
-    return text.toString();
+    return "Error: " + message + '\n' + writer.getBuffer();
   }
-
 }

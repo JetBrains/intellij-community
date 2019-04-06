@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -21,8 +22,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.ARC;
@@ -48,7 +47,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   protected void uninstallDarculaDefaults() {}
 
-    @Override
+  @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -61,7 +60,8 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
-        } else {
+        }
+        else {
           icon.paintIcon(this, g, 0, 0);
         }
       }
@@ -84,7 +84,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     int iconWidth = icon.getIconWidth() + i.right;
     int iconHeight = icon.getIconHeight() + i.top + i.bottom;
 
-    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
@@ -102,28 +102,37 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
-      JComboBox cb = (JComboBox)parent;
+        JComboBox cb = (JComboBox)parent;
 
-      if (arrowButton != null) {
-        Rectangle bounds = cb.getBounds();
-        Insets cbInsets = cb.getInsets();
-        Dimension prefSize = arrowButton.getPreferredSize();
+        if (arrowButton != null) {
+          Rectangle bounds = cb.getBounds();
+          Insets cbInsets = cb.getInsets();
+          Dimension prefSize = arrowButton.getPreferredSize();
 
-        int buttonHeight = bounds.height - (cbInsets.top + cbInsets.bottom);
-        double ar = (double)buttonHeight / prefSize.height;
-        int buttonWidth = (int)Math.floor(prefSize.width * ar);
-        int offset = (int)Math.round(ar - 1.0);
+          int buttonHeight = bounds.height - (cbInsets.top + cbInsets.bottom);
+          double ar = (double)buttonHeight / prefSize.height;
+          int buttonWidth = (int)Math.floor(prefSize.width * ar);
+          int offset = (int)Math.round(ar - 1.0);
 
-        arrowButton.setBounds(bounds.width - buttonWidth - cbInsets.right + offset, cbInsets.top, buttonWidth, buttonHeight);
-      }
+          arrowButton.setBounds(bounds.width - buttonWidth - cbInsets.right + offset, cbInsets.top, buttonWidth, buttonHeight);
+        }
 
-      layoutEditor();
+        layoutEditor();
       }
     };
   }
 
   @Override
   protected ComboPopup createPopup() {
+    if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
+      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+        @Override
+        protected void configureList(@NotNull JList<Object> list) {
+          super.configureList(list);
+          list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
+        }
+      };
+    }
     return new CustomComboPopup(comboBox) {
       @Override
       protected void configurePopup() {
@@ -137,25 +146,11 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       protected void configureList() {
         super.configureList();
         list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
-        wrapRenderer();
-      }
-
-      @Override
-      protected PropertyChangeListener createPropertyChangeListener() {
-        final PropertyChangeListener listener = super.createPropertyChangeListener();
-        return new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            listener.propertyChange(evt);
-            if ("renderer".equals(evt.getPropertyName())) {
-              wrapRenderer();
-            }
-          }
-        };
       }
 
       @SuppressWarnings("unchecked")
-      private void wrapRenderer() {
+      @Override
+      protected void wrapRenderer() {
         ListCellRenderer<Object> renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
@@ -192,7 +187,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.translate(r.x, r.y);
 
       Color background = comboBox.isEditable() ? comboBox.getEditor().getEditorComponent().getBackground() :
-                           UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
+                         UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
       g2.setColor(background);
 
       float arc = comboBox.isEditable() ? 0 : ARC.getFloat();
@@ -202,19 +197,21 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       bgs.subtract(new Area(arrowButton.getBounds()));
 
       g2.fill(bgs);
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
 
 
-    if ( !comboBox.isEditable() ) {
+    if (!comboBox.isEditable()) {
       listBox.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
       checkFocus();
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
     }
   }
 
-  @Nullable Rectangle getArrowButtonBounds() {
+  @Nullable
+  Rectangle getArrowButtonBounds() {
     return arrowButton != null ? arrowButton.getBounds() : null;
   }
 }

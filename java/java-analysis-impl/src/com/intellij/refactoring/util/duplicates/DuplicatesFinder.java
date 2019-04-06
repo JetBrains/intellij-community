@@ -519,11 +519,17 @@ public class DuplicatesFinder {
       return (resolveResult2 instanceof PsiLocalVariable || resolveResult2 instanceof PsiParameter) &&
              match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
     }
-    final PsiElement qualifier2 = candidate.getQualifier();
+    PsiElement qualifier2 = candidate.getQualifier();
+    while (qualifier2 instanceof PsiParenthesizedExpression) {
+      qualifier2 = ((PsiParenthesizedExpression)qualifier2).getExpression();
+    }
     if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
       return matchExtractableVariable(pattern, candidate, match);
     }
     PsiElement qualifier1 = pattern.getQualifier();
+    while (qualifier1 instanceof PsiParenthesizedExpression) {
+      qualifier1 = ((PsiParenthesizedExpression)qualifier1).getExpression();
+    }
     if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
         !match.areCorrespond(((PsiReferenceExpression)qualifier1).resolve(), ((PsiReferenceExpression)qualifier2).resolve())) {
       return false;

@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LOG
 import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
@@ -15,6 +16,7 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
@@ -42,16 +44,19 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     directoryPath: Path?,
                                                     isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
+    val fileChangeSubscriber = when {
+      streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
+      else -> createFileChangeSubscriber()
+    }
     val manager = SchemeManagerImpl(path,
-                                                                                  processor,
-                                                                                  streamProvider
-                                                                                  ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                                                                  directoryPath ?: pathToFile(path),
-                                                                                  roamingType,
-                                                                                  presentableName,
-                                                                                  schemeNameToFileName,
-                                                                                  if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
-                                                                                  else createFileChangeSubscriber())
+                                    processor,
+                                    streamProvider
+                                    ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                    directoryPath ?: pathToFile(path),
+                                    roamingType,
+                                    presentableName,
+                                    schemeNameToFileName,
+                                    fileChangeSubscriber)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -64,14 +69,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   open fun checkPath(originalPath: String): String {
-    fun error(message: String) {
-      // as error because it is not a new requirement
-      if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.error(message)
-    }
-
     when {
-      originalPath.contains('\\') -> error("Path must be system-independent, use forward slash instead of backslash")
-      originalPath.isEmpty() -> error("Path must not be empty")
+      originalPath.contains('\\') -> LOG.error("Path must be system-independent, use forward slash instead of backslash")
+      originalPath.isEmpty() -> LOG.error("Path must not be empty")
     }
     return originalPath
   }
@@ -117,18 +117,29 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(
-      ROOT_CONFIG), path)!!
+    override fun pathToFile(path: String): Path {
+      return Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)!!
+    }
   }
 
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
+    private fun addVfsListener(schemeManager: SchemeManagerImpl<*, *>) {
+      @Suppress("UNCHECKED_CAST")
+      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
+    }
+
     override fun createFileChangeSubscriber(): ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? {
       return { schemeManager ->
-        @Suppress("UNCHECKED_CAST")
-        project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
+        val startupManager = if (ApplicationManager.getApplication().isUnitTestMode) null else StartupManagerEx.getInstanceEx(project)
+        if (startupManager == null || startupManager.postStartupActivityPassed()) {
+          addVfsListener(schemeManager)
+        }
+        else {
+          startupManager.registerPostStartupActivity(DumbAwareRunnable { addVfsListener(schemeManager) })
+        }
       }
     }
 

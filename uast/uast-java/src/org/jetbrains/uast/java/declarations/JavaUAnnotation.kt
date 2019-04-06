@@ -22,39 +22,37 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 
 class JavaUAnnotation(
-  override val psi: PsiAnnotation,
+  override val sourcePsi: PsiAnnotation,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
-  override val javaPsi: PsiAnnotation = psi
+  override val javaPsi: PsiAnnotation = sourcePsi
 
   override val qualifiedName: String?
-    get() = psi.qualifiedName
+    get() = sourcePsi.qualifiedName
 
   override val attributeValues: List<UNamedExpression> by lz {
-    val attributes = psi.parameterList.attributes
+    val attributes = sourcePsi.parameterList.attributes
 
     attributes.map { attribute -> JavaUNamedExpression(attribute, this) }
   }
 
   override val uastAnchor: UIdentifier?
-    get() = psi.nameReferenceElement?.referenceNameElement?.let { UIdentifier(it, this) }
+    get() = sourcePsi.nameReferenceElement?.referenceNameElement?.let { UIdentifier(it, this) }
 
-  override fun resolve(): PsiClass? = psi.nameReferenceElement?.resolve() as? PsiClass
+  override fun resolve(): PsiClass? = sourcePsi.nameReferenceElement?.resolve() as? PsiClass
 
   override fun multiResolve(): Iterable<ResolveResult> =
-    psi.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
+    sourcePsi.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override fun findAttributeValue(name: String?): UExpression? {
-    val context = getUastContext()
-    val attributeValue = psi.findAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
+    val attributeValue = sourcePsi.findAttributeValue(name) ?: return null
+    return UastFacade.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? {
-    val context = getUastContext()
-    val attributeValue = psi.findDeclaredAttributeValue(name) ?: return null
-    return context.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
+    val attributeValue = sourcePsi.findDeclaredAttributeValue(name) ?: return null
+    return UastFacade.convertElement(attributeValue, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
   companion object {

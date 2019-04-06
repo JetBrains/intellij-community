@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,6 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,14 +42,6 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   @NotNull private final List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private volatile State myState;
-
-  public VisiblePackRefresherImpl(@NotNull Project project,
-                                  @NotNull VcsLogData logData,
-                                  @NotNull PermanentGraph.SortType initialSortType,
-                                  @NotNull VcsLogFilterer builder,
-                                  @NotNull String logId) {
-    this(project, logData, VcsLogFilterObject.collection(), initialSortType, builder, logId);
-  }
 
   public VisiblePackRefresherImpl(@NotNull Project project,
                                   @NotNull VcsLogData logData,
@@ -164,6 +155,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         }
         catch (Throwable t) {
           LOG.error("Error while filtering log by " + requests, t);
+          myTaskController.removeRequests(requests);
         }
       }
 

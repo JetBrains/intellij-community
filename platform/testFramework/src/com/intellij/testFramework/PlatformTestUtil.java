@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -129,6 +131,24 @@ public class PlatformTestUtil {
     return uppercaseChars >= 3;
   }
 
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   */
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
+  }
+
+  /**
+   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
+   */
+  @Deprecated
   public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
@@ -137,16 +157,7 @@ public class PlatformTestUtil {
                                            @NotNull BaseExtensionPointName name,
                                            @NotNull T t,
                                            @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
-    extensionPoint.registerExtension(t);
-    Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
-  }
-
-  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
-    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
-    T[] extensions = name.getExtensions();
-    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
-    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
+    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
   }
 
   @Nullable
@@ -285,9 +296,8 @@ public class PlatformTestUtil {
     }
   }
 
-  private static boolean isBusy(JTree tree) {
+  private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
-    TreeModel model = tree.getModel();
     if (model instanceof AsyncTreeModel) {
       AsyncTreeModel async = (AsyncTreeModel)model;
       if (async.isProcessing()) return true;
@@ -302,9 +312,13 @@ public class PlatformTestUtil {
   }
 
   public static void waitWhileBusy(JTree tree) {
+    waitWhileBusy(tree, tree.getModel());
+  }
+
+  public static void waitWhileBusy(JTree tree, TreeModel model) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
-    while (isBusy(tree)) {
+    while (isBusy(tree, model)) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
     }
@@ -495,17 +509,8 @@ public class PlatformTestUtil {
     return print(Arrays.asList(objects));
   }
 
-  public static String print(Collection c) {
-    StringBuilder result = new StringBuilder();
-    for (Iterator iterator = c.iterator(); iterator.hasNext();) {
-      Object each = iterator.next();
-      result.append(toString(each, null));
-      if (iterator.hasNext()) {
-        result.append("\n");
-      }
-    }
-
-    return result.toString();
+  public static String print(Collection<?> c) {
+    return c.stream().map(each -> toString(each, null)).collect(Collectors.joining("\n"));
   }
 
   public static String print(ListModel model) {
@@ -608,7 +613,7 @@ public class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project, boolean isForceSavingAllSettings) {
-    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
+    StoreReloadManager.getInstance().flushChangedProjectFileAlarm();
     StateStorageManagerKt.saveComponentManager(project, isForceSavingAllSettings);
   }
 
@@ -795,6 +800,7 @@ public class PlatformTestUtil {
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();
       try {
@@ -913,7 +919,7 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");

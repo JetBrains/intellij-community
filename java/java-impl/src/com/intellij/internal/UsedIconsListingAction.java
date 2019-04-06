@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -10,7 +10,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -37,7 +36,7 @@ import java.util.*;
 public class UsedIconsListingAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getData(LangDataKeys.PROJECT);
 
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
@@ -182,9 +181,7 @@ public class UsedIconsListingAction extends AnAction {
       if (replacement != null) {
         final PsiFile file = att.getContainingFile();
         if (useScope.contains(file.getVirtualFile())) {
-          WriteCommandAction.writeCommandAction(project, file).run(() -> {
-            att.setValue(replacement);
-          });
+          WriteCommandAction.writeCommandAction(project, file).run(() -> att.setValue(replacement));
         }
       }
     }

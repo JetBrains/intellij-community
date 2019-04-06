@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -112,17 +113,16 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
   public final void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     boolean enabled = ApplicationManagerEx.getApplicationEx().isInternal() && getEditor(e) != null && myFileClass.isInstance(getPsiFile(e));
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
-    return CommonDataKeys.EDITOR.getData(e.getDataContext());
+    return e.getData(CommonDataKeys.EDITOR);
   }
 
   @Nullable
   private static PsiFile getPsiFile(@NotNull AnActionEvent e) {
-    return CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+    return e.getData(CommonDataKeys.PSI_FILE);
   }
 }

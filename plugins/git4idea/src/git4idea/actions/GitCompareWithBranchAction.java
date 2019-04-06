@@ -98,6 +98,6 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
       throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
     }
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, GitContentRevision
-      .createRevision(filePath, compareRevisionNumber, project, null)) : changes;
+      .createRevision(filePath, compareRevisionNumber, project)) : changes;
   }
 }

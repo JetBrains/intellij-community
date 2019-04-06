@@ -41,9 +41,7 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(myModel.getRowCount() - 1, myModel.getRowCount() - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -59,9 +57,7 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow, selectedRow);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
       }
     });
     myMoveUpButton.addActionListener(new ActionListener() {
@@ -73,9 +69,7 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
       }
     });
     myMoveDownButton.addActionListener(new ActionListener() {
@@ -87,9 +81,7 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
       }
     });
 

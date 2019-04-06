@@ -20,7 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.BalloonImpl;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -35,7 +35,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
@@ -43,7 +42,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
-  private final List<EventListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<EventListener> myMouseListeners = new DisposableWrapperList<>();
   private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
     double weight1 = 0;
     double weight2 = 0;
@@ -146,8 +145,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       final boolean pureMouse1Event = (me.getModifiersEx() | button1) == button1;
       if (pureMouse1Event && me.getClickCount() <= 1 && !me.isPopupTrigger()) {
         final Point point = SwingUtilities.convertPoint(meComponent, me.getPoint(), myRootPane.getContentPane());
-        JMenuBar menuBar = myRootPane.getJMenuBar();
-        point.y += menuBar != null ? menuBar.getHeight() : 0;
+        final JMenuBar menuBar = myRootPane.getJMenuBar();
+        if (menuBar != null && menuBar.isVisible())
+          point.y += menuBar.getHeight();
 
         final Component target =
           SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
@@ -161,9 +161,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
               case MouseEvent.MOUSE_PRESSED:
                 boolean consumed = false;
                 if (target.isFocusable()) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                    IdeFocusManager.getGlobalInstance().requestFocus(target, true);
-                  });
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(target, true));
                 }
                 for (final MouseListener listener : listeners) {
                   final String className = listener.getClass().getName();
@@ -452,18 +450,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     _addListener(listener, parent);
   }
 
-  private void _addListener(final EventListener listener, final Disposable parent) {
+  private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
     if (!myMouseListeners.contains(listener)) {
-      myMouseListeners.add(listener);
+      Disposable listenerDisposable = myMouseListeners.add(listener, parent);
+      Disposer.register(listenerDisposable, this::onListenerRemoval);
       updateSortedList();
     }
     activateIfNeeded();
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        UIUtil.invokeLaterIfNeeded(() -> removeListener(listener));
-      }
-    });
   }
 
   @Override
@@ -476,11 +469,15 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     removeListener(listener);
   }
 
-  private void removeListener(final EventListener listener) {
-    if (myMouseListeners.remove(listener)) {
+  private void removeListener(@NotNull EventListener listener) {
+    myMouseListeners.remove(listener);
+  }
+
+  private void onListenerRemoval() {
+    UIUtil.invokeLaterIfNeeded(() -> {
       updateSortedList();
-    }
-    deactivateIfNeeded();
+      deactivateIfNeeded();
+    });
   }
 
   private void updateSortedList() {

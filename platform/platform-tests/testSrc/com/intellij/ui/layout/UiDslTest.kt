@@ -2,7 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
@@ -100,6 +100,11 @@ class UiDslTest {
   @Test
   fun `do not add visual paddings for titled border`() {
     doTest { commentAndPanel() }
+  }
+
+  @Test
+  fun `checkbox that acts as label`() {
+    doTest { checkBoxFollowedBySpinner() }
   }
 
   @Test

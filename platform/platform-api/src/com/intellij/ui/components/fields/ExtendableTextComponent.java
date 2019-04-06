@@ -33,6 +33,15 @@ public interface ExtendableTextComponent {
       return scale(5);
     }
 
+    default int getPreferredSpace() {
+      Icon icon1 = getIcon(true);
+      Icon icon2 = getIcon(false);
+      if (icon1 == null && icon2 == null) return 0;
+      if (icon1 == null) return getIconGap() + icon2.getIconWidth();
+      if (icon2 == null) return getIconGap() + icon1.getIconWidth();
+      return getIconGap() + Math.max(icon1.getIconWidth(), icon2.getIconWidth());
+    }
+
     default int getAfterIconOffset() {
       return 0;
     }

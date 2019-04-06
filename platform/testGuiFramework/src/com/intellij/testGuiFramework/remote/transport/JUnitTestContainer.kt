@@ -20,4 +20,4 @@ import java.io.Serializable
 /**
  * @author Sergey Karashevich
  */
-data class JUnitTestContainer(val testClass: Class<*>, val testName: String, val additionalInfo: Map<String, Any?> = emptyMap()) : Serializable
+data class JUnitTestContainer(val testClassName: String, val testName: String, val additionalInfo: Map<String, Any?> = emptyMap()) : Serializable

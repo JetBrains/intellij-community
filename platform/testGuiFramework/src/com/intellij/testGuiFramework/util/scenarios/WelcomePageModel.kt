@@ -26,6 +26,7 @@ class WelcomePageDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCas
 val GuiTestCase.welcomePageDialogModel by WelcomePageDialogModel
 
 fun WelcomePageDialogModel.createNewProject() {
+  testCase.screenshot("before click Create New Project")
   WelcomeFrameFixture.findSimple().createNewProject()
   testCase.newProjectDialogModel.waitLoadingTemplates()
 }

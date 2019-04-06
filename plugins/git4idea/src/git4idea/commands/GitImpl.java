@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,9 +17,9 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
+import git4idea.rebase.GitHandlerRebaseEditorManager;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorHandler;
-import git4idea.rebase.GitRebaseEditorService;
 import git4idea.rebase.GitRebaseResumeMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -94,11 +95,14 @@ public class GitImpl extends GitImplBase {
   }
 
   @NotNull
-  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root, @Nullable String output, @NotNull String fileStatusPrefix) {
+  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root,
+                                             @Nullable String output,
+                                             @NotNull String fileStatusPrefix) {
     if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
 
     final Set<VirtualFile> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
+      ProgressManager.checkCanceled();
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());
@@ -711,16 +715,11 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   private GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
-    GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    service.configureHandler(handler, editorHandler.getHandlerNo());
-    try {
+    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(handler, editorHandler)) {
       GitCommandResult result = runCommand(handler);
       if (editorHandler.wasCommitListEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitList(result);
       if (editorHandler.wasUnstructuredEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitMessage(result);
       return GitRebaseCommandResult.normal(result);
-    }
-    finally {
-      service.unregisterHandler(editorHandler.getHandlerNo());
     }
   }
 
@@ -730,7 +729,7 @@ public class GitImpl extends GitImplBase {
                                                            @NotNull VirtualFile root,
                                                            @NotNull GitLineHandler handler,
                                                            boolean commitListAware) {
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(GitRebaseEditorService.getInstance(), project, root);
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(project, root);
     if (!commitListAware) {
       editor.setRebaseEditorShown();
     }

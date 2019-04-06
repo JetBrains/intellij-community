@@ -141,7 +141,11 @@ public class ModuleRootModificationUtil {
     ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
       task.consume(model);
-      ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
+
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (module.isDisposed()) return;
+        WriteAction.run(model::commit);
+      });
     }
     finally {
       if (!model.isDisposed()) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -99,6 +101,15 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull
   public PermanentGraphInfo<CommitId> getPermanentGraph() {
     return myPermanentGraph;
+  }
+
+  @Override
+  public String toString() {
+    Collection<CommitId> commits = new ArrayList<>();
+    for (int i = 0; i < getVisibleCommitCount(); i++) {
+      commits.add(getRowInfo(i).getCommit());
+    }
+    return "VisibleGraph[" + StringUtil.join(commits, ", ") + "]";
   }
 
   private class ActionControllerImpl implements ActionController<CommitId> {

@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -26,15 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author peter
@@ -46,7 +43,8 @@ public class AsyncHighlighterUpdater {
   public static void updateHighlighters(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     CancellablePromise<EditorHighlighter> promise = ReadAction
       .nonBlocking(() -> updateHighlighter(project, editor, file))
-      .expireWhen(() -> !file.isValid() || editor.isDisposed() || project.isDisposed())
+      .expireWith(project)
+      .expireWhen(() -> !file.isValid() || editor.isDisposed())
       .finishOnUiThread(ModalityState.any(), highlighter -> ((EditorEx)editor).setHighlighter(highlighter))
       .submit(ourExecutor);
 
@@ -66,26 +64,7 @@ public class AsyncHighlighterUpdater {
 
   @TestOnly
   public static void completeAsyncTasks() {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    ApplicationManager.getApplication().invokeAndWait(() -> ourHighlighterFutures.values().forEach(AsyncHighlighterUpdater::waitForFuture));
-    UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
-  @TestOnly
-  private static void waitForFuture(CancellablePromise<?> future) {
-    int iteration = 0;
-    while (!future.isDone() && iteration++ < 1000) {
-      UIUtil.dispatchAllInvocationEvents();
-      try {
-        future.blockingGet(10, TimeUnit.MILLISECONDS);
-        return;
-      }
-      catch (TimeoutException ignore) {
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    assert future.isDone() : "Too long async highlighter";
-  }
 }

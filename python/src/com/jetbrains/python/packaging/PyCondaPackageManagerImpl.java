@@ -18,18 +18,14 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,37 +75,27 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
     final Sdk sdk = getSdk();
 
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable(sdk.getHomePath());
-    if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
-
     final String path = getCondaDirectory();
     if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
 
-    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, command, "-p", path);
+    final ArrayList<String> parameters = Lists.newArrayList(command, "-p", path);
     parameters.addAll(arguments);
 
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProcessOutput result = handler.runProcess();
-    checkExitCode(parameters, result);
-    return result;
-  }
-
-  private static void checkExitCode(ArrayList<String> parameters, ProcessOutput result) throws PyExecutionException {
-    final int exitCode = result.getExitCode();
-    if (exitCode != 0) {
-      final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                             "Permission denied" : "Non-zero exit code";
-      throw new PyExecutionException(message, "Conda", parameters, result);
-    }
+    return PyCondaRunKt.runConda(sdk, parameters);
   }
 
   @Nullable
   private String getCondaDirectory() {
-    final VirtualFile homeDirectory = getSdk().getHomeDirectory();
+    final VirtualFile condaDirectory = getCondaDirectory(getSdk());
+    return condaDirectory == null ? null : condaDirectory.getPath();
+  }
+
+  @Nullable
+  public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
+    final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
-    if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
-    return homeDirectory.getParent().getParent().getPath();
+    if (SystemInfo.isWindows) return homeDirectory.getParent();
+    return homeDirectory.getParent().getParent();
   }
 
   @Override
@@ -157,6 +143,11 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       mySideCache = Lists.newArrayList(condaPackages);
       return super.collectPackages();
     }
+  }
+
+  @Override
+  public boolean hasManagement() throws ExecutionException {
+    return useConda || super.hasManagement();
   }
 
   @NotNull
@@ -225,17 +216,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
                                         @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
-    final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",
-                                                            "python=" + version);
+    final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
-    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final ProcessOutput result = handler.runProcessWithProgressIndicator(indicator);
-    if (result.isCancelled()) {
-      throw new RunCanceledByUserException();
-    }
-    checkExitCode(parameters, result);
+    PyCondaRunKt.runConda(condaExecutable, parameters);
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;

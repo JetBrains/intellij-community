@@ -23,7 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import java.util.ArrayList;
 
 class FragmentsCollector {
-  private final ArrayList<Fragment> myFragments = new ArrayList<Fragment>();
+  private final ArrayList<Fragment> myFragments = new ArrayList<>();
   private int myOffset1 = 0;
   private int myOffset2 = 0;
 

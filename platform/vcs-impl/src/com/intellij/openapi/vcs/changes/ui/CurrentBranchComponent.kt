@@ -88,11 +88,11 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
 
   companion object {
     private val BACKGROUND_BALANCE
-      get() = namedDouble("VersionControl.Ref.backgroundBrightness", 0.08)
+      get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
 
-    private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.Ref.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
+    private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
     @JvmField
-    val TEXT_COLOR: JBColor = namedColor("VersionControl.Ref.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
+    val TEXT_COLOR: JBColor = namedColor("VersionControl.RefLabel.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
 
     @Suppress("SameParameterValue")
     private fun namedDouble(name: String, default: Double): Double {

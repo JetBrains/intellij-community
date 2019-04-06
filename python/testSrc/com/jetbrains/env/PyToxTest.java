@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,8 +58,8 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
-                                                       // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       // Does not support 3.6
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -75,7 +75,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -91,7 +91,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
+                                                       Pair.create("py36", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -106,7 +106,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("ython 2.7", true)),
-                                                       Pair.create("py34", new InterpreterExpectations("", false))
+                                                       Pair.create("py36", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -137,7 +137,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        Pair.create("py27", new InterpreterExpectations("I am 2.7", true)),
                                                        // Should have output
-                                                       Pair.create("py34", new InterpreterExpectations("I am 3.4", true))
+                                                       Pair.create("py36", new InterpreterExpectations("I am 3.6", true))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -153,7 +153,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                                      Arrays.asList(
                                                        //26 and 27 only used for first time, they aren't used after rerun
                                                        Pair.create("py27", new InterpreterExpectations("", true, 1)),
-                                                       Pair.create("py34", new InterpreterExpectations("", false))
+                                                       Pair.create("py36", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
     );
@@ -202,7 +202,7 @@ public final class PyToxTest extends PyEnvTestCase {
    */
   @Test
   public void testConcreteEnv() {
-    final String[] envsToRun = {"py27", "py34"};
+    final String[] envsToRun = {"py27", "py36"};
     runPythonTest(
       new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxSuccess/", SdkCreationType.EMPTY_SDK) {
         @NotNull
@@ -220,7 +220,7 @@ public final class PyToxTest extends PyEnvTestCase {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           assertThat(environments)
             .describedAs("Wrong environments launched")
-            .containsExactly(envsToRun);
+            .containsExactlyInAnyOrderElementsOf(Arrays.asList(envsToRun));
           assertThat(all).contains("-v");
         }
 
@@ -343,7 +343,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
         if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("ERROR")) {
           // Interpreter failed to run
-          final String testOutput = getTestOutput(interpreterSuite.getChildren().get(0));
+          final String testOutput = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite.getChildren().get(0));
           if (testOutput.contains("InterpreterNotFound")) {
             // Skipped with out of "skip_missing_interpreters = True"
             Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
@@ -352,14 +352,15 @@ public final class PyToxTest extends PyEnvTestCase {
           }
           // Some other error?
           Assert
-            .assertFalse(String.format("Interpreter %s should not fail, but failed: %s", interpreterName, getTestOutput(interpreterSuite)),
+            .assertFalse(String.format("Interpreter %s should not fail, but failed: %s", interpreterName, BaseSMTRunnerTestCase
+                           .getTestOutput(interpreterSuite)),
                          expectations.myExpectedSuccess);
           continue;
         }
 
         if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("SKIP")) {
           // The only reason it may be skipped is it does not exist and skip_missing_interpreters = True
-          final String output = getTestOutput(interpreterSuite);
+          final String output = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite);
           assertThat(output)
             .describedAs("Test marked skipped but not because interpreter not found")
             .contains("InterpreterNotFound");
@@ -383,7 +384,7 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
         assertThat(message)
-          .describedAs(getTestOutput(interpreterSuite))
+          .describedAs(BaseSMTRunnerTestCase.getTestOutput(interpreterSuite))
           .contains(expectations.myExpectedOutput);
       }
 
@@ -414,13 +415,6 @@ public final class PyToxTest extends PyEnvTestCase {
     }
 
     @NotNull
-    private static String getTestOutput(@NotNull final SMTestProxy test) {
-      final MockPrinter p = new MockPrinter();
-      test.printOn(p);
-      return p.getAllOut();
-    }
-
-    @NotNull
     @Override
     public Set<String> getTags() {
       return Sets.newHashSet("tox");
@@ -445,25 +439,35 @@ public final class PyToxTest extends PyEnvTestCase {
     @Override
     protected void configurationCreatedAndWillLaunch(@NotNull PyToxConfiguration configuration) throws IOException {
       super.configurationCreatedAndWillLaunch(configuration);
+      fixPathForTox(configuration);
+    }
+  }
 
-      // To help tox with all interpreters, we add all our environments to path
-      // Envs should have binaries like "python2.7" (with version included),
-      // and tox will find em: see tox_get_python_executable @ interpreters.py
+  private static void fixPathForTox(final @NotNull PyToxConfiguration configuration) {
+    // To help tox with all interpreters, we add all our environments to path
+    // Envs should have binaries like "python2.7" (with version included),
+    // and tox will find em: see tox_get_python_executable @ interpreters.py
 
-      //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
-      final List<String> roots = new ArrayList<>();
-      final List<String> libs = new ArrayList<>();
-      for (final String root : getPythonRoots()) {
-        File bin = new File(root, "/bin/");
-        roots.add(bin.exists() ? bin.getAbsolutePath() : root);
-        File lib = new File(root, "/lib/");
-        if (lib.exists()) {
-          libs.add(lib.getAbsolutePath());
-        }
+    //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
+    final List<String> roots = new ArrayList<>();
+    final List<String> libs = new ArrayList<>();
+    for (final String root : getPythonRoots()) {
+      File bin = new File(root, "/bin/");
+      roots.add(bin.exists() ? bin.getAbsolutePath() : root);
+      File lib = new File(root, "/lib/");
+      if (lib.exists()) {
+        libs.add(lib.getAbsolutePath());
       }
+    }
 
-      configuration.getEnvs().put("PATH", StringUtil.join(roots, File.pathSeparator));
-      configuration.getEnvs().put("LD_LIBRARY_PATH", StringUtil.join(libs, File.pathSeparator));
+    final String pathes = StringUtil.join(roots, File.pathSeparator);
+    final String libraryPathes = StringUtil.join(libs, File.pathSeparator);
+    final Logger logger = Logger.getInstance(PyToxTest.class);
+    Map<String, String> envs = configuration.getEnvs();
+    envs.put("PATH", pathes);
+    envs.put("LD_LIBRARY_PATH", libraryPathes);
+    for (final String key : envs.keySet()) {
+      logger.warn(String.format("%s: %s", key, envs.get(key)));
     }
   }
 
@@ -507,6 +511,7 @@ public final class PyToxTest extends PyEnvTestCase {
       super.configurationCreatedAndWillLaunch(configuration);
       PyToxTestTools.setArguments(configuration, myArgs);
       PyToxTestTools.setRunOnlyEnvs(configuration, myEnvsToRun);
+      fixPathForTox(configuration);
     }
   }
 }

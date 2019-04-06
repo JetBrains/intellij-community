@@ -50,7 +50,7 @@ class SuperMethodWarningDialog extends DialogWrapper {
     myIsSuperAbstract = isSuperAbstract;
     myIsParentInterface = isParentInterface;
     myIsContainedInInterface = isContainedInInterface;
-    setTitle(IdeBundle.message("title.warning"));
+    setTitle("Method Overrides");
     setButtonsAlignment(SwingConstants.CENTER);
     setOKButtonText(CommonBundle.getYesButtonText());
     init();

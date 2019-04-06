@@ -22,9 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Mikhail Golubev
+ * This is a stub definition intended to be used with Google GSON. Its fields are initialized reflectively.
  */
-
 @SuppressWarnings("UnusedDeclaration")
 @Tag("TrelloBoard")
 public class TrelloBoard extends TrelloModel {

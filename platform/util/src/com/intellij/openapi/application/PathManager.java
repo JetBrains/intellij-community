@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
@@ -407,7 +408,7 @@ public class PathManager {
   public static void loadProperties() {
     getHomePath();
 
-    Set<String> paths = new LinkedHashSet<String>();
+    Set<String> paths = new LinkedHashSet<>();
     paths.add(System.getProperty(PROPERTIES_FILE));
     paths.add(getCustomPropertiesFile());
     paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
@@ -418,22 +419,16 @@ public class PathManager {
     Properties sysProperties = System.getProperties();
     for (String path : paths) {
       if (path != null && new File(path).exists()) {
-        try {
-          Reader fis = new BufferedReader(new FileReader(path));
-          try {
-            Map<String, String> properties = FileUtil.loadProperties(fis);
-            for (Map.Entry<String, String> entry : properties.entrySet()) {
-              String key = entry.getKey();
-              if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-                log(path + ": '" + key + "' cannot be redefined");
-              }
-              else if (!sysProperties.containsKey(key)) {
-                sysProperties.setProperty(key, substituteVars(entry.getValue()));
-              }
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Reader reader = new FileReader(path)) {
+          Map<String, String> properties = FileUtil.loadProperties(reader);
+          for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(path + ": '" + key + "' cannot be redefined");
             }
-          }
-          finally {
-            fis.close();
+            else if (!sysProperties.containsKey(key)) {
+              sysProperties.setProperty(key, substituteVars(entry.getValue()));
+            }
           }
         }
         catch (IOException e) {
@@ -523,6 +518,7 @@ public class PathManager {
       PathManager.class,            // module 'intellij.platform.util'
       Flow.class,                   // jetbrains-annotations-java5
       SystemInfoRt.class,           // module 'intellij.platform.util.rt'
+      UrlClassLoader.class,         // module 'intellij.platform.util.classLoader'
       Document.class,               // jDOM
       Appender.class,               // log4j
       THashSet.class,               // trove4j
@@ -532,7 +528,7 @@ public class PathManager {
       LZ4Factory.class,             // lz4-java
     };
 
-    final Set<String> classPath = new HashSet<String>();
+    final Set<String> classPath = new HashSet<>();
     for (Class<?> aClass : classes) {
       final String path = getJarPathForClass(aClass);
       if (path != null) {

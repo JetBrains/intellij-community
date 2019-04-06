@@ -25,18 +25,18 @@ public class ExceptionUtilRt {
     }
   }
 
-  @Contract("_->fail")
-  public static void rethrow(@Nullable Throwable throwable) {
-    rethrowUnchecked(throwable);
-    throw new RuntimeException(throwable);
+  public static <T> T findCause(Throwable e, Class<T> klass) {
+    while (e != null && !klass.isInstance(e)) {
+      e = e.getCause();
+    }
+    //noinspection unchecked
+    return (T)e;
   }
 
-  @Contract("!null->fail")
-  public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      rethrow(t);
-    }
+  public static boolean causedBy(Throwable e, Class klass) {
+    return findCause(e, klass) != null;
   }
+
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {
@@ -48,28 +48,38 @@ public class ExceptionUtilRt {
     final StringWriter stringWriter = new StringWriter();
     final PrintWriter writer = new PrintWriter(stringWriter) {
       private boolean skipping;
+      private boolean newLine;
 
       @Override
-      public void println(final String x) {
+      public void print(String x) {
+        if (x == null) return;
         boolean curSkipping = skipping;
-        if (x != null) {
-          if (!skipping && x.startsWith(skipPattern)) curSkipping = true;
-          else if (skipping && !x.startsWith(prefix)) curSkipping = false;
-          if (curSkipping && !skipping) {
-            super.println("\tin " + stripPackage(x, skipPattern.length()));
+        if (!skipping && x.startsWith(skipPattern)) curSkipping = true;
+        else if (skipping && !x.startsWith(prefix)) curSkipping = false;
+        if (curSkipping) {
+          if (!skipping) {
+            super.print("\tin " + stripPackage(x, skipPattern.length()));
+            newLine = true;
           }
-          skipping = curSkipping;
-          if (skipping) {
-            skipping = !x.startsWith(prefixRemoteUtil);
-            return;
-          }
-          if (x.startsWith(prefixProxy)) return;
-          super.println(x);
+          skipping = !x.startsWith(prefixRemoteUtil);
+        }
+        else if (!x.startsWith(prefixProxy)) {
+          super.print(x);
+          newLine = true;
+        }
+        skipping = curSkipping;
+      }
+
+      @Override
+      public void println() {
+        if (newLine) {
+          newLine = false;
+          super.println();
         }
       }
     };
     aThrowable.printStackTrace(writer);
-    return stringWriter.getBuffer().toString();
+    return stringWriter.toString();
   }
 
   private static String stripPackage(String x, int offset) {

@@ -30,6 +30,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -153,9 +154,11 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
         myCreateBranch.setSelected(myTaskManager.getState().createBranch && myBranchFrom.getItemCount() > 0);
         myUseBranch.setSelected(myTaskManager.getState().useBranch && myUseBranchCombo.getItemCount() > 0);
       }
-      myBranchFrom.setRenderer(new TaskInfoCellRenderer(myBranchFrom));
-      myUseBranchCombo.setRenderer(new TaskInfoCellRenderer(myUseBranchCombo));
+      myBranchFrom.setRenderer(new TaskInfoCellRenderer());
+      myUseBranchCombo.setRenderer(new TaskInfoCellRenderer());
       myBranchName.setText(branchName);
+      new ComboboxSpeedSearch(myBranchFrom);
+      new ComboboxSpeedSearch(myUseBranchCombo);
     }
 
     updateFields(true);
@@ -284,9 +287,6 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   }
 
   private static class TaskInfoCellRenderer extends ColoredListCellRenderer<VcsTaskHandler.TaskInfo> {
-    TaskInfoCellRenderer(ComboBox from) {
-      super(from);
-    }
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list,

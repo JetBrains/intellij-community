@@ -2,20 +2,14 @@
 
 package com.intellij.psi.impl.meta;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataCache;
-import com.intellij.patterns.ElementPattern;
+import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.position.PatternFilter;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
@@ -32,44 +26,9 @@ public class MetaRegistry extends MetaDataRegistrar {
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded;
 
-  private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
-
-  public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
-    CachedValue<PsiMetaData> value =
-      CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
-        data.init(element);
-        return new CachedValueProvider.Result<>(data, data.getDependencies());
-      });
-    element.putUserData(META_DATA_KEY, value);
-  }
-
   public static PsiMetaData getMeta(final PsiElement element) {
     return getMetaBase(element);
   }
-
-  private static final UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
-    new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
-      @Override
-      protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
-        return CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
-          ensureContributorsLoaded();
-          for (final MyBinding binding : ourBindings) {
-            if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-              final PsiMetaData data = binding.myDataClass.get();
-              data.init(element);
-              Object[] dependences = data.getDependencies();
-              for (Object dependence : dependences) {
-                if (dependence == null) {
-                  LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
-                }
-              }
-              return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependences, element));
-            }
-          }
-          return new CachedValueProvider.Result<>(null, element);
-        }, false);
-      }
-    };
 
   private static void ensureContributorsLoaded() {
     if (!ourContributorsLoaded) {
@@ -85,40 +44,23 @@ public class MetaRegistry extends MetaDataRegistrar {
   }
 
   @Nullable
-  public static PsiMetaData getMetaBase(final PsiElement element) {
+  public static PsiMetaData getMetaBase(PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
-    return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
-  }
-
-  /**
-   * @see com.intellij.psi.meta.MetaDataContributor
-   * @deprecated
-   */
-  @Deprecated
-  static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
-                                                         Supplier<? extends T> aMetadataClass,
-                                                                Disposable parentDisposable) {
-    final MyBinding binding = new MyBinding(filter, aMetadataClass);
-    addBinding(binding);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ourBindings.remove(binding);
+    return CachedValuesManager.getCachedValue(element, () -> {
+      ensureContributorsLoaded();
+      for (MyBinding binding : ourBindings) {
+        if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
+          PsiMetaData data = binding.myDataClass.get();
+          data.init(element);
+          Object[] dependencies = data.getDependencies();
+          if (NullUtils.hasNull(dependencies)) {
+            LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
+          }
+          return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependencies, element));
+        }
       }
+      return new CachedValueProvider.Result<>(null, element);
     });
-  }
-
-  /**
-   * @see com.intellij.psi.meta.MetaDataContributor
-   * @deprecated
-   */
-  @Deprecated
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Supplier<? extends T> aMetadataClass) {
-    addBinding(new MyBinding(filter, aMetadataClass));
-  }
-
-  private static void addBinding(final MyBinding binding) {
-    ourBindings.add(0, binding);
   }
 
   @Override
@@ -132,12 +74,7 @@ public class MetaRegistry extends MetaDataRegistrar {
       }
       return null;
     };
-    addMetadataBinding(filter, supplier);
-  }
-
-  @Override
-  public <T extends PsiMetaData> void registerMetaData(ElementPattern<?> pattern, Supplier<? extends T> metadataDescriptorClass) {
-    addMetadataBinding(new PatternFilter(pattern), metadataDescriptorClass);
+    ourBindings.add(0, new MyBinding(filter, supplier));
   }
 
   private static class MyBinding {

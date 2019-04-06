@@ -87,8 +87,11 @@ public abstract class PsiAugmentProvider {
         try {
           PsiUtil.ensureValidType(type);
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
         catch (Throwable e) {
-          throw PluginException.createByClass(e.getMessage(), e, provider.getClass());
+          throw PluginException.createByClass(e, provider.getClass());
         }
         result.set(type);
         return false;

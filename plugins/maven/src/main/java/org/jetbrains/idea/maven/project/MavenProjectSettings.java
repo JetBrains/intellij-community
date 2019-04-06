@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Sergey Evdokimov
  */
+@Deprecated
 @State(name = "MavenProjectSettings", storages = @Storage("mavenProjectSettings.xml"))
 public class MavenProjectSettings implements PersistentStateComponent<MavenProjectSettings> {
 

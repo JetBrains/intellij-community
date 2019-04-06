@@ -8,7 +8,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
@@ -30,7 +29,9 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   protected int getMinimumHeight(int textHeight) {
     Insets i = getComponent().getInsets();
     Component c = getComponent();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+           UIUtil.getParentOfType(JSpinner.class, c) != null ||
+           isCompact(c) ?
            textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 

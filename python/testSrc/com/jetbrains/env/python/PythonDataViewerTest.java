@@ -90,6 +90,25 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testPandasRepeatingColumnNames() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_pandas_repeating_column_names.py",
+                                              ImmutableSet.of(7)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("c", 10, 2, arrayChunk -> {
+          for (ArrayChunk.ColHeader header : arrayChunk.getColHeaders())
+            assertEquals("A", header.getLabel());
+          Object[][] data = arrayChunk.getData();
+          assertEquals("0", data[0][0].toString());
+          assertEquals("0", data[0][1].toString());
+          assertEquals("6", data[6][0].toString());
+          assertEquals("9", data[9][0].toString());
+        });
+      }
+    });
+  }
+
   private static class PyDataFrameDebuggerTask extends PyDebuggerTask {
 
     private final Set<Integer> myLines;

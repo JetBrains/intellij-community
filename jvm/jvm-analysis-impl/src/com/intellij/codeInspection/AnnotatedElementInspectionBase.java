@@ -29,6 +29,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
 
   protected abstract void createProblem(@NotNull PsiReference reference,
                                         @NotNull PsiModifierListOwner annotatedTarget,
+                                        @NotNull List<PsiAnnotation> annotations,
                                         @NotNull ProblemsHolder holder);
 
   protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
@@ -55,7 +56,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
                                          @NotNull PsiModifierListOwner annotatedTarget,
                                          @NotNull List<PsiAnnotation> annotations) {
         if (AnnotatedElementInspectionBase.this.shouldProcessElement(annotatedTarget)) {
-          createProblem(reference, annotatedTarget, holder);
+          createProblem(reference, annotatedTarget, annotations, holder);
         }
       }
     };

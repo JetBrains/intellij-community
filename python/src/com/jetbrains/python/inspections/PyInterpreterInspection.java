@@ -128,6 +128,13 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      showProjectInterpreterDialog(project);
+    }
+
+    /**
+     * It is only applicable to PyCharm, not Python plugin.
+     */
+    public static void showProjectInterpreterDialog(@NotNull Project project) {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
     }
   }

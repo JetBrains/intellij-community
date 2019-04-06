@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -18,7 +18,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.test.VcsPlatformTest
 import java.io.File
-
 
 internal const val DOT_MOCK = ".mock"
 
@@ -42,14 +41,13 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
 
     vcs = MockAbstractVcs(myProject)
     rootChecker = MockRootChecker(vcs)
-    extensionPoint.registerExtension(rootChecker)
+    extensionPoint.registerExtension(rootChecker, testRootDisposable)
     vcsManager.registerVcs(vcs)
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      extensionPoint.unregisterExtension(rootChecker)
       vcsManager.unregisterVcs(vcs)
     }
     finally {

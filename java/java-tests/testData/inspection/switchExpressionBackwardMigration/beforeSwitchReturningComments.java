@@ -10,7 +10,7 @@ class SwitchExpressionMigration {
         break 1;
       }
       case/*15*/ 2 -> /*16*/2 +/*17*/ 2;
-      case 3, 4 -> {
+      case 3 /*in1*/ + 1, 4 /*in2*/+ 33 -> {
         System.out.println("asda");
         break 3;
       }

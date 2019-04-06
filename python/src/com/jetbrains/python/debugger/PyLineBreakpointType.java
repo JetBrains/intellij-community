@@ -52,9 +52,8 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
-
-  private final static Class[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
-
+  @SuppressWarnings("unchecked")
+  private final static Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   public PyLineBreakpointType() {
     super(ID, NAME, new PyDebuggerEditorsProvider());
@@ -77,14 +76,14 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
 
   protected boolean isSuitableFileType(@NotNull Project project, @NotNull VirtualFile file) {
     return file.getFileType() == getFileType() ||
-           (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getLanguage());
+           (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getFileLanguage());
   }
 
   protected FileType getFileType() {
     return PythonFileType.INSTANCE;
   }
 
-  protected Language getLanguage() {
+  protected Language getFileLanguage() {
     return PythonLanguage.INSTANCE;
   }
 
@@ -92,27 +91,36 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return UNSTOPPABLE_ELEMENT_TYPES;
   }
 
-  protected Class[] getUnstoppableElements() {
+  protected Class<? extends PsiElement>[] getUnstoppableElements() {
     return UNSTOPPABLE_ELEMENTS;
+  }
+
+  /**
+   * We can't rely only on file type, because there are Cython files which contain
+   * Python & Cython elements and there are Jupyter files which contain Python & Markdown elements
+   * That's why we should check that there is at least one stoppable psiElement at the line
+   *
+   * @param psiElement to check
+   * @return true if psiElement is compatible with breakpoint type and false otherwise
+   */
+  protected boolean isPsiElementStoppable(PsiElement psiElement) {
+    return psiElement.getLanguage() == PythonLanguage.INSTANCE;
   }
 
   protected void lineHasStoppablePsi(@NotNull Project project,
                                      @NotNull VirtualFile file,
                                      int line,
                                      Document document,
-                                     Class[] unstoppablePsiElements,
+                                     Class<? extends PsiElement>[] unstoppablePsiElements,
                                      Set<IElementType> unstoppableElementTypes,
                                      Ref<? super Boolean> stoppable) {
     if (!isSkeleton(project, file)) {
       XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
-        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) {
-          return true;
-        }
-
+        if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) return true;
         if (psiElement.getNode() != null && unstoppableElementTypes.contains(psiElement.getNode().getElementType())) return true;
-
-        // Python debugger seems to be able to stop on pretty much everything
-        stoppable.set(true);
+        if (isPsiElementStoppable(psiElement)) {
+          stoppable.set(true);
+        }
         return false;
       });
 
@@ -138,7 +146,6 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     return psiFile != null && PySdkUtil.isElementInSkeletons(psiFile);
   }
-
 
   @Override
   public String getBreakpointsDialogHelpTopic() {

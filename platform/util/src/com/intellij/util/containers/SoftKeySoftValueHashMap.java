@@ -28,7 +28,7 @@ import java.util.*;
 @Deprecated
 public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   @Deprecated
   public SoftKeySoftValueHashMap() {
@@ -72,7 +72,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   public V put(K key, V value) {
     processQueue();
     RefHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
-    ValueReference<K, V> reference = new ValueReference<K, V>(softKey, value, myQueue);
+    ValueReference<K, V> reference = new ValueReference<>(softKey, value, myQueue);
     ValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
     return com.intellij.reference.SoftReference.dereference(oldRef);
   }
@@ -124,7 +124,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<>();
     final Collection<ValueReference<K, V>> refs = mySoftKeyMap.values();
     for (ValueReference<K, V> ref : refs) {
       final V value = ref.get();

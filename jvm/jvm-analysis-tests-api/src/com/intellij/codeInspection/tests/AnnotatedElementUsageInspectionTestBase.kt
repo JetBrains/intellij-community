@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 abstract class AnnotatedElementUsageInspectionTestBase : JavaCodeInsightFixtureTestCase() {
   abstract override fun getBasePath(): String
   abstract fun getInspection(): InspectionProfileEntry
-  abstract fun getAnnotationFqn(): String
+  abstract fun getAnnotationString(): String
 
   open fun performAdditionalSetUp() {}
 
@@ -15,7 +15,7 @@ abstract class AnnotatedElementUsageInspectionTestBase : JavaCodeInsightFixtureT
     performAdditionalSetUp()
     myFixture.enableInspections(getInspection())
 
-    addAnnotatedElementsToProject("@" + getAnnotationFqn())
+    addAnnotatedElementsToProject(getAnnotationString())
   }
 
   private fun addAnnotatedElementsToProject(annotation: String) {

@@ -13,9 +13,8 @@ import java.util.function.BiFunction
 object GithubAsyncUtil {
 
   @JvmStatic
-  fun <T> awaitMutableFuture(progressIndicator: ProgressIndicator, futureSupplier: () -> Future<T>): T {
+  fun <T> awaitFuture(progressIndicator: ProgressIndicator, future: Future<T>): T {
     var result: T
-    var future = futureSupplier()
     while (true) {
       try {
         result = future.get(50, TimeUnit.MILLISECONDS)
@@ -25,10 +24,7 @@ object GithubAsyncUtil {
         progressIndicator.checkCanceled()
       }
       catch (e: Exception) {
-        if (isCancellation(e)) {
-          future = futureSupplier()
-          continue
-        }
+        if (isCancellation(e)) throw ProcessCanceledException()
         if (e is ExecutionException) throw e.cause ?: e
         throw e
       }

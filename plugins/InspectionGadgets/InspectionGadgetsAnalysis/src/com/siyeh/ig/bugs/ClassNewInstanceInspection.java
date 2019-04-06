@@ -1,18 +1,4 @@
-/*
- * Copyright 2009-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -33,9 +19,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class ClassNewInstanceInspection extends BaseInspection {
 
   @Override
@@ -95,7 +86,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
                           "java.lang.reflect.InvocationTargetException");
         }
       }
-      else {
+      else if (parentOfType instanceof PsiMethod){
         final PsiMethod method = (PsiMethod)parentOfType;
         addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
@@ -104,8 +95,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, new CommentTracker());
     }
 
-    private static void addThrowsClause(PsiMethod method,
-                                        String... exceptionNames) {
+    private static void addThrowsClause(PsiMethod method, String... exceptionNames) {
       final PsiReferenceList throwsList = method.getThrowsList();
       final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
       final Set<String> presentExceptionNames = new HashSet<>();
@@ -130,21 +120,15 @@ public class ClassNewInstanceInspection extends BaseInspection {
     protected static void addCatchBlock(PsiTryStatement tryStatement, String... exceptionNames) {
       final Project project = tryStatement.getProject();
       final PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-      final Set<String> presentExceptionNames = new HashSet<>();
-      for (PsiParameter parameter : parameters) {
-        final PsiType type = parameter.getType();
-        final String exceptionName = type.getCanonicalText();
-        presentExceptionNames.add(exceptionName);
-      }
+      final Set<PsiType> presentExceptions = Arrays.stream(parameters).map(PsiParameter::getType).collect(Collectors.toSet());
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final String name = codeStyleManager.suggestUniqueVariableName("e",
-                                                                     tryStatement.getTryBlock(), false);
+      final String name = codeStyleManager.suggestUniqueVariableName("e", tryStatement.getTryBlock(), false);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       for (String exceptionName : exceptionNames) {
-        if (presentExceptionNames.contains(exceptionName)) {
+        final PsiClassType type = (PsiClassType)factory.createTypeFromText(exceptionName, tryStatement);
+        if (presentExceptions.stream().anyMatch(e -> e.isAssignableFrom(type))) {
           continue;
         }
-        final PsiClassType type = (PsiClassType)factory.createTypeFromText(exceptionName, tryStatement);
         final PsiCatchSection section = factory.createCatchSection(type, name, tryStatement);
         final PsiCatchSection element = (PsiCatchSection)tryStatement.add(section);
         codeStyleManager.shortenClassReferences(element);

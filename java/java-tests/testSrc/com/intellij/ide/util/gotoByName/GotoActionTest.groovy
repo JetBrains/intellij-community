@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -26,13 +27,17 @@ import java.util.concurrent.TimeUnit
 @CompileStatic
 class GotoActionTest extends LightCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
+  private static final Comparator<MatchedValue> MATCH_COMPARATOR =
+    { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
+  private static final Equality<MatchedValue> MATCH_EQUALITY =
+    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as Equality<MatchedValue>
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
     def fork = 'Rebase my GitHub fork'
     def rebase = 'Rebase...'
     def items = [matchedAction(fork, pattern),
-                 matchedAction(rebase, pattern)].sort()
+                 matchedAction(rebase, pattern)].toSorted(MATCH_COMPARATOR)
     assert [rebase, fork] == items.collect { it.valueText }
   }
 
@@ -41,7 +46,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     def byName = 'By Name'
     def byDesc = 'By Desc'
     def items = [matchedAction(byName, pattern),
-                 matchedAction(byDesc, pattern, MatchMode.DESCRIPTION)].sort()
+                 matchedAction(byDesc, pattern, MatchMode.DESCRIPTION)].toSorted(MATCH_COMPARATOR)
     assert [byName, byDesc] == items.collect { it.valueText }
   }
 
@@ -60,7 +65,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
                  matchedAction(eclaire, pattern),
                  matchedAction(deaf, pattern),
                  matchedAction(cut, pattern),
-                 matchedAction(c, pattern)].sort()
+                 matchedAction(c, pattern)].toSorted(MATCH_COMPARATOR)
     assert [c, copy, cut, aardvark, eclaire, boom, deaf] == items.collect { it.valueText }
   }
 
@@ -84,23 +89,18 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
       items += matchedOption(name, pattern)
       items += matchedOption(name, pattern)
       items += matchedBooleanOption(name, pattern)
-      items += new MatchedValue(name, pattern)
     }
 
-    PlatformTestUtil.assertComparisonContractNotViolated(items,
-                                                         { def item1, def item2 -> (item1 <=> item2) },
-                                                         { def item1, def item2 -> item1 == item2 })
+    PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)
 
     // order can be different on EDT and pooled threads
     ApplicationManager.getApplication().executeOnPooledThread {
-      PlatformTestUtil.assertComparisonContractNotViolated(items,
-                                                           { def item1, def item2 -> (item1 <=> item2) },
-                                                           { def item1, def item2 -> item1 == item2 })
+      PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)
     }.get(20000, TimeUnit.MILLISECONDS)
   }
 
   void "test same action is not reported twice"() {
-    def patterns = ["Patch", "Add", "Delete", "Show", "Toggle"]
+    def patterns = ["Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class"]
 
     def model = new GotoActionModel(project, null, null)
     def provider = new GotoActionItemProvider(model)
@@ -129,6 +129,13 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  void "test detected action groups"() {
+    assert getPresentableGroupName(project, "Zoom", "Images.Editor.ZoomIn", false) == "Images"
+    assert getPresentableGroupName(project, "Next Tab", "SearchEverywhere.NextTab", false) == "Search Everywhere"
+    assert getPresentableGroupName(project, "Next Tab", "NextTab", false) == "Window | Editor Tabs"
+    assert getPresentableGroupName(project, "Next Tab", "NextEditorTab", false) == "Tabs"
+  }
+
   void "test same invisible groups are ignored"() {
     def pattern = "GotoActionTest.TestAction"
 
@@ -146,23 +153,23 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
     runWithGlobalAction(pattern, testAction) {
       runWithMainMenuGroup(outerGroup) {
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == "Outer | VisibleGroup"
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+        assert getPresentableGroupName(project, pattern, testAction, false) == "Outer | VisibleGroup"
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
 
         outerGroup.remove(visibleGroup)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | A HiddenGroup1"
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
 
         outerGroup.remove(hiddenGroup1)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == "Outer | Z HiddenGroup2"
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | Z HiddenGroup2"
 
         hiddenGroup2.remove(testAction)
 
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, outerGroup, true) == null
+        assert getPresentableGroupName(project, pattern, testAction, false) == null
+        assert getPresentableGroupName(project, pattern, testAction, true) == null
       }
     }
   }
@@ -207,12 +214,19 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     return wrappers
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, DefaultActionGroup menuGroup,
-                                                boolean passFlag) {
+  private static String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
+    def action = ActionManager.instance.getAction(testActionId)
+    assert action != null
+    return getPresentableGroupName(project, pattern, action, passFlag)
+  }
+
+  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
     return computeWithCustomDataProvider(passFlag) {
       def result = getActionsFromPopup(project, pattern)
       def matches = result.findAll { it.action == testAction }
-      assert matches.size() == 1
+      if (matches.size() != 1) {
+        fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result)
+      }
 
       ActionWrapper wrapper = matches[0]
       wrapper.getPresentation() // update before show

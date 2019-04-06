@@ -1,0 +1,1 @@
+foo = "something".len<caret>

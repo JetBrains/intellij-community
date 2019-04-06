@@ -94,18 +94,7 @@ public class ZipFileObject extends JpsFileObject {
    */
   @Override
   public boolean equals(Object other) {
-    if (this == other) {
-      return true;
-    }
-    if (!(other instanceof ZipFileObject)) {
-      return false;
-    }
-    return toUri().equals(((ZipFileObject)other).toUri());  // todo: check if this is fast enough to rely on URI.equals() here
-  }
-
-  @Override
-  public int hashCode() {
-    return toUri().hashCode();
+    return other instanceof ZipFileObject && super.equals(other);
   }
 
   @Override

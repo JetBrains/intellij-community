@@ -6,7 +6,6 @@ import com.intellij.configurationStore.Property;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
@@ -64,7 +63,7 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
   @Property(externalName = "inline_tags")
   @CommaSeparatedValues
   @NonNls public String HTML_INLINE_ELEMENTS =
-    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
+    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,small,span,strike,strong,sub,sup,textarea,tt,u,var";
 
   @Property(externalName = "do_not_break_if_inline_tags")
   @CommaSeparatedValues
@@ -78,31 +77,4 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
   public CodeStyleSettings.HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.Never;
   @Property(externalName = "new_line_after_last_attribute")
   public CodeStyleSettings.HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.Never;
-
-  @SuppressWarnings("deprecation")
-  @Override
-  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
-    HTML_KEEP_WHITESPACES = rootSettings.HTML_KEEP_WHITESPACES;
-    HTML_ATTRIBUTE_WRAP = rootSettings.HTML_ATTRIBUTE_WRAP;
-    HTML_TEXT_WRAP = rootSettings.HTML_TEXT_WRAP;
-    HTML_KEEP_LINE_BREAKS = rootSettings.HTML_KEEP_LINE_BREAKS;
-    HTML_KEEP_LINE_BREAKS_IN_TEXT = rootSettings.HTML_KEEP_LINE_BREAKS_IN_TEXT;
-    HTML_KEEP_BLANK_LINES = rootSettings.HTML_KEEP_BLANK_LINES;
-    HTML_ALIGN_ATTRIBUTES = rootSettings.HTML_ALIGN_ATTRIBUTES;
-    HTML_ALIGN_TEXT = rootSettings.HTML_ALIGN_TEXT;
-    HTML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = rootSettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
-    HTML_SPACE_AFTER_TAG_NAME = rootSettings.HTML_SPACE_AFTER_TAG_NAME;
-    HTML_SPACE_INSIDE_EMPTY_TAG = rootSettings.HTML_SPACE_INSIDE_EMPTY_TAG;
-    HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = rootSettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE;
-    HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = rootSettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE;
-    HTML_DO_NOT_INDENT_CHILDREN_OF = rootSettings.HTML_DO_NOT_INDENT_CHILDREN_OF;
-    HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = rootSettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
-    HTML_KEEP_WHITESPACES_INSIDE = rootSettings.HTML_KEEP_WHITESPACES_INSIDE;
-    HTML_INLINE_ELEMENTS = rootSettings.HTML_INLINE_ELEMENTS;
-    HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = rootSettings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT;
-    HTML_QUOTE_STYLE = rootSettings.HTML_QUOTE_STYLE;
-    HTML_ENFORCE_QUOTES = rootSettings.HTML_ENFORCE_QUOTES;
-    HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = rootSettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE;
-    HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = rootSettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE;
-  }
 }

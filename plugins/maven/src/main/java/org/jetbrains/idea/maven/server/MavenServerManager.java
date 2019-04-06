@@ -20,6 +20,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -257,7 +259,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     return getMavenVersion(myState.mavenHome);
   }
 
-  private static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
+  /*
+  Made public for external systems intergration
+   */
+  public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final List<File> classpath = new ArrayList<>();
     final String root = pluginFileOrDir.getParent();
@@ -346,6 +351,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         classpath.add(jar);
       }
     }
+  }
+
+  public void createExternalSystemEmbedder(ExternalSystemTaskId id, ExternalSystemTaskNotificationListener listener) {
+
   }
 
   public MavenEmbedderWrapper createEmbedder(final Project project,
@@ -652,8 +661,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
-  class MavenServerCMDState extends CommandLineState {
-    MavenServerCMDState() {super(null);}
+  public class MavenServerCMDState extends CommandLineState {
+    public MavenServerCMDState() {super(null);}
 
     SimpleJavaParameters createJavaParameters() {
       final SimpleJavaParameters params = new SimpleJavaParameters();

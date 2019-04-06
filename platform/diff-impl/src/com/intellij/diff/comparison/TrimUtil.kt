@@ -192,10 +192,10 @@ fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence, text3: C
 }
 
 
-fun <T> trimExpandRange(start1: Int, start2: Int, end1: Int, end2: Int,
-                        equals: (Int, Int) -> Boolean,
-                        ignored1: (Int) -> Boolean,
-                        ignored2: (Int) -> Boolean): Range {
+fun trimExpandRange(start1: Int, start2: Int, end1: Int, end2: Int,
+                    equals: (Int, Int) -> Boolean,
+                    ignored1: (Int) -> Boolean,
+                    ignored2: (Int) -> Boolean): Range {
   return trimExpand(start1, start2, end1, end2,
                     { index1, index2 -> equals(index1, index2) },
                     { index -> ignored1(index) },

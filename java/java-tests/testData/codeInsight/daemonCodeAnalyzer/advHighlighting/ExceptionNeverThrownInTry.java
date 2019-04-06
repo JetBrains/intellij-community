@@ -11,3 +11,21 @@ class x {
     }
   }
 }
+//////////////////
+class A {
+  private void a() {
+  }
+}
+
+class B extends A {
+  void a() throws InterruptedException {
+  }
+
+  void b() {
+    try {
+      a();
+    } catch (InterruptedException e) {
+      // IDEA-207296
+    }
+  }
+}

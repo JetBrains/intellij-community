@@ -571,6 +571,16 @@ def foo(a) {
 ''', 'A'
   }
 
+  void 'test if null typed'() {
+    doTest '''\
+def foo(String a) {
+    if (a == null) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test null or instanceof'() {
     doTest '''\
 def foo(a) {
@@ -620,6 +630,26 @@ def foo(a) {
         <caret>a
     }
 }
+''', JAVA_LANG_STRING
+  }
+
+  void 'test while null'() {
+    doTest '''\
+def s = null
+while (s == null) {
+  s = ""
+}
+<caret>s
+''', JAVA_LANG_STRING
+  }
+
+  void 'test while null typed'() {
+    doTest '''\
+String s = null
+while (s == null) {
+  s = ""
+}
+<caret>s
 ''', JAVA_LANG_STRING
   }
 
@@ -889,32 +919,31 @@ def foo() {
   void testClassExpressionsWithArguments() {
     doExprTest 'String[1]', 'java.lang.Object'
     doExprTest 'String[1][]', 'java.lang.Object'
-    doExprTest 'String[1][].class', 'java.lang.Class<java.lang.Object>'
-    doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
+    doExprTest 'String[1][].class', 'java.lang.Class<? extends java.lang.Object>'
+    doExprTest 'int[][1].class', 'java.lang.Class<? extends java.lang.Object>'
   }
 
   void testClassReference() {
-    doExprTest '[].class', "java.lang.Class<java.util.List<java.lang.Object>>"
-    doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
-    doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doExprTest '[].class', "java.lang.Class<? extends java.util.List>"
+    doExprTest '1.class', 'java.lang.Class<? extends java.lang.Integer>'
+    doExprTest 'String.valueOf(1).class', 'java.lang.Class<? extends java.lang.String>'
     doExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
 
-    doCSExprTest '[].class', "java.lang.Class<java.util.List<java.lang.Object>>"
-    doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
-    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doCSExprTest '[].class', "java.lang.Class<? extends java.util.List>"
+    doCSExprTest '1.class', 'java.lang.Class<? extends java.lang.Integer>'
+    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<? extends java.lang.String>'
     doCSExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
   }
 
   void testUnknownClass() {
     doExprTest 'a.class', null
-    doCSExprTest 'a.class', 'java.lang.Class'
+    doCSExprTest 'a.class', 'java.lang.Class<? extends java.lang.Object>'
 
     doExprTest 'a().class', null
     doCSExprTest 'a().class', 'java.lang.Class'
   }
 
   void 'test list literal type'() {
-    doExprTest '[]', 'java.util.List<java.lang.Object>'
     doExprTest '[null]', 'java.util.List'
     doExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
     doExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
@@ -1103,5 +1132,9 @@ def test() {
     }
 }
 ''', JAVA_LANG_STRING
+  }
+
+  void 'test spread list of classes'() {
+    doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<? extends java.lang.Class>>'
   }
 }

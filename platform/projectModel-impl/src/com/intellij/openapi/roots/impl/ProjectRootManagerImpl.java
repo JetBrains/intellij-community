@@ -27,7 +27,6 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -227,7 +226,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  public void setProjectSdkName(String name) {
+  public void setProjectSdkName(@NotNull String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
 
@@ -253,7 +252,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");
@@ -332,6 +331,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @NotNull
   protected BatchSession getBatchSession(final boolean fileTypes) {
     return fileTypes ? myFileTypesChanged : myRootsChanged;
   }
@@ -403,12 +403,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected void doSynchronizeRoots() { }
 
-  public static String extractLocalPath(String url) {
+  @NotNull
+  public static String extractLocalPath(@NotNull String url) {
     String path = VfsUtilCore.urlToPath(url);
     int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
 
+  @NotNull
   private ModuleManager getModuleManager() {
     return ModuleManager.getInstance(myProject);
   }
@@ -466,19 +468,38 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final Object myLibraryTableListenersLock = new Object();
   private final Map<LibraryTable, LibraryTableMultiListener> myLibraryTableMultiListeners = new HashMap<>();
 
-  private class LibraryTableMultiListener implements LibraryTable.Listener {
-    private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
-    private LibraryTable.Listener[] myListenersArray;
+  private static class ListenerContainer<T> {
+    private final Set<T> myListeners = new LinkedHashSet<>();
+    @NotNull private final T[] myEmptyArray;
+    private T[] myListenersArray;
 
-    private synchronized void addListener(@NotNull LibraryTable.Listener listener) {
+    private ListenerContainer(@NotNull T[] emptyArray) {
+      myEmptyArray = emptyArray;
+    }
+
+    synchronized void addListener(@NotNull T listener) {
       myListeners.add(listener);
       myListenersArray = null;
     }
 
-    private synchronized boolean removeListener(@NotNull LibraryTable.Listener listener) {
+    synchronized boolean removeListener(@NotNull T listener) {
       myListeners.remove(listener);
       myListenersArray = null;
       return myListeners.isEmpty();
+    }
+
+    @NotNull
+    synchronized T[] getListeners() {
+      if (myListenersArray == null) {
+        myListenersArray = myListeners.toArray(myEmptyArray);
+      }
+      return myListenersArray;
+    }
+  }
+
+  private class LibraryTableMultiListener extends ListenerContainer<LibraryTable.Listener> implements LibraryTable.Listener {
+    private LibraryTableMultiListener() {
+      super(new LibraryTable.Listener[0]);
     }
 
     @Override
@@ -489,13 +510,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
           listener.afterLibraryAdded(newLibrary);
         }
       });
-    }
-
-    private synchronized LibraryTable.Listener[] getListeners() {
-      if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new LibraryTable.Listener[0]);
-      }
-      return myListenersArray;
     }
 
     @Override
@@ -531,31 +545,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final JdkTableMultiListener myJdkTableMultiListener;
 
-  private class JdkTableMultiListener implements ProjectJdkTable.Listener {
-    private final Set<ProjectJdkTable.Listener> myListeners = new LinkedHashSet<>();
+  private class JdkTableMultiListener extends ListenerContainer<ProjectJdkTable.Listener> implements ProjectJdkTable.Listener {
     private final MessageBusConnection listenerConnection;
-    private ProjectJdkTable.Listener[] myListenersArray;
 
-    private JdkTableMultiListener(Project project) {
+    private JdkTableMultiListener(@NotNull Project project) {
+      super(new ProjectJdkTable.Listener[0]);
       listenerConnection = project.getMessageBus().connect();
       listenerConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
-    }
-
-    private synchronized void addListener(ProjectJdkTable.Listener listener) {
-      myListeners.add(listener);
-      myListenersArray = null;
-    }
-
-    private synchronized void removeListener(ProjectJdkTable.Listener listener) {
-      myListeners.remove(listener);
-      myListenersArray = null;
-    }
-
-    private synchronized ProjectJdkTable.Listener[] getListeners() {
-      if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[0]);
-      }
-      return myListenersArray;
     }
 
     @Override

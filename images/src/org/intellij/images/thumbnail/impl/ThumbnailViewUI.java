@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/** $Id$ */
-
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -722,9 +719,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private class FocusRequester extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(ThumbnailViewUI.this, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ThumbnailViewUI.this, true));
         }
     }
 

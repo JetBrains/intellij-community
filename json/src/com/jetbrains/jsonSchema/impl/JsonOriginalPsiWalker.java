@@ -35,8 +35,9 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   public boolean handles(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    return parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
-           && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
+    return element instanceof JsonFile && JsonDialectUtil.isStandardJson(element)
+           || parent != null && (element instanceof JsonElement || element instanceof LeafPsiElement && parent instanceof JsonElement)
+             && JsonDialectUtil.isStandardJson(CompletionUtil.getOriginalOrSelf(parent));
   }
 
   @Override
@@ -242,5 +243,17 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public PsiElement getParentContainer(PsiElement element) {
     return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
                                 JsonObject.class, JsonArray.class);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRoot(@NotNull PsiFile file) {
+    return file instanceof JsonFile ? ((JsonFile)file).getTopLevelValue() : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPropertyNameElement(PsiElement property) {
+    return property instanceof JsonProperty ? ((JsonProperty)property).getNameElement() : null;
   }
 }

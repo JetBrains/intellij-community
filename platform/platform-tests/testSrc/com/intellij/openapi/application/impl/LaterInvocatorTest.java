@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -578,12 +578,18 @@ public class LaterInvocatorTest extends PlatformTestCase {
 
   }
 
+  @SuppressWarnings("StringOperationCanBeSimplified")
   public void testDifferentStatesAreNotEqualAfterGc() {
-    ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
-    ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
+    String s1 = new String("foo");
+    String s2 = new String("bar");
+    ModalityStateEx state1 = new ModalityStateEx("common", s1);
+    ModalityStateEx state2 = new ModalityStateEx("common", s2);
     assertNotEquals(state1, state2);
 
-    GCUtil.tryGcSoftlyReachableObjects();
+    GCWatcher watcher = GCWatcher.tracking(s1, s2);
+    //noinspection UnusedAssignment
+    s1 = s2 = null;
+    watcher.tryGc();
     assertNotEquals(state1, state2);
   }
 

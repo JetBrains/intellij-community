@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +51,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(myArgumentsList);
     if (properties != null && properties.isApplicabilityCheck()) {
       final PsiMethod method = properties.getMethod();
-      LOG.error("Recursive conflict resolution for:" + method + "; " + 
+      LOG.error("Recursive conflict resolution for:" + method + "; " +
                 myArgumentsList.getText() + "; " +
                 "file=" + (method == null ? "<unknown>" : method.getContainingFile()));
     }
@@ -89,7 +75,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     checkParametersNumber(conflicts, getActualParametersLength(), map, false);
     if (conflicts.size() == 1) return conflicts.get(0);
-    
+
     checkStaticMethodsOfInterfaces(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -156,7 +142,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         for (int j = 0; j < i; j++) {
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
-          if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue; 
+          if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue;
           switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, map, offset)) {
             case FIRST:
               conflicts.remove(conflict);
@@ -285,7 +271,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   /**
    * choose to accept static interface methods during search to get "Static interface methods must be invoked on containing interface class only" error
    * instead of non clear javac message that symbol not found
-   * 
+   *
    * but these methods should be ignored during overload resolution if another methods are present
    */
   private void checkStaticMethodsOfInterfaces(@NotNull List<CandidateInfo> conflicts) {
@@ -466,7 +452,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     //process all arguments of varargs call
     //todo check method reference actual params length
-    final int argsLength = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && (method1.isVarArgs() || method2.isVarArgs()) 
+    final int argsLength = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && (method1.isVarArgs() || method2.isVarArgs())
                            ? getActualParametersLength() : 0;
     final int max = Math.max(Math.max(params1.length, params2.length), argsLength);
     PsiType[] types1 = PsiType.createArray(max);
@@ -555,7 +541,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
         if (applicable12 && !applicable21) return Specifics.SECOND;
         if (applicable21 && !applicable12) return Specifics.FIRST;
-  
+
         //from 15.12.2.5 Choosing the Most Specific Method: concrete = nonabstract or default
         final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT) || method1.hasModifierProperty(PsiModifier.DEFAULT);
         final boolean abstract2 = method2.hasModifierProperty(PsiModifier.ABSTRACT) || method2.hasModifierProperty(PsiModifier.DEFAULT);
@@ -575,7 +561,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           return Specifics.FIRST;
         }
       }
-    } 
+    }
     else if (varargsPosition) {
       final PsiType lastParamType1 = classSubstitutor1.substitute(types1[types1.length - 1]);
       final PsiType lastParamType2 = classSubstitutor2.substitute(types2[types1.length - 1]);
@@ -628,7 +614,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   private static boolean isBoxingUsed(PsiType parameterType, @Nullable PsiType argType, PsiExpression arg) {
     ProgressManager.checkCanceled();
-    final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType 
+    final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType
                                                               : PsiPolyExpressionUtil.isExpressionOfPrimitiveType(arg);
     return parameterType instanceof PsiPrimitiveType ^ isExpressionTypePrimitive;
   }

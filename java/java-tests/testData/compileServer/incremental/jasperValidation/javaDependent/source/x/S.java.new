@@ -1,7 +1,0 @@
-package x;
-
-////////// XXXXXXX
-public class S {
-  public static void f() {
-  }
-}

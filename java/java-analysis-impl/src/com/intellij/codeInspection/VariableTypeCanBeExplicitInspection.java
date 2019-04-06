@@ -87,11 +87,10 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
                 PsiTypesUtil.replaceWithExplicitType(typeElement);
               }
             }
+            return;
           }
         }
-        else {
-          PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)element);
-        }
+        PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)element);
       }
     }
   }

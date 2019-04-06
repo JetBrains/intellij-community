@@ -28,8 +28,10 @@ public class GraphTableModel extends AbstractTableModel {
   public static final int COMMIT_COLUMN = 1;
   public static final int AUTHOR_COLUMN = 2;
   public static final int DATE_COLUMN = 3;
-  private static final int COLUMN_COUNT = DATE_COLUMN + 1;
-  private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
+  public static final int HASH_COLUMN = 4;
+  private static final int COLUMN_COUNT = HASH_COLUMN + 1;
+  public static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date", "Hash"};
+  public static final int[] DYNAMIC_COLUMNS = {AUTHOR_COLUMN, DATE_COLUMN, HASH_COLUMN};
 
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
@@ -135,6 +137,8 @@ public class GraphTableModel extends AbstractTableModel {
         else {
           return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
+      case HASH_COLUMN:
+        return data.getId().toShortString();
       default:
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (getColumnCount() - 1));
     }
@@ -155,8 +159,8 @@ public class GraphTableModel extends AbstractTableModel {
       case COMMIT_COLUMN:
         return GraphCommitCell.class;
       case AUTHOR_COLUMN:
-        return String.class;
       case DATE_COLUMN:
+      case HASH_COLUMN:
         return String.class;
       default:
         throw new IllegalArgumentException("columnIndex is " + column + " > " + (getColumnCount() - 1));

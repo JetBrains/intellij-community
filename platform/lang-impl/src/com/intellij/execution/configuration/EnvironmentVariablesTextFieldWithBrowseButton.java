@@ -20,6 +20,7 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -84,6 +85,18 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     if (!oldData.equals(data)) {
       fireStateChanged();
     }
+  }
+
+  @NotNull
+  @Override
+  protected Icon getDefaultIcon() {
+    return AllIcons.General.InlineVariables;
+  }
+
+  @NotNull
+  @Override
+  protected Icon getHoveredIcon() {
+    return AllIcons.General.InlineVariablesHover;
   }
 
   @NotNull
@@ -262,31 +275,31 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     protected AnActionButton[] createExtraActions() {
       return myUserList
              ? super.createExtraActions()
-             : new AnActionButton[]{
-               new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Actions.Rollback) {
-                 @Override
-                 public void actionPerformed(@NotNull AnActionEvent e) {
-                   stopEditing();
-                   List<EnvironmentVariable> variables = getSelection();
-                   for (EnvironmentVariable environmentVariable : variables) {
-                     if (isModifiedSysEnv(environmentVariable)) {
-                       environmentVariable.setValue(myParentDefaults.get(environmentVariable.getName()));
-                       setModified();
-                     }
-                   }
-                   getTableView().revalidate();
-                   getTableView().repaint();
-                 }
+             : ArrayUtil.append(super.createExtraActions(),
+                                new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Actions.Rollback) {
+                                  @Override
+                                  public void actionPerformed(@NotNull AnActionEvent e) {
+                                    stopEditing();
+                                    List<EnvironmentVariable> variables = getSelection();
+                                    for (EnvironmentVariable environmentVariable : variables) {
+                                      if (isModifiedSysEnv(environmentVariable)) {
+                                        environmentVariable.setValue(myParentDefaults.get(environmentVariable.getName()));
+                                        setModified();
+                                      }
+                                    }
+                                    getTableView().revalidate();
+                                    getTableView().repaint();
+                                  }
 
-                 @Override
-                 public boolean isEnabled() {
-                   List<EnvironmentVariable> selection = getSelection();
-                   for (EnvironmentVariable variable : selection) {
-                     if (isModifiedSysEnv(variable)) return true;
-                   }
-                   return false;
-                 }
-               }};
+                                  @Override
+                                  public boolean isEnabled() {
+                                    List<EnvironmentVariable> selection = getSelection();
+                                    for (EnvironmentVariable variable : selection) {
+                                      if (isModifiedSysEnv(variable)) return true;
+                                    }
+                                    return false;
+                                  }
+                                });
     }
 
     @Override

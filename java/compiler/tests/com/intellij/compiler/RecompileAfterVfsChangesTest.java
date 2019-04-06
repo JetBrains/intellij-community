@@ -36,9 +36,7 @@ public class RecompileAfterVfsChangesTest extends BaseCompilerTestCase {
     assertOutput(m, fs().file("a.txt", "hello"));
 
 
-    WriteAction.run(() -> {
-      file.rename(this, "b.txt");
-    });
+    WriteAction.run(() -> file.rename(this, "b.txt"));
     make(m);
     assertOutput(m, fs().file("b.txt", "hello"));
   }

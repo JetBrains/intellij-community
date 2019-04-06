@@ -394,6 +394,27 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
   }
 
+  public void testCheckCanceledAfterWrappedIndicatorIsCanceledAndBaseIndicatorIsNotCanceled() {
+    ProgressIndicator base = new EmptyProgressIndicator();
+    ProgressIndicator wrapper = new SensitiveProgressWrapper(base);
+
+    wrapper.cancel();
+    assertTrue(wrapper.isCanceled());
+    assertFalse(base.isCanceled());
+
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        assertTrue(wrapper.isCanceled());
+
+        ProgressManager.checkCanceled(); // this is the main check
+      }, wrapper);
+
+      fail("should throw ProcessCanceledException");
+    }
+    catch (ProcessCanceledException ignored) {
+    }
+  }
+
   private static void waitForPCE() {
     while (true) {
       ProgressManager.checkCanceled();

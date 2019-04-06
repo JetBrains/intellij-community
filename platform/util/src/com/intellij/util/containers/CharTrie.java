@@ -221,11 +221,5 @@ public class CharTrie {
     init();
   }
 
-  private static final ArrayFactory<char[]> FACTORY = new ArrayFactory<char[]>() {
-    @NotNull
-    @Override
-    public char[][] create(int count) {
-      return new char[count][];
-    }
-  };
+  private static final ArrayFactory<char[]> FACTORY = char[][]::new;
 }

@@ -1,0 +1,15 @@
+a.
+                toSet().
+                findAllXxx( (it)->
+        it > 2
+).
+                collect(it->it as String
+)
+-----
+a.
+    toSet().
+    findAllXxx((it) ->
+        it > 2
+    ).
+    collect(it -> it as String
+    )

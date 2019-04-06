@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public abstract class DeprecationInspectionBase extends LocalInspectionTool {
-  public boolean IGNORE_IN_SAME_OUTERMOST_CLASS;
+  public boolean IGNORE_IN_SAME_OUTERMOST_CLASS = true;
 
   @Override
   public boolean isEnabledByDefault() {

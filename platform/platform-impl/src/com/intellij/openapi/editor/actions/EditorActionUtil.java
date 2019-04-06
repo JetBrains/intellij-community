@@ -153,12 +153,10 @@ public class EditorActionUtil {
     for (int i = 0; i < newLength;) {
       if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= tabsEnd) {
         buf.append('\t');
-        //noinspection AssignmentToForLoopParameter
         i += tabSize;
       }
       else {
         buf.append(' ');
-        //noinspection AssignmentToForLoopParameter
         i++;
       }
     }
@@ -167,7 +165,7 @@ public class EditorActionUtil {
     if (newCaretOffset >= spacesEnd) {
       newCaretOffset += buf.length() - (spacesEnd - lineStart);
     }
-    else if (newCaretOffset >= lineStart && newCaretOffset < spacesEnd && newCaretOffset > newSpacesEnd) {
+    else if (newCaretOffset >= lineStart && newCaretOffset > newSpacesEnd) {
       newCaretOffset = newSpacesEnd;
     }
 
@@ -176,7 +174,13 @@ public class EditorActionUtil {
         document.replaceString(lineStart, spacesEnd, buf.toString());
       }
       else {
+        SelectionModel selectionModel = editor.getSelectionModel();
+        boolean extendSelection = selectionModel.hasSelection() &&
+                                  selectionModel.getSelectionStart() == lineStart &&
+                                  (selectionModel.getSelectionEnd() == document.getTextLength() ||
+                                   DocumentUtil.isAtLineEnd(selectionModel.getSelectionEnd(), document));
         document.insertString(lineStart, buf.toString());
+        if (extendSelection) selectionModel.setSelection(lineStart, selectionModel.getSelectionEnd());
       }
     }
     else {

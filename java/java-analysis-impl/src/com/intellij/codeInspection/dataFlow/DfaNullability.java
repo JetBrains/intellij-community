@@ -6,17 +6,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a value nullability within DFA. Unlike {@link Nullability} may additionally hold a {@link #FLUSHED} value
- * which means that non-stable variable declared as Nullable was checked for nullity and flushed afterwards (e.g. by unknown method call),
- * so we are unsure about its nullability anymore.
+ * Represents a value nullability within DFA. Unlike {@link Nullability} may have more fine-grained
+ * values useful during the DFA. If you have a DfaNullability value (e.g. from {@link CommonDataflow}),
+ * and want to check if it's nullable, or not, it's advised to convert it to {@link Nullability} first,
+ * as more values could be introduced to this enum in future.
  *
  * @see DfaFactType#NULLABILITY
  */
 public enum DfaNullability {
+  /**
+   * Means: exactly null
+   */
   NULL("Null", "null", Nullability.NULLABLE),
   NULLABLE("Nullable", "nullable", Nullability.NULLABLE),
   NOT_NULL("Not-null", "non-null", Nullability.NOT_NULL),
   UNKNOWN("Unknown", "", Nullability.UNKNOWN),
+  /**
+   * Means: non-stable variable declared as Nullable was checked for nullity and flushed afterwards (e.g. by unknown method call),
+   * so we are unsure about its nullability anymore.
+   */
   FLUSHED("Flushed", "", Nullability.UNKNOWN);
 
   private final @NotNull String myInternalName;

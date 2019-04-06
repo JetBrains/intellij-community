@@ -212,7 +212,9 @@ public class ReplaceInProjectManager {
           usageView.setRerunAction(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation);
+              UsageViewPresentation rerunPresentation = presentation.copy();
+              rerunPresentation.setOpenInNewTab(false);
+              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, rerunPresentation, processPresentation);
             }
           });
         }
@@ -530,9 +532,7 @@ public class ReplaceInProjectManager {
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
     }, FindBundle.message("find.replace.command"), null);
 
     replaceContext.invalidateExcludedSetCache();

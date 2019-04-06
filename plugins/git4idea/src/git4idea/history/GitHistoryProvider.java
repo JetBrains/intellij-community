@@ -141,10 +141,10 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   public boolean getBaseVersionContent(FilePath filePath, Processor<? super String> processor, String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
     // apply if base revision id matches revision
-    final VirtualFile root = GitUtil.getGitRoot(filePath);
-    if (root == null) return false;
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
+    if (repository == null) return false;
 
-    Hash hash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
+    Hash hash = GitChangeUtils.commitExists(myProject, repository.getRoot(), beforeVersionId, null, "HEAD");
     if (hash == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }

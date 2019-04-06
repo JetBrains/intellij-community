@@ -52,24 +52,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedDefineInspection extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unused Define";
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
-    return "UnusedDefine";
-  }
 
   @Override
   @NotNull

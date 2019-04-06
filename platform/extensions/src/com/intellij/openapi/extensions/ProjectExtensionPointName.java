@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +29,16 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName {
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
-    return ContainerUtil.findInstance(getExtensions(areaInstance), instanceOf);
+    return findExtension(this, instanceOf, areaInstance, false);
+  }
+
+  @NotNull
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
+    //noinspection ConstantConditions
+    return findExtension(this, instanceOf, areaInstance, true);
+  }
+
+  public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
+    return getPoint(areaInstance).hasAnyExtensions();
   }
 }

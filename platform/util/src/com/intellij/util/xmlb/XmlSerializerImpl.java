@@ -97,7 +97,7 @@ public final class XmlSerializerImpl {
       Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
       if (map == null) {
         map = ContainerUtil.newConcurrentMap();
-        ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
+        ourBindings = new SoftReference<>(map);
       }
       return map;
     }
@@ -118,11 +118,7 @@ public final class XmlSerializerImpl {
         try {
           binding.init(originalType, this);
         }
-        catch (RuntimeException e) {
-          map.remove(key);
-          throw e;
-        }
-        catch (Error e) {
+        catch (RuntimeException | Error e) {
           map.remove(key);
           throw e;
         }
@@ -315,9 +311,7 @@ public final class XmlSerializerImpl {
       accessor.set(host, fromText.invoke(null, value));
       return true;
     }
-    catch (IllegalAccessException ignored) {
-    }
-    catch (InvocationTargetException ignored) {
+    catch (IllegalAccessException | InvocationTargetException ignored) {
     }
     return false;
   }

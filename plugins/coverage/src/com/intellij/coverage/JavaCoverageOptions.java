@@ -1,18 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class JavaCoverageOptions extends CoverageOptions {
-
+class JavaCoverageOptions extends CoverageOptions {
   private final JavaCoverageOptionsProvider myCoverageOptionsProvider;
   private JavaCoverageOptionsEditor myEditor;
 
-  public JavaCoverageOptions(JavaCoverageOptionsProvider coverageOptionsProvider) {
-    myCoverageOptionsProvider = coverageOptionsProvider;
+  JavaCoverageOptions(@NotNull Project project) {
+    myCoverageOptionsProvider = JavaCoverageOptionsProvider.getInstance(project);
   }
 
   @Override
@@ -40,7 +41,7 @@ public class JavaCoverageOptions extends CoverageOptions {
   public void disposeUIResources() {
     myEditor = null;
   }
-  
+
   private static class JavaCoverageOptionsEditor {
 
     private final JPanel myPanel = new JPanel(new VerticalFlowLayout());

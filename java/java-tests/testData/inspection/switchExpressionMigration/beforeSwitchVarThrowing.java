@@ -7,7 +7,7 @@ class SwitchExpressionMigration {
     switch<caret>(s) {
       case "a": result = 1; break;
       case "b":
-        throw new NulPointerException();
+        throw new NullPointerException();
       default: result = 0;
     }
   }

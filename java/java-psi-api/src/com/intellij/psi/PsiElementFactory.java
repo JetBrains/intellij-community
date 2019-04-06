@@ -36,12 +36,21 @@ import java.util.Map;
  * @see PsiFileFactory
  */
 public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
+
+  /**
+   * @deprecated please use static interface method
+   */
+  @Deprecated
   class SERVICE {
     private SERVICE() { }
 
     public static PsiElementFactory getInstance(Project project) {
-      return ServiceManager.getService(project, PsiElementFactory.class);
+      return PsiElementFactory.getInstance(project);
     }
+  }
+
+  static PsiElementFactory getInstance(Project project) {
+    return ServiceManager.getService(project, PsiElementFactory.class);
   }
 
   /**
@@ -395,7 +404,18 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   PsiImportStatement createImportStatementOnDemand(@NotNull @NonNls String packageName) throws IncorrectOperationException;
 
   /**
-   * @see #createVariableDeclarationStatement(String, PsiType, PsiExpression, PsiElement)
+   * Creates a local variable declaration statement with the specified name, type and initializer,
+   * optionally without reformatting the declaration.
+   * <p>
+   *   Note that depending on code style settings the resulting variable may be declared as 'final'.
+   * </p>
+   *
+   * @param name        the name of the variable to create.
+   * @param type        the type of the variable to create.
+   * @param initializer the initializer for the variable.
+   * @return a newly created declaration statement which contains a variable.
+   * @throws IncorrectOperationException if {@code name} is not a valid identifier or
+   *                                     {@code type} is not a valid type.
    */
   @NotNull
   PsiDeclarationStatement createVariableDeclarationStatement(@NonNls @NotNull String name,
@@ -406,11 +426,14 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   /**
    * Creates a local variable declaration statement with the specified name, type and initializer,
    * optionally without reformatting the declaration.
+   * <p>
+   *   Note that depending on code style settings the resulting variable may be declared as 'final'.
+   * </p>
    *
    * @param name        the name of the variable to create.
    * @param type        the type of the variable to create.
    * @param initializer the initializer for the variable.
-   * @param context     the context for dummy holder
+   * @param context     the context used to resolve symbols in the resulting declaration.
    * @return a newly created declaration statement which contains a variable.
    * @throws IncorrectOperationException if {@code name} is not a valid identifier or
    *                                     {@code type} is not a valid type.

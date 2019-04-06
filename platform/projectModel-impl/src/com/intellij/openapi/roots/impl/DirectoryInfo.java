@@ -5,6 +5,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,4 +66,10 @@ public abstract class DirectoryInfo {
    */
   @Nullable
   public abstract String getUnloadedModuleName();
+
+  /**
+   * if {@code dir} is excluded and there are content entries under the {@code dir}, process them all and
+   * @return processing result
+   */
+  public abstract boolean processContentBeneathExcluded(@NotNull VirtualFile dir, @NotNull Processor<? super VirtualFile> processor);
 }

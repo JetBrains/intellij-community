@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.internal.statistic.utils.getCountingUsage
-import com.intellij.internal.statistic.utils.getPluginType
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -82,5 +82,7 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
 }
 
 fun getReportableTypeId(type: XBreakpointType<*, *>): String {
-  return if (getPluginType(type.javaClass).isSafeToReport()) type.getId() else "custom"
+  val info = getPluginInfo(type.javaClass)
+  if (info.isDevelopedByJetBrains()) return type.getId()
+  return if (info.isSafeToReport()) "custom.${info.id}" else "custom"
 }

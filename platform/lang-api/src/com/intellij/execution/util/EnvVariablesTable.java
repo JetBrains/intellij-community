@@ -16,12 +16,16 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -195,7 +199,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       StringBuilder sb = new StringBuilder();
       List<EnvironmentVariable> variables = getSelection();
       for (EnvironmentVariable environmentVariable : variables) {
-        if (environmentVariable.getIsPredefined() || isEmpty(environmentVariable)) continue;
+        if (isEmpty(environmentVariable)) continue;
         if (sb.length() > 0) sb.append(';');
         sb.append(StringUtil.escapeChars(environmentVariable.getName(), '=', ';')).append('=')
           .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';'));
@@ -218,7 +222,20 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     public void performPaste(@NotNull DataContext dataContext) {
       String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       Map<String, String> map = parseEnvsFromText(content);
-      if (map.isEmpty()) return;
+      if (map.isEmpty() && !StringUtil.isEmpty(content)) {
+        TableView<EnvironmentVariable> view = getTableView();
+        int row = view.getEditingRow();
+        int column = view.getEditingColumn();
+        if (row < 0 || column < 0) {
+          row = view.getSelectedRow();
+          column = view.getSelectedColumn();
+        }
+        if (row >= 0 && column >= 0) {
+          view.stopEditing();
+          view.getModel().setValueAt(content, row, column);
+        }
+        return;
+      }
       stopEditing();
       removeSelected();
       List<EnvironmentVariable> parsed = new ArrayList<>();
@@ -243,6 +260,39 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     }
   }
 
+  @NotNull
+  @Override
+  protected AnActionButton[] createExtraActions() {
+    AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPanel.performCopy(e.getDataContext());
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
+      }
+    };
+    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPanel.performPaste(e.getDataContext());
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT);
+      }
+
+      @Override
+      public boolean isVisible() {
+        return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
+      }
+    };
+    return new AnActionButton[]{copyButton, pasteButton};
+  }
+
   public static Map<String, String> parseEnvsFromText(String content) {
     Map<String, String> result = new LinkedHashMap<>();
     if (content != null && content.contains("=")) {
@@ -254,7 +304,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         pairs = new ArrayList<>();
         int start = 0;
         int end;
-        for (end = content.indexOf(";"); end < content.length()-1; end = content.indexOf(";", end+1)) {
+        for (end = content.indexOf(";"); end < content.length(); end = content.indexOf(";", end+1)) {
           if (end == -1) {
             pairs.add(content.substring(start).replace("\\;", ";"));
             break;
@@ -267,7 +317,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       }
       for (String pair : pairs) {
         int pos = pair.indexOf('=');
-        if (pos == -1) continue;
+        if (pos <= 0) continue;
         while (pos > 0 && pair.charAt(pos - 1) == '\\') {
           pos = pair.indexOf('=', pos + 1);
         }

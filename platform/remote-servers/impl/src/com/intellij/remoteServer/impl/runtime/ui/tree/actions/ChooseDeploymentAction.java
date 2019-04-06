@@ -15,25 +15,24 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
-public class ChooseDeploymentAction extends ServersTreeAction<ServersTreeStructure.RemoteServerNode> {
+import static com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeActionUtils.getRemoteServerTarget;
 
-  public ChooseDeploymentAction() {
-    super("Deploy", "Deploy a chosen item to the selected remote server", AllIcons.Nodes.Deploy);
+public class ChooseDeploymentAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(getRemoteServerTarget(e) != null);
   }
 
   @Override
-  protected Class<ServersTreeStructure.RemoteServerNode> getTargetNodeClass() {
-    return ServersTreeStructure.RemoteServerNode.class;
-  }
-
-  @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
-    node.deploy(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ServersTreeStructure.RemoteServerNode node = getRemoteServerTarget(e);
+    if (node != null) {
+      node.deploy(e);
+    }
   }
 }

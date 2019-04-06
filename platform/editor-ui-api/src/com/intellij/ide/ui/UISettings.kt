@@ -89,9 +89,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.reuseNotModifiedTabs = value
     }
 
-  val maxClipboardContents: Int
-    get() = state.maxClipboardContents
-
   var disableMnemonics: Boolean
     get() = state.disableMnemonics
     set(value) {
@@ -345,7 +342,11 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
 
     @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+    private fun verbose(msg: String, vararg args: Any) {
+      if (UIUtil.SCALE_VERBOSE) {
+        LOG.info(String.format(msg, *args))
+      }
+    }
 
     const val ANIMATION_DURATION = 300 // Milliseconds
 
@@ -382,12 +383,17 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     @JvmStatic
     val shadowInstance: UISettings
       get() {
-        val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
+        val uiSettings = if (ApplicationManager.getApplication() == null) null else instanceOrNull
+        return when {
+          uiSettings != null -> uiSettings
+          else -> {
+            return UISettings()
+          }
+        }
       }
 
     @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS: Boolean = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
+    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", false)
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
@@ -430,7 +436,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
@@ -486,11 +492,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
   }
 
-  private fun withDefFont(): UISettings {
-    notRoamableOptions.state.initDefFont()
-    return this
-  }
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
@@ -540,6 +541,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     updateDeprecatedProperties()
 
     migrateOldSettings()
+    if (migrateOldFontSettings()) {
+      notRoamableOptions.fixFontSettings()
+    }
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -559,10 +563,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.alphaModeRatio = 0.5f
     }
 
-    if (state.maxClipboardContents <= 0) {
-      state.maxClipboardContents = 5
-    }
-
     fireUISettingsChanged()
   }
 
@@ -576,19 +576,27 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
+  }
 
+  @Suppress("DEPRECATION")
+  private fun migrateOldFontSettings(): Boolean {
+    var migrated = false
     if (state.fontSize != 0) {
-      fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
+      fontSize = restoreFontSize(state.fontSize, state.fontScale)
       state.fontSize = 0
+      migrated = true
     }
     if (state.fontScale != 0f) {
       fontScale = state.fontScale
       state.fontScale = 0f
+      migrated = true
     }
     if (state.fontFace != null) {
       fontFace = state.fontFace
       state.fontFace = null
+      migrated = true
     }
+    return migrated
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -646,7 +654,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
   @Transient
   var PRESENTATION_MODE = false
 
-  @Suppress("unused")
+  @Suppress("unused", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient

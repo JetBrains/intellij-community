@@ -1,4 +1,7 @@
 <root>
+  <item name='java.lang.Class java.lang.reflect.Constructor&lt;T&gt; getDeclaredConstructor(java.lang.Class&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.Process java.io.InputStream getErrorStream()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

@@ -284,8 +284,9 @@ class CustomMethodHandlers {
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
     if (value != null) {
       LongRangeSet fact = memoryState.getValueFact(value, DfaFactType.RANGE);
-      if (fact != null && !fact.isEmpty() && fact.min() == fact.max()) {
-        return fact.min();
+      Long constantValue = fact == null ? null : fact.getConstantValue();
+      if (constantValue != null) {
+        return constantValue;
       }
     }
     DfaConstValue dfaConst = memoryState.getConstantValue(value);

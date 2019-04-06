@@ -1,0 +1,7 @@
+UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+                    UObjectLiteralExpression -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+                            UPostfixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = variable) -> PsiLocalVariable:variable: variable
+            UBlockExpression -> UQualifiedReferenceExpression -> PsiMethod:run: run
+            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> UQualifiedReferenceExpression -> PsiMethod:run: run
+            UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> PsiLocalVariable:runnable: runnable
+            UReturnExpression -> USimpleNameReferenceExpression (identifier = variable) -> PsiLocalVariable:variable: variable

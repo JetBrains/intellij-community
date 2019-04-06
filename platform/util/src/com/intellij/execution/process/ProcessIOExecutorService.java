@@ -4,8 +4,10 @@ import com.intellij.util.concurrency.CountingThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A thread pool for long-running workers needed for handling child processes, to avoid occupying workers in the main application pool
@@ -17,7 +19,7 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
   private ProcessIOExecutorService() {
-    super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new CountingThreadFactory() {
+    super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), new CountingThreadFactory() {
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {

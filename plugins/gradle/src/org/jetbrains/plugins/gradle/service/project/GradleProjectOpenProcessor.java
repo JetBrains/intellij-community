@@ -70,6 +70,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
 
   @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
 
+  @NotNull
   @Override
   public String getName() {
     return GradleBundle.message("gradle.name");
@@ -82,7 +83,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Override
-  public boolean canOpenProject(VirtualFile file) {
+  public boolean canOpenProject(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return Arrays.stream(file.getChildren()).anyMatch(GradleProjectOpenProcessor::canOpenFile);
     }

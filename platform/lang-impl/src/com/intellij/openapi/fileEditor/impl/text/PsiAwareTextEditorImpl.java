@@ -41,7 +41,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
   @NotNull
   @Override
   protected Runnable loadEditorInBackground() {
-    Runnable baseAction = super.loadEditorInBackground();
+    Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
@@ -50,18 +50,18 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                     ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
                                     : null;
 
-    List<? extends Segment> zones = FocusModePassFactory.calcFocusZones(psiFile);
+    List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
 
     return () -> {
-      baseAction.run();
+      baseResult.run();
       Editor editor = getEditor();
 
       if (foldingState != null) {
         foldingState.setToEditor(editor);
       }
 
-      if (zones != null) {
-        FocusModePassFactory.setToEditor(zones, editor);
+      if (focusZones != null) {
+        FocusModePassFactory.setToEditor(focusZones, editor);
         if (editor instanceof EditorImpl) {
           ((EditorImpl)editor).applyFocusMode();
         }

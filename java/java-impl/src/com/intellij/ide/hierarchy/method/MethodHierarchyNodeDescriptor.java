@@ -93,10 +93,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       Icon newIcon = myRawIcon;
 
       if (myIsBase) {
-        final LayeredIcon icon = new LayeredIcon(2);
-        icon.setIcon(newIcon, 0);
-        icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
-        newIcon = icon;
+        newIcon = getBaseMarkerIcon(newIcon);
       }
 
       if (myStateIcon != null) {

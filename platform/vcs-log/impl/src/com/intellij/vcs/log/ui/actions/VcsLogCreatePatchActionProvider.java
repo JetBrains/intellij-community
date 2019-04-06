@@ -44,7 +44,7 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);

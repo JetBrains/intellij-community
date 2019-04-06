@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -185,6 +186,14 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   public GrClosableBlock createClosureFromText(@NotNull String s) throws IncorrectOperationException {
     return createClosureFromText(s, null);
+  }
+
+  @NotNull
+  public abstract GrLambdaExpression createLambdaFromText(@NotNull String text, @Nullable PsiElement context);
+
+  @NotNull
+  public GrLambdaExpression createLambdaFromText(@NotNull String text) {
+    return createLambdaFromText(text, null);
   }
 
   @NotNull

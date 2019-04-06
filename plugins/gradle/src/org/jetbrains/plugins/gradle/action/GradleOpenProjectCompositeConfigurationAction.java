@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -39,7 +25,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
     if (!super.isEnabled(e)) return false;
     if (getSystemId(e) == null) return false;
 
-    return ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext()) != null;
+    return e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE) != null;
   }
 
   @Override
@@ -50,7 +36,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
     if(!GradleConstants.SYSTEM_ID.equals(systemId)) return false;
 
     if (GradleSettings.getInstance(project).getLinkedProjectsSettings().size() > 1) {
-      final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
+      final ProjectNode projectNode = e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE);
       if (projectNode == null || projectNode.getData() == null) return false;
 
       GradleProjectSettings projectSettings =
@@ -69,7 +55,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
     final Project project = getProject(e);
     if (project == null) return;
     GradleActionsUsagesCollector.trigger(project, this, e);
-    final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
+    final ProjectNode projectNode = e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE);
     if (projectNode == null || projectNode.getData() == null) return;
     new GradleProjectCompositeSelectorDialog(project, projectNode.getData().getLinkedExternalProjectPath()).showAndGet();
   }

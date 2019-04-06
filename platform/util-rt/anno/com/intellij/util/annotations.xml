@@ -21,5 +21,11 @@
   <item name="com.intellij.util.NullableFunction">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
+  <item name="com.intellij.util.ThrowableConsumer">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.ThrowableRunnable">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
 </root>
 

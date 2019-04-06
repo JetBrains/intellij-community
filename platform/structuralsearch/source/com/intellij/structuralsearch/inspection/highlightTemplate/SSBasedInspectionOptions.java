@@ -93,7 +93,6 @@ public class SSBasedInspectionOptions {
           if (project == null) return;
           for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
             myConfigurations.remove(configuration);
-            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
           }
           configurationsChanged(project);
         }
@@ -172,7 +171,6 @@ public class SSBasedInspectionOptions {
     }
     final int index = myConfigurations.indexOf(configuration);
     myConfigurations.set(index, newConfiguration);
-    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
     configurationsChanged(project);
   }
 

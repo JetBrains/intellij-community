@@ -198,9 +198,7 @@ public class ImportFromExistingAction implements QuestionAction {
       return;
     }
     WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile()).withName(PyBundle.message("ACT.CMD.use.import"))
-                      .run(() -> {
-                        doIt(item);
-                      });
+                      .run(() -> doIt(item));
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }

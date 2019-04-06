@@ -1,0 +1,29 @@
+<html>
+<body>
+Reports cases when loop contains <b>if</b> statement and this <b>if</b> statement can end with <b>break</b>.
+<p>
+  For instance, consider the following code:
+<pre><code>
+  <b>boolean</b> found = <b>false</b>;
+  <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {
+    <b>if</b> (Objects.equals(value, arr[i])) {
+      found = <b>true</b>;
+    }
+  }
+</code></pre>
+In this case iterations have no effect after condition is met. So, <b>break</b> should be added:
+<pre><code>
+  <b>boolean</b> found = <b>false</b>;
+  <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {
+    <b>if</b> (Objects.equals(value, arr[i])) {
+      found = <b>true</b>;
+      <b>break</b>;
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+  <small>New in 2019.2</small>
+</p>
+</body>
+</html>

@@ -5,7 +5,7 @@ class SwitchExpressionMigration {
   private static void m() {
     int result = switch (s) {
         case "a" -> 1;
-        case "b" -> throw new NulPointerException();
+        case "b" -> throw new NullPointerException();
         default -> 0;
     };
   }

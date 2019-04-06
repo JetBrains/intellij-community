@@ -92,7 +92,7 @@ public class GitPushOperation {
   @NotNull private final GitPushSupport myPushSupport;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   @Nullable private final GitPushTagMode myTagMode;
-  private final boolean myForce;
+  private final ForceMode myForceMode;
   private final boolean mySkipHook;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
@@ -106,11 +106,26 @@ public class GitPushOperation {
                           @Nullable GitPushTagMode tagMode,
                           boolean force,
                           boolean skipHook) {
+    this(project, pushSupport, pushSpecs, tagMode, getForceMode(force), skipHook);
+  }
+
+  @NotNull
+  private static ForceMode getForceMode(boolean force) {
+    if (force) return Registry.is("git.use.push.force.with.lease") ? ForceMode.FORCE_WITH_LEASE : ForceMode.FORCE;
+    return ForceMode.NONE;
+  }
+
+  public GitPushOperation(@NotNull Project project,
+                          @NotNull GitPushSupport pushSupport,
+                          @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                          @Nullable GitPushTagMode tagMode,
+                          @NotNull ForceMode forceMode,
+                          boolean skipHook) {
     myProject = project;
     myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
-    myForce = force;
+    myForceMode = forceMode;
     mySkipHook = skipHook;
     myGit = Git.getInstance();
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
@@ -161,7 +176,7 @@ public class GitPushOperation {
         // propose to update if rejected
         if (!result.rejected.isEmpty()) {
           boolean shouldUpdate = true;
-          if (myForce || pushingToNotTrackedBranch(result.rejected)) {
+          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) {
             shouldUpdate = false;
           }
           else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
@@ -214,7 +229,7 @@ public class GitPushOperation {
   private GitPushProcessCustomizationFactory.GitPushProcessCustomization findPushCustomization() {
     List<GitPushProcessCustomizationFactory.GitPushProcessCustomization> customizations = StreamEx
       .of(GIT_PUSH_CUSTOMIZATION_FACTORY_EP.getExtensions())
-      .map(factory -> factory.createCustomization(myProject, myPushSpecs, myForce)).toList();
+      .map(factory -> factory.createCustomization(myProject, myPushSpecs, myForceMode.isForce())).toList();
 
     if (customizations.isEmpty()) {
       return null;
@@ -250,6 +265,12 @@ public class GitPushOperation {
       String currentRef = pushSpec.getSource().getBranch().getFullName();
       return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo.getRoot() : null;
     });
+  }
+
+  @NotNull
+  public GitPushOperation deriveForceWithoutLease(@NotNull List<GitRepository> newRepositories) {
+    Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> newPushSpec = filter(myPushSpecs, repo -> newRepositories.contains(repo));
+    return new GitPushOperation(myProject, myPushSupport, newPushSpec, myTagMode, ForceMode.FORCE, mySkipHook);
   }
 
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
@@ -392,13 +413,13 @@ public class GitPushOperation {
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();
-    if (myForce && Registry.is("git.use.push.force.with.lease")) {
+    if (myForceMode == ForceMode.FORCE_WITH_LEASE) {
       Hash hash = repository.getBranches().getHash(targetBranch);
       String expectedHash = hash != null ? hash.asString() : "";
       forceWithLease = singletonList(new ForceWithLeaseReference(targetBranch.getNameForRemoteOperations(), expectedHash));
     }
 
-    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForce, setUpstream, mySkipHook, tagMode, forceWithLease);
+    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForceMode.isForce(), setUpstream, mySkipHook, tagMode, forceWithLease);
 
     GitCommandResult res;
     if (myPushProcessCustomization != null) {
@@ -500,6 +521,14 @@ public class GitPushOperation {
     @Override
     public String toString() {
       return "Parsed results: " + parsedResults + "\nCommand output:" + resultOutput;
+    }
+  }
+
+  enum ForceMode {
+    NONE, FORCE, FORCE_WITH_LEASE;
+
+    public boolean isForce() {
+      return this != NONE;
     }
   }
 }

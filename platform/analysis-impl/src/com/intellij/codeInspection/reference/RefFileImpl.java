@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class RefFileImpl extends RefElementImpl implements RefFile {
-  RefFileImpl(PsiFile elem, RefManager manager) {
+  public RefFileImpl(PsiFile elem, RefManager manager) {
     super(elem, manager);
   }
 

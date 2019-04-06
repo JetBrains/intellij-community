@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.ide.TypePresentationService;
@@ -54,8 +54,6 @@ public abstract class AddDomElementAction extends AnAction {
       }
     }
     e.getPresentation().setIcon(IconUtil.getAddIcon());
-
-    super.update(e);
   }
 
   @Override
@@ -134,9 +132,6 @@ public abstract class AddDomElementAction extends AnAction {
     else {
       if (actions.size() > 1) {
         actions.add(Separator.getInstance());
-      }
-      else if (actions.size() == 1) {
-
       }
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);

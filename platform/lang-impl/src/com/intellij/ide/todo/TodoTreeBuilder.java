@@ -437,15 +437,13 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final Promise<?> updateTree() {
     if (myUpdatable) {
-      return myModel.getInvoker().runOrInvokeLater(() -> {
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-            validateCache();
-            getTodoTreeStructure().validateCache();
-          }
-          myModel.invalidate();
-        });
-      });
+      return myModel.getInvoker().runOrInvokeLater(() -> DumbService.getInstance(myProject).runWhenSmart(() -> {
+        if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+          validateCache();
+          getTodoTreeStructure().validateCache();
+        }
+        myModel.invalidate();
+      }));
     }
     return Promises.resolvedPromise();
   }

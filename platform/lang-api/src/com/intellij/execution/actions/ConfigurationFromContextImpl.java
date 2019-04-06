@@ -18,6 +18,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author yole
@@ -68,5 +69,10 @@ public class ConfigurationFromContextImpl extends ConfigurationFromContext {
   @Override
   public void onFirstRun(ConfigurationContext context, Runnable startRunnable) {
     myConfigurationProducer.onFirstRun(this, context, startRunnable);
+  }
+
+  @TestOnly
+  public RunConfigurationProducer getConfigurationProducer() {
+    return myConfigurationProducer;
   }
 }

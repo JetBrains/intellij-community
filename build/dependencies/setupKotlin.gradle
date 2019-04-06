@@ -7,8 +7,12 @@ configurations {
   kotlinPlugin
 }
 
+def pluginChannelSeparator = kotlinPluginBuild.indexOf(":")
+def groupId = pluginChannelSeparator == -1 ? "com.jetbrains.plugins"
+                                           : "${kotlinPluginBuild.substring(pluginChannelSeparator + 1)}.com.jetbrains.plugins"
+def pluginArtifactVersion = pluginChannelSeparator == -1 ? kotlinPluginBuild : kotlinPluginBuild.substring(0, pluginChannelSeparator)
 dependencies {
-  kotlinPlugin "com.jetbrains.plugins:org.jetbrains.kotlin:$kotlinPluginBuild@zip"
+  kotlinPlugin "$groupId:org.jetbrains.kotlin:$pluginArtifactVersion@zip"
 }
 
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {

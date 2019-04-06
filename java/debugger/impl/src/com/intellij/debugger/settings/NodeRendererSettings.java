@@ -41,7 +41,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Value;
 import org.jdom.Element;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,7 +264,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private void addAnnotationRenderers(List<NodeRenderer> renderers, Project project) {
     try {
       GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-      String annotationFqn = Debugger.Renderer.class.getName().replace("$", ".");
+      String annotationFqn = Debug.Renderer.class.getName().replace("$", ".");
       PsiClass annotationClass =
         JavaPsiFacade.getInstance(project).findClass(annotationFqn, allScope);
       if (annotationClass != null) {

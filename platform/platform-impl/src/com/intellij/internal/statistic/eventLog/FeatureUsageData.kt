@@ -13,10 +13,27 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.*
 
+/**
+ * <p>FeatureUsageData represents additional data for reported event.</p>
+ *
+ * <h3>Example</h3>
+ *
+ * <p>My usage collector collects actions invocations. <i>"my.foo.action"</i> could be invoked from one of the following contexts:
+ * "main.menu", "context.menu", "my.dialog", "all-actions-run".</p>
+ *
+ * <p>If I write {@code FUCounterUsageLogger.logEvent("my.foo.action", "bar")}, I'll know how many times the action "bar" was invoked (e.g. 239)</p>
+ *
+ * <p>If I write {@code FUCounterUsageLogger.logEvent("my.foo.action", "bar", new FeatureUsageData().addPlace(place))}, I'll get the same
+ * total count of action invocations (239), but I'll also know that the action was called 3 times from "main.menu", 235 times from "my.dialog" and only once from "context.menu".
+ * <br/>
+ * </p>
+ */
 class FeatureUsageData {
   private var data: MutableMap<String, Any> = ContainerUtil.newHashMap<String, Any>()
 
@@ -76,6 +93,14 @@ class FeatureUsageData {
     return this
   }
 
+  fun addCurrentFile(language: Language): FeatureUsageData {
+    val type = getPluginType(language.javaClass)
+    if (type.isSafeToReport()) {
+      data["current_file"] = language.id
+    }
+    return this
+  }
+
   fun addInputEvent(event: AnActionEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getActionEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -86,6 +111,14 @@ class FeatureUsageData {
 
   fun addInputEvent(event: KeyEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getKeyEventText(event)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: MouseEvent): FeatureUsageData {
+    val inputEvent = ShortcutDataProvider.getMouseEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent
     }
@@ -132,6 +165,9 @@ class FeatureUsageData {
   }
 
   fun build(): Map<String, Any> {
+    if (data.isEmpty()) {
+      return Collections.emptyMap()
+    }
     return data
   }
 

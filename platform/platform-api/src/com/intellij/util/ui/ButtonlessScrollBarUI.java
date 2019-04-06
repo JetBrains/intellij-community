@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -230,7 +231,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
-    myWeakListener = new WeakLestener(myAWTMouseListener);
+    myWeakListener = new WeakListener(myAWTMouseListener);
     myNSScrollerListener = new NSScrollerHelper.ScrollbarStyleListener() {
       @Override
       public void styleChanged() {
@@ -645,7 +646,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       boolean vertical = isVertical();
 
       final Paint paint;
-      final Color start = adjustColor(UIUtil.getSlightlyDarkerColor(getTrackBackground()));
+      final Color start = adjustColor(ColorUtil.darker(getTrackBackground(), 1));
       final Color end = adjustColor(getTrackBackground().brighter());
 
       if (vertical) {
@@ -916,10 +917,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  private static final class WeakLestener implements AWTEventListener {
+  private static final class WeakListener implements AWTEventListener {
     private final WeakReference<AWTEventListener> myReference;
 
-    private WeakLestener(AWTEventListener listener) {
+    private WeakListener(AWTEventListener listener) {
       myReference = new WeakReference<>(listener);
     }
 

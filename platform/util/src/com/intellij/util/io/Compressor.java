@@ -140,12 +140,8 @@ public abstract class Compressor implements Closeable {
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
     entryName = entryName(entryName);
     if (accepts(entryName)) {
-      InputStream source = new FileInputStream(file);
-      try {
+      try (InputStream source = new FileInputStream(file)) {
         writeFileEntry(entryName, source, file.length(), file.lastModified());
-      }
-      finally {
-        source.close();
       }
     }
   }

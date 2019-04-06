@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.validity;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -28,22 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 public class GroovyUnreachableStatementInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unreachable Statement";
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Unreachable statement #loc";
 
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

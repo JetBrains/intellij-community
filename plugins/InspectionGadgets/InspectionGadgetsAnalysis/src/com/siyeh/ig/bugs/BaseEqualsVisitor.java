@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -70,19 +56,31 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     final PsiExpression expression1;
     final PsiExpression expression2;
     if (OBJECT_EQUALS.test(expression)) {
-      expression1 = ExpressionUtils.getQualifierOrThis(expression.getMethodExpression());
-      expression2 = arguments[0];
+      expression1 = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(expression.getMethodExpression()));
+      expression2 = PsiUtil.skipParenthesizedExprDown(arguments[0]);
     }
     else if (STATIC_EQUALS.test(expression)) {
-      expression1 = arguments[0];
-      expression2 = arguments[1];
+      expression1 = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+      expression2 = PsiUtil.skipParenthesizedExprDown(arguments[1]);
     }
     else {
       return;
     }
-    final PsiType leftType = expression1.getType();
-    final PsiType rightType = expression2.getType();
+    if (expression1 == null || expression2 == null) {
+      return;
+    }
+    final PsiType leftType = getType(expression1);
+    final PsiType rightType = getType(expression2);
     if (leftType != null && rightType != null) checkTypes(expression.getMethodExpression(), leftType, rightType);
+  }
+
+  private static PsiType getType(PsiExpression expression) {
+    if (!(expression instanceof PsiNewExpression)) {
+      return expression.getType();
+    }
+    final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    return anonymousClass != null ? anonymousClass.getBaseClassType() : expression.getType();
   }
 
   abstract void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);

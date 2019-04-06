@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -363,29 +364,36 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
   }
 
-  @Test fun `VFS - rename A to B and B to A`() {
+  @Test
+  fun `VFS - rename A to B and B to A`() {
     val dir = tempDirManager.newPath(refreshVfs = true)
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
-      @Suppress("UNCHECKED_CAST")
-      ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(
-        schemeManager as SchemeManagerImpl<Any, Any>, null))
-    })
+    val busDisposable = Disposer.newDisposable()
+    try {
+      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
+        @Suppress("UNCHECKED_CAST")
+        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project)
+        ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
+      })
 
-    val a = TestScheme("a", "a")
-    val b = TestScheme("b", "b")
-    schemeManager.setSchemes(listOf(a, b))
-    runInEdtAndWait { schemeManager.save() }
+      val a = TestScheme("a", "a")
+      val b = TestScheme("b", "b")
+      schemeManager.setSchemes(listOf(a, b))
+      runInEdtAndWait { schemeManager.save() }
 
-    assertThat(dir.resolve("a.xml")).isRegularFile()
-    assertThat(dir.resolve("b.xml")).isRegularFile()
+      assertThat(dir.resolve("a.xml")).isRegularFile()
+      assertThat(dir.resolve("b.xml")).isRegularFile()
 
-    a.name = "b"
-    b.name = "a"
+      a.name = "b"
+      b.name = "a"
 
-    runInEdtAndWait { schemeManager.save() }
+      runInEdtAndWait { schemeManager.save() }
 
-    assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
-    assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+      assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
+      assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+    }
+    finally {
+      Disposer.dispose(busDisposable)
+    }
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {

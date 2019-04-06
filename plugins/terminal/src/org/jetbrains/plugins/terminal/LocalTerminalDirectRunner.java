@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,18 +86,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Nullable
-  private static String findRCFile(String shellName) {
-    if (shellName != null) {
-      if ("sh".equals(shellName)) {
-        shellName = "bash";
-      }
-      String rcfile = "jediterm-" + shellName + ".in";
-      if ("zsh".equals(shellName)) {
-        rcfile = ".zshrc";
-      }
-      else if ("fish".equals(shellName)) {
-        rcfile = "fish/config.fish";
-      }
+  private static String findRCFile(@NotNull String shellName) {
+    String rcfile = null;
+    //noinspection IfCanBeSwitch
+    if ("bash".equals(shellName) || "sh".equals(shellName)) {
+      rcfile = "jediterm-bash.in";
+    }
+    else if ("zsh".equals(shellName)) {
+      rcfile = ".zshrc";
+    }
+    else if ("fish".equals(shellName)) {
+      rcfile = "fish/config.fish";
+    }
+    if (rcfile != null) {
       try {
         return findAbsolutePath(rcfile);
       }
@@ -192,13 +192,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
     }
 
+    String workingDir = getWorkingDirectory(directory);
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
     try {
-      TerminalUsageTriggerCollector.trigger(myProject, "local.exec", FUSUsageContext.create(
-        FUSUsageContext.getOSNameContextData(),
-        SystemInfo.getOsNameAndVersion(),
-        TerminalUsageTriggerCollector.getShellNameForStat(command[0]))
-      );
-      String workingDir = getWorkingDirectory(directory);
       long startNano = System.nanoTime();
       String[] finalCommand = command;
       PtyProcess process = TerminalSignalUtil.computeWithIgnoredSignalsResetToDefault(
@@ -212,7 +208,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return process;
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to start " + Arrays.toString(command), e);
+      throw new ExecutionException("Failed to start " + Arrays.toString(command) + " in " + workingDir, e);
     }
   }
 

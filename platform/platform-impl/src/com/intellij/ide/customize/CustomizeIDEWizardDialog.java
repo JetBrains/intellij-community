@@ -180,10 +180,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     super.doOKAction();
   }
 
-  @Nullable
   @Override
-  protected String getLoggedDialogId() {
-    return null;
+  protected boolean canRecordDialogId() {
+    return false;
   }
 
   private void initCurrentStep(boolean forward) {
@@ -192,9 +191,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
       Component component = myCurrentStep.getDefaultFocusedComponent();
       if (component != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
       }
     });
 

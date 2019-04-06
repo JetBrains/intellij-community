@@ -41,7 +41,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
-    return shortName == null ? InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
+    return shortName == null ? shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
   }
 
   @Nullable

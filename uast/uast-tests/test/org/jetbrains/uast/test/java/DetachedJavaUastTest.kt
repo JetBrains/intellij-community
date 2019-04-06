@@ -19,7 +19,7 @@ class DetachedJavaUastTest : AbstractJavaUastTest() {
   )
 
   override fun check(testName: String, file: UFile) {
-    val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.psi, *detachers.keys.toTypedArray())
+    val detachablePsiElements = PsiTreeUtil.collectElementsOfType(file.sourcePsi, *detachers.keys.toTypedArray())
       .map { psiElement -> psiElement to detachers.entries.first { it.key.isAssignableFrom(psiElement.javaClass) }.value }
 
     for ((element, detacher) in detachablePsiElements) {
@@ -60,4 +60,5 @@ class DetachedJavaUastTest : AbstractJavaUastTest() {
 }
 
 private infix fun Class<out PsiElement>.through(detacher: (PsiElementFactory, String, PsiElement) -> PsiElement)
-  : Pair<Class<PsiElement>, (PsiElementFactory, String, PsiElement) -> PsiElement> = (this as Class<PsiElement>) to detacher
+  : Pair<Class<PsiElement>, (PsiElementFactory, String, PsiElement) -> PsiElement> =
+  @Suppress("UNCHECKED_CAST") (this as Class<PsiElement>) to detacher

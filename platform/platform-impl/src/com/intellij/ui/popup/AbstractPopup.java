@@ -29,14 +29,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
@@ -48,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
@@ -122,6 +118,7 @@ public class AbstractPopup implements JBPopup {
   InputEvent myDisposeEvent;
 
   private Runnable myFinalRunnable;
+  private Runnable myOkHandler;
   @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
@@ -158,11 +155,16 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private JLabel myAdComponent;
   private boolean myDisposed;
+  private boolean myNormalWindowLevel;
 
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
 
   private volatile State myState = State.NEW;
+
+  public void setNormalWindowLevel(boolean normalWindowLevel) {
+    myNormalWindowLevel = normalWindowLevel;
+  }
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
@@ -268,7 +270,7 @@ public class AbstractPopup implements JBPopup {
 
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", 
+          new IconButton("Open as Tool Window",
                          AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
                          IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
@@ -374,7 +376,6 @@ public class AbstractPopup implements JBPopup {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.setOpaque(false);
-      wrapper.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
@@ -403,6 +404,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
+    if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
     Component focusedComponent = getWndManager().getFocusedComponent(project);
@@ -436,6 +438,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
+    if (UiInterceptors.tryIntercept(this)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
@@ -536,6 +539,8 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInBestPositionFor(@NotNull Editor editor) {
+    // Intercept before the following assert; otherwise assertion may fail
+    if (UiInterceptors.tryIntercept(this)) return;
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
     // Set the accessible parent so that screen readers don't announce
@@ -659,6 +664,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public final void closeOk(@Nullable InputEvent e) {
     setOk(true);
+    myFinalRunnable = FunctionUtil.composeRunnables(myOkHandler, myFinalRunnable);
     cancel(e);
   }
 
@@ -753,6 +759,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -764,7 +771,6 @@ public class AbstractPopup implements JBPopup {
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
 
-    installWindowHook(this);
     installProjectDisposer();
     addActivity();
 
@@ -777,6 +783,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     prepareToShow();
+    installWindowHook(this);
 
     Dimension sizeToSet = null;
 
@@ -1015,6 +1022,9 @@ public class AbstractPopup implements JBPopup {
     myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
     myWindow = window;
+    if (myNormalWindowLevel) {
+      myWindow.setType(Window.Type.NORMAL);
+    }
     setMinimumSize(myMinSize);
 
     final Disposable tb = TouchBarsManager.showPopupBar(this, myContent);
@@ -1140,13 +1150,6 @@ public class AbstractPopup implements JBPopup {
     };
     myContent.addMouseListener(mouseAdapter);
     Disposer.register(this, () -> myContent.removeMouseListener(mouseAdapter));
-
-    myContent.registerKeyboardAction(__ -> {
-      if (myCancelKeyEnabled) {
-        cancel();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
 
     myContent.addKeyListener(mySpeedSearch);
 
@@ -1862,6 +1865,10 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  public void setOkHandler(Runnable okHandler) {
+    myOkHandler = okHandler;
+  }
+
   @Override
   public void setFinalRunnable(Runnable finalRunnable) {
     myFinalRunnable = finalRunnable;
@@ -1881,8 +1888,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
     BooleanFunction<KeyEvent> handler = myKeyEventHandler;
-    if (handler != null) {
-      return handler.fun(e);
+    if (handler != null && handler.fun(e)) {
+      return true;
     }
     if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter()) {
       cancel(e);

@@ -34,11 +34,6 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();

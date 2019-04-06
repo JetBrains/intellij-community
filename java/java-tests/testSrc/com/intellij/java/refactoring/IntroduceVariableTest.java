@@ -9,8 +9,10 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -220,6 +222,18 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testCaseLabelSingle() {
+    doTest(new IntroduceVariableHandler());
+  }
+
+  public void testCaseLabelRuleSingle() {
+    doTest(new IntroduceVariableHandler());
+  }
+
+  public void testCaseLabelRuleExpression() {
+    doTest(new IntroduceVariableHandler());
+  }
+
   public void testCaseLabelEnum() {
     try {
       doTest(new MockIntroduceVariableHandler("temp", true, false, false, ""));
@@ -257,6 +271,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testEnsureCodeBlockForThrowsJava12Preview() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testFromSwitchStatementJava12Preview() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testVarTypeExtractedJava10() {
+    doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, "java.util.ArrayList<java.lang.String>"));
   }
 
   public void testDeclareTernary() {
@@ -571,6 +593,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("l", false, false, false, "D<java.lang.Integer>", false));
   }
 
+  public void testForIterationParameterVar() {
+    try {
+      doTest(new MockIntroduceVariableHandler("input", false, false, false, "Object", false));
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nUnknown expression type.", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testOneLineLambdaVoidCompatible() {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
@@ -677,6 +710,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testChooseTypeExpressionWhenNotDenotable() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo")); }
   public void testChooseTypeExpressionWhenNotDenotable1() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo<?>")); }
 
+  private void doTestWithVarType(IntroduceVariableBase testMe) {
+    Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
+    try {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+      doTest(testMe);
+    }
+    finally {
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = asVarType;
+    }
+  }
+  
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");

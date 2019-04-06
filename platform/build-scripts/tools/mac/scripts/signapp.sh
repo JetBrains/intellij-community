@@ -5,6 +5,8 @@ set -euo pipefail
 
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
+
+INPUT_FILE=$1
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
@@ -13,17 +15,15 @@ HELP_DIR_NAME=$6
 
 cd $(dirname $0)
 
+echo "Deleting ${EXPLODED}..."
 test -d ${EXPLODED} && chmod -R u+wx ${EXPLODED}/*
 rm -rf ${EXPLODED}
-rm -f $1.dmg
-rm -f pack.temp.dmg
-
 mkdir ${EXPLODED}
-echo "Unzipping $1.sit to ${EXPLODED}..."
-unzip -q $1.sit -d ${EXPLODED}/
-rm $1.sit
+
+echo "Unzipping ${INPUT_FILE} to ${EXPLODED}..."
+unzip -q ${INPUT_FILE} -d ${EXPLODED}/
+rm ${INPUT_FILE}
 BUILD_NAME=$(ls ${EXPLODED}/)
-cp product-info.json ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
 
 if [ $# -eq 7 ] && [ -f $7 ]; then
   archiveJDK="$7"
@@ -44,7 +44,6 @@ fi
 
 if [ $HELP_DIR_NAME != "no-help" ]; then
   HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
-
   echo "Building help indices for $HELP_DIR"
   hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 fi
@@ -99,8 +98,8 @@ do
   fi
 done
 
-echo "Zipping ${BUILD_NAME} to $1.sit..."
+echo "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
 cd ${EXPLODED}
-ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../$1.sit
+ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../${INPUT_FILE}
 cd ..
 rm -rf ${EXPLODED}

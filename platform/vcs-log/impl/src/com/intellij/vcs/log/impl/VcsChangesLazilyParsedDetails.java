@@ -26,9 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,16 +37,22 @@ import java.util.concurrent.atomic.AtomicReference;
  * Allows to postpone changes parsing, which might take long for a large amount of commits,
  * because {@link Change} holds {@link LocalFilePath} which makes costly refreshes and type detections.
  */
-public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
+public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
   private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
-  protected static final Changes EMPTY_CHANGES = new EmptyChanges();
-  @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
+  private static final Changes EMPTY_CHANGES = new EmptyChanges();
+  @NotNull private final ChangesParser myChangesParser;
+  @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
-  public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
+  public VcsChangesLazilyParsedDetails(@NotNull Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
+                                       @NotNull VirtualFile root,
                                        @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
-                                       @NotNull VcsUser committer, long authorTime) {
+                                       @NotNull VcsUser committer, long authorTime,
+                                       @NotNull List<List<VcsFileStatusInfo>> reportedChanges,
+                                       @NotNull ChangesParser changesParser) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
+    myChangesParser = changesParser;
+    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
   @NotNull
@@ -88,8 +92,34 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
   }
 
   @Override
+  public int size() {
+    int size = 0;
+    Changes changes = myChanges.get();
+    if (changes instanceof UnparsedChanges) {
+      for (int i = 0; i < getParents().size(); i++) {
+        size += ((UnparsedChanges)changes).getChangesOutput().get(i).size();
+      }
+    }
+    else {
+      for (int i = 0; i < getParents().size(); i++) {
+        try {
+          size += changes.getChanges(i).size();
+        }
+        catch (VcsException ignored) {
+        }
+      }
+    }
+    return size;
+  }
+
+  @Override
   public boolean hasRenames() {
     return true;
+  }
+
+  @NotNull
+  protected Changes getChangesHolder() {
+    return myChanges.get();
   }
 
   public interface Changes {
@@ -132,7 +162,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
   }
 
-  protected abstract class UnparsedChanges implements Changes {
+  protected class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
     // without interner each commit will have it's own instance of this string
     @NotNull private final String myRootPrefix = ourPathsInterner.intern(getRoot().getPath() + "/");
@@ -157,7 +187,8 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @NotNull
     private List<Change> parseMergedChanges() throws VcsException {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
-      List<Change> changes = parseStatusInfo(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
+      List<Change> changes = myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this,
+                                                             ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
       LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
       if (getParents().size() <= 1) return changes;
 
@@ -221,14 +252,11 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       else {
         List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
-          changes.add(parseStatusInfo(myChangesOutput.get(i), i));
+          changes.add(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, myChangesOutput.get(i), i));
         }
         return changes;
       }
     }
-
-    @NotNull
-    protected abstract List<Change> parseStatusInfo(@NotNull List<VcsFileStatusInfo> changes, int parentIndex) throws VcsException;
 
     /*
      * This method mimics result of `-c` option added to `git log` command.
@@ -238,6 +266,11 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
+    }
+
+    @NotNull
+    public List<List<VcsFileStatusInfo>> getChangesOutput() {
+      return myChangesOutput;
     }
 
     private class MyMergedChange extends MergedChange {
@@ -251,7 +284,9 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
           List<Change> sourceChanges = ContainerUtil.newArrayList();
           try {
             for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
-              sourceChanges.addAll(parseStatusInfo(Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent)), parent));
+              List<VcsFileStatusInfo> statusInfos = Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent));
+              sourceChanges.addAll(myChangesParser.parseStatusInfo(myProject, VcsChangesLazilyParsedDetails.this, statusInfos,
+                                                                   parent));
             }
           }
           catch (VcsException e) {
@@ -318,5 +353,12 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
       }
       return renames;
     }
+  }
+
+  public interface ChangesParser {
+    List<Change> parseStatusInfo(@NotNull Project project,
+                                 @NotNull VcsShortCommitDetails commit,
+                                 @NotNull List<VcsFileStatusInfo> changes,
+                                 int parentIndex) throws VcsException;
   }
 }

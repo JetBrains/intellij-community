@@ -312,9 +312,7 @@ public class GitUnstashDialog extends DialogWrapper {
     VirtualFile root = getGitRoot();
     GitLineHandler h = handler();
 
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      GitStashUtils.unstash(myProject, root, h, new UnstashConflictResolver(myProject, root, getSelectedStash()));
-    }, GitBundle.getString("unstash.unstashing"), true, myProject);
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> GitStashUtils.unstash(myProject, root, h, new UnstashConflictResolver(myProject, root, getSelectedStash())), GitBundle.getString("unstash.unstashing"), true, myProject);
 
     if (completed) {
       super.doOKAction();

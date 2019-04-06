@@ -47,15 +47,13 @@ then
 fi
 
 function override_jb_variables {
-  env | while read VARIABLE
+  env | while IFS="=" read NAME VALUE
   do
-    NAME=${VARIABLE%%=*}
     if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
     then
       NEW_NAME=${NAME:20}
       if [ -n "$NEW_NAME" ]
       then
-        VALUE=${VARIABLE#*=}
         export "$NEW_NAME"="$VALUE"
       fi
     fi
@@ -63,16 +61,3 @@ function override_jb_variables {
 }
 
 override_jb_variables
-
-function configureCommandHistory {
-  local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
-  if [ -n "$commandHistoryFile" ]
-  then
-    if [ ! -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
-    then
-      command cp "$HISTFILE" "$commandHistoryFile"
-    fi
-    export HISTFILE="$commandHistoryFile"
-  fi
-}
-configureCommandHistory

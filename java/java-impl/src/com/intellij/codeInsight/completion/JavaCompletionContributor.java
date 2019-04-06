@@ -26,10 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
@@ -73,7 +70,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   static final ElementPattern<PsiElement> ANNOTATION_NAME =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
 
-  private static final PsiJavaElementPattern.Capture<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
+  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
@@ -105,14 +102,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
   private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
   private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
-    psiElement().inside(PsiTypeElement.class).afterLeaf(psiElement().inside(true, psiElement(PsiEnumConstant.class), psiClass()));
+    psiElement().inside(PsiTypeElement.class).afterLeaf(
+      psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
 
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
-    // Completion after extends in interface, type parameter and implements in class
-    PsiClass containingClass = PsiTreeUtil.getParentOfType(
-      position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
-    if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
+    if (isInExtendsOrImplementsList(position)) {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
 
@@ -187,6 +182,17 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  private static boolean isInExtendsOrImplementsList(PsiElement position) {
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(
+      position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
+    return containingClass != null &&
+           psiElement().afterLeaf(
+             psiElement()
+               .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
+               .withParent(PsiReferenceList.class)
+           ).accepts(position);
   }
 
   private static boolean isInsideAnnotationName(PsiElement position) {

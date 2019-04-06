@@ -5,9 +5,10 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextAware;
-import com.intellij.util.ui.JBUI.ScaleContextSupport;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.ScaleContextSupport;
+import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import java.awt.image.BufferedImage;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
+public class ShadowPainter extends ScaleContextSupport {
   private final Icon myTop;
   private final Icon myTopRight;
   private final Icon myRight;
@@ -39,7 +40,6 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
   private Color myBorderColor;
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft) {
-    super(ScaleContext.create());
     myTop = top;
     myTopRight = topRight;
     myRight = right;
@@ -89,7 +89,7 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
   }
 
   public void paintShadow(Component c, Graphics2D g, int x, int y, int width, int height) {
-    ScaleContext ctx = ScaleContext.create(c, g);
+    ScaleContext ctx = ScaleContext.create(g);
     if (updateScaleContext(ctx)) {
       updateIcons(ctx);
     }

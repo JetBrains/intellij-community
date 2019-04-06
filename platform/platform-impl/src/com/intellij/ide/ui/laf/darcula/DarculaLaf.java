@@ -59,7 +59,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
-      } else {
+      }
+      else {
         return new IdeaLaf();
       }
     }
@@ -92,7 +93,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected static void log(Exception e) {
-//    everything is gonna be alright
+    // everything is gonna be alright
     e.printStackTrace();
   }
 
@@ -111,7 +112,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
               }
             }
           }
-        } else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+        }
+        else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
           for (Object key : defaults.keySet()) {
             if (key instanceof String && ((String)key).endsWith(".font")) {
               final Font font = defaults.getFont(key);
@@ -130,10 +132,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration")) {
-        JFrame.setDefaultLookAndFeelDecorated(true);
-        JDialog.setDefaultLookAndFeelDecorated(true);
-      }
       if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
@@ -158,7 +156,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           defaults.put(entry.getKey(), entry.getValue());
         }
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       log(e);
     }
   }
@@ -216,7 +215,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void initIdeaDefaults(UIDefaults defaults) {
     loadDefaults(defaults);
-    defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
+    defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[]{
       "ctrl C", "copy",
       "meta C", "copy",
       "ctrl V", "paste",
@@ -294,7 +293,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           String darculaKey = key.substring(prefix.length());
           if (value == SYSTEM) {
             darculaGlobalSettings.remove(darculaKey);
-          } else {
+          }
+          else {
             darculaGlobalSettings.put(darculaKey, value);
           }
         }
@@ -315,7 +315,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         defaults.put(key, parseValue(key, value));
       }
     }
-    catch (IOException e) {log(e);}
+    catch (IOException e) {
+      log(e);
+    }
   }
 
   protected Object parseValue(String key, @NotNull String value) {
@@ -376,7 +378,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
     try {
       base.initialize();
-    } catch (Exception ignore) {}
+    }
+    catch (Exception ignore) {
+    }
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       Disposer.register(application, myDisposable);
@@ -407,8 +411,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         if (component instanceof JComponent) {
           for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
             if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
-              || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
-              ) {
+                || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
+            ) {
               c.repaint();
             }
           }
@@ -421,7 +425,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   public void uninitialize() {
     try {
       base.initialize();
-    } catch (Exception ignore) {}
+    }
+    catch (Exception ignore) {
+    }
     Disposer.dispose(myDisposable);
     myDisposable = null;
   }
@@ -429,18 +435,17 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   protected void loadSystemColors(UIDefaults defaults, String[] systemColors, boolean useNative) {
     try {
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
-                                                                   UIDefaults.class,
-                                                                   String[].class,
-                                                                   boolean.class);
+      Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
+                                                                    UIDefaults.class,
+                                                                    String[].class,
+                                                                    boolean.class);
       superMethod.setAccessible(true);
       superMethod.invoke(base, defaults, systemColors, useNative);
     }
-    catch (Exception ignore) {
-      log(ignore);
+    catch (Exception e) {
+      log(e);
     }
   }
-
 
 
   @Override

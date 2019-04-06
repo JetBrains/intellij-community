@@ -327,6 +327,19 @@ def start_client(host, port):
     process_exec_queue(interpreter)
 
 
+def get_ipython_hidden_vars():
+    if IPYTHON and hasattr(__builtin__, 'interpreter'):
+        interpreter = get_interpreter()
+        return interpreter.get_ipython_hidden_vars_dict()
+    else:
+        try:
+            ipython_shell = get_ipython()
+            from _pydev_bundle.pydev_ipython_console_011 import get_ipython_hidden_vars
+            return get_ipython_hidden_vars(ipython_shell)
+        except:
+            pass
+
+
 def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')

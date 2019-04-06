@@ -64,7 +64,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
   @NotNull
-  @org.junit.runners.Parameterized.Parameter(0)
+  @org.junit.runners.Parameterized.Parameter()
   public String gradleVersion;
   private GradleProjectSettings myProjectSettings;
   private String myJdkHome;
@@ -117,12 +117,13 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         Messages.setTestDialog(TestDialog.DEFAULT);
         deleteBuildSystemDirectory();
       },
-      () -> super.tearDown()
+      super::tearDown
     ).run();
   }
 
   @Override
   protected void collectAllowedRoots(final List<String> roots) {
+    super.collectAllowedRoots(roots);
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
@@ -158,6 +159,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListenerAdapter() {
       @Override
       public void onProjectsLinked(@NotNull Collection settings) {
+        super.onProjectsLinked(settings);
         final Object item = ContainerUtil.getFirstItem(settings);
         if (item instanceof GradleProjectSettings) {
           ((GradleProjectSettings)item).setGradleJvm(GRADLE_JDK_NAME);
@@ -283,5 +285,22 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected boolean isGradleNewerThen_4_5() {
     return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.5")) > 0;
+  }
+
+  protected boolean isGradleOlderThen_5_2() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.2")) < 0;
+  }
+
+  protected boolean isGradleOlderThen_4_8() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0;
+  }
+
+  protected boolean isGradleNewerOrSameThen_5_0() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.0")) >= 0;
+  }
+
+  protected String getExtraPropertiesExtensionFqn() {
+    return isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
+                                   : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
   }
 }

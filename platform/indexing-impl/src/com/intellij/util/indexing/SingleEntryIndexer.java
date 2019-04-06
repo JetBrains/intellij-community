@@ -37,9 +37,6 @@ public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, F
   @Override
   @NotNull
   public final Map<Integer, V> map(@NotNull FileContent inputData) {
-    if (inputData == null) {
-      return Collections.emptyMap();
-    }
     final V value = computeValue(inputData);
     if (value == null && !myAcceptNullValues) {
       return Collections.emptyMap();

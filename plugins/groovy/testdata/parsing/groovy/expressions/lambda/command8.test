@@ -17,10 +17,11 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(->)('->')
         PsiWhiteSpace(' ')
-        Call expression
-          Reference expression
-            PsiElement(identifier)('a')
-          PsiWhiteSpace(' ')
-          Command arguments
+        Lambda body
+          Call expression
             Reference expression
-              PsiElement(identifier)('b')
+              PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Reference expression
+                PsiElement(identifier)('b')

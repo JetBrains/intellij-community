@@ -389,12 +389,28 @@ def setup_client_server_paths(paths):
 
 setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
 
+
+def _is_int(filename):
+    # isdigit() doesn't support negative numbers
+    try:
+        int(filename)
+        return True
+    except:
+        return False
+
+def is_real_file(filename):
+    # Check for Jupyter cells
+    return not _is_int(filename) and not filename.startswith("<ipython-input")
+
 # For given file f returns tuple of its absolute path, real path and base name
 def get_abs_path_real_path_and_base_from_file(f):
     try:
         return NORM_PATHS_AND_BASE_CONTAINER[f]
     except:
-        abs_path, real_path = _NormPaths(f)
+        if not is_real_file(f):
+            abs_path, real_path, base = f, f, f
+        else:
+            abs_path, real_path = _NormPaths(f)
         base = basename(real_path)
         ret = abs_path, real_path, base
         NORM_PATHS_AND_BASE_CONTAINER[f] = ret

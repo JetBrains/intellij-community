@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -31,7 +31,6 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -233,7 +232,9 @@ public class Matcher {
 
     if (isTesting) {
       // testing mode;
-      final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
+      final LocalSearchScope scope = (LocalSearchScope)options.getScope();
+      assert scope != null;
+      final PsiElement[] elements = scope.getScope();
 
       PsiElement parent = elements[0].getParent();
       if (matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
@@ -250,9 +251,7 @@ public class Matcher {
       matchContext.getSink().matchingFinished();
       return;
     }
-    if (!findMatches(options, compiledPattern)) {
-      return;
-    }
+    findMatches(options, compiledPattern);
 
     if (scheduler.getTaskQueueEndAction()==null) {
       scheduler.setTaskQueueEndAction(
@@ -263,7 +262,7 @@ public class Matcher {
     scheduler.executeNext();
   }
 
-  private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
+  private void findMatches(MatchOptions options, CompiledPattern compiledPattern) {
     SearchScope searchScope = compiledPattern.getScope();
     final boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
@@ -283,7 +282,9 @@ public class Matcher {
       progress.setText2("");
     }
     else {
-      final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
+      final LocalSearchScope scope = (LocalSearchScope)searchScope;
+      assert scope != null;
+      final PsiElement[] elementsToScan = scope.getScope();
       totalFilesToScan = elementsToScan.length;
 
       for (int i = 0; i < elementsToScan.length; ++i) {
@@ -294,7 +295,6 @@ public class Matcher {
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
-    return true;
   }
 
   private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
@@ -316,11 +316,11 @@ public class Matcher {
    * @throws UnsupportedPatternException
    */
   public List<MatchResult> testFindMatches(String source,
-                                              MatchOptions options,
-                                              boolean fileContext,
-                                              FileType sourceFileType,
-                                              String sourceExtension,
-                                              boolean physicalSourceFile)
+                                           MatchOptions options,
+                                           boolean fileContext,
+                                           FileType sourceFileType,
+                                           String sourceExtension,
+                                           boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
 
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -334,11 +334,6 @@ public class Matcher {
 
       options.setScope(new LocalSearchScope(elements));
       testFindMatches(sink, options);
-    }
-    catch (IncorrectOperationException e) {
-      MalformedPatternException exception = new MalformedPatternException();
-      exception.initCause(e);
-      throw exception;
     } finally {
       options.setScope(null);
     }

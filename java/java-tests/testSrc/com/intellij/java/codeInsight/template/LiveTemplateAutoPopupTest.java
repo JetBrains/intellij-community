@@ -14,7 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
   @Override
-  protected void setUp() {
+  protected void setUp() throws Exception {
     super.setUp();
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
   }

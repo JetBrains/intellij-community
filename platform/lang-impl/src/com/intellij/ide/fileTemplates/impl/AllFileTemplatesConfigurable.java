@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -14,10 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -28,6 +25,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -41,18 +39,33 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
-/*
- * @author: MYakovlev
- */
-
-public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
+public final class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
                                                      Configurable.VariableProjectAppLevel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
+  private static final Logger LOG = Logger.getInstance(AllFileTemplatesConfigurable.class);
 
   private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String OTHER_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+
+  final static class Provider extends ConfigurableProvider {
+    private final Project myProject;
+
+    Provider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    public Configurable createConfigurable() {
+      return new AllFileTemplatesConfigurable(myProject);
+    }
+
+    @Override
+    public boolean canCreateConfigurable() {
+      return !PlatformUtils.isDataGrip();
+    }
+  }
 
   private final Project myProject;
   private final FileTemplateManager myManager;
@@ -247,7 +260,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
           return;
@@ -264,7 +276,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myOtherTemplatesList));
       }
     };
@@ -276,7 +287,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         e.getPresentation().setEnabled(myCurrentTab != myCodeTemplatesList
                                        && myCurrentTab != myOtherTemplatesList
                                        && myCurrentTab.getSelectedTemplate() != null);
@@ -290,7 +300,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
           return;
@@ -426,7 +435,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   @Override
   public boolean isProjectLevel() {
-    return myScheme != null && !myScheme.getProject().isDefault();
+    return myScheme != null && myScheme != FileTemplatesScheme.DEFAULT && !myScheme.getProject().isDefault();
   }
 
   // internal template could not be removed and should be rendered bold

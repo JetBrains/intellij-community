@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class MvcCommand {
 
-  public static final Collection<String> ourEnvironments = Arrays.asList("prod", "test", "dev");
+  public static final Collection<String> ourEnvironments = ContainerUtil.immutableList("prod", "test", "dev");
 
   private final Map<String, String> myEnvVariables = ContainerUtil.newHashMap();
   private boolean myPassParentEnvs = true;

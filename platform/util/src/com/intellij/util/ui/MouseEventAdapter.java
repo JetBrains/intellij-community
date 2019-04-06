@@ -128,7 +128,8 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
                                event.isPopupTrigger(),
                                event.getScrollType(),
                                event.getScrollAmount(),
-                               event.getWheelRotation());
+                               event.getWheelRotation(),
+                               event.getPreciseWheelRotation());
   }
 
   @NotNull
@@ -138,5 +139,18 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
                                   event.isPopupTrigger(),
                                   event.getPath(),
                                   event.getMenuSelectionManager());
+  }
+
+  private static boolean dispatch(Component component, @NotNull MouseEvent event) {
+    component.dispatchEvent(event);
+    return event.isConsumed();
+  }
+
+  public static void redispatch(@NotNull MouseEvent event, Component source) {
+    if (source != null && dispatch(source, convert(event, source))) event.consume();
+  }
+
+  public static void redispatch(@NotNull MouseEvent event, Component source, int x, int y) {
+    if (source != null && dispatch(source, convert(event, source, x, y))) event.consume();
   }
 }

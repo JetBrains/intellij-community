@@ -3,7 +3,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,11 +15,9 @@ import java.awt.*;
  * <p>
  * Inlay becomes invalid on explicit disposal, or when a document range fully containing inlay's offset, is deleted.
  * <p>
- * WARNING! This is an experimental API, it can change at any time.
  *
  * @see InlayModel
  */
-@ApiStatus.Experimental
 public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable, UserDataHolderEx {
   /**
    * Returns editor, this custom visual element belongs to.
@@ -32,7 +29,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * Defines relative position of inlay element with respect to the containing text.
    */
   @NotNull
-  VerticalAlignment getVerticalAlignment();
+  Placement getPlacement();
 
   /**
    * Tells whether this element is valid. Inlay becomes invalid on explicit disposal,
@@ -103,7 +100,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   void repaint();
 
   /**
-   * @see #getVerticalAlignment()
+   * @see #getPlacement()
    */
-  enum VerticalAlignment { INLINE, ABOVE_LINE, BELOW_LINE }
+  enum Placement { INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END }
 }

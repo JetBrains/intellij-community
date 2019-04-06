@@ -19,6 +19,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
@@ -100,6 +101,7 @@ import java.util.stream.Stream;
  * @author Eugene Zhuravlev
  */
 public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
+  private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private static final NotificationGroup NOTIFICATIONS = new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false);
@@ -112,6 +114,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<>();
   private final Set<ID<?, ?>> myPsiDependentIndices = new THashSet<>();
   private final Set<FileType> myNoLimitCheckTypes = new THashSet<>();
+
+  private volatile boolean myExtensionsRelatedDataWasLoaded;
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
   @NotNull private final ChangedFilesCollector myChangedFilesCollector;
@@ -194,24 +198,28 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       @Override
       public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-        final Map<FileType, Set<String>> oldExtensions = myTypeToExtensionMap;
+        final Map<FileType, Set<String>> oldTypeToExtensionsMap = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
-        if (oldExtensions != null) {
-          final Map<FileType, Set<String>> newExtensions = new THashMap<>();
+        if (oldTypeToExtensionsMap != null) {
+          final Map<FileType, Set<String>> newTypeToExtensionsMap = new THashMap<>();
           for (FileType type : myFileTypeManager.getRegisteredFileTypes()) {
-            newExtensions.put(type, getExtensions(type));
+            newTypeToExtensionsMap.put(type, getExtensions(type));
           }
           // we are interested only in extension changes or removals.
           // addition of an extension is handled separately by RootsChanged event
-          if (!newExtensions.keySet().containsAll(oldExtensions.keySet())) {
-            rebuildAllIndices();
+          if (!newTypeToExtensionsMap.keySet().containsAll(oldTypeToExtensionsMap.keySet())) {
+            Set<FileType> removedFileTypes = new HashSet<>(oldTypeToExtensionsMap.keySet());
+            removedFileTypes.removeAll(newTypeToExtensionsMap.keySet());
+            rebuildAllIndices("The following file types were removed/are no longer associated: " + removedFileTypes);
             return;
           }
-          for (Map.Entry<FileType, Set<String>> entry : oldExtensions.entrySet()) {
+          for (Map.Entry<FileType, Set<String>> entry : oldTypeToExtensionsMap.entrySet()) {
             FileType fileType = entry.getKey();
             Set<String> strings = entry.getValue();
-            if (!newExtensions.get(fileType).containsAll(strings)) {
-              rebuildAllIndices();
+            if (!newTypeToExtensionsMap.get(fileType).containsAll(strings)) {
+              Set<String> removedExtensions = new HashSet<>(strings);
+              removedExtensions.removeAll(newTypeToExtensionsMap.get(fileType));
+              rebuildAllIndices(fileType.getName() + " is no longer associated with extension(s) " + String.join(",", removedExtensions));
               return;
             }
           }
@@ -227,9 +235,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         return set;
       }
 
-      private void rebuildAllIndices() {
+      private void rebuildAllIndices(@NotNull String reason) {
         doClearIndices();
-        scheduleIndexRebuild("File type change");
+        scheduleIndexRebuild("File type change" + ", " + reason);
       }
     });
 
@@ -308,14 +316,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void initComponent() {
-    long started = System.nanoTime();
-    List<FileBasedIndexExtension> extensions = IndexInfrastructure.hasIndices() ?
-                                               FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList() : Collections.emptyList();
-    LOG.info("Index exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.size());
-    started = System.nanoTime();
-
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));
-    LOG.info("Index scheduled:" + (System.nanoTime() - started) / 1000000);
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization());
+    
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
     }
@@ -346,6 +348,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
+      } else {
+        LOG.info("Index " + name + " will be built.");
       }
       if (extension.hasSnapshotMapping() && versionChanged) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
@@ -458,22 +462,11 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @NotNull
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
-                                                               @NotNull final MemoryIndexStorage<K, V> storage)
+                                                                      @NotNull final MemoryIndexStorage<K, V> storage)
     throws StorageException, IOException {
-    final VfsAwareMapReduceIndex<K, V, FileContent> index;
-    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      final UpdatableIndex<K, V, FileContent> custom =
-        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(extension, storage);
-      if (!(custom instanceof VfsAwareMapReduceIndex)) {
-        return custom;
-      }
-      index = (VfsAwareMapReduceIndex<K, V, FileContent>)custom;
-    }
-    else {
-      index = new VfsAwareMapReduceIndex<>(extension, storage);
-    }
-
-    return index;
+    return extension instanceof CustomImplementationFileBasedIndexExtension
+           ? ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, storage)
+           : new VfsAwareMapReduceIndex<>(extension, storage);
   }
 
   @Override
@@ -657,6 +650,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     return false;
   }
 
+  @NotNull
+  @Override
+  public <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
+    int fileId = getFileId(virtualFile);
+    Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
+    return ContainerUtil.notNullize(map);
+  }
+
   private static final ThreadLocal<Integer> myUpToDateCheckState = new ThreadLocal<>();
 
   public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
@@ -700,6 +701,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
    */
   @Override
   public <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+    waitUntilIndicesAreInitialized();
     ensureUpToDate(indexId, project, filter, null);
   }
 
@@ -1021,7 +1023,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         minMax[0] = minMax[1] = set.get(0);
       }
       set.forEach(value -> {
-        if (value < 0) value = -value;
         minMax[0] = Math.min(minMax[0], value);
         minMax[1] = Math.max(minMax[1], value);
         return true;
@@ -1030,7 +1031,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myMinId = minMax[0];
       myBitMask = new long[((myMaxId - myMinId) >> SHIFT) + 1];
       set.forEach(value -> {
-        if (value < 0) value = -value;
         value -= myMinId;
         myBitMask[value >> SHIFT] |= (1L << (value & MASK));
         return true;
@@ -1443,6 +1443,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
     cleanupProcessedFlag();
+    if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
+    
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
@@ -1469,6 +1471,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         TransactionGuard.getInstance().submitTransactionLater(app, rebuildRunnable);
       }
     }
+  }
+
+  private static void reportUnexpectedAsyncInitState() {
+    LOG.error("Unexpected async indices initialization problem");
   }
 
   public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -1646,9 +1652,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     fc.putUserData(IndexingDataKeys.PROJECT, project);
   }
 
-  static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
-
   private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
+    if (!myExtensionsRelatedDataWasLoaded) reportUnexpectedAsyncInitState();
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
@@ -1658,10 +1663,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     assert index != null;
 
     boolean hasContent = currentFC != null;
-    if (hasContent && currentFC.getUserData(ourPhysicalContentKey) == null) {
-      currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
-    }
 
+    if (ourIndexedFile.get() != null) throw new AssertionError("Reentrant indexing");
+    ourIndexedFile.set(file);
     boolean updateCalculated = false;
     try {
       // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
@@ -1679,6 +1683,14 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
       throw exception;
     }
+    finally {
+      ourIndexedFile.remove();
+    }
+  }
+
+  @Override
+  public VirtualFile getFileBeingCurrentlyIndexed() {
+    return ourIndexedFile.get();
   }
 
   private class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
@@ -1806,9 +1818,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         if (getInputFilter(indexId).acceptInput(file)) {
           if (fileContent == null) {
             fileContent = new FileContentImpl(file);
-            if (fileId < 0) {
-              fileId = -fileId;
-            }
           }
           updateSingleIndex(indexId, file, fileId, fileContent);
         }
@@ -2115,10 +2124,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
       for(VirtualFile file:files) {
         int fileId = ((VirtualFileWithId)file).getId();
-        if (fileId > 0) {
-          if (usedFileIds.get(fileId)) continue;
-          usedFileIds.set(fileId);
-        }
+        if (usedFileIds.get(fileId)) continue;
+        usedFileIds.set(fileId);
+        
         if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
         else archiveFiles.add(file);
       }
@@ -2353,13 +2361,17 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private boolean currentVersionCorrupted;
     private SerializationManagerEx mySerializationManagerEx;
 
-    FileIndexDataInitialization(@NotNull List<? extends FileBasedIndexExtension> extensions) {
-      // init contentless indices first
-      if (!extensions.isEmpty()) {
-        extensions = ContainerUtil.copyList(extensions);
-        extensions.sort(Comparator.comparingInt(o -> o.dependsOnFileContent() ? 1 : 0));
-      }
-      for (FileBasedIndexExtension<?, ?> extension : extensions) {
+    private void initAssociatedDataForExtensions() {
+      long started = System.nanoTime();
+      Iterator<FileBasedIndexExtension> extensions = 
+        IndexInfrastructure.hasIndices() ?
+        ((ExtensionPointImpl<FileBasedIndexExtension>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint(null)).iterator() :
+        Collections.emptyIterator();
+
+      // todo: init contentless indices first ?
+      while (extensions.hasNext()) {
+        FileBasedIndexExtension<?, ?> extension = extensions.next();
+        if (extension == null) break;
         ID<?, ?> name = extension.getName();
         RebuildStatus.registerIndex(name);
 
@@ -2388,10 +2400,15 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         });
       }
+
+      myExtensionsRelatedDataWasLoaded = true;
+      LOG.info("File index extensions iterated:" + (System.nanoTime() - started) / 1000000);
     }
 
     @Override
     protected void prepare() {
+      initAssociatedDataForExtensions();
+      
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
 

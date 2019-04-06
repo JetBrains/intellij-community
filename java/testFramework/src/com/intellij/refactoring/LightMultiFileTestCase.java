@@ -18,14 +18,13 @@ public abstract class LightMultiFileTestCase extends LightCodeInsightFixtureTest
     doTest(performAction, getTestName(lowercaseFirstLetter));
   }
 
-  protected void doTest (final ThrowableRunnable<? extends Exception> performAction, final String testName) {
+  protected void doTest(final ThrowableRunnable<? extends Exception> performAction, final String testName) {
     try {
-
       VirtualFile actualDirectory = myFixture.copyDirectoryToProject(testName + "/before", "");
 
       performAction.run();
-      
-      final VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(getTestDataPath().replace(File.separatorChar, '/') + testName + "/after");
+
+      VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(getTestDataPath().replace(File.separatorChar, '/') + testName + "/after");
       assertNotNull(rootAfter);
 
       PlatformTestUtil.assertDirectoriesEqual(rootAfter, actualDirectory);
@@ -36,9 +35,5 @@ public abstract class LightMultiFileTestCase extends LightCodeInsightFixtureTest
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  protected interface PerformAction {
-    void performAction() throws Exception;
   }
 }

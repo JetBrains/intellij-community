@@ -1,10 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -16,10 +14,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Aleev
  */
 public class ShowConfigurationsAction extends ToggleAction implements DumbAware {
-  public ShowConfigurationsAction() {
-    super(ExecutionBundle.message("run.dashboard.show.configurations.action.name"), null, AllIcons.Actions.ShowAsTree);
-  }
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     RunDashboardContent runDashboardContent = e.getData(RunDashboardContent.KEY);

@@ -33,8 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
@@ -82,6 +82,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private int myAdAlignment = SwingConstants.LEFT;
   private BooleanFunction<KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
+  private boolean myNormalWindowLevel;
+  private @Nullable Runnable myOkHandler;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -239,6 +241,10 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
+
+    popup.setNormalWindowLevel(myNormalWindowLevel);
+    popup.setOkHandler(myOkHandler);
+
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
@@ -363,8 +369,22 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   @Override
+  public ComponentPopupBuilder setNormalWindowLevel(boolean b) {
+    myNormalWindowLevel = b;
+    return this;
+  }
+
+  @NotNull
+  @Override
   public ComponentPopupBuilder setBorderColor(Color color) {
     myBorderColor = color;
+    return this;
+  }
+  
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler) {
+    myOkHandler = okHandler;
     return this;
   }
 }

@@ -34,7 +34,7 @@ except ImportError:
 from IPython.core import release
 
 from _pydev_bundle.pydev_imports import xmlrpclib
-from _pydevd_bundle.pydevd_constants import dict_keys
+from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
 
 default_pydev_banner_parts = default_banner_parts
 
@@ -475,4 +475,25 @@ def get_pydev_frontend(rpc_client):
 
     return _PyDevFrontEndContainer._instance
 
-    
+
+def get_ipython_hidden_vars(ipython_shell):
+    try:
+        if hasattr(ipython_shell, 'user_ns_hidden'):
+            user_ns_hidden = ipython_shell.user_ns_hidden
+            if isinstance(user_ns_hidden, dict):
+                # Since IPython 2 dict `user_ns_hidden` contains hidden variables and values
+                user_hidden_dict = user_ns_hidden.copy()
+            else:
+                # In IPython 1.x `user_ns_hidden` used to be a set with names of hidden variables
+                user_hidden_dict = dict([(key, val) for key, val in dict_iter_items(ipython_shell.user_ns)
+                                         if key in user_ns_hidden])
+
+            # while `_`, `__` and `___` were not initialized, they are not presented in `user_ns_hidden`
+            user_hidden_dict.setdefault('_', '')
+            user_hidden_dict.setdefault('__', '')
+            user_hidden_dict.setdefault('___', '')
+
+            return user_hidden_dict
+    except:
+        # Getting IPython variables shouldn't break loading frame variables
+        traceback.print_exc()

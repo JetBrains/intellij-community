@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
@@ -17,6 +16,7 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import org.xmlpull.mxp1.MXParser
 import org.xmlpull.v1.XmlPullParser
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -132,7 +132,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     return false
   }
 
-  fun loadScheme(fileName: String, input: InputStream): MUTABLE_SCHEME? {
+  fun loadScheme(fileName: String, input: InputStream?, preloadedBytes: ByteArray?): MUTABLE_SCHEME? {
     val extension = schemeManager.getFileExtension(fileName, isAllowAny = false)
     if (isFileScheduledForDeleteInThisLoadSession(fileName)) {
       LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
@@ -145,9 +145,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
       if (element != null) {
-        val digest = getDigest()
-        serializeElementToBinary(element, DigestOutputStream(digest))
-        info.digest = digest.digest()
+        info.digest = element.digest(getDigest())
       }
       info.schemeKey = schemeName
       return info
@@ -155,7 +153,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
 
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
-      val bytes = input.readBytes()
+      val bytes = preloadedBytes ?: input!!.readBytes()
       lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> {
           if (parser.eventType == XmlPullParser.START_TAG) {
@@ -179,7 +177,10 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       }
     }
     else {
-      val element = JDOMUtil.load(input.bufferedReader())
+      val element = when (preloadedBytes) {
+        null -> JDOMUtil.load(input!!.bufferedReader())
+        else -> JDOMUtil.load(ByteArrayInputStream(preloadedBytes))
+      }
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, isDuringLoad) ?: return null
       val schemeKey = processor.getSchemeKey(scheme!!)
       if (!checkExisting(schemeKey, fileName, fileNameWithoutExtension, extension)) {
@@ -289,11 +290,11 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
   override fun toString() = fileName
 }
 
-internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runUndoTransparentWriteAction { createChildData(requestor, fileName) }
+internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {
+  return findChild(fileName) ?: runAsWriteActionIfNeeded { createChildData(requestor, fileName) }
 }
 
-internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {
+internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   ioDir.createDirectories()
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))

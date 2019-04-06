@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -95,19 +94,6 @@ public class JavaKeywordCompletion {
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
-  private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
-    psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
-      not(
-        or(
-           psiElement(PsiExpressionStatement.class),
-           psiElement(PsiPrefixExpression.class)
-        )
-      )
-    )),
-    not(psiElement().afterLeaf(".")),
-    not(JavaCompletionContributor.IN_SWITCH_LABEL)
-  );
-
   private final CompletionParameters myParameters;
   private final JavaCompletionSession mySession;
   private final PsiElement myPosition;
@@ -118,8 +104,7 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myKeywordMatcher = Registry.is("ide.completion.typo.tolerance") ? session.getMatcher()
-                                                                    : new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
+    myKeywordMatcher = new StartOnlyMatcher(session.getMatcher());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -429,6 +414,9 @@ public class JavaKeywordCompletion {
     }
 
     if (isExpressionPosition(myPosition)) {
+      PsiElement parent = myPosition.getParent();
+      PsiElement grandParent = parent == null ? null : parent.getParent();
+      boolean allowExprKeywords = !(grandParent instanceof PsiExpressionStatement) && !(grandParent instanceof PsiUnaryExpression);
       if (PsiTreeUtil.getParentOfType(myPosition, PsiAnnotation.class) == null) {
         if (!statementPosition) {
           addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.NEW), TailType.INSERT_SPACE));
@@ -436,9 +424,11 @@ public class JavaKeywordCompletion {
             addKeyword(new OverridableSpace(createKeyword(PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
           }
         }
-        addKeyword(createKeyword(PsiKeyword.NULL));
+        if (allowExprKeywords) {
+          addKeyword(createKeyword(PsiKeyword.NULL));
+        }
       }
-      if (mayExpectBoolean(myParameters)) {
+      if (allowExprKeywords && mayExpectBoolean(myParameters)) {
         addKeyword(createKeyword(PsiKeyword.TRUE));
         addKeyword(createKeyword(PsiKeyword.FALSE));
       }
@@ -597,8 +587,13 @@ public class JavaKeywordCompletion {
   }
 
   private static boolean isExpressionPosition(PsiElement position) {
-    return EXPR_KEYWORDS.accepts(position) && LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE ||
-           psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position);
+    if (psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position)) return true;
+
+    PsiElement parent = position.getParent();
+    return parent instanceof PsiReferenceExpression &&
+           !((PsiReferenceExpression)parent).isQualified() &&
+           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) &&
+           LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE;
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {

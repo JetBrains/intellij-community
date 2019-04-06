@@ -31,7 +31,7 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
   private final TObjectHashingStrategy<T> myStrategy;
 
   public SoftArrayHashMap() {
-    this(ContainerUtil.<T>canonicalStrategy());
+    this(ContainerUtil.canonicalStrategy());
   }
 
   public SoftArrayHashMap(@NotNull TObjectHashingStrategy<T> strategy) {
@@ -87,7 +87,7 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
       }
       SoftArrayHashMap<T, V> softArrayHashMap = myContinuationMap.get(key);
       if (softArrayHashMap == null) {
-        myContinuationMap.put(key, softArrayHashMap = new SoftArrayHashMap<T, V>(myStrategy));
+        myContinuationMap.put(key, softArrayHashMap = new SoftArrayHashMap<>(myStrategy));
       }
       softArrayHashMap.put(array, index + 1, value);
     }
@@ -113,7 +113,7 @@ public class SoftArrayHashMap<T,V> implements Cloneable {
 
   @Override
   public final SoftArrayHashMap<T,V> clone() {
-    final SoftArrayHashMap<T, V> copy = new SoftArrayHashMap<T, V>(myStrategy);
+    final SoftArrayHashMap<T, V> copy = new SoftArrayHashMap<>(myStrategy);
     copy.myContinuationMap = copyMap(myContinuationMap);
     copy.myValuesMap = copyMap(myValuesMap);
     copy.myEmptyValue = myEmptyValue;

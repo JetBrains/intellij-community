@@ -49,6 +49,9 @@
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
     <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
+    <multiHostInjector implementation="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector"/>
+    <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
+
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"
                      key="inspections.unresolved.alias.name" level="ERROR"
@@ -77,6 +80,13 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaDeprecation"
+                     key="inspections.schema.deprecation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

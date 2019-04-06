@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -54,9 +52,7 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
 
 
-    WriteCommandAction.writeCommandAction(project).withName(REFACTORING_NAME).run(() -> {
-      replaceAllAndDeleteImport(referenceElements, null, staticStatement);
-    });
+    WriteCommandAction.writeCommandAction(project).withName(REFACTORING_NAME).run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 }

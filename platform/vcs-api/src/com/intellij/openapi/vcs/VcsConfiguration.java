@@ -58,6 +58,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean USE_CUSTOM_SHELF_PATH = false;
   public String CUSTOM_SHELF_PATH = null;
   public boolean MOVE_SHELVES = false;
+  public boolean ADD_EXTERNAL_FILES_SILENTLY = false;
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_SHELF = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;

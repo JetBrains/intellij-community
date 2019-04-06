@@ -91,11 +91,11 @@ public class AdjustWhiteSpacesState extends State {
     }
   }
 
-  private boolean isReformatSelectedRangesContext() {
+  boolean isReformatSelectedRangesContext() {
     return myReformatContext && !ContainerUtil.isEmpty(myAlignmentsInsideRangesToModify);
   }
 
-  private void defineAlignOffset(final LeafBlockWrapper block) {
+  void defineAlignOffset(final LeafBlockWrapper block) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = current.getAlignment();

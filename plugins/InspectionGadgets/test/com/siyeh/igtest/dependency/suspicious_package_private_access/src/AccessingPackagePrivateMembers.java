@@ -7,19 +7,23 @@ import static xxx.StaticMembers.*;
  * @see PublicClass#packagePrivateField
  */
 public class AccessingPackagePrivateMembers {
-  Object field = new <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>();
+  static Object staticField = <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">new PackagePrivateClass()</warning>;
+  Object field = <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">new PackagePrivateClass()</warning>;
   {
-    new <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>();
+    <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">new PackagePrivateClass()</warning>;
   }
   static {
-    new <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>();
+    <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">new PackagePrivateClass()</warning>;
   }
 
   public void main() {
-    new <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>();
+    <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">new PackagePrivateClass()</warning>;
     <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning> variable;
 
-    PublicClass aClass = new PublicClass();
+    PublicClass aClass = new PublicClass(1);
+    PublicClassWithDefaultConstructor aClass2 = new PublicClassWithDefaultConstructor();
+    <warning descr="Constructor PublicClass.PublicClass() is package-private, but declared in a different module 'dep'">new PublicClass()</warning>;
+    <warning descr="Constructor PublicClass.PublicClass(boolean) is package-private, but declared in a different module 'dep'">new PublicClass(true)</warning>;
 
     System.out.println(aClass.publicField);
     System.out.println(aClass.<warning descr="Field PublicClass.packagePrivateField is package-private, but declared in a different module 'dep'">packagePrivateField</warning>);
@@ -32,5 +36,9 @@ public class AccessingPackagePrivateMembers {
 
     System.out.println(<warning descr="Field StaticMembers.IMPORTED_FIELD is package-private, but declared in a different module 'dep'">IMPORTED_FIELD</warning>);
     <warning descr="Method StaticMembers.importedMethod() is package-private, but declared in a different module 'dep'">importedMethod</warning>();
+
+    <warning descr="Class xxx.InnerClasses.PackagePrivateInnerClass is package-private, but declared in a different module 'dep'">new InnerClasses.<warning descr="Class xxx.InnerClasses.PackagePrivateInnerClass is package-private, but declared in a different module 'dep'">PackagePrivateInnerClass</warning>()</warning>;
+    <warning descr="Constructor PackagePrivateInnerClassWithConstructor.PackagePrivateInnerClassWithConstructor() is package-private, but declared in a different module 'dep'">new InnerClasses.<warning descr="Class xxx.InnerClasses.PackagePrivateInnerClassWithConstructor is package-private, but declared in a different module 'dep'">PackagePrivateInnerClassWithConstructor</warning>()</warning>;
+    <warning descr="Constructor ClassWithPackagePrivateConstructor.ClassWithPackagePrivateConstructor() is package-private, but declared in a different module 'dep'">new InnerClasses.ClassWithPackagePrivateConstructor()</warning>;
   }
 }

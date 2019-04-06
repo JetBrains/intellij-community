@@ -42,6 +42,7 @@ public class GitPushRepoResult {
     UP_TO_DATE,
     FORCED,
     REJECTED_NO_FF,
+    REJECTED_STALE_INFO,
     REJECTED_OTHER,
     ERROR,
     NOT_PUSHED
@@ -157,7 +158,9 @@ public class GitPushRepoResult {
       case NEW_REF:
         return Type.NEW_BRANCH;
       case REJECTED:
-        return nativeResult.isNonFFUpdate() ? Type.REJECTED_NO_FF : Type.REJECTED_OTHER;
+        if (nativeResult.isNonFFUpdate()) return Type.REJECTED_NO_FF;
+        if (nativeResult.isStaleInfo()) return Type.REJECTED_STALE_INFO;
+        return Type.REJECTED_OTHER;
       case UP_TO_DATE:
         return Type.UP_TO_DATE;
       case ERROR:

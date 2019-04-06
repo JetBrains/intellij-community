@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
@@ -9,17 +10,17 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.ComponentValidator;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -33,8 +34,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +47,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
   };
 
   private final AnimatedIcon.Default myAnimatedIcon = new AnimatedIcon.Default();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   private final JBTable myTable = new JBTable(myModel) {
     @Override
@@ -135,119 +135,51 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myTable.setDefaultRenderer(Object.class, new ColoredTableCellRenderer() {
-      final SimpleTextAttributes ERROR_ATTRIBUTES =
-        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, DialogWrapper.ERROR_FOREGROUND_COLOR);
-
-      @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
-        if (row >= 0 && row < myModel.getRowCount()) {
-          UrlInfo info = myModel.getRowValue(row);
-          setBorder(null);
-          setForeground(selected ? table.getSelectionForeground() : table.getForeground());
-          setBackground(selected ? table.getSelectionBackground() : table.getBackground());
-          append(info.name, info.errorTooltip != null && !info.progress ? ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-
-      @Override
-      protected SimpleTextAttributes modifyAttributes(SimpleTextAttributes attributes) {
-        return attributes;
-      }
-    });
-
-    DefaultCellEditor editor = new DefaultCellEditor(new JTextField());
+    ExtendableTextField cellEditor = new ExtendableTextField();
+    DefaultCellEditor editor = new StatefulValidatingCellEditor(cellEditor, myDisposable).
+      withStateUpdater(vi -> ValidationUtils.setExtension(cellEditor, vi));
     editor.setClickCountToStart(1);
     myTable.setDefaultEditor(Object.class, editor);
 
-    createValidatorHandler();
+    myTable.setDefaultRenderer(Object.class, new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
+        { setIpad(JBUI.emptyInsets());}
+
+        @Override
+        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+          if (row >= 0 && row < myModel.getRowCount()) {
+            UrlInfo info = myModel.getRowValue(row);
+            setForeground(selected ? table.getSelectionForeground() : table.getForeground());
+            setBackground(selected ? table.getSelectionBackground() : table.getBackground());
+            append(info.name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        }
+
+        @Override
+        protected SimpleTextAttributes modifyAttributes(SimpleTextAttributes attributes) {
+          return attributes;
+        }
+      }).
+      bindToEditorSize(cellEditor::getPreferredSize).
+      withCellValidator((value, row, column) -> {
+        if (row >= 0 && row < myModel.getRowCount()) {
+          UrlInfo info = myModel.getRowValue(row);
+          return info.errorTooltip == null || info.progress ? null : new ValidationInfo(info.errorTooltip);
+        }
+        else {
+          return null;
+        }
+      }));
+
+    new CellTooltipManager(myDisposable).
+      withCellComponentProvider(CellComponentProvider.forTable(myTable)).
+      installOn(myTable);
 
     return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().createPanel();
   }
 
-  private void createValidatorHandler() {
-    MouseAdapter listener = new MouseAdapter() {
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        showErrorPopup(e);
-      }
-
-      @Override
-      public void mouseExited(MouseEvent event) {
-        if (!myTable.contains(event.getX(), event.getY()) || myTable.rowAtPoint(event.getPoint()) == myTable.getEditingRow()) {
-          hideErrorPopup();
-        }
-      }
-
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        showErrorPopup(e);
-      }
-    };
-    myTable.addMouseListener(listener);
-    myTable.addMouseMotionListener(listener);
-  }
-
-  private JBPopup myErrorPopup;
-  private JLabel myErrorLabel;
-
-  private void showErrorPopup(@NotNull MouseEvent event) {
-    int row = myTable.rowAtPoint(event.getPoint());
-    if (row == -1 || row == myTable.getEditingRow()) {
-      hideErrorPopup();
-      return;
-    }
-
-    UrlInfo item = myModel.getItem(row);
-    if (item.progress || item.errorTooltip == null) {
-      hideErrorPopup();
-      return;
-    }
-
-    if (myErrorPopup != null && myErrorPopup.isVisible() && myErrorPopup.getContent().getParent() != null) {
-      myErrorLabel.setText(item.errorTooltip);
-      showErrorPopup(row, true);
-      return;
-    }
-
-    hideErrorPopup();
-
-    myErrorLabel = new JLabel(item.errorTooltip);
-    myErrorLabel.setOpaque(true);
-    myErrorLabel.setBackground(JBUI.CurrentTheme.Validator.errorBackgroundColor());
-    myErrorLabel.setBorder(ComponentValidator.getBorder());
-
-    myErrorPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myErrorLabel, null)
-      .setBorderColor(JBUI.CurrentTheme.Validator.errorBorderColor()).setShowShadow(false).createPopup();
-
-    showErrorPopup(row, false);
-  }
-
-  private void showErrorPopup(int row, boolean update) {
-    Rectangle cellRect = myTable.getCellRect(row, 0, false);
-    Point location = new Point(cellRect.x + JBUI.scale(40), cellRect.y - myErrorLabel.getPreferredSize().height - JBUI.scale(4));
-    SwingUtilities.convertPointToScreen(location, myTable);
-
-    if (update) {
-      myErrorPopup.pack(true, true);
-      myErrorPopup.setLocation(location);
-    }
-    else {
-      myErrorPopup.showInScreenCoordinates(myTable, location);
-    }
-  }
-
   @Override
   public void disposeUIResources() {
-    hideErrorPopup();
-  }
-
-  private void hideErrorPopup() {
-    if (myErrorPopup != null) {
-      myErrorPopup.cancel();
-      myErrorPopup = null;
-      myErrorLabel = null;
-    }
+    Disposer.dispose(myDisposable);
   }
 
   private void validateRepositories(@NotNull List<UrlInfo> urls) {

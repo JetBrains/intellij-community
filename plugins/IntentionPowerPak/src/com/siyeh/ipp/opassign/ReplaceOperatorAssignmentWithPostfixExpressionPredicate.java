@@ -1,27 +1,17 @@
-/*
- * Copyright 2009-2012 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.opassign;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceOperatorAssignmentWithPostfixExpressionPredicate implements PsiElementPredicate {
-
-  private static final Integer ONE = Integer.valueOf(1);
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
@@ -33,12 +23,11 @@ class ReplaceOperatorAssignmentWithPostfixExpressionPredicate implements PsiElem
     if (!JavaTokenType.PLUSEQ.equals(tokenType) && !JavaTokenType.MINUSEQ.equals(tokenType)) {
       return false;
     }
-    final PsiExpression rhs = assignmentExpression.getRExpression();
-    if (!(rhs instanceof PsiLiteralExpression)) {
+    final PsiExpression lhs = assignmentExpression.getLExpression();
+    if (!TypeConversionUtil.isNumericType(lhs.getType())) {
       return false;
     }
-    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)rhs;
-    final Object value = literalExpression.getValue();
-    return ONE == value;
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression())  ;
+    return ExpressionUtils.isLiteral(rhs, 1);
   }
 }

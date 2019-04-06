@@ -72,7 +72,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private IntegerField myRightMarginField;
 
-  private JComboBox myLineSeparatorCombo;
+  private com.intellij.openapi.ui.ComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private JBCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JCheckBox myEnableFormatterTags;
@@ -352,5 +352,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
     myExcludedFilesList.setSchemesModel(model);
+  }
+
+  @Override
+  public void dispose() {
+    for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
+      option.disposeUIResources();
+    }
+    super.dispose();
   }
 }

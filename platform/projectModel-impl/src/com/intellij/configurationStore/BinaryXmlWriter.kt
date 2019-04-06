@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.util.containers.ObjectIntHashMap
@@ -57,9 +57,12 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
           out.writeByte(TypeMarker.CDATA.ordinal)
           writeString(item.text)
         }
-        is Text -> if (!isAllWhitespace(item)) {
-          out.writeByte(TypeMarker.TEXT.ordinal)
-          writeString(item.text)
+        is Text -> {
+          val text = item.text
+          if (text != null && !Verifier.isAllXMLWhitespace(text)) {
+            out.writeByte(TypeMarker.TEXT.ordinal)
+            writeString(text)
+          }
         }
       }
     }
@@ -106,9 +109,5 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
       }
       else -> throw IllegalArgumentException("Integer out of range: $v")
     }
-  }
-
-  private fun isAllWhitespace(obj: Text): Boolean {
-    return obj.text?.all { Verifier.isXMLWhitespace(it) } ?: return true
   }
 }

@@ -62,7 +62,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myTitle;
 
   private boolean myStoppedAlready;
-  private boolean myStarted;
   protected boolean myBackgrounded;
   int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
@@ -120,16 +119,16 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public synchronized void start() {
-    LOG.assertTrue(!isRunning());
-    LOG.assertTrue(!myStoppedAlready);
+  public void start() {
+    synchronized (getLock()) {
+      LOG.assertTrue(!isRunning());
+      LOG.assertTrue(!myStoppedAlready);
 
-    super.start();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      prepareShowDialog();
+      super.start();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        prepareShowDialog();
+      }
     }
-
-    myStarted = true;
   }
 
   /**
@@ -144,10 +143,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   public void setDelayInMillis(int delayInMillis) {
     myDelayInMillis = delayInMillis;
-  }
-
-  private synchronized boolean isStarted() {
-    return myStarted;
   }
 
   protected void prepareShowDialog() {
@@ -198,7 +193,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   public void startBlocking(@NotNull Runnable init) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (this) {
+    synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
     }
@@ -211,7 +206,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         if (isCancellationEvent(event)) {
           cancel();
         }
-        return isStarted() && !isRunning();
+        return wasStarted() && !isRunning();
       });
     }
     finally {
@@ -245,25 +240,27 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public synchronized void stop() {
-    LOG.assertTrue(!myStoppedAlready);
+  public void stop() {
+    synchronized (getLock()) {
+      LOG.assertTrue(!myStoppedAlready);
 
-    super.stop();
+      super.stop();
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (myDialog != null) {
-        myDialog.hide();
-      }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (myDialog != null) {
+          myDialog.hide();
+        }
 
-      synchronized (this) {
-        myStoppedAlready = true;
-      }
+        synchronized (getLock()) {
+          myStoppedAlready = true;
+        }
 
-      Disposer.dispose(this);
-    });
+        Disposer.dispose(this);
+      });
 
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
+    }
   }
 
   @Nullable

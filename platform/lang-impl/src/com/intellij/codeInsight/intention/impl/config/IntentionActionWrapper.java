@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,7 +90,7 @@ public class IntentionActionWrapper implements IntentionAction, ShortcutProvider
       try {
         myDelegate = myExtension.instantiate();
       }
-      catch (ClassNotFoundException e) {
+      catch (PluginException e) {
         LOG.error(e);
       }
     }

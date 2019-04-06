@@ -83,19 +83,32 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
       ListSelection<? extends DiffRequestProducer> producers = loadRequestsInBackground();
       return () -> {
         indicator.checkCanceled();
-
-        if (myRequests != null) {
-          LOG.error("Changes are loaded twice");
-          return;
-        }
-
-        myRequests = producers.getList();
-        setIndex(producers.getSelectedIndex());
-        myIndicator = null;
-
-        myDispatcher.getMulticaster().onRequestsLoaded();
+        applyLoadedChanges(producers);
       };
     }, null);
+  }
+
+  /**
+   * @return Callback to execute on EDT to apply loaded changes
+   */
+  @Nullable
+  @CalledInBackground
+  public Runnable forceLoadRequests() {
+    if (myRequests != null) return null;
+
+    ListSelection<? extends DiffRequestProducer> producers = loadRequestsInBackground();
+    return () -> applyLoadedChanges(producers);
+  }
+
+  @CalledInAwt
+  private void applyLoadedChanges(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
+    if (myRequests != null) return;
+
+    myRequests = producers.getList();
+    setIndex(producers.getSelectedIndex());
+    myIndicator = null;
+
+    myDispatcher.getMulticaster().onRequestsLoaded();
   }
 
   @NotNull

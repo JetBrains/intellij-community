@@ -3,15 +3,13 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -28,29 +26,17 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
 
   @Override
   protected Object getAimedObject(MouseEvent e) {
-    Object aimedObject = null;
-    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-    if (path != null) {
-      DefaultMutableTreeNode treeNode = ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-      if (treeNode != null) {
-        aimedObject = treeNode.getUserObject();
-      }
-    }
-    return aimedObject;
+    return TreeUtil.getLastUserObject(myTree.getPathForLocation(e.getX(), e.getY()));
   }
 
   @Override
   protected void repaintComponent(MouseEvent e) {
-    final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-    if (path != null) {
-      final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
-      DefaultTreeModel treeModel = ObjectUtils.tryCast(myTree.getModel(), DefaultTreeModel.class);
-      if (treeModel != null) {
-        // Invoke nodeChanged() in order to repaint ExpandableItemsHandler's tooltip component.
-        treeModel.nodeChanged(treeNode);
-      }
+    ExpandableItemsHandler<Integer> handler = myTree.getExpandableItemsHandler();
+    if (handler.isEnabled() && !handler.getExpandedItems().isEmpty()) {
+      // Dispatch MOUSE_ENTERED in order to repaint ExpandableItemsHandler's tooltip component, since it ignores MOUSE_MOVE.
+      myTree.dispatchEvent(new MouseEvent((Component)e.getSource(), MouseEvent.MOUSE_ENTERED, e.getWhen(), e.getModifiers(),
+                                          e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger(), e.getButton()));
     }
-
     // Repaint all tree since nodes which cursor just leaved should be repaint too.
     myTree.repaint();
   }
@@ -65,12 +51,13 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
     if (rectangle == null) return null;
 
     int dx = e.getX() - rectangle.x;
-    final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+    final Object treeNode = path.getLastPathComponent();
     final int row = myTree.getRowForLocation(e.getX(), e.getY());
+    boolean isLeaf = myTree.getModel().isLeaf(treeNode);
 
     Object tag = null;
 
-    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeNode, true, false, treeNode.isLeaf(), row, true);
+    Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeNode, true, false, isLeaf, row, true);
     if (component instanceof ColoredTreeCellRenderer) {
       tag = ((ColoredTreeCellRenderer)component).getFragmentTagAt(dx);
     }

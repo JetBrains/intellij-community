@@ -73,4 +73,8 @@ public class UnusedReturnValueLocalTest extends InspectionTestCase {
       myGlobal.highestModifier = UnusedReturnValue.DEFAULT_HIGHEST_MODIFIER;
     }
   }
+
+  public void testUsedFromGroovy() {
+    doTest();
+  }
 }

@@ -42,7 +42,7 @@ public class FileTypeAssocTable<T> {
   private FileTypeAssocTable(@NotNull Map<CharSequence, T> extensionMappings,
                              @NotNull Map<CharSequence, T> exactFileNameMappings,
                              @NotNull Map<CharSequence, T> exactFileNameAnyCaseMappings,
-                             @NotNull List<Pair<FileNameMatcher, T>> matchingMappings) {
+                             @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = new THashMap<>(Math.max(10, extensionMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
     myExtensionMappings.putAll(extensionMappings);
     myExactFileNameMappings = new THashMap<>(Math.max(10, exactFileNameMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_SENSITIVE);
@@ -163,13 +163,13 @@ public class FileTypeAssocTable<T> {
       if (FileNameMatcherEx.acceptsCharSequence(mapping.getFirst(), fileName)) return mapping.getSecond();
     }
 
-    return myExtensionMappings.get(FileUtilRt.getExtension(fileName));
+    return findByExtension(FileUtilRt.getExtension(fileName));
   }
 
   @Nullable
   T findAssociatedFileType(@NotNull FileNameMatcher matcher) {
     if (matcher instanceof ExtensionFileNameMatcher) {
-      return myExtensionMappings.get(((ExtensionFileNameMatcher)matcher).getExtension());
+      return findByExtension(((ExtensionFileNameMatcher)matcher).getExtension());
     }
 
     if (matcher instanceof ExactFileNameMatcher) {
@@ -184,6 +184,10 @@ public class FileTypeAssocTable<T> {
     }
 
     return null;
+  }
+
+  T findByExtension(@NotNull CharSequence extension) {
+    return myExtensionMappings.get(extension);
   }
 
   @Deprecated

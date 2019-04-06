@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.diagnostic.DebugLogManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.JBUI
 import com.intellij.xml.util.XmlStringUtil
 import javax.swing.JTextArea
 
@@ -38,6 +39,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
 
   init {
     myTextArea = JTextArea(10, 30)
+    myTextArea.margin = JBUI.insets(2)
     myTextArea.text = categories.joinToString("\n") {
       when (it.second) {
         DebugLogLevel.DEBUG -> it.first
@@ -51,7 +53,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
   override fun getDimensionServiceKey() = "#com.intellij.ide.actions.DebugLogConfigureAction"
 
   override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(
-    "Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level."))
+    "Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level.<br><br>"))
 
   override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 

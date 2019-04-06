@@ -78,14 +78,6 @@
               <columns value="15"/>
             </properties>
           </component>
-          <component id="53321" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">
-            <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.place.option"/>
-            </properties>
-          </component>
           <component id="d7b04" class="com.intellij.ui.components.JBCheckBox" binding="myIsAllowRunningInParallelCheckBox">
             <constraints>
               <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
@@ -102,6 +94,24 @@
               </grid>
             </constraints>
           </hspacer>
+          <grid id="319a0" binding="myCbStoreProjectConfigurationPanel" layout-manager="GridBagLayout">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="53321" class="javax.swing.JCheckBox" binding="myCbStoreProjectConfiguration">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.place.option"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
         </children>
       </grid>
       <scrollpane id="55372" class="com.intellij.ui.components.JBScrollPane" binding="myJBScrollPane" custom-create="true">

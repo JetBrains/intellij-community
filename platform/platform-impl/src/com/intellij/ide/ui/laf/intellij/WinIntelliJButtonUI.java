@@ -69,7 +69,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       Icon help = LafIconLookup.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
-    } else if (c instanceof AbstractButton) {
+    }
+    else if (c instanceof AbstractButton) {
       AbstractButton b = (AbstractButton)c;
       Graphics2D g2 = (Graphics2D)g.create();
       try {
@@ -83,7 +84,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
         JBInsets.removeFrom(r, JBUI.insets(2));
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
         if (!b.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
@@ -93,13 +95,15 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
         g2.fill(r);
 
         paintContents(g2, b);
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
   }
 
-  @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
+  @Override
+  protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     super.modifyViewRect(b, rect);
     rect.y -= JBUI.scale(1); // Move one pixel up
   }
@@ -118,9 +122,10 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     try {
       g2.setColor(UIManager.getColor("Button.disabledText"));
       UIUtilities.drawStringUnderlineCharAt(c, g2, text, -1,
-                                                textRect.x + getTextShiftOffset(),
-                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
-    } finally {
+                                            textRect.x + getTextShiftOffset(),
+                                            textRect.y + metrics.getAscent() + getTextShiftOffset());
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -134,9 +139,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
     if (focusedStyle && focusedColor != null) {
       return focusedColor;
-    } else if (!focusedStyle && textColor != null) {
+    }
+    else if (!focusedStyle && textColor != null) {
       return textColor;
-    } else {
+    }
+    else {
       return DarculaUIUtil.getButtonTextColor(button);
     }
   }
@@ -148,10 +155,12 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     if (bm.isPressed()) {
       return focusedColor != null ?
              focusedColor : UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
-    } else if (b.hasFocus() || bm.isRollover()) {
+    }
+    else if (b.hasFocus() || bm.isRollover()) {
       return focusedColor != null ?
-             focusedColor :UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
-    } else {
+             focusedColor : UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
+    }
+    else {
       Color backgroundColor = (Color)b.getClientProperty("JButton.backgroundColor");
       return backgroundColor != null ? backgroundColor : b.getBackground();
     }

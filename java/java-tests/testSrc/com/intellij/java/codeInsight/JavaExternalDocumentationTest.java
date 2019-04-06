@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -52,9 +52,16 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
       PsiTestUtil.newLibrary("myLib").classesRoot(libClasses).javaDocRoot(libJavadocJar).addTo(model);
     }
   };
-  
+
   public static final Pattern BASE_URL_PATTERN = Pattern.compile("(<base href=\")([^\"]*)");
   public static final Pattern IMG_URL_PATTERN = Pattern.compile("<img src=\"([^\"]*)");
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    BuiltInServerManager.getInstance().waitForStart();
+  }
 
   @NotNull
   @Override

@@ -35,6 +35,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.ui.Splash
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -92,7 +93,8 @@ class GuiTestRule : TestRule {
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
+    myTestShortName = "${description.testClass.simpleName}-${description.methodName}"
+    GuiTestNameHolder.initialize(myTestShortName)
     //do not apply timeout rule if it is already applied to a test class
     return if (description.testClass.fields.any { it.type == Timeout::class.java })
       myRuleChain.apply(base, description)
@@ -142,7 +144,7 @@ class GuiTestRule : TestRule {
             Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
             assumeOnlyWelcomeFrameShowing()
           } catch (e: Exception) {
-            ScreenshotOnFailure.takeScreenshot("$myTestName.welcomeFrameCheckFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("welcomeFrameCheckFail")
             throw e
           }
           setUp()
@@ -183,14 +185,16 @@ class GuiTestRule : TestRule {
       errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: tearDown project")
       errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
+      LOG.info("tearDown: check opened modal dialogs appeared after attempt to close the project...")
+      errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
-      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
+//      errors.addAll(GuiTestUtilKt.fatalErrorsFromIde(currentTestDateStart)) //do not add fatal errors from previous tests
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
       if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
         LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromTearDown")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromTearDown")
         GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
                                                     "IDE cannot return to the Welcome frame")
         )
@@ -220,9 +224,9 @@ class GuiTestRule : TestRule {
     //find first page with such actions like "Create New Project" without timeout
     private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
       val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
-        WelcomeFrameFixture.find(robot(), timeout).apply { robot().finder().find(this@apply.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
+        WelcomeFrameFixture.find(robot(), timeout).let { robot().finder().find(it.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
       }
-      return createNewProjectAction?.target()?.isShowing ?: false
+      return createNewProjectAction?.isShowing ?: false
     }
 
 
@@ -232,7 +236,7 @@ class GuiTestRule : TestRule {
         emptyList()
       }
       catch (e: Throwable) {
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromRunning")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromRunning")
         listOf(e)
       }
 
@@ -251,7 +255,7 @@ class GuiTestRule : TestRule {
           }
           else {
             closedModalDialogSet.add(modalDialog)
-            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("checkForModalDialogFail")
             if (isProcessIsRunningDialog(modalDialog))
               closeProcessIsRunningDialog(modalDialog)
             else

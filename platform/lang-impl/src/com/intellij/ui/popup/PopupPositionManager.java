@@ -223,12 +223,12 @@ public class PopupPositionManager {
       }
 
       if (popupRect != null) {
-        if (popup.isVisible()) {
-          popup.setLocation(new Point(r.x, r.y));
-        }
-        else {
+        if (popup.canShow()) {
           final Point p = new Point(r.x - myRelativeOnScreen.x, r.y - myRelativeOnScreen.y);
           popup.show(new RelativePoint(myRelativeTo, p));
+        }
+        else {
+          popup.setLocation(new Point(r.x, r.y));
         }
       }
       else {
@@ -244,12 +244,12 @@ public class PopupPositionManager {
                                                   d.width, d.height));
 
         popup.setSize(crop.getSize());
-        if (popup.isVisible()) {
-          popup.setLocation(crop.getLocation());
-        }
-        else {
+        if (popup.canShow()) {
           popup.show(new RelativePoint(myRelativeTo, new Point(crop.getLocation().x - myRelativeOnScreen.x,
                                                                crop.getLocation().y - myRelativeOnScreen.y)));
+        }
+        else {
+          popup.setLocation(crop.getLocation());
         }
       }
     }

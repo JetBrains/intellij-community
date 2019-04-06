@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.SchemeState
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -18,12 +17,12 @@ class InspectionSchemeTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule: ProjectRule = ProjectRule()
+    val projectRule = ProjectRule()
   }
 
   @JvmField
   @Rule
-  val fsRule: InMemoryFsRule = InMemoryFsRule()
+  val fsRule = InMemoryFsRule()
 
   @Test fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
@@ -34,7 +33,7 @@ class InspectionSchemeTest {
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
+    val profileManager = ApplicationInspectionProfileManager(schemeManagerFactory)
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 

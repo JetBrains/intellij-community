@@ -84,7 +84,7 @@ public class ProblemsHolder {
 
   private boolean isInPsiFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    return myFile.getViewProvider() == file.getViewProvider();
+    return file != null && myFile.getViewProvider() == file.getViewProvider();
   }
 
   private void redirectProblem(@NotNull final ProblemDescriptor problem, @NotNull final PsiElement target) {

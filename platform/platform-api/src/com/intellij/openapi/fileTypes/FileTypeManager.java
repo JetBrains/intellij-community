@@ -61,7 +61,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated use {@link FileTypeFactory} instead
    */
   @Deprecated
-  public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
+  public abstract void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations);
 
   /**
    * Registers a file type.
@@ -133,11 +133,12 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * If fileName is already associated with any known file type returns it.
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    *
+   * @deprecated Use {@link #getKnownFileTypeOrAssociate(VirtualFile, Project)} instead
    * @param file - a file to ask for file type association
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
-  @Deprecated() // use getKnownFileTypeOrAssociate(VirtualFile file, Project project) instead
+  @Deprecated
   public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
 
   @Nullable

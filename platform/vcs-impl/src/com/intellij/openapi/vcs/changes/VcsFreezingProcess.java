@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
  * and blocking/unblocking save/sync on frame de/activation.
  */
 public class VcsFreezingProcess {
-
   private static final Logger LOG = Logger.getInstance(VcsFreezingProcess.class);
 
   @NotNull private final Project myProject;
@@ -24,8 +23,6 @@ public class VcsFreezingProcess {
   @NotNull private final Runnable myRunnable;
 
   @NotNull private final ChangeListManagerEx myChangeListManager;
-  @NotNull private final ProjectManagerEx myProjectManager;
-  @NotNull private final SaveAndSyncHandler mySaveAndSyncHandler;
 
   public VcsFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
     myProject = project;
@@ -33,8 +30,6 @@ public class VcsFreezingProcess {
     myRunnable = runnable;
 
     myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
-    myProjectManager = ProjectManagerEx.getInstanceEx();
-    mySaveAndSyncHandler = SaveAndSyncHandler.getInstance();
   }
 
   public void execute() {
@@ -61,20 +56,22 @@ public class VcsFreezingProcess {
     LOG.debug("finished.");
   }
 
-  private void saveAndBlockInAwt() {
+  private static void saveAndBlockInAwt() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      myProjectManager.blockReloadingProjectOnExternalChanges();
+      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
       FileDocumentManager.getInstance().saveAllDocuments();
-      mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
-      mySaveAndSyncHandler.blockSyncOnFrameActivation();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      saveAndSyncHandler.blockSaveOnFrameDeactivation();
+      saveAndSyncHandler.blockSyncOnFrameActivation();
     });
   }
 
-  private void unblockInAwt() {
+  private static void unblockInAwt() {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      myProjectManager.unblockReloadingProjectOnExternalChanges();
-      mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
-      mySaveAndSyncHandler.unblockSyncOnFrameActivation();
+      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
+      saveAndSyncHandler.unblockSaveOnFrameDeactivation();
+      saveAndSyncHandler.unblockSyncOnFrameActivation();
     });
   }
 

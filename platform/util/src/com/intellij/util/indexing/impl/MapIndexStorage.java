@@ -100,7 +100,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       @Override
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+        return new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
           @NotNull
           @Override
           public Object getLock() {
@@ -114,7 +114,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
             try {
               value = map.get(key);
               if (value == null) {
-                value = new ValueContainerImpl<Value>();
+                value = new ValueContainerImpl<>();
               }
             }
             catch (IOException e) {
@@ -181,10 +181,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     try {
       myMap.close();
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (RuntimeException e) {
+    catch (IOException | RuntimeException e) {
       LOG.error(e);
     }
     try {
@@ -239,7 +236,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
         return;
       }
       // do not pollute the cache with keys unique to indexed file
-      ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<Value>(null);
+      ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
       valueContainer.addValue(inputId, value);
       myMap.put(key, valueContainer);
     }

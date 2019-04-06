@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,9 @@ public class ShortcutDataProvider {
 
        return getKeyEventText((KeyEvent)inputEvent);
      }
+     else if (inputEvent instanceof MouseEvent) {
+       return getMouseEventText((MouseEvent)inputEvent);
+     }
     }
     return null;
   }
@@ -42,6 +46,41 @@ public class ShortcutDataProvider {
 
     final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent(key);
     return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
+  }
+
+  @Nullable
+  protected static String getMouseEventText(@Nullable MouseEvent event) {
+    if (event == null) return null;
+
+    String res = getMouseButtonText(event.getButton());
+
+    int clickCount = event.getClickCount();
+    if (clickCount > 1) {
+      res += "(" + clickCount + "x)";
+    }
+
+    int modifiers = event.getModifiersEx() & ~BUTTON1_DOWN_MASK & ~BUTTON3_DOWN_MASK & ~BUTTON2_DOWN_MASK;
+    if (modifiers > 0) {
+      String modifiersText = getLocaleUnawareKeyModifiersText(modifiers);
+      if (!modifiersText.isEmpty()) {
+        res = modifiersText + "+" + res;
+      }
+    }
+
+    return res;
+  }
+
+  private static String getMouseButtonText(int buttonNum) {
+    switch (buttonNum) {
+      case MouseEvent.BUTTON1:
+        return "MouseLeft";
+      case MouseEvent.BUTTON2:
+        return "MouseMiddle";
+      case MouseEvent.BUTTON3:
+        return "MouseRight";
+      default:
+        return "NoMouseButton";
+    }
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {
@@ -81,12 +120,14 @@ public class ShortcutDataProvider {
 
   private static final List<Pair<Integer, String>> ourModifiers = new ArrayList<>(6);
   static {
-    ourModifiers.add(Pair.create(META_MASK, "Meta"));
-    ourModifiers.add(Pair.create(CTRL_MASK, "Ctrl"));
-    ourModifiers.add(Pair.create(ALT_MASK, "Alt"));
-    ourModifiers.add(Pair.create(SHIFT_MASK, "Shift"));
-    ourModifiers.add(Pair.create(ALT_GRAPH_MASK, "Alt Graph"));
-    ourModifiers.add(Pair.create(BUTTON1_MASK, "Button1"));
+    ourModifiers.add(Pair.create(BUTTON1_DOWN_MASK, "Button1"));
+    ourModifiers.add(Pair.create(BUTTON2_DOWN_MASK, "Button2"));
+    ourModifiers.add(Pair.create(BUTTON3_DOWN_MASK, "Button3"));
+    ourModifiers.add(Pair.create(META_DOWN_MASK, "Meta"));
+    ourModifiers.add(Pair.create(CTRL_DOWN_MASK, "Ctrl"));
+    ourModifiers.add(Pair.create(ALT_DOWN_MASK, "Alt"));
+    ourModifiers.add(Pair.create(SHIFT_DOWN_MASK, "Shift"));
+    ourModifiers.add(Pair.create(ALT_GRAPH_DOWN_MASK, "Alt Graph"));
   }
 
   private static String getLocaleUnawareKeyModifiersText(int modifiers) {

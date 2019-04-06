@@ -20,7 +20,8 @@ class SwitchExpressionMigration {
           case 2:
               x = 2;
               break;
-          case 3, 4:
+          case 3:
+          case 4:
               System.out.println("asda");
               x = 3;
               break;

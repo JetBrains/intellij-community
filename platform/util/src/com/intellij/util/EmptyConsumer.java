@@ -17,8 +17,8 @@ package com.intellij.util;
 
 public class EmptyConsumer {
 
-  @SuppressWarnings("unchecked")
   public static <T> Consumer<T> getInstance() {
+    //noinspection unchecked
     return Consumer.EMPTY_CONSUMER;
   }
 }

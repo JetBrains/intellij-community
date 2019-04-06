@@ -11,12 +11,12 @@ UFile (package = ) [public class While {...]
                     UBinaryExpression (operator = <) [i < 10] = Undetermined (depending on: (var i = Undetermined))
                         USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                         ULiteralExpression (value = 10) [10] = 10
-                    UBlockExpression [{...}] = Undetermined (depending on: (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0))), (var i = Undetermined))
-                        UBinaryExpression (operator = =) [result = result + i++] = Undetermined (depending on: (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0))), (var i = Undetermined))
-                            USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0)))
-                            UBinaryExpression (operator = +) [result + i++] = Undetermined (depending on: (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0))), (var i = Undetermined))
-                                USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0)))
+                    UBlockExpression [{...}] = Undetermined (depending on: (var result = Undetermined), (var i = Undetermined))
+                        UBinaryExpression (operator = =) [result = result + i++] = Undetermined (depending on: (var result = Undetermined), (var i = Undetermined))
+                            USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
+                            UBinaryExpression (operator = +) [result + i++] = Undetermined (depending on: (var result = Undetermined), (var i = Undetermined))
+                                USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                 UPostfixExpression (operator = ++) [i++] = (var i = Undetermined)
                                     USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                 UReturnExpression [return result] = Nothing
-                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0)))
+                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)

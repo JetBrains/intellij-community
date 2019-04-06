@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -22,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrGetAtReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
 
+import static com.intellij.psi.util.CachedValueProvider.Result;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isClassLiteral;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isSimpleArrayAccess;
@@ -34,40 +33,33 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceAr
  */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
-  private final NullableLazyValue<GrIndexPropertyReference> myRValueReference = AtomicNullableLazyValue.createValue(
-    () -> isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null
-  );
-
-  private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(() -> {
-    if (!isIndexAccess()) return null;
-    Argument rValue = getRValue(this);
-    return rValue == null ? null : new GrPutAtReference(this, rValue);
-  });
-
-  private final NotNullLazyValue<GroovyReference[]> myReferences = AtomicNotNullLazyValue.createValue(
-    () -> referenceArray(getRValueReference(), getLValueReference())
-  );
+  public GrIndexPropertyImpl(@NotNull ASTNode node) {
+    super(node);
+  }
 
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
-    return myRValueReference.getValue();
+    return CachedValuesManager.getCachedValue(this, () -> {
+      GrIndexPropertyReference reference = isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null;
+      return Result.create(reference, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @Nullable
   @Override
   public GroovyReference getLValueReference() {
-    return myLValueReference.getValue();
+    return CachedValuesManager.getCachedValue(this, () -> {
+      Argument rValue = getRValue(this);
+      GrIndexPropertyReference reference = rValue != null && isIndexAccess() ? new GrPutAtReference(this, rValue) : null;
+      return Result.create(reference, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @NotNull
   @Override
   public GroovyReference[] getReferences() {
-    return myReferences.getValue();
-  }
-
-  public GrIndexPropertyImpl(@NotNull ASTNode node) {
-    super(node);
+    return referenceArray(getRValueReference(), getLValueReference());
   }
 
   @Override

@@ -11,7 +11,8 @@ class SwitchExpressionMigration {
                   return 1;
           case 2:
               return 2;
-          case 3, 4:
+          case 3:
+          case 4:
               System.out.println("asda");
               return 3;
           default:

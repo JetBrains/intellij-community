@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -61,11 +61,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @return all configurables as a plain list except the root configurable group
    */
   @NotNull
-  public static Configurable[] getConfigurables(@Nullable Project project, boolean withIdeSettings) {
+  public static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
     List<Configurable> list = new ArrayList<>();
     collect(list, group.getConfigurables());
-    return list.toArray(new Configurable[0]);
+    return list;
   }
 
   private static void collect(List<? super Configurable> list, Configurable... configurables) {

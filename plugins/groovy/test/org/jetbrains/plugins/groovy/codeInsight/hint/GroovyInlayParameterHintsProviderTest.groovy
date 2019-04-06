@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
@@ -80,6 +80,7 @@ foo.with {
   defaultArgs(<hint name="a">1, <hint name="c">2)
   defaultArgs(<hint name="a">1, <hint name="b">2, <hint name="c">3)
   mapArgs(foo: 1, <hint name="a">null, bar: 2)
+  varArgs(<hint name="a">1, <hint name="...b">2)
   varArgs(<hint name="a">1, <hint name="...b">2, 3, 4)
   varArgs(<hint name="a">1, <hint name="...b">2, aa)
   varArgs(<hint name="a">1, <hint name="...b">aa, 3)
@@ -99,6 +100,7 @@ foo.with {
   defaultArgs <hint name="a">1, <hint name="c">2
   defaultArgs <hint name="a">1, <hint name="b">2, <hint name="c">3
   mapArgs foo: 1, <hint name="a">null, bar: 2
+  varArgs <hint name="a">1, <hint name="...b">2
   varArgs <hint name="a">1, <hint name="...b">2, 3, 4
   varArgs <hint name="a">1, <hint name="...b">2, aa
   varArgs <hint name="a">1, <hint name="...b">aa, 3
@@ -144,6 +146,16 @@ new Foo().with {
   simple {}
   simple(<hint name="a">{})
   simple <hint name="a">null, <hint name="b">{}
+}
+'''
+  }
+
+  void 'test lambda arguments'() {
+    testInlays '''\
+new Foo().with {
+  simple {}
+  simple(<hint name="a">()->{})
+  simple <hint name="a">null, <hint name="b">()->{}
 }
 '''
   }

@@ -73,9 +73,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
             myRevisionText.setText("HEAD");
           }
           myRevisionText.getTextField().selectAll();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myRevisionText, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myRevisionText, true));
         }
       }
     });

@@ -117,12 +117,8 @@ public class PluginUpdatesService {
     checkAccess();
     assert !myPreparing;
 
-    Integer countValue = -1;
     for (PluginUpdatesService service : SERVICES) {
-      service.runCountCallbacks(countValue);
-      if (service.myInstalledPanelCallback != null) {
-        service.myInstalledPanelCallback.accept(null);
-      }
+      service.runAllCallbacks(0);
     }
 
     calculateUpdates();
@@ -190,7 +186,7 @@ public class PluginUpdatesService {
 
   @Nullable
   private static Integer getCount() {
-    return myCache == null ? null : new Integer(myCache.size());
+    return myCache == null ? null : myCache.size();
   }
 
   private static void checkAccess() {

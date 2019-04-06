@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
@@ -22,21 +23,13 @@ public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
 
   static {
-    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-    // the way we tell CF to interpret our char*
-    // May be removed if we use toStringViaUTF16
-    System.setProperty("jna.encoding", "UTF8");
-
-    Map<String, Object> foundationOptions = new HashMap<String, Object>();
-    //foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
-
-    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
+    assert JnaLoader.isLoaded() : "JNA library is not available";
+    myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static void init() { /* fake method to init foundation */ }
 
-  private Foundation() {
-  }
+  private Foundation() { }
 
   /**
    * Get the ID of the NSClass with className
@@ -273,7 +266,7 @@ public class Foundation {
   }
 
   private static Callback ourRunnableCallback;
-  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
+  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
@@ -375,7 +368,7 @@ public class Foundation {
 
     @NotNull
     public static Map<String, String> toStringMap(@Nullable ID delegate) {
-      Map<String, String> result = new HashMap<String, String>();
+      Map<String, String> result = new HashMap<>();
       if (isNil(delegate)) {
         return result;
       }
@@ -418,7 +411,7 @@ public class Foundation {
 
     @NotNull
     public List<ID> getList() {
-      List<ID> result = new ArrayList<ID>();
+      List<ID> result = new ArrayList<>();
       for (int i = 0; i < count(); i++) {
         result.add(at(i));
       }

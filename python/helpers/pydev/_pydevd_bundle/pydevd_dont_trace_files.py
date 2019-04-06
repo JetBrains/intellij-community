@@ -53,6 +53,8 @@ DONT_TRACE = {
     'pydev_ipython_console.py': PYDEV_FILE,
     'pydev_ipython_console_011.py': PYDEV_FILE,
     'pydev_is_thread_alive.py': PYDEV_FILE,
+    'pydev_jupyter_plugin.py': PYDEV_FILE,
+    'pydev_jupyter_utils.py': PYDEV_FILE,
     'pydev_localhost.py': PYDEV_FILE,
     'pydev_log.py': PYDEV_FILE,
     'pydev_monkey.py': PYDEV_FILE,

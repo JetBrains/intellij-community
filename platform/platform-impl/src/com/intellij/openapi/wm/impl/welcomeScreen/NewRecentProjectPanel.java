@@ -102,9 +102,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               if (policy != null) {
                 Component next = policy.getComponentAfter(frame, list);
                 if (next != null) {
-                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                    IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-                  });
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
                 }
               }
             }

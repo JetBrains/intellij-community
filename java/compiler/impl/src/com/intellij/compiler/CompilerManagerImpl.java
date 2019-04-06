@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,7 +46,6 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -166,7 +166,7 @@ public class CompilerManagerImpl extends CompilerManager {
         compilers.add((T)item);
       }
     }
-    final T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
+    final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
     return compilers.toArray(array);
   }
 
@@ -202,11 +202,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @NotNull
-  private List<CompileTask> getCompileTasks(List<CompileTask> taskList, CompileTaskBean.CompileTaskExecutionPhase phase) {
+  private List<CompileTask> getCompileTasks(@NotNull List<CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
-        beforeTasks.add(extension.getTaskInstance());
+        beforeTasks.add(extension.getTaskInstance(myProject));
       }
     }
     return beforeTasks;

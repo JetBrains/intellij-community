@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -53,9 +55,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiExpression left = instruction.getLExpression();
-    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left)) && !TypeUtils.isJavaLangString(left.getType())) {
-      // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
-      // (we compare strings by contents)
+    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
       if (!left.isPhysical()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
@@ -65,6 +65,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         DfaValue target = memState.getStackValue(1);
         if (target != null && memState.areEqual(value, target) &&
             !(value instanceof DfaConstValue && isFloatingZero(((DfaConstValue)value).getValue())) &&
+            // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
+            // (we compare strings by contents)
+            !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&
             !isAssignmentToDefaultValueInConstructor(instruction, runner, target)) {
           mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
@@ -181,6 +184,12 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
                                       @NotNull PsiExpression expression,
                                       @Nullable TextRange range,
                                       @NotNull DfaMemoryState memState) {
+    if (!expression.isPhysical()) {
+      Application application = ApplicationManager.getApplication();
+      if (application.isEAP() || application.isInternal() || application.isUnitTestMode()) {
+        throw new IllegalStateException("Non-physical expression is passed");
+      }
+    }
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {
       reportConstantExpressionValue(value, memState, expression);

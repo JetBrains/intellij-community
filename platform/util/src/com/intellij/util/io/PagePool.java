@@ -37,7 +37,7 @@ public class PagePool {
 
   private int finalizationId = 0;
 
-  private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
+  private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<>();
 
   private final Object lock = new Object();
   private final Object finalizationMonitor = new Object();

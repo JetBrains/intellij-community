@@ -77,7 +77,10 @@ public class FileTypeChooser extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myTitleLabel.setText(FileTypesBundle.message("filetype.chooser.prompt", myFileName));
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(myFileName);
+    myTitleLabel.setText(fileType == FileTypes.UNKNOWN ?
+                         FileTypesBundle.message("filetype.chooser.prompt", myFileName) :
+                         FileTypesBundle.message("filetype.chooser.change.prompt", myFileName, fileType.getName()));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new FileTypeRenderer());

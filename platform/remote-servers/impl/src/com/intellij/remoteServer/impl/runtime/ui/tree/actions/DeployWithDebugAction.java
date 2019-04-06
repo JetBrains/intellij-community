@@ -15,32 +15,27 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
+import org.jetbrains.annotations.NotNull;
 
-public class DeployWithDebugAction extends ServersTreeAction<DeploymentNode> {
+import static com.intellij.remoteServer.util.ApplicationActionUtils.getDeploymentTarget;
 
-  public DeployWithDebugAction() {
-    super("Debug", "Deploy and debug the selected item", AllIcons.Actions.StartDebugger);
+public class DeployWithDebugAction extends DumbAwareAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    boolean visible = node != null && node.isDeployActionVisible() && node.isDebugActionVisible();
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && node.isDeployActionEnabled());
   }
 
   @Override
-  protected Class<DeploymentNode> getTargetNodeClass() {
-    return DeploymentNode.class;
-  }
-
-  @Override
-  protected boolean isVisible4(DeploymentNode node) {
-    return node.isDeployActionVisible() && node.isDebugActionVisible();
-  }
-
-  @Override
-  protected boolean isEnabled4(DeploymentNode node) {
-    return node.isDeployActionEnabled();
-  }
-
-  @Override
-  protected void doActionPerformed(DeploymentNode node) {
-    node.deployWithDebug();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    DeploymentNode node = getDeploymentTarget(e);
+    if (node != null) {
+      node.deployWithDebug();
+    }
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -24,8 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
@@ -150,9 +147,15 @@ public class ThreadTracker {
         //if (thread.isAlive()) {
         //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
         //}
-        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + 10_000) {
+        StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+        if (shouldIgnore(thread, traceBeforeWait)) continue;
+        int WAIT_SEC = 10;
+        StackTraceElement[] stackTrace = traceBeforeWait;
+        while (System.currentTimeMillis() < start + WAIT_SEC*1_000) {
           UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           // afters some time the submitted task can finish and the thread become idle pool
+          stackTrace = thread.getStackTrace();
+          if (shouldIgnore(thread, stackTrace)) break;
         }
         //long elapsed = System.currentTimeMillis() - start;
         //if (elapsed > 1_000) {
@@ -160,13 +163,25 @@ public class ThreadTracker {
         //}
 
         // check once more because the thread name may be set via race
-        StackTraceElement[] stackTrace = thread.getStackTrace();
         stackTraces.put(thread, stackTrace);
-
         if (shouldIgnore(thread, stackTrace)) continue;
 
-        String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
-        Assert.fail(trace + "\n\nFull thread dump:\n"+dumpThreadsToString(after, stackTraces));
+        all.keySet().removeAll(after.keySet());
+        Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
+
+        String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
+        String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
+
+        String internalDiagnostic = stackTrace.length < 5 ? "stackTrace.length: "+stackTrace.length : "(diagnostic: " +
+              "0: "+ stackTrace[0].getClassName() + " : "+ stackTrace[0].getClassName().equals("sun.misc.Unsafe")
+              + " . " +stackTrace[0].getMethodName() +" : "+ stackTrace[0].getMethodName().equals("unpark")
+              + " 2: "+ stackTrace[2].getClassName() +" : "+ stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
+              + " . " + stackTrace[2].getMethodName() +" : " +stackTrace[2].getMethodName().equals("finishCompletion") + ")";
+
+        Assert.fail("Thread leaked: " +traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace)+
+                    internalDiagnostic +
+                    "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+                    "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
       }
     }
     finally {
@@ -175,8 +190,14 @@ public class ThreadTracker {
   }
 
   private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
-    Writer f = new StringWriter();
-    after.values().forEach(thread -> ThreadDumper.dumpCallStack(thread, f, stackTraces.get(thread)));
+    StringBuilder f = new StringBuilder();
+    after.forEach((name, thread) -> {
+      f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      for (StackTraceElement element : stackTraces.get(thread)) {
+        f.append("\tat " + element + "\n");
+      }
+      f.append("\n");
+    });
     return f.toString();
   }
 
@@ -187,9 +208,10 @@ public class ThreadTracker {
     if (stackTrace.length == 0) {
       return true; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
     }
-    if (isIdleApplicationPoolThread(stackTrace)) return true;
-    return isIdleCommonPoolThread(thread, stackTrace) ||
-           isCoroutineSchedulerPoolThread(thread, stackTrace);
+    return isIdleApplicationPoolThread(stackTrace)
+           || isIdleCommonPoolThread(thread, stackTrace)
+           || isFutureTaskAboutToFinish(stackTrace)
+           || isCoroutineSchedulerPoolThread(thread, stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -215,6 +237,33 @@ public class ThreadTracker {
       .anyMatch(element -> element.getMethodName().equals("awaitWork")
                            && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
+  }
+
+  // in newer JDKs strange long hangups observed in Unsafe.unpark:
+  // "Document Committing Pool" (alive) TIMED_WAITING
+  //	at sun.misc.Unsafe.unpark(Native Method)
+  //	at java.util.concurrent.locks.LockSupport.unpark(LockSupport.java:141)
+  //	at java.util.concurrent.FutureTask.finishCompletion(FutureTask.java:372)
+  //	at java.util.concurrent.FutureTask.set(FutureTask.java:233)
+  //	at java.util.concurrent.FutureTask.run(FutureTask.java:274)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor.doRun(BoundedTaskExecutor.java:207)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor.access$100(BoundedTaskExecutor.java:29)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1.lambda$run$0(BoundedTaskExecutor.java:185)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1$$Lambda$157/1473781324.run(Unknown Source)
+  //	at com.intellij.util.ConcurrencyUtil.runUnderThreadName(ConcurrencyUtil.java:208)
+  //	at com.intellij.util.concurrency.BoundedTaskExecutor$1.run(BoundedTaskExecutor.java:181)
+  //	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+  //	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+  //	at java.lang.Thread.run(Thread.java:748)
+  private static boolean isFutureTaskAboutToFinish(@NotNull StackTraceElement[] stackTrace) {
+    if (stackTrace.length < 5) {
+      return false;
+    }
+
+    return stackTrace[0].getClassName().equals("sun.misc.Unsafe")
+      && stackTrace[0].getMethodName().equals("unpark")
+      && stackTrace[2].getClassName().equals("java.util.concurrent.FutureTask")
+      && stackTrace[2].getMethodName().equals("finishCompletion");
   }
 
   private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class IntegerAccessor extends CodeStylePropertyAccessor<Integer,Integer> {
+public class IntegerAccessor extends CodeStyleFieldAccessor<Integer,Integer> {
   IntegerAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }

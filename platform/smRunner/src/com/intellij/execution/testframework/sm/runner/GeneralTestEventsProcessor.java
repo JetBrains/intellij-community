@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Processes events of test runner in general text-based form.
  * <p/>
  * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
- * 
+ *
  * <p/>
  * Threading information:
  * <ul>
@@ -41,7 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *   <li>all other events should be processed in the same output reader thread</li>
  *   <li>{@link #dispose()} is called from EDT</li>
  * </ul>
- * 
+ *
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
@@ -125,6 +126,10 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     processTreeBuildEvents(runnables);
   }
 
+  public final void onDurationStrategyChanged(@NotNull final TestDurationStrategy durationStrategy) {
+    myTestsRootProxy.setDurationStrategy(durationStrategy);
+  }
+
   private static void processTreeBuildEvents(final List<Runnable> runnables) {
     for (Runnable runnable : runnables) {
       runnable.run();
@@ -191,7 +196,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       adapter.onSuiteStarted(newSuite);
     }
   }
-  
+
   public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
   protected void fireOnSuiteFinished(SMTestProxy mySuite) {
     myEventPublisher.onSuiteFinished(mySuite);
@@ -299,7 +304,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected void logProblem(final String msg) {
     logProblem(LOG, msg, myTestFrameworkName);
   }
-  
+
   protected void logProblem(String msg, boolean throwError) {
     logProblem(LOG, msg, throwError, myTestFrameworkName);
   }

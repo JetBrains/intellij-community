@@ -39,6 +39,9 @@ public interface DiffUserDataKeys {
   Key<Pair<ThreeSide, Integer>> SCROLL_TO_LINE_THREESIDE = Key.create("Diff.ScrollToLineThreeside");
 
   Key<String> HELP_ID = Key.create("Diff.HelpId");
+  /**
+   * Used IN ADDITION to FORCE_READ_ONLY data key
+   */
   Key<boolean[]> FORCE_READ_ONLY_CONTENTS = Key.create("Diff.ForceReadOnlyContents");
 
   //
@@ -67,5 +70,10 @@ public interface DiffUserDataKeys {
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
+
+  //
+  // DiffContext / DiffRequest / DiffContent
+  //
+
   Key<Boolean> FORCE_READ_ONLY = Key.create("Diff.ForceReadOnly");
 }

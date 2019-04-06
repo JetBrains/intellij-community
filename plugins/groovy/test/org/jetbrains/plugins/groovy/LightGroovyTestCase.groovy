@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.ToolExtensionPoints
@@ -12,7 +12,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-
 /**
  * @author peter
  */
@@ -27,7 +26,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   void setUp() throws Exception {
     super.setUp()
     // avoid PSI/document/model changes are not allowed during highlighting
-    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null)
+    Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensionList()
   }
 
   @Override

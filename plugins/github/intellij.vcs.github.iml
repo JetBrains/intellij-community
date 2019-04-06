@@ -31,7 +31,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="library" name="imgscalr" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>
 </module>

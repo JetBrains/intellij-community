@@ -27,4 +27,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspectionTest extends L
     doTest();
   }
 
+  public void testPublicClass() {
+    doTest();
+  }
 }

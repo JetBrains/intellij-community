@@ -26,8 +26,8 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
-  private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<MyReference<V>>();
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+  private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<>();
+  private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   private static class MyReference<T> extends WeakReference<T> {
     private final int key;
@@ -57,7 +57,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   @Override
   public final V put(int key, @NotNull V value) {
     processQueue();
-    MyReference<V> ref = new MyReference<V>(key, value, myQueue);
+    MyReference<V> ref = new MyReference<>(key, value, myQueue);
     MyReference<V> oldRef = myMap.put(key, ref);
     return SoftReference.dereference(oldRef);
   }
@@ -93,7 +93,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   @Override
   @NotNull
   public final Collection<V> values() {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<>();
     Object[] refs = myMap.getValues();
     for (Object o : refs) {
       @SuppressWarnings("unchecked")
@@ -147,7 +147,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
   @NotNull
   private Iterator<Entry<V>> entriesIterator() {
-    final MovingIterator<V> entryIterator = new MovingIterator<V>(myMap);
+    final MovingIterator<V> entryIterator = new MovingIterator<>(myMap);
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private int lastReturned;
@@ -178,7 +178,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
             continue;
           }
           final int key = entryIterator.key();
-          nextVEntry = new SimpleEntry<V>(key, v);
+          nextVEntry = new SimpleEntry<>(key, v);
           return;
         }
         nextVEntry = null;

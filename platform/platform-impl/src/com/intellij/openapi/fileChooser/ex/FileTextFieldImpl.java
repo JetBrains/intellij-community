@@ -41,6 +41,10 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 
@@ -168,6 +172,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private void processTextChanged() {
     if (myAutopopup && !isPathUpdating()) {
+      // Hide current popup as early as we can
+      hideCurrentPopup();
       suggestCompletion(false, false);
     }
 
@@ -387,9 +393,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           myPathTextField.setSelectionStart(caret);
           myPathTextField.setSelectionEnd(caret);
           myPathTextField.setFocusTraversalKeysEnabled(true);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(getField(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getField(), true));
           return Boolean.TRUE;
         }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();

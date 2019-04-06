@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,19 +54,15 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
 
   @Nullable
   private static PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
-    final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-    if (qualifierExpression instanceof PsiMethodCallExpression && isFilterCall((PsiMethodCallExpression)qualifierExpression)) {
-      return (PsiMethodCallExpression)qualifierExpression;
+    final PsiMethodCallExpression prevCall = MethodCallUtils.getQualifierMethodCall(methodCallExpression);
+    if (prevCall != null && isFilterCall(prevCall)) {
+      return prevCall;
     }
 
-    final PsiElement parent = methodCallExpression.getParent();
-    if (parent instanceof PsiReferenceExpression) {
-      final PsiElement gParent = parent.getParent();
-      if (gParent instanceof PsiMethodCallExpression && isFilterCall((PsiMethodCallExpression)gParent)) {
-        return (PsiMethodCallExpression)gParent;
-      }
+    final PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
+    if (nextCall != null && isFilterCall(nextCall)) {
+      return nextCall;
     }
-
     return null;
   }
 

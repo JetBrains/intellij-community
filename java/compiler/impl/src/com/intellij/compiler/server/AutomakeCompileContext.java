@@ -34,6 +34,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     myAnnotationProcessingEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;

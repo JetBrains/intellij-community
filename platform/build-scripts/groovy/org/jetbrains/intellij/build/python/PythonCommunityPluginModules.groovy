@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
     "intellij.python.langInjection",
-    "intellij.python.ipnb",
     "intellij.python.community",
     "intellij.python.community.plugin",
     "intellij.python.community.plugin.java",
@@ -22,12 +21,11 @@ class PythonCommunityPluginModules {
   ]
   public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
   static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
-    "intellij.python.langInjection",
-    "intellij.python.ipnb",
+    "intellij.python.langInjection"
   ]
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.buildPatches",
+    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.dependencies",
                  COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
       PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
@@ -55,6 +53,7 @@ class PythonCommunityPluginModules {
         "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
       }
       doNotCreateSeparateJarForLocalizableResources()
+      withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
       body()
     }

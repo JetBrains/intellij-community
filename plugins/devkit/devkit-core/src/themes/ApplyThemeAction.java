@@ -1,29 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Attribute;
-import org.jdom.Element;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,24 +31,38 @@ import java.nio.file.Paths;
 public class ApplyThemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    applyTempTheme(e);
+  }
+
+  public static boolean applyTempTheme(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) return;
+    if (project == null) return false;
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null || !UITheme.isThemeFile(file)) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-        if (UITheme.isThemeFile(fileEditor.getFile())) {
-          file = fileEditor.getFile();
+    if (!UITheme.isThemeFile(file)) {
+      file = null;
+    }
+
+    if (file == null) {
+      for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getOpenFiles()) {
+        if (UITheme.isThemeFile(virtualFile)) {
+          file = virtualFile;
           break;
         }
       }
     }
 
-    if (file != null && UITheme.isThemeFile(file)) {
-      applyTempTheme(file, project);
+    if (file == null) {
+        file = ContainerUtil.getFirstItem(
+          FilenameIndex.getAllFilesByExt(project, "theme.json", GlobalSearchScope.projectScope(project))
+        );
     }
+    if (file != null && UITheme.isThemeFile(file)) {
+      return applyTempTheme(file, project);
+    }
+    return false;
   }
 
-  private static void applyTempTheme(@NotNull VirtualFile json, Project project) {
+  private static boolean applyTempTheme(@NotNull VirtualFile json, Project project) {
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
       UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null);
@@ -68,28 +79,19 @@ public class ApplyThemeAction extends DumbAwareAction {
           }
         }
       }
-      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, createTempEditorSchemeFile(editorScheme)));
+
+      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, editorScheme));
       LafManager.getInstance().updateUI();
+      return true;
     }
     catch (IOException ignore) {}
+    return false;
   }
 
-  private static Path createTempEditorSchemeFile(VirtualFile editorSchemeFile) {
-    if (editorSchemeFile == null) return null;
-    try {
-      Element root = JDOMUtil.load(editorSchemeFile.getInputStream());
-      Attribute name = root.getAttribute("name");
-
-      if (name != null && StringUtil.isNotEmpty(name.getValue())) {
-        String newName = name.getValue() + System.currentTimeMillis();
-        File file = FileUtil.createTempFile(newName, ".xml", true);
-        root.setAttribute("name", newName);
-        JDOMUtil.write(root, file);
-        return file.toPath();
-      }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (LafManager.getInstance().getCurrentLookAndFeel() instanceof TempUIThemeBasedLookAndFeelInfo) {
+      e.getPresentation().setIcon(AllIcons.Actions.Rerun);
     }
-    catch (Exception ignore) {}
-
-    return null;
   }
 }

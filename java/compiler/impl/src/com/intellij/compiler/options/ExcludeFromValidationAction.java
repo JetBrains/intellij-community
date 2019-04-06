@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.compiler.options;
 
@@ -52,7 +50,6 @@ public class ExcludeFromValidationAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean applicable = getExcludedConfigurationAndFile(e, project) != null;
-    e.getPresentation().setVisible(applicable);
-    e.getPresentation().setEnabled(applicable);
+    e.getPresentation().setEnabledAndVisible(applicable);
   }
 }

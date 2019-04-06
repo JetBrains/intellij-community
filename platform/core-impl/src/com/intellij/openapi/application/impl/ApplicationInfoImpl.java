@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -93,7 +94,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private @Nullable String myHelpFileName = "ideahelp.jar";
   private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
   private String myFUStatisticsSettingsUrl;
   private String myEventLogSettingsUrl;
@@ -107,6 +107,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
+  private List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -154,7 +155,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String HELP_ELEMENT_NAME = "help";
   private static final String ATTRIBUTE_HELP_FILE = "file";
   private static final String ATTRIBUTE_HELP_ROOT = "root";
-  private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
   private static final String ELEMENT_YOUTRACK = "youtrack";
@@ -190,8 +190,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
   private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+  private static final String PROGRESS_SLIDE = "progressSlide";
+  private static final String PROGRESS_PERCENT = "progressPercent";
 
-  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
+  static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {
     String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
@@ -591,6 +594,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return mySubscriptionAdditionalFormData;
   }
 
+  @Override
+  public List<ProgressSlide> getProgressSlides() {
+    return myProgressSlides;
+  }
+
   private static ApplicationInfoImpl ourShadowInstance;
 
   @NotNull
@@ -692,6 +700,20 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
       if (v != null) {
         myLicenseOffsetY = Integer.parseInt(v);
+      }
+
+      for (Element child : getChildren(logoElement, PROGRESS_SLIDE)) {
+        String slideUrl = child.getAttributeValue(ATTRIBUTE_URL);
+        assert slideUrl != null;
+        String progressPercentString = child.getAttributeValue(PROGRESS_PERCENT);
+        assert progressPercentString != null;
+
+        int progressPercentInt = Integer.parseInt(progressPercentString);
+        assert (progressPercentInt <= 100 && progressPercentInt >= 0);
+
+        float progressPercentFloat = (float) progressPercentInt / 100;
+        ProgressSlide progressSlide = new ProgressSlide(slideUrl, progressPercentFloat);
+        myProgressSlides.add(progressSlide);
       }
     }
 
@@ -832,13 +854,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    final String pluginsHost = System.getProperty("idea.plugins.host");
+    final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
     if (pluginsHost != null) {
       myPluginManagerUrl = StringUtil.trimEnd(pluginsHost, "/");
       myPluginsListUrl = myChannelsListUrl = myPluginsDownloadUrl = null;
     }
 
-    myPluginManagerUrl = ObjectUtils.coalesce(myPluginsListUrl, DEFAULT_PLUGINS_HOST);
+    myPluginManagerUrl = ObjectUtils.coalesce(myPluginManagerUrl, DEFAULT_PLUGINS_HOST);
     myPluginsListUrl = ObjectUtils.coalesce(myPluginsListUrl, myPluginManagerUrl + "/plugins/list/");
     myChannelsListUrl = ObjectUtils.coalesce(myChannelsListUrl, myPluginManagerUrl + "/channels/list/");
     myPluginsDownloadUrl = ObjectUtils.coalesce(myPluginsDownloadUrl, myPluginManagerUrl + "/pluginManager/");
@@ -847,11 +869,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (keymapElement != null) {
       myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
-    }
-
-    myPluginChooserPages = new ArrayList<>();
-    for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
-      myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
@@ -868,7 +885,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
     else {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml";
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
@@ -948,11 +965,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<PluginChooserPage> getPluginChooserPages() {
-    return myPluginChooserPages;
-  }
-
-  @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
@@ -980,34 +992,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     @Override
     public String getPatchesUrl() {
       return myPatchesUrl;
-    }
-  }
-
-  private static class PluginChooserPageImpl implements PluginChooserPage {
-    private final String myTitle;
-    private final String myCategory;
-    private final String myDependentPlugin;
-
-    private PluginChooserPageImpl(Element e) {
-      myTitle = e.getAttributeValue("title");
-      myCategory = e.getAttributeValue("category");
-      myDependentPlugin = e.getAttributeValue("depends");
-    }
-
-    @NotNull
-    @Override
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Override
-    public String getCategory() {
-      return myCategory;
-    }
-
-    @Override
-    public String getDependentPlugin() {
-      return myDependentPlugin;
     }
   }
 

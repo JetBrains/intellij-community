@@ -3,8 +3,6 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
-import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
-import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.After
 import org.junit.Before
@@ -26,12 +24,12 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
 
   @Before
   fun beforeTest(){
-    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_before_${testMethod.methodName}")
+    screenshot("before")
   }
 
   @After
   fun afterTest(){
-    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_after_${testMethod.methodName}")
+    screenshot("after")
   }
 
   @Test

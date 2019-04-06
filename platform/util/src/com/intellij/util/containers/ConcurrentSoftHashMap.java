@@ -73,6 +73,6 @@ final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   @Override
   protected KeyReference<K, V> createKeyReference(@NotNull K key,
                                                   @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
+    return new SoftKey<>(key, hashingStrategy.computeHashCode(key), hashingStrategy, myReferenceQueue);
   }
 }

@@ -232,12 +232,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createGeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType type) {
-    return new GeneralizeCatchFix(element, type);
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createChangeToAppendFix(@NotNull IElementType sign,
                                                  @NotNull PsiType type,
                                                  @NotNull PsiAssignmentExpression assignment) {
@@ -546,13 +540,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call) {
-    return new StaticImportMethodFix(call);
+    return new StaticImportMethodFix(call.getContainingFile(), call);
   }
 
   @NotNull
   @Override
   public IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call) {
-    return new QualifyStaticMethodCallFix(call);
+    return new QualifyStaticMethodCallFix(call.getContainingFile(), call);
   }
 
   @NotNull
@@ -584,8 +578,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddReturnFix(@NotNull PsiMethod method) {
-    return new AddReturnFix(method);
+  public IntentionAction createAddReturnFix(@NotNull PsiParameterListOwner methodOrLambda) {
+    return new AddReturnFix(methodOrLambda);
   }
 
   @NotNull

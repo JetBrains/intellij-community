@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
 import com.google.common.collect.Lists;
@@ -42,7 +42,7 @@ public class PyExecuteSelectionAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       final String selectionText = getSelectionText(editor);
       if (selectionText != null) {
@@ -92,7 +92,7 @@ public class PyExecuteSelectionAction extends AnAction {
    * @param selectionText null means that there is no code to execute, only open a console
    */
   public static void showConsoleAndExecuteCode(@NotNull final AnActionEvent e, @Nullable final String selectionText) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     Project project = e.getProject();
     final boolean requestFocusToConsole = selectionText == null;
 
@@ -143,7 +143,7 @@ public class PyExecuteSelectionAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     Presentation presentation = e.getPresentation();
 
     boolean enabled = false;
@@ -162,8 +162,7 @@ public class PyExecuteSelectionAction extends AnAction {
       enabled = !StringUtil.isEmpty(text);
     }
 
-    presentation.setEnabled(enabled);
-    presentation.setVisible(enabled);
+    presentation.setEnabledAndVisible(enabled);
   }
 
   public static boolean isPython(Editor editor) {

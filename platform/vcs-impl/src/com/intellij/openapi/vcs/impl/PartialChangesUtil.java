@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.ex.ExclusionState;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
@@ -114,36 +115,18 @@ public class PartialChangesUtil {
   public static void runUnderChangeList(@NotNull Project project,
                                         @Nullable LocalChangeList targetChangeList,
                                         @NotNull Runnable task) {
-    computeUnderChangeList(project, targetChangeList, () -> {
+    computeUnderChangeList(project, targetChangeList, null, () -> {
       task.run();
       return null;
-    });
+    }, false);
   }
 
   public static <T> T computeUnderChangeList(@NotNull Project project,
-                                             @Nullable LocalChangeList targetChangeList,
-                                             @NotNull Computable<T> task) {
-    ChangeListManagerEx clm = (ChangeListManagerEx)ChangeListManager.getInstance(project);
-    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
-
-    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
-      return task.compute();
-    }
-
-    switchChangeList(clm, targetChangeList, oldDefaultList);
-    try {
-      return task.compute();
-    }
-    finally {
-      restoreChangeList(clm, targetChangeList, oldDefaultList);
-    }
-  }
-
-  public static <T> T computeUnderChangeListWithRefresh(@NotNull Project project,
                                                         @Nullable LocalChangeList targetChangeList,
                                                         @Nullable String title,
-                                                        @NotNull Computable<T> task) {
-    ChangeListManagerEx clm = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+                                                        @NotNull Computable<T> task,
+                                                        boolean shouldAwaitCLMRefresh) {
+    ChangeListManagerImpl clm = ChangeListManagerImpl.getInstanceImpl(project);
     LocalChangeList oldDefaultList = clm.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
@@ -151,14 +134,22 @@ public class PartialChangesUtil {
     }
 
     switchChangeList(clm, targetChangeList, oldDefaultList);
+    ChangelistConflictTracker clmConflictTracker = clm.getConflictTracker();
     try {
+      clmConflictTracker.setIgnoreModifications(true);
       return task.compute();
     }
     finally {
-      InvokeAfterUpdateMode mode = title != null
-                                   ? InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
-                                   : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
-      clm.invokeAfterUpdate(() -> restoreChangeList(clm, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
+      clmConflictTracker.setIgnoreModifications(false);
+      if (shouldAwaitCLMRefresh) {
+        InvokeAfterUpdateMode mode = title != null
+                                     ? InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE
+                                     : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
+        clm.invokeAfterUpdate(() -> restoreChangeList(clm, targetChangeList, oldDefaultList), mode, title, ModalityState.NON_MODAL);
+      }
+      else {
+        restoreChangeList(clm, targetChangeList, oldDefaultList);
+      }
     }
   }
 

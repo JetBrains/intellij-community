@@ -29,12 +29,6 @@ public class GroovyInstanceVariableNamingConventionInspection extends Convention
   private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Instance variable naming convention";
-  }
-
-  @Override
   protected GroovyFix buildFix(@NotNull PsiElement location) {
     return GroovyQuickFixFactory.getInstance().createRenameFix();
   }

@@ -2,19 +2,22 @@
 package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * Represents a Groovy lambda expression.
  */
 public interface GrLambdaExpression extends GrFunctionalExpression {
   /**
-   * Returns PSI element representing lambda expression body: {@link org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock}, {@link GrExpression},
-   * or null if the expression is incomplete.
+   * Returns PSI element representing lambda expression body or null if the expression is incomplete.
    *
    * @return lambda expression body.
    */
   @Nullable
-  PsiElement getBody();
+  GrLambdaBody getBody();
+
+  @Override
+  @NotNull
+  PsiElement getArrow();
 }

@@ -377,8 +377,8 @@ void updateButton(
         const char *raster4ByteRGBA, int w, int h,
         execute jaction
 ) {
-    NSCustomTouchBarItem *container = buttObj; // TODO: check types
-    NSButtonJAction *button = (container).view; // TODO: check types
+    NSCustomTouchBarItem *container = buttObj;
+    NSButtonJAction *button = (container).view;
 
     NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
@@ -401,8 +401,8 @@ void updateButton(
 
 // NOTE: now is called from AppKit-thread (creation when TB becomes visible), but can be called from EDT (when update UI)
 void setArrowImage(id buttObj, const char *raster4ByteRGBA, int w, int h) {
-    NSCustomTouchBarItem *container = buttObj; // TODO: check types
-    NSButtonJAction *button = (container).view; // TODO: check types
+    NSCustomTouchBarItem *container = buttObj;
+    NSButtonJAction *button = (container).view;
     NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
 
     NSImage *img = nil;

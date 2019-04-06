@@ -40,11 +40,12 @@
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
-    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
+           description="Checkout selected revision or a branch on selected commit"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="Branch..."
             description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
@@ -100,8 +101,19 @@
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebase"/>
+      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge" text="Abort Merge"/>
+      <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick" text="Abort Cherry-Pick"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
+    </group>
+
+    <group id="Git.Ongoing.Rebase.Actions" popup="false">
+      <!-- See GitOngoingOperationAction -->
+      <reference id="Git.Rebase.Abort"/>
+      <reference id="Git.Merge.Abort"/>
+      <reference id="Git.CherryPick.Abort"/>
+      <reference id="Git.Rebase.Continue"/>
+      <reference id="Git.Rebase.Skip"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -121,9 +133,8 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <group id="Git.LogContextMenu">
-      <separator/>
-    </group>
+    <!--This group is empty and unused, left for plugins compatibility.-->
+    <group id="Git.LogContextMenu"/>
 
     <group id="Git.FileHistory.ContextMenu">
       <reference id="Git.SelectInGitLog"/>
@@ -133,11 +144,14 @@
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
-    <group id="Git.Log.ContextMenu">
-      <separator/>
-      <reference id="Git.CheckoutRevision"/>
+    <group id="Git.Log.ContextMenu.CheckoutBrowse">
+      <reference id="Git.CheckoutGroup"/>
       <reference id="Git.BrowseRepoAtRevision"/>
-      <separator/>
+
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.CompareRevisions" anchor="before"/>
+    </group>
+
+    <group id="Git.Log.ContextMenu">
       <reference id="Git.Reset.In.Log"/>
       <reference id="Git.Revert.In.Log"/>
       <reference id="Git.Uncommit"/>
@@ -148,11 +162,13 @@
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
-      <reference id="Git.CreateNewBranch"/>
-      <reference id="Git.CreateNewTag"/>
+      <group id="Git.Log.CreateNew" text="New" popup="true"
+             description="Create new branch or tag on selected commit">
+        <reference id="Git.CreateNewBranch"/>
+        <reference id="Git.CreateNewTag"/>
+      </group>
       <separator/>
-
-      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
 
     <group id="Git.Log.Toolbar">
@@ -165,7 +181,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
+    <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
@@ -191,6 +207,8 @@
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsConfigurable"
+                         parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>

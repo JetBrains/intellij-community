@@ -65,11 +65,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public void moveText(int srcStart, int srcEnd, int dstOffset) {
-    throw new UnsupportedOperationException();
-  }
-  
-  @Override
   public void clearLineModificationFlags() {
     throw new UnsupportedOperationException();
   }

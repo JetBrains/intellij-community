@@ -53,7 +53,7 @@ public class LanguageIndentStrategy extends LanguageExtension<IndentStrategy> {
 
   private static class DefaultIndentStrategy implements IndentStrategy {
     @Override
-    public boolean canIndent(@NotNull PsiElement element) {
+    public boolean canIndent(int indentationStartOffset, int indentationEndOffset, @NotNull PsiElement element) {
       return true;
     }
   }

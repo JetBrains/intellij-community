@@ -207,7 +207,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @Override
   public <T extends DomElement> T createStableCopy() {
     XmlTag tag = getXmlTag();
-    if (tag != null) {
+    if (tag != null && tag.isPhysical()) {
       DomInvocationHandler existing = myManager.getDomHandler(tag);
       if (!equals(existing)) {
         throw new IllegalStateException(this + " != " + existing);

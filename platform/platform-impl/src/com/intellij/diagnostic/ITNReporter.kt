@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
-import com.intellij.CommonBundle
+import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.hasOnlyUserName
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.diagnostic.ITNProxy.ErrorBean
-import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.DataManager
@@ -61,7 +60,7 @@ open class ITNReporter : ErrorReportSubmitter() {
 
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
 
-    return submit(errorBean, parentComponent, consumer, project)
+    return submit(errorBean, consumer, parentComponent, project)
   }
 
   /**
@@ -70,20 +69,20 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(errorBean: ErrorBean, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, project: Project?): Boolean {
+private fun submit(errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
-    // ask password only if user name was specified
-    if (!showJetBrainsAccountDialog(parentComponent).showAndGet()) {
-      return false
-    }
-    credentials = ErrorReportConfigurable.getCredentials()
+    credentials = askJBAccountCredentials(parentComponent, project)
+    if (credentials == null) return false
   }
+  submit(credentials, errorBean, callback, parentComponent, project)
+  return true
+}
 
+private fun submit(credentials: Credentials?, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
   ITNProxy.sendError(project, credentials?.userName, credentials?.getPasswordAsString(), errorBean,
                      { threadId -> onSuccess(threadId, errorBean.event.data, callback, project) },
-                     { e -> onError(e, errorBean, parentComponent, callback, project) })
-  return true
+                     { e -> onError(e, errorBean, callback, parentComponent, project) })
 }
 
 private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<SubmittedReportInfo>, project: Project?) {
@@ -104,32 +103,32 @@ private fun onSuccess(threadId: Int, eventData: Any?, callback: Consumer<Submitt
   }
 }
 
-private fun onError(e: Exception, errorBean: ErrorBean, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, project: Project?) {
+private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<SubmittedReportInfo>, parentComponent: Component, project: Project?) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-      val title = CommonBundle.getWarningTitle()
+      val title = "Report Exception"
       val icon = Messages.getWarningIcon()
       if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
-      else Messages.showMessageDialog(project, message, title, icon)
+                                else Messages.showMessageDialog(project, message, title, icon)
       callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
-      return@invokeLater
     }
-
-    val msg = when (e) {
-      is NoSuchEAPUserException -> DiagnosticBundle.message("error.report.authentication.failed")
-      is InternalEAPException -> DiagnosticBundle.message("error.report.posting.failed", e.message)
-      else -> DiagnosticBundle.message("error.report.sending.failure")
-    }
-    if (!MessageDialogBuilder.yesNo(ReportMessages.ERROR_REPORT, msg).project(project).isYes) {
-      callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+    else if (e is NoSuchEAPUserException) {
+      val credentials = askJBAccountCredentials(parentComponent, project, true)
+      if (credentials != null) {
+        submit(credentials, errorBean, callback, parentComponent, project)
+      }
+      else {
+        callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+      }
     }
     else {
-      if (e is NoSuchEAPUserException) {
-        showJetBrainsAccountDialog(parentComponent, project).show()
+      val message = DiagnosticBundle.message("error.report.posting.failed", e.message)
+      val result = MessageDialogBuilder.yesNo(ReportMessages.ERROR_REPORT, message).project(project).show()
+      if (result != Messages.YES || !submit(errorBean, callback, parentComponent, project)) {
+        callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
-      ApplicationManager.getApplication().invokeLater { submit(errorBean, parentComponent, callback, project) }
     }
   }
 }

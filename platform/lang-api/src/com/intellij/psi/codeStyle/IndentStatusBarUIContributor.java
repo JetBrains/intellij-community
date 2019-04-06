@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.ui.ColorUtil;
@@ -32,11 +34,11 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @Nullable
   @Override
   public String getTooltip() {
-    return createTooltip(getTooltip(myIndentOptions), getHint());
+    return createTooltip(getIndentInfo(myIndentOptions), getHint());
   }
 
   @NotNull
-  public static String getTooltip(@NotNull IndentOptions indentOptions) {
+  public static String getIndentInfo(@NotNull IndentOptions indentOptions) {
     StringBuilder sb = new StringBuilder();
     if (indentOptions.USE_TAB_CHARACTER) {
       sb.append("Tab");
@@ -57,7 +59,7 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   }
 
   @NotNull
-  private static String createTooltip(String indentInfo, String hint) {
+  public static String createTooltip(String indentInfo, String hint) {
     StringBuilder sb = new StringBuilder();
     sb.append("<html>").append("Indent: ").append(indentInfo);
     if (hint != null) {
@@ -66,6 +68,19 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
       sb.append("</span>");
     }
     return sb.toString();
+  }
+
+  @NotNull
+  @Override
+  public String getStatusText(@NotNull PsiFile psiFile) {
+    String indentInfo = getIndentInfo(myIndentOptions);
+    StringBuilder widgetText = new StringBuilder();
+    widgetText.append(indentInfo);
+    IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
+    if (!projectIndentOptions.equals(myIndentOptions)) {
+      widgetText.append("*");
+    }
+    return widgetText.toString();
   }
 }
 

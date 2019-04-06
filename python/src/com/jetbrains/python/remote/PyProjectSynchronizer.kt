@@ -24,6 +24,8 @@ import com.intellij.util.PathMappingSettings
 import java.io.File
 import java.util.function.Consumer
 
+typealias PathMappings = List<PathMappingSettings.PathMapping>
+
 /**
  * ProjectSynchronizer is an engine that synchronize code between local and remote system or between java (which is local)
  * and python (which may be remote).
@@ -63,7 +65,7 @@ interface PyProjectSynchronizer {
    * If remote box does not allow user to configure path mapping then these mappings could be used to automatically convert
    * local path to remote path. If set, can't be empty and can't coexist with [getDefaultRemotePath]
    */
-  fun getAutoMappings(): List<PathMappingSettings.PathMapping>? = null
+  fun getAutoMappings(): com.jetbrains.python.Result<PathMappings, String>? = null
 
 
   /**

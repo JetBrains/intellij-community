@@ -24,9 +24,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doNegativeTest(PyBundle.message("INTN.convert.type.comment.to.variable.annotation.text"));
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.convert.type.comment.to.variable.annotation.text")));
   }
 
   public void testSimpleAssignment() {
@@ -34,9 +32,7 @@ public class PyConvertTypeCommentToVariableAnnotationIntentionTest extends PyInt
   }
 
   public void testBadLanguageLevel() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
-      doNegativeTest(PyBundle.message("INTN.convert.type.comment.to.variable.annotation.text"));
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doNegativeTest(PyBundle.message("INTN.convert.type.comment.to.variable.annotation.text")));
   }
 
   public void testChainedAssignment() {

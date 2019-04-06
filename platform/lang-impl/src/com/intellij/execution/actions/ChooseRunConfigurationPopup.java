@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -22,6 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -46,6 +48,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
@@ -151,6 +154,8 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         if (speedSearch.isHoldingFilter()) {
           speedSearch.backspace();
           speedSearch.update();
+        } else {
+          popup.removeSelected();
         }
       }
     });
@@ -194,11 +199,36 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    if (Messages.YES == Messages.showYesNoDialog(project,
-                                                    "Are you sure you want to delete " + configurationSettings.getName() + "?",
-                                                    "Confirmation",
-                                                    Messages.getQuestionIcon())) {
+  private static void deleteConfiguration(ChooseRunConfigurationPopup popup, final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
+    RunManagerConfig runManagerConfig = RunManagerImpl.getInstanceImpl(project).getConfig();
+    boolean confirmed;
+    if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
+      popup.myPopup.cancel();
+      confirmed = Messages.YES == Messages.showYesNoDialog(project,
+                                                           "Are you sure you want to delete " + configurationSettings.getName() + "?",
+                                                           "Confirmation",
+                                                           Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption.Adapter() {
+          @Override
+          public void rememberChoice(boolean isSelected, int exitCode) {
+            runManagerConfig.setDeletionFromPopupRequiresConfirmation(!isSelected);
+          }
+
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return "Don't ask again";
+          }
+
+          @Override
+          public boolean shouldSaveOptionsOnCancel() {
+            return true;
+          }
+        });
+    }
+    else {
+      confirmed = true;
+    }
+    if (confirmed) {
       RunManager.getInstance(project).removeConfiguration(configurationSettings);
     }
   }
@@ -331,7 +361,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           RunnerAndConfigurationSettings config = getValue();
           RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
-          ExecutionUtil.runConfiguration(config, executor);
+          ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
         }
 
         @Override
@@ -545,7 +575,16 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       boolean isFirst = true;
-      for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+      final List<Executor> allExecutors = new ArrayList<>();
+      for (final Executor executor: ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+        if (executor instanceof ExecutorGroup) {
+          allExecutors.addAll(((ExecutorGroup)executor).childExecutors());
+        }
+        else {
+          allExecutors.add(executor);
+        }
+      }
+      for (final Executor executor : allExecutors) {
         final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
         if (runner != null) {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
@@ -588,7 +627,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
         @Override
         public void perform() {
-          deleteConfiguration(project, settings);
+          deleteConfiguration(action, project, settings);
         }
       });
 
@@ -806,7 +845,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
       final Object o = getListModel().get(index);
       if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);
@@ -938,6 +977,15 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     return createSettingsList(RunManagerImpl.getInstanceImpl(project), executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
   }
 
+  public static List<ItemWrapper> createFlatSettingsList(@NotNull Project project) {
+    return RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(false)
+      .values()
+      .stream()
+      .flatMap(map -> map.values().stream().flatMap(settings -> settings.stream()))
+      .map(settings -> ItemWrapper.wrap(project, settings))
+      .collect(Collectors.toList());
+  }
+
   @TestOnly
   @NotNull
   public static List<ItemWrapper> createSettingsList(@NotNull RunManagerImpl runManager,
@@ -1053,7 +1101,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
           ExecutionTargetManager.setActiveTarget(project, getValue());
-          ExecutionUtil.runConfiguration(selectedConfiguration, executor);
+          ExecutionUtil.doRunConfiguration(selectedConfiguration, executor, null, null, context);
         }
 
         @Override
@@ -1085,7 +1133,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         if (new EditConfigurationsDialog(project) {
           @Override
           protected void init() {
-            setOKButtonText(executor.getStartActionText());
+            setOKButtonText(executor.getActionName());
             setOKButtonIcon(executor.getIcon());
             myExecutor = executor;
             super.init();
@@ -1094,7 +1142,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           ApplicationManager.getApplication().invokeLater(() -> {
             RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
             if (configuration != null) {
-              ExecutionUtil.runConfiguration(configuration, executor);
+              ExecutionUtil.doRunConfiguration(configuration, executor, null, null, context);
             }
           }, project.getDisposed());
         }
@@ -1131,7 +1179,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     int i = 2; // selectedConfiguration == null ? 1 : 2;
     for (final ConfigurationFromContext fromContext : producers) {
       final RunnerAndConfigurationSettings configuration = fromContext.getConfigurationSettings();
-      if (existing.keySet().contains(configuration)) {
+      if (existing.containsKey(configuration)) {
         final ItemWrapper wrapper = existing.get(configuration);
         if (wrapper.getMnemonic() != 1) {
           wrapper.setMnemonic(i);
@@ -1166,7 +1214,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
             manager.setTemporaryConfiguration(configuration);
             RunManager.getInstance(project).setSelectedConfiguration(configuration);
-            ExecutionUtil.runConfiguration(configuration, executor);
+            ExecutionUtil.doRunConfiguration(configuration, executor, null, null, context);
           }
 
           @Override

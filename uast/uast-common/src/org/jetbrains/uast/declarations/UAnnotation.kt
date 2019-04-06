@@ -29,7 +29,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 /**
  * An annotation wrapper to be used in [UastVisitor].
  */
-interface UAnnotation : UElement, UResolvable {
+interface UAnnotation : UElement, UResolvable, UAnchorOwner {
 
   override val javaPsi: PsiAnnotation?
   /**

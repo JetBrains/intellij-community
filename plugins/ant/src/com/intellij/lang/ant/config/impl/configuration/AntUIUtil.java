@@ -145,9 +145,7 @@ public class AntUIUtil {
             catch (BadLocationException ex) {
               LOG.error(ex);
             }
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(textField, true));
           }
         }
       });

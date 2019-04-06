@@ -41,7 +41,7 @@ public abstract class PostfixTemplatesUtils {
    */
   @NotNull
   public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
-    Set<PostfixTemplate> result = ContainerUtil.newHashSet(provider.getTemplates());
+    Set<PostfixTemplate> result = new HashSet<>(provider.getTemplates());
     for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
       if (template instanceof PostfixChangedBuiltinTemplate) {
         result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());

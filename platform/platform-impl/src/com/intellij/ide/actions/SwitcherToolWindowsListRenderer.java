@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
+class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<ToolWindow> {
   private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> shortcuts;
   private final boolean myPinned;
@@ -33,27 +33,29 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  protected void customizeCellRenderer(@NotNull JList<? extends ToolWindow> list,
+                                       ToolWindow tw,
+                                       int index,
+                                       boolean selected,
+                                       boolean hasFocus) {
     hide = false;
     setPaintFocusBorder(false);
-    if (value instanceof ToolWindow) {
-      final ToolWindow tw = (ToolWindow)value;
-      setIcon(getIcon(tw));
-      final String name;
+    setIcon(getIcon(tw));
+    final String name;
 
-      String stripeTitle = tw.getStripeTitle();
-      String shortcut = shortcuts.get(tw);
-      if (myPinned || shortcut == null) {
-        name = stripeTitle;
-      } else {
-        append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
-        name = ": " + stripeTitle;
-      }
+    String stripeTitle = tw.getStripeTitle();
+    String shortcut = shortcuts.get(tw);
+    if (myPinned || shortcut == null) {
+      name = stripeTitle;
+    }
+    else {
+      append(shortcut, new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
+      name = ": " + stripeTitle;
+    }
 
-      append(name);
-      if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
-        hide = mySpeedSearch.matchingFragments(stripeTitle) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
-      }
+    append(name);
+    if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
+      hide = mySpeedSearch.matchingFragments(stripeTitle) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
     }
   }
 

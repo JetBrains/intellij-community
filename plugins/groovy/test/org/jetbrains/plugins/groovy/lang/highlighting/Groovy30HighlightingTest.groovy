@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -66,7 +66,18 @@ I i = {3}
   }
 
   void 'test constructor reference static access'() {
-    fixture.enableInspections GrUnresolvedAccessInspection
-    highlightingTest()
+    highlightingTest GrUnresolvedAccessInspection
+  }
+
+  void 'test reassigned var in lambda'() {
+    highlightingTest GrUnresolvedAccessInspection
+  }
+
+  void 'test reassigned var in lambda 2'() {
+    highlightingTest GrUnresolvedAccessInspection
+  }
+
+  void 'test illegal single argument lambda'() {
+    highlightingTest ()
   }
 }

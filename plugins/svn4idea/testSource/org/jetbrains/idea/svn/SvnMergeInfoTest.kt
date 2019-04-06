@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
 import com.intellij.openapi.util.io.FileUtil
@@ -18,8 +18,8 @@ import org.jetbrains.idea.svn.history.SvnChangeList
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation
 import org.jetbrains.idea.svn.integrate.MergeContext
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo
+import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -88,7 +88,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     // rev 3
     editAndCommit(trunk, f1)
 
-    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
+    assertMergeResult(trunkChangeLists, MergeCheckResult.NOT_MERGED)
   }
 
   @Test
@@ -104,7 +104,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     updateFile(myBranchVcsRoot)
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3")
-    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.MERGED)
+    assertMergeResult(trunkChangeLists, MergeCheckResult.MERGED)
   }
 
   @Test
@@ -126,7 +126,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3")
     assertMergeInfo(File(myBranchVcsRoot, "folder"), "")
-    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
+    assertMergeResult(trunkChangeLists, MergeCheckResult.NOT_MERGED)
   }
 
   @Test
@@ -142,7 +142,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     updateFile(myBranchVcsRoot)
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3*")
-    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
+    assertMergeResult(trunkChangeLists, MergeCheckResult.NOT_MERGED)
   }
 
   @Test
@@ -167,7 +167,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     val changeLists = trunkChangeLists
     assertRevisions(changeLists, 4, 3)
-    assertMergeResult(changeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED)
+    assertMergeResult(changeLists, MergeCheckResult.NOT_MERGED, MergeCheckResult.MERGED)
   }
 
   @Test
@@ -193,7 +193,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     val changeListList = trunkChangeLists
     assertRevisions(changeListList, 3)
-    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
+    assertMergeResult(changeListList, MergeCheckResult.NOT_MERGED)
   }
 
   @Test
@@ -214,7 +214,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     val changeListList = trunkChangeLists
     assertRevisions(changeListList, 3)
-    assertMergeResult(changeListList[0], SvnMergeInfoCache.MergeCheckResult.MERGED)
+    assertMergeResult(changeListList[0], MergeCheckResult.MERGED)
   }
 
   @Test
@@ -235,13 +235,13 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertEquals(2, f1info!!.revision.number)
 
     val changeList = trunkChangeLists[0]
-    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
+    assertMergeResult(changeList, MergeCheckResult.NOT_MERGED)
 
     // and after update
     updateFile(myBranchVcsRoot)
     myMergeChecker.clear()
 
-    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED)
+    assertMergeResult(changeList, MergeCheckResult.MERGED)
   }
 
   private fun createOneFolderStructure() {
@@ -296,7 +296,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertEquals(expectedValue, propertyValue!!.toString())
   }
 
-  private fun assertMergeResult(changeLists: List<SvnChangeList>, vararg mergeResults: SvnMergeInfoCache.MergeCheckResult) {
+  private fun assertMergeResult(changeLists: List<SvnChangeList>, vararg mergeResults: MergeCheckResult) {
     myOneShotMergeInfoHelper.prepare()
 
     for ((index, mergeResult) in mergeResults.withIndex()) {
@@ -305,10 +305,10 @@ class SvnMergeInfoTest : SvnTestCase() {
     }
   }
 
-  private fun assertMergeResult(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) =
+  private fun assertMergeResult(changeList: SvnChangeList, mergeResult: MergeCheckResult) =
     assertEquals(mergeResult, myMergeChecker.checkList(changeList, myBranchVcsRoot.absolutePath))
 
-  private fun assertMergeResultOneShot(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) =
+  private fun assertMergeResultOneShot(changeList: SvnChangeList, mergeResult: MergeCheckResult) =
     assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList))
 
   private fun commitFile(file: File) = runInAndVerifyIgnoreOutput("ci", "-m", "test", file.absolutePath)

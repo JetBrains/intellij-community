@@ -1,18 +1,4 @@
-/*
- * Copyright 2009-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -24,24 +10,14 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
-  extends MutablyNamedIntention {
+public class ReplaceOperatorAssignmentWithPostfixExpressionIntention extends MutablyNamedIntention {
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    final PsiAssignmentExpression assignment =
-      (PsiAssignmentExpression)element;
-    final PsiExpression expression = assignment.getLExpression();
+    final PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignment.getOperationSign();
     final IElementType tokenType = sign.getTokenType();
-    final String replacementText;
-    if (JavaTokenType.PLUSEQ.equals(tokenType)) {
-      replacementText = expression.getText() + "++";
-    }
-    else {
-      replacementText = expression.getText() + "--";
-    }
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), replacementText);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), JavaTokenType.PLUSEQ.equals(tokenType) ? "++" : "--");
   }
 
   @NotNull
@@ -52,8 +28,7 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    final PsiAssignmentExpression assignment =
-      (PsiAssignmentExpression)element;
+    final PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
     final PsiExpression expression = assignment.getLExpression();
     CommentTracker commentTracker = new CommentTracker();
     final String expressionText = commentTracker.text(expression);

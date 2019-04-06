@@ -14,9 +14,7 @@ import javax.swing.*;
  */
 public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseRepository> {
   private JTextField myProjectId;
-  private JTextField myAPIKey;
   private JBLabel myProjectIDLabel;
-  private JBLabel myAPIKeyLabel;
 
   public LighthouseRepositoryEditor(final Project project,
                                     final LighthouseRepository repository,
@@ -24,17 +22,14 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);
-    myPasswordText.setVisible(false);
-    myPasswordLabel.setVisible(false);
+    myPasswordLabel.setText("API Token:");
 
     myProjectId.setText(repository.getProjectId());
-    myAPIKey.setText(repository.getAPIKey());
   }
 
   @Override
   public void apply() {
     myRepository.setProjectId(myProjectId.getText().trim());
-    myRepository.setAPIKey(myAPIKey.getText().trim());
     super.apply();
   }
 
@@ -44,10 +39,8 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
     myProjectIDLabel = new JBLabel("Project ID:", SwingConstants.RIGHT);
     myProjectId = new JTextField();
     installListener(myProjectId);
-    myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
-    myAPIKey = new JTextField();
-    installListener(myAPIKey);
-    return FormBuilder.createFormBuilder().addLabeledComponent(myProjectIDLabel, myProjectId).addLabeledComponent(myAPIKeyLabel, myAPIKey)
+    return FormBuilder.createFormBuilder()
+      .addLabeledComponent(myProjectIDLabel, myProjectId)
       .getPanel();
   }
 
@@ -55,6 +48,5 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
   public void setAnchor(@Nullable final JComponent anchor) {
     super.setAnchor(anchor);
     myProjectIDLabel.setAnchor(anchor);
-    myAPIKeyLabel.setAnchor(anchor);
   }
 }

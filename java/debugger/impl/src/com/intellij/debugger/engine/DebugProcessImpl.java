@@ -19,7 +19,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -97,14 +96,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
   @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
-  @NonNls private static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
+  @NonNls public static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
   @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
-  @Nullable protected volatile MemoryAgent myMemoryAgent;
   protected final EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
@@ -657,8 +655,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private static boolean versionMatch(@Nullable Sdk sdk, @NotNull JavaVersion version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-      String versionString = sdk.getVersionString();
-      return versionString != null && version.equals(JavaVersion.tryParse(versionString));
+      JavaVersion v = JavaVersion.tryParse(sdk.getVersionString());
+      if (v != null) {
+        return version.feature == v.feature && version.minor == v.minor && version.update == v.update;
+      }
     }
     return false;
   }
@@ -917,11 +917,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myDebuggerManagerThread;
   }
 
-  @Nullable
-  public MemoryAgent getMemoryAgent() {
-    return myMemoryAgent;
-  }
-
   private static int getInvokePolicy(SuspendContext suspendContext) {
     if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ||
         isResumeOnlyCurrentThread() ||
@@ -1088,16 +1083,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                       }
                     }
                   }
-                }
-              }
-            }
-
-            // workaround for multi-array args bug in jdi calls
-            for (Value arg : myArgs) {
-              if (arg instanceof ArrayReference) {
-                Type type = arg.type();
-                while (type instanceof ArrayType) {
-                  type = ((ArrayType)type).componentType(); // this will throw ClassNotLoadedException if necessary
                 }
               }
             }
@@ -1873,14 +1858,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       try {
         thread.popFrames(myStackFrame);
+        getSuspendManager().popFrame(suspendContext);
       }
       catch (final EvaluateException e) {
         DebuggerInvocationUtil.swingInvokeLater(myProject,
                                                 () -> Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon()));
         LOG.info(e);
-      }
-      finally {
-        getSuspendManager().popFrame(suspendContext);
       }
     }
   }

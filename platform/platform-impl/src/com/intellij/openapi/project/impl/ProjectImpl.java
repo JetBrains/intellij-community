@@ -3,17 +3,15 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -31,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -194,6 +193,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return plugin.getProjectComponents();
   }
 
+  @NotNull
+  @Override
+  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getProjectServices();
+  }
+
   @Nullable
   @Override
   public @SystemIndependent String getProjectFilePath() {
@@ -259,19 +264,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    long start = System.currentTimeMillis();
-
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator,
-         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
-
-    long time = System.currentTimeMillis() - start;
-    String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    if (application.isUnitTestMode()) {
-      LOG.debug(message);
-    } else {
-      LOG.info(message);
-    }
+    //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
+    //noinspection CodeBlock2Expr
+    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
+      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
+    } : null);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
@@ -350,6 +348,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
   }
@@ -381,8 +381,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            " " + getName();
   }
 
+  @Nullable
   @Override
-  protected boolean logSlowComponents() {
-    return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
+  protected String activityNamePrefix() {
+    return "project ";
   }
 }

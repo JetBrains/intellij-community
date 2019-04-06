@@ -406,7 +406,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
           Point point = event.getLocationOnScreen();
           SwingUtilities.convertPointFromScreen(point, view);
           Component target = SwingUtilities.getDeepestComponentAt(view, point.x, point.y);
-          if (target != null) target.dispatchEvent(MouseEventAdapter.convert(event, target));
+          MouseEventAdapter.redispatch(event, target);
         }
       }
       return true;

@@ -135,5 +135,5 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    *
    * @param name the name of the JDK.
    */
-  public abstract void setProjectSdkName(String name);
+  public abstract void setProjectSdkName(@NotNull String name);
 }

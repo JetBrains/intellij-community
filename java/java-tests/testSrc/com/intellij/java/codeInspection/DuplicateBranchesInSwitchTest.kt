@@ -41,6 +41,7 @@ class DuplicateBranchesInSwitchTest : LightCodeInsightFixtureTestCase() {
   fun testParentheses() = doTest()
   fun testAssignment() = doTest()
   fun testNoExceptionWhenFirstLabelIsMissing() = doTest()
+  fun testUnresolvedQualifier() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

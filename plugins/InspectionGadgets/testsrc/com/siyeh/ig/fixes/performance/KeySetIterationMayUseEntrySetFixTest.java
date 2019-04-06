@@ -51,5 +51,7 @@ public class KeySetIterationMayUseEntrySetFixTest extends IGQuickFixesTestCase {
   public void testEntryIterationBug() { doTest(); }
   public void testLambda() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
   public void testLambdaNoVar() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Map.forEach()")); }
+  public void testWildcardType() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "values()")); }
+  public void testNestedLambdaNameConflict() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "entrySet()")); }
 
 }

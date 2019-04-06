@@ -5,10 +5,11 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
+import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
-        if (!SwitchUtils.isRuleFormatSwitch(expression)) return;
+        if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
         holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
@@ -42,10 +43,15 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
       @Override
       public void visitSwitchStatement(PsiSwitchStatement statement) {
-        if (!SwitchUtils.isRuleFormatSwitch(statement)) return;
+        if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
+      }
+
+      private boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
+        PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
+        return label instanceof PsiSwitchLabeledRuleStatement;
       }
     };
   }
@@ -159,7 +165,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
     private final PsiSwitchBlock mySwitchBlock;
     final PsiElementFactory myFactory;
 
-    SwitchGenerator(PsiSwitchBlock switchBlock) {mySwitchBlock = switchBlock;
+    SwitchGenerator(PsiSwitchBlock switchBlock) {
+      mySwitchBlock = switchBlock;
       myFactory = JavaPsiFacade.getElementFactory(mySwitchBlock.getProject());
     }
 
@@ -173,13 +180,22 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         .select(PsiSwitchLabeledRuleStatement.class)
         .toList();
       List<CommentTracker> branchTrackers = new ArrayList<>();
+      TIntArrayList caseCounts = new TIntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
+      boolean addDefaultBranch = mySwitchBlock instanceof PsiSwitchExpression;
       for (PsiSwitchLabeledRuleStatement rule : rules) {
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
         String generate = generateBranch(rule, ct, switchCopy);
+        PsiExpressionList values = rule.getCaseValues();
+        int caseCount = values == null ? 1 : values.getExpressionCount();
+        caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
+        addDefaultBranch &= !rule.isDefaultCase();
+      }
+      if (addDefaultBranch) {
+        joiner.add("default:throw new java.lang.IllegalArgumentException();");
       }
       String bodyText = joiner.toString();
       String switchText = "switch(" + mainCommentTracker.text(expression) + "){" + bodyText + "}";
@@ -190,10 +206,16 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       List<PsiSwitchLabelStatement> branches = StreamEx.of(newBody.getStatements())
         .select(PsiSwitchLabelStatement.class)
         .toList();
-      if (branches.size() != branchTrackers.size()) return newBlock;
-      for (int i = 0; i < branches.size(); i++) {
-        PsiSwitchLabelStatement branch = branches.get(i);
+      int totalCaseStatements = 0;
+      for (int i = 0; i < caseCounts.size(); i++) {
+        totalCaseStatements += caseCounts.get(i);
+      }
+      if (branches.size() != totalCaseStatements) return newBlock;
+      int firstCaseInChainIndex = 0;
+      for (int i = 0; i < branchTrackers.size(); i++) {
+        PsiSwitchLabelStatement branch = branches.get(firstCaseInChainIndex);
         branchTrackers.get(i).insertCommentsBefore(branch);
+        firstCaseInChainIndex += caseCounts.get(i);
       }
       return newBlock;
     }
@@ -207,7 +229,17 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         .filter(breakStatement -> breakStatement.getValueExpression() != null && breakStatement.findExitedElement() == switchBlock)
         .forEach(breakStatement -> handleBreakInside(breakStatement, ct));
       PsiExpressionList caseValues = rule.getCaseValues();
-      String caseValuesText = caseValues == null ? "" : ct.text(caseValues);
+      String caseExpressionsText;
+      if (caseValues == null || caseValues.isEmpty()) {
+        if (rule.isDefaultCase()) {
+          caseExpressionsText = "default:";
+        } else {
+          caseExpressionsText = "case:";
+        }
+      } else {
+        PsiExpression[] expressions = caseValues.getExpressions();
+        caseExpressionsText = StreamEx.of(expressions).map(e -> "case " + ct.text(e) + ":").joining("\n");
+      }
       PsiStatement body = rule.getBody();
       String finalBody;
       if (body == null) {
@@ -218,10 +250,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         finalBody = generateBlockBranch(body, ct);
       }
       ct.grabComments(rule);
-
-
-      String prefix = rule.isDefaultCase() ? "default" : "case " + caseValuesText;
-      return prefix + ":" + finalBody;
+      return caseExpressionsText + finalBody;
     }
 
     String generateBlockBranch(@NotNull PsiStatement statement, CommentTracker ct) {
@@ -252,6 +281,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct) {
+      if (statement instanceof PsiThrowStatement) return ct.text(statement);
       return "return " + ct.text(statement);
     }
   }
@@ -297,7 +327,10 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     String generateExpressionBranch(@NotNull PsiStatement statement, CommentTracker ct) {
-      return ct.text(statement) + "\nbreak;";
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return ct.text(statement) + "\nbreak;";
+      }
+      return ct.text(statement);
     }
 
     @Override

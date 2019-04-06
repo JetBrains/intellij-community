@@ -159,8 +159,10 @@ public abstract class LRUPopupBuilder<T> {
     List<T> lru = ContainerUtil.newArrayListWithCapacity(LRU_ITEMS);
     List<T> items = ContainerUtil.newArrayListWithCapacity(MAX_VISIBLE_SIZE);
     List<T> extra = myExtraItems.toList();
-    for (T t : myItemsIterable) {
-      (ids.indexOf(getStorageId(t)) != -1 ? lru : items).add(t);
+    if (myItemsIterable != null) {
+      for (T t : myItemsIterable) {
+        (ids.indexOf(getStorageId(t)) != -1 ? lru : items).add(t);
+      }
     }
     if (myComparator != null) {
       Collections.sort(items, myComparator);

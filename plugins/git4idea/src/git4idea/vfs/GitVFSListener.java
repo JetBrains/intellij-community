@@ -2,6 +2,7 @@
 package git4idea.vfs;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -9,10 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsVFSListener;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -29,6 +28,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -90,15 +90,17 @@ public class GitVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
+    executeAddWithoutIgnores(addedFiles, copiedFiles,
+                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
+  }
+
+  @Override
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // Filter added files before further processing
-    Map<VirtualFile, List<VirtualFile>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
-    }
-    catch (VcsException e) {
-      throw new RuntimeException("The exception is not expected here", e);
-    }
+    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRootIgnoringMissing(myProject, addedFiles);
     final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
@@ -117,7 +119,7 @@ public class GitVFSListener extends VcsVFSListener {
         }
         addedFiles.retainAll(retainedFiles);
 
-        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copiedFiles));
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
       }
     });
   }
@@ -224,13 +226,13 @@ public class GitVFSListener extends VcsVFSListener {
           List<FilePath> dirtyPaths = newArrayList();
           List<File> toRefresh = newArrayList();
           //perform adding
-          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRoot(toAdd, true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toAdd).entrySet()) {
             List<FilePath> files = toAddEntry.getValue();
             executeAdding(toAddEntry.getKey(), files);
             dirtyPaths.addAll(files);
           }
           //perform deletion
-          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRoot(toRemove, true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toRemoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, toRemove).entrySet()) {
             List<FilePath> paths = toRemoveEntry.getValue();
             toRefresh.addAll(executeDeletion(toRemoveEntry.getKey(), paths));
             dirtyPaths.addAll(paths);
@@ -238,7 +240,7 @@ public class GitVFSListener extends VcsVFSListener {
           //perform force move if needed
           Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(VcsUtil.getFilePath(info.myNewPath), info));
           dirtyPaths.addAll(map(toForceMove, fileInfo -> VcsUtil.getFilePath(fileInfo.myOldPath)));
-          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRoot(filesToForceMove.keySet(), true).entrySet()) {
+          for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
             List<FilePath> paths = toForceMoveEntry.getValue();
             toRefresh.addAll(executeForceMove(toForceMoveEntry.getKey(), paths, filesToForceMove));
             dirtyPaths.addAll(paths);
@@ -304,14 +306,7 @@ public class GitVFSListener extends VcsVFSListener {
   private void performBackgroundOperation(@NotNull Collection<FilePath> files,
                                           @NotNull String operationTitle,
                                           @NotNull LongOperationPerRootExecutor executor) {
-    Map<VirtualFile, List<FilePath>> sortedFiles;
-    try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(files, true);
-    }
-    catch (VcsException e) {
-      myVcsConsoleWriter.showMessage(e.getMessage());
-      return;
-    }
+    Map<VirtualFile, List<FilePath>> sortedFiles = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, files);
 
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
       @Override
@@ -332,6 +327,13 @@ public class GitVFSListener extends VcsVFSListener {
   private interface LongOperationPerRootExecutor {
     void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException;
     Collection<File> getFilesToRefresh();
+  }
+
+  @TestOnly
+  public void waitForAllEventsProcessedInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
+    ((ExternallyAddedFilesProcessorImpl)myExternalFilesProcessor).waitForEventsProcessedInTestMode();
   }
 
 }

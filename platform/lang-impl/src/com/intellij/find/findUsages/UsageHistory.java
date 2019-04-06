@@ -38,11 +38,7 @@ public class UsageHistory {
     final String descriptiveName = usageTarget.getLongDescriptiveName();
     synchronized (myHistory) {
       final Set<Map.Entry<ConfigurableUsageTarget, String>> entries = myHistory.entrySet();
-      for (Iterator<Map.Entry<ConfigurableUsageTarget, String>> iterator = entries.iterator(); iterator.hasNext(); ) {
-        if (iterator.next().getValue().equals(descriptiveName)) {
-          iterator.remove();
-        }
-      }
+      entries.removeIf(entry -> entry.getValue().equals(descriptiveName));
       myHistory.put(usageTarget, descriptiveName);
     }
   }

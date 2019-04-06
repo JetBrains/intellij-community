@@ -19,10 +19,16 @@ fun expectedParameter(types: List<ExpectedType>, names: Collection<String>): Exp
   return SimpleExpectedParameter(types, names)
 }
 
+fun expectedParameter(type: JvmType, name: String, annotations: Collection<AnnotationRequest>): ExpectedParameter {
+  return SimpleExpectedParameter(listOf(expectedType(type, ExpectedType.Kind.SUPERTYPE)), listOf(name), annotations)
+}
+
 private class SimpleExpectedParameter(
   private val types: List<ExpectedType>,
-  private val names: Collection<String>
+  private val names: Collection<String>,
+  private val annotations: Collection<AnnotationRequest> = emptyList()
 ) : ExpectedParameter {
   override fun getExpectedTypes() = types
   override fun getSemanticNames() = names
+  override fun getExpectedAnnotations() = annotations
 }

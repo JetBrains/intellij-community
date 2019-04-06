@@ -74,10 +74,10 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       Binding binding = serializer.getBinding(itemType);
       Class<?>[] elementTypes = getElementTypes();
       if (elementTypes.length == 0) {
-        itemBindings = binding == null ? Collections.<Binding>emptyList() : Collections.singletonList(binding);
+        itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
       }
       else {
-        itemBindings = new SmartList<Binding>();
+        itemBindings = new SmartList<>();
         if (binding != null) {
           itemBindings.add(binding);
         }
@@ -116,7 +116,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
     if (tagName == null) {
-      List<Object> result = new SmartList<Object>();
+      List<Object> result = new SmartList<>();
       if (!ContainerUtil.isEmpty(collection)) {
         for (Object item : collection) {
           ContainerUtil.addAllNotNull(result, serializeItem(item, result, filter));
@@ -157,7 +157,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     assert elements.size() == 1;
     Element element = elements.get(0);
-    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<Object>() : context, element.getChildren());
+    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<>() : context, element.getChildren());
   }
 
   @NotNull

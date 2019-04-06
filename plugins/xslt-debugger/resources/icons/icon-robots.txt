@@ -1,0 +1,1 @@
+deprecated: filterWhitespace.png -> com.intellij.icons.AllIcons@/objectBrowser/flattenPackages.svg; to be removed in IDEA 2020 - use AllIcons.ObjectBrowser.FlattenPackages

@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.tree.ui.Control;
+import com.intellij.ui.tree.ui.DefaultControl;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -58,9 +60,8 @@ import java.util.*;
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
-  private static final Color WRONG_CONTENT = JBColor.RED;
-  private static final Color MODIFIED_CONTENT = JBColor.BLUE;
-  public static final Color FOREGROUND = new JBColor(Gray.x1A, Gray.xBB);
+  private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
+  private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -74,6 +75,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private Configurable myQueuedConfigurable;
   private boolean myPaintInternalInfo;
+
+  private MyControl myControl;
 
   public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
     myFilter = filter;
@@ -119,12 +122,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         }
         if (myHeader == null) {
           myHeader = new JLabel();
-          myHeader.setForeground(FOREGROUND);
+          myHeader.setForeground(UIUtil.getTreeForeground());
           myHeader.setIconTextGap(ICON_GAP);
           myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
-        myHeader.setIcon(myTree.getEmptyHandle());
+        myHeader.setIcon(getIcon(null));
         int height = myHeader.getPreferredSize().height;
         String group = findGroupNameAt(0, height + 3);
         if (group == null || !group.equals(findGroupNameAt(0, 0))) {
@@ -180,6 +183,48 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    myControl = null;
+  }
+
+  private Icon getIcon(@Nullable DefaultMutableTreeNode node) {
+    if (myControl == null) myControl = new MyControl();
+    if (node == null || 0 == node.getChildCount()) return myControl.empty;
+    return myTree.isExpanded(new TreePath(node.getPath())) ? myControl.expanded : myControl.collapsed;
+  }
+
+  private static final class MyControl {
+    private final Control control = new DefaultControl();
+    private final Icon collapsed = new MyIcon(false);
+    private final Icon expanded = new MyIcon(true);
+    private final Icon empty = new MyIcon(null);
+
+    private final class MyIcon implements Icon {
+      private final Boolean expanded;
+
+      private MyIcon(@Nullable Boolean expanded) {
+        this.expanded = expanded;
+      }
+
+      @Override
+      public int getIconWidth() {
+        return control.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return control.getHeight();
+      }
+
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        if (expanded != null) control.paint(g, x, y, getIconWidth(), getIconHeight(), expanded, false);
+      }
+    }
   }
 
   private static void setComponentPopupMenuTo(JTree tree) {
@@ -559,7 +604,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myTextLabel.setFont(isGroup ? myTree.getFont() : UIUtil.getLabelFont());
 
       // update font color for modified configurables
-      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground() : FOREGROUND);
+      myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
       if (!selected && node != null) {
         Configurable configurable = node.myConfigurable;
         if (configurable != null) {
@@ -585,15 +630,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
-        if (0 == treeNode.getChildCount()) {
-          nodeIcon = myTree.getEmptyHandle();
-        }
-        else {
-          nodeIcon = myTree.isExpanded(new TreePath(treeNode.getPath()))
-                     ? myTree.getExpandedHandle()
-                     : myTree.getCollapsedHandle();
-        }
+        nodeIcon = getIcon((DefaultMutableTreeNode)value);
       }
       myNodeIcon.setIcon(nodeIcon);
       if (node != null && myPaintInternalInfo) {
@@ -722,6 +759,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     @Override
     public void setUI(TreeUI ui) {
       super.setUI(ui instanceof MyTreeUi ? ui : new MyTreeUi());
+      setRowHeight(UIManager.getInt("SettingsTree.rowHeight"));
     }
 
     @Override

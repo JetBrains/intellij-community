@@ -69,9 +69,9 @@ public class TodoCheckinHandlerWorker {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
       FilePath afterFilePath = change.getAfterRevision().getFile();
+      VirtualFile afterFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(afterFilePath.getPath());
 
       MyEditedFileProcessor fileProcessor = ReadAction.compute(() -> {
-        final VirtualFile afterFile = getFileWithRefresh(afterFilePath);
         if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
           return null; // skip detection
         }
@@ -118,15 +118,6 @@ public class TodoCheckinHandlerWorker {
         mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
       }
     }
-  }
-
-  @Nullable
-  private static VirtualFile getFileWithRefresh(@NotNull FilePath filePath) {
-    VirtualFile file = filePath.getVirtualFile();
-    if (file == null) {
-      file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath.getIOFile());
-    }
-    return file;
   }
 
   private static void applyFilterAndRemoveDuplicates(final List<TodoItem> todoItems, final TodoFilter filter) {

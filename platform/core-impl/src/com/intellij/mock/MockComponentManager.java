@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +118,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @NotNull
   public <T> T[] getComponents(@NotNull Class<T> baseClass) {
     final List<T> list = myPicoContainer.getComponentInstancesOfType(baseClass);
-    return list.toArray((T[])Array.newInstance(baseClass, 0));
+    return list.toArray(ArrayUtil.newArray(baseClass, 0));
   }
 
   @Override

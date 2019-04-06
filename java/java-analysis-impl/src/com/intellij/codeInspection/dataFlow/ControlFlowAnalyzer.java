@@ -17,7 +17,6 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -118,10 +117,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
-
-    if (Registry.is("idea.dfa.live.variables.analysis")) {
-      new LiveVariablesAnalyzer(myCurrentFlow, myFactory).flushDeadVariablesOnStatementFinish();
-    }
 
     return myCurrentFlow;
   }
@@ -1299,27 +1294,28 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new AssignInstruction(originalExpression, arrayWriteTarget));
       int index = 0;
       for (PsiExpression initializer : initializers) {
+        DfaValue target = null;
         if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
-          DfaValue target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index));
-          addInstruction(new PushInstruction(target, null, true));
+          target = Objects.requireNonNull(expressionFactory.getArrayElementValue(arrayWriteTarget, index));
         }
+        index++;
+        addInstruction(new PushInstruction(target, null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
-        if (index < MAX_ARRAY_INDEX_FOR_INITIALIZER) {
-          addInstruction(new AssignInstruction(initializer, null));
-        }
-        index++;
+        addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
     }
     else {
       for (PsiExpression initializer : initializers) {
+        addInstruction(new PushInstruction(null, null, true));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
+        addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
       addInstruction(new PushInstruction(var, null, true));
@@ -1453,8 +1449,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
-                                        PsiExpression lExpr, PsiType lType,
-                                        PsiExpression rExpr, PsiType rType) {
+                                        PsiExpression lExpr, @Nullable PsiType lType,
+                                        PsiExpression rExpr, @Nullable PsiType rType) {
     boolean comparing = op == JavaTokenType.EQEQ || op == JavaTokenType.NE;
     boolean comparingRef = comparing
                            && !TypeConversionUtil.isPrimitiveAndNotNull(lType)
@@ -1466,7 +1462,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                         TypeConversionUtil.isNumericType(lType) &&
                                         TypeConversionUtil.isNumericType(rType);
 
-    PsiType castType = comparingPrimitiveNumeric ? TypeConversionUtil.unboxAndBalanceTypes(lType, rType) : type;
+    boolean shift = op == JavaTokenType.GTGT || op == JavaTokenType.LTLT || op == JavaTokenType.GTGTGT;
+
+    PsiType castType = comparingPrimitiveNumeric ? TypeConversionUtil.unboxAndBalanceTypes(lType, rType) :
+                       shift && PsiType.LONG.equals(rType) ? rType : type;
 
     if (!comparingRef) {
       generateBoxingUnboxingInstructionFor(lExpr,castType);
@@ -1697,6 +1696,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           pushUnknown();
         }
         break;
+      } else if (!qualifierExpression.isPhysical() && call.isPhysical()) {
+        // Possible -- see com.intellij.psi.impl.source.jsp.jspJava.JspMethodCallImpl.getMethodExpression
+        pushUnknown();
+        break;
       }
       call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(qualifierExpression), PsiMethodCallExpression.class);
       if (call == null) {
@@ -1741,8 +1744,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
     addConditionalRuntimeThrow();
     PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
-    List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : JavaMethodContractUtil
-      .getMethodCallContracts(method, expression);
+    List<? extends MethodContract> contracts =
+      method == null ? Collections.emptyList() :
+      DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(method, expression));
     PsiExpression anchor;
     if (expression == null) {
       assert reference instanceof PsiMethodReferenceExpression;
@@ -1850,14 +1854,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalRuntimeThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
+      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, DfaUtil.addRangeContracts(constructor, contracts)));
 
       addMethodThrows(constructor, expression);
     }
 
     finishElement(expression);
   }
-  
+
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {

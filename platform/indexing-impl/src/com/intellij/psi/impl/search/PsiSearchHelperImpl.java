@@ -436,10 +436,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                 final short searchContext,
                                 final boolean caseSensitively,
                                 @NotNull String text,
-                                @NotNull Collection<VirtualFile> result) {
+                                @NotNull Collection<? super VirtualFile> result) {
     myManager.startBatchFilesProcessingMode();
     try {
-      Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
+      Processor<? super VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       boolean success = processFilesWithText(scope, searchContext, caseSensitively, text, processor);
       // success == false means exception in index
     }
@@ -452,7 +452,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                       final short searchContext,
                                       final boolean caseSensitively,
                                       @NotNull String text,
-                                      @NotNull final Processor<VirtualFile> processor) {
+                                      @NotNull final Processor<? super VirtualFile> processor) {
     List<IdIndexEntry> entries = getWordEntries(text, caseSensitively);
     if (entries.isEmpty()) return true;
 
@@ -895,7 +895,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
                                            @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
-                                           @NotNull List<Computable<Boolean>> customs,
+                                           @NotNull List<? super Computable<Boolean>> customs,
                                            @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
     for (final Map.Entry<SearchRequestCollector, Processor<? super PsiReference>> entry : collectors.entrySet()) {
@@ -915,7 +915,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
       for (final Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
         ProgressManager.checkCanceled();
-        customs.add(() -> customAction.process(processor));
+        customs.add((Computable<Boolean>)() -> customAction.process(processor));
       }
     }
 
@@ -999,8 +999,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static boolean processFilesContainingAllKeys(@NotNull Project project,
                                                        @NotNull final GlobalSearchScope scope,
-                                                       @Nullable final Condition<Integer> checker,
-                                                       @NotNull final Collection<IdIndexEntry> keys,
+                                                       @Nullable final Condition<? super Integer> checker,
+                                                       @NotNull final Collection<? extends IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
     return DumbService.getInstance(project).runReadActionInSmartMode(

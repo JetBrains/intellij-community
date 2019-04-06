@@ -1,4 +1,4 @@
-// "Convert field to local variable in method 'Test'" "true"
+// "Convert field to local variable in constructor" "true"
 class Test {
 
     public Test(String param) {

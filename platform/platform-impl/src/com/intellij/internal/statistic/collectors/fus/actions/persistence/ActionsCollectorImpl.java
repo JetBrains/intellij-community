@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,6 +17,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +55,11 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   }
 
   @Override
-  public void record(@Nullable AnAction action, @Nullable AnActionEvent event) {
+  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
+    final FeatureUsageData data = new FeatureUsageData().addOS().addProject(project).addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).
@@ -65,6 +67,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
+    if (lang != null) {
+      data.addCurrentFile(lang);
+    }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
   }
 

@@ -5,11 +5,14 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -132,22 +135,36 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
-        settings.withArgument("--info");
+      if (!settings.getArguments().contains("--quiet")) {
+        if (!settings.getArguments().contains("--debug")){
+          settings.withArgument("--info");
+        }
+        settings.withArgument("--stacktrace");
       }
     }
 
+    List<String> filteredArgs = ContainerUtil.newArrayList();
     if (!settings.getArguments().isEmpty()) {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
-      // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
-
+      // filter nulls, empty strings and '--args' arguments
+      for (Iterator<String> iterator = settings.getArguments().iterator(); iterator.hasNext(); ) {
+        String arg = iterator.next();
+        if(StringUtil.isEmpty(arg)) continue;
+        if("--args".equals(arg) && iterator.hasNext()) {
+          iterator.next();
+        } else {
+          filteredArgs.add(arg);
+        }
+      }
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
-      operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
+    filteredArgs.add("-Didea.active=true");
+    filteredArgs.add("-Didea.version=" + getIdeaVersion());
+    operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
+
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
     final String javaHome = settings.getJavaHome();
@@ -778,5 +795,10 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardError) {
     settings.withArguments(commandLineArgs).withVmOptions(extraJvmArgs);
     prepare(operation, id, settings, listener, connection, standardOutput, standardError);
+  }
+
+  private static String getIdeaVersion() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }

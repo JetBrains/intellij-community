@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
+/**
+ * A text range defined by start and end offset.
+ *
+ * @see ProperTextRange
+ */
 public class TextRange implements Segment, Serializable {
   private static final Logger LOG = Logger.getInstance(TextRange.class);
   private static final long serialVersionUID = -670091356599757430L;
-  public static final TextRange EMPTY_RANGE = new TextRange(0,0);
+
+  public static final TextRange EMPTY_RANGE = new TextRange(0, 0);
   public static final TextRange[] EMPTY_ARRAY = new TextRange[0];
+
   private final int myStartOffset;
   private final int myEndOffset;
 
+  /**
+   * @see #create(int, int)
+   * @see #from(int, int)
+   * @see #allOf(String)
+   */
   public TextRange(int startOffset, int endOffset) {
     this(startOffset, endOffset, true);
   }
@@ -74,6 +86,7 @@ public class TextRange implements Segment, Serializable {
   public boolean contains(@NotNull TextRange range) {
     return contains((Segment)range);
   }
+
   public boolean contains(@NotNull Segment range) {
     return containsRange(range.getStartOffset(), range.getEndOffset());
   }
@@ -158,6 +171,7 @@ public class TextRange implements Segment, Serializable {
   public static TextRange create(int startOffset, int endOffset) {
     return new TextRange(startOffset, endOffset);
   }
+
   @NotNull
   public static TextRange create(@NotNull Segment segment) {
     return create(segment.getStartOffset(), segment.getEndOffset());
@@ -183,15 +197,19 @@ public class TextRange implements Segment, Serializable {
   public boolean intersects(@NotNull TextRange textRange) {
     return intersects((Segment)textRange);
   }
+
   public boolean intersects(@NotNull Segment textRange) {
     return intersects(textRange.getStartOffset(), textRange.getEndOffset());
   }
+
   public boolean intersects(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) <= Math.min(myEndOffset, endOffset);
   }
+
   public boolean intersectsStrict(@NotNull TextRange textRange) {
     return intersectsStrict(textRange.getStartOffset(), textRange.getEndOffset());
   }
+
   public boolean intersectsStrict(int startOffset, int endOffset) {
     return Math.max(myStartOffset, startOffset) < Math.min(myEndOffset, endOffset);
   }

@@ -32,8 +32,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class YamlJsonPsiWalker implements JsonLikePsiWalker {
+  public static final YamlJsonPsiWalker INSTANCE = new YamlJsonPsiWalker();
 
-  public YamlJsonPsiWalker() {
+  private YamlJsonPsiWalker() {
   }
 
   @Override
@@ -111,6 +112,14 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Nullable
   @Override
   public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
+    YAMLMapping mapping = PsiTreeUtil.getParentOfType(element, YAMLMapping.class, true, YAMLKeyValue.class);
+    if (mapping != null) {
+      // if we reach a mapping without reaching any key-value, this is a case like:
+      // - foo: bar
+      //   a
+      // and we should create a property adapter for "a" for proper behavior of features
+      return new YamlPropertyAdapter(element.getParent());
+    }
     final YAMLKeyValue property = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, false);
     if (property == null) return null;
     // it is a parent property only if its value contains the current property
@@ -335,5 +344,25 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   public PsiElement getParentContainer(PsiElement element) {
     return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class),
                                        YAMLMapping.class, YAMLSequence.class);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRoot(@NotNull PsiFile file) {
+    if (!(file instanceof YAMLFile)) return null;
+    List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
+    if (documents.size() != 1) {
+      return null;
+    }
+
+    YAMLDocument document = documents.get(0);
+    YAMLValue topLevelValue = document.getTopLevelValue();
+    return topLevelValue == null ? document : topLevelValue;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPropertyNameElement(PsiElement property) {
+    return property instanceof YAMLKeyValue ? ((YAMLKeyValue)property).getKey() : null;
   }
 }

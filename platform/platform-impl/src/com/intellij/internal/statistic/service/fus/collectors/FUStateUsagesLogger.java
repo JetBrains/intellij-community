@@ -3,9 +3,10 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,19 +28,19 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project) {
-    logProjectStates(project, EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
+    logProjectStates(project, EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
   }
 
   public void logApplicationStates() {
-    logApplicationStates(EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
+    logApplicationStates(EventLogExternalSettingsService.getFeatureUsageSettings().getApprovedGroups(), false);
   }
 
-  public void logProjectStates(@NotNull Project project, @NotNull Set<String> approvedGroups, boolean recordAll) {
-    if (!approvedGroups.isEmpty() || ApplicationManagerEx.getApplicationEx().isInternal()) {
+  public void logProjectStates(@NotNull Project project, @NotNull FUSWhitelist whitelist, boolean recordAll) {
+    if (!whitelist.isEmpty() || ApplicationManagerEx.getApplicationEx().isInternal()) {
       synchronized (LOCK) {
         for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
-          if (recordAll || approvedGroups.contains(usagesCollector.getGroupId())) {
-            final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+          if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
+            final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
             logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getUsages(project));
           }
         }
@@ -47,11 +48,11 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     }
   }
 
-  public void logApplicationStates(@NotNull Set<String> approvedGroups, boolean recordAll) {
+  public void logApplicationStates(@NotNull FUSWhitelist whitelist, boolean recordAll) {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
-        if (recordAll || approvedGroups.contains(usagesCollector.getGroupId())) {
-          final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+        if (recordAll || whitelist.accepts(usagesCollector.getGroupId(), usagesCollector.getVersion())) {
+          final EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
           logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getUsages());
         }
       }
@@ -59,7 +60,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   }
 
   private static void logUsagesAsStateEvents(@Nullable Project project,
-                                             @NotNull FeatureUsageGroup group,
+                                             @NotNull EventLogGroup group,
                                              @Nullable FeatureUsageData context,
                                              @NotNull Set<UsageDescriptor> usages) {
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
@@ -72,7 +73,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
         logger.logState(group, usage.getKey(), eventData);
       }
     }
-    logger.logState(group, INVOKED);
+    logger.logState(group, INVOKED, new FeatureUsageData().addProject(project).build());
   }
 
   @Nullable
@@ -99,7 +100,7 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     return newData;
   }
 
-  public static void logStateEvent(@NotNull FeatureUsageGroup group, @NotNull String event, @NotNull FeatureUsageData data) {
+  public static void logStateEvent(@NotNull EventLogGroup group, @NotNull String event, @NotNull FeatureUsageData data) {
     FeatureUsageLogger.INSTANCE.logState(group, event, data.build());
     FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
   }

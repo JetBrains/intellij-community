@@ -184,3 +184,10 @@ inline fun <T> Collection<T>.filterSmart(predicate: (T) -> Boolean): List<T> {
 inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): MutableList<T> {
   return filterTo(if (size <= 1) SmartList() else ArrayList(), predicate)
 }
+
+inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
+
+fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+  return (this as java.util.Collection<E>).toArray(empty)
+}

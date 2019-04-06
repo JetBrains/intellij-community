@@ -175,8 +175,8 @@ public class SurroundAction extends AbstractGuiEditorAction {
   private boolean canWrapSelection(final List<? extends RadComponent> selection) {
     if (myComponentClass.equals(JScrollPane.class.getName())) {
       if (selection.size() > 1) return false;
-      RadComponent component = selection.get(0);
-      return component.getDelegee() instanceof Scrollable;
+      JComponent liveComponent = selection.get(0).getDelegee();
+      return liveComponent instanceof Scrollable || liveComponent instanceof JPanel;
     }
     return true;
   }

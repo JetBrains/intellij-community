@@ -40,6 +40,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -64,6 +65,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected boolean myProcessCanTerminate;
   protected ExecutionResult myExecutionResult;
   protected SuspendPolicy myDefaultSuspendPolicy = SuspendPolicy.THREAD;
+  /**
+   * The value must align with the one from the pydevd_resolver.py module.
+   */
+  protected static final int MAX_ITEMS_TO_HANDLE = 100;
 
   protected PyBaseDebuggerTask(@Nullable final String relativeTestDataPath) {
     super(relativeTestDataPath);
@@ -173,6 +178,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return convertToList(myDebugProcess.loadVariable(var));
   }
 
+  protected XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+    return myDebugProcess.loadVariable(var);
+  }
+
   protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
     return convertToList(myDebugProcess.loadFrame());
   }
@@ -233,8 +242,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     pw.flush();
   }
 
-  private void outputContains(String substring) {
+  protected void outputContains(String substring) {
     Assert.assertTrue(output().contains(substring));
+  }
+
+  protected void outputContains(String substring, int times) {
+    Assert.assertEquals(times, StringUtils.countMatches(output(), substring));
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {
@@ -410,6 +423,35 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     this.shouldPrintOutput = shouldPrintOutput;
   }
 
+  public String formatStr(int x, int collectionLength) {
+    return String.format("%0" + Integer.toString(collectionLength).length() + "d", x);
+  }
+
+  public boolean hasChildWithName(XValueChildrenList children, String name) {
+    for (int i = 0; i < children.size(); i++)
+      // Dictionary key names are followed by the hash so we need to consider only
+      // the first word of a name. For lists this operation doesn't have any effect.
+      if (children.getName(i).split(" ")[0].equals(name)) return true;
+    return false;
+  }
+
+  public boolean hasChildWithName(XValueChildrenList children, int name) {
+    return hasChildWithName(children, Integer.toString(name));
+  }
+
+  public boolean hasChildWithValue(XValueChildrenList children, String value) {
+    for (int i = 0; i < children.size(); i++) {
+      PyDebugValue current = (PyDebugValue)children.getValue(i);
+      if (current.getValue().equals(value)) return true;
+    }
+    return false;
+  }
+
+  public boolean hasChildWithValue(XValueChildrenList children, int value) {
+    return hasChildWithValue(children, Integer.toString(value));
+  }
+
+
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
@@ -496,7 +538,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected static class Variable {
+  public static class Variable {
     private final XTestValueNode myValueNode;
 
     public Variable(XValue value) {

@@ -87,7 +87,7 @@ public class JpsAntExtensionService {
       antHome = new File(antPath);
     }
     else {
-      final String appHome = PathManager.getHomePath();
+      final String appHome = PathManager.getHomePath(false);
       if (appHome == null) {
         LOG.debug("idea.home.path and " + BUNDLED_ANT_PATH_PROPERTY + " aren't specified, bundled Ant won't be configured");
         return null;

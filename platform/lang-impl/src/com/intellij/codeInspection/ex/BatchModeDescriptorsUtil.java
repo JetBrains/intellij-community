@@ -5,8 +5,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.TripleFunction;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,11 @@ import java.util.*;
 public class BatchModeDescriptorsUtil {
   private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT =
     (tool, element, context) -> {
+      PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(context.getProject()).getInjectionHost(element);
+      if (injectionHost != null) {
+        element = injectionHost;
+      }
+
       final PsiNamedElement problemElement = getContainerElement(element, tool, context);
 
       RefElement refElement = context.getRefManager().getReference(problemElement);

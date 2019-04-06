@@ -145,7 +145,7 @@ public class YamlGenericValueAdapter implements JsonValueAdapter {
   private static boolean isFloat(@NotNull String s) {
     if (INFS.contains(trimSign(s)) || NANS.contains(s)) return true;
     if (hasTag(s, "float")) return true;
-    return Pattern.matches("[-+]?[1-9](\\.[0-9]*[1-9])?([eE][-+]?[1-9][0-9]*)?", s);
+    return Pattern.matches("[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?", s);
   }
 
   @NotNull

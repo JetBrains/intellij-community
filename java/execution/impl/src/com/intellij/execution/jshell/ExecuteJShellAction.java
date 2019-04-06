@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
 import com.intellij.icons.AllIcons;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 class ExecuteJShellAction extends AnAction{
   private static final AnAction ourInstance = new ExecuteJShellAction();
-  private final boolean myIsExecuteContextElement = false;
+  private static final boolean myIsExecuteContextElement = false;
 
   private ExecuteJShellAction() {
     super(AllIcons.Toolwindows.ToolWindowRun);
@@ -38,11 +38,11 @@ class ExecuteJShellAction extends AnAction{
     if (project == null) {
       return;
     }
-    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       return;
     }
-    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (vFile == null) {
       return;
     }

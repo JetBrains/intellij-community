@@ -7,19 +7,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.availability.PsiAvailabilityService;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -95,21 +92,8 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Override
-  public void updateCrumbs(@NotNull VirtualFile virtualFile,
-                           Document document, int offset,
-                           ProgressIndicator progressIndicator,
-                           @NotNull Consumer<Iterable<? extends Crumb>> consumer,
-                           Boolean forcedShown) {
-    PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(document, () -> {
-      consumer.consume(collectBreadcrumbs(virtualFile, document, offset, forcedShown));
-    }, progressIndicator);
-  }
-
   @NotNull
-  private Iterable<Crumb> collectBreadcrumbs(VirtualFile file,
-                                             Document document,
-                                             int offset,
-                                             Boolean forcedShown) {
+  public Iterable<Crumb> computeCrumbs(@NotNull VirtualFile file, @NotNull Document document, int offset, Boolean forcedShown) {
     BreadcrumbsProvider defaultInfoProvider = findProvider(file, myProject, forcedShown);
 
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =

@@ -1,8 +1,16 @@
 <component name="libraryTable">
   <library name="delight-rhino-sandbox" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.javadelight:delight-rhino-sandbox:0.0.9" />
+    <properties maven-id="org.javadelight:delight-rhino-sandbox:0.0.10">
+      <exclude>
+        <dependency maven-id="org.mozilla:rhino" />
+        <dependency maven-id="com.google.guava:guava" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.9/delight-rhino-sandbox-0.0.9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.10/delight-rhino-sandbox-0.0.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtend/org.eclipse.xtend.lib/2.14.0/org.eclipse.xtend.lib-2.14.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.14.0/org.eclipse.xtext.xbase.lib-2.14.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtend/org.eclipse.xtend.lib.macro/2.14.0/org.eclipse.xtend.lib.macro-2.14.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

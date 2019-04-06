@@ -5,6 +5,7 @@ import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -19,8 +20,6 @@ import java.util.Set;
  * @author Irina.Chernushina on 2/15/2017.
  */
 public interface JsonLikePsiWalker {
-  JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
-
   /**
    * Returns YES in place where a property name is expected,
    *         NO in place where a property value is expected,
@@ -38,6 +37,7 @@ public interface JsonLikePsiWalker {
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();
+  default boolean isValidIdentifier(String string, Project project) { return true; }
 
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 
@@ -55,9 +55,11 @@ public interface JsonLikePsiWalker {
 
   default boolean acceptsEmptyRoot() { return false; }
 
+  @Nullable PsiElement getRoot(@NotNull PsiFile file);
+
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
-    if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
+    if (JsonOriginalPsiWalker.INSTANCE.handles(element)) return JsonOriginalPsiWalker.INSTANCE;
 
     return JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME.getExtensionList().stream()
       .filter(extension -> extension.handles(element))
@@ -79,4 +81,7 @@ public interface JsonLikePsiWalker {
   default PsiElement getParentContainer(PsiElement element) {
     return null;
   }
+
+  @Nullable
+  PsiElement getPropertyNameElement(@Nullable PsiElement property);
 }
