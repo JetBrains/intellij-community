@@ -6,7 +6,6 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -50,7 +49,7 @@ import java.util.function.Function;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements BaseComponent, Disposable {
+public class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
@@ -69,20 +68,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
     myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-  }
 
-  @Override
-  public void initComponent() {
     FSRecords.connect();
   }
 
   @Override
-  public void disposeComponent() {
-    performShutdown();
-  }
-
-  @Override
   public void dispose() {
+    performShutdown();
   }
 
   private void performShutdown() {
