@@ -820,14 +820,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
-        int start = 0;
-        String path = filePath.getPath();
-        while (start < path.length()) {
-          int end = Math.min(path.indexOf('/', start), path.indexOf('\\', start));
-          if (end == -1) end = path.length();
-          String name = path.substring(start, end);
+        for (String name : StringUtil.tokenize(filePath.getPath(), "/\\")) {
           if (myFileTypeManager.isFileIgnored(name)) return true;
-          start = end + 1;
         }
         return false;
       }
