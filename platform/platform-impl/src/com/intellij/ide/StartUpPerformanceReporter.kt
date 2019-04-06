@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ObjectLongHashMap
 import gnu.trove.THashMap
 import java.io.StringWriter
 import java.util.concurrent.TimeUnit
@@ -167,9 +168,54 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
   // sorted to get predictable JSON
   for (name in activities.keys.sorted()) {
     val list = activities.getValue(name)
+
+    val ownDurations = ObjectLongHashMap<ActivityImpl>()
+    if (name.endsWith("Component")) {
+      val respectedItems = mutableListOf<ActivityImpl>()
+      var computedDurationForAll = 0L
+      for ((index, item) in list.withIndex()) {
+        val totalDuration = item.end - item.start
+        var ownDuration = totalDuration
+
+        if (index > 0 && list.get(index - 1).end > item.end) {
+          LOG.warn("prev ${list.get(index - 1).name} end > ${item.name}")
+        }
+        if (index > 0 && list.get(index - 1).start > item.start) {
+          LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
+        }
+
+        for (j in (index + 1) until list.size) {
+          val otherItem = list.get(j)
+          if (otherItem.start > item.start) {
+            if (otherItem.end < item.end) {
+              LOG.warn("${otherItem.name} start > ${item.name} but end is lesser")
+            }
+            break
+          }
+
+          if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem, it) }) {
+            ownDuration -= otherItem.end - otherItem.start
+            respectedItems.add(otherItem)
+          }
+        }
+
+        computedDurationForAll += ownDuration
+        if (totalDuration != ownDuration) {
+          ownDurations.put(item, ownDuration)
+        }
+      }
+
+      val actualTotalDurationForAll = list.last().end - list.first().start
+      LOG.assertTrue(computedDurationForAll == actualTotalDurationForAll, "computed: $computedDurationForAll, actual: ${actualTotalDurationForAll}")
+    }
+
     StartUpPerformanceReporter.sortItems(list)
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name))
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations)
   }
+}
+
+private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {
+  return otherItem.start >= item.start && otherItem.end <= item.end
 }
 
 private fun writeServiceStats(writer: JsonWriter) {
@@ -218,7 +264,7 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String) {
+private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonWriter, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>) {
   if (activities.isEmpty()) {
     return
   }
@@ -230,7 +276,8 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
   for (item in activities) {
     writer.beginObject()
     writer.name("name").value(item.name)
-    writeItemTimeInfo(item, item.end - item.start, offset, writer)
+    val computedOwnDuration = ownDurations.get(item)
+    writeItemTimeInfo(item, if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration, offset, writer)
     writer.endObject()
   }
 
