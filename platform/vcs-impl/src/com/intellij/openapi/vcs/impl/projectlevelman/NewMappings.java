@@ -170,7 +170,7 @@ public class NewMappings {
 
   @NotNull
   private static List<VcsDirectoryMapping> removeDuplicates(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
-    List<VcsDirectoryMapping> newMapping = new ArrayList<>(mappings);
+    List<VcsDirectoryMapping> newMapping = new ArrayList<>();
     Set<String> paths = new HashSet<>();
 
     for (VcsDirectoryMapping mapping : reverse(newArrayList(mappings))) {
