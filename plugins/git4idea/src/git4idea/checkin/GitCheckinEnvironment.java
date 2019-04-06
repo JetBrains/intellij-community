@@ -91,7 +91,7 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
+import static com.intellij.vcs.log.util.VcsUserUtil.*;
 import static git4idea.GitUtil.*;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
@@ -107,7 +107,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitVcsSettings mySettings;
 
-  private String myNextCommitAuthor = null; // The author for the next commit
+  private VcsUser myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
@@ -876,7 +876,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--amend");
     }
     if (myNextCommitAuthor != null) {
-      handler.addParameters("--author=" + myNextCommitAuthor);
+      handler.addParameters("--author=" + toExactString(myNextCommitAuthor));
     }
     if (myNextCommitAuthorDate != null) {
       handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
@@ -1031,7 +1031,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.addParameters("--only", "-F", message.getAbsolutePath());
       if (myNextCommitAuthor != null) {
-        handler.addParameters("--author=" + myNextCommitAuthor);
+        handler.addParameters("--author=" + toExactString(myNextCommitAuthor));
       }
       if (myNextCommitAuthorDate != null) {
         handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
@@ -1188,10 +1188,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     @Nullable
-    public String getAuthor() {
+    public VcsUser getAuthor() {
       String author = myAuthorField.getText();
       if (StringUtil.isEmptyOrSpaces(author)) return null;
-      return GitCommitAuthorCorrector.correct(author);
+      return fromExactString(author);
     }
 
     @NotNull
@@ -1303,7 +1303,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     public void saveState() {
       myNextCommitAuthor = getAuthor();
       if (myNextCommitAuthor != null) {
-        mySettings.saveCommitAuthor(myNextCommitAuthor);
+        mySettings.saveCommitAuthor(toExactString(myNextCommitAuthor));
       }
       myNextCommitAmend = isAmend();
       myNextCommitAuthorDate = myAuthorDate;
