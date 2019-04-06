@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBUI;
@@ -86,6 +87,8 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private int getRightIndent() {
+    int old = myRightIndent == null ? Registry.intValue("ide.ui.tree.indent", -1) : -1;
+    if (old >= 0) return JBUI.scale(old); // support old registry key temporarily
     return Math.max(0, myRightIndent != null ? JBUI.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
   }
 
