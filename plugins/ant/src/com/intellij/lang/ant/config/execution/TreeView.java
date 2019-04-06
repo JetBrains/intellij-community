@@ -98,7 +98,6 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private JPanel createPanel() {
     createModel();
     myTree = new MyTree();
-    myTree.setLineStyleAngled();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.updateUI();
