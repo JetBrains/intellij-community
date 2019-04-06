@@ -37,6 +37,14 @@ public abstract class VcsRootChecker {
   }
 
   /**
+   * Checks if registered mapping can be used to perform VCS operations.
+   * The difference with {@link #isRoot} is that this method should return {@code true} if unsure.
+   */
+  public boolean validateRoot(@NotNull String path) {
+    return isRoot(path);
+  }
+
+  /**
    * Returns the VCS supported by this checker.
    */
   @NotNull

@@ -65,6 +65,7 @@ public class VcsDirectoryMapping {
     return FileUtil.toSystemIndependentName(myDirectory);
   }
 
+  @Nullable
   public String getVcs() {
     return myVcs;
   }

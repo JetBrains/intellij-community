@@ -251,6 +251,9 @@ public abstract class ProjectLevelVcsManager {
   @Nullable
   public abstract AbstractVcs findVersioningVcs(VirtualFile file);
 
+  @NotNull
+  public abstract VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs);
+
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
   public abstract VcsHistoryCache getVcsHistoryCache();

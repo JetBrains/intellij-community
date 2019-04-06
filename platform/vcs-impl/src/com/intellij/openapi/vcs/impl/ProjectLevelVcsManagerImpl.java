@@ -725,6 +725,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return probableVcs == null ? null : findVcsByName(probableVcs.getName());
   }
 
+
+  @NotNull
+  @Override
+  public VcsRootChecker getRootChecker(@NotNull AbstractVcs vcs) {
+    for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (checker.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) return checker;
+    }
+    return new DefaultVcsRootChecker(vcs);
+  }
+
   @Override
   public CheckoutProvider.Listener getCompositeCheckoutListener() {
     return new CompositeCheckoutListener(myProject);
