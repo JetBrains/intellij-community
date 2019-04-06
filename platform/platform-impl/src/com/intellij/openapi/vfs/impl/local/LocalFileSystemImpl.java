@@ -71,7 +71,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   public LocalFileSystemImpl() {
-    myManagingFS = ApplicationManager.getApplication().getComponent(ManagingFS.class);
+    myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
       JobScheduler.getScheduler().scheduleWithFixedDelay(
