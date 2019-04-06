@@ -4,7 +4,6 @@ package git4idea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -23,7 +22,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -64,9 +62,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-
-import static java.util.Comparator.comparing;
 
 /**
  * Git VCS implementation
@@ -341,35 +336,13 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
-
-    for (int i = 1; i < in.size(); i++) {
-      final S sChild = in.get(i);
-      final VirtualFile child = convertor.apply(sChild);
-      final VirtualFile childRoot = GitUtil.gitRootOrNull(child);
-      if (childRoot == null) {
-        // non-git file actually, skip it
-        continue;
-      }
-      for (int j = i - 1; j >= 0; --j) {
-        final S sParent = in.get(j);
-        final VirtualFile parent = convertor.apply(sParent);
-        // the method check both that parent is an ancestor of the child and that they share common git root
-        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
-          in.remove(i);
-          //noinspection AssignmentToForLoopParameter
-          --i;
-          break;
-        }
-      }
-    }
-    return in;
+  public List<VirtualFile> detectVcsRootsFor(@NotNull List<VirtualFile> files) {
+    return defaultDetectVcsRootsFor(files, file -> GitUtil.isGitRoot(file));
   }
 
   @Override
-  public RootsConvertor getCustomConvertor() {
-    return GitRootConverter.INSTANCE;
+  public boolean validateMappedRoot(@NotNull VirtualFile root) {
+    return GitUtil.isUnderGit(root);
   }
 
   public static VcsKey getKey() {

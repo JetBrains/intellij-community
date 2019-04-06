@@ -363,6 +363,10 @@ public class GitUtil {
     return isGitRoot(folder.getPath());
   }
 
+  public static boolean isGitRoot(@NotNull VirtualFile file) {
+    return isGitRoot(file.getPath());
+  }
+
   /**
    * Return a git root for the file (the parent directory with ".git" subdirectory)
    *
