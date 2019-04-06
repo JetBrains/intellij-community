@@ -32,6 +32,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import static java.lang.Character.*;
+
 public class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
@@ -831,8 +833,8 @@ public class EditorActionUtil {
     final char word = isStart ? curr : prev;
     final char neighbor = isStart ? prev : curr;
 
-    if (Character.isJavaIdentifierPart(word)) {
-      if (!Character.isJavaIdentifierPart(neighbor)) return true;
+    if (isJavaIdentifierPart(word)) {
+      if (!isJavaIdentifierPart(neighbor)) return true;
       if (isCamel && isHumpBound(text, offset, isStart)) return true;
     }
     if (isPunctuation(word) && !isPunctuation(neighbor)) return true;
@@ -846,20 +848,20 @@ public class EditorActionUtil {
     final char curChar = editorText.charAt(offset);
     final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
 
-    return isLowerCaseOrDigit(prevChar) && Character.isUpperCase(curChar) ||
+    return isLowerCaseOrDigit(prevChar) && isUpperCase(curChar) ||
         start && prevChar == '_' && curChar != '_' ||
         !start && prevChar != '_' && curChar == '_' ||
-        start && prevChar == '$' && Character.isLetterOrDigit(curChar) ||
-        !start && Character.isLetterOrDigit(prevChar) && curChar == '$' ||
-        Character.isUpperCase(prevChar) && Character.isUpperCase(curChar) && Character.isLowerCase(nextChar);
+        start && prevChar == '$' && isLetterOrDigit(curChar) ||
+        !start && isLetterOrDigit(prevChar) && curChar == '$' ||
+        isUpperCase(prevChar) && isUpperCase(curChar) && isLowerCase(nextChar);
   }
 
   private static boolean isLowerCaseOrDigit(char c) {
-    return Character.isLowerCase(c) || Character.isDigit(c);
+    return isLowerCase(c) || isDigit(c);
   }
 
   private static boolean isPunctuation(char c) {
-    return !(Character.isJavaIdentifierPart(c) || Character.isWhitespace(c));
+    return !(isJavaIdentifierPart(c) || isWhitespace(c));
   }
 
   /**
