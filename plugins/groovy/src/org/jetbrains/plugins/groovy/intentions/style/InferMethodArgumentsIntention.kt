@@ -36,7 +36,7 @@ import java.util.*
 internal class InferMethodArgumentsIntention : Intention() {
 
   /**
-   * Performs inference of arguments for [GrMethod] pointed by [element]
+   * Performs inference of parameters for [GrMethod] pointed by [element]
    * @param element used for pointing to processed method
    * @param project current project
    * @param editor current editor
@@ -46,10 +46,9 @@ internal class InferMethodArgumentsIntention : Intention() {
     val method: GrMethod = element as GrMethod
     AddReturnTypeFix.applyFix(project, element)
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
-    val newTypeParameterList = elementFactory.createTypeParameterList()
-    method.typeParameters.forEach { newTypeParameterList.add(it.copy()) }
+    val defaultTypeParameterList = (method.typeParameterList?.copy() ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
     val parameterIndex = setUpNewTypeParameters(method, elementFactory)
-    inferTypeArguments(parameterIndex, method, elementFactory, newTypeParameterList)
+    inferTypeArguments(parameterIndex, method, elementFactory, defaultTypeParameterList)
     if (method.typeParameters.isEmpty()) {
       method.typeParameterList?.delete()
     }
@@ -65,11 +64,17 @@ internal class InferMethodArgumentsIntention : Intention() {
    *
    * @return [PsiElement] with necessary bound. Ready for addition in [PsiParameterList]
    */
-  private fun createBoundedTypeParameterElement(variable: InferenceVariable, factory: GroovyPsiElementFactory): PsiElement {
-    val superTypes = variable.getBounds(InferenceBound.UPPER)
-      .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
-      .map { it as PsiClassType }
-      .toTypedArray()
+  private fun createBoundedTypeParameterElement(variable: InferenceVariable,
+                                                factory: GroovyPsiElementFactory,
+                                                substitutor: PsiSubstitutor): PsiElement {
+    val typeParameterAmongSuperclasses = variable.getBounds(InferenceBound.UPPER).first { substitutor.substitute(it) != it }
+    val superTypes = if (typeParameterAmongSuperclasses != null)
+      arrayOf(substitutor.substitute(typeParameterAmongSuperclasses) as PsiClassType)
+    else
+      variable.getBounds(InferenceBound.UPPER)
+        .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
+        .map { substitutor.substitute(it) as PsiClassType }
+        .toTypedArray()
     return factory.createTypeParameter(variable.parameter.originalElement.text, superTypes)
   }
 
@@ -84,16 +89,21 @@ internal class InferMethodArgumentsIntention : Intention() {
                                  method: GrMethod,
                                  elementFactory: GroovyPsiElementFactory,
                                  defaultTypeParameterList: PsiTypeParameterList) {
-    val defaultInferenceSession = GroovyInferenceSession(parameterIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
+    val defaultInferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
                                                          propagateVariablesToNestedSessions = true)
     collectOuterMethodCalls(method, defaultInferenceSession)
     collectInnerMethodCalls(method, defaultInferenceSession)
+    for (typeParam in method.typeParameters.subtract(parameterIndex.values)) {
+      defaultInferenceSession.getInferenceVariable(
+        defaultInferenceSession.substituteWithInferenceVariables(typeParam.type())).instantiation = typeParam.type()
+    }
     val substitutor = defaultInferenceSession.inferSubst()
     for (entry in parameterIndex) {
       val variable = defaultInferenceSession
         .getInferenceVariable(defaultInferenceSession.substituteWithInferenceVariables(entry.key.type))
-      if (variable.instantiation == PsiType.NULL) {
-        defaultTypeParameterList.add(createBoundedTypeParameterElement(variable, elementFactory))
+      if (variable.instantiation.equalsToText(entry.value.type().canonicalText)) {
+        defaultTypeParameterList.add(
+          createBoundedTypeParameterElement(variable, elementFactory, defaultInferenceSession.restoreNameSubstitution))
       }
       entry.key.setType(substitutor.substitute(entry.value))
     }
