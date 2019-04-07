@@ -170,46 +170,46 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
     val list = activities.getValue(name)
 
     val ownDurations = ObjectLongHashMap<ActivityImpl>()
-    if (name.endsWith("Component")) {
-      val respectedItems = mutableListOf<ActivityImpl>()
-      var computedDurationForAll = 0L
-      for ((index, item) in list.withIndex()) {
-        val totalDuration = item.end - item.start
-        var ownDuration = totalDuration
-
-        if (index > 0 && list.get(index - 1).end > item.end) {
-          LOG.warn("prev ${list.get(index - 1).name} end > ${item.name}")
-        }
-        if (index > 0 && list.get(index - 1).start > item.start) {
-          LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
-        }
-
-        for (j in (index + 1) until list.size) {
-          val otherItem = list.get(j)
-          if (otherItem.start > item.start) {
-            if (otherItem.end < item.end) {
-              LOG.warn("${otherItem.name} start > ${item.name} but end is lesser")
-            }
-            break
-          }
-
-          if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem,
-                                                                                it)
-            }) {
-            ownDuration -= otherItem.end - otherItem.start
-            respectedItems.add(otherItem)
-          }
-        }
-
-        computedDurationForAll += ownDuration
-        if (totalDuration != ownDuration) {
-          ownDurations.put(item, ownDuration)
-        }
-      }
-
-      val actualTotalDurationForAll = list.last().end - list.first().start
-      LOG.assertTrue(computedDurationForAll == actualTotalDurationForAll, "computed: $computedDurationForAll, actual: ${actualTotalDurationForAll}")
-    }
+//    if (name.endsWith("Component")) {
+//      val respectedItems = mutableListOf<ActivityImpl>()
+//      var computedDurationForAll = 0L
+//      for ((index, item) in list.withIndex()) {
+//        val totalDuration = item.end - item.start
+//        var ownDuration = totalDuration
+//
+//        if (index > 0 && list.get(index - 1).end > item.end) {
+//          LOG.warn("prev ${list.get(index - 1).name} end > ${item.name}")
+//        }
+//        if (index > 0 && list.get(index - 1).start > item.start) {
+//          LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
+//        }
+//
+//        for (j in (index + 1) until list.size) {
+//          val otherItem = list.get(j)
+//          if (otherItem.start > item.start) {
+//            if (otherItem.end < item.end) {
+//              LOG.warn("${otherItem.name} start > ${item.name} but end is lesser")
+//            }
+//            break
+//          }
+//
+//          if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem,
+//                                                                                it)
+//            }) {
+//            ownDuration -= otherItem.end - otherItem.start
+//            respectedItems.add(otherItem)
+//          }
+//        }
+//
+//        computedDurationForAll += ownDuration
+//        if (totalDuration != ownDuration) {
+//          ownDurations.put(item, ownDuration)
+//        }
+//      }
+//
+//      val actualTotalDurationForAll = list.last().end - list.first().start
+//      LOG.assertTrue(computedDurationForAll == actualTotalDurationForAll, "computed: $computedDurationForAll, actual: ${actualTotalDurationForAll}")
+//    }
 
     StartUpPerformanceReporter.sortItems(list)
     writeActivities(list, startTime, writer, activityNameToJsonFieldName(name),
