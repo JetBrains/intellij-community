@@ -307,7 +307,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
     public MyRenameProcessor(PsiElement element, String newName, RenamePsiElementProcessor elementProcessor) {
       super(MemberInplaceRenamer.this.myProject, element, newName, elementProcessor.isToSearchInComments(element),
-            elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurencesEnabled(element));
+            elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurrencesEnabled(element));
     }
 
     @Nullable

@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
@@ -62,12 +64,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private final List<AutomaticRenamer> myRenamers = new ArrayList<>();
   private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<>();
 
-  public RenameProcessor(Project project,
+  public RenameProcessor(@NotNull Project project,
                          @NotNull PsiElement element,
                          @NotNull String newName,
                          boolean isSearchInComments,
                          boolean isSearchTextOccurrences) {
-    super(project);
+    this(project, element, newName, GlobalSearchScope.projectScope(project), isSearchInComments, isSearchTextOccurrences);
+  }
+
+  public RenameProcessor(@NotNull Project project,
+                         @NotNull PsiElement element,
+                         @NotNull String newName,
+                         @NotNull SearchScope refactoringScope,
+                         boolean isSearchInComments,
+                         boolean isSearchTextOccurrences) {
+    super(project, refactoringScope, null);
     myPrimaryElement = element;
 
     assertNonCompileElement(element);

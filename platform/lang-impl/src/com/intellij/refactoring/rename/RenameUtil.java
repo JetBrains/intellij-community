@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -37,6 +36,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
@@ -47,7 +47,6 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,15 +60,24 @@ public class RenameUtil {
   }
 
   @NotNull
-  public static UsageInfo[] findUsages(@NotNull final PsiElement element,
-                                       final String newName,
+  public static UsageInfo[] findUsages(@NotNull PsiElement element,
+                                       String newName,
                                        boolean searchInStringsAndComments,
                                        boolean searchForTextOccurrences,
                                        Map<? extends PsiElement, String> allRenames) {
-    final List<UsageInfo> result = Collections.synchronizedList(new ArrayList<UsageInfo>());
+    return findUsages(element, newName, GlobalSearchScope.projectScope(element.getProject()),
+                      searchInStringsAndComments, searchForTextOccurrences, allRenames);
+  }
 
-    PsiManager manager = element.getManager();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+  @NotNull
+  public static UsageInfo[] findUsages(@NotNull PsiElement element,
+                                       String newName,
+                                       @NotNull SearchScope searchScope,
+                                       boolean searchInStringsAndComments,
+                                       boolean searchForTextOccurrences,
+                                       Map<? extends PsiElement, String> allRenames) {
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
+
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
 
     Collection<PsiReference> refs = processor.findReferences(element, searchInStringsAndComments);
@@ -91,7 +99,7 @@ public class RenameUtil {
       if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, false, processor);
         UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(searchForInComments, stringToSearch, result, factory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(searchForInComments, searchScope, stringToSearch, result, factory);
       }
     }
 
@@ -99,20 +107,23 @@ public class RenameUtil {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
       if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, true, processor);
-        addTextOccurrence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
+        addTextOccurrence(searchForInComments, result, searchScope, stringToSearch, stringToReplace);
       }
 
       final Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(searchForInComments, newName);
       if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
-        addTextOccurrence(searchForInComments, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
+        addTextOccurrence(searchForInComments, result, searchScope, additionalStringToSearch.first, additionalStringToSearch.second);
       }
     }
 
     return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void addTextOccurrence(final PsiElement element, final List<? super UsageInfo> result, final GlobalSearchScope projectScope,
-                                        final String stringToSearch, final String stringToReplace) {
+  private static void addTextOccurrence(@NotNull PsiElement element,
+                                        @NotNull List<? super UsageInfo> result,
+                                        @NotNull SearchScope searchScope,
+                                        @NotNull String stringToSearch,
+                                        String stringToReplace) {
     UsageInfoFactory factory = new UsageInfoFactory() {
       @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
@@ -121,7 +132,9 @@ public class RenameUtil {
         return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
       }
     };
-    TextOccurrencesUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
+    if (searchScope instanceof GlobalSearchScope) {
+      TextOccurrencesUtil.addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, result, factory);
+    }
   }
 
 
@@ -173,14 +186,14 @@ public class RenameUtil {
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
         @Override
-        public void undo() throws UnexpectedUndoException {
+        public void undo() {
           if (listener instanceof UndoRefactoringElementListener) {
             ((UndoRefactoringElementListener)listener).undoElementMovedOrRenamed(element, fqn);
           }
         }
 
         @Override
-        public void redo() throws UnexpectedUndoException {
+        public void redo() {
         }
       };
       UndoManager.getInstance(project).undoableActionPerformed(action);

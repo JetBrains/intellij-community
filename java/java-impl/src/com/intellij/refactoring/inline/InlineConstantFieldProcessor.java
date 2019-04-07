@@ -105,7 +105,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
     List<UsageInfo> usages = new ArrayList<>();
-    for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference ref : ReferencesSearch.search(myField, myRefactoringScope, false)) {
       PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
       if (element instanceof PsiDocMethodOrFieldRef) {
@@ -125,13 +125,13 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       if (mySearchInCommentsAndStrings) {
         String stringToSearch =
           ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myField, stringToSearch, usages, nonCodeUsageFactory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myField, myRefactoringScope, stringToSearch, usages, nonCodeUsageFactory);
       }
 
-      if (mySearchForTextOccurrences) {
+      if (mySearchForTextOccurrences && myRefactoringScope instanceof GlobalSearchScope) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.NON_JAVA);
-        TextOccurrencesUtil
-          .addTextOccurences(myField, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+        TextOccurrencesUtil.addTextOccurrences(myField, stringToSearch, (GlobalSearchScope)myRefactoringScope,
+                                               usages, nonCodeUsageFactory);
       }
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);

@@ -117,7 +117,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageInfo[] findUsages() {
-    List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<UsageInfo>());
+    List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
+    GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
     for (PsiElement element : myElements) {
       boolean handled = false;
       for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
@@ -125,8 +126,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           final NonCodeUsageSearchInfo filter = delegate.findUsages(element, myElements, usages);
           if (filter != null) {
             for(PsiElement nonCodeUsageElement: filter.getElementsToSearch()) {
-              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition(), mySearchNonJava,
-                               mySearchInCommentsAndStrings);
+              addNonCodeUsages(nonCodeUsageElement, searchScope, usages,
+                               filter.getInsideDeletedCondition(), mySearchNonJava, mySearchInCommentsAndStrings);
             }
           }
           handled = true;
@@ -135,7 +136,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       if (!handled && element instanceof PsiNamedElement) {
         findGenericElementUsages(element, usages, myElements);
-        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
+        addNonCodeUsages(element, searchScope, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
     UsageInfo[] result = usages.toArray(UsageInfo.EMPTY_ARRAY);
@@ -425,7 +426,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
-  public static void addNonCodeUsages(final PsiElement element,
+  public static void addNonCodeUsages(PsiElement element,
+                                      SearchScope searchScope,
                                       List<? super UsageInfo> usages,
                                       @Nullable final Condition<? super PsiElement> insideElements,
                                       boolean searchNonJava,
@@ -441,11 +443,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     };
     if (searchInCommentsAndStrings) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-      TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
+      TextOccurrencesUtil.addUsagesInStringsAndComments(element, searchScope, stringToSearch, usages, nonCodeUsageFactory);
     }
-    if (searchNonJava) {
+    if (searchNonJava && searchScope instanceof GlobalSearchScope) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
-      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(element.getProject()), usages, nonCodeUsageFactory);
+      TextOccurrencesUtil.addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, usages, nonCodeUsageFactory);
     }
   }
 

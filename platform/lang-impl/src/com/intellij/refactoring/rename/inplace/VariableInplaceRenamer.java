@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -90,8 +91,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     final String stringToSearch = myElementToRename.getName();
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
-      TextOccurrencesUtil
-        .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, (psiElement, textRange) -> {
+      TextOccurrencesUtil.processUsagesInStringsAndComments(
+        myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
+        stringToSearch, true, (psiElement, textRange) -> {
           if (psiElement.getContainingFile() == currentFile) {
             stringUsages.add(Pair.create(psiElement, textRange));
           }
