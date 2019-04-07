@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.AccessLevel;
@@ -60,8 +61,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return; // Should not get here, but safer to check
     }
 
-    @Nullable
-    final PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass, lombok.experimental.FieldDefaults.class);
+    @Nullable final PsiAnnotation fieldDefaultsAnnotation = PsiAnnotationSearchUtil.findAnnotation(searchableClass, lombok.experimental.FieldDefaults.class);
     final boolean isConfigDefaultFinal = isConfigDefaultFinal(searchableClass);
     final boolean isConfigDefaultPrivate = isConfigDefaultPrivate(searchableClass);
 
@@ -130,7 +130,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private AccessLevel detectDefaultAccessLevel(@Nullable PsiAnnotation fieldDefaultsAnnotation, boolean isConfigDefaultPrivate) {
     final AccessLevel accessLevelFromAnnotation = fieldDefaultsAnnotation != null
-      ? AccessLevel.valueOf(PsiAnnotationUtil.getStringAnnotationValue(fieldDefaultsAnnotation, "level"))
+      ? LombokProcessorUtil.getAccessLevel(fieldDefaultsAnnotation, "level")
       : AccessLevel.NONE;
 
     if (accessLevelFromAnnotation == AccessLevel.NONE && isConfigDefaultPrivate) {
