@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -197,7 +198,7 @@ public class NewMappings {
       if (vcsRoot == null || !vcsRoot.isDirectory()) {
         invalidMappings.add(mapping.getDirectory());
       }
-      else if (vcs == null || !vcs.validateMappedRoot(vcsRoot)) {
+      else if (!checkMappedRoot(vcs, vcsRoot)) {
         mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
       }
       else {
@@ -210,7 +211,7 @@ public class NewMappings {
       AbstractVcs<?> vcs = getMappingsVcs(mapping, allVcsesI);
       if (vcs == null) continue;
 
-      List<VirtualFile> defaultRoots = vcs.detectVcsRootsFor(new ArrayList<>(myDefaultVcsRootPolicy.getDefaultVcsRoots()));
+      List<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs, myDefaultVcsRootPolicy.getDefaultVcsRoots());
 
       for (VirtualFile vcsRoot : defaultRoots) {
         if (vcsRoot != null && vcsRoot.isDirectory()) {
@@ -227,6 +228,32 @@ public class NewMappings {
   private static AbstractVcs getMappingsVcs(@NotNull VcsDirectoryMapping mapping, @NotNull AllVcsesI allVcsesI) {
     String vcsName = mapping.getVcs();
     return vcsName != null ? allVcsesI.getByName(vcsName) : null;
+  }
+
+  private boolean checkMappedRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile vcsRoot) {
+    if (vcs == null) return false;
+    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+    return rootChecker.isRoot(vcsRoot.getPath());
+  }
+
+  @NotNull
+  private List<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs<?> vcs, @NotNull Collection<VirtualFile> files) {
+    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+    HashSet<VirtualFile> checkedDirs = new HashSet<>();
+
+    List<VirtualFile> gitRoots = new ArrayList<>();
+    for (VirtualFile f : files) {
+      while (f != null) {
+        ProgressManager.checkCanceled();
+        if (!checkedDirs.add(f)) break;
+        if (rootChecker.isRoot(f.getPath())) {
+          gitRoots.add(f);
+          break;
+        }
+        f = f.getParent();
+      }
+    }
+    return gitRoots;
   }
 
   public void mappingsChanged() {

@@ -334,17 +334,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
-  @NotNull
-  @Override
-  public List<VirtualFile> detectVcsRootsFor(@NotNull List<VirtualFile> files) {
-    return defaultDetectVcsRootsFor(files, file -> GitUtil.isGitRoot(file));
-  }
-
-  @Override
-  public boolean validateMappedRoot(@NotNull VirtualFile root) {
-    return GitUtil.isUnderGit(root);
-  }
-
   public static VcsKey getKey() {
     return ourKey;
   }

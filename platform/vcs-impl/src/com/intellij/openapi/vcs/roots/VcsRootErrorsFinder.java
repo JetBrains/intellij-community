@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -123,10 +122,10 @@ public class VcsRootErrorsFinder {
 
   private boolean isRoot(@NotNull final VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return true;
-    List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
-    final String pathToCheck = mapping.getDirectory();
-    return ContainerUtil.exists(checkers, checker ->
-      checker.getSupportedVcs().getName().equalsIgnoreCase(mapping.getVcs()) &&
-      checker.isRoot(pathToCheck));
+    AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
+    if (vcs == null) return false;
+
+    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+    return rootChecker.isRoot(mapping.getDirectory());
   }
 }
