@@ -1,5 +1,6 @@
 package com.intellij.bash.psi;
 
+import com.intellij.bash.BashStringUtil;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -19,12 +20,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.bash.BashStringUtil.quote;
+import static com.intellij.bash.BashStringUtil.unquote;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public class BashFilePathCompletionContributor extends CompletionContributor implements DumbAware {
-
-  public static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
+  private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
     File file = (File) item.getObject();
     String name = item.getLookupString();
     Document document = context.getEditor().getDocument();
@@ -33,7 +35,7 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     boolean alreadyFollowedBySlash = document.getTextLength() < end && document.getCharsSequence().charAt(end) == '/';
     document.deleteString(start, end);
     boolean isDirectory = file.isDirectory();
-    String newName = name.replaceAll(" ", "\\\\ ") + (isDirectory && !alreadyFollowedBySlash ? "/" : "");
+    String newName = quote(name) + (isDirectory && !alreadyFollowedBySlash ? "/" : "");
     document.insertString(start, newName);
     int caretOffset = context.getEditor().getCaretModel().getOffset();
     context.getEditor().getCaretModel().moveToOffset(caretOffset + newName.length());
@@ -44,6 +46,7 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
 
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
+    super.duringCompletion(context);
     Caret caret = context.getCaret();
     Editor editor = context.getEditor();
     context.setReplacementOffset(calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
@@ -53,24 +56,20 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }
 
+  // @formatter:off
   private static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
     int idEnd = startFrom;
     int length = text.length();
     while (idEnd < length) {
       char ch = text.charAt(idEnd);
-      if (Character.isJavaIdentifierPart(ch) || ch == '.') {
-        idEnd++;
-      }
-      else if (idEnd < length - 1 && ch == '\\' && text.charAt(idEnd + 1) == ' ') {
-        idEnd += 2;
-      }
-      else {
-        return idEnd;
-      }
+      if (Character.isJavaIdentifierPart(ch) || ch == '.' || ch == '-') idEnd++;
+      else if (idEnd < length - 1 && ch == '\\' && BashStringUtil.ORIGINS_SET.contains(text.charAt(idEnd + 1))) idEnd += 2;
+      else return idEnd;
     }
     return idEnd;
   }
+  // @formatter:on
 
   public BashFilePathCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
@@ -89,14 +88,15 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
             boolean isRoot = beforeSlash.isEmpty();
 
             if (beforeSlash.startsWith("/") || isRoot || beforeSlash.startsWith("~")) {  // absolute paths
-              String maybeFilePath = FileUtil.expandUserHome(beforeSlash.replaceAll("\\\\ ", " "));
-
+              String maybeFilePath = FileUtil.expandUserHome(unquote(beforeSlash));
               File dir = isRoot ? new File("/") : new File(maybeFilePath);
               if (dir.exists() && dir.isDirectory()) {
                 File[] files = dir.listFiles();
                 if (files != null) {
                   List<LookupElement> collect = Arrays.stream(files).map(BashFilePathCompletionContributor::createFileLookupElement).collect(Collectors.toList());
-                  result.withPrefixMatcher(afterSlash.replaceAll("\\\\ ", " ")).caseInsensitive().addAllElements(collect);
+                  String unquote = unquote(afterSlash);
+                  String prefix = unquote.endsWith("\\") ? unquote.substring(0, unquote.length() - 1) : unquote;
+                  result.withPrefixMatcher(prefix).caseInsensitive().addAllElements(collect);
                 }
               }
               result.stopHere();
