@@ -162,10 +162,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     createPredefinedScopeDescriptors(model);
 
     Comparator<SearchScope> comparator = (o1, o2) -> {
-      int w1 = o1 instanceof WeighedItem ? ((WeighedItem)o1).getWeight() : -1;
-      int w2 = o2 instanceof WeighedItem ? ((WeighedItem)o2).getWeight() : -1;
+      int w1 = o1 instanceof WeighedItem ? ((WeighedItem)o1).getWeight() : Integer.MAX_VALUE;
+      int w2 = o2 instanceof WeighedItem ? ((WeighedItem)o2).getWeight() : Integer.MAX_VALUE;
       if (w1 == w2) return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
-      return w2 - w1;
+      return w1 - w2;
     };
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
       if (StringUtil.isEmpty(each.getDisplayName())) continue;
