@@ -216,7 +216,8 @@ public class GitLogUtil {
                                               @NotNull List<String> hashes,
                                               @NotNull GitCommitRequirements requirements,
                                               @NotNull Consumer<? super GitCommit> commitConsumer) throws VcsException {
-    new GitFullDetailsCollector(project, root).readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
+    new GitFullDetailsCollector(project, root, new InternedGitLogRecordBuilder())
+      .readFullDetailsForHashes(hashes, requirements, false, commitConsumer);
   }
 
   @NotNull
