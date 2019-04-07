@@ -3,9 +3,9 @@ package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpPerformanceReporter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
-import com.intellij.ide.StartUpPerformanceReporter;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
