@@ -26,16 +26,13 @@ import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 
-class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
+open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
     private val myRestoreAction: Action = CustomFrameAction("Restore", AllIcons.Windows.RestoreSmall) { restore() }
     private val myMaximizeAction: Action = CustomFrameAction("Maximize", AllIcons.Windows.MaximizeSmall) { maximize() }
 
     private var windowStateListener: WindowStateListener
-    private var changeListener: ChangeListener
-    private val mySelectedEditorFilePath: CustomDecorationPath
-    private val myIdeMenu: IdeMenuBar
-    private var myState = 0
+    protected var myState = 0
 
     init {
         windowStateListener = object : WindowAdapter() {
@@ -43,49 +40,11 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
                 updateActions()
             }
         }
-
-        layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top", "$H_GAP[pref!]$H_GAP[][pref!]")
-        add(productIcon)
-
-        myIdeMenu = object : IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()) {
-            override fun getBorder(): Border? {
-                return JBUI.Borders.empty()
-            }
-        }
-
-        changeListener = ChangeListener {
-            setCustomDecorationHitTestSpots()
-        }
-        mySelectedEditorFilePath = CustomDecorationPath(this)
-
-        val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
-        pane.isOpaque = false
-        pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
-        pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
-
-        add(pane, "wmin 0, growx")
-        add(buttonPanes.getView(), "top, wmin pref")
-
-        setCustomFrameTopBorder({myState != MAXIMIZED_VERT && myState != MAXIMIZED_BOTH}, {true})
-    }
-
-    fun setProject(project: Project) {
-        mySelectedEditorFilePath.setProject(project)
-    }
+     }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = ResizableCustomFrameTitleButtons.create(myCloseAction,
             myRestoreAction, myIconifyAction, myMaximizeAction)
 
-
-    override fun installListeners() {
-        myIdeMenu.selectionModel.addChangeListener(changeListener)
-        super.installListeners()
-    }
-
-    override fun uninstallListeners() {
-        myIdeMenu.selectionModel.removeChangeListener(changeListener)
-        super.uninstallListeners()
-    }
 
     override fun windowStateChanged() {
         super.windowStateChanged()
@@ -147,21 +106,16 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
     }
 
-    override fun getHitTestSpots(): List<Rectangle> {
+    override fun getHitTestSpots(): ArrayList<Rectangle> {
         val hitTestSpots = ArrayList<Rectangle>()
 
         val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
-        val menuRect = RelativeRectangle(myIdeMenu).getRectangleOn(this)
         val buttonsRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
 
         val state = frame.extendedState
         iconRect.width = (iconRect.width * 1.5).toInt()
 
         if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
-
-            if (menuRect != null /*&& !myIdeMenu.isSelected*/) {
-                menuRect.y += Math.round((menuRect.height / 3).toFloat())
-            }
 
             if (buttonsRect != null) {
                 buttonsRect.y += HIT_TEST_RESIZE_GAP
@@ -170,9 +124,6 @@ class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
             }
         }
 
-        hitTestSpots.add(menuRect)
-
-        hitTestSpots.addAll(mySelectedEditorFilePath.getListenerBounds())
         hitTestSpots.add(iconRect)
         hitTestSpots.add(buttonsRect)
         return hitTestSpots
