@@ -86,6 +86,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
   Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
 
+  Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
+
   //
   // MergeContext / MergeRequest
   //
