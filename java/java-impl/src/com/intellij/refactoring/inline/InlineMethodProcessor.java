@@ -140,12 +140,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myReference != null) {
       usages.add(new UsageInfo(myReference));
     }
-    GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
-    for (PsiReference reference : ReferencesSearch.search(myMethod, searchScope)) {
+    for (PsiReference reference : ReferencesSearch.search(myMethod, myRefactoringScope)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, searchScope, false).forEach(method -> {
+    OverridingMethodsSearch.search(myMethod, myRefactoringScope, false).forEach(method -> {
       if (AnnotationUtil.isAnnotated(method, Override.class.getName(), 0)) {
         usages.add(new UsageInfo(method));
       }
@@ -162,13 +161,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       };
       if (mySearchInComments) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, stringToSearch, usages, infoFactory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, myRefactoringScope, stringToSearch, usages, infoFactory);
       }
 
-      if (mySearchForTextOccurrences) {
+      if (mySearchForTextOccurrences && myRefactoringScope instanceof GlobalSearchScope) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.NON_JAVA);
-        TextOccurrencesUtil
-          .addTextOccurences(myMethod, stringToSearch, searchScope, usages, infoFactory);
+        TextOccurrencesUtil.addTextOccurrences(myMethod, stringToSearch, (GlobalSearchScope)myRefactoringScope, usages, infoFactory);
       }
     }
 
@@ -793,7 +791,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, myRefactoringScope, false)) {
       final PsiElement refElement = reference.getElement();
       final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
       if (anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true)) {
@@ -1142,8 +1140,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       else {
         if (isAccessedForWriting) {
           if (refVar.hasModifierProperty(PsiModifier.FINAL) || shouldBeFinal) return false;
-          PsiReference[] refs =
-            ReferencesSearch.search(refVar, GlobalSearchScope.projectScope(myProject), false).toArray(PsiReference.EMPTY_ARRAY);
+          PsiReference[] refs = ReferencesSearch.search(refVar, myRefactoringScope, false).toArray(PsiReference.EMPTY_ARRAY);
           return refs.length == 1; //TODO: control flow
         }
         else {
@@ -1264,7 +1261,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void inlineResultVariable(PsiVariable resultVar) throws IncorrectOperationException {
     PsiAssignmentExpression assignment = null;
     PsiReferenceExpression resultUsage = null;
-    for (PsiReference ref1 : ReferencesSearch.search(resultVar, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference ref1 : ReferencesSearch.search(resultVar, myRefactoringScope, false)) {
       PsiReferenceExpression ref = (PsiReferenceExpression)ref1;
       if (ref.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)ref.getParent()).getLExpression().equals(ref)) {
         if (assignment != null) {
