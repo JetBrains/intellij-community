@@ -62,7 +62,10 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shellcheckExecutable)
-          .withParameters("--color=never", "--format=json", "--severity=style", "--shell=bash", "--wiki-link-count=10", "-");
+          .withParameters(
+              "--color=never", "--format=json", "--severity=style", "--shell=bash", "--wiki-link-count=10",
+              "-exclude=SC1091",
+              "-");
       Process process = commandLine.createProcess();
       writeFileContentToStdin(process, fileContent, commandLine.getCharset());
       if (process.waitFor(10, TimeUnit.SECONDS)) {
