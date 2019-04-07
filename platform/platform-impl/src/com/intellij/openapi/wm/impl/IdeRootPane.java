@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.BalloonLayout;
@@ -71,7 +72,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
   private boolean myFullScreen;
 
-  private FrameHeader myCustomFrameTitlePane;
+  private MainFrameHeader myCustomFrameTitlePane;
   private boolean myDecoratedMenu = false;
 
   IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, final IdeFrame frame) {
@@ -107,7 +108,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
         JFrame jframe = (JFrame) frame;
         JdkEx.setHasCustomDecoration(jframe);
 
-        myCustomFrameTitlePane = CustomHeader.Companion.createFrameHeader(jframe);
+        myCustomFrameTitlePane = CustomHeader.Companion.createMainFrameHeader(jframe);
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
         menu.setVisible(false);
       }

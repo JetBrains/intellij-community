@@ -26,14 +26,19 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         val HIT_TEST_RESIZE_GAP = JBUI.scale(3)
 
         fun create(window: Window): CustomHeader {
-            return if (window is JFrame && window.rootPane is IdeRootPane) {
-                createFrameHeader(window)
+            return if (window is JFrame) {
+                if(window.rootPane is IdeRootPane) {
+                    createMainFrameHeader(window)
+                } else {
+                    createFrameHeader(window)
+                }
             } else {
                 DialogHeader(window)
             }
         }
 
-        fun createFrameHeader(frame: JFrame): FrameHeader = FrameHeader(frame)
+        fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
     }
 
     private var windowListener: WindowAdapter

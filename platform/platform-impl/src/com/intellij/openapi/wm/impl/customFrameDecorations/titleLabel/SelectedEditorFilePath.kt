@@ -31,7 +31,17 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     return clippedText.equals(path)
   }
 
-  private val label = JLabel().apply {
+  private val label = object : JLabel(){
+    override fun addNotify() {
+      super.addNotify()
+      getView().addComponentListener(resizedListener)
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      getView().removeComponentListener(resizedListener)
+    }
+  }.apply {
     isEnabled = false
   }
 
@@ -60,9 +70,6 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
   private fun init() {
     inited = true
-
-    getView().addComponentListener(resizedListener)
-    Disposer.register(disposable, Disposable { getView().removeComponentListener(resizedListener) })
   }
 
   fun setProject(project: Project) {
