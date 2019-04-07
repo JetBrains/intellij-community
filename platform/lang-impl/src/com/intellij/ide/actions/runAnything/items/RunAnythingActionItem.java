@@ -21,7 +21,7 @@ public class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBa
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
+  public Component createComponent(boolean isSelected, boolean hasFocus) {
     SimpleColoredComponent component = new SimpleColoredComponent();
     component.append(getCommand());
     setupIcon(component, myIcon);
