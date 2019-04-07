@@ -30,11 +30,15 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     File file = (File) item.getObject();
     Document document = context.getEditor().getDocument();
     int end = context.getSelectionEndOffset();
-    boolean alreadyFollowedBySlash = document.getTextLength() >= end && document.getCharsSequence().charAt(end) == '/';
+    boolean endOfFile = document.getTextLength() >= end;
+    boolean alreadyFollowedBySlash = !endOfFile && document.getCharsSequence().charAt(end) == '/';
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
       if (!alreadyFollowedBySlash) {
         document.insertString(end, "/");
+        if (endOfFile) {
+          context.getEditor().getCaretModel().moveToOffset(end + 1);
+        }
       }
       else {
         context.getEditor().getCaretModel().moveToOffset(end + 1);
