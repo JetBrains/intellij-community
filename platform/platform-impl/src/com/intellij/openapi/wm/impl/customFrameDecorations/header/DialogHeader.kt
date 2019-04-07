@@ -16,10 +16,8 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
         titleLabel.text = getTitle()
 
         add(productIcon)
-        add(titleLabel, "wmin 0, left")
+        add(titleLabel, "wmin 0, left, hmin $MIN_HEIGHT")
         add(buttonPanes.getView(), "top, wmin pref")
-
-        minimumSize = Dimension(minimumSize.width, MIN_HEIGHT)
     }
 
     override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
@@ -35,15 +33,6 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
     }
 
     private fun getActiveColor(): Color? {
-/*        when (windowRootPane?.windowDecorationStyle) {
-                JRootPane.ERROR_DIALOG -> return UIManager.getColor("OptionPane.errorDialog.titlePane.foreground")
-                JRootPane.QUESTION_DIALOG,
-                JRootPane.COLOR_CHOOSER_DIALOG,
-                JRootPane.FILE_CHOOSER_DIALOG -> return UIManager.getColor("OptionPane.questionDialog.titlePane.foreground")
-                JRootPane.WARNING_DIALOG -> return UIManager.getColor("OptionPane.warningDialog.titlePane.foreground")
-                JRootPane.PLAIN_DIALOG,
-                JRootPane.INFORMATION_DIALOG -> return UIManager.getColor("Panel.foreground")
-        }*/
         return UIManager.getColor("Panel.foreground")
     }
 
@@ -54,7 +43,6 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
 
     private fun getTitle(): String? {
         when (window) {
-            is Frame -> return window.title
             is Dialog -> return window.title
             else -> return ""
         }
