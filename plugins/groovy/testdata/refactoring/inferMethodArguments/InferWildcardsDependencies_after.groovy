@@ -1,4 +1,4 @@
-def <T0> void foo(List<T0> a, T0 x) {
+def void foo(List<Serializable> a, Serializable x) {
   a.add(x)
 }
 

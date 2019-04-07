@@ -7,6 +7,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
@@ -83,21 +84,21 @@ internal class InferMethodArgumentsIntention : Intention() {
                                  method: GrMethod,
                                  elementFactory: GroovyPsiElementFactory,
                                  defaultTypeParameterList: PsiTypeParameterList) {
-    val defaultResolveSession = GroovyInferenceSession(parameterIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
-                                                       propagateVariablesToNestedSessions = true)
-    collectOuterMethodCalls(method, defaultResolveSession)
-    collectInnerMethodCalls(method, defaultResolveSession)
-    val substitutor = defaultResolveSession.inferSubst()
+    val defaultInferenceSession = GroovyInferenceSession(parameterIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
+                                                         propagateVariablesToNestedSessions = true)
+    collectOuterMethodCalls(method, defaultInferenceSession)
+    collectInnerMethodCalls(method, defaultInferenceSession)
+    val substitutor = defaultInferenceSession.inferSubst()
     for (entry in parameterIndex) {
-      val variable = defaultResolveSession
-        .getInferenceVariable(defaultResolveSession.substituteWithInferenceVariables(entry.key.type))
+      val variable = defaultInferenceSession
+        .getInferenceVariable(defaultInferenceSession.substituteWithInferenceVariables(entry.key.type))
       if (variable.instantiation == PsiType.NULL) {
         defaultTypeParameterList.add(createBoundedTypeParameterElement(variable, elementFactory))
       }
       entry.key.setType(substitutor.substitute(entry.value))
     }
     if (parameterIndex.entries.map { it.key.type }.any { it is PsiClassType && it.parameters.any { param -> param is PsiWildcardType } }) {
-      runWildcardInferencePhase(method, parameterIndex, elementFactory, defaultTypeParameterList)
+      deepInference(method, parameterIndex, elementFactory, defaultTypeParameterList)
     }
     else {
       method.typeParameterList?.replace(defaultTypeParameterList)
@@ -105,57 +106,69 @@ internal class InferMethodArgumentsIntention : Intention() {
   }
 
 
-  /**
-   * Replaces all wildcards with new type parameters and then runs [GroovyInferenceSession] to collect more dependencies.
-   * All type parameters that wildcards gain will not be regarded as [InferenceVariable].
-   *
-   * @param method method that is currently processed
-   * @param parameterIndex map from parameters to their parameter types. These parameters are under inference in this intention.
-   * @param elementFactory factory which can produce new [PsiElement]
-   * @param defaultTypeParameterList original parameter list that method has in the very beginning.
-   * It can vary through inference phases, so it is important to keep track on initial type parameters.
-   *
-   */
-  private fun runWildcardInferencePhase(method: GrMethod,
-                                        parameterIndex: Map<GrParameter, PsiTypeParameter>,
-                                        elementFactory: GroovyPsiElementFactory,
-                                        defaultTypeParameterList: PsiTypeParameterList) {
-    method.typeParameterList?.replace(defaultTypeParameterList)
-    val typeParameterList = method.typeParameterList!!
-    val remainingTypeParameterList = typeParameterList.copy()
-    var nameCounter = 0
-    val newParameterIndex = LinkedHashMap<GrParameter, PsiTypeParameter>()
-    for (paramEntry in parameterIndex) {
-      val requiredType = paramEntry.key.type
-      if (requiredType is PsiClassType && requiredType.hasParameters()) {
-        val insteadOfWildcards = ArrayList<PsiType>()
-        for (classParameterType in requiredType.parameters.filter { it is PsiWildcardType }) {
-          val newTypeParameter = elementFactory.createTypeParameter(produceTypeParameterName(nameCounter), PsiClassType.EMPTY_ARRAY)
-          ++nameCounter
-          // todo: hide name generating in some helper class
-          typeParameterList.add(newTypeParameter)
-          remainingTypeParameterList.add(newTypeParameter.copy())
-          insteadOfWildcards.add(newTypeParameter.type())
-        }
-        val parametrizedRequiredType = elementFactory.createType(requiredType.resolve()!!, *insteadOfWildcards.toTypedArray())
-        paramEntry.key.setType(parametrizedRequiredType)
+  private fun createDeeplyParametrizedType(target: PsiClassType,
+                                           elementFactory: GroovyPsiElementFactory,
+                                           typeParameterList: PsiTypeParameterList, generator: NameGenerator): PsiType {
+    val visitor = object : PsiTypeMapper() {
+
+      override fun visitClassType(classType: PsiClassType?): PsiType? {
+        classType ?: return classType
+        val parameters = classType.parameters
+        val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
+        val resolveResult = classType.resolveGenerics()
+        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
       }
-      else {
-        val newTypeParameter = elementFactory.createTypeParameter(produceTypeParameterName(nameCounter), PsiClassType.EMPTY_ARRAY)
-        ++nameCounter
-        typeParameterList.add(newTypeParameter)
-        newParameterIndex[paramEntry.key] = newTypeParameter
-        paramEntry.key.setType(newTypeParameter.type())
+
+      override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+        wildcardType ?: return wildcardType
+        val upperBounds = if (wildcardType.isExtends) arrayOf(wildcardType.extendsBound.accept(this) as PsiClassType) else emptyArray()
+        val typeParam = elementFactory.createTypeParameter(generator.name, upperBounds)
+        typeParameterList.add(typeParam)
+        return typeParam.type()
+      }
+
+      override fun visitCapturedWildcardType(type: PsiCapturedWildcardType?): PsiType? {
+        type ?: return type
+        val upperBound = type.upperBound.accept(this) as PsiClassType
+        val typeParam = elementFactory.createTypeParameter(generator.name, arrayOf(upperBound))
+        typeParameterList.add(typeParam)
+        return typeParam.type()
+      }
+
+    }
+    if (target.hasParameters()) {
+      return target.accept(visitor)
+    }
+    else {
+      val typeParam = elementFactory.createTypeParameter(generator.name, arrayOf(target))
+      typeParameterList.add(typeParam)
+      return typeParam.type()
+    }
+  }
+
+
+  private fun deepInference(method: GrMethod,
+                            parameterIndex: Map<GrParameter, PsiTypeParameter>,
+                            elementFactory: GroovyPsiElementFactory,
+                            defaultTypeParameterList: PsiTypeParameterList) {
+    method.typeParameterList?.replace(defaultTypeParameterList)
+    val nameGenerator = NameGenerator()
+    val defaultTypeParameters = method.typeParameters
+    for (parameter in parameterIndex.keys) {
+      if (parameter.type is PsiClassType) {
+        parameter.setType(
+          createDeeplyParametrizedType(parameter.type as PsiClassType, elementFactory, method.typeParameterList!!, nameGenerator))
       }
     }
-    val inferenceSession = GroovyInferenceSession(newParameterIndex.values.toTypedArray(), PsiSubstitutor.EMPTY, method,
+    val collectedTypeParameters = method.typeParameters.subtract(defaultTypeParameters.asIterable())
+    val inferenceSession = GroovyInferenceSession(collectedTypeParameters.toTypedArray(), PsiSubstitutor.EMPTY, method,
                                                   propagateVariablesToNestedSessions = true)
     collectInnerMethodCalls(method, inferenceSession)
     val newSubst = inferenceSession.inferSubst()
-    for (entry in newParameterIndex) {
-      entry.key.setType(newSubst.substitute(entry.value))
+    for (param in parameterIndex.keys) {
+      param.setType(newSubst.substitute(param.type))
     }
-    method.typeParameterList?.replace(remainingTypeParameterList)
+    method.typeParameterList?.replace(defaultTypeParameterList)
   }
 
 

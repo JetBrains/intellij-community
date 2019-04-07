@@ -4,5 +4,15 @@ package org.jetbrains.plugins.groovy.intentions.style
 fun produceTypeParameterName(index: Int): String {
   // todo: fix possible collisions
   val namerange = 'Z'.toByte() - 'T'.toByte()
-  return ('T'.toByte() + index % namerange ).toChar().toString() + (index / namerange).toString()
+  return ('T'.toByte() + index % namerange).toChar().toString() + (index / namerange).toString()
+}
+
+class NameGenerator {
+  var counter = 0
+  val name: String
+    get() {
+      val name = produceTypeParameterName(counter)
+      ++counter
+      return name
+    }
 }
