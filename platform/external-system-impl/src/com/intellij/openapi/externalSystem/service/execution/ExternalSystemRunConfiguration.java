@@ -60,9 +60,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
@@ -204,7 +205,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (file != null) {
         Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
         if (module != null) {
-          scope = SearchScopeProvider.createSearchScope(ContainerUtil.ar(module));
+          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }

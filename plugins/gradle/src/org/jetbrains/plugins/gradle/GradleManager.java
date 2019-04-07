@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.components.ServiceManager;
@@ -52,11 +51,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -386,10 +387,10 @@ public final class GradleManager
       return null;
     }
     else {
-      Module[] modules = Arrays.stream(ModuleManager.getInstance(project).getModules())
+      List<Module> modules = JBIterable.of(ModuleManager.getInstance(project).getModules())
         .filter(module -> StringUtil.equals(projectPath, ExternalSystemApiUtil.getExternalProjectPath(module)))
-        .toArray(Module[]::new);
-      return modules.length > 0 ? SearchScopeProvider.createSearchScope(modules) : null;
+        .toList();
+      return modules.isEmpty() ? null : GlobalSearchScopes.executionScope(modules);
     }
   }
 
