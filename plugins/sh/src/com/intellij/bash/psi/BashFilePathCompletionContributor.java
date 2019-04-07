@@ -51,12 +51,12 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     context.setReplacementOffset(calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
   }
 
-  private static int calcSelectionEnd(Caret caret) {
+  private static int calcSelectionEnd(@NotNull Caret caret) {
     return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }
 
   // @formatter:off
-  private static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
+  private static int calcDefaultIdentifierEnd(@NotNull Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
     int idEnd = startFrom;
     int length = text.length();
@@ -105,7 +105,8 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     });
   }
 
-  private static LookupElement createFileLookupElement(File file) {
+  @NotNull
+  private static LookupElement createFileLookupElement(@NotNull File file) {
     String name = file.getName();
     boolean isDirectory = file.isDirectory();
     return LookupElementBuilder.create(file, quote(name))
