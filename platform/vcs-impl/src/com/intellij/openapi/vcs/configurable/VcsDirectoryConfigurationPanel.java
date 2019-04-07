@@ -377,10 +377,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
-    String vcs = mapping.getVcs();
-    VcsRootChecker checker = myCheckers.get(vcs);
-    return checker == null ||
-           (mapping.isDefaultMapping() ? checker.isRoot(myProject.getBasePath()) : checker.isRoot(mapping.getDirectory()));
+    if (mapping.isDefaultMapping()) return true;
+    VcsRootChecker checker = myCheckers.get(mapping.getVcs());
+    return checker == null || checker.isRoot(mapping.getDirectory());
   }
 
   @NotNull
