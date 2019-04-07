@@ -28,18 +28,17 @@ import static com.intellij.patterns.StandardPatterns.instanceOf;
 public class BashFilePathCompletionContributor extends CompletionContributor implements DumbAware {
   private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
     File file = (File) item.getObject();
-    String name = item.getLookupString();
     Document document = context.getEditor().getDocument();
-    int start = context.getStartOffset();
     int end = context.getSelectionEndOffset();
-    boolean alreadyFollowedBySlash = document.getTextLength() < end && document.getCharsSequence().charAt(end) == '/';
-    document.deleteString(start, end);
+    boolean alreadyFollowedBySlash = document.getTextLength() >= end && document.getCharsSequence().charAt(end) == '/';
     boolean isDirectory = file.isDirectory();
-    String newName = quote(name) + (isDirectory && !alreadyFollowedBySlash ? "/" : "");
-    document.insertString(start, newName);
-    int caretOffset = context.getEditor().getCaretModel().getOffset();
-    context.getEditor().getCaretModel().moveToOffset(caretOffset + newName.length());
     if (isDirectory) {
+      if (!alreadyFollowedBySlash) {
+        document.insertString(end, "/");
+      }
+      else {
+        context.getEditor().getCaretModel().moveToOffset(end + 1);
+      }
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
   };
@@ -94,8 +93,7 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
                 File[] files = dir.listFiles();
                 if (files != null) {
                   List<LookupElement> collect = Arrays.stream(files).map(BashFilePathCompletionContributor::createFileLookupElement).collect(Collectors.toList());
-                  String unquote = unquote(afterSlash);
-                  String prefix = unquote.endsWith("\\") ? unquote.substring(0, unquote.length() - 1) : unquote;
+                  String prefix = afterSlash.endsWith("\\") ? afterSlash.substring(0, afterSlash.length() - 1) : afterSlash;
                   result.withPrefixMatcher(prefix).caseInsensitive().addAllElements(collect);
                 }
               }
@@ -110,14 +108,9 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
   private static LookupElement createFileLookupElement(File file) {
     String name = file.getName();
     boolean isDirectory = file.isDirectory();
-    return LookupElementBuilder.create(file, name)
+    return LookupElementBuilder.create(file, quote(name))
         .withIcon(isDirectory ? PlatformIcons.FOLDER_ICON : null)
-        .withInsertHandler(getLookupElementInsertHandler())
+        .withInsertHandler(FILE_INSERT_HANDLER)
         ;
-  }
-
-  @NotNull
-  private static InsertHandler<LookupElement> getLookupElementInsertHandler() {
-    return FILE_INSERT_HANDLER;
   }
 }
