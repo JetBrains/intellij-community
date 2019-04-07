@@ -37,7 +37,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-        fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
+        private fun createFrameHeader(frame: JFrame): DefaultFrameHeader = DefaultFrameHeader(frame)
         fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
     }
 
