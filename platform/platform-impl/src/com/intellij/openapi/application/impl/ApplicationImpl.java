@@ -1472,6 +1472,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
-    myDispatcher.neuterMultiCasterWhilePerformanceTestAreRunningUntil(disposable);
+    myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 }

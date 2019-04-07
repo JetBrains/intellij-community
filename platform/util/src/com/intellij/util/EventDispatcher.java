@@ -169,7 +169,7 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   @TestOnly
-  public void neuterMultiCasterWhilePerformanceTestAreRunningUntil(@NotNull Disposable disposable) {
+  public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
     T multicaster = myMulticaster;
     myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(Collections.emptyList()));
     Disposer.register(disposable, () -> myMulticaster = multicaster);
