@@ -30,19 +30,14 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
     File file = (File) item.getObject();
     Document document = context.getEditor().getDocument();
     int end = context.getSelectionEndOffset();
-    boolean endOfFile = document.getTextLength() >= end;
-    boolean alreadyFollowedBySlash = !endOfFile && document.getCharsSequence().charAt(end) == '/';
-    boolean isDirectory = file.isDirectory();
-    if (isDirectory) {
-      if (!alreadyFollowedBySlash) {
+    boolean endOfFile = document.getTextLength() == end;
+    boolean alreadyFollowedBySlash = end < document.getTextLength() && document.getCharsSequence().charAt(end) == '/';
+    boolean needInsertSlash = endOfFile || !alreadyFollowedBySlash;
+    if (file.isDirectory()) {
+      if (needInsertSlash) {
         document.insertString(end, "/");
-        if (endOfFile) {
-          context.getEditor().getCaretModel().moveToOffset(end + 1);
-        }
       }
-      else {
-        context.getEditor().getCaretModel().moveToOffset(end + 1);
-      }
+      context.getEditor().getCaretModel().moveToOffset(end + 1);
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
   };
