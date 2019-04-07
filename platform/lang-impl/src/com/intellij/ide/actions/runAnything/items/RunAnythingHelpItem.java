@@ -24,7 +24,7 @@ public class RunAnythingHelpItem extends RunAnythingItemBase {
 
   @NotNull
   @Override
-  public Component createComponent(boolean isSelected) {
+  public Component createComponent(boolean isSelected, boolean hasFocus) {
     SimpleColoredComponent component = new SimpleColoredComponent();
 
     parseAndApplyStyleToParameters(component, myPlaceholder);
