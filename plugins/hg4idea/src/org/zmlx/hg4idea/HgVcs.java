@@ -225,17 +225,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
-  @NotNull
-  @Override
-  public List<VirtualFile> detectVcsRootsFor(@NotNull List<VirtualFile> files) {
-    return defaultDetectVcsRootsFor(files, file -> HgUtil.isHgRoot(file));
-  }
-
-  @Override
-  public boolean validateMappedRoot(@NotNull VirtualFile root) {
-    return HgUtil.isHgRoot(root);
-  }
-
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return HgUtil.getNearestHgRoot(dir) != null;
