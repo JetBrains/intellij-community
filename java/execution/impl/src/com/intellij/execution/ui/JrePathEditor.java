@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -61,7 +61,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
     }
 
     final Set<String> jrePaths = new HashSet<>();
-    for (JreProvider provider : JreProvider.EP_NAME.getExtensions()) {
+    for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
       String path = provider.getJrePath();
       if (!StringUtil.isEmpty(path)) {
         jrePaths.add(path);

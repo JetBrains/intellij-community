@@ -28,7 +28,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensions()) {
+    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
       ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
     }
   }
