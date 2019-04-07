@@ -4,6 +4,8 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 // use only JDK classes here (avoid StringUtil and so on)
 public final class ActivityImpl implements Activity {
   private final String name;
@@ -118,6 +120,6 @@ public final class ActivityImpl implements Activity {
 
   @Override
   public String toString() {
-    return name;
+    return "ActivityImpl(name=" + name + ", start=" + TimeUnit.NANOSECONDS.toMillis(start) + ", end=" + TimeUnit.NANOSECONDS.toMillis(start) + ")";
   }
 }
