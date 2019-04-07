@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide
+package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -126,7 +124,9 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     writer.name("items")
     writer.beginArray()
-    var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
+    var totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start,
+                                                                                        startTime)
+    else 0
     for ((index, item) in items.withIndex()) {
       writer.beginObject()
       writer.name("name").value(item.name)
@@ -193,7 +193,9 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
             break
           }
 
-          if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem, it) }) {
+          if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem,
+                                                                                it)
+            }) {
             ownDuration -= otherItem.end - otherItem.start
             respectedItems.add(otherItem)
           }
@@ -210,7 +212,8 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
     }
 
     StartUpPerformanceReporter.sortItems(list)
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations)
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name),
+                    ownDurations)
   }
 }
 
@@ -277,7 +280,8 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
     writer.beginObject()
     writer.name("name").value(item.name)
     val computedOwnDuration = ownDurations.get(item)
-    writeItemTimeInfo(item, if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration, offset, writer)
+    writeItemTimeInfo(item, if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration, offset,
+                                              writer)
     writer.endObject()
   }
 

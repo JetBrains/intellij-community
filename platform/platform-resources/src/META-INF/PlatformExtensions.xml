@@ -654,6 +654,6 @@
       </components>
     </obsoleteStorage>
 
-    <postStartupActivity implementation="com.intellij.ide.StartUpPerformanceReporter" order="last"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.StartUpPerformanceReporter" order="last"/>
   </extensions>
 </idea-plugin>
