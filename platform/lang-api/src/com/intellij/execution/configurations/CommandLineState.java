@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public abstract class CommandLineState implements RunProfileState {
     myEnvironment = environment;
     if (myEnvironment != null) {
       final Project project = myEnvironment.getProject();
-      final GlobalSearchScope searchScope = SearchScopeProvider.createSearchScope(project, myEnvironment.getRunProfile());
+      final GlobalSearchScope searchScope = GlobalSearchScopes.executionScope(project, myEnvironment.getRunProfile());
       myConsoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project, searchScope);
     }
   }
