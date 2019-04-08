@@ -445,6 +445,7 @@
     <statistics.counterUsagesCollector groupId="ide.self.update" version="1"/>
     <statistics.counterUsagesCollector groupId="import.old.config" version="1"/>
     <statistics.counterUsagesCollector groupId="ui.tips" version="1"/>
+    <statistics.counterUsagesCollector groupId="gutter.icon.click" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
