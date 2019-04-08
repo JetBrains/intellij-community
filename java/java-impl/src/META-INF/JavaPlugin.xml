@@ -1195,7 +1195,6 @@
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaProjectDataService"/>
     <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
-    <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
     <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>

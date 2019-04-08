@@ -32,8 +32,6 @@
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
 
-    <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
-
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
     <completion.contributor order="first" language="yaml"
