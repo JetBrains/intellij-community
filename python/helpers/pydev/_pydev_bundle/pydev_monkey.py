@@ -343,6 +343,10 @@ def patch_fork_exec_executable_list(args, other_args):
     return other_args
 
 
+def patch_path(path):
+    return sys.executable if is_python(path) else path
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
         original_name = 'original_' + funcname
@@ -383,7 +387,7 @@ def create_execl(original_name):
         args = patch_args(args)
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, *args)
+        return getattr(os, original_name)(patch_path(path), *args)
     return new_execl
 
 
@@ -396,7 +400,7 @@ def create_execv(original_name):
         import os
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args))
+        return getattr(os, original_name)(patch_path(path), patch_args(args))
     return new_execv
 
 
@@ -409,7 +413,7 @@ def create_execve(original_name):
         import os
         if is_python_args(args):
             send_process_will_be_substituted()
-        return getattr(os, original_name)(path, patch_args(args), env)
+        return getattr(os, original_name)(patch_path(path), patch_args(args), env)
     return new_execve
 
 
