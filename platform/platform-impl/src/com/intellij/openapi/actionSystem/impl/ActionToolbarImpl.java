@@ -158,7 +158,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myVisibleActions = new ArrayList<>();
     myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(myActionManager, keymapManager, this) {
+    myUpdater = new ToolbarUpdater(keymapManager, this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
         ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
