@@ -82,7 +82,7 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
       }
       countQuotes(myQuotesNumber, text, minOffset, endOffset);
       
-      EditorActionUtil.moveCaretToPreviousWord(editor, false, camel);
+      EditorActionUtil.moveToPreviousCaretStop(editor, CaretStopPolicy.WORD_START, false, camel);
       
       for (int offset = caretModel.getOffset(); offset > minOffset; offset = caretModel.getOffset()) {
         char previous = text.charAt(offset - 1);
@@ -98,7 +98,7 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
           }
           if (myQuotesNumber.get(current) % 2 == 0) {
             // Was 'one "two" [caret]', now 'one "two[caret]"', we want to get 'one [caret]"two"'
-            EditorActionUtil.moveCaretToPreviousWord(editor, false, camel);
+            EditorActionUtil.moveToPreviousCaretStop(editor, CaretStopPolicy.WORD_START, false, camel);
             continue;
           }
           break;
