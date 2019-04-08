@@ -7,6 +7,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -423,10 +426,30 @@ public class RecentProjectPanel extends JPanel {
           if (getCloseIconRect(index).contains(point)) {
             e.consume();
             final Object element = getModel().getElementAt(index);
+            if (element instanceof ProjectGroupActionGroup) {
+              final ProjectGroup group = ((ProjectGroupActionGroup)element).getGroup();
+              if(group.isTutorials()){
+                removeTutorialChildren(group);
+              }
+            }
             removeRecentProjectElement(element);
             ListUtil.removeSelectedItems(MyList.this);
           }
         }
+      }
+
+      private void removeTutorialChildren(ProjectGroup group) {
+        int currentIndex = MyList.this.getSelectedIndex();
+        List<String> projects = group.getProjects();
+        final int[] childIndices = new int[projects.size()];
+        for (int i = 0; i < projects.size(); i++) {
+          childIndices[i] = currentIndex + 1;
+          currentIndex++;
+        }
+        ListUtil.removeIndices(MyList.this, childIndices);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials were removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
+        });
       }
     }
   }
@@ -612,7 +635,11 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          pathIsValid = isFileAvailable(new File(path));
+          if (!isFileSystemPath(path))
+            pathIsValid = true;
+          else {
+            pathIsValid = isFileAvailable(new File(path));
+          }
         }
         catch (Exception e) {
           pathIsValid = false;
@@ -648,5 +675,9 @@ public class RecentProjectPanel extends JPanel {
     return IconUtil.toSize(icon,
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
+  }
+
+  public static boolean isFileSystemPath(String path) {
+    return path.indexOf('/') != -1 || path.indexOf('\\') != -1;
   }
 }
