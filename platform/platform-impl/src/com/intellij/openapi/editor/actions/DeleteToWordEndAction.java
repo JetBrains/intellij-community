@@ -60,33 +60,10 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
 
   private static void deleteToWordEnd(Editor editor, boolean camelMode) {
     int startOffset = editor.getCaretModel().getOffset();
-    int endOffset = getWordEndOffset(editor, startOffset, camelMode);
+    int endOffset = EditorActionUtil.getNextCaretStopOffset(editor, CaretStopPolicy.WORD_END, camelMode);
     if(endOffset > startOffset) {
       Document document = editor.getDocument();
       document.deleteString(startOffset, endOffset);
     }
-  }
-
-  private static int getWordEndOffset(Editor editor, int offset, boolean camelMode) {
-    Document document = editor.getDocument();
-    CharSequence text = document.getCharsSequence();
-    if(offset >= document.getTextLength() - 1)
-      return offset;
-    int newOffset = offset + 1;
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    int maxOffset = document.getLineEndOffset(lineNumber);
-    if(newOffset > maxOffset) {
-      if(lineNumber+1 >= document.getLineCount())
-        return offset;
-      maxOffset = document.getLineEndOffset(lineNumber+1);
-    }
-    for (; newOffset < maxOffset; newOffset++) {
-      if (EditorActionUtil.isWordEnd(text, newOffset, camelMode) ||
-          EditorActionUtil.isWordStart(text, newOffset, camelMode) ||
-          EditorActionUtil.isLexemeBoundary(editor, newOffset)) {
-        break;
-      }
-    }
-    return newOffset;
   }
 }

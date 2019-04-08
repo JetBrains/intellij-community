@@ -19,9 +19,11 @@ data class CaretStop
 
 data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretStop.NONE,
                            @OptionTag("LINE") val lineStop: CaretStop = CaretStop.NONE) {
-  companion object {
-    @JvmField val NONE = CaretStopPolicy()
-  }
+  companion object { // @formatter:off
+    @JvmField val NONE       = CaretStopPolicy(wordStop = CaretStop.NONE,  lineStop = CaretStop.NONE)
+    @JvmField val WORD_START = CaretStopPolicy(wordStop = CaretStop.START, lineStop = CaretStop.BOTH)
+    @JvmField val WORD_END   = CaretStopPolicy(wordStop = CaretStop.END,   lineStop = CaretStop.BOTH)
+  } // @formatter:on
 }
 
 data class CaretStopOptions(@OptionTag("BACKWARD") val backwardPolicy: CaretStopPolicy,
