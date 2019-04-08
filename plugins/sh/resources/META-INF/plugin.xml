@@ -40,6 +40,8 @@
     <defaultLiveTemplatesProvider implementation="com.intellij.bash.template.BashTemplateProvider"/>
     <liveTemplateContext implementation="com.intellij.bash.template.BashContextType"/>
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
+    <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
