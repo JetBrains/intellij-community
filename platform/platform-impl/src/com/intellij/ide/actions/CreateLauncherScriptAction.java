@@ -97,7 +97,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     File target = new File(path);
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
-      if (Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon()) != Messages.OK) {
+      String ok = ApplicationBundle.message("launcher.script.overwrite.button");
+      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
