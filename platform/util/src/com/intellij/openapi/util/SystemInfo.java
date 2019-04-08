@@ -44,6 +44,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
+  public static final boolean isChromeOS = SystemInfoRt.isLinux && isCrostini();
 
   public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
   public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
@@ -64,6 +65,10 @@ public class SystemInfo extends SystemInfoRt {
     catch (Throwable t) {
       return false;
     }
+  }
+
+  private static boolean isCrostini() {
+    return new File("/dev/.cros_milestone").exists();
   }
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
