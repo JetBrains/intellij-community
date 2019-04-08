@@ -449,6 +449,7 @@ public class ExpectedTypeUtils {
       for (PsiExpression arrayDimension : arrayDimensions) {
         if (wrappedExpression.equals(arrayDimension)) {
           expectedType = PsiType.INT;
+          break;
         }
       }
     }

@@ -312,6 +312,7 @@ public class LiveTemplateBuilder {
     for (VarOccurence occurence : myVariableOccurrences) {
       if (occurence.myOffset == offset) {
         flag = true;
+        break;
       }
     }
     return flag;

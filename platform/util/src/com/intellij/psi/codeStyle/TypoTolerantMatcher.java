@@ -250,6 +250,7 @@ class TypoTolerantMatcher extends MinusculeMatcher {
         char c = name.charAt(i);
         if (c >= 128) {
           isAscii = false;
+          break;
         }
       }
 
