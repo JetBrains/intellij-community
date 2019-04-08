@@ -11,7 +11,7 @@ Reports cases when loop contains <b>if</b> statement and this <b>if</b> statemen
     }
   }
 </code></pre>
-In this case iterations have no effect after condition is met. So, <b>break</b> should be added:
+In this case iterations have no effect after condition is met and you may skip them adding a <b>break</b>.
 <pre><code>
   <b>boolean</b> found = <b>false</b>;
   <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {
