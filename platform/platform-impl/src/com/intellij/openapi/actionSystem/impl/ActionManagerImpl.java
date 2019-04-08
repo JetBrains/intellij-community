@@ -435,7 +435,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, this, myKeymapManager);
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myKeymapManager);
   }
 
   private void registerPluginActions() {
