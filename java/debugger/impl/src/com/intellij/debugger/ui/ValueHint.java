@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -169,7 +169,7 @@ public class ValueHint extends AbstractValueHint {
           component = HintUtil.createInformationLabel(text);
         }
         else {
-          component = createExpandableHintComponent(text, () -> {
+          component = createExpandableHintComponent(null, text, () -> {
             final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
             final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
             debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
