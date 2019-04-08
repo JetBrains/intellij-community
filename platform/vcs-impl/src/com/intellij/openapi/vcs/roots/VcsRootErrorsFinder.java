@@ -76,7 +76,7 @@ public class VcsRootErrorsFinder {
         }
       }
       else {
-        String mappedPath = mapping.systemIndependentPath();
+        String mappedPath = mapping.getDirectory();
         if (!isRoot(mapping)) {
           errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
         }
@@ -104,7 +104,7 @@ public class VcsRootErrorsFinder {
         continue;
       }
       if (!mapping.isDefaultMapping()) {
-        paths.add(mapping.systemIndependentPath());
+        paths.add(mapping.getDirectory());
       }
       else {
         String basePath = myProject.getBasePath();

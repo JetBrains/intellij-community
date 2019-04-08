@@ -103,6 +103,6 @@ class ModuleVcsDetector(private val myProject: Project,
 
   private fun getMappings(module: Module): List<VcsDirectoryMapping> {
     return module.rootManager.contentRoots
-      .mapNotNull { root -> myVcsManager.directoryMappings.firstOrNull { it.systemIndependentPath() == root.path } }
+      .mapNotNull { root -> myVcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
   }
 }

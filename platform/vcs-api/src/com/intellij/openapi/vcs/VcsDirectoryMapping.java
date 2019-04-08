@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.Objects;
 
@@ -45,7 +46,7 @@ public class VcsDirectoryMapping {
   }
 
   public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
-    myDirectory = directory;
+    myDirectory = FileUtil.normalize(directory);
     myVcs = vcs;
     myRootSettings = rootSettings;
   }
@@ -56,13 +57,9 @@ public class VcsDirectoryMapping {
   }
 
   @NotNull
+  @SystemIndependent
   public String getDirectory() {
     return myDirectory;
-  }
-
-  @NotNull
-  public String systemIndependentPath() {
-    return FileUtil.toSystemIndependentName(myDirectory);
   }
 
   @Nullable

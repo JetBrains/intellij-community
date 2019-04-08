@@ -120,7 +120,7 @@ public class NewMappings implements Disposable {
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
 
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
-    newMappings.removeIf(mapping -> Comparing.equal(mapping.systemIndependentPath(), newMapping.systemIndependentPath()));
+    newMappings.removeIf(mapping -> Comparing.equal(mapping.getDirectory(), newMapping.getDirectory()));
     newMappings.add(newMapping);
 
     updateVcsMappings(newMappings);
@@ -179,7 +179,7 @@ public class NewMappings implements Disposable {
 
     for (VcsDirectoryMapping mapping : reverse(newArrayList(mappings))) {
       // take last mapping in collection in case of duplicates
-      if (paths.add(mapping.systemIndependentPath())) {
+      if (paths.add(mapping.getDirectory())) {
         newMapping.add(mapping);
       }
     }
