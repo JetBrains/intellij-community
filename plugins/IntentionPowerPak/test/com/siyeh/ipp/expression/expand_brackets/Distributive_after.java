@@ -18,7 +18,10 @@ class Test {
     int n = a & c | a & b;
       /*1*/
       /*2*/
-      int o = 2 / 3 + 2 / a * b / c;
+      int o = 2 * 3 + 2 * a / b * c;
+      /*1*/
+      /*2*/
+      int p = a / c + b / c;
   }
 
   void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {
