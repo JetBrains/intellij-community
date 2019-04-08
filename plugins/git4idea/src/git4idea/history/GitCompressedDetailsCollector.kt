@@ -50,14 +50,11 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
 
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
     if (secondPath != null) {
-      changes.put(pathsEncoder.encode(absolutePath(firstPath), false), Change.Type.DELETED)
-      changes.put(pathsEncoder.encode(absolutePath(secondPath), false), Change.Type.NEW)
-      addParents(firstPath)
-      addParents(secondPath)
+      addPath(firstPath, Change.Type.DELETED)
+      addPath(secondPath, Change.Type.NEW)
     }
     else {
-      changes.put(pathsEncoder.encode(absolutePath(firstPath), false), type)
-      addParents(firstPath)
+      addPath(firstPath, type)
     }
     when (type) {
       Change.Type.NEW -> targetsCount++
@@ -65,6 +62,12 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
       else -> {
       }
     }
+  }
+
+  private fun addPath(path: String, type: Change.Type) {
+    val absolutePath = absolutePath(path)
+    changes.put(pathsEncoder.encode(absolutePath, false), type)
+    addParents(absolutePath)
   }
 
   private fun addParents(path: String) {
