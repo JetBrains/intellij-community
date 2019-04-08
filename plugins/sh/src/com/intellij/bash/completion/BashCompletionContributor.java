@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +22,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class BashCompletionContributor extends CompletionContributor implements DumbAware {
+  private static final int BUILTIN_PRIORITY = -10;
+
   public BashCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -37,6 +41,11 @@ public class BashCompletionContributor extends CompletionContributor implements 
           for (String keywords : kws) {
             result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
           }
+          result.addAllElements(ContainerUtil.map(BUILTINS,
+              s -> PrioritizedLookupElement.withPriority(LookupElementBuilder
+                  .create(s)
+                  .withIcon(PlatformIcons.FUNCTION_ICON)
+                  .withInsertHandler(AddSpaceInsertHandler.INSTANCE), BUILTIN_PRIORITY)));
         }
 
         String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
@@ -74,4 +83,13 @@ public class BashCompletionContributor extends CompletionContributor implements 
     TreeUtil.ensureParsed(file.getNode());
     return state.items;
   }
+
+  private static List<String> BUILTINS = ContainerUtil.newSmartList(
+      "alias", "bg", "bind", "break", "builtin", "caller", "cd", "command",
+      "compgen", "complete", "continue", "declare", "dirs", "disown", "echo",
+      "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts",
+      "hash", "help", "history", "jobs", "kill", "let", "local", "logout", "popd",
+      "printf", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt",
+      "source", "suspend", "test", "times", "trap", "true", "type", "typeset", "ulimit",
+      "umask", "unalias", "unset", "wait");
 }
