@@ -13,6 +13,7 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +76,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
-  @NonNls private static final String SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
+  @NonNls private static final String SPLITTER_PROPERTY = "BuildView.Splitter.Proportion";
   private final JPanel myPanel = new JPanel();
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
 
@@ -113,29 +114,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myContentPanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), TREE);
 
     myPanel.setLayout(new BorderLayout());
-    ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
-      @Override
-      public void setFirstSize(int size) {
-        super.setFirstSize(size);
-        float proportion = size / (float)getWidth();
-        PropertiesComponent.getInstance().setValue(SPLITTER_PROPERTY, proportion, 0.3f);
-      }
-
-      @Override
-      public void doLayout() {
-        super.doLayout();
-        JComponent detailsComponent = myConsoleViewHandler.getComponent();
-        if (detailsComponent != null && detailsComponent.isVisible()) {
-          updateSplitter(this);
-        }
-      }
-    };
-    Disposer.register(this, myThreeComponentsSplitter);
+    OnePixelSplitter myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.33f);
     myThreeComponentsSplitter.setFirstComponent(myContentPanel);
     myConsoleViewHandler =
-      new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, myThreeComponentsSplitter, executionConsole,
-                             buildViewSettingsProvider);
-    myThreeComponentsSplitter.setLastComponent(myConsoleViewHandler.getComponent());
+      new ConsoleViewHandler(myProject, myTree, myBuildProgressRootNode, this, executionConsole, buildViewSettingsProvider);
+    myThreeComponentsSplitter.setSecondComponent(myConsoleViewHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
   }
 
@@ -570,7 +553,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     ConsoleViewHandler(Project project,
                        @NotNull Tree tree,
                        @NotNull ExecutionNode buildProgressRootNode,
-                       ThreeComponentsSplitter threeComponentsSplitter,
+                       @NotNull Disposable parentDisposable,
                        @Nullable ExecutionConsole executionConsole,
                        @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
       myBuildProgressRootNode = buildProgressRootNode;
@@ -608,8 +591,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
       });
 
-      Disposer.register(threeComponentsSplitter, myView);
-      Disposer.register(threeComponentsSplitter, myNodeConsole);
+      Disposer.register(parentDisposable, myView);
+      Disposer.register(parentDisposable, myNodeConsole);
     }
 
     private ConsoleView getTaskOutputView() {
