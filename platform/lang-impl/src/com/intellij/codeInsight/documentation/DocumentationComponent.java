@@ -17,7 +17,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -458,7 +457,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
-    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true, ActionManagerEx.getInstanceEx(), KeymapManagerEx.getInstanceEx()) {
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true, KeymapManagerEx.getInstanceEx()) {
       Point initialClick;
 
       @Override
