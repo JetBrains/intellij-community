@@ -1152,6 +1152,17 @@ public class JBUI {
    */
 
   /**
+   * @deprecated Use {@link JBUIScale.ScaleType}.
+   */
+  @Deprecated
+  enum ScaleType {
+    USR_SCALE,
+    SYS_SCALE,
+    OBJ_SCALE,
+    PIX_SCALE
+  }
+
+  /**
    * @deprecated Use {@link JBUIScale.UserScaleContext}.
    */
   @Deprecated
@@ -1163,6 +1174,16 @@ public class JBUI {
 
     public boolean update(@NotNull Scale scale) {
       return setScale(scale);
+    }
+
+    public double getScale(@NotNull ScaleType type) {
+      switch (type) {
+        case USR_SCALE: return usrScale.value();
+        case SYS_SCALE: return 1d;
+        case OBJ_SCALE: return objScale.value();
+        case PIX_SCALE: return pixScale;
+      }
+      return 1f; // unreachable
     }
   }
 
@@ -1194,6 +1215,16 @@ public class JBUI {
 
     protected ScaleContext(@NotNull Scale scale) {
       setScale(scale);
+    }
+
+    public double getScale(@NotNull ScaleType type) {
+      switch (type) {
+        case USR_SCALE: return usrScale.value();
+        case SYS_SCALE: return sysScale.value();
+        case OBJ_SCALE: return objScale.value();
+        case PIX_SCALE: return pixScale;
+      }
+      return 1f; // unreachable
     }
   }
 

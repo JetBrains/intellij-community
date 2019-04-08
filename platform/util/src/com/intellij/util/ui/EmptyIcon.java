@@ -48,7 +48,7 @@ public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int size) {
     return create(size, size);
@@ -57,7 +57,7 @@ public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
   /**
    * Creates an icon of the provided size.
    *
-   * Use {@link JBUI#scale(JBUI.JBIcon)} to meet HiDPI.
+   * Use {@link JBUI#scale(JBScalableIcon)} to meet HiDPI.
    */
   public static EmptyIcon create(int width, int height) {
     return create(width, height, true);
