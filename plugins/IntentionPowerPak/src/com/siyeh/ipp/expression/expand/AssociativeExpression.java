@@ -124,6 +124,6 @@ class AssociativeExpression extends ExpandableExpression {
 
   @Nullable
   static AssociativeExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
-    return ExpandUtils.createExpression(parenthesized, (outer, operand) -> new AssociativeExpression(outer, operand), OUTER_OPERATORS);
+    return ExpandUtils.createExpression(parenthesized, AssociativeExpression::new, OUTER_OPERATORS);
   }
 }

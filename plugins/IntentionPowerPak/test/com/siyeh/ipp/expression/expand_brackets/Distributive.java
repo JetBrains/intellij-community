@@ -10,7 +10,8 @@ class Test {
     int l = a | (c &<caret> b);
     int m = a | (-c & <caret>b);
     int n = a & (c | <caret>b);
-    int o = 2 / (3 - -a <caret>/ -/*1*/b * -/*2*/c);
+    int o = 2 * (3 - -a <caret>/ -/*1*/b * -/*2*/c);
+    int p = (a <caret>+/*1*/ b) /*2*// c;
   }
 
   void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {

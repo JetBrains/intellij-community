@@ -140,6 +140,12 @@ class DistributiveExpression extends ExpandableExpression {
 
   @Nullable
   static DistributiveExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
-    return ExpandUtils.createExpression(parenthesized, (outer, operand) -> new DistributiveExpression(outer, operand), OUTER_OPERATORS);
+    DistributiveExpression expression = ExpandUtils.createExpression(parenthesized, DistributiveExpression::new, OUTER_OPERATORS);
+    if (expression == null) return null;
+    PsiPolyadicExpression polyadicExpression = expression.getExpression();
+    if (polyadicExpression == null || !JavaTokenType.DIV.equals(polyadicExpression.getOperationTokenType())) return expression;
+    PsiExpression operand = expression.getOperand();
+    if (polyadicExpression.getTokenBeforeOperand(operand) != null) return null;
+    return expression;
   }
 }
