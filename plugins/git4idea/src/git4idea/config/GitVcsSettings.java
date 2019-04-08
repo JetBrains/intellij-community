@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -251,7 +252,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return myState.UPDATE_BRANCHES_INFO;
+    return Registry.is("git.update.incoming.outgoing.info") && myState.UPDATE_BRANCHES_INFO;
   }
 
   public void setUpdateBranchInfo(boolean state) {
