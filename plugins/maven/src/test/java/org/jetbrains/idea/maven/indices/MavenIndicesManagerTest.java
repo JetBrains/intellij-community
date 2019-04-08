@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,11 +56,12 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     Pair<String, String> remote4 = Pair.create("id4", "http://foo/bar"); // same url
     Pair<String, String> remote5 = Pair.create("id4", "http://foo/baz"); // same id
 
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, Collections.singleton(remote1)).size());
-    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3)).size());
-    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4)).size());
-    assertEquals(4, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4, remote5)).size());
+    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, Collections.singleton(remote1)).size());
+    assertEquals(1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3)).size());
+    assertEquals(2, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4)).size());
+    assertEquals(3, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, asList(remote1, remote2, remote3, remote4, remote5))
+      .size());
   }
 
   public void testDefaultArchetypes() {
@@ -70,16 +70,20 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
-                                                            Collections.emptyList());
+    myIndicesFixture.getIndicesManager()
+      .createIndexForLocalRepo(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"));
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
 
   public void testIndexedArchetypesWithSeveralIndicesAfterReopening() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
-                                                            Collections.singleton(Pair.create("id", "foo://bar.baz")));
+    /*myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
+                                                            Collections.singleton(Pair.create("id", "foo://bar.baz")));*/
+
+    myIndicesFixture.getIndicesManager()
+      .createIndexForLocalRepo(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"));
+
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
 
@@ -91,10 +95,10 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   public void testAddingArchetypes() throws Exception {
     myIndicesFixture.getIndicesManager().addArchetype(new MavenArchetype("myGroup",
-                                                                        "myArtifact",
-                                                                        "666",
-                                                                        null,
-                                                                        null));
+                                                                         "myArtifact",
+                                                                         "666",
+                                                                         null,
+                                                                         null));
 
     assertArchetypeExists("myGroup:myArtifact:666");
 

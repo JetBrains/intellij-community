@@ -3,9 +3,11 @@ package org.jetbrains.idea.maven.onlinecompletion;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.model.MavenCoordinate;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
@@ -15,6 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -29,10 +32,16 @@ public class DependencySearchService {
     new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId());
   private static final DeduplicationCollector VERSION_COLLECTOR =
     new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId() + ":" + m.getVersion());
+  private final Project myProject;
   private final List<DependencyCompletionProvider> myProviders;
 
-  public DependencySearchService(List<DependencyCompletionProvider> providers) {
+  public DependencySearchService(Project project, List<DependencyCompletionProvider> providers) {
+    myProject = project;
     myProviders = providers;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -67,7 +76,7 @@ public class DependencySearchService {
   }
 
   public List<MavenDependencyCompletionItem> findGroupCandidates(@NotNull MavenCoordinate template, @NotNull SearchParameters parameters) {
-    return doQuery(parameters, template, (p, s) -> p.findGroupCandidates(s, parameters), GROUP_COLLECTOR);
+    return doQuery(parameters, template, (p, s) -> p.findGroupCandidates(s, parameters), GROUP_COLLECTOR, localFirstComparator());
   }
 
 
@@ -79,7 +88,7 @@ public class DependencySearchService {
   @NotNull
   public List<MavenDependencyCompletionItem> findArtifactCandidates(@NotNull MavenCoordinate template,
                                                                     @NotNull SearchParameters parameters) {
-    return doQuery(parameters, template, (p, s) -> p.findArtifactCandidates(s, parameters), ARTIFACT_COLLECTOR);
+    return doQuery(parameters, template, (p, s) -> p.findArtifactCandidates(s, parameters), ARTIFACT_COLLECTOR, localFirstComparator());
   }
 
   @NotNull
@@ -89,7 +98,7 @@ public class DependencySearchService {
 
   @NotNull
   public List<MavenDependencyCompletionItem> findAllVersions(@NotNull MavenCoordinate template, @NotNull SearchParameters parameters) {
-    return doQuery(parameters, template, (p, s) -> p.findAllVersions(s, parameters), VERSION_COLLECTOR);
+    return doQuery(parameters, template, (p, s) -> p.findAllVersions(s, parameters), VERSION_COLLECTOR, versionComparator());
   }
 
   @NotNull
@@ -99,16 +108,18 @@ public class DependencySearchService {
 
   @NotNull
   public List<MavenDependencyCompletionItemWithClass> findClasses(@NotNull String className, @NotNull SearchParameters parameters) {
-    return doQuery(parameters, className, (p, s) -> p.findClassesByString(s, parameters), VERSION_COLLECTOR);
+    return doQuery(parameters, className, (p, s) -> p.findClassesByString(s, parameters), VERSION_COLLECTOR, localFirstComparator());
   }
+
 
   private <PARAM, RESULT extends MavenDependencyCompletionItem> List<RESULT> doQuery(@NotNull SearchParameters parameters,
                                                                                      PARAM template,
                                                                                      ThrowingSearch<PARAM, RESULT> search,
-                                                                                     Collector<? super List<RESULT>, ?, List<RESULT>> collector) {
+                                                                                     Collector<? super List<RESULT>, ?, List<RESULT>> collector,
+                                                                                     Comparator<? super RESULT> comparator) {
     final Application application = ApplicationManager.getApplication();
 
-    return myProviders
+    List<RESULT> result = myProviders
       .stream().map(provider -> application.executeOnPooledThread(
         () -> search.search(provider, template)))
       .map(f -> {
@@ -116,16 +127,36 @@ public class DependencySearchService {
           return f.get(parameters.getMillisToWait(), TimeUnit.MILLISECONDS);
         }
         catch (InterruptedException | ExecutionException | TimeoutException e) {
-            MavenLog.LOG.debug(e);
+          MavenLog.LOG.debug(e);
           return Collections.<RESULT>emptyList();
         }
       }).collect(collector);
+
+    if (comparator != null) {
+      Collections.sort(result, comparator);
+    }
+    return result;
   }
+
+  private static <T extends MavenDependencyCompletionItem> Comparator<T> versionComparator() {
+    return Comparator.comparing(o -> new MavenVersionComparable(o.getVersion()));
+  }
+
+  private static <T extends MavenDependencyCompletionItem> Comparator<T> localFirstComparator() {
+    Comparator<T> result = Comparator.comparing(o -> {
+      MavenDependencyCompletionItem.Type type = o.getType();
+      return type == null ? Integer.MAX_VALUE : type.getWeight();
+    });
+
+    return result.reversed();
+  }
+
 
   @FunctionalInterface
   private interface ThrowingSearch<PARAM, RESULT extends MavenDependencyCompletionItem> {
     List<RESULT> search(DependencyCompletionProvider p, PARAM t) throws IOException;
   }
+
 
   @TestOnly
   public List<DependencyCompletionProvider> getProviders() {

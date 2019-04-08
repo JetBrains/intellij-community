@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -47,7 +46,7 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 public class MavenDependencyCompletionUtil {
 
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
-    @NotNull final String groupId, @NotNull final String artifactId) {
+                                                         @NotNull final String groupId, @NotNull final String artifactId) {
 
     final Ref<MavenDomDependency> ref = new Ref<>();
 
@@ -143,6 +142,8 @@ public class MavenDependencyCompletionUtil {
         return AllIcons.Nodes.PpLibFolder;
       case CACHED_ERROR:
         return AllIcons.Nodes.PpInvalid;
+      case PROJECT:
+        return AllIcons.Nodes.Module;
     }
 
     return null;
@@ -168,11 +169,11 @@ public class MavenDependencyCompletionUtil {
     return builder.toString();
   }
 
-  public static @NotNull String removeDummy(@Nullable String str) {
-    if(str ==null){
+  public static @NotNull
+  String removeDummy(@Nullable String str) {
+    if (str == null) {
       return "";
     }
     return StringUtil.trim(str.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
   }
-
 }

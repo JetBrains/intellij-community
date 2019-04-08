@@ -24,11 +24,13 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 
 public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCoordinatesConverter {
   @Override
@@ -62,7 +64,8 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
   @Override
   protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
     if (StringUtil.isEmptyOrSpaces(id.getGroupId())) return Collections.emptySet();
-    return searchService.findArtifactCandidates(id).stream().map(s -> s.getArtifactId()).collect(Collectors.toSet());
+    return searchService.findArtifactCandidates(id, SearchParameters.DEFAULT).stream().map(s -> s.getArtifactId())
+      .collect(Collectors.toSet());
   }
 
   private static class MavenArtifactInsertHandler implements InsertHandler<LookupElement> {
@@ -93,18 +96,16 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
 
       MavenDomDependency dependency = (MavenDomDependency)domElement;
 
-      MavenId id = new MavenId(item.getLookupString());
-      String artifactId = id.getArtifactId();
+      String artifactId = item.getLookupString();
 
       String groupId = dependency.getGroupId().getStringValue();
       OffsetKey startRef = context.trackOffset(context.getStartOffset(), false);
       int len = context.getTailOffset() - context.getStartOffset();
       if (StringUtil.isEmpty(groupId)) {
-        groupId = id.getGroupId();
-        if (StringUtil.isEmpty(groupId)) {
+        XmlTag groupIdTag = dependency.getGroupId().getXmlTag();
+        if (groupIdTag == null) {
           dependency.getGroupId().setStringValue("");
         }
-        XmlTag groupIdTag = dependency.getGroupId().getXmlTag();
         context.getEditor().getCaretModel().moveToOffset(groupIdTag.getValue().getTextRange().getStartOffset());
         MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.SMART);
         return;

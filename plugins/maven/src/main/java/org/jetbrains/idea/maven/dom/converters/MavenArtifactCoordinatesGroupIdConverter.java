@@ -6,13 +6,13 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -23,9 +23,12 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,8 +54,20 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
   @Override
   protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
-    return searchService.findGroupCandidates(id).stream().map(s -> s.getGroupId()).collect(Collectors.toSet());
+    Set<String> result =
+      MavenProjectsManager.getInstance(searchService.getProject()).getProjects().stream().map(p -> p.getMavenId().getGroupId())
+        .collect(Collectors.toSet());
+    result.addAll(searchService.findGroupCandidates(id, SearchParameters.DEFAULT).stream()
+                    .map(s -> s.getGroupId()).collect(Collectors.toSet()));
+    return result;
   }
+
+  private void addProjectGroupsToResult(Set<String> result, Project project) {
+    Set<String> projectGroups =
+      MavenProjectsManager.getInstance(project).getProjects().stream().map(p -> p.getMavenId().getGroupId()).collect(Collectors.toSet());
+    result.addAll(projectGroups);
+  }
+
 
   @Nullable
   @Override
@@ -64,17 +79,14 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
   @Override
   public Collection<String> getSmartVariants(ConvertContext convertContext) {
-    Set<String> groupIds = new HashSet<>();
     String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();
     if (!StringUtil.isEmptyOrSpaces(artifactId)) {
-      MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(convertContext.getFile().getProject());
-      for (String groupId : manager.getGroupIds()) {
-        if (manager.getArtifactIds(groupId).contains(artifactId)) {
-          groupIds.add(groupId);
-        }
-      }
+      DependencySearchService searchService = MavenProjectIndicesManager.getInstance(convertContext.getProject()).getSearchService();
+
+      return searchService.findByTemplate(artifactId, SearchParameters.DEFAULT)
+        .stream().filter(p -> artifactId.equals(p.getArtifactId())).map(p -> p.getGroupId()).collect(Collectors.toSet());
     }
-    return groupIds;
+    return Collections.emptySet();
   }
 
   private static class MavenGroupIdInsertHandler implements InsertHandler<LookupElement> {

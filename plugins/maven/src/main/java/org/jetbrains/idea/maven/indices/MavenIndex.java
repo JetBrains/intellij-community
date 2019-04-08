@@ -38,7 +38,6 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-@Deprecated
 public class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
@@ -212,7 +211,6 @@ public class MavenIndex implements MavenSearchIndex {
       myData = new IndexData(dataDir);
     }
     catch (Exception e) {
-      cleanupBrokenData();
       throw e;
     }
   }
@@ -443,6 +441,9 @@ public class MavenIndex implements MavenSearchIndex {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
         for (IndexedMavenId id : artifacts) {
+          if ("pom.lastUpdated".equals(id.packaging)) {
+            continue;
+          }
           builder.setLength(0);
 
           builder.append(id.groupId).append(":").append(id.artifactId);

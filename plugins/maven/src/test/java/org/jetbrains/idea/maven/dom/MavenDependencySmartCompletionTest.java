@@ -20,11 +20,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <caret>" +
+                     "    ju<caret>" +
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariantsInclude(myProjectPom, "junit:junit");
+    assertCompletionVariantsInclude(myProjectPom, "junit:...");
   }
 
   public void testInsertDependency() {
@@ -203,6 +203,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
   }
 
   public void testCompletionArtifactIdThenGroupIdThenInsertVersion() {
+    if (!onlineCompletionFinished()) {
+      return;
+    }
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");

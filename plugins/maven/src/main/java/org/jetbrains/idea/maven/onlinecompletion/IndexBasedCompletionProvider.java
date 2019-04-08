@@ -8,8 +8,8 @@ import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.model.MavenCoordinate;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
@@ -24,30 +24,37 @@ import java.util.List;
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-public class IndexBasedSearchService implements DependencyCompletionProvider {
+public class IndexBasedCompletionProvider implements DependencyCompletionProvider {
 
   private final MavenIndex myIndex;
+  private final MavenDependencyCompletionItem.Type resultingType;
 
-  public IndexBasedSearchService(MavenIndex index) {myIndex = index;}
-
-  @NotNull
-  @Override
-  public List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters parameters) throws IOException {
-    return ContainerUtil.map(myIndex.getGroupIds(), g -> new MavenDependencyCompletionItem(g, MavenDependencyCompletionItem.Type.REMOTE));
+  public IndexBasedCompletionProvider(MavenIndex index) {
+    myIndex = index;
+    resultingType = myIndex.getKind() == MavenSearchIndex.Kind.LOCAL
+                    ? MavenDependencyCompletionItem.Type.LOCAL
+                    : MavenDependencyCompletionItem.Type.REMOTE;
   }
 
   @NotNull
   @Override
-  public List<MavenDependencyCompletionItem> findArtifactCandidates(MavenCoordinate template, SearchParameters parameters) throws IOException {
+  public List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters parameters) throws IOException {
+    return ContainerUtil.map(myIndex.getGroupIds(), g -> new MavenDependencyCompletionItem(g, resultingType));
+  }
+
+  @NotNull
+  @Override
+  public List<MavenDependencyCompletionItem> findArtifactCandidates(MavenCoordinate template, SearchParameters parameters)
+    throws IOException {
     return ContainerUtil.map(myIndex.getArtifactIds(template.getGroupId()), a ->
-      new MavenDependencyCompletionItem(template.getGroupId(), a, null, MavenDependencyCompletionItem.Type.REMOTE));
+      new MavenDependencyCompletionItem(template.getGroupId(), a, null, resultingType));
   }
 
   @NotNull
   @Override
   public List<MavenDependencyCompletionItem> findAllVersions(MavenCoordinate template, SearchParameters parameters) throws IOException {
     return ContainerUtil.map(myIndex.getVersions(template.getGroupId(), template.getArtifactId()), v ->
-      new MavenDependencyCompletionItem(template.getGroupId(), template.getArtifactId(), v, MavenDependencyCompletionItem.Type.REMOTE));
+      new MavenDependencyCompletionItem(template.getGroupId(), template.getArtifactId(), v, resultingType));
   }
 
   @NotNull
@@ -66,7 +73,7 @@ public class IndexBasedSearchService implements DependencyCompletionProvider {
     }
     return ContainerUtil.map(myIndex.search(searchQuery, parameters.getMaxResults()),
                              r -> new MavenDependencyCompletionItemWithClass(r.getGroupId(), r.getArtifactId(), r.getVersion(),
-                                                                             MavenDependencyCompletionItem.Type.LOCAL,
+                                                                             resultingType,
                                                                              Collections.singletonList(r.getClassNames())));
   }
 
