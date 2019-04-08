@@ -5,9 +5,6 @@ import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.designer.LightToolWindow;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -23,21 +20,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Lobas
  */
 public class PaletteToolWindowManager extends AbstractToolWindowManager {
-  private final PaletteWindow myToolWindowPanel;
+  private PaletteWindow myToolWindowPanel;
 
   public PaletteToolWindowManager(Project project) {
     super(project);
-
-    myToolWindowPanel = ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new PaletteWindow(project);
-    if (myToolWindowPanel != null) {
-      Disposer.register(this, () -> myToolWindowPanel.dispose());
-    }
   }
 
   public static PaletteWindow getInstance(GuiEditor designer) {
     PaletteToolWindowManager manager = getInstance(designer.getProject());
     if (manager.isEditorMode()) {
       return (PaletteWindow)manager.getContent(designer);
+    }
+    if (manager.myToolWindowPanel == null) {
+      manager.initToolWindow();
     }
     return manager.myToolWindowPanel;
   }
@@ -48,6 +43,9 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   protected void initToolWindow() {
+    myToolWindowPanel = new PaletteWindow(myProject);
+    Disposer.register(this, () -> myToolWindowPanel.dispose());
+
     myToolWindow = ToolWindowManager.getInstance(myProject)
       .registerToolWindow(IdeBundle.message("toolwindow.palette"), false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
@@ -99,14 +97,5 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   @Override
   public String getComponentName() {
     return "PaletteManager";
-  }
-
-  @Override
-  public AnAction createGearActions() {
-    DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
-    group.add(createToggleAction(ToolWindowAnchor.LEFT));
-    group.add(createToggleAction(ToolWindowAnchor.RIGHT));
-    group.add(createToggleAction(null));
-    return group;
   }
 }
