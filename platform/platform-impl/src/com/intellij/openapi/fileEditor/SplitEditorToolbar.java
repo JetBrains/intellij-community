@@ -43,7 +43,6 @@ public class SplitEditorToolbar extends JPanel implements Disposable {
 
   public SplitEditorToolbar(@Nullable ActionToolbar leftToolbar, @NotNull ActionToolbar rightToolbar) {
     super(new GridBagLayout());
-
     myRightToolbar = rightToolbar;
 
     if (leftToolbar != null) {
@@ -64,6 +63,9 @@ public class SplitEditorToolbar extends JPanel implements Disposable {
     setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtil.CONTRAST_BORDER_COLOR));
 
     addComponentListener(myAdjustToGutterListener);
+
+    if (leftToolbar != null) leftToolbar.updateActionsImmediately();
+    rightToolbar.updateActionsImmediately();
   }
 
   public void addGutterToTrack(@NotNull EditorGutterComponentEx gutterComponentEx) {
