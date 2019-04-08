@@ -61,7 +61,7 @@ public class ExtractMethodWithResultObjectProcessor {
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
-  private static final Key<Integer> EXIT_STATEMENT_INDEX_KEY = Key.create("ExtractMethodWithResultObjectProcessor.ExitStatementIndex");
+  private static final Key<PsiStatement> OLD_EXIT_STATEMENT = Key.create("ExtractMethodWithResultObjectProcessor.OldExitStatement");
 
   private enum ExitType {
     EXPRESSION,
@@ -661,12 +661,9 @@ public class ExtractMethodWithResultObjectProcessor {
       return;
     }
 
-    List<PsiStatement> oldExitStatements = new ArrayList<>();
     for (PsiStatement statement : myExits.keySet()) {
       if (statement != null) {
-        Integer index = oldExitStatements.size();
-        oldExitStatements.add(statement);
-        statement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, index);
+        statement.putCopyableUserData(OLD_EXIT_STATEMENT, statement);
       }
     }
 
@@ -674,27 +671,15 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiStatement[] methodBodyStatements = body.getStatements();
     List<PsiStatement> newExitStatements = collectExitStatements(methodBodyStatements);
 
-    Map<PsiStatement, PsiStatement> newToOldExitStatements = new HashMap<>();
     for (PsiStatement newExitStatement : newExitStatements) {
-      Integer index = newExitStatement.getCopyableUserData(EXIT_STATEMENT_INDEX_KEY);
-      if (index == null) {
-        continue; // break or continue within the method
-      }
-      assert index >= 0 && index < oldExitStatements.size() : "exit statement index";
-      PsiStatement oldExitStatement = oldExitStatements.get(index);
-      newToOldExitStatements.put(newExitStatement, oldExitStatement);
-
-      newExitStatement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, null);
-      oldExitStatement.putCopyableUserData(EXIT_STATEMENT_INDEX_KEY, null);
-    }
-
-    Set<ExitType> exitTypes = myExits.values().stream().map(Exit::getType).collect(Collectors.toSet());
-
-    for (PsiStatement newExitStatement : newExitStatements) {
-      PsiStatement oldExitStatement = newToOldExitStatements.get(newExitStatement);
+      PsiStatement oldExitStatement = newExitStatement.getCopyableUserData(OLD_EXIT_STATEMENT);
       if (oldExitStatement == null) {
-        continue; // break or continue within the method
+        continue; // it's break or continue within the method
       }
+
+      newExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
+      oldExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
+
       Exit exit = myExits.get(oldExitStatement);
       Integer exitKey = distinctExits.get(exit);
       assert exitKey != null : "exit key";
@@ -708,10 +693,10 @@ public class ExtractMethodWithResultObjectProcessor {
       }
 
       PsiReturnStatement returnStatement = createReturnStatement(resultItems, exitKey, body, expression);
-      assert returnStatement != null : "returnStatement ";
       newExitStatement.replace(returnStatement);
     }
 
+    Set<ExitType> exitTypes = myExits.values().stream().map(Exit::getType).collect(Collectors.toSet());
     if (exitTypes.contains(ExitType.SEQUENTIAL)) {
       body.add(createReturnStatement(resultItems, -1, body, null));
     }
@@ -804,6 +789,7 @@ public class ExtractMethodWithResultObjectProcessor {
     return exitStatements;
   }
 
+  @NotNull
   private PsiReturnStatement createReturnStatement(List<ResultItem> resultItems,
                                                    int exitKey,
                                                    PsiCodeBlock body,
