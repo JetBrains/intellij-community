@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * {@code RecursionManager} assists in distinguishing this situation and allowing caching outside that loop, but disallowing it inside.<p></p>
  *
  * To prevent caching incorrect values, please create a {@code private static final} field of {@link #createGuard} call, and then use
- * {@link RecursionGuard#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
+ * {@link RecursionManager#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
  * on it.<p></p>
  *
  * Note that the above only helps with idempotent recursion loops, that is, the ones that stabilize after one iteration, so that
@@ -73,6 +73,7 @@ public class RecursionManager {
   /**
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
+   * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
   @NotNull
   public static RecursionGuard createGuard(@NonNls final String id) {

@@ -32,21 +32,25 @@ public abstract class RecursionGuard {
    * @param key an id of the computation. It's stored internally to ensure that a recursive calls with the same key won't lead to endless recursion.
    * @param memoize whether the result of the computation may be cached thread-locally until the last currently active {@code doPreventingRecursion} call
    *                completes. May be used to speed up things when recursion re-entrance happens: otherwise nothing would be cached at all and
-   *                in some cases exponential performance may be observed. Pass {@code true} if your computation has no side effects.
+   *                in some cases exponential performance may be observed. Pass {@code true} if your computation has no side effects
+   *                and doesn't depend on method parameters.
    * @param computation a piece of code to compute.
    * @return the result of the computation or {@code null} if we're entering a computation with this key on this thread recursively,
    */
   @Nullable
   public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation);
 
-  /** Use {@link RecursionManager#markStack()} instead */
+  /** @deprecated Use {@link RecursionManager#markStack()} instead */
   @NotNull
+  @Deprecated
   public StackStamp markStack() {
     return RecursionManager.markStack();
   }
 
   /**
-   * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Object, boolean, Computable)}
+   * Note: if you make decisions based on the result of this method, you'd better couple it with {@link #prohibitResultCaching},
+   * otherwise you might cache inconsistent values.
+   * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Object, boolean, Computable)}.
    */
   @NotNull
   public abstract List<Object> currentStack();
@@ -71,7 +75,7 @@ public abstract class RecursionGuard {
      * re-entrant recursive results. When such non-reliable results exist in the thread's call stack, returns false, otherwise true.<p></p>
      *
      * If you use this with {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)}, then the
-     * {@link RecursionGuard#markStack()}+{@link #mayCacheNow()} should be outside of recursion prevention call. Otherwise
+     * {@link RecursionManager#markStack()}+{@link #mayCacheNow()} should be outside of recursion prevention call. Otherwise
      * even the outer recursive computation result won't be cached. In particular, {@code doPreventingRecursion} calls should
      * be inside your {@link com.intellij.psi.util.CachedValue} provider, not outside cached value access.
      */

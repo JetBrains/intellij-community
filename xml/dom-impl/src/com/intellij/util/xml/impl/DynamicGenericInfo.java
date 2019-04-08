@@ -3,7 +3,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
@@ -30,7 +29,6 @@ import java.util.Set;
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<WeakInterner<ChildrenDescriptionsHolder>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("dynamicGenericInfo");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
@@ -60,7 +58,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
     if (!myInvocationHandler.exists()) return true;
 
-    return ourGuard.doPreventingRecursion(myInvocationHandler, false, () -> {
+    return RecursionManager.doPreventingRecursion(myInvocationHandler, false, () -> {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {

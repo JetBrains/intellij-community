@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class> ourReportedValueClasses = Collections.synchronizedSet(ContainerUtil.newTroveSet());
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("IdempotenceChecker");
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
 
@@ -257,7 +256,7 @@ public class IdempotenceChecker {
    */
   public static <T> void applyForRandomCheck(T data, Object provider, Computable<? extends T> recomputeValue) {
     if (areRandomChecksEnabled() && shouldPerformRandomCheck()) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       Integer prevNesting = ourRandomCheckNesting.get();
       ourRandomCheckNesting.set(prevNesting + 1);
       try {

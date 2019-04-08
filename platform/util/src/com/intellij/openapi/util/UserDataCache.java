@@ -19,7 +19,6 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> extends FieldCache<T, Owner, Key<T>, Param> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("userDataCache");
   private final Key<T> myKey;
 
   protected UserDataCache() {
@@ -52,7 +51,7 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
   public T get(Key<T> a, Owner owner, Param p) {
     T value = owner.getUserData(a);
     if (value == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       value = compute(owner, p);
       if (stamp.mayCacheNow()) {
         value = ((UserDataHolderEx)owner).putUserDataIfAbsent(a, value);

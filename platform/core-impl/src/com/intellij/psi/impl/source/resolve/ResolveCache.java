@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 public class ResolveCache {
   private final AtomicReferenceArray<Map> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
   private final AtomicReferenceArray<Map> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
-  private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
@@ -145,8 +144,8 @@ public class ResolveCache {
       return result;
     }
 
-    RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true,
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Trinity.create(ref, incompleteCode, isPoly), true,
                                                                     () -> resolver.resolve(ref, incompleteCode)) : resolver.resolve(ref, incompleteCode);
     if (result instanceof ResolveResult) {
       ensureValidPsi((ResolveResult)result);
@@ -198,8 +197,8 @@ public class ResolveCache {
       return result;
     }
 
-    RecursionGuard.StackStamp stamp = myGuard.markStack();
-    result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+    result = needToPreventRecursion ? RecursionManager.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
                                                                     () -> resolver.resolve(ref, containingFile, incompleteCode)) : resolver.resolve(ref, containingFile, incompleteCode);
     if (result != null) {
       ensureValidResults(result);

@@ -27,7 +27,7 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
         return ourNotNullizer.nullize(valueRef.get())
       }
 
-      val stamp = ourRecursionGuard.markStack()
+      val stamp = RecursionManager.markStack()
       val newValue = ourRecursionGuard.doPreventingRecursion(recursionKey, false, initializerValue)
       // In case of recursion don't update [valueRef] and don't clear [initializer].
       if (newValue === null) {

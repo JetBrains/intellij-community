@@ -22,7 +22,6 @@ import java.util.List;
  */
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("cachedValue");
   private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 
@@ -236,10 +235,10 @@ public abstract class CachedValueBase<T> {
       return data.getValue();
     }
 
-    RecursionGuard.StackStamp stamp = ourGuard.markStack();
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     Computable<Data<T>> calcData = () -> computeData(doCompute(param));
-    data = ourGuard.doPreventingRecursion(this, true, calcData);
+    data = RecursionManager.doPreventingRecursion(this, true, calcData);
     if (data == null) {
       data = calcData.compute();
     }

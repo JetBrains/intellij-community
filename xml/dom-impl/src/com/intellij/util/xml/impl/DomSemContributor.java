@@ -3,8 +3,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +16,6 @@ import com.intellij.semantic.SemContributor;
 import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
@@ -131,46 +128,40 @@ final class DomSemContributor extends SemContributor {
       return null;
     });
 
-    registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
-      private final RecursionGuard myGuard = RecursionManager.createGuard("customDomParent");
+    registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, tag -> {
+      if (StringUtil.isEmpty(tag.getName())) return null;
 
-      @Override
-      public CollectionElementInvocationHandler fun(XmlTag tag) {
-        if (StringUtil.isEmpty(tag.getName())) return null;
+      XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
+      assert parentTag != null;
 
-        final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
-        assert parentTag != null;
+      DomInvocationHandler parent = RecursionManager.doPreventingRecursion(tag, true, () -> getParentDom(parentTag));
+      if (parent == null) return null;
 
-        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true,
-                                                                    (NullableComputable<DomInvocationHandler>)() -> getParentDom(parentTag));
-        if (parent == null) return null;
+      DomGenericInfoEx info = parent.getGenericInfo();
+      List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
+      if (customs.isEmpty()) return null;
 
-        DomGenericInfoEx info = parent.getGenericInfo();
-        final List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
-        if (customs.isEmpty()) return null;
+      if (semService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
+          semService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
 
-        if (semService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
-            semService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
-
-          String localName = tag.getLocalName();
-          XmlFile file = parent.getFile();
-          for (final DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
-            XmlName xmlName = description.getXmlName();
-            if (localName.equals(xmlName.getLocalName()) && DomImplUtil.isNameSuitable(xmlName, tag, parent, file)) {
-              return null;
-            }
-          }
-          for (CustomDomChildrenDescription description : customs) {
-            if (description.getTagNameDescriptor() != null) {
-             AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)description;
-             Type type = description.getType();
-             return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
-            }
+        String localName = tag.getLocalName();
+        XmlFile file = parent.getFile();
+        for (DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
+          XmlName xmlName = description.getXmlName();
+          if (localName.equals(xmlName.getLocalName()) && DomImplUtil.isNameSuitable(xmlName, tag, parent, file)) {
+            return null;
           }
         }
-
-        return null;
+        for (CustomDomChildrenDescription description : customs) {
+          if (description.getTagNameDescriptor() != null) {
+           AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)description;
+           Type type = description.getType();
+           return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
+          }
+        }
       }
+
+      return null;
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY,
