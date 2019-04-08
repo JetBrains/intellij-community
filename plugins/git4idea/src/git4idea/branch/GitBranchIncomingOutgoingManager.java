@@ -169,6 +169,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void scheduleUpdate() {
+    if (!myGitSettings.shouldUpdateBranchInfo()) return;
     myQueue.queue(Update.create("update", () -> {
       List<GitRepository> toPull;
       List<GitRepository> toPush;

@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.EnumComboBoxModel;
@@ -189,7 +190,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
     myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
     boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    myUpdateBranchInfoCheckBox.setEnabled(Registry.is("git.update.incoming.outgoing.info") && branchInfoSupported);
     UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
     updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
@@ -286,6 +287,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
+    if (!Registry.is("git.update.incoming.outgoing.info")) return;
     boolean branchInfoSupported = isBranchInfoSupported();
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
     UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
@@ -302,6 +304,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private boolean isUpdateBranchSettingsModified(@NotNull GitVcsSettings projectSettings) {
+    if (!Registry.is("git.update.incoming.outgoing.info")) return false;
     return projectSettings.getBranchInfoUpdateTime() != (Integer)myBranchUpdateTimeField.getValue() ||
            projectSettings.shouldUpdateBranchInfo() != myUpdateBranchInfoCheckBox.isSelected();
   }
