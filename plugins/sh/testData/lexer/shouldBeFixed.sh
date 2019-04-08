@@ -21,6 +21,8 @@ EOF
 
 $(${)                     #issue398
 
+[[ (a =~ "b") ]]          #issue412
+
 
 \
 b                        #lineContinuation

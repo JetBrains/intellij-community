@@ -68,6 +68,7 @@ InputCharacter           = [^\r\n]
 LineTerminator           = \r\n | \r | \n
 LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
+EscapedWhiteSpace        = "\\ "
 //WhiteSpaceLineContinuation={WhiteSpace}
 
 Shebang                  = #\! {InputCharacter}* {LineTerminator}?
@@ -116,6 +117,7 @@ AssigOp                  = "=" | "+="
 
 EscapedCurly             = "\\{" | "\\}"
 
+
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
@@ -130,6 +132,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 %state CASE_PATTERN
 
 %state STRING_EXPRESSION
+%state REGULAR_EXPRESSION
 
 %state HERE_DOC_START_MARKER
 %state HERE_DOC_END_MARKER
@@ -201,9 +204,14 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 <CONDITIONAL_EXPRESSION> {
     "=="                          { return EQ; }
     "!="                          { return NE; }
-    "=~"                          { return REGEXP; }
+    "=~"                          { pushState(REGULAR_EXPRESSION); return REGEXP; }
     "<"                           { return LT; }
     ">"                           { return GT; }
+}
+
+<REGULAR_EXPRESSION> {
+  {WhiteSpace}+                                         {return WHITESPACE;}
+  ([^ ]| {EscapedWhiteSpace})+ / {WhiteSpace}* "]]"     { popState(); return WORD; }
 }
 
 <PARAMETER_EXPANSION> {

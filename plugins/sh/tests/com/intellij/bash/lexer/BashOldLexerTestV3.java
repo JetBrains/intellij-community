@@ -313,10 +313,6 @@ public class BashOldLexerTestV3 extends LexerTestCase {
     doFileTest("sh");
   }
 
-  public void testIssue412() {
-    doFileTest("sh");
-  }
-
   public void testIssue401() {
     doFileTest("sh");
   }

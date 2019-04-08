@@ -1,0 +1,47 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    VARIABLE
+                      PsiElement(var)('$JAVAC_VERSION')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=~)('=~')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('javac\ (1\.([789]|[1-9][0-9])).*$')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('  ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  ASSIGNMENT_COMMAND
+                    PsiElement(word)('XCODE_VERSION')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(parameter_expansion_body)('XCODE_VERSION')
+                        PsiElement(})('}')
+                      PsiElement(word)('.0')
+                      PsiElement(")('"')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')
