@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -133,27 +133,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull final ActionGroup actionGroup,
                            boolean horizontal,
-                           @NotNull DataManager dataManager,
                            @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, false);
+    this(place, actionGroup, horizontal, false, actionManager, keymapManager, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons,
-                           @NotNull DataManager dataManager,
                            @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, decorateButtons, dataManager, actionManager, keymapManager, false);
+    this(place, actionGroup, horizontal, decorateButtons, actionManager, keymapManager, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            final boolean horizontal,
                            final boolean decorateButtons,
-                           @NotNull DataManager dataManager,
                            @NotNull ActionManagerEx actionManager,
                            @NotNull KeymapManagerEx keymapManager,
                            boolean updateActionsNow) {
@@ -162,7 +159,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPlace = place;
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
-    myDataManager = dataManager;
+    myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
     myUpdater = new ToolbarUpdater(actionManager, keymapManager, this) {
       @Override
@@ -1232,7 +1229,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       group = outside;
     }
 
-    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myUpdater.getKeymapManager(), this) {
+    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myActionManager, myUpdater.getKeymapManager(), this) {
       @Override
       protected void onOtherActionPerformed() {
         hidePopup();
@@ -1353,11 +1350,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     PopupToolbar(@NotNull String place,
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
-                 @NotNull DataManager dataManager,
                  @NotNull ActionManagerEx actionManager,
                  @NotNull KeymapManagerEx keymapManager,
                  @NotNull JComponent parent) {
-      super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
+      super(place, actionGroup, horizontal, false, actionManager, keymapManager, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());
