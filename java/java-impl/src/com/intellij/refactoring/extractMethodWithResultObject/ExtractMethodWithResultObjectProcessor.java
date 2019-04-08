@@ -12,25 +12,20 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Pavel.Dolgov
@@ -41,13 +36,10 @@ public class ExtractMethodWithResultObjectProcessor {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiElementFactory myFactory;
-  private final PsiElement[] myElements;
+  final PsiElement[] myElements;
   private final PsiExpression myExpression;
-  private final PsiElement myCodeFragmentMember;
-  private final Map<PsiReferenceExpression, PsiVariable> myInputs = new HashMap<>();
-  private final Set<PsiVariable> myOutputVariables = new HashSet<>();
-  private final Map<PsiStatement, Exit> myExits = new HashMap<>();
-  private final Set<PsiVariable> myWrittenOuterVariables = new HashSet<>();
+  final PsiElement myCodeFragmentMember;
+  private ExtractionContext myContext;
 
   private String myMethodName = "newMethod";
   private String myResultClassName = "NewMethodResult";
@@ -62,53 +54,6 @@ public class ExtractMethodWithResultObjectProcessor {
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
   private static final Key<PsiStatement> OLD_EXIT_STATEMENT = Key.create("ExtractMethodWithResultObjectProcessor.OldExitStatement");
-
-  private enum ExitType {
-    EXPRESSION,
-    RETURN,
-    BREAK,
-    CONTINUE,
-    THROW,
-    SEQUENTIAL,
-    UNDEFINED
-  }
-
-  private static class Exit {
-    private final ExitType myType;
-    private final PsiElement myExitedElement;
-
-    private Exit(@NotNull ExitType type, @Nullable PsiElement element) {
-      myType = type;
-      myExitedElement = element;
-    }
-
-    ExitType getType() {
-      return myType;
-    }
-
-    PsiElement getExitedElement() {
-      return myExitedElement;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Exit)) return false;
-
-      Exit exit = (Exit)o;
-      return myType == exit.myType && Objects.equals(myExitedElement, exit.myExitedElement);
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * myType.hashCode() + (myExitedElement != null ? myExitedElement.hashCode() : 0);
-    }
-
-    @Override
-    public String toString() {
-      return myExitedElement != null ? myType + " " + myExitedElement : myType.toString();
-    }
-  }
 
   public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
     if (elements.length == 0) {
@@ -161,9 +106,7 @@ public class ExtractMethodWithResultObjectProcessor {
       return false;
     }
 
-    collectInputsAndOutputs();
-    collectDeclaredInsideUsedAfter();
-    findSequentialExit();
+    myContext = new ExtractionContextAnalyser(myElements, myCodeFragmentMember, myExpression).createContext();
 
     chooseTargetClass();
     chooseAnchor();
@@ -171,308 +114,6 @@ public class ExtractMethodWithResultObjectProcessor {
     return true;
   }
 
-  private void collectInputsAndOutputs() {
-    // todo take care of surrounding try-catch
-    JavaRecursiveElementWalkingVisitor elementsVisitor = new JavaRecursiveElementWalkingVisitor() {
-      private final Set<PsiElement> mySkippedContexts = new HashSet<>();
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-
-        PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
-          PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiVariable) {
-            PsiVariable variable = (PsiVariable)resolved;
-            PsiAssignmentExpression assignment = getAssignmentOf(expression);
-            if (assignment != null) {
-              if (assignment.getOperationTokenType() != JavaTokenType.EQ) {
-                processPossibleInput(expression, variable);
-              }
-              processPossibleOutput(variable);
-            }
-            else if (PsiUtil.isIncrementDecrementOperation(expression)) {
-              processPossibleInput(expression, variable);
-              processPossibleOutput(variable);
-            }
-            else {
-              processPossibleInput(expression, variable);
-            }
-          }
-        }
-      }
-
-      private PsiAssignmentExpression getAssignmentOf(PsiReferenceExpression expression) {
-        PsiElement element = expression;
-        while (element.getParent() instanceof PsiParenthesizedExpression) {
-          element = element.getParent();
-        }
-        PsiElement parent = element.getParent();
-        if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == element) {
-          return (PsiAssignmentExpression)parent;
-        }
-        return null;
-      }
-
-      @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
-        super.visitReturnStatement(statement);
-
-        if (!isInSkippedContext(statement)) {
-          myExits.put(statement, new Exit(ExitType.RETURN, myCodeFragmentMember));
-        }
-      }
-
-      @Override
-      public void visitContinueStatement(PsiContinueStatement statement) {
-        super.visitContinueStatement(statement);
-
-        if (!isInSkippedContext(statement)) {
-          PsiStatement continuedStatement = statement.findContinuedStatement();
-          if (continuedStatement instanceof PsiLoopStatement && !isInside(continuedStatement)) {
-            myExits.put(statement, new Exit(ExitType.CONTINUE, ((PsiLoopStatement)continuedStatement).getBody()));
-          }
-        }
-      }
-
-      @Override
-      public void visitBreakStatement(PsiBreakStatement statement) {
-        super.visitBreakStatement(statement);
-
-        if (!isInSkippedContext(statement)) {
-          PsiElement exitedElement = statement.findExitedElement();
-          if (exitedElement != null && !isInside(exitedElement)) {
-            PsiElement outermostExited = findOutermostExitedElement(statement);
-            myExits.put(statement, new Exit(ExitType.BREAK, outermostExited != null ? outermostExited : exitedElement));
-          }
-        }
-      }
-
-      @Override
-      public void visitThrowStatement(PsiThrowStatement statement) {
-        super.visitThrowStatement(statement);
-
-        if (!isInSkippedContext(statement)) {
-          PsiTryStatement throwTarget = findThrowTarget(statement);
-          if (throwTarget == null) {
-            myExits.put(statement, new Exit(ExitType.THROW, myCodeFragmentMember));
-          }
-          else if (!isInside(throwTarget)) {
-            myExits.put(statement, new Exit(ExitType.THROW, throwTarget));
-          }
-        }
-      }
-
-      @Override
-      public void visitClass(PsiClass aClass) {
-        mySkippedContexts.add(aClass);
-        super.visitClass(aClass);
-      }
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
-        mySkippedContexts.add(expression);
-        super.visitLambdaExpression(expression);
-      }
-
-      private boolean isInSkippedContext(PsiElement element) {
-        while (true) {
-          if (element == myCodeFragmentMember) {
-            return false;
-          }
-          if (element == null || mySkippedContexts.contains(element)) {
-            return true;
-          }
-          element = element.getContext();
-        }
-      }
-    };
-
-    for (PsiElement element : myElements) {
-      element.accept(elementsVisitor);
-    }
-    if (myExpression != null) {
-      myExits.put(null, new Exit(ExitType.EXPRESSION, myExpression));
-    }
-  }
-
-  private void collectDeclaredInsideUsedAfter() {
-    if (myExpression != null) {
-      return;
-    }
-    Set<PsiLocalVariable> declaredInside = new HashSet<>();
-    for (PsiElement element : myElements) {
-      if (element instanceof PsiDeclarationStatement) {
-        PsiElement[] declaredElements = ((PsiDeclarationStatement)element).getDeclaredElements();
-        for (PsiElement declaredElement : declaredElements) {
-          if (declaredElement instanceof PsiLocalVariable) {
-            declaredInside.add((PsiLocalVariable)declaredElement);
-          }
-        }
-      }
-    }
-
-    if (!declaredInside.isEmpty()) {
-      for (PsiElement next = myElements[myElements.length - 1].getNextSibling(); next != null; next = next.getNextSibling()) {
-        next.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-
-            if (expression.getQualifier() == null) {
-              PsiElement resolved = expression.resolve();
-              if (resolved instanceof PsiLocalVariable && declaredInside.contains(resolved)) {
-                myOutputVariables.add((PsiLocalVariable)resolved);
-              }
-            }
-          }
-        });
-      }
-    }
-  }
-
-  @Nullable("null means there's an error in the code")
-  private PsiElement findOutermostExitedElement(@NotNull PsiElement startLocation) {
-    PsiElement location = startLocation;
-    while (true) {
-      if (location == null || location instanceof PsiParameterListOwner || location instanceof PsiClassInitializer) {
-        return location;
-      }
-      if (location instanceof PsiBreakStatement) {
-        PsiElement exited = ((PsiBreakStatement)location).findExitedElement();
-        if (exited == null) {
-          return null;
-        }
-        location = exited;
-        continue;
-      }
-      if (location instanceof PsiContinueStatement) {
-        PsiStatement continued = ((PsiContinueStatement)location).findContinuedStatement();
-        if (continued instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally(continued)) {
-          return ((PsiLoopStatement)continued).getBody();
-        }
-        if (continued == null) {
-          return null;
-        }
-        location = continued;
-        continue;
-      }
-      if (location instanceof PsiThrowStatement) {
-        PsiTryStatement target = findThrowTarget((PsiThrowStatement)location);
-        return target != null ? target.getTryBlock() : myCodeFragmentMember;
-      }
-      if (location instanceof PsiSwitchLabelStatementBase) {
-        location = ((PsiSwitchLabelStatementBase)location).getEnclosingSwitchBlock();
-        continue;
-      }
-
-      PsiElement parent = location.getParent();
-      if (parent instanceof PsiLoopStatement && !ControlFlowUtils.statementMayCompleteNormally((PsiLoopStatement)parent)) {
-        return ((PsiLoopStatement)parent).getBody();
-      }
-      if (parent instanceof PsiCodeBlock) {
-        PsiStatement next = PsiTreeUtil.getNextSiblingOfType(location, PsiStatement.class);
-        if (next != null) {
-          return location;
-        }
-      }
-      location = parent;
-    }
-  }
-
-  @Nullable
-  private PsiTryStatement findThrowTarget(@NotNull PsiThrowStatement statement) {
-    PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
-    if (exception == null) {
-      return null;
-    }
-    PsiClassType exactType = null;
-    PsiClassType lowerBoundType = null;
-    if (exception instanceof PsiNewExpression) {
-      PsiType type = exception.getType();
-      if (type instanceof PsiClassType) {
-        PsiClass resolved = ((PsiClassType)type).resolve();
-        if (resolved != null && !(resolved instanceof PsiAnonymousClass)) {
-          exactType = lowerBoundType = (PsiClassType)type;
-        }
-      }
-    }
-    if (lowerBoundType == null) {
-      lowerBoundType = tryCast(exception.getType(), PsiClassType.class);
-    }
-    if (lowerBoundType == null) {
-      return null;
-    }
-    for (PsiElement element = statement; element != null && element != myCodeFragmentMember; element = element.getContext()) {
-      PsiElement parent = element.getContext();
-      if (parent instanceof PsiTryStatement && element == ((PsiTryStatement)parent).getTryBlock()) {
-        for (PsiParameter parameter : ((PsiTryStatement)parent).getCatchBlockParameters()) {
-          PsiType catchType = parameter.getType();
-          if (exactType != null && catchType.isAssignableFrom(exactType)) {
-            return ((PsiTryStatement)parent);
-          }
-          else if (exactType == null && ControlFlowUtil.isCaughtExceptionType(lowerBoundType, catchType)) {
-            return ((PsiTryStatement)parent);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private void findSequentialExit() {
-    if (myExpression != null) {
-      return;
-    }
-    for (int i = myElements.length - 1; i >= 0; i--) {
-      if (!(myElements[i] instanceof PsiStatement)) {
-        continue; // skip comments and white spaces
-      }
-      PsiStatement statement = (PsiStatement)myElements[i];
-      if (!ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return; // sequential exit can't happen
-      }
-      break;
-    }
-
-    PsiElement exitedElement = findOutermostExitedElement(myElements[myElements.length - 1]);
-    if (exitedElement != null) {
-      myExits.put(null, new Exit(ExitType.SEQUENTIAL, exitedElement));
-    }else {
-      myExits.put(null, new Exit(ExitType.UNDEFINED, null));
-    }
-  }
-
-  private void processPossibleOutput(PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-      if (PsiTreeUtil.isAncestor(myCodeFragmentMember, variable, true)) {
-        myOutputVariables.add(variable);
-        if (!isInside(variable)) {
-          myWrittenOuterVariables.add(variable);
-        }
-      }
-    }
-    else if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL)) {
-      if (myCodeFragmentMember.getParent() != null && myCodeFragmentMember.getParent() == variable.getParent()) {
-        myOutputVariables.add(variable);
-      }
-    }
-  }
-
-  private void processPossibleInput(PsiReferenceExpression expression, PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-      if (!isInside(variable)) {
-        myInputs.put(expression, variable);
-      }
-    }
-  }
-
-  private boolean isInside(@NotNull PsiElement element) {
-    PsiElement context = PsiTreeUtil.findFirstContext(element, false,
-                                                      e -> e == myCodeFragmentMember || ArrayUtil.find(myElements, e) >= 0);
-    return context != myCodeFragmentMember;
-  }
 
   boolean showDialog() {
     LOG.info("showDialog");
@@ -482,9 +123,9 @@ public class ExtractMethodWithResultObjectProcessor {
   void doRefactoring() {
     LOG.warn("doRefactoring");
 
-    Set<ExitType> exitTypes = myExits.values().stream().map(e -> e.getType()).collect(Collectors.toSet());
+    Set<ExitType> exitTypes = myContext.getExitTypes();
     if (!exitTypes.contains(ExitType.UNDEFINED) && !exitTypes.contains(ExitType.THROW)) {
-      Map<Exit, Integer> distinctExits = getDistinctExits();
+      Map<Exit, Integer> distinctExits = myContext.getDistinctExits();
       List<ResultItem> resultItems = collectResultItems(distinctExits);
       PsiClass resultClass = createResultClass(resultItems);
       createMethod(resultItems, resultClass, distinctExits);
@@ -495,9 +136,9 @@ public class ExtractMethodWithResultObjectProcessor {
       dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));
     }
 
-    dumpTexts(myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), "exit");
-    dumpElements(myOutputVariables, "out");
-    dumpElements(new HashSet<>(myInputs.values()), "in");
+    dumpTexts(myContext.myExits.entrySet().stream().map(ExtractMethodWithResultObjectProcessor::getExitText), "exit");
+    dumpElements(myContext.myOutputVariables, "out");
+    dumpElements(new HashSet<>(myContext.myInputs.values()), "in");
     dumpText("ins and outs");
   }
 
@@ -534,7 +175,7 @@ public class ExtractMethodWithResultObjectProcessor {
 
   private List<ResultItem> collectResultItems(Map<Exit, Integer> distinctExits) {
     if (myExpression != null) {
-      assert myExits.size() == 1 : "one exit with expression";
+      assert myContext.myExits.size() == 1 : "one exit with expression";
       PsiType expressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(myExpression);
       if (expressionType == null) {
         expressionType = PsiType.getJavaLangObject(myExpression.getManager(), GlobalSearchScope.allScope(myProject));
@@ -548,7 +189,7 @@ public class ExtractMethodWithResultObjectProcessor {
       resultItems.add(new ExitKeyResultItem());
     }
 
-    List<Exit> returnExits = ContainerUtil.filter(myExits.values(), exit -> ExitType.RETURN.equals(exit.getType()));
+    List<Exit> returnExits = ContainerUtil.filter(myContext.myExits.values(), exit -> ExitType.RETURN.equals(exit.getType()));
     if (!returnExits.isEmpty()) {
       PsiType returnType = null;
       PsiTypeElement returnTypeElement = null;
@@ -567,7 +208,7 @@ public class ExtractMethodWithResultObjectProcessor {
       }
     }
 
-    StreamEx.of(myOutputVariables)
+    StreamEx.of(myContext.myOutputVariables)
       .mapToEntry(v -> v.getName(), v -> v)
       .filterKeys(Objects::nonNull)
       .sortedBy(e -> e.getKey())
@@ -630,7 +271,7 @@ public class ExtractMethodWithResultObjectProcessor {
     PsiParameterList parameterList = method.getParameterList();
 
     Map<PsiVariable, Pair<PsiExpression, Integer>> orderedInputs = new HashMap<>();
-    myInputs.forEach((expression, variable) -> {
+    myContext.myInputs.forEach((expression, variable) -> {
       int offset = expression.getTextOffset();
       Pair<PsiExpression, Integer> pair = orderedInputs.get(variable);
       if (pair == null || pair.second > offset) {
@@ -661,7 +302,7 @@ public class ExtractMethodWithResultObjectProcessor {
       return;
     }
 
-    for (PsiStatement statement : myExits.keySet()) {
+    for (PsiStatement statement : myContext.myExits.keySet()) {
       if (statement != null) {
         statement.putCopyableUserData(OLD_EXIT_STATEMENT, statement);
       }
@@ -680,7 +321,7 @@ public class ExtractMethodWithResultObjectProcessor {
       newExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
       oldExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
 
-      Exit exit = myExits.get(oldExitStatement);
+      Exit exit = myContext.myExits.get(oldExitStatement);
       Integer exitKey = distinctExits.get(exit);
       assert exitKey != null : "exit key";
 
@@ -696,7 +337,7 @@ public class ExtractMethodWithResultObjectProcessor {
       newExitStatement.replace(returnStatement);
     }
 
-    Set<ExitType> exitTypes = myExits.values().stream().map(Exit::getType).collect(Collectors.toSet());
+    Set<ExitType> exitTypes = myContext.getExitTypes();
     if (exitTypes.contains(ExitType.SEQUENTIAL)) {
       body.add(createReturnStatement(resultItems, -1, body, null));
     }
@@ -722,8 +363,8 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private void redeclareWrittenOuterVariables(PsiCodeBlock body) throws IncorrectOperationException {
-    HashSet<PsiVariable> writtenVariables = new HashSet<>(myWrittenOuterVariables);
-    for (PsiVariable inputVariable : myInputs.values()) {
+    HashSet<PsiVariable> writtenVariables = new HashSet<>(myContext.myWrittenOuterVariables);
+    for (PsiVariable inputVariable : myContext.myInputs.values()) {
       writtenVariables.remove(inputVariable);
     }
     StreamEx.of(writtenVariables)
@@ -739,20 +380,6 @@ public class ExtractMethodWithResultObjectProcessor {
         PsiDeclarationStatement statement = myFactory.createVariableDeclarationStatement(name, type, initializer);
         body.add(statement);
       });
-  }
-
-  @NotNull
-  private Map<Exit, Integer> getDistinctExits() {
-    Map<Exit, Integer> distinctExits = new HashMap<>();
-    EntryStream.of(myExits)
-      .mapKeys(s -> s != null ? s.getTextOffset() : 0)
-      .sorted(Comparator.comparing((Map.Entry<Integer, Exit> e) -> e.getKey()).thenComparing(e -> e.getValue().getType()))
-      .forKeyValue((offset, exit) -> {
-        if (!distinctExits.containsKey(exit)) {
-          distinctExits.put(exit, distinctExits.size());
-        }
-      });
-    return distinctExits;
   }
 
   @NotNull
