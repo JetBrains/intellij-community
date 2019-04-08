@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -302,16 +302,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
    */
   public void setCaretPosition(int position) {
     Document document = getDocument();
-    if (document != null) {
-      if (position > document.getTextLength() || position < 0) {
-        throw new IllegalArgumentException("bad position: " + position);
-      }
-      if (myEditor != null) {
-        myEditor.getCaretModel().moveToOffset(myCaretPosition);
-      }
-      else {
-        myCaretPosition = position;
-      }
+    if (position > document.getTextLength() || position < 0) {
+      throw new IllegalArgumentException("bad position: " + position);
+    }
+    if (myEditor != null) {
+      myEditor.getCaretModel().moveToOffset(position);
+    }
+    else {
+      myCaretPosition = position;
     }
   }
   public CaretModel getCaretModel() {
