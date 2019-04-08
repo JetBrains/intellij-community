@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -86,7 +87,7 @@ public class JavaResolveCache {
 
     PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
     if (type == null) {
-      final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+      RecursionGuard.StackStamp dStackStamp = RecursionManager.markStack();
       type = f.fun(expr);
       if (!dStackStamp.mayCacheNow()) {
         return type;

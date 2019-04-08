@@ -63,7 +63,6 @@ import java.util.stream.Collectors;
 public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
   @NonNls private static final String XML_NS_PREFIX = "xml";
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
   private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
   private static final Key<CachedValue<XmlTag[]>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
@@ -467,7 +466,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   public XmlElementDescriptor getDescriptor() {
     return CachedValuesManager.getCachedValue(this, () -> {
-      XmlElementDescriptor descriptor = ourGuard.doPreventingRecursion(this, true, this::computeElementDescriptor);
+      XmlElementDescriptor descriptor = RecursionManager.doPreventingRecursion(this, true, this::computeElementDescriptor);
       return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker());
     });
   }
@@ -795,7 +794,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       // When there is no namespace declarations then qualified names should be just used in dtds
       // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
 
-      String result = ourGuard.doPreventingRecursion(Trinity.create("getNsByPrefix", this, prefix), true, () -> {
+      String result = RecursionManager.doPreventingRecursion(Trinity.create("getNsByPrefix", this, prefix), true, () -> {
         final String nsFromEmptyPrefix = getNamespaceByPrefix("");
         if (nsFromEmptyPrefix.isEmpty()) return nsFromEmptyPrefix;
 

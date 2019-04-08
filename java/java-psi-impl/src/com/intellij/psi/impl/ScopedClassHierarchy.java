@@ -55,7 +55,6 @@ class ScopedClassHierarchy {
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("ScopedClassHierarchy");
   private final PsiClass myPlaceClass;
   private final GlobalSearchScope myResolveScope;
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
@@ -110,7 +109,7 @@ class ScopedClassHierarchy {
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
       map = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
       if (stamp.mayCacheNow()) {
         hierarchy.mySupersWithSubstitutors = map;
@@ -143,8 +142,8 @@ class ScopedClassHierarchy {
   List<PsiClassType.ClassResolveResult> getImmediateSupersWithCapturing() {
     List<PsiClassType.ClassResolveResult> list = myImmediateSupersWithCapturing;
     if (list == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      list = ourGuard.doPreventingRecursion(this, true, () -> calcImmediateSupersWithCapturing());
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      list = RecursionManager.doPreventingRecursion(this, true, () -> calcImmediateSupersWithCapturing());
       if (list == null) {
         return Collections.emptyList();
       }

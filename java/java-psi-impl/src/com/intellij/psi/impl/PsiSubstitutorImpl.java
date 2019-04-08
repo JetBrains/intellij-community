@@ -143,12 +143,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
   private PsiType rawTypeForTypeParameter(@NotNull PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
       // First bound
-      return ourGuard.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
+      return RecursionManager.doPreventingRecursion(extendsTypes[0], true, () -> substitute(extendsTypes[0]));
     }
     // Object
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());

@@ -28,7 +28,7 @@ class RecursionAwareSafePublicationLazy<T>(initializer: () -> T) : Lazy<T> {
         return valueRef.get()
       }
 
-      val stamp = ourRecursionGuard.markStack()
+      val stamp = RecursionManager.markStack()
       val newValue = initializerValue()
       if (!stamp.mayCacheNow()) {
         // In case of recursion don't update [valueRef] and don't clear [initializer].
@@ -49,7 +49,6 @@ class RecursionAwareSafePublicationLazy<T>(initializer: () -> T) : Lazy<T> {
   override fun toString(): String = if (isInitialized()) value.toString() else "Lazy value not initialized yet."
 
   companion object {
-    private val ourRecursionGuard = RecursionManager.createGuard("RecursionAwareSafePublicationLazy")
     private val UNINITIALIZED_VALUE: Any = ObjectUtils.sentinel("RecursionAwareSafePublicationLazy initial value")
   }
 }

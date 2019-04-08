@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -87,8 +86,6 @@ class ServiceView extends JPanel implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final ServiceViewState myState;
 
-  private final RecursionGuard myGuard = RecursionManager.createGuard("ServiceView.getData");
-
   ServiceView(@NotNull Project project, @NotNull ServiceViewState state) {
     super(new BorderLayout());
     myProject = project;
@@ -125,7 +122,7 @@ class ServiceView extends JPanel implements Disposable {
       ServiceViewContributor.ViewDescriptor descriptor = getSelectedDescriptor();
       DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
       if (dataProvider != null) {
-        return myGuard.doPreventingRecursion(this, false, () -> dataProvider.getData(dataId));
+        return RecursionManager.doPreventingRecursion(this, false, () -> dataProvider.getData(dataId));
       }
       return null;
     });

@@ -130,7 +130,7 @@ public class GroovyPsiManager {
   private static <K extends GroovyPsiElement> PsiType getTypeWithCaching(@NotNull K key, @NotNull ConcurrentMap<? super K, PsiType> map, @NotNull Function<? super K, ? extends PsiType> calculator) {
     PsiType type = map.get(key);
     if (type == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       type = calculator.fun(key);
       if (type == null) {
         type = UNKNOWN_TYPE;

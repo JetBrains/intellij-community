@@ -313,7 +313,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+        RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
 
         myApplicabilityError.remove();
         try {
