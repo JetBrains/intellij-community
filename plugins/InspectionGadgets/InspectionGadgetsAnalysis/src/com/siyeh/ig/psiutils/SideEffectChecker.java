@@ -87,36 +87,6 @@ public class SideEffectChecker {
     return mayHaveSideEffects(element, SideEffectChecker::isLocalSideEffect);
   }
 
-  /**
-   * Returns true if element execution may cause side-effect outside of the loop. Break/continue or update of a variable defined inside of
-   * the loop are considered to be loop only side-effects.
-   *
-   * @param element           element to check
-   * @param declaredVariables variables declared inside of the loop
-   */
-  public static boolean mayHaveOutsideOfLoopSideEffects(@NotNull PsiElement element, @NotNull Set<PsiVariable> declaredVariables) {
-    return mayHaveSideEffects(element, e -> isLoopOnlySideEffect(e, declaredVariables));
-  }
-
-  private static boolean isLoopOnlySideEffect(PsiElement e, @NotNull Set<PsiVariable> declaredVariables) {
-    if (e instanceof PsiContinueStatement || e instanceof PsiBreakStatement || e instanceof PsiVariable) {
-      return true;
-    }
-
-    PsiExpression operand = null;
-    if (e instanceof PsiUnaryExpression) {
-      operand = ((PsiUnaryExpression)e).getOperand();
-    }
-    else if (e instanceof PsiAssignmentExpression) {
-      operand = ((PsiAssignmentExpression)e).getLExpression();
-    }
-    if (operand == null) return false;
-    PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
-    if (ref == null) return true;
-    PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
-    return variable == null || declaredVariables.contains(variable);
-  }
-
   private static boolean isLocalSideEffect(PsiElement e) {
     if (e instanceof PsiContinueStatement ||
         e instanceof PsiReturnStatement ||
