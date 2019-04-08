@@ -6,6 +6,7 @@ class C {
       if (a.equals(s)) {
 
           NewMethodResult x = newMethod(b, s);
+          if (x.exitKey == 1) return x.returnResult;
           if (b == null) {
           return true;
         }

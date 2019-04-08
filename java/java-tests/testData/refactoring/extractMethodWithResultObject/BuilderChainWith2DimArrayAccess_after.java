@@ -3,6 +3,7 @@ class Foo {
         for (int i = 0; i < a.length; i++)
             for (int j = 0; i < a[i].length; j++) {
                 NewMethodResult x = newMethod(a, i, j);
+                if (x.exitKey == 1) return x.returnResult;
                 if (a[i][j].length() > 3 && i % 3 == 0)
                     return true;
 

@@ -2,6 +2,7 @@ class Foo {
     boolean bar(String[] a) {
         for (int i = 0; i < a.length; i++) {
             NewMethodResult x = newMethod(a, i);
+            if (x.exitKey == 1) return x.returnResult;
             if (a[i].length() > 3 && i % 3 == 0)
                 return true;
         }

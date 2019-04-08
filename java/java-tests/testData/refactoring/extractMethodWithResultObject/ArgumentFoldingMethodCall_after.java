@@ -7,6 +7,7 @@ class C {
     private void foo() {
 
         NewMethodResult x1 = newMethod();
+        if (x1.exitKey == 1) return;
         if (x.isEmpty()) return;
         x.remove(0);
         y.add(str());

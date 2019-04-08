@@ -3,6 +3,7 @@ class WillWorkTest {
         int i = 0;
 
         NewMethodResult x = newMethod(i);
+        return x.returnResult;
         int k;
         if (true) k = i;
         return k;

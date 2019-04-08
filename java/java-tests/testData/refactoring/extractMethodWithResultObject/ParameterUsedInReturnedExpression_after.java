@@ -3,6 +3,7 @@ class C {
     String s = "";
 
       NewMethodResult x = newMethod(n, s);
+      if (x.exitKey == 1) return x.returnResult;
       if (n == 1) {
       return "A" + s;
     }

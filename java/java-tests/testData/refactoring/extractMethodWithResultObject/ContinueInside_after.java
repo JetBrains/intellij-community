@@ -2,6 +2,7 @@ class Test {
   String foo(String[] args) {
 
       NewMethodResult x = newMethod(args);
+      if (x.exitKey == 1) return x.returnResult;
       for(String arg : args) {
       if (arg == null) continue;
       System.out.println(arg);

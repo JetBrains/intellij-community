@@ -2,6 +2,7 @@ class X {
   void foo(java.util.List l) {
     for (Object o : l) {
         NewMethodResult x1 = newMethod(o);
+        if (x1.exitKey == 1) continue;
         if (o == null) continue;
       String x = bar(o);
       System.out.println(x);

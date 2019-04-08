@@ -7,6 +7,7 @@ class C {
       catch (Exception e) {}
 
         NewMethodResult x = newMethod();
+        if (x.exitKey == 1) return x.returnResult;
         if (foo()) {
         return null;
       }

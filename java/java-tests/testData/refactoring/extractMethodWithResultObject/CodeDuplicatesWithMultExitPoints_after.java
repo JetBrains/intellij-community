@@ -1,6 +1,7 @@
 class A {
    int foo (Object o) {
        NewMethodResult x = newMethod(o);
+       if (x.exitKey == 1) return x.returnResult;
        if (o == null) return 0;
      if (o == null) return 0;
      return 1;

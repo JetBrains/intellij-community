@@ -2,6 +2,7 @@ class X {
   static String guessTestDataName(String method, String testName, String[] methods) {
     for (String psiMethod : methods) {
         NewMethodResult x = newMethod(method, testName);
+        if (x.exitKey == 1) return x.returnResult;
         String strings = method;
       if (strings != null && !strings.isEmpty()) {
         return strings.substring(0) + testName;

@@ -2,6 +2,7 @@ class Test {
     public static Integer foo(Integer[] a) {
 
         NewMethodResult x = newMethod(a);
+        if (x.exitKey == 1) return x.returnResult;
         if (a.length != 0) {
             int n = a[0] != null ? a[0] : 0;
             return n;

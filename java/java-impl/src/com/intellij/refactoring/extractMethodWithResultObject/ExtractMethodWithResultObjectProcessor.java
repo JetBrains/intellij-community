@@ -130,7 +130,8 @@ public class ExtractMethodWithResultObjectProcessor {
       PsiClass resultClass = createResultClass(resultItems);
       createMethod(resultItems, resultClass, distinctExits);
 
-      createMethodCall(resultClass);
+      PsiElement methodCall = createMethodCall(resultClass);
+      createExitStatements(methodCall, resultItems, distinctExits);
     }
     else {
       dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));
@@ -142,7 +143,7 @@ public class ExtractMethodWithResultObjectProcessor {
     dumpText("ins and outs");
   }
 
-  private void createMethodCall(PsiClass resultClass) {
+  private PsiElement createMethodCall(PsiClass resultClass) {
     PsiElement firstElement = myElements[0];
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myFactory.createExpressionFromText(myMethodName + "()", firstElement);
     PsiExpressionList argumentList = methodCall.getArgumentList();
@@ -155,22 +156,72 @@ public class ExtractMethodWithResultObjectProcessor {
       PsiReferenceExpression referenceExpression =
         (PsiReferenceExpression)myFactory.createExpressionFromText("x." + ExpressionResultItem.EXPRESSION_RESULT, null);
       referenceExpression.setQualifierExpression(methodCall);
-      myExpression.replace(referenceExpression);
-
-    } else {
-
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-      myResultVariableName = codeStyleManager.suggestUniqueVariableName(myResultVariableName, firstElement, true);
-      PsiDeclarationStatement methodResultDeclaration =
-        myFactory.createVariableDeclarationStatement(myResultVariableName, myFactory.createType(resultClass), null, firstElement);
-      PsiElement[] declaredElements = methodResultDeclaration.getDeclaredElements();
-
-      LOG.assertTrue(declaredElements.length == 1, "declaredElements.length");
-      LOG.assertTrue(declaredElements[0] instanceof PsiLocalVariable, "declaredElements[0]");
-      ((PsiLocalVariable)declaredElements[0]).setInitializer(methodCall);
-
-      firstElement.getParent().addBefore(methodResultDeclaration, firstElement);
+      return myExpression.replace(referenceExpression);
     }
+
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+    myResultVariableName = codeStyleManager.suggestUniqueVariableName(myResultVariableName, firstElement, true);
+    PsiDeclarationStatement methodResultDeclaration =
+      myFactory.createVariableDeclarationStatement(myResultVariableName, myFactory.createType(resultClass), null, firstElement);
+    PsiElement[] declaredElements = methodResultDeclaration.getDeclaredElements();
+
+    LOG.assertTrue(declaredElements.length == 1, "declaredElements.length");
+    LOG.assertTrue(declaredElements[0] instanceof PsiLocalVariable, "declaredElements[0]");
+    ((PsiLocalVariable)declaredElements[0]).setInitializer(methodCall);
+
+    return firstElement.getParent().addBefore(methodResultDeclaration, firstElement);
+  }
+
+  private void createExitStatements(PsiElement methodCall, List<ResultItem> resultItems, Map<Exit, Integer> distinctExits) {
+    if (myExpression != null) {
+      return;
+    }
+
+    boolean haveResultKey = ContainerUtil.find(resultItems, item -> item instanceof ExitKeyResultItem) != null;
+    boolean haveReturnResult = ContainerUtil.find(resultItems, item -> item instanceof ReturnResultItem) != null;
+    //boolean haveSequentialExit = ContainerUtil.find(distinctExits.keySet(), exit -> ExitType.SEQUENTIAL.equals(exit.getType())) != null;
+
+    EntryStream.of(distinctExits)
+      .sorted(Comparator.comparing((Map.Entry<Exit, Integer> e) -> e.getValue()).reversed())
+      .forKeyValue((exit, exitKey) -> {
+        PsiStatement exitStatement = null;
+        switch (exit.getType()) {
+          case RETURN: {
+            String text = haveReturnResult
+                          ? PsiKeyword.RETURN + ' ' + myResultVariableName + '.' + ReturnResultItem.FIELD_NAME + ';'
+                          : PsiKeyword.RETURN + ';';
+            exitStatement = myFactory.createStatementFromText(text, methodCall);
+            break;
+          }
+          case BREAK: {
+            exitStatement = myFactory.createStatementFromText(PsiKeyword.BREAK + ';', methodCall); // todo labeled
+            break;
+          }
+          case CONTINUE: {
+            exitStatement = myFactory.createStatementFromText(PsiKeyword.CONTINUE + ';', methodCall); // todo labeled
+            break;
+          }
+          case THROW:
+            break; // todo
+          case SEQUENTIAL:
+            break; // do nothing
+          default:
+            throw new IllegalStateException(exit.toString());
+        }
+        if (exitStatement == null) {
+          return;
+        }
+        if (haveResultKey) {
+          String ifText = "if (" + myResultVariableName + '.' + ExitKeyResultItem.FIELD_NAME + " == " + exitKey + ");";
+          PsiIfStatement ifStatement = (PsiIfStatement)myFactory.createStatementFromText(ifText, methodCall);
+          ifStatement = (PsiIfStatement)methodCall.getParent().addAfter(ifStatement, methodCall);
+
+          notNull(ifStatement.getThenBranch()).replace(exitStatement);
+        }
+        else {
+          methodCall.getParent().addAfter(exitStatement, methodCall);
+        }
+      });
   }
 
   private List<ResultItem> collectResultItems(Map<Exit, Integer> distinctExits) {
@@ -519,10 +570,12 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private static class ReturnResultItem extends ResultItem {
+    static final String FIELD_NAME = "returnResult";
+
     private final PsiTypeElement myReturnTypeElement;
 
     ReturnResultItem(@NotNull PsiType returnType, PsiTypeElement returnTypeElement) {
-      super("returnResult", returnType);
+      super(FIELD_NAME, returnType);
       myReturnTypeElement = returnTypeElement;
     }
 
@@ -544,8 +597,10 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   private static class ExitKeyResultItem extends ResultItem {
+    static final String FIELD_NAME = "exitKey";
+
     ExitKeyResultItem() {
-      super("exitKey", PsiType.INT);
+      super(FIELD_NAME, PsiType.INT);
     }
 
     @Override

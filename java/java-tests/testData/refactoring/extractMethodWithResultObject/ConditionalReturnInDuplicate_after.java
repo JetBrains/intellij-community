@@ -2,6 +2,7 @@ class Conditional {
     int[] bar(String[] s) {
 
         NewMethodResult x = newMethod(s);
+        if (x.exitKey == 1) return x.returnResult;
         if (s != null) {
             int[] n = new int[s.length];
             for (int i = 0; i < s.length; i++) {

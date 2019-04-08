@@ -2,6 +2,7 @@ class C {
     String method(Object o) {
         System.out.println(o);
         NewMethodResult x = newMethod(o);
+        return x.returnResult;
         Integer i = new Integer(o.hashCode());
         return i.toString();
     }//ins and outs
