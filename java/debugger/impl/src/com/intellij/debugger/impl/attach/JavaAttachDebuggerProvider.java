@@ -30,6 +30,7 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -437,7 +438,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class ProcessAttachRunConfiguration extends RunConfigurationBase {
+  private static class ProcessAttachRunConfiguration extends RunConfigurationBase<Element> {
     private LocalAttachInfo myAttachInfo;
 
     protected ProcessAttachRunConfiguration(@NotNull Project project) {
