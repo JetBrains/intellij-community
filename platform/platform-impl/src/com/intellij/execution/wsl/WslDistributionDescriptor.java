@@ -3,7 +3,6 @@ package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -12,14 +11,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.execution.wsl.WSLUtil.LOG;
+
 /**
  * Data class describing a WSL distribution.
  * @apiNote Uniqueness of the descriptor defined by {@code id} only. All other fields may not be unique.
  */
 @Tag("descriptor")
 final class WslDistributionDescriptor {
-  private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
-
   @Tag("id")
   private String myId;
   @Tag("microsoft-id")
