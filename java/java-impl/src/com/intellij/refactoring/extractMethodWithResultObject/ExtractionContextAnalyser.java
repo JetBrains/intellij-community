@@ -36,14 +36,14 @@ class ExtractionContextAnalyser extends JavaRecursiveElementWalkingVisitor {
       myContext.addExit(null, ExitType.EXPRESSION, myExpression);
     }
     else {
-      findSequentialExit();
+      addSequentialExit();
     }
     return myContext;
   }
 
   private void collectInputsAndOutputs() {
     // todo take care of surrounding try-catch
-    ExtractionContextVisitor visitor = new ExtractionContextVisitor();
+    ExtractionContextVisitor visitor = new ExtractionContextVisitor(myCodeFragmentMember);
     for (PsiElement element : myElements) {
       element.accept(visitor);
     }
@@ -81,14 +81,14 @@ class ExtractionContextAnalyser extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private void findSequentialExit() {
+  private void addSequentialExit() {
     for (int i = myElements.length - 1; i >= 0; i--) {
       if (!(myElements[i] instanceof PsiStatement)) {
         continue; // skip comments and white spaces
       }
       PsiStatement statement = (PsiStatement)myElements[i];
       if (!ControlFlowUtils.statementMayCompleteNormally(statement)) {
-        return; // sequential exit can't happen
+        return; // there's no sequential exit
       }
       break;
     }
@@ -102,57 +102,20 @@ class ExtractionContextAnalyser extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-
-  private void processExpression(PsiReferenceExpression expression) {
-    PsiExpression qualifier = expression.getQualifierExpression();
-    if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
-      PsiElement resolved = expression.resolve();
-      if (resolved instanceof PsiVariable) {
-        PsiVariable variable = (PsiVariable)resolved;
-        PsiAssignmentExpression assignment = getAssignmentOf(expression);
-        if (assignment != null) {
-          if (assignment.getOperationTokenType() != JavaTokenType.EQ) {
-            processPossibleInput(expression, variable);
-          }
-          processPossibleOutput(variable);
-        }
-        else if (PsiUtil.isIncrementDecrementOperation(expression)) {
-          processPossibleInput(expression, variable);
-          processPossibleOutput(variable);
-        }
-        else {
-          processPossibleInput(expression, variable);
-        }
+  private void processReferenceToVariable(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
+    PsiAssignmentExpression assignment = getAssignmentOf(expression);
+    if (assignment != null) {
+      if (assignment.getOperationTokenType() != JavaTokenType.EQ) {
+        processPossibleInput(expression, variable);
       }
+      processPossibleOutput(variable);
     }
-  }
-
-  private void processReturnExit(PsiReturnStatement statement) {
-    myContext.addExit(statement, ExitType.RETURN, myCodeFragmentMember);
-  }
-
-  private void processBreakExit(PsiBreakStatement statement) {
-    PsiElement exitedElement = statement.findExitedElement();
-    if (exitedElement != null && !isInside(exitedElement)) {
-      PsiElement outermostExited = ExitUtil.findOutermostExitedElement(statement, myCodeFragmentMember);
-      myContext.addExit(statement, ExitType.BREAK, outermostExited != null ? outermostExited : exitedElement);
+    else if (PsiUtil.isIncrementDecrementOperation(expression)) {
+      processPossibleInput(expression, variable);
+      processPossibleOutput(variable);
     }
-  }
-
-  private void processContinueExit(PsiContinueStatement statement) {
-    PsiStatement continuedStatement = statement.findContinuedStatement();
-    if (continuedStatement instanceof PsiLoopStatement && !isInside(continuedStatement)) {
-      myContext.addExit(statement, ExitType.CONTINUE, ((PsiLoopStatement)continuedStatement).getBody());
-    }
-  }
-
-  private void processThrowExit(PsiThrowStatement statement) {
-    PsiTryStatement throwTarget = ExitUtil.findThrowTarget(statement, myCodeFragmentMember);
-    if (throwTarget == null) {
-      myContext.addExit(statement, ExitType.THROW, myCodeFragmentMember);
-    }
-    else if (!isInside(throwTarget)) {
-      myContext.addExit(statement, ExitType.THROW, throwTarget);
+    else {
+      processPossibleInput(expression, variable);
     }
   }
 
@@ -199,73 +162,52 @@ class ExtractionContextAnalyser extends JavaRecursiveElementWalkingVisitor {
     return null;
   }
 
-  private class ExtractionContextVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final Set<PsiElement> mySkippedContexts = new HashSet<>();
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-
-      processExpression(expression);
+  private class ExtractionContextVisitor extends ExitStatementsVisitor {
+    ExtractionContextVisitor(PsiElement topmostElement) {
+      super(topmostElement);
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
-      super.visitReturnStatement(statement);
-
-      if (!isInSkippedContext(statement)) {
-        processReturnExit(statement);
-      }
-    }
-
-    @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
-      super.visitContinueStatement(statement);
-
-      if (!isInSkippedContext(statement)) {
-        processContinueExit(statement);
-      }
-    }
-
-    @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
-      super.visitBreakStatement(statement);
-
-      if (!isInSkippedContext(statement)) {
-        processBreakExit(statement);
-      }
-    }
-
-    @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
-      super.visitThrowStatement(statement);
-
-      if (!isInSkippedContext(statement)) {
-        processThrowExit(statement);
-      }
-    }
-
-    @Override
-    public void visitClass(PsiClass aClass) {
-      mySkippedContexts.add(aClass);
-      super.visitClass(aClass);
-    }
-
-    @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
-      mySkippedContexts.add(expression);
-      super.visitLambdaExpression(expression);
-    }
-
-    private boolean isInSkippedContext(PsiElement element) {
-      while (true) {
-        if (element == myCodeFragmentMember) {
-          return false;
+    protected void processReferenceExpression(PsiReferenceExpression expression) {
+      PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiVariable) {
+          processReferenceToVariable(expression, (PsiVariable)resolved);
         }
-        if (element == null || mySkippedContexts.contains(element)) {
-          return true;
-        }
-        element = element.getContext();
+      }
+    }
+
+    @Override
+    protected void processReturnExit(PsiReturnStatement statement) {
+      myContext.addExit(statement, ExitType.RETURN, myCodeFragmentMember);
+    }
+
+    @Override
+    protected void processContinueExit(PsiContinueStatement statement) {
+      PsiStatement continuedStatement = statement.findContinuedStatement();
+      if (continuedStatement instanceof PsiLoopStatement && !isInside(continuedStatement)) {
+        myContext.addExit(statement, ExitType.CONTINUE, ((PsiLoopStatement)continuedStatement).getBody());
+      }
+    }
+
+    @Override
+    protected void processBreakExit(PsiBreakStatement statement) {
+      PsiElement exitedElement = statement.findExitedElement();
+      if (exitedElement != null && !isInside(exitedElement)) {
+        PsiElement outermostExited = ExitUtil.findOutermostExitedElement(statement, myCodeFragmentMember);
+        myContext.addExit(statement, ExitType.BREAK, outermostExited != null ? outermostExited : exitedElement);
+      }
+    }
+
+    @Override
+    protected void processThrowExit(PsiThrowStatement statement) {
+      PsiTryStatement throwTarget = ExitUtil.findThrowTarget(statement, myCodeFragmentMember);
+      if (throwTarget == null) {
+        myContext.addExit(statement, ExitType.THROW, myCodeFragmentMember);
+      }
+      else if (!isInside(throwTarget)) {
+        myContext.addExit(statement, ExitType.THROW, throwTarget);
       }
     }
   }

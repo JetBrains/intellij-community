@@ -53,7 +53,7 @@ public class ExtractMethodWithResultObjectProcessor {
 
   @NonNls static final String REFACTORING_NAME = "Extract Method With Result Object";
 
-  private static final Key<PsiStatement> OLD_EXIT_STATEMENT = Key.create("ExtractMethodWithResultObjectProcessor.OldExitStatement");
+  private static final Key<PsiStatement> ORIGINAL_STATEMENT = Key.create("ExtractMethodWithResultObjectProcessor.OriginalStatement");
 
   public ExtractMethodWithResultObjectProcessor(@NonNls Project project, @NonNls Editor editor, @NonNls PsiElement[] elements) {
     if (elements.length == 0) {
@@ -304,24 +304,24 @@ public class ExtractMethodWithResultObjectProcessor {
 
     for (PsiStatement statement : myContext.myExits.keySet()) {
       if (statement != null) {
-        statement.putCopyableUserData(OLD_EXIT_STATEMENT, statement);
+        statement.putCopyableUserData(ORIGINAL_STATEMENT, statement);
       }
     }
 
     body.addRange(myElements[0], myElements[myElements.length - 1]);
     PsiStatement[] methodBodyStatements = body.getStatements();
-    List<PsiStatement> newExitStatements = collectExitStatements(methodBodyStatements);
+    List<PsiStatement> newExitStatements = collectExitStatements(methodBodyStatements, body);
 
     for (PsiStatement newExitStatement : newExitStatements) {
-      PsiStatement oldExitStatement = newExitStatement.getCopyableUserData(OLD_EXIT_STATEMENT);
-      if (oldExitStatement == null) {
+      PsiStatement originalExitStatement = newExitStatement.getCopyableUserData(ORIGINAL_STATEMENT);
+      if (originalExitStatement == null) {
         continue; // it's break or continue within the method
       }
 
-      newExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
-      oldExitStatement.putCopyableUserData(OLD_EXIT_STATEMENT, null);
+      newExitStatement.putCopyableUserData(ORIGINAL_STATEMENT, null);
+      originalExitStatement.putCopyableUserData(ORIGINAL_STATEMENT, null);
 
-      Exit exit = myContext.myExits.get(oldExitStatement);
+      Exit exit = myContext.myExits.get(originalExitStatement);
       Integer exitKey = distinctExits.get(exit);
       assert exitKey != null : "exit key";
 
@@ -383,32 +383,14 @@ public class ExtractMethodWithResultObjectProcessor {
   }
 
   @NotNull
-  private static List<PsiStatement> collectExitStatements(PsiStatement[] bodyStatements) {
+  private static List<PsiStatement> collectExitStatements(PsiStatement[] bodyStatements, PsiElement topmostElement) {
     List<PsiStatement> exitStatements = new ArrayList<>();
-    JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
-        super.visitReturnStatement(statement);
-        exitStatements.add(statement);
-      }
-
-      @Override
-      public void visitBreakStatement(PsiBreakStatement statement) {
-        super.visitBreakStatement(statement);
-        exitStatements.add(statement);
-      }
-
-      @Override
-      public void visitContinueStatement(PsiContinueStatement statement) {
-        super.visitContinueStatement(statement);
-        exitStatements.add(statement);
-      }
-
-      @Override
-      public void visitClass(PsiClass aClass) {}
-
-      @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    ExitStatementsVisitor visitor = new ExitStatementsVisitor(topmostElement) {
+      @Override protected void processReferenceExpression(PsiReferenceExpression expression) {}
+      @Override protected void processReturnExit(PsiReturnStatement statement) { exitStatements.add(statement);}
+      @Override protected void processContinueExit(PsiContinueStatement statement) {exitStatements.add(statement);}
+      @Override protected void processBreakExit(PsiBreakStatement statement) {exitStatements.add(statement);}
+      @Override protected void processThrowExit(PsiThrowStatement statement) {exitStatements.add(statement);}
     };
     for (PsiStatement bodyStatement : bodyStatements) {
       bodyStatement.accept(visitor);
