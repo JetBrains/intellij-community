@@ -83,6 +83,9 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
                      notification: Notification?,
                      mock_init: String?,
                      vararg vcs_roots: String) {
+    for (vcsRoot in vcsRoots) {
+      assertTrue(File(vcsRoot.path!!.path, DOT_MOCK).mkdirs())
+    }
 
     val vcsRootsList = ContainerUtil.newArrayList(*vcs_roots)
     //default
