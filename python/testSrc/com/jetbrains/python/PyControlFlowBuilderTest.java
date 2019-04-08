@@ -289,6 +289,16 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-4537
+  public void testDelete() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testDeleteSubscriptionAndSlice() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
