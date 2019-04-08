@@ -55,17 +55,17 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myDiffProvider = new MockDiffProvider();
     myVcs.setDiffProvider(myDiffProvider);
 
+    myTempDir = createTempDirectory();
+    myContentRoot = getVirtualFile(myTempDir);
+    PsiTestUtil.addContentRoot(myModule, myContentRoot);
+
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(singletonList(VcsDirectoryMapping.createDefault(myVcs.getName())));
+    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(myTempDir.getPath(), myVcs.getName())));
     myVcsManager.waitForInitialized();
     assertTrue(myVcsManager.hasActiveVcss());
 
     myCache = CommittedChangesCache.getInstance(getProject());
     assertEquals(1, myCache.getCachesHolder().getAllCaches().size());
-
-    myTempDir = createTempDirectory();
-    myContentRoot = getVirtualFile(myTempDir);
-    PsiTestUtil.addContentRoot(myModule, myContentRoot);
     myFilesToDelete.add(myCache.getCachesHolder().getCacheBasePath());
   }
 
