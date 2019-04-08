@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
 
@@ -63,8 +62,18 @@ data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
 
   companion object {
     @JvmField
-    val DEFAULT = CaretStopOptionsTransposed(if (SystemInfo.isWindows) CaretStopBoundary.START else CaretStopBoundary.CURRENT,
-                                             if (SystemInfo.isWindows) CaretStopBoundary.BOTH else CaretStopBoundary.NONE)
+    val DEFAULT_WINDOWS = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
+                                                     lineBoundary = CaretStopBoundary.BOTH)
+    @JvmField
+    val DEFAULT_UNIX = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
+                                                  lineBoundary = CaretStopBoundary.NONE)
+    @JvmField
+    val DEFAULT_IDEA = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
+                                                  lineBoundary = CaretStopBoundary.END)
+
+    // TODO[eldar] revert once the decision on the OS defaults is made.
+    @JvmField
+    val DEFAULT = DEFAULT_IDEA  // if (SystemInfo.isWindows) DEFAULT_WINDOWS else DEFAULT_UNIX
 
     @JvmStatic
     fun fromCaretStopOptions(caretStopOptions: CaretStopOptions) = with(caretStopOptions) {
