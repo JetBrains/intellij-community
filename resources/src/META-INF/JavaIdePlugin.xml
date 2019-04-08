@@ -129,7 +129,6 @@
                         serviceImplementation="com.intellij.ide.java.IntelliJIdeaLanguageCustomization"
                         overrides="true"/>
 
-    <moduleType id="WEB_MODULE" implementationClass="com.intellij.openapi.module.WebModuleType"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
