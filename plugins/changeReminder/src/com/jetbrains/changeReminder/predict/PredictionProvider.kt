@@ -13,9 +13,8 @@ import kotlin.math.min
  *
  * To get more information about decision function used here, see the README.md file.
  */
-class PredictionProvider(private val minProb: Double = 0.3) {
+class PredictionProvider(private val minProb: Double = 0.55) {
   companion object {
-    private const val HISTORY_DEPTH = 20
     private const val MAX_RELATED_FILES_COUNT = 150
     private const val MAX_HISTORY_COMMIT_SIZE = 15
   }
@@ -91,22 +90,17 @@ class PredictionProvider(private val minProb: Double = 0.3) {
   }
 
 
-  private fun getRelatedFiles(sortedFilesHistory: Map<FilePath, List<Commit>>): Map<FilePath, Set<Commit>> {
+  private fun getRelatedFiles(commit: Commit, history: Collection<Commit>): Map<FilePath, Set<Commit>> {
+    val sortedHistory = history.sortedByDescending { it.time }
     val relatedFiles = mutableMapOf<FilePath, MutableSet<Commit>>()
-    val commitFiles = sortedFilesHistory.keys
 
-    for (depth in 0 until HISTORY_DEPTH) {
+    for (oldCommit in sortedHistory) {
       if (relatedFiles.size > MAX_RELATED_FILES_COUNT) {
         break
       }
-      sortedFilesHistory.values.forEach { commits ->
-        if (depth < commits.size) {
-          val oldCommit = commits[depth]
-          if (oldCommit.files.size > MAX_HISTORY_COMMIT_SIZE) {
-            oldCommit.files.filter { it !in commitFiles }.forEach { relatedFile ->
-              relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
-            }
-          }
+      if (oldCommit.files.size > MAX_HISTORY_COMMIT_SIZE) {
+        oldCommit.files.filter { it !in commit.files }.forEach { relatedFile ->
+          relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
         }
       }
     }
@@ -115,15 +109,15 @@ class PredictionProvider(private val minProb: Double = 0.3) {
   }
 
   /**
-   * Method makes a prediction about forgotten files, which are close to files from their [filesHistory].
+   * Method makes a prediction about forgotten files, which are close to files contained in commits from the [history].
    *
-   * @param commit commit for which system try to predict files
-   * @param filesHistory map from file from commit to its previous commits
+   * @param commit commit for which system tries to predict files
+   * @param history commits which system uses to predict files
    * @param maxPredictedFileCount maximum files to be predicted
    * @return list of forgotten files
    */
-  fun predictForgottenFiles(commit: Commit, filesHistory: Map<FilePath, Set<Commit>>, maxPredictedFileCount: Int = 5): List<FilePath> =
-    getRelatedFiles(filesHistory.mapValues { it.value.sortedByDescending { commit -> commit.time } })
+  fun predictForgottenFiles(commit: Commit, history: Collection<Commit>, maxPredictedFileCount: Int = 5): List<FilePath> =
+    getRelatedFiles(commit, history)
       .asSequence()
       .map { (candidateFile, candidateFileHistory) ->
         val fileScore = MLWhiteBox.makePredict(collectFileFactors(commit, candidateFile, candidateFileHistory))

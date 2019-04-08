@@ -38,13 +38,10 @@ class FilesHistoryProvider(private val project: Project, private val root: Virtu
     return commitsData
   }
 
-  fun getFilesHistory(files: Collection<FilePath>): Map<FilePath, Set<Commit>> {
+  fun getFilesHistory(files: Collection<FilePath>): Collection<Commit> {
     val filesData = files.associateWith { getCommitHashesWithFile(it) }
     val commits = filesData.values.flatten().toSet()
-    val commitsData = getCommitsData(commits)
 
-    return filesData.mapValues { entry ->
-      entry.value.mapNotNull { commitsData[it] }.toSet()
-    }
+    return getCommitsData(commits).values
   }
 }
