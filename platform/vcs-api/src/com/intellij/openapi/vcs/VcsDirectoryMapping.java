@@ -45,7 +45,7 @@ public class VcsDirectoryMapping {
   }
 
   public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
-    myDirectory = directory;
+    myDirectory = FileUtil.normalize(directory);
     myVcs = vcs;
     myRootSettings = rootSettings;
   }
