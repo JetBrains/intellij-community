@@ -31,7 +31,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -48,7 +47,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -284,13 +282,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setSelectedChanges(oldSelection);
   }
 
-  private void setChildIndent(boolean isFlat) {
-    BasicTreeUI treeUI = (BasicTreeUI)getUI();
-
-    treeUI.setLeftChildIndent(!isFlat ? UIUtil.getTreeLeftChildIndent() : 0);
-    treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
-  }
-
   private boolean isCurrentModelFlat() {
     boolean isFlat = true;
     Enumeration enumeration = getRoot().depthFirstEnumeration();
@@ -316,7 +307,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
-      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
       if (myKeepTreeState) {
         //noinspection ConstantConditions
