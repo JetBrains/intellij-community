@@ -614,6 +614,29 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            CONDITIONAL_EXPRESSION
+              COMPARISON_EXPRESSION
+                LITERAL_EXPRESSION
+                  PsiElement(word)('Errors')
+                PsiElement(<)('<')
+                LITERAL_EXPRESSION
+                  PsiElement(int)('125')
+              PsiElement(?)('?')
+              LITERAL_EXPRESSION
+                PsiElement(word)('Errors')
+              PsiElement(:)(':')
+              LITERAL_EXPRESSION
+                PsiElement(int)('125')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('echo')

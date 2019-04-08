@@ -91,7 +91,7 @@ Word                     = {WordFirst}{WordAfter}*
 //AssignListWordAfter      =  {AssignListWordFirst} | [#!]
 //AssignListWord           = {AssignListWordFirst}{AssignListWordAfter}*
 
-ArithWordFirst           = [a-zA-Z_@?.:] | {EscapedChar} | {LineContinuation}
+ArithWordFirst           = [a-zA-Z_@.] | {EscapedChar} | {LineContinuation}
 ArithWordAfter           = {ArithWordFirst} | [0-9#!]
 // No "[" | "]"
 ArithWord                = {ArithWordFirst}{ArithWordAfter}*

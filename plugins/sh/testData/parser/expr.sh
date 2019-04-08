@@ -49,6 +49,8 @@ echo $[ 1 * 1]
 echo $(( 1 < 1 ))
 echo $[ 1 < 1]
 
+$((Errors<125?Errors:125))
+
 echo for $[ 0x888 + 007 ]
 
 echo "$(for x do echo -n "$sep$x"; done)"
