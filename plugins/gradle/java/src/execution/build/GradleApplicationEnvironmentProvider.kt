@@ -48,9 +48,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
  */
 class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider {
 
-  override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
-    return task.runProfile is ApplicationConfiguration
-  }
+  override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
 
   override fun createExecutionEnvironment(project: Project,
                                           executeRunConfigurationTask: ExecuteRunConfigurationTask,
@@ -176,7 +174,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
 
       // @formatter:off
       @Suppress("UnnecessaryVariable")
-  //    @Language("Groovy")
+//      @Language("Groovy")
       val initScript = """
     def gradlePath = '$gradlePath'
     def runAppTaskName = '$runAppTaskName'
@@ -187,9 +185,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
-    ${if (useClasspathFile && intelliJRtPath != null) """
-      def intelliJRtPath = '$intelliJRtPath'
-      gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, intelliJRtPath)) """ else ""}
+    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, '$intelliJRtPath'))\n " else ""}
 
     allprojects {
       afterEvaluate { project ->
@@ -222,15 +218,15 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     abstract class RunAppTaskActionListener implements TaskActionListener {
       String myTaskName
       File myClasspathFile
-      RunAppTaskActionListener(String taskName){
-      myTaskName = taskName
+      RunAppTaskActionListener(String taskName) {
+        myTaskName = taskName
       }
       void beforeActions(Task task) {
-      if(!(task instanceof JavaExec) || task.name != myTaskName) return
-      myClasspathFile = patchTaskClasspath(task)
+        if(!(task instanceof JavaExec) || task.name != myTaskName) return
+        myClasspathFile = patchTaskClasspath(task)
       }
       void afterActions(Task task) {
-      if(myClasspathFile != null) { myClasspathFile.delete() }
+        if(myClasspathFile != null) { myClasspathFile.delete() }
       }
       abstract File patchTaskClasspath(JavaExec task)
     }
@@ -242,7 +238,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     import java.util.jar.Manifest
     import java.util.zip.ZipEntry
     class ManifestTaskActionListener extends RunAppTaskActionListener {
-      ManifestTaskActionListener(String taskName){
+      ManifestTaskActionListener(String taskName) {
          super(taskName)
       }
       File patchTaskClasspath(JavaExec task) {
@@ -263,7 +259,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     import org.gradle.api.tasks.JavaExec
     import org.gradle.process.CommandLineArgumentProvider
     class ArgFileTaskActionListener extends RunAppTaskActionListener {
-      ArgFileTaskActionListener(String taskName){
+      ArgFileTaskActionListener(String taskName) {
          super(taskName)
       }
       File patchTaskClasspath(JavaExec task) {
@@ -301,7 +297,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     class ClasspathFileTaskActionListener extends RunAppTaskActionListener {
       String myMainClass
       String myIntelliJRtPath
-      ClasspathFileTaskActionListener(String taskName, String mainClass, String intelliJRtPath){
+      ClasspathFileTaskActionListener(String taskName, String mainClass, String intelliJRtPath) {
          super(taskName)
          myMainClass = mainClass
          myIntelliJRtPath = intelliJRtPath
