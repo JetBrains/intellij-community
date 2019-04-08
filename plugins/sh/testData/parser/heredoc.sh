@@ -109,3 +109,7 @@ EO\F
 		#
 		echo "Example"
 	EOF
+
+cat <<- 'DONE' |
+echo
+DONE
