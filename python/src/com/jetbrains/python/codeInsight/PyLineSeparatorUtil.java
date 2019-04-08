@@ -31,23 +31,7 @@ public class PyLineSeparatorUtil {
       if (!provider.isSeparatorAllowed(element)) {
         return;
       }
-      //boolean hasSeparableBefore = false;
-      //final PsiElement parent = element.getParent();
-      //if (parent == null) {
-      //  return;
-      //}
-      //for (PsiElement child : parent.getChildren()) {
-      //  if (child == element){
-      //    break;
-      //  }
-      //  if (provider.isSeparatorAllowed(child)) {
-      //    hasSeparableBefore = true;
-      //    break;
-      //  }
-      //}
-      //if (!hasSeparableBefore) {
-      //  return;
-      //}
+
       PsiElement nextChild = PsiTreeUtil.nextChildAfter(element);
       if (nextChild != null) {
         info.set(createLineSeparatorByElement(element, nextChild));
@@ -61,8 +45,7 @@ public class PyLineSeparatorUtil {
                                                                          @NotNull PsiElement nextChild) {
     PsiElement anchor = PsiTreeUtil.getDeepestLast(element);
     return LineMarkersPass.createMethodSeparatorLineMarker(anchor,
-                                                           new TextRange(anchor.getTextRange().getEndOffset(),
-                                                                         nextChild.getTextRange().getStartOffset()),
+                                                           nextChild.getTextRange(),
                                                            EditorColorsManager.getInstance());
   }
 }
