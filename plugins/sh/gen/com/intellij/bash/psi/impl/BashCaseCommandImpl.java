@@ -79,4 +79,10 @@ public class BashCaseCommandImpl extends BashCommandImpl implements BashCaseComm
     return findChildByType(ESAC);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getIn() {
+    return findChildByType(IN);
+  }
+
 }

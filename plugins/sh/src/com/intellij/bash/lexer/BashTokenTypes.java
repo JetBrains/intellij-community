@@ -21,7 +21,6 @@ public interface BashTokenTypes extends BashTypes {
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 
-  IElementType IN = new BashTokenType("in");
 
   //conditional expressions
 

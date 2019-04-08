@@ -33,6 +33,23 @@ case $-:$BASH_VERSION in
 *x*:[0123456789]*)	: bash set -x is broken :; set +ex ;;
 esac
 
+case :${lib_path1}:        in
+  *:${lib}:*) ;;
+  *) lib_path1=${lib_path1}:${lib} ;;
+esac
+
+case x`uname -r` in
+x1.*)
+	WHICH_LINUX=linux-c
+	;;
+esac
+
+case x$WHICH_LINUX in #(vi
+xauto)
+	system=`uname -s 2>/dev/null`
+	;;
+esac
+
 monthnoToName()
 {
   # sets the variable 'month' to the appropriate value

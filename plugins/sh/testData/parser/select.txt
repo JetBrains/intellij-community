@@ -167,7 +167,7 @@ BASH_FILE
                     VARIABLE
                       PsiElement(var)('$FILENAME')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
+                    PsiElement(in)('in')
                     CASE_CLAUSE
                       PsiElement(\n)('\n')
                       PsiWhiteSpace('        ')

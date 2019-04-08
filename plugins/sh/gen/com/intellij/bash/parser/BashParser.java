@@ -549,7 +549,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // case w(':'w)* newlines "in" case_clause_list esac
+  // case w+ in case_clause_list esac
   public static boolean case_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_command")) return false;
     if (!nextTokenIs(b, CASE)) return false;
@@ -557,37 +557,27 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CASE_COMMAND, null);
     r = consumeToken(b, CASE);
     p = r; // pin = 1
-    r = r && report_error_(b, w(b, l + 1));
-    r = p && report_error_(b, case_command_2(b, l + 1)) && r;
-    r = p && report_error_(b, newlines(b, l + 1)) && r;
-    r = p && report_error_(b, consumeToken(b, "in")) && r;
+    r = r && report_error_(b, case_command_1(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, IN)) && r;
     r = p && report_error_(b, case_clause_list(b, l + 1)) && r;
     r = p && consumeToken(b, ESAC) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // (':'w)*
-  private static boolean case_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_command_2")) return false;
-    while (true) {
+  // w+
+  private static boolean case_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "case_command_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = w(b, l + 1);
+    while (r) {
       int c = current_position_(b);
-      if (!case_command_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "case_command_2", c)) break;
+      if (!w(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "case_command_1", c)) break;
     }
-    return true;
-  }
-
-  // ':'w
-  private static boolean case_command_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "case_command_2_0")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, COLON);
-    p = r; // pin = 1
-    r = r && w(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

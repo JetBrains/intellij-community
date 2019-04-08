@@ -34,4 +34,7 @@ public interface BashCaseCommand extends BashCommand {
   @Nullable
   PsiElement getEsac();
 
+  @Nullable
+  PsiElement getIn();
+
 }

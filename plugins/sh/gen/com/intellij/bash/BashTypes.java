@@ -123,6 +123,7 @@ public interface BashTypes {
   IElementType HEREDOC_MARKER_TAG = new BashTokenType("HEREDOC_MARKER_TAG");
   IElementType HEX = new BashTokenType("hex");
   IElementType IF = new BashTokenType("if");
+  IElementType IN = new BashTokenType("in");
   IElementType INT = new BashTokenType("int");
   IElementType LE = new BashTokenType("<=");
   IElementType LEFT_CURLY = new BashTokenType("{");

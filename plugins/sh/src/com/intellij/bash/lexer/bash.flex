@@ -22,7 +22,6 @@ import static org.apache.commons.lang3.StringUtils.contains;
       private static final int DOUBLE_PARENTHESES = 2;
       private static final int PARENTHESES = 1;
 
-      private boolean isCaseParameter;
       private boolean isArithmeticExpansion;
       private String heredocMarker;
       private boolean heredocWithWhiteSpaceIgnore;
@@ -59,7 +58,6 @@ import static org.apache.commons.lang3.StringUtils.contains;
         parenStack.clear();
         heredocWithWhiteSpaceIgnore = false;
         heredocMarker = null;
-        isCaseParameter = false;
         isArithmeticExpansion = false;
       }
 %}
@@ -225,8 +223,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 <CASE_CONDITION> {
   ";&" | ";;&" | ";;"             { pushState(CASE_PATTERN);    return CASE_END; }
-  ":"                             { if (isCaseParameter) return COLON; else return WORD; }
-  "in"                            { if (yystate() == CASE_CONDITION) pushState(CASE_PATTERN); isCaseParameter = false; return WORD; }
+  "in"                            { if (yystate() == CASE_CONDITION) {pushState(CASE_PATTERN); return IN; } else return WORD; }
 }
 
 <CASE_PATTERN> {
@@ -265,7 +262,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 <YYINITIAL, CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
 
-    "case"                        { pushState(CASE_CONDITION); isCaseParameter = true; return CASE; }
+    "case"                        { pushState(CASE_CONDITION); return CASE; }
     "esac"                        { if (yystate() == CASE_CONDITION) popState(); return ESAC; }
     "done"                        { if (yystate() == OTHER_CONDITIONS) popState(); return DONE; }
     "do"                          { return DO; }

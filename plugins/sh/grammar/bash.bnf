@@ -231,7 +231,7 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-case_command ::= case w(':'w)* newlines "in" case_clause_list esac {pin(".*")=1}
+case_command ::= case w+ in case_clause_list esac {pin(".*")=1}
 private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1}
 case_clause ::= newlines '('? pattern ')' (compound_case_list|newlines) {pin=3}
 

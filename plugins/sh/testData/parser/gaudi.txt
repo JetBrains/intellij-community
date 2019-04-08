@@ -273,7 +273,7 @@ BASH_FILE
               PsiElement(var)('$1')
             PsiElement(")('"')
           PsiWhiteSpace(' ')
-          PsiElement(word)('in')
+          PsiElement(in)('in')
           CASE_CLAUSE
             PsiElement(\n)('\n')
             PsiWhiteSpace('    ')
