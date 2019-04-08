@@ -459,7 +459,7 @@ public class PluginManagerCore {
     return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
   }
 
-  private static void configureExtensions() {
+  public static void configureExtensions() {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
@@ -925,7 +925,7 @@ public class PluginManagerCore {
     return false;
   }
 
-  private static void resolveOptionalDescriptors(@NotNull String fileName,
+  public static void resolveOptionalDescriptors(@NotNull String fileName,
                                                  @NotNull IdeaPluginDescriptorImpl descriptor,
                                                  @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
@@ -1481,7 +1481,7 @@ public class PluginManagerCore {
     ourPlugins = pluginDescriptors;
   }
 
-  private static void fixDescriptors(@NotNull IdeaPluginDescriptorImpl[] pluginDescriptors,
+  public static void fixDescriptors(@NotNull IdeaPluginDescriptorImpl[] pluginDescriptors,
                                      @NotNull ClassLoader parentLoader,
                                      @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
                                      @NotNull Map<String, String> disabledPluginNames,
