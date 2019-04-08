@@ -35,6 +35,16 @@ if [[ $# > 2 ]]; then
 	echo "Usage: [vmlinux] [base path] [modules path]"
 fi
 
+if [[ "${USE_PREBUILT_HEXAOGON_BINARIES}" != "true"
+      && -z "${QUALCOMM_SDK}" ]]; then
+    exit 1
+fi
+
+if [[ "${USE_PREBUILT_HEXAOGON_BINARIES}" != "true" &&
+      -z "${QUALCOMM_SDK}" ]]; then
+    exit 1
+fi
+
 if [ "$key" = "" ] ; then
     # Use default initialization logic based on configuration in '/etc/inittab'.
     echo -e "Executing \\e[32m/sbin/init\\e[0m as PID 1."

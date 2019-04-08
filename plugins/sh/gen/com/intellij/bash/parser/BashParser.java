@@ -1018,21 +1018,68 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<condOp>> | lit | vars
+  // (<<condOp>> newlines? | newlines? <<condOp>>) | lit | vars
   static boolean conditional_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_body")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = condOp(b, l + 1);
+    r = conditional_body_0(b, l + 1);
     if (!r) r = lit(b, l + 1);
     if (!r) r = vars(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
+  // <<condOp>> newlines? | newlines? <<condOp>>
+  private static boolean conditional_body_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_body_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = conditional_body_0_0(b, l + 1);
+    if (!r) r = conditional_body_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // <<condOp>> newlines?
+  private static boolean conditional_body_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_body_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = condOp(b, l + 1);
+    r = r && conditional_body_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // newlines?
+  private static boolean conditional_body_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_body_0_0_1")) return false;
+    newlines(b, l + 1);
+    return true;
+  }
+
+  // newlines? <<condOp>>
+  private static boolean conditional_body_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_body_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = conditional_body_0_1_0(b, l + 1);
+    r = r && condOp(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // newlines?
+  private static boolean conditional_body_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "conditional_body_0_1_0")) return false;
+    newlines(b, l + 1);
+    return true;
+  }
+
   /* ********************************************************** */
   // '[['conditional_body* (']]'|']'<<differentBracketsWarning>>)
-  //                         |'['conditional_body*(']'|']]' <<differentBracketsWarning>>)
+  //                         |'['conditional_body* (']'|']]' <<differentBracketsWarning>>)
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
@@ -1091,7 +1138,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '['conditional_body*(']'|']]' <<differentBracketsWarning>>)
+  // '['conditional_body* (']'|']]' <<differentBracketsWarning>>)
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     boolean r, p;

@@ -426,6 +426,130 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                      PsiElement(})('}')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(!=)('!=')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement(word)('true')
+                    PsiElement(")('"')
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('      ')
+                  PsiElement(&&)('&&')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('-z')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                      PsiElement(})('}')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('exit')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                      PsiElement(})('}')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(!=)('!=')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement(word)('true')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(&&)('&&')
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('      ')
+                  PsiElement(word)('-z')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                      PsiElement(})('}')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('exit')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
                   STRING
