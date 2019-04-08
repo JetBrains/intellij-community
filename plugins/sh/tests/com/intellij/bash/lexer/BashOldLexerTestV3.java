@@ -4,7 +4,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class BashV3OldLexerTest extends LexerTestCase {
+public class BashOldLexerTestV3 extends LexerTestCase {
   @Override
   protected Lexer createLexer() {
     return new BashLexer();
