@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
@@ -17,6 +18,8 @@ import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.roots.MockRootChecker;
+import com.intellij.openapi.vcs.roots.VcsRootBaseTestKt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -53,6 +56,11 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myVcs = new MockAbstractVcs(getProject());
     myModuleManager = ModuleManager.getInstance(getProject());
     createOutsideModule();
+
+    Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
+      .registerExtension(new MockRootChecker(myVcs), getTestRootDisposable());
+    assertTrue(new File(myProject.getBasePath(), VcsRootBaseTestKt.DOT_MOCK).mkdirs());
+    assertTrue(new File(myModuleRootFile.getAbsolutePath(), VcsRootBaseTestKt.DOT_MOCK).mkdirs());
 
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
     myVcsManager.registerVcs(myVcs);
