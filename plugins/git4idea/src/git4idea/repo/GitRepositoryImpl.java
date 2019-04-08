@@ -12,9 +12,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -283,7 +281,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
       if(myProject.isDisposed()) return;
 
-      VcsFileUtil.markFilesDirty(myProject, ContainerUtil.newArrayList(ignoredPaths));
       myChangesViewI.scheduleRefresh();
     }
   }
