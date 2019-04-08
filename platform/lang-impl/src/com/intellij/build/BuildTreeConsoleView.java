@@ -11,7 +11,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -21,7 +20,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +53,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -277,8 +274,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
       if (myConsoleViewHandler.myExecutionNode == null) {
-        ExecutionNode element = buildProgressRootNode;
-        ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(element));
+        ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(buildProgressRootNode));
       }
     }
     scheduleUpdate(currentNode);
@@ -393,7 +389,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     String group = messageEvent.getGroup();
     String groupNodeId = group.hashCode() + messageEventParentId.toString();
     ExecutionNode messagesGroupNode =
-      getOrCreateMessagesNode(messageEvent, groupNodeId, parentNode, null, group, true, null, null, nodesMap, myProject);
+      getOrCreateMessagesNode(messageEvent, groupNodeId, parentNode, null, group, null, null, nodesMap, myProject);
 
     EventResult groupNodeResult = messagesGroupNode.getResult();
     final MessageEvent.Kind eventKind = messageEvent.getKind();
@@ -402,7 +398,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       messagesGroupNode.setResult((MessageEventResult)() -> eventKind);
     }
     if (messageEvent instanceof FileMessageEvent) {
-      ExecutionNode fileParentNode = messagesGroupNode;
       FilePosition filePosition = ((FileMessageEvent)messageEvent).getFilePosition();
       String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
       String parentsPath = "";
@@ -412,11 +407,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         parentsPath = myWorkingDir;
       }
 
-      VirtualFile ioFile = VfsUtil.findFileByIoFile(new File(filePath), false);
-
       String fileNodeId = groupNodeId + filePath;
       relativePath = StringUtil.isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
-      parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, fileParentNode, relativePath, null, true,
+      parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, messagesGroupNode, relativePath, null,
                                            () -> {
                                              VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
                                              if (file != null) {
@@ -494,25 +487,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return tree;
   }
 
-  private static void updateSplitter(@NotNull ThreeComponentsSplitter myThreeComponentsSplitter) {
-    int firstSize = myThreeComponentsSplitter.getFirstSize();
-    int splitterWidth = myThreeComponentsSplitter.getWidth();
-    if (firstSize == 0) {
-      float proportion = PropertiesComponent.getInstance().getFloat(SPLITTER_PROPERTY, 0.3f);
-      int width = Math.round(splitterWidth * proportion);
-      if (width > 0) {
-        myThreeComponentsSplitter.setFirstSize(width);
-      }
-    }
-  }
-
   @NotNull
   private static ExecutionNode getOrCreateMessagesNode(MessageEvent messageEvent,
                                                        String nodeId,
                                                        ExecutionNode parentNode,
                                                        String nodeName,
                                                        String nodeTitle,
-                                                       boolean autoExpandNode,
                                                        @Nullable Supplier<? extends Icon> iconProvider,
                                                        @Nullable Navigatable navigatable,
                                                        Map<Object, ExecutionNode> nodesMap,
@@ -522,9 +502,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       node = new ExecutionNode(project, parentNode);
       node.setName(nodeName);
       node.setTitle(nodeTitle);
-      if (autoExpandNode) {
-        node.setAutoExpandNode(true);
-      }
+      node.setAutoExpandNode(true);
       node.setStartTime(messageEvent.getEventTime());
       node.setEndTime(messageEvent.getEventTime());
       if (iconProvider != null) {
