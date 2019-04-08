@@ -68,6 +68,7 @@ public class WSLDistribution {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
       final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
       if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
