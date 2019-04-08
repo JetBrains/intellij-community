@@ -27,6 +27,7 @@ import javax.swing.tree.TreePath;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.ui.ExpandableItemsHandler.RENDERER_DISABLED;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
@@ -81,6 +82,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     else if (component.isOpaque()) {
       component.setBackground(tree.getBackground());
     }
+  }
+
+  private static boolean isRendererReducible(Component component) {
+    if (component instanceof DefaultTreeCellRenderer) return false;
+    return !UIUtil.isClientPropertyTrue(component, RENDERER_DISABLED);
   }
 
   private static boolean isSuspiciousRenderer(Component component) {
@@ -207,7 +213,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
-                if (width < bounds.width && (expandedRow == row || hsbVisible && component instanceof DefaultTreeCellRenderer)) {
+                if (width < bounds.width && (expandedRow == row || hsbVisible && !isRendererReducible(component))) {
                   width = bounds.width; // disable shrinking a long nodes
                 }
                 setBackground(tree, component, background, false);
