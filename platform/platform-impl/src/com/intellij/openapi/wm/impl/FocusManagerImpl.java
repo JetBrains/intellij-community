@@ -19,7 +19,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -63,7 +62,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private IdeFrame myLastFocusedFrame;
 
   @SuppressWarnings("UnusedParameters")  // the dependencies are needed to ensure correct loading order
-  public FocusManagerImpl(WindowManager wm, UiActivityMonitor monitor) {
+  public FocusManagerImpl() {
+    UiActivityMonitor.getInstance();
+
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
 
