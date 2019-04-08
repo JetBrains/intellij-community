@@ -926,8 +926,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (focusEditor) {
           //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
           window.setAsCurrentWindow(true);
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
+          if (windowAncestor != null &&
+              windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          }
         }
       }
 
