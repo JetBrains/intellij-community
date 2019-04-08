@@ -26,23 +26,20 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
   @Override
   public Component createComponent(boolean isSelected, boolean hasFocus) {
     String command = getCommand();
+    JPanel component = (JPanel)super.createComponent(isSelected, hasFocus);
 
     String toComplete = notNullize(substringAfterLast(command, " "));
-    String description = null;
     if (toComplete.startsWith("-")) {
       Option option = MavenCommandLineOptions.findOption(toComplete);
       if (option != null) {
-        description = option.getDescription();
+        String description = option.getDescription();
+        if (description != null) {
+          SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
+          descriptionComponent.append(" " + shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+        }
       }
     }
-    SimpleColoredComponent component = new SimpleColoredComponent();
-    component.append(command);
-    component.appendTextPadding(20);
-    setupIcon(component, myIcon);
 
-    if (description != null) {
-      component.append(" " + shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-    }
     return component;
   }
 }

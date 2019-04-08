@@ -2,13 +2,11 @@
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +33,14 @@ public class RunAnythingItemBase extends RunAnythingItem {
   @NotNull
   @Override
   public Component createComponent(boolean isSelected, boolean hasFocus) {
-    SimpleColoredComponent component = new SimpleColoredComponent();
-    component.append(myCommand);
-    component.appendTextPadding(20);
-    setupIcon(component, myIcon);
+    JPanel component = (JPanel)super.createComponent(isSelected, hasFocus);
+
+    SimpleColoredComponent textComponent = new SimpleColoredComponent();
+    textComponent.append(myCommand);
+    textComponent.appendTextPadding(20);
+    component.add(textComponent, BorderLayout.WEST);
+    setupIcon(textComponent, myIcon);
+
     return component;
   }
 
@@ -64,12 +66,10 @@ public class RunAnythingItemBase extends RunAnythingItem {
     return myCommand.hashCode();
   }
 
-  protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description, boolean isSelected) {
+  protected static void appendDescription(@NotNull SimpleColoredComponent component,
+                                          @Nullable String description,
+                                          @NotNull Color foreground) {
     if (description != null) {
-      Color foreground = JBColor.GRAY;
-      if (isSelected) {
-        foreground = UIUtil.getListForeground(true);
-      }
       SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, foreground);
       component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), smallAttributes);
       component.appendTextPadding(660, SwingConstants.RIGHT);
