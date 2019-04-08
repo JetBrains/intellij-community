@@ -11,8 +11,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  */
 public interface ApplicationInitializedListener {
   /**
-   * Invoked when all application level components are initialized. In the same thread where components are initializing.
-   * Write actions and time-consuming activities are not recommended because listener invoked sequentially and directly affects application start time.
+   * Invoked when all application level components are initialized in the same thread where components are initializing (currently, EDT, but it is not guaranteed and can be changed any time).
+   * Write actions and time-consuming activities are not recommended because listeners are invoked sequentially and directly affects application start time.
    */
   void componentsInitialized();
 }
