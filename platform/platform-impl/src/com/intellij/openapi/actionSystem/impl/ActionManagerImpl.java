@@ -528,7 +528,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public JComponent createButtonToolbar(@NotNull final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
-    return new ButtonToolbarImpl(actionPlace, messageActionGroup, DataManager.getInstance(), this);
+    return new ButtonToolbarImpl(actionPlace, messageActionGroup);
   }
 
   @Override

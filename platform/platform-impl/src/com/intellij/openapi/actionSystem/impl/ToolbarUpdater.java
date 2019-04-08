@@ -42,7 +42,7 @@ public abstract class ToolbarUpdater implements Activatable {
     myActionManager = ActionManagerEx.getInstanceEx();
     myKeymapManager = keymapManager;
     myComponent = component;
-    myWeakTimerListener = new WeakTimerListener(myActionManager, myTimerListener);
+    myWeakTimerListener = new WeakTimerListener(myTimerListener);
     new UiNotifyConnector(component, this);
   }
 
