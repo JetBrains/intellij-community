@@ -123,8 +123,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myHeader == null) {
           myHeader = new JLabel();
           myHeader.setForeground(UIUtil.getTreeForeground());
-          myHeader.setIconTextGap(ICON_GAP);
-          myHeader.setBorder(BorderFactory.createEmptyBorder(1, 10 + getLeftMargin(0), 0, 0));
+          myHeader.setIconTextGap(JBUI.scale(ICON_GAP));
+          myHeader.setBorder(JBUI.Borders.empty(2, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
         myHeader.setIcon(getIcon(null));
@@ -560,13 +560,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     Pair<Component, ConfigurableTreeRenderer.Layout> myRenderInfo;
 
     MyRenderer() {
-      setLayout(new BorderLayout(ICON_GAP, 0));
+      setLayout(new BorderLayout(JBUI.scale(ICON_GAP - 1), 0));
       myNodeIcon.setName(NODE_ICON);
       myTextLabel.setOpaque(false);
+      myTextLabel.setIpad(JBUI.insets(1, 0));
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
-      setBorder(BorderFactory.createEmptyBorder(1, 10, 3, 10));
+      setBorder(JBUI.Borders.empty(1, 10, 3, 10));
     }
 
     @Override
@@ -885,7 +886,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected int getRowX(int row, int depth) {
-      return getLeftMargin(depth - 1);
+      return JBUI.scale(getLeftMargin(depth - 1));
     }
   }
 
