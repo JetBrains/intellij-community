@@ -107,7 +107,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
 
   private fun assertVcsRoots(expectedVcsRoots: Collection<String>) {
     val actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(vcs)
-    VcsTestUtil.assertEqualCollections(expectedVcsRoots, actualRoots.map { it.path })
+    VcsTestUtil.assertEqualCollections(actualRoots.map { it.path }, expectedVcsRoots)
   }
 
   private fun given(vararg roots: String): Collection<VcsRoot> {
