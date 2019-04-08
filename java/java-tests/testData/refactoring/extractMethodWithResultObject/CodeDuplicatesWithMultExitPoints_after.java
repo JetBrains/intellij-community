@@ -3,7 +3,6 @@ class A {
        NewMethodResult x = newMethod(o);
        if (x.exitKey == 1) return x.returnResult;
        if (o == null) return 0;
-     if (o == null) return 0;
      return 1;
    }//ins and outs
 //in: PsiParameter:o

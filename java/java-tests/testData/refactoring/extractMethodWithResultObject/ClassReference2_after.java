@@ -3,7 +3,6 @@ class C {
     if (b) {
         NewMethodResult x = newMethod();
         return x.returnResult;
-        return A.getInstance();
     } else {
       return B.getInstance();
     }

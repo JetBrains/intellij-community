@@ -4,7 +4,6 @@ class Test {
     double[] doubles = null;
 
       NewMethodResult x = newMethod(doubles, i);
-      double progressResult = doubles[0] / i;
   }//ins and outs
 //in: PsiLocalVariable:doubles
 //in: PsiLocalVariable:i

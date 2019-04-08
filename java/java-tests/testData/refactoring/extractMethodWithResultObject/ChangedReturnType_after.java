@@ -3,9 +3,7 @@ class X {
     for (Object o : l) {
         NewMethodResult x1 = newMethod(o);
         if (x1.exitKey == 1) continue;
-        if (o == null) continue;
-      String x = bar(o);
-      System.out.println(x);
+        System.out.println(x);
     }
   }//ins and outs
 //in: PsiParameter:o

@@ -4,9 +4,6 @@ class WillWorkTest {
 
         NewMethodResult x = newMethod(i);
         return x.returnResult;
-        int k;
-        if (true) k = i;
-        return k;
     }//ins and outs
 //in: PsiLocalVariable:i
 //out: PsiLocalVariable:k

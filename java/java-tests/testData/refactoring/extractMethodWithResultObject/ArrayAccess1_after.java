@@ -3,8 +3,6 @@ class Test {
      for(int i = 0; i < ss.length; i++) {
 
          NewMethodResult x = newMethod(ss, i, bb);
-         System.out.println(ss[i]);
-       System.out.println(bb[i]);
 
      }
   }//ins and outs

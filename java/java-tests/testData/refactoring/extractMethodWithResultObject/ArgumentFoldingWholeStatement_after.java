@@ -6,8 +6,6 @@ class ArgumentFoldingWholeStatement {
 
     private void foo() {
         NewMethodResult x1 = newMethod();
-        x.add(str());
-        baz();
     }//ins and outs
 //exit: SEQUENTIAL PsiMethod:foo
 

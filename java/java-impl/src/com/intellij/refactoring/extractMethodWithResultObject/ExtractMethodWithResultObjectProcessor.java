@@ -132,6 +132,9 @@ public class ExtractMethodWithResultObjectProcessor {
 
       PsiElement methodCall = createMethodCall(resultClass);
       createExitStatements(methodCall, resultItems, distinctExits);
+      if (myExpression == null) {
+        myElements[0].getParent().deleteChildRange(myElements[0], myElements[myElements.length - 1]);
+      }
     }
     else {
       dumpText("too complex exits: " + exitTypes.stream().sorted().collect(Collectors.toList()));

@@ -11,13 +11,9 @@ class X {
 
       NewMethodResult x1 = newMethod(b);
       if (x1.exitKey == 1) return x1.returnResult;
-      if (b != null) {
-      int x = 1;
-      return fun1(x);
-    }
 
 
-    int x = 0;
+      int x = 0;
     return null;
   }//ins and outs
 //in: PsiParameter:b

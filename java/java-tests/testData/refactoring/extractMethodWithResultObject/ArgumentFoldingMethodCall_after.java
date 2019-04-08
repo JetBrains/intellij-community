@@ -8,10 +8,6 @@ class C {
 
         NewMethodResult x1 = newMethod();
         if (x1.exitKey == 1) return;
-        if (x.isEmpty()) return;
-        x.remove(0);
-        y.add(str());
-        baz();
     }//ins and outs
 //exit: RETURN PsiMethod:foo<-void
 //exit: SEQUENTIAL PsiMethod:foo

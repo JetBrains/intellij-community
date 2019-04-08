@@ -4,7 +4,6 @@ class Test
 {
    <T> void foo(List<? extends List<T>> tr){
        NewMethodResult x = newMethod(tr);
-       tr.add(null);
    }//ins and outs
 //in: PsiParameter:tr
 //exit: SEQUENTIAL PsiMethod:foo

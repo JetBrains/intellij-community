@@ -2,10 +2,6 @@ class Conditional {
     int bar(String s) {
         NewMethodResult x = newMethod(s);
         if (x.exitKey == 1) return x.returnResult;
-        if (s != null) {
-            int n = s.length();
-            return n;
-        }
         return 0;
     }//ins and outs
 //in: PsiParameter:s

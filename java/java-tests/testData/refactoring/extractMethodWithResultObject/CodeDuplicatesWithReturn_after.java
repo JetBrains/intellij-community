@@ -3,8 +3,6 @@ class C {
         System.out.println(o);
         NewMethodResult x = newMethod(o);
         return x.returnResult;
-        Integer i = new Integer(o.hashCode());
-        return i.toString();
     }//ins and outs
 //in: PsiParameter:o
 //exit: RETURN PsiMethod:method<-PsiMethodCallExpression:i.toString()

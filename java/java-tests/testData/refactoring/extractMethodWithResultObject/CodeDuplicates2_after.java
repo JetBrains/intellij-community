@@ -3,9 +3,6 @@ class C {
         Object[] array = { "a", 1 };
 
         NewMethodResult x = newMethod(array);
-        for (int i = 0; i < array.length; i++) {
-            System.out.println(array[i]);
-        }
 
 
         Object[] array1 = { "b", 2 };

@@ -1,13 +1,8 @@
 class Test10 {
   void test() {
       NewMethodResult x = newMethod();
-      new Object() {
-      int get() {
-        return 0;
-      }
-    };
 
-    new Object() {
+      new Object() {
       int get() {
         return 0;
       }

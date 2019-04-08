@@ -3,7 +3,6 @@ class C {
         for(int i = 0; i < 10; i++){
             NewMethodResult x = newMethod(i);
             if (x.exitKey == 1) continue;
-            if (i < 10){ continue;}
         }
     }//ins and outs
 //in: PsiLocalVariable:i

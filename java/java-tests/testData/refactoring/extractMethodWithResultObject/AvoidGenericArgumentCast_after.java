@@ -1,7 +1,6 @@
 class C {
     <K> void f(K k) {
         NewMethodResult x = newMethod(k);
-        System.out.println(k);
     }//ins and outs
 //in: PsiParameter:k
 //exit: SEQUENTIAL PsiMethod:f

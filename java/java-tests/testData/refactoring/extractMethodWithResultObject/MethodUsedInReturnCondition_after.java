@@ -8,12 +8,6 @@ class C {
 
         NewMethodResult x = newMethod();
         if (x.exitKey == 1) return x.returnResult;
-        if (foo()) {
-        return null;
-      }
-      if (bar()) {
-        return null;
-      }
 
     }
   }//ins and outs

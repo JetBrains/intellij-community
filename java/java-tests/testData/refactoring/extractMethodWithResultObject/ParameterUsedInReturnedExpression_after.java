@@ -4,14 +4,8 @@ class C {
 
       NewMethodResult x = newMethod(n, s);
       if (x.exitKey == 1) return x.returnResult;
-      if (n == 1) {
-      return "A" + s;
-    }
-    if (n == 2) {
-      return "B" + s;
-    }
 
-    return null;
+      return null;
   }//ins and outs
 //in: PsiLocalVariable:s
 //in: PsiParameter:n

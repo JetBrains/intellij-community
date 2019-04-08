@@ -1,4 +1,7 @@
-class D {}
+class D {
+    int myField = 10;
+    int myOtherField = 10;
+}
 class C extends D {
     int myField = 10;
     int myOtherField = 10;
@@ -6,8 +9,6 @@ class C extends D {
     {
         int i = 5;
         NewMethodResult x = newMethod(i);
-        myField = i;
-        myOtherField = i;
 
         C c = new C();
 

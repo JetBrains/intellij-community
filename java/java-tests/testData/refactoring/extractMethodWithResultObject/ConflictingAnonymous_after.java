@@ -3,7 +3,7 @@ class Test {
     new A() {
       void fe() {
           NewMethodResult x = newMethod();
-          System.out.println("");}//ins and outs
+      }//ins and outs
 //exit: SEQUENTIAL PsiMethod:fe
 
         NewMethodResult newMethod() {

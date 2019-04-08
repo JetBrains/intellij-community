@@ -5,12 +5,6 @@ class RenamedParameter {
         String a = "s";
         String b = "t";
         NewMethodResult x = newMethod(b, a);
-        if (c) {
-            String t = b;
-            x(t);
-        } else if (!b.equals(a)) {
-            x(b);
-        }
     }//ins and outs
 //in: PsiLocalVariable:a
 //in: PsiLocalVariable:b

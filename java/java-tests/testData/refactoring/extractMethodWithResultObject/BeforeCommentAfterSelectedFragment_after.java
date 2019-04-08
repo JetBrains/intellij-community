@@ -3,9 +3,6 @@ class CommentAfterSelectedFragment {
         int i= 0;
 
         NewMethodResult x = newMethod(debugMode);
-        if (debugMode) {
-            i = 1;
-        } /* comment */
         System.out.println(i);
     }//ins and outs
 //in: PsiParameter:debugMode

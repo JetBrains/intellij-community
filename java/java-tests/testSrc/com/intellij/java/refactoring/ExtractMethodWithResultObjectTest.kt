@@ -58,7 +58,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testCodeDuplicates2() = doTest()
   fun testCodeDuplicates3() = doTest()
   fun testCodeDuplicates4() = doTest()
-  fun testCodeDuplicates5() = doTest(false) // expected
+  fun testCodeDuplicates5() = doTest()
   fun testCodeDuplicates() = doTest()
   fun testCodeDuplicatesVarargsShouldNotChangeReturnType() = doTest()
   fun testCodeDuplicatesWithComments() = doTest()

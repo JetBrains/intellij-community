@@ -1,4 +1,7 @@
-class D {}
+class D {
+    int myField = 10;
+    int myOtherField = 10;
+}
 class C extends D {
     int myField = 10;
     int myOtherField = 10;
