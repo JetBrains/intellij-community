@@ -16,14 +16,12 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 
 import javax.swing.*;
-import java.awt.LayoutManager;
-import java.awt.Rectangle;
-import java.awt.Component;
+import java.awt.*;
 
 /**
  * @author yole
@@ -46,6 +44,7 @@ public class RadBoxLayoutManager extends RadGridLayoutManager {
       for(Component component: parent.getComponents()) {
         if (component instanceof Box.Filler) {
           hasFiller = true;
+          break;
         }
       }
 

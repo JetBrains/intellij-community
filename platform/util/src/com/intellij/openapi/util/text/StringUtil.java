@@ -531,6 +531,7 @@ public class StringUtil extends StringUtilRt {
         for (int j = 0; j < preposition.length(); j++) {
           if (toLowerCase(s.charAt(firstChar + j)) != preposition.charAt(j)) {
             found = false;
+            break;
           }
         }
       }
