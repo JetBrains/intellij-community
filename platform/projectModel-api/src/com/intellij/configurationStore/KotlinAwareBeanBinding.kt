@@ -16,6 +16,7 @@ import kotlin.reflect.jvm.isAccessible
 
 internal class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAccessor? = null) : BeanBinding(beanClass, accessor) {
   // kotlin data class constructor is never cached, because we have (and it is good) very limited number of such classes
+  @Volatile
   private var constructor: Constructor<*>? = null
 
   // only for accessor, not field
