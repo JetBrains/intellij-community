@@ -59,7 +59,7 @@ class C {
 
 enum E {
   val((C c) -> {
-    def data = c.with (it) -> it.field
+    def data = c.with( (it) -> it.field )
     print d<caret>ata
   })
 }''', "java.util.Date"
