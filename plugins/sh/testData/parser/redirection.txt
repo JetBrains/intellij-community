@@ -1,0 +1,48 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEF
+          PsiElement(word)('dump-host-id')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('  ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  COMMAND
+                    BLOCK
+                      PsiElement({)('{')
+                      COMPOUND_LIST
+                        PsiElement(\n)('\n')
+                        PsiWhiteSpace('    ')
+                        PIPELINE_COMMAND
+                          PIPELINE
+                            SIMPLE_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
+                                PsiElement(word)('echo')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                STRING
+                                  PsiElement(")('"')
+                                  PsiElement(word)('Dummy')
+                                  PsiWhiteSpace(' ')
+                                  PsiElement(word)('text')
+                                  PsiElement(")('"')
+                        PsiElement(\n)('\n')
+                      PsiWhiteSpace('  ')
+                      PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    REDIRECTION_LIST
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        VARIABLE
+                          PsiElement(var)('$out_dir')
+                        PsiElement(word)('/kernel.txt')
+              PsiElement(\n)('\n')
+            PsiElement(})('}')

@@ -123,7 +123,7 @@ private w ::= word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'f
 
 redirection ::= redirection_inner | '&>' w | num redirection_inner
 private redirection_inner ::= ('<&' | '>&') (num | '-')
-                            | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
+                            | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w+
 
 private num ::= number | int | hex | octal
 string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {

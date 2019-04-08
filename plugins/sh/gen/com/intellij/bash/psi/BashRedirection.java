@@ -7,35 +7,23 @@ import com.intellij.psi.PsiElement;
 
 public interface BashRedirection extends BashCompositeElement {
 
-  @Nullable
-  BashArithmeticExpansion getArithmeticExpansion();
+  @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
 
-  @Nullable
-  BashBashExpansion getBashExpansion();
+  @NotNull
+  List<BashBashExpansion> getBashExpansionList();
 
-  @Nullable
-  BashCommand getCommand();
+  @NotNull
+  List<BashCommand> getCommandList();
 
-  @Nullable
-  BashShellParameterExpansion getShellParameterExpansion();
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
-  @Nullable
-  BashString getString();
+  @NotNull
+  List<BashString> getStringList();
 
-  @Nullable
-  BashVariable getVariable();
-
-  @Nullable
-  PsiElement getAt();
-
-  @Nullable
-  PsiElement getBang();
-
-  @Nullable
-  PsiElement getDollar();
-
-  @Nullable
-  PsiElement getFiledescriptor();
+  @NotNull
+  List<BashVariable> getVariableList();
 
   @Nullable
   PsiElement getGt();
@@ -66,8 +54,5 @@ public interface BashRedirection extends BashCompositeElement {
 
   @Nullable
   PsiElement getShiftRight();
-
-  @Nullable
-  PsiElement getWord();
 
 }

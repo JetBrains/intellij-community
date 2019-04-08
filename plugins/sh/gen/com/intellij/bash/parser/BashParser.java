@@ -2125,7 +2125,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ('<&' | '>&') (num | '-')
-  //                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
+  //                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w+
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
@@ -2169,13 +2169,13 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w
+  // ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w+
   private static boolean redirection_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = redirection_inner_1_0(b, l + 1);
-    r = r && w(b, l + 1);
+    r = r && redirection_inner_1_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2195,6 +2195,21 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, "<<-");
     if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // w+
+  private static boolean redirection_inner_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = w(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!w(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1", c)) break;
+    }
     exit_section_(b, m, null, r);
     return r;
   }

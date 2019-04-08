@@ -408,8 +408,7 @@ BASH_FILE
                         PsiWhiteSpace(' ')
                         VARIABLE
                           PsiElement(var)('$GIT_DIR')
-                    SIMPLE_COMMAND_ELEMENT
-                      PsiElement(word)('/map')
+                        PsiElement(word)('/map')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')

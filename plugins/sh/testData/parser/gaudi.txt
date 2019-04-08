@@ -637,8 +637,7 @@ BASH_FILE
                         PsiWhiteSpace(' ')
                         VARIABLE
                           PsiElement(var)('$NAME')
-                    SIMPLE_COMMAND_ELEMENT
-                      PsiElement(word)('/build-info.sh')
+                        PsiElement(word)('/build-info.sh')
               PsiElement(\n)('\n')
           PsiWhiteSpace('        ')
           PsiElement(;;)(';;')

@@ -659,11 +659,9 @@ BASH_FILE
             REDIRECTION
               PsiElement(>)('>')
               PsiElement(word)('/etc/profile.d/')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$NAME')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('.sh')
+              VARIABLE
+                PsiElement(var)('$NAME')
+              PsiElement(word)('.sh')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
