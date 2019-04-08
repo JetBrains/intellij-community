@@ -271,6 +271,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   @Override
   public void dispose() {
     stopSearching();
+    myListModel.clear();
   }
 
   @Nullable
