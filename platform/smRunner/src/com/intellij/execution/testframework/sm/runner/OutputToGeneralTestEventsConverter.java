@@ -59,7 +59,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputEventSplitter((text, outputType) -> processConsistentText(text, outputType, false));
+    mySplitter = new OutputEventSplitter() {
+      @Override
+      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+        processConsistentText(text, outputType);
+      }
+    };
   }
 
   @Override

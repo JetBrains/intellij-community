@@ -8,22 +8,15 @@ import com.intellij.openapi.util.Key
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import java.util.concurrent.atomic.AtomicReference
 
-@FunctionalInterface
-interface EventListener {
-  /** For stderr and system [text] is provided as fast as possible.
-   * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
-   * or chunk of process output*/
-  fun onTextAvailable(text: String, outputType: Key<*>)
-}
 
 /**
- * Processes text from test framework streams and runs [eventListener] when consistency is guaranteed.
+ * Processes text from test framework streams and runs [onTextAvailable] when consistency is guaranteed.
  * Class is not thread safe in that matter that you can't call [process] for same stream (i.e. stderr) from different threads,
  * but [flush] could be called from any thread.
  *
  * See [process] for more info
  */
-class OutputEventSplitter(private val eventListener: EventListener) {
+abstract class OutputEventSplitter {
 
   private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
 
@@ -41,9 +34,14 @@ class OutputEventSplitter(private val eventListener: EventListener) {
     }
     else {
       // Everything but stdout
-      eventListener.onTextAvailable(text, outputType)
+      onTextAvailable(text, outputType)
     }
   }
+
+  /** For stderr and system [text] is provided as fast as possible.
+   * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
+   * or chunk of process output*/
+  abstract fun onTextAvailable(text: String, outputType: Key<*>)
 
   private val prevStdOutRef: AtomicReference<Output> = AtomicReference()
 
@@ -131,12 +129,12 @@ class OutputEventSplitter(private val eventListener: EventListener) {
       result = text.substring(0, SM_MESSAGE_PREFIX) + text.substring(text.length - SM_MESSAGE_PREFIX)
     }
 
-    eventListener.onTextAvailable(result, key)
+    onTextAvailable(result, key)
   }
 }
 
 
-const val SM_MESSAGE_PREFIX = 105
+internal const val SM_MESSAGE_PREFIX = 105
 
 private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
 private const val SERVICE_MESSAGE_START: String = ServiceMessage.SERVICE_MESSAGE_START

@@ -11,7 +11,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
   private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest" ) }
   private val testProxy by lazy { SMTestProxy.SMRootTestProxy() }
 
-  private var flushEachChar = 0
+  private var flushBufferSize = 0
 
 
   private val suiteName = "suite_dummy"
@@ -19,33 +19,33 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
   private val testSuccessName = "test_dummy_2"
 
   fun testIdBased() {
-    flushEachChar = 0
+    flushBufferSize = 0
     buildTestTree(idBased = true)
   }
 
   fun testIdBasedFlushEachChar() {
-    flushEachChar = 1
+    flushBufferSize = 1
     buildTestTree(idBased = true)
   }
 
   fun testIdBasedFlushEachFourChars() {
-    flushEachChar = 4
+    flushBufferSize = 4
     buildTestTree(idBased = true)
   }
 
 
   fun testGeneric() {
-    flushEachChar = 0
+    flushBufferSize = 0
     buildTestTree(idBased = false)
   }
 
   fun testGenericFlushEachChar() {
-    flushEachChar = 1
+    flushBufferSize = 1
     buildTestTree(idBased = false)
   }
 
   fun testGenericFlushEachFourChars() {
-    flushEachChar = 4
+    flushBufferSize = 4
     buildTestTree(idBased = false)
   }
 
@@ -95,6 +95,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
     message(ServiceMessageBuilder.testStarted(testFailName))
     message(ServiceMessageBuilder.testFailed(testFailName), "message", "failMessage")
+    message(ServiceMessageBuilder.testFinished(testSuccessName))
 
     message(ServiceMessageBuilder.testStarted(testSuccessName))
     message(ServiceMessageBuilder.testFinished(testSuccessName))
@@ -104,7 +105,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
 
   private fun finish() {
-    testProxy.setFinished()
+    testProxy.setFinished() //Called from coverter after process finished in real code
     converter.finishTesting()
   }
 
@@ -122,8 +123,8 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
     attrs.forEach { k, v -> message.addAttribute(k, v) }
     val text = message.toString() + "\n"
 
-    if (flushEachChar > 0) {
-      text.chunked(flushEachChar).forEach { c -> converter.process(c, ProcessOutputTypes.STDOUT) }
+    if (flushBufferSize > 0) {
+      text.chunked(flushBufferSize).forEach { c -> converter.process(c, ProcessOutputTypes.STDOUT) }
     }
     else {
       converter.process(text, ProcessOutputTypes.STDOUT)
