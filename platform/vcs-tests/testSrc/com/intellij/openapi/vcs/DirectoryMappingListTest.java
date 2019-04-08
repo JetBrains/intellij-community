@@ -118,22 +118,24 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   }
 
   public void testSame() {
-    myMappings.setMapping(myRootPath + "/parent/path", "CVS");
+    myMappings.setMapping(myRootPath + "/parent/path1", "CVS");
+    myMappings.setMapping(myRootPath + "\\parent\\path2", "CVS");
 
     final String[] children = {
-      myRootPath + "/parent/path", myRootPath + "\\parent\\path", myRootPath + "\\parent\\path"
+      myRootPath + "\\parent\\path1", myRootPath + "/parent/path1", myRootPath + "\\parent\\path1",
+      myRootPath + "\\parent\\path2", myRootPath + "/parent/path2", myRootPath + "\\parent\\path2"
     };
     createFiles(children);
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
       myMappings.cleanupMappings();
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
 
     for (String child : children) {
       myMappings.setMapping(child, "CVS");
-      assertEquals("cleanup failed: " + child, 1, myMappings.getDirectoryMappings().size());
+      assertEquals("cleanup failed: " + child, 2, myMappings.getDirectoryMappings().size());
     }
   }
 
