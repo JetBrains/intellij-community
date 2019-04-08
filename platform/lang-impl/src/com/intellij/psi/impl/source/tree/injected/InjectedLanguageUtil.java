@@ -335,6 +335,9 @@ public class InjectedLanguageUtil {
                                       @NotNull PsiFile hostPsiFile,
                                       boolean probeUp,
                                       @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    element = skipNonInjectablePsi(element, probeUp);
+    if (element == null) return;
+
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
@@ -392,6 +395,23 @@ public class InjectedLanguageUtil {
       e.putUserData(INJECTED_PSI, cachedRef);
       if (!probeUp) break;
     }
+  }
+
+  /**
+   * We can only inject into injection hosts or their ancestors, so if we're sure there are no PsiLanguageInjectionHost descendants,
+   * we can skip that PSI safely.
+   */
+  @Nullable
+  private static PsiElement skipNonInjectablePsi(@NotNull PsiElement element, boolean probeUp) {
+    if (!(element instanceof PsiLanguageInjectionHost) && element.getFirstChild() == null) {
+      if (!probeUp) return null;
+
+      element = element.getParent();
+      while (element != null && !(element instanceof PsiLanguageInjectionHost) && element.getFirstChild() == element.getLastChild()) {
+        element = element.getParent();
+      }
+    }
+    return element;
   }
 
   private static boolean intersects(@NotNull PsiElement hostElement, @NotNull Place place) {
