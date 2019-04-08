@@ -38,6 +38,8 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testStartsWithPrimitive2() { doTestFor("StringBuilder"); }
   public void testStartsWithPrimitive3() { doTestFor("StringBuilder"); }
   public void testStartsWithPrimitive4() { doTestFor("StringBuilder"); }
+  public void testStartsWithPrimitive5() { doTestFor("StringBuilder"); }
+  public void testStartsWithPrimitive6() { doTestFor("StringBuilder"); }
   public void testPrecedence() { doTestFor("StringBuilder"); }
   public void testPrecedence2() { doTestFor("StringBuilder"); }
   public void testPrecedence3() { doTestFor("StringBuilder"); }
@@ -70,6 +72,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testImplicitToString3() { doTestFor("StringBuilder"); }
   public void testJoiner() { doTestFor("StringJoiner"); }
   public void testJoiner2() { doTestFor("StringJoiner"); }
+  public void testCharacterPlusAppend() { doTestFor("StringBuilder"); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
