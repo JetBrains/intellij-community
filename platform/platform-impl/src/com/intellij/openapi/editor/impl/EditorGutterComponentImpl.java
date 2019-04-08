@@ -1780,7 +1780,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     if (clickAction != null) {
       if (PluginInfoDetectorKt.getPluginInfo(renderer.getClass()).isSafeToReport()) {
-        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getClass().getCanonicalName());
+        FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getClass().getName());
       }
 
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
