@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -358,19 +359,28 @@ class DistributionJARsBuilder {
   }
 
   private void buildBundledPlugins() {
-    def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {it.bundlingRestrictions.supportedOs == OsFamily.ALL}, "$buildContext.paths.distAll/plugins")
+    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
+  }
+
+  private boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily) {
+    def bundlingRestrictions = plugin.bundlingRestrictions
+    if (!buildContext.applicationInfo.isEAP && bundlingRestrictions.includeInEapOnly) {
+      return false
+    }
+    osFamily == null ? bundlingRestrictions.supportedOs == OsFamily.ALL
+                     : bundlingRestrictions.supportedOs != OsFamily.ALL && bundlingRestrictions.supportedOs.contains(osFamily)
   }
 
   private void buildOsSpecificBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
-    for (osFamily in OsFamily.values()) {
+    for (OsFamily osFamily in OsFamily.values()) {
       List<PluginLayout> osSpecificPlugins =
         getPluginsByModules(buildContext, productLayout.bundledOsPluginModules[osFamily] ?: []) +
         getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
-          it.bundlingRestrictions.supportedOs != OsFamily.ALL && it.bundlingRestrictions.supportedOs.contains(osFamily)
+          satisfiesBundlingRequirements(it, osFamily)
         }
 
       if (!osSpecificPlugins.isEmpty()) {
