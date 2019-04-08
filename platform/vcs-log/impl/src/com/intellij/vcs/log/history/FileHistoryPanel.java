@@ -114,7 +114,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
     tablePanel.add(createActionsToolbar(), BorderLayout.WEST);
 
-    myDiffPreview = createDiffPreview();
+    myDiffPreview = createDiffPreview(false);
     myDiffPreviewSplitter = new OnePixelSplitter(false, "vcs.history.diff.splitter.proportion", 0.7f);
     myDiffPreviewSplitter.setHonorComponentsMinimumSize(false);
     myDiffPreviewSplitter.setFirstComponent(tablePanel);
@@ -181,9 +181,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   @Nullable
-  private FileHistoryDiffPreview createDiffPreview() {
+  private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
     if (!myFilePath.isDirectory()) {
-      FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myUi.getLogData().getProject(), () -> myUi.getSelectedChange(), this);
+      FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myUi.getLogData().getProject(), () -> myUi.getSelectedChange(),
+                                                                      isInEditor, this);
       ListSelectionListener selectionListener = e -> {
         int[] selection = myGraphTable.getSelectedRows();
         ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
@@ -246,7 +247,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         @NotNull
         @Override
         public DiffRequestProcessor createDiffRequestProcessor() {
-          FileHistoryDiffPreview preview = notNull(createDiffPreview());
+          FileHistoryDiffPreview preview = notNull(createDiffPreview(true));
           preview.updatePreview(true);
           return preview;
         }
