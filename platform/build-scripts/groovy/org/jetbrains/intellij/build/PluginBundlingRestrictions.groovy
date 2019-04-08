@@ -14,4 +14,9 @@ class PluginBundlingRestrictions {
    * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
    */
   List<OsFamily> supportedOs = OsFamily.ALL
+
+  /**
+   * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+   */
+  boolean includeInEapOnly = false
 }
