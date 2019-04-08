@@ -193,6 +193,7 @@ dumpfile
 dword
 dylib
 easymock
+ecma
 ehcache
 elseif
 elsif
