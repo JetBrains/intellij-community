@@ -155,7 +155,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
-            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
+            Icon nodeIcon = place == XValuePlace.TOOLTIP
+                            ? myValueDescriptor.getValueIcon()
+                            : DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
             XValuePresentation presentation = createPresentation(myValueDescriptor);
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
