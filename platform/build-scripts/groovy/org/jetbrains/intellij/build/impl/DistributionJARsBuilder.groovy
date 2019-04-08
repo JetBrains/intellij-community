@@ -360,17 +360,22 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
+    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {it.bundlingRestrictions.supportedOs == OsFamily.ALL}, "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
   private void buildOsSpecificBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     for (osFamily in OsFamily.values()) {
-      def osSpecificPluginModules = productLayout.bundledOsPluginModules[osFamily]
-      if (osSpecificPluginModules) {
+      List<PluginLayout> osSpecificPlugins =
+        getPluginsByModules(buildContext, productLayout.bundledOsPluginModules[osFamily] ?: []) +
+        getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
+          it.bundlingRestrictions.supportedOs != OsFamily.ALL && it.bundlingRestrictions.supportedOs.contains(osFamily)
+        }
+
+      if (!osSpecificPlugins.isEmpty()) {
         def layoutBuilder = createLayoutBuilder()
-        buildPlugins(layoutBuilder, getPluginsByModules(buildContext, osSpecificPluginModules),
+        buildPlugins(layoutBuilder, osSpecificPlugins,
                      "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
         usedModules.addAll(layoutBuilder.usedModules)
       }

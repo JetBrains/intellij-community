@@ -54,6 +54,10 @@ class ProductModulesLayout {
 
   /**
    * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
+   *
+   * @deprecated specify supported OS in {@link PluginBundlingRestrictions#supportedOs bundlingRestrictions.supportedOs} property in
+   * {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#bundlingRestrictions the plugin layout} and add the plugin to
+   * the standard {@link #bundledPluginModules} instead
    */
   final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
 
