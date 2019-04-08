@@ -40,7 +40,8 @@ public class _BashLexerGen implements FlexLexer {
   public static final int HERE_DOC_PIPELINE = 26;
   public static final int HERE_DOC_BODY = 28;
   public static final int PARAMETER_EXPANSION = 30;
-  public static final int COMMAND_SUBSTITUTION = 32;
+  public static final int PARENTHESES_COMMAND_SUBSTITUTION = 32;
+  public static final int BACKQUOTE_COMMAND_SUBSTITUTION = 34;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -51,7 +52,7 @@ public class _BashLexerGen implements FlexLexer {
   private static final int ZZ_LEXSTATE[] = { 
      0,  0,  1,  1,  1,  1,  2,  2,  3,  3,  0,  0,  0,  0,  4,  4, 
      5,  5,  6,  6,  7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 
-     0, 0
+     0,  0,  0, 0
   };
 
   /** 
@@ -1165,7 +1166,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 129: break;
           case 12: 
-            { if (yystate() == COMMAND_SUBSTITUTION) popState(); else pushState(COMMAND_SUBSTITUTION);
+            { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) popState(); else pushState(BACKQUOTE_COMMAND_SUBSTITUTION);
                                   return BACKQUOTE;
             } 
             // fall through
@@ -1220,7 +1221,7 @@ public class _BashLexerGen implements FlexLexer {
           case 139: break;
           case 22: 
             { if (shouldCloseSingleParen()) popParentheses();
-                                    if (yystate() == COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN;
+                                    if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN;
             } 
             // fall through
           case 140: break;
@@ -1370,7 +1371,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 167: break;
           case 50: 
-            { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR;
+            { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR;
             } 
             // fall through
           case 168: break;
@@ -1472,7 +1473,7 @@ public class _BashLexerGen implements FlexLexer {
           case 69: 
             { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) {
-                                      if (yystate() == COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
+                                      if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
                                     } else return RIGHT_DOUBLE_PAREN;
             } 
             // fall through

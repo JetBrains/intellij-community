@@ -140,7 +140,8 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 %state HERE_DOC_BODY
 
 %state PARAMETER_EXPANSION
-%state COMMAND_SUBSTITUTION
+%state PARENTHESES_COMMAND_SUBSTITUTION
+%state BACKQUOTE_COMMAND_SUBSTITUTION
 %%
 
 <STRING_EXPRESSION> {
@@ -260,7 +261,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 
-<YYINITIAL, CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
+<YYINITIAL, CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
 
     "case"                        { pushState(CASE_CONDITION); return CASE; }
     "esac"                        { if (yystate() == CASE_CONDITION) popState(); return ESAC; }
@@ -282,7 +283,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
-  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
@@ -293,13 +294,13 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
                                     else { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
                                            isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; } }
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
-    "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+    "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
     "[["                          { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
     "["                           { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
     "))"                          { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) {
-                                      if (yystate() == COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
+                                      if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
                                     } else return RIGHT_DOUBLE_PAREN; }
     "]]"                          { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET; }
     "]"                           { switch (yystate()) {
@@ -314,12 +315,12 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "$"                           { return DOLLAR; }
     "("                           { pushParentheses(PARENTHESES); return LEFT_PAREN; }
     ")"                           { if (shouldCloseSingleParen()) popParentheses();
-                                    if (yystate() == COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN; }
+                                    if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
 
     "!"                           { return BANG; }
-    "`"                           { if (yystate() == COMMAND_SUBSTITUTION) popState(); else pushState(COMMAND_SUBSTITUTION);
+    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) popState(); else pushState(BACKQUOTE_COMMAND_SUBSTITUTION);
                                   return BACKQUOTE; }
 
     /***** Pipeline separators *****/
@@ -370,7 +371,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
-  OTHER_CONDITIONS, COMMAND_SUBSTITUTION> {
+  OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
     {Word}                        { return WORD; }
 }
 

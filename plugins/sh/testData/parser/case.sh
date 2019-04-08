@@ -50,6 +50,15 @@ xauto)
 	;;
 esac
 
+case `(typeset -u s=a n=0; ((n=n+1)); print $s$n) 2>/dev/null` in
+A1)	shell=ksh
+	typeset -u ID
+	typeset -i counter err_line
+	;;
+*)	shell=bsh
+	;;
+esac
+
 monthnoToName()
 {
   # sets the variable 'month' to the appropriate value

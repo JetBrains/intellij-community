@@ -539,6 +539,148 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          COMMAND_SUBSTITUTION_COMMAND
+            PsiElement(`)('`')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  COMMAND
+                    SUBSHELL_COMMAND
+                      PsiElement(()('(')
+                      COMPOUND_LIST
+                        PIPELINE_COMMAND
+                          PIPELINE
+                            SIMPLE_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
+                                PsiElement(word)('typeset')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                PsiElement(word)('-u')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                ASSIGNMENT_COMMAND
+                                  PsiElement(word)('s')
+                                  PsiElement(=)('=')
+                                  PsiElement(word)('a')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                ASSIGNMENT_COMMAND
+                                  PsiElement(word)('n')
+                                  PsiElement(=)('=')
+                                  PsiElement(int)('0')
+                        PsiElement(;)(';')
+                        PsiWhiteSpace(' ')
+                        PIPELINE_COMMAND
+                          PIPELINE
+                            GENERIC_COMMAND_DIRECTIVE
+                              ARITHMETIC_EXPANSION
+                                PsiElement((()('((')
+                                ASSIGNMENT_EXPRESSION
+                                  LITERAL_EXPRESSION
+                                    PsiElement(word)('n')
+                                  PsiElement(=)('=')
+                                  ADD_EXPRESSION
+                                    LITERAL_EXPRESSION
+                                      PsiElement(word)('n')
+                                    PsiElement(+)('+')
+                                    LITERAL_EXPRESSION
+                                      PsiElement(int)('1')
+                                PsiElement()))('))')
+                        PsiElement(;)(';')
+                        PsiWhiteSpace(' ')
+                        PIPELINE_COMMAND
+                          PIPELINE
+                            SIMPLE_COMMAND
+                              GENERIC_COMMAND_DIRECTIVE
+                                PsiElement(word)('print')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND_ELEMENT
+                                VARIABLE
+                                  PsiElement(var)('$s')
+                              SIMPLE_COMMAND_ELEMENT
+                                VARIABLE
+                                  PsiElement(var)('$n')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    REDIRECTION_LIST
+                      REDIRECTION
+                        PsiElement(int)('2')
+                        PsiElement(>)('>')
+                        PsiElement(word)('/dev/null')
+            PsiElement(`)('`')
+          PsiWhiteSpace(' ')
+          PsiElement(in)('in')
+          CASE_CLAUSE
+            PsiElement(\n)('\n')
+            PATTERN
+              PsiElement(word)('A1')
+            PsiElement())(')')
+            PsiWhiteSpace('\t')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  ASSIGNMENT_COMMAND
+                    PsiElement(word)('shell')
+                    PsiElement(=)('=')
+                    PsiElement(word)('ksh')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('typeset')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('-u')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('ID')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('\t')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('typeset')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('-i')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('counter')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('err_line')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('\t')
+          PsiElement(;;)(';;')
+          CASE_CLAUSE
+            PsiElement(\n)('\n')
+            PATTERN
+              PsiElement(word)('*')
+            PsiElement())(')')
+            PsiWhiteSpace('\t')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  ASSIGNMENT_COMMAND
+                    PsiElement(word)('shell')
+                    PsiElement(=)('=')
+                    PsiElement(word)('bsh')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('\t')
+          PsiElement(;;)(';;')
+          PsiElement(\n)('\n')
+          PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
         FUNCTION_DEF
           PsiElement(word)('monthnoToName')
           PsiElement(()('(')
