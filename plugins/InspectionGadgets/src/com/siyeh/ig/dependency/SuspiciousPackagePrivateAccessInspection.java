@@ -3,6 +3,8 @@ package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -25,6 +27,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -34,7 +37,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -60,150 +62,98 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
-      @Override
-      public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
-        UExpression receiver = node.getReceiver();
-        if (node.getSourcePsi() instanceof PsiMethodCallExpression) {
-          //JavaUastLanguagePlugin produces UQualifiedReferenceExpression for the both PsiMethodCallExpression and PsiReferenceExpression inside it, so we need to ignore them
-          return true;
-        }
-        PsiElement resolved = node.resolve();
-        if (resolved instanceof PsiMember) {
-          checkAccess(node.getSelector(), (PsiMember)resolved, getAccessObjectType(receiver));
-        }
-        return true;
-      }
-
-      @Override
-      public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
-        UElement uastParent = node.getUastParent();
-        //we should skip 'checkAccess' here if node is part of UQualifiedReferenceExpression or UCallExpression node,
-        // otherwise the same problem will be reported twice
-        if (!isSelectorOfQualifiedReference(node) && !isReferenceToConstructorOrQualifiedMethodReference(node, uastParent)) {
-          PsiElement resolved = node.resolve();
-          if (resolved instanceof PsiMember) {
-            checkAccess(node, (PsiMember)resolved, null);
-          }
-        }
-        return true;
-      }
-
-      private boolean isReferenceToConstructorOrQualifiedMethodReference(@NotNull USimpleNameReferenceExpression node,
-                                                                         @Nullable UElement uastParent) {
-        return uastParent instanceof UCallExpression && isMethodReferenceOfCallExpression(node, (UCallExpression)uastParent)
-               && (((UCallExpression)uastParent).getKind() == UastCallKind.CONSTRUCTOR_CALL || isSelectorOfQualifiedReference((UExpression)uastParent));
-      }
-
-      private boolean isSelectorOfQualifiedReference(@Nullable UExpression expression) {
-        if (expression == null) return false;
-        UElement parent = expression.getUastParent();
-        return parent instanceof UQualifiedReferenceExpression
-               && referToSameSourceElement(expression, ((UQualifiedReferenceExpression)parent).getSelector());
-      }
-
-      private boolean isMethodReferenceOfCallExpression(@NotNull USimpleNameReferenceExpression expression, @NotNull UCallExpression parent) {
-        UElement methodIdentifier = parent.getMethodIdentifier();
-        UReferenceExpression classReference = parent.getClassReference();
-        if (methodIdentifier == null && classReference != null) {
-          methodIdentifier = classReference.getReferenceNameElement();
-        }
-        return referToSameSourceElement(expression.getReferenceNameElement(), methodIdentifier);
-      }
-
-      private boolean referToSameSourceElement(@Nullable UElement element1, @Nullable UElement element2) {
-        if (element1 == null || element2 == null) return false;
-        PsiElement sourcePsi1 = element1.getSourcePsi();
-        return sourcePsi1 != null && sourcePsi1.equals(element2.getSourcePsi());
-      }
-
-      @Override
-      public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
-        PsiElement resolve = node.resolve();
-        if (resolve instanceof PsiMember) {
-          PsiMember member = (PsiMember)resolve;
-          UElement sourceNode = getReferenceNameElement(node);
-          if (sourceNode != null) {
-            checkAccess(sourceNode, member, getAccessObjectType(node.getQualifierExpression()));
-          }
-        }
-        return true;
-      }
-
-      @Override
-      public boolean visitCallExpression(@NotNull UCallExpression node) {
-        //regular method calls are handled by visitSimpleNameReferenceExpression or visitQualifiedReferenceExpression, but we need to handle
-        // constructor calls in a special way because they may refer to classes
-        if (!isSelectorOfQualifiedReference(node) && node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-          PsiMethod resolved = node.resolve();
-          if (resolved != null) {
-            checkAccess(node, resolved, null);
-          }
-          else {
-            UReferenceExpression classReference = node.getClassReference();
-            PsiElement resolvedClass = classReference != null ? classReference.resolve() : null;
-            if (resolvedClass instanceof PsiClass) {
-              checkAccess(node, (PsiClass)resolvedClass, null);
-            }
-          }
-        }
-        return true;
-      }
-
-      private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable PsiClass accessObjectType) {
-        if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
-          checkPackageLocalAccess(sourceNode, target, "package-private");
-        }
-        else if (target.hasModifier(JvmModifier.PROTECTED) && !canAccessProtectedMember(sourceNode, target, accessObjectType)) {
-          checkPackageLocalAccess(sourceNode, target, "protected and used not through a subclass here");
-        }
-      }
-
-      private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType) {
-        PsiElement sourcePsi = sourceNode.getSourcePsi();
-        if (sourcePsi != null) {
-          Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
-          Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
-          if (isPackageLocalAccessSuspicious(sourceModule, targetModule) && PsiTreeUtil.getParentOfType(sourcePsi, PsiComment.class) == null) {
-            List<IntentionAction> fixes =
-              JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
-            String elementDescription = StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
-            LocalQuickFix[] quickFixes = IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-            holder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
-                                              + targetModule.getName() + "'",
-                                   ArrayUtil.append(quickFixes, new MarkModulesAsLoadedTogetherFix(sourceModule.getName(), targetModule.getName())));
-          }
-        }
-      }
-    }, true);
+    return new UastVisitorAdapter(new ApiUsageUastVisitor(
+      new SuspiciousApiUsageProcessor(holder, myModuleSetByModuleName.getValue())
+    ), true);
   }
 
-  @Nullable
-  private static UElement getReferenceNameElement(UCallableReferenceExpression node) {
-    PsiElement psi = node.getSourcePsi();
-    if (psi instanceof PsiReferenceExpression) {
-      PsiElement nameElement = ((PsiReferenceExpression)psi).getReferenceNameElement();
-      if (nameElement != null) {
-        return UastContextKt.toUElement(nameElement);
+  private static class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
+
+    private final ProblemsHolder myProblemsHolder;
+    private final Map<String, ModulesSet> myModuleNameToModulesSet;
+
+    private SuspiciousApiUsageProcessor(ProblemsHolder problemsHolder, Map<String, ModulesSet> moduleNameToModulesSet) {
+      myProblemsHolder = problemsHolder;
+      myModuleNameToModulesSet = moduleNameToModulesSet;
+    }
+
+    @Override
+    public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
+      PsiClass accessObjectType = getAccessObjectType(qualifier);
+      if (target instanceof PsiMember) {
+        checkAccess(sourceNode, (PsiMember)target, accessObjectType);
       }
     }
-    return node;
-  }
 
-  @Nullable
-  private static PsiClass getAccessObjectType(@Nullable UExpression receiver) {
-    if (receiver == null || receiver instanceof UThisExpression || receiver instanceof USuperExpression) {
+    @Override
+    public void processConstructorInvocation(@NotNull UElement sourceNode,
+                                             @NotNull PsiClass instantiatedClass,
+                                             @Nullable PsiMethod constructor,
+                                             @Nullable UClass subclassDeclaration) {
+      if (subclassDeclaration == null) {
+        if (constructor != null) {
+          checkAccess(sourceNode, constructor, null);
+        }
+        else {
+          checkAccess(sourceNode, instantiatedClass, null);
+        }
+      }
+    }
+
+    @Nullable
+    private static PsiClass getAccessObjectType(@Nullable UExpression qualifier) {
+      if (qualifier == null || qualifier instanceof UThisExpression || qualifier instanceof USuperExpression) {
+        return null;
+      }
+
+      PsiType type = qualifier.getExpressionType();
+      if (type instanceof PsiClassType) {
+        return ((PsiClassType)type).resolve();
+      }
+      if (qualifier instanceof UReferenceExpression) {
+        return ObjectUtils.tryCast(((UReferenceExpression)qualifier).resolve(), PsiClass.class);
+      }
       return null;
     }
 
-    PsiType type = receiver.getExpressionType();
-    if (type != null) {
-      if (!(type instanceof PsiClassType)) return null;
-      return ((PsiClassType)type).resolve();
+    private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable PsiClass accessObjectType) {
+      if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
+        checkPackageLocalAccess(sourceNode, target, "package-private");
+      }
+      else if (target.hasModifier(JvmModifier.PROTECTED) && !canAccessProtectedMember(sourceNode, target, accessObjectType)) {
+        checkPackageLocalAccess(sourceNode, target, "protected and used not through a subclass here");
+      }
     }
-    else {
-      PsiElement element = ((UReferenceExpression)receiver).resolve();
-      return element instanceof PsiClass ? (PsiClass)element : null;
+
+    private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType) {
+      PsiElement sourcePsi = sourceNode.getSourcePsi();
+      if (sourcePsi != null) {
+        Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
+        Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
+        if (isPackageLocalAccessSuspicious(sourceModule, targetModule) &&
+            PsiTreeUtil.getParentOfType(sourcePsi, PsiComment.class) == null) {
+          List<IntentionAction> fixes =
+            JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
+          String elementDescription =
+            StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
+          LocalQuickFix[] quickFixes =
+            IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
+          myProblemsHolder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
+                                                      + targetModule.getName() + "'",
+                                           ArrayUtil.append(quickFixes,
+                                                            new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
+                                                                                               targetModule.getName())));
+        }
+      }
+    }
+
+    private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {
+      if (targetModule == null || sourceModule == null || targetModule.equals(sourceModule)) {
+        return false;
+      }
+      ModulesSet sourceGroup = myModuleNameToModulesSet.get(sourceModule.getName());
+      ModulesSet targetGroup = myModuleNameToModulesSet.get(targetModule.getName());
+      return sourceGroup == null || sourceGroup != targetGroup;
     }
   }
 
@@ -248,15 +198,6 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       sourcePsi = uastParent.getSourcePsi();
     }
     return UastUtils.findContaining(sourcePsi, UClass.class);
-  }
-
-  private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {
-    if (targetModule == null || sourceModule == null || targetModule.equals(sourceModule)) {
-      return false;
-    }
-    ModulesSet sourceGroup = myModuleSetByModuleName.getValue().get(sourceModule.getName());
-    ModulesSet targetGroup = myModuleSetByModuleName.getValue().get(targetModule.getName());
-    return sourceGroup == null || sourceGroup != targetGroup;
   }
 
   @Tag("modules-set")

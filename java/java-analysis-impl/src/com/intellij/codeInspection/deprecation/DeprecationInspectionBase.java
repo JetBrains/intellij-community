@@ -38,7 +38,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return true;
   }
 
-  public static void checkDeprecated(@NotNull PsiElement element,
+  public static void checkDeprecated(@NotNull PsiModifierListOwner element,
                                      @NotNull PsiElement elementToHighlight,
                                      @Nullable TextRange rangeInElement,
                                      boolean ignoreInsideDeprecated,
@@ -48,13 +48,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      @NotNull ProblemsHolder holder,
                                      boolean forRemoval,
                                      @NotNull ProblemHighlightType highlightType) {
-    if (!(element instanceof PsiModifierListOwner)) {
-      return;
-    }
-
-    PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-    if (PsiImplUtil.isDeprecated(modifierListOwner)) {
-      if (forRemoval != isForRemovalAttributeSet(modifierListOwner)) {
+    if (PsiImplUtil.isDeprecated(element)) {
+      if (forRemoval != isForRemovalAttributeSet(element)) {
         return;
       }
     }
@@ -108,7 +103,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       }
     }
     if (refElement instanceof PsiField) {
-      PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(elementToHighlight.getParent(), PsiReferenceExpression.class);
+      PsiReferenceExpression referenceExpression = getFieldReferenceExpression(elementToHighlight);
       if (referenceExpression != null) {
         PsiField replacement = findReplacementInJavaDoc((PsiField)refElement, referenceExpression);
         if (replacement != null) {
@@ -270,10 +265,21 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   }
 
   @Nullable
+  private static PsiReferenceExpression getFieldReferenceExpression(@NotNull PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      return (PsiReferenceExpression) element;
+    }
+    return ObjectUtils.tryCast(element.getParent(), PsiReferenceExpression.class);
+  }
+
+  @Nullable
   private static PsiMethodCallExpression getMethodCall(@NotNull PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return null;
-    PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return null;
-    return ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+    if (element instanceof PsiReferenceExpression) {
+      return ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);
+    }
+    if (element instanceof PsiIdentifier) {
+      return getMethodCall(element.getParent());
+    }
+    return null;
   }
 }

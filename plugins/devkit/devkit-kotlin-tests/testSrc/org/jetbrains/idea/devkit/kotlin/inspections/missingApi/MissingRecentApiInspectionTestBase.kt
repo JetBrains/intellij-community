@@ -10,7 +10,7 @@ import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
-import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiVisitor
+import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiUsageProcessor
 import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaJdkDescriptor
 import org.jetbrains.idea.devkit.kotlin.inspections.missingApi.project.PluginProjectWithIdeaLibraryDescriptor
 
@@ -60,12 +60,15 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
   private fun configureLibraryFiles() {
     myFixture.configureByFiles(
       "library/RecentClass.java",
+      "library/RecentInterface.java",
+      "library/RecentSamInterface.java",
       "library/RecentAnnotation.java",
       "library/OldClass.java",
       "library/OldClassWithDefaultConstructor.java",
       "library/OldAnnotation.java",
 
       "library/RecentKotlinClass.kt",
+      "library/RecentKotlinInterface.kt",
       "library/RecentKotlinUtils.kt",
       "library/RecentKotlinAnnotation.kt",
 
@@ -90,7 +93,7 @@ abstract class MissingRecentApiInspectionTestBase : PluginModuleTestCase() {
 
   private fun assertAnnotationsFoundForClass(className: String) {
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))!!
-    val annotations = AnnotationUtil.findAllAnnotations(psiClass, listOf(MissingRecentApiVisitor.AVAILABLE_SINCE_ANNOTATION), false)
+    val annotations = AnnotationUtil.findAllAnnotations(psiClass, listOf(MissingRecentApiUsageProcessor.AVAILABLE_SINCE_ANNOTATION), false)
     assertNotEmpty(annotations)
   }
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.pom.java.LanguageLevel;
@@ -13,6 +14,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.uast.UastVisitorAdapter;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,12 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
     PsiFile file = holder.getFile();
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
       HighlightSeverity severity = getCurrentSeverity(file);
-      return new DeprecationElementVisitor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, severity);
+      return new UastVisitorAdapter(
+        new ApiUsageUastVisitor(
+          new DeprecatedApiUsageProcessor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, severity)
+        ),
+        true
+      );
     }
     return PsiElementVisitor.EMPTY_VISITOR;
   }

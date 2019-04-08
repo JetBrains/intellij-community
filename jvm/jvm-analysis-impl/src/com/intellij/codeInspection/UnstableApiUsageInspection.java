@@ -4,10 +4,11 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiReference;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,13 +35,24 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     return unstableApiAnnotations;
   }
 
+  @NotNull
   @Override
-  protected void createProblem(@NotNull PsiReference reference,
-                               @NotNull PsiModifierListOwner annotatedTarget,
-                               @NotNull List<PsiAnnotation> annotations,
-                               @NotNull ProblemsHolder holder) {
-    String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getPresentableName(annotatedTarget));
-    holder.registerProblem(reference, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  protected AnnotatedApiUsageProcessor buildAnnotatedApiUsageProcessor(@NotNull ProblemsHolder holder) {
+    return new AnnotatedApiUsageProcessor() {
+      @Override
+      public void processAnnotatedTarget(@NotNull UElement sourceNode,
+                                         @NotNull PsiModifierListOwner annotatedTarget,
+                                         @NotNull List<PsiAnnotation> annotations) {
+        if (!AnnotatedElementInspectionBase.isLibraryElement(annotatedTarget)) {
+          return;
+        }
+        String message = JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", getPresentableName(annotatedTarget));
+        PsiElement elementToHighlight = sourceNode.getSourcePsi();
+        if (elementToHighlight != null) {
+          holder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        }
+      }
+    };
   }
 
   @NotNull
