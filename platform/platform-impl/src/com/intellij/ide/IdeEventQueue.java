@@ -34,7 +34,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
@@ -1148,7 +1148,7 @@ public class IdeEventQueue extends EventQueue {
     String message = myFrequentEventDetector.getMessageOnEvent(event);
     if (message != null) {
       // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
-      AppExecutorUtil.getAppExecutorService().execute(() -> myFrequentEventDetector.logMessage(message));
+      NonUrgentExecutor.getInstance().execute(() -> myFrequentEventDetector.logMessage(message));
     }
 
     boolean typeAheadEnabled = Registry.is("action.aware.typeAhead");
