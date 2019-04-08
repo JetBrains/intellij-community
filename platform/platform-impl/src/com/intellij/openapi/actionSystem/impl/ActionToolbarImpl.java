@@ -519,8 +519,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       final int maxWidth = getMaxButtonWidth();
       final int maxHeight = getMaxButtonHeight();
 
+      int offset = 0;
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        int offset = 0;
         for (int i = 0; i < componentCount; i++) {
           final Rectangle r = bounds.get(i);
           r.setBounds(insets.left + offset, insets.top + (height - maxHeight) / 2, maxWidth, maxHeight);
@@ -528,7 +528,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       }
       else {
-        int offset = 0;
         for (int i = 0; i < componentCount; i++) {
           final Rectangle r = bounds.get(i);
           r.setBounds(insets.left + (width - maxWidth) / 2, insets.top + offset, maxWidth, maxHeight);
@@ -690,13 +689,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     int heightToFit = sizeToFit.height - insets.top - insets.bottom;
 
     if (myAdjustTheSameSize) {
+      final int maxWidth = getMaxButtonWidth();
+      final int maxHeight = getMaxButtonHeight();
+      int xOffset = 0;
+      int yOffset = 0;
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        final int maxWidth = getMaxButtonWidth();
-        final int maxHeight = getMaxButtonHeight();
 
         // Lay components out
-        int xOffset = 0;
-        int yOffset = 0;
         int maxRowWidth = getMaxRowWidth(widthToFit, maxWidth);
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
@@ -711,12 +710,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       }
       else {
-        final int maxWidth = getMaxButtonWidth();
-        final int maxHeight = getMaxButtonHeight();
 
         // Lay components out
-        int xOffset = 0;
-        int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
         final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
