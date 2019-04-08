@@ -125,8 +125,6 @@
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
 
-    <psi.treeChangePreprocessor implementation="com.intellij.lang.properties.psi.impl.PropertiesPsiTreeChangePreprocessor"/>
-
     <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
   </extensions>
 

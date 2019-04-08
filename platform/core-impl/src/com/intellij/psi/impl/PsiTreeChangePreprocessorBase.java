@@ -9,6 +9,8 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated to be removed */
+@Deprecated
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
   protected final PsiManager myPsiManager;
 
