@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.ui.IconDeferrer
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
@@ -120,6 +121,8 @@ internal class RecentProjectIconHelper {
   }
 
   private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
+    if (!RecentProjectPanel.isFileSystemPath(path)) return null
+
     val file = Paths.get(path, ".idea", if (isDark) "icon_dark.png" else "icon.png")
     val fileInfo = file.basicAttributesIfExists() ?: return null
     val timestamp = fileInfo.lastModifiedTime().toMillis()
