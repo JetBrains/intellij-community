@@ -210,22 +210,20 @@ public class EditorActionUtil {
   public static int getNextCaretStopOffset(@NotNull Editor editor, boolean isCamel,
                                            @NotNull CaretStopPolicy caretStopPolicy) {
     final CaretStop wordStop = caretStopPolicy.getWordStop();
-
-    final CaretModel caretModel = editor.getCaretModel();
-    final int lineNumber = caretModel.getLogicalPosition().line;
-    final int offset = caretModel.getOffset();
+    final CaretStop lineStop = caretStopPolicy.getLineStop();
 
     final Document document = editor.getDocument();
     final int textLength = document.getTextLength();
-    if (caretStopPolicy.equals(CaretStopPolicy.NONE) || offset == textLength) return textLength;
+
+    final CaretModel caretModel = editor.getCaretModel();
+    final int offset = caretModel.getOffset();
+    if (offset == textLength || caretStopPolicy.equals(CaretStopPolicy.NONE)) return textLength;
+
+    final int lineNumber = caretModel.getLogicalPosition().line;
+    final boolean isAtLineEnd = (offset == document.getLineEndOffset(lineNumber));
+    final int maxOffset = getNextLineStopOffset(document, lineNumber, isAtLineEnd, lineStop);
 
     int newOffset = offset + 1;
-    int maxOffset = document.getLineEndOffset(lineNumber);
-    if (newOffset > maxOffset) {
-      if (lineNumber + 1 >= document.getLineCount()) return offset;
-      maxOffset = document.getLineEndOffset(lineNumber + 1);
-    }
-
     for (; newOffset < maxOffset; newOffset++) {
       if (isWordStop(editor, newOffset, isCamel, wordStop)) break;
     }
@@ -236,21 +234,57 @@ public class EditorActionUtil {
   public static int getPreviousCaretStopOffset(@NotNull Editor editor, boolean isCamel,
                                                @NotNull CaretStopPolicy caretStopPolicy) {
     final CaretStop wordStop = caretStopPolicy.getWordStop();
+    final CaretStop lineStop = caretStopPolicy.getLineStop();
 
     final CaretModel caretModel = editor.getCaretModel();
-    final int lineNumber = caretModel.getLogicalPosition().line;
     final int offset = caretModel.getOffset();
+    if (offset == 0 || caretStopPolicy.equals(CaretStopPolicy.NONE)) return 0;
 
-    if (caretStopPolicy.equals(CaretStopPolicy.NONE) || offset == 0) return 0;
+    final Document document = editor.getDocument();
+    final int lineNumber = caretModel.getLogicalPosition().line;
+    final boolean isAtLineStart = (offset == document.getLineStartOffset(lineNumber));
+    final int minOffset = getPreviousLineStopOffset(document, lineNumber, isAtLineStart, lineStop);
 
     int newOffset = offset - 1;
-    int minOffset = lineNumber > 0 ? editor.getDocument().getLineEndOffset(lineNumber - 1) : 0;
-
     for (; newOffset > minOffset; newOffset--) {
       if (isWordStop(editor, newOffset, isCamel, wordStop)) break;
     }
 
     return newOffset;
+  }
+
+  private static int getNextLineStopOffset(@NotNull Document document, int lineNumber, boolean isAtLineEnd,
+                                           @NotNull CaretStop lineStop) {
+    if (lineNumber + 1 >= document.getLineCount()) {
+      return document.getTextLength();
+    }
+    else if (!isAtLineEnd) {
+      return lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber) :
+             lineStop.isAtStart() ? document.getLineStartOffset(lineNumber + 1) :
+             document.getTextLength();
+    }
+    else {
+      return lineStop.isAtStart() ? document.getLineStartOffset(lineNumber + 1) :
+             lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber + 1) :
+             document.getTextLength();
+    }
+  }
+
+  private static int getPreviousLineStopOffset(@NotNull Document document, int lineNumber, boolean isAtLineStart,
+                                               @NotNull CaretStop lineStop) {
+    if (lineNumber - 1 < 0) {
+      return 0;
+    }
+    else if (!isAtLineStart) {
+      return lineStop.isAtStart() ? document.getLineStartOffset(lineNumber) :
+             lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber - 1) :
+             0;
+    }
+    else {
+      return lineStop.isAtEnd() ? document.getLineEndOffset(lineNumber - 1) :
+             lineStop.isAtStart() ? document.getLineStartOffset(lineNumber - 1) :
+             0;
+    }
   }
 
   private static boolean isWordStop(@NotNull Editor editor,
