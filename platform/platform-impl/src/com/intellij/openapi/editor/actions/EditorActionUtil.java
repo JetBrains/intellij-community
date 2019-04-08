@@ -207,8 +207,7 @@ public class EditorActionUtil {
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
   }
 
-  public static int getNextCaretStopOffset(@NotNull Editor editor, boolean isCamel,
-                                           @NotNull CaretStopPolicy caretStopPolicy) {
+  public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     final CaretStop wordStop = caretStopPolicy.getWordStop();
     final CaretStop lineStop = caretStopPolicy.getLineStop();
 
@@ -221,7 +220,7 @@ public class EditorActionUtil {
 
     final int lineNumber = caretModel.getLogicalPosition().line;
     final boolean isAtLineEnd = (offset == document.getLineEndOffset(lineNumber));
-    final int maxOffset = getNextLineStopOffset(document, lineNumber, isAtLineEnd, lineStop);
+    final int maxOffset = getNextLineStopOffset(document, lineStop, lineNumber, isAtLineEnd);
 
     int newOffset = offset + 1;
     for (; newOffset < maxOffset; newOffset++) {
@@ -231,8 +230,7 @@ public class EditorActionUtil {
     return newOffset;
   }
 
-  public static int getPreviousCaretStopOffset(@NotNull Editor editor, boolean isCamel,
-                                               @NotNull CaretStopPolicy caretStopPolicy) {
+  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     final CaretStop wordStop = caretStopPolicy.getWordStop();
     final CaretStop lineStop = caretStopPolicy.getLineStop();
 
@@ -243,7 +241,7 @@ public class EditorActionUtil {
     final Document document = editor.getDocument();
     final int lineNumber = caretModel.getLogicalPosition().line;
     final boolean isAtLineStart = (offset == document.getLineStartOffset(lineNumber));
-    final int minOffset = getPreviousLineStopOffset(document, lineNumber, isAtLineStart, lineStop);
+    final int minOffset = getPreviousLineStopOffset(document, lineStop, lineNumber, isAtLineStart);
 
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
@@ -253,8 +251,8 @@ public class EditorActionUtil {
     return newOffset;
   }
 
-  private static int getNextLineStopOffset(@NotNull Document document, int lineNumber, boolean isAtLineEnd,
-                                           @NotNull CaretStop lineStop) {
+  private static int getNextLineStopOffset(@NotNull Document document, @NotNull CaretStop lineStop,
+                                           int lineNumber, boolean isAtLineEnd) {
     if (lineNumber + 1 >= document.getLineCount()) {
       return document.getTextLength();
     }
@@ -270,8 +268,8 @@ public class EditorActionUtil {
     }
   }
 
-  private static int getPreviousLineStopOffset(@NotNull Document document, int lineNumber, boolean isAtLineStart,
-                                               @NotNull CaretStop lineStop) {
+  private static int getPreviousLineStopOffset(@NotNull Document document, @NotNull CaretStop lineStop,
+                                               int lineNumber, boolean isAtLineStart) {
     if (lineNumber - 1 < 0) {
       return 0;
     }
@@ -648,12 +646,12 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
-    moveToNextCaretStop(editor, isWithSelection, camel,
-                        EditorSettingsExternalizable.getInstance().getCaretStopOptions().getForwardPolicy());
+    moveToNextCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getForwardPolicy(),
+                        isWithSelection, camel);
   }
 
-  public static void moveToNextCaretStop(@NotNull Editor editor, boolean isWithSelection, boolean isCamel,
-                                         @NotNull CaretStopPolicy caretStopPolicy) {
+  public static void moveToNextCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                         boolean isWithSelection, boolean isCamel) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -672,7 +670,7 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getEndOffset();
     }
     else {
-      newOffset = getNextCaretStopOffset(editor, isCamel, caretStopPolicy);
+      newOffset = getNextCaretStopOffset(editor, caretStopPolicy, isCamel);
       if (newOffset == offset) return;
 
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
@@ -741,12 +739,12 @@ public class EditorActionUtil {
   }
 
   public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
-    moveToPreviousCaretStop(editor, isWithSelection, camel,
-                            EditorSettingsExternalizable.getInstance().getCaretStopOptions().getBackwardPolicy());
+    moveToPreviousCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getBackwardPolicy(),
+                            isWithSelection, camel);
   }
 
-  public static void moveToPreviousCaretStop(@NotNull Editor editor, boolean isWithSelection, boolean isCamel,
-                                             @NotNull CaretStopPolicy caretStopPolicy) {
+  public static void moveToPreviousCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                             boolean isWithSelection, boolean isCamel) {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
@@ -762,7 +760,7 @@ public class EditorActionUtil {
       newOffset = currentFoldRegion.getStartOffset();
     }
     else {
-      newOffset = getPreviousCaretStopOffset(editor, isCamel, caretStopPolicy);
+      newOffset = getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel);
       if (newOffset == offset) return;
 
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
@@ -916,7 +914,6 @@ public class EditorActionUtil {
            neighbor == '$' && isLetterOrDigit(hump) ||
            isUpperCase(prev) && isUpperCase(curr) && isLowerCase(next);
   }
-
 
   private static boolean isLowerCaseOrDigit(char c) {
     return isLowerCase(c) || isDigit(c);
