@@ -26,8 +26,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
     updateJavaParameters(configuration,params,runnerSettings);
   }
 
-  public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
-
+  public abstract <T extends RunConfigurationBase> void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
 
   @Override
   protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
