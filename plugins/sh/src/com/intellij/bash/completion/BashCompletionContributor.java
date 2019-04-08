@@ -1,12 +1,14 @@
-package com.intellij.bash.psi;
+package com.intellij.bash.completion;
 
 import com.intellij.bash.BashLanguage;
 import com.intellij.bash.lexer.BashLexer;
+import com.intellij.bash.psi.BashFile;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -21,11 +23,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public class BashCompletionContributor extends CompletionContributor implements DumbAware {
   public BashCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inFile(instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
 

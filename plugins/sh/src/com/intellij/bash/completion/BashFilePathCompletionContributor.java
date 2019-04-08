@@ -1,6 +1,7 @@
-package com.intellij.bash.psi;
+package com.intellij.bash.completion;
 
 import com.intellij.bash.BashStringUtil;
+import com.intellij.bash.psi.BashFile;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -23,7 +25,6 @@ import java.util.stream.Collectors;
 import static com.intellij.bash.BashStringUtil.quote;
 import static com.intellij.bash.BashStringUtil.unquote;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 public class BashFilePathCompletionContributor extends CompletionContributor implements DumbAware {
   private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
@@ -70,7 +71,7 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
   // @formatter:on
 
   public BashFilePathCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inFile(instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         PsiElement original = parameters.getOriginalPosition();
