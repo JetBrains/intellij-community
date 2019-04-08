@@ -563,9 +563,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   }
 
   public void testDoNotAddReferenceToDelimiterDefinition() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +

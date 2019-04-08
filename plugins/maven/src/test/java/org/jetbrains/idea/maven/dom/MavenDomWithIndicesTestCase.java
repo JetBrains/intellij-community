@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.junit.Assume;
 
 public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;

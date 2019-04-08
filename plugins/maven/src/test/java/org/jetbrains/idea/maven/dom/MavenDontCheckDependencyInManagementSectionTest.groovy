@@ -21,9 +21,6 @@ package org.jetbrains.idea.maven.dom
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   void testHighlighting() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     importProject("""
 <groupId>test</groupId>
 <artifactId>m1</artifactId>
@@ -75,8 +72,8 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   <dependencies>
     <dependency>
-      <groupId>xxxx</groupId>
-      <artifactId>yyyy</artifactId>
+      <groupId><error descr="Dependency 'xxxx:yyyy:zzzz' not found">xxxx</error></groupId>
+      <artifactId><error descr="Dependency 'xxxx:yyyy:zzzz' not found">yyyy</error></artifactId>
       <version><error descr="Dependency 'xxxx:yyyy:zzzz' not found">zzzz</error></version>
     </dependency>
   </dependencies>
@@ -94,8 +91,8 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
   <build>
     <plugins>
       <plugin>
-        <groupId>xxxx</groupId>
-        <artifactId>yyyy</artifactId>
+        <groupId><error descr="Plugin 'xxxx:yyyy:zzzz' not found">xxxx</error></groupId>
+        <artifactId><error descr="Plugin 'xxxx:yyyy:zzzz' not found">yyyy</error></artifactId>
         <version><error descr="Plugin 'xxxx:yyyy:zzzz' not found">zzzz</error></version>
       </plugin>
     </plugins>

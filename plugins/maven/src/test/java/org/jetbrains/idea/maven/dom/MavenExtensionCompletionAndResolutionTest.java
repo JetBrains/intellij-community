@@ -40,9 +40,6 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
   }
 
   public void testGroupIdCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

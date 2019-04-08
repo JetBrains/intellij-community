@@ -45,9 +45,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testGroupIdCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -108,39 +105,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertEquals(Arrays.asList("4.0", "3.8.2", "3.8.1"), variants);
   }
 
-  public void testDoesNotCompleteVersionOnUnknownGroupOrArtifact() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>unknown</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>unknown</artifactId>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
-  }
-
   public void testDoNotCompleteVersionIfNoGroupIdAndArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -156,9 +120,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testAddingLocalProjectsIntoCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -196,9 +157,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testResolvingPropertiesForLocalProjectsInCompletion() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -242,7 +200,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m, "RELEASE", "LATEST", "1");
+    assertCompletionVariants(m, "1");
 
     createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>module2</artifactId>" +
@@ -260,9 +218,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testChangingExistingProjects() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -322,9 +277,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     VirtualFile m = createModulePom("m1",
                                     "<groupId>project-group</groupId>" +
                                     "<artifactId>m1</artifactId>" +
@@ -379,12 +331,9 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    if(!onlineCompletionFinished()){
-      return;
-    }
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariants(myProjectPom, "m1");
+    assertCompletionVariantsInclude(myProjectPom, "m1");
 
     myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> m.delete(null));
@@ -558,9 +507,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testResolutionInsideTheProject() throws Exception {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -611,16 +557,13 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testHighlightInvalidSystemScopeDependencies() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <groupId><error descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></groupId>" +
+                     "    <groupId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></groupId>" +
                      "    <artifactId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></artifactId>" +
                      "    <version><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></version>" +
                      "    <scope>system</scope>" +
@@ -1100,23 +1043,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProject();
     checkHighlighting(m, true, false, true);
-  }
-
-  public void testUpdateIndicesIntention() {
-    if(!onlineCompletionFinished()){
-      return;
-    }
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><caret>xxx</groupId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertNotNull(getIntentionAtCaret("Update Maven Indices"));
   }
 
   public void testExclusionCompletion() {

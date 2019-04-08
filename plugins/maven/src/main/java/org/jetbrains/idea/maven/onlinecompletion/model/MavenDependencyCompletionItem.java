@@ -12,7 +12,7 @@ public class MavenDependencyCompletionItem extends MavenId {
   private final String classifier;
 
   public enum Type {
-    REMOTE(10), LOCAL(20), CACHED_ERROR(-1);
+    REMOTE(10), LOCAL(20), PROJECT(100), CACHED_ERROR(-1);
 
     private final int myWeight;
 
