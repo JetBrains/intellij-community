@@ -63,8 +63,13 @@ data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
 
   companion object {
     @JvmField
-    val DEFAULT = CaretStopOptionsTransposed(if (SystemInfo.isWindows) CaretStopBoundary.START else CaretStopBoundary.CURRENT,
-                                             if (SystemInfo.isWindows) CaretStopBoundary.BOTH else CaretStopBoundary.NONE)
+    val DEFAULT_WINDOWS = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
+                                                     lineBoundary = CaretStopBoundary.BOTH)
+    @JvmField
+    val DEFAULT_UNIX = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
+                                                  lineBoundary = CaretStopBoundary.NONE)
+    @JvmField
+    val DEFAULT = if (SystemInfo.isWindows) DEFAULT_WINDOWS else DEFAULT_UNIX
 
     @JvmStatic
     fun fromCaretStopOptions(caretStopOptions: CaretStopOptions) = with(caretStopOptions) {
