@@ -23,7 +23,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -36,7 +36,6 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author peter
@@ -46,8 +45,6 @@ public class EditorNotificationsImpl extends EditorNotifications {
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
   private final Key<CancellablePromise<?>> CURRENT_UPDATE = Key.create("EditorNotifications update"); // non-static, per-project
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-    "EditorNotificationsImpl Pool");
   private final MergingUpdateQueue myUpdateMerger;
   @NotNull private final Project myProject;
 
@@ -105,7 +102,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
             update.run();
           }
         })
-        .submit(ourExecutor);
+        .submit(NonUrgentExecutor.getInstance());
       file.putUserData(CURRENT_UPDATE, promise);
       promise.onProcessed(__ -> file.putUserData(CURRENT_UPDATE, null));
     });

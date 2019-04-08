@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -63,6 +64,7 @@ public interface NonBlockingReadAction<T> {
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise
    * is completed on the same thread (in the same read action), or on UI thread if {@link #finishOnUiThread} has been called.
    * @param backgroundThreadExecutor an executor to actually run the computation. Common examples are
+   *                                 {@link NonUrgentExecutor#getInstance()} or
    *                                 {@link AppExecutorUtil#getAppExecutorService()} or
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */

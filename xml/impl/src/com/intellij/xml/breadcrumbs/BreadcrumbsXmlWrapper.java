@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -53,7 +53,6 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
@@ -63,7 +62,6 @@ import static com.intellij.util.ui.UIUtil.getLabelFont;
  * @author spleaner
  */
 public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Editor Breadcrumb Updater", 1);
   final PsiBreadcrumbs breadcrumbs = new PsiBreadcrumbs();
 
   private final Project myProject;
@@ -203,7 +201,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         breadcrumbs.setFont(getNewFont(myEditor));
         breadcrumbs.setCrumbs(crumbs);
         notifyListeners(crumbs);
-      }).submit(ourExecutor);
+      }).submit(NonUrgentExecutor.getInstance());
     myAsyncUpdateProgress.onProcessed(__ -> myAsyncUpdateProgress = null);
   }
 
