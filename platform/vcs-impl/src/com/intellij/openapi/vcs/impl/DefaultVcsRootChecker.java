@@ -36,6 +36,11 @@ public class DefaultVcsRootChecker extends VcsRootChecker {
   }
 
   @Override
+  public boolean validateRoot(@NotNull String path) {
+    return true;
+  }
+
+  @Override
   public boolean isVcsDir(@NotNull String dirName) {
     if (myVcsDescriptor == null) return false;
     return myVcsDescriptor.matchesVcsDirPattern(dirName);

@@ -233,7 +233,7 @@ public class NewMappings {
   private boolean checkMappedRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile vcsRoot) {
     if (vcs == null) return false;
     VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-    return rootChecker.isRoot(vcsRoot.getPath());
+    return rootChecker.validateRoot(vcsRoot.getPath());
   }
 
   @NotNull
