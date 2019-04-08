@@ -346,6 +346,26 @@ BASH_FILE
               PsiElement()))('))')
             PsiElement(")('"')
   PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('s/.*\(iphoneos')
+            PsiElement(()('(')
+            PsiElement(()('(')
+            PsiElement([)('[')
+            PsiElement(word)('0-9')
+            PsiElement(])(']')
+            PsiElement(|)('|')
+            PsiElement(word)('.')
+            PsiElement())(')')
+            PsiElement(word)('+')
+            PsiElement())(')')
+            PsiElement(word)('\).*/\1/')
+            PsiElement(")('"')
+  PsiElement(\n)('\n')
   PsiComment(Comment)('# "$("s/(/")" #todo check s/(')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -554,12 +574,14 @@ BASH_FILE
         GENERIC_COMMAND_DIRECTIVE
           STRING
             PsiElement(")('"')
-            PsiElement((()('((')
+            PsiElement(()('(')
+            PsiElement(()('(')
             PsiWhiteSpace(' ')
             VARIABLE
               PsiElement(var)('$1')
             PsiWhiteSpace(' ')
-            PsiElement()))('))')
+            PsiElement())(')')
+            PsiElement())(')')
             PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST

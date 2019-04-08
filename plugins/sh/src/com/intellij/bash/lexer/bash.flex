@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
       private static final int PARENTHESES = 1;
 
       private boolean isCaseParameter;
+      private boolean isArithmeticExpansion;
       private String heredocMarker;
       private boolean heredocWithWhiteSpaceIgnore;
       private IntStack stateStack = new IntStack(20);
@@ -57,8 +58,9 @@ import static org.apache.commons.lang3.StringUtils.contains;
         stateStack.clear();
         parenStack.clear();
         heredocWithWhiteSpaceIgnore = false;
-        isCaseParameter = false;
         heredocMarker = null;
+        isCaseParameter = false;
+        isArithmeticExpansion = false;
       }
 %}
 
@@ -288,8 +290,11 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
     /***** Conditional statements *****/
-    "$(("                         { yypushback(2); return DOLLAR; }
-    "(("                          { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES); return LEFT_DOUBLE_PAREN; }
+    "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+    "(("                          { if (yystate() == STRING_EXPRESSION && !isArithmeticExpansion) { pushParentheses(PARENTHESES);
+                                           yypushback(1); isArithmeticExpansion = false; return LEFT_PAREN;}
+                                    else { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
+                                           isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; } }
     "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
     "$("                          { pushState(COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
     "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}

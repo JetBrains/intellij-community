@@ -827,6 +827,7 @@ public class _BashLexerGen implements FlexLexer {
       private static final int PARENTHESES = 1;
 
       private boolean isCaseParameter;
+      private boolean isArithmeticExpansion;
       private String heredocMarker;
       private boolean heredocWithWhiteSpaceIgnore;
       private IntStack stateStack = new IntStack(20);
@@ -861,8 +862,9 @@ public class _BashLexerGen implements FlexLexer {
         stateStack.clear();
         parenStack.clear();
         heredocWithWhiteSpaceIgnore = false;
-        isCaseParameter = false;
         heredocMarker = null;
+        isCaseParameter = false;
+        isArithmeticExpansion = false;
       }
 
 
@@ -1396,7 +1398,10 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 173: break;
           case 55: 
-            { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES); return LEFT_DOUBLE_PAREN;
+            { if (yystate() == STRING_EXPRESSION && !isArithmeticExpansion) { pushParentheses(PARENTHESES);
+                                           yypushback(1); isArithmeticExpansion = false; return LEFT_PAREN;}
+                                    else { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
+                                           isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
             } 
             // fall through
           case 174: break;
@@ -1607,7 +1612,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 213: break;
           case 95: 
-            { yypushback(2); return DOLLAR;
+            { isArithmeticExpansion = true; yypushback(2); return DOLLAR;
             } 
             // fall through
           case 214: break;
