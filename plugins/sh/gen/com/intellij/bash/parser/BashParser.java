@@ -233,7 +233,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression? ';' expression? ';' expression? '))'
+  // '((' expression? ';' newlines expression? ';' newlines expression? '))'
   static boolean arithmetic_for_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for_clause")) return false;
     if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
@@ -243,9 +243,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, arithmetic_for_clause_1(b, l + 1));
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, arithmetic_for_clause_3(b, l + 1)) && r;
+    r = p && report_error_(b, newlines(b, l + 1)) && r;
+    r = p && report_error_(b, arithmetic_for_clause_4(b, l + 1)) && r;
     r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, arithmetic_for_clause_5(b, l + 1)) && r;
+    r = p && report_error_(b, newlines(b, l + 1)) && r;
+    r = p && report_error_(b, arithmetic_for_clause_7(b, l + 1)) && r;
     r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -259,15 +261,15 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   // expression?
-  private static boolean arithmetic_for_clause_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_3")) return false;
+  private static boolean arithmetic_for_clause_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_4")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   // expression?
-  private static boolean arithmetic_for_clause_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_5")) return false;
+  private static boolean arithmetic_for_clause_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_7")) return false;
     expression(b, l + 1, -1);
     return true;
   }

@@ -33,6 +33,12 @@ for (( ;  ; ))
 {
 }
 
+for ((  i=1    ;
+    i <= 10;
+    i++ )) ; do
+    echo "Dummy text"
+done
+
 
 for name in idea-ultimate idea-community idea-contrib idea-community-android idea-community-android-tools idea-cidr idea-appcode-testdata idea-gemsData; do
 	dir=$name.git
