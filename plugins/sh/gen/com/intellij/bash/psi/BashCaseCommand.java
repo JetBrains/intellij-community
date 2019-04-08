@@ -7,55 +7,31 @@ import com.intellij.psi.PsiElement;
 
 public interface BashCaseCommand extends BashCommand {
 
-  @Nullable
-  BashArithmeticExpansion getArithmeticExpansion();
+  @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
 
-  @Nullable
-  BashBashExpansion getBashExpansion();
+  @NotNull
+  List<BashBashExpansion> getBashExpansionList();
 
   @NotNull
   List<BashCaseClause> getCaseClauseList();
 
-  @Nullable
-  BashShellParameterExpansion getShellParameterExpansion();
+  @NotNull
+  List<BashCommand> getCommandList();
 
-  @Nullable
-  BashString getString();
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
-  @Nullable
-  BashVariable getVariable();
+  @NotNull
+  List<BashString> getStringList();
 
-  @Nullable
-  PsiElement getAt();
-
-  @Nullable
-  PsiElement getBang();
-
-  @Nullable
-  PsiElement getDollar();
-
-  @Nullable
-  PsiElement getFiledescriptor();
+  @NotNull
+  List<BashVariable> getVariableList();
 
   @NotNull
   PsiElement getCase();
 
   @Nullable
   PsiElement getEsac();
-
-  @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
-
-  @Nullable
-  PsiElement getWord();
 
 }

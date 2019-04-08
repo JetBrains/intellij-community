@@ -29,6 +29,9 @@ case "$TARGET_CARD" in
     log_action_begin_msg "Setting up ALSA" ;;
 esac
 
+case $-:$BASH_VERSION in
+*x*:[0123456789]*)	: bash set -x is broken :; set +ex ;;
+esac
 
 monthnoToName()
 {
