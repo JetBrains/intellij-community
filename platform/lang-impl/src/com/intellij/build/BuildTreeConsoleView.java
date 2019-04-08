@@ -9,9 +9,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +22,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.Tree;
@@ -39,7 +40,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,15 +55,18 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
+import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
+import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
 
 /**
  * @author Vladislav.Soroka
@@ -504,6 +507,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     EditSourceOnEnterKeyHandler.install(tree, null);
     new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(tree);
+    tree.setCellRenderer(new MyNodeRenderer());
     return tree;
   }
 
@@ -698,64 +702,68 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     @Override
     public void setUI(final TreeUI ui) {
-      super.setUI(ui);
-      final int fontHeight = getFontMetrics(getFont()).getHeight();
-      final int iconHeight = AllIcons.RunConfigurations.TestPassed.getIconHeight();
-      setRowHeight(Math.max(fontHeight, iconHeight) + 2);
+      super.setUI(ui instanceof DefaultTreeUI ? ui : new DefaultTreeUI());
       setLargeModel(true);
     }
+  }
 
-    public boolean isExpandableHandlerVisibleForCurrentRow(int row) {
-      final ExpandableItemsHandler<Integer> handler = getExpandableItemsHandler();
-      final Collection<Integer> items = handler.getExpandedItems();
-      return items.size() == 1 && row == items.iterator().next();
-    }
+  private static class MyNodeRenderer extends NodeRenderer {
+    private String myDurationText;
+    private Color myDurationColor;
+    private int myDurationWidth;
+    private int myDurationOffset;
 
     @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      Rectangle visibleRect = getVisibleRect();
-      Rectangle clip = g.getClipBounds();
-      final int visibleRowCount = TreeUtil.getVisibleRowCountForFixedRowHeight(this);
-      final int firstRow = getClosestRowForLocation(0, visibleRect.y);
-      for (int row = firstRow; row < Math.min(firstRow + visibleRowCount + 1, getRowCount()); row++) {
-        if (isExpandableHandlerVisibleForCurrentRow(row)) continue;
-        if (row == -1) continue;
-        Object node = getPathForRow(row).getLastPathComponent();
-        if (!(node instanceof DefaultMutableTreeNode)) continue;
-        Object data = ((DefaultMutableTreeNode)node).getUserObject();
-        if (!(data instanceof ExecutionNode)) continue;
-        final String duration = ((ExecutionNode)data).getDuration();
-        if (duration == null) continue;
-
-        Rectangle rowBounds = getRowBounds(row);
-        rowBounds.x = 0;
-        rowBounds.width = Integer.MAX_VALUE;
-
-        if (rowBounds.intersects(clip)) {
-          Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
-          paintRowData(this, duration, fullRowRect, (Graphics2D)g, isRowSelected(row), hasFocus());
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+      myDurationText = null;
+      myDurationColor = null;
+      myDurationWidth = 0;
+      myDurationOffset = 0;
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+      final Object userObj = node.getUserObject();
+      if (userObj instanceof ExecutionNode) {
+        myDurationText = ((ExecutionNode)userObj).getDuration();
+        if (myDurationText != null) {
+          FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
+          myDurationWidth = metrics.stringWidth(myDurationText);
+          myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+          myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
         }
       }
     }
 
-    private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
-      g.setFont(tree.getFont().deriveFont(Font.PLAIN, UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
-      int totalWidth = tree.getFontMetrics(g.getFont()).stringWidth(duration) + 2;
-      int x = bounds.x + bounds.width - totalWidth;
-      g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
-      int leftOffset = 5;
-      g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
-      g.translate(0, bounds.y - 1);
-      if (isSelected) {
-        g.setColor(UIUtil.getTreeSelectionForeground(hasFocus));
+    @Override
+    protected void paintComponent(Graphics g) {
+      UISettings.setupAntialiasing(g);
+      Shape clip = null;
+      int width = getWidth();
+      int height = getHeight();
+      if (isOpaque()) {
+        // paint background for expanded row
+        g.setColor(getBackground());
+        g.fillRect(0, 0, width, height);
       }
-      else {
-        g.setColor(new JBColor(0x808080, 0x808080));
+      if (myDurationWidth > 0) {
+        width -= myDurationWidth + myDurationOffset;
+        if (width > 0 && height > 0) {
+          g.setColor(myDurationColor);
+          g.setFont(RelativeFont.SMALL.derive(getFont()));
+          g.drawString(myDurationText, width + myDurationOffset / 2, getTextBaseLine(g.getFontMetrics(), height));
+          clip = g.getClip();
+          g.clipRect(0, 0, width, height);
+        }
       }
-      g.drawString(duration, x, SimpleColoredComponent.getTextBaseLine(tree.getFontMetrics(tree.getFont()), bounds.height) + 1);
-      g.translate(0, -bounds.y + 1);
-      GraphicsUtil.setupAAPainting(g).restore();
+
+      super.paintComponent(g);
+      // restore clip area if needed
+      if (clip != null) g.setClip(clip);
     }
   }
 }
