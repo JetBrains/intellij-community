@@ -147,8 +147,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    if (IdeFrameDecorator.isCustomDecoration()) JdkEx.setHasCustomDecoration(this);
-
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
       protected Component getDefaultComponentImpl(Container focusCycleRoot) {
@@ -329,6 +327,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     try {
       ourUpdatingTitle = true;
+
+      if(IdeFrameDecorator.isCustomDecoration()) {
+        frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
+      }
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
         frame.getRootPane().putClientProperty("Window.documentFile", currentFile);

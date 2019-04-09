@@ -9,6 +9,7 @@ import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -27,8 +28,10 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -77,7 +80,7 @@ import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
-  public static final int DEFAULT_HEIGHT = 460;
+  public static final int DEFAULT_HEIGHT = 490;
   public static final int MAX_DEFAULT_WIDTH = 777;
   private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
@@ -97,12 +100,18 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setGlassPane(glassPane);
     glassPane.setVisible(false);
-    //setUndecorated(true);
-    setContentPane(myScreen.getWelcomePanel());
+
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      setContentPane(CustomFrameDialogContent.Companion.getContent(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background")));
+    } else {
+      setContentPane(myScreen.getWelcomePanel());
+    }
+
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
-    getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
+
+    getRootPane().setPreferredSize(JBUI.size(width, Math.min(DEFAULT_HEIGHT, getPreferredSize().height)));
     setResizable(false);
 
     Dimension size = getPreferredSize();
