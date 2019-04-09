@@ -3,8 +3,8 @@ package git4idea.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor.append
-import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -14,6 +14,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.*
 import junit.framework.TestCase
 
@@ -102,6 +103,66 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     TestCase.assertEquals(expected, actual)
   }
+
+  fun `test file history`() {
+    val expectedHistory = mutableSetOf<Int>()
+
+    val oldFile = "oldFile.txt"
+    expectedHistory.add(getCommitIndex(tac(oldFile)))
+
+    tac("somethingUnrelated.txt")
+
+    val newFile = "newFile.txt"
+    repo.mv(oldFile, newFile)
+    expectedHistory.add(getCommitIndex(repo.addCommit("rename")))
+
+    tac("somethingEvenMoreUnrelated.txt")
+
+    expectedHistory.add(getCommitIndex(modify(newFile)))
+
+    indexAll()
+
+    val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
+    val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
+
+    TestCase.assertEquals(expectedHistory, newHistory)
+    TestCase.assertEquals(expectedHistory, oldHistory)
+  }
+
+  fun `test directory history`() {
+    val dir = "dir"
+    Executor.mkdir(dir)
+
+    val expectedHistory = mutableSetOf<Int>()
+
+    cd(dir)
+    val file1 = "file1.txt"
+    expectedHistory.add(getCommitIndex(tac(file1)))
+    expectedHistory.add(getCommitIndex(tac("file2.txt")))
+
+    cd(repo.root)
+    tac("somethingUnrelated.txt")
+
+    cd(dir)
+    expectedHistory.add(getCommitIndex(modify(file1)))
+
+    cd(repo.root)
+    tac("somethingEvenMoreUnrelated.txt")
+
+    cd(dir)
+    mv(file1, "file3.txt")
+    expectedHistory.add(getCommitIndex(repo.addCommit("rename")))
+
+    cd(repo.root)
+    tac("somethingAbsolutelyUnrelated.txt")
+
+    indexAll()
+
+    val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
+    TestCase.assertEquals(expectedHistory, actualHistory)
+  }
+
+  private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))
 
   private fun getCommitIndex(hash: String): Int {
     return storage.getCommitIndex(HashImpl.build(hash), repo.root)
