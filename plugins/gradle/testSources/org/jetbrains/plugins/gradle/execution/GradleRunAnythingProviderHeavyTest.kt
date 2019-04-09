@@ -48,12 +48,12 @@ class GradleRunAnythingProviderHeavyTest : GradleImportingTestCase() {
     assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test -"), "gradle test --tests")
     assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --"), "gradle test --tests")
     assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --t"), "gradle test --tests")
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests "), completions)
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests *"), completions)
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests *."), completions)
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests *.Class"), completions)
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests org.jetbrains."), superCompletions)
-    assertUnorderedElementsAreEqual(provider.getValues(dataContext, "gradle test --tests org.jetbrains.Class"), superCompletions)
+    assertTrue(provider.getValues(dataContext, "gradle test --tests ").containsAll(completions))
+    assertTrue(provider.getValues(dataContext, "gradle test --tests *").containsAll(completions))
+    assertTrue(provider.getValues(dataContext, "gradle test --tests *.").containsAll(completions))
+    assertTrue(provider.getValues(dataContext, "gradle test --tests *.Class").containsAll(completions))
+    assertTrue(provider.getValues(dataContext, "gradle test --tests org.jetbrains.").containsAll(superCompletions))
+    assertTrue(provider.getValues(dataContext, "gradle test --tests org.jetbrains.Class").containsAll(superCompletions))
   }
 
   private fun createTestJavaClass(name: String) {
@@ -72,6 +72,6 @@ class GradleRunAnythingProviderHeavyTest : GradleImportingTestCase() {
      */
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(GradleImportingTestCase.BASE_GRADLE_VERSION))
+    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
 }
