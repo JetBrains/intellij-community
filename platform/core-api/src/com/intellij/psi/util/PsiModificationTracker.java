@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
  *   <li/> Make a {@link CachedValue} instance dependent on a specific PSI modification tracker.
  *   To achieve that, one should can one of the constants in this interface as {@link CachedValueProvider.Result}
  *   dependencies.
- *   See {@link #MODIFICATION_COUNT}, {@link #JAVA_STRUCTURE_MODIFICATION_COUNT}, {@link #OUT_OF_CODE_BLOCK_MODIFICATION_COUNT}
  *
  *   <li/> Subscribe to any PSI change (for example, to drop caches in the listener manually).
  *   See {@link PsiModificationTracker.Listener}
