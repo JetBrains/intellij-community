@@ -75,15 +75,18 @@ def is_executable(path):
 
 
 def starts_with_python_shebang(path):
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            for name in PYTHON_NAMES:
-                if line.startswith('#!/usr/bin/env %s' % name):
-                    return True
-            if line:
-                False
-    return False
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                for name in PYTHON_NAMES:
+                    if line.startswith('#!/usr/bin/env %s' % name):
+                        return True
+                return False
+    except UnicodeDecodeError:
+        return False
 
 
 def is_python(path):
