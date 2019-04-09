@@ -138,7 +138,7 @@ public class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 

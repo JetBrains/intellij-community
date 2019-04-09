@@ -2329,7 +2329,7 @@ public class ControlFlowUtil {
     return startOffset != -1 && isInstructionReachable(flow, startOffset, startOffset);
   }
 
-  static boolean isCaughtExceptionType(@NotNull PsiClassType throwType, @NotNull PsiType catchType) {
+  public static boolean isCaughtExceptionType(@NotNull PsiClassType throwType, @NotNull PsiType catchType) {
     return catchType.isAssignableFrom(throwType) || mightBeAssignableFromSubclass(throwType, catchType);
   }
 
