@@ -54,6 +54,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -157,7 +158,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   }
 
   @Override
-  public synchronized void scheduleIndex(boolean full) {
+  public void scheduleIndex(boolean full) {
+    doScheduleIndex(full, request -> mySingleTaskController.request(request));
+  }
+
+  @TestOnly
+  void indexNow(boolean full) {
+    doScheduleIndex(full, request -> request.run(myProgress.createProgressIndicator(INDEXING)));
+  }
+
+  private synchronized void doScheduleIndex(boolean full, @NotNull Consumer<IndexingRequest> requestConsumer) {
     if (Disposer.isDisposed(this)) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
@@ -181,7 +191,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         continue;
       }
 
-      mySingleTaskController.request(new IndexingRequest(root, myIndexStorage.paths.getPathsEncoder(), commits, isFull, false));
+      requestConsumer.consume(new IndexingRequest(root, myIndexStorage.paths.getPathsEncoder(), commits, isFull, false));
     }
 
     if (isFull) {
