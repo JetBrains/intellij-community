@@ -76,8 +76,7 @@ public class ExtractMethodWithResultObjectHandler implements RefactoringActionHa
     }
   }
 
-  static void extractMethodWithResultObject(ExtractMethodWithResultObjectProcessor processor)
-    throws PrepareFailedException {
+  static void extractMethodWithResultObject(ExtractMethodWithResultObjectProcessor processor) throws PrepareFailedException {
     if (!processor.prepare()) return;
     if (processor.showDialog()) {
       extractMethodWithResultObjectImpl(processor);

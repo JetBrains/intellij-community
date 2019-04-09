@@ -9,7 +9,7 @@ class X {
   }
 
     NewMethodResult newMethod(Object o) {
-        if (o == null) return new NewMethodResult((1 /* exit key */), x);
+        if (o == null) return new NewMethodResult((1 /* exit key */), (null /* missing value */));
         String x = bar(o);
         return new NewMethodResult((-1 /* exit key */), x);
     }

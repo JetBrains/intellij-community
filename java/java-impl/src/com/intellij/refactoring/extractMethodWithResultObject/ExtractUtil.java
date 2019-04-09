@@ -3,8 +3,10 @@ package com.intellij.refactoring.extractMethodWithResultObject;
 
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +16,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Pavel.Dolgov
  */
-public class ExitUtil {
+class ExtractUtil {
   @Nullable("null means there's an error in the code")
   static PsiElement findOutermostExitedElement(@NotNull PsiElement startLocation, @NotNull PsiElement codeFragmentMember) {
     PsiElement location = startLocation;
@@ -102,5 +104,19 @@ public class ExitUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  static PsiElement findContext(@NotNull PsiElement from, @NotNull PsiElement topmost, @NotNull PsiElement[] elements) {
+    return PsiTreeUtil.findFirstContext(from, false, e -> e == topmost || ArrayUtil.find(elements, e) >= 0);
+  }
+
+  @NotNull
+  static PsiType getVariableType(@NotNull PsiVariable variable) {
+    PsiType type = variable.getType();
+    if (type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) {
+      return PsiType.getJavaLangObject(variable.getManager(), GlobalSearchScope.allScope(variable.getProject()));
+    }
+    return type;
   }
 }

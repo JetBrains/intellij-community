@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectHandler
 import com.intellij.refactoring.extractMethodWithResultObject.ExtractMethodWithResultObjectProcessor
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -14,6 +15,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   private val BASE_PATH = "/refactoring/extractMethodWithResultObject/"
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_8
 
   override fun getTestDataPath(): String {
     return JavaTestUtil.getJavaTestDataPath()
@@ -51,7 +54,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testChainedConstructor() = doTest()
   fun testChainedConstructorDuplicates() = doTest()
   fun testChainedConstructorInvalidDuplicates() = doTest()
-  fun testChangedReturnType() = doTest(false) // todo
+  fun testChangedReturnType() = doTest()
   fun testCheckQualifierMapping() = doTest()
   fun testClassReference2() = doTest()
   fun testClassReference() = doTest()
@@ -79,9 +82,65 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testConditionalWithTwoParameters() = doTest()
   fun testConflictingAnonymous() = doTest(false) // todo
   fun testConstantConditionsAffectingControlFlow1() = doTest()
-  fun testConstantConditionsAffectingControlFlow() = doTest()
+  fun _testConstantConditionsAffectingControlFlow() = doTest() // todo
   fun testContinueInside() = doTest()
   fun testCopyParamAnnotations() = doTest()
+  fun testDecrementDifferentChainedFieldsDuplicate() = doTest()
+  fun testDecrementDifferentFieldsDuplicate() = doTest()
+  fun testDecrementDifferentInnerFieldsDuplicate() = doTest()
+  fun testDecrementDifferentOuterFieldsDuplicate() = doTest()
+  fun testDecrementDifferentStaticFieldsDuplicate() = doTest()
+  fun testDefaultNamesConflictResolution() = doTest()
+  fun testDifferentAnnotations() = doTest()
+  fun testDisabledParam() = doTest()
+  fun testDontMakeParametersFinalDueToUsagesInsideAnonymous() = doTest()
+  fun testDontSkipVariablesUsedInLeftSideOfAssignments() = doTest()
+  fun testDuplicateInUnreachableCode() = doTest()
+  fun testDuplicatePreserveComments() = doTest()
+  fun testDuplicatesFromAnonymous() = doTest()
+  fun testDuplicatesFullyQualifiedType() = doTest(false) // something's with the test data?
+  fun testDuplicateSubexpression() = doTest()
+  fun testDuplicateSubexpressionWithParentheses() = doTest()
+  fun testEffectivelyLocalVariables() = doTest() // todo!!
+  fun testEffectivelyLocalWithinExpression() = doTest()
+  fun testEmptyBlockStatement() = doTest()
+  fun testExactDuplicateDeclaredReusedVariable() = doTest()
+  fun testExactDuplicateTwoDeclaredReusedVariables() = doTest()
+  fun testExitPoints10() = doTest()
+  fun testExitPoints11() = doTest()
+  fun testExitPoints1() = doTest()
+  fun testExitPoints2() = doTest()
+  fun testExitPoints3() = doTest()
+  fun testExitPoints4() = doTest()
+  fun testExitPoints4Nullable() = doTest()
+  fun _testExitPoints5() = doTest() // todo!!
+  fun testExitPoints6() = doTest()
+  fun testExitPoints7() = doTest() // todo!!
+  fun testExitPoints8() = doTest()
+  fun testExitPoints9() = doTest()
+  fun testExitPointsInsideLoop() = doTest()
+  fun testExpression() = doTest()
+  fun testExpressionDuplicates() = doTest()
+  fun testExtractAssignmentExpression() = doTest()
+  fun testExtractAssignmentExpressionFromStatement() = doTest() // todo
+  fun testExtractChainedAssignmentExpression() = doTest()
+  fun testExtractUpdateAssignmentExpression() = doTest()
+  fun testExtractBareDoWhileBody() = doTest()
+  fun testExtractBareElseBranch() = doTest()
+  fun testExtractBareForBody() = doTest()
+  fun testExtractBareThenBranch() = doTest()
+  fun testExtractBracedDoWhileBody() = doTest()
+  fun testExtractBracedElseBranch() = doTest()
+  fun testExtractedVariableReused() = doTest() // todo
+  fun testExtractFromAnonymous() = doTest()
+  fun testExtractFromCodeBlock() = doTest()
+  fun testExtractFromFinally() = doTest()
+  fun testExtractFromTryFinally2() = doTest()
+  fun testExtractFromTryFinally() = doTest()
+  fun testExtractUnresolvedLambdaExpression() = doTest(false) // as expected
+  fun testExtractUnresolvedLambdaParameter() = doTest(false) // as expected
+  fun testExtractWithLeadingComment() = doTest()
+
   fun testParameterUsedInReturnedExpression() = doTest()
   fun testParameterUsedInReturnCondition() = doTest()
   fun testMethodUsedInReturnCondition() = doTest()
@@ -105,7 +164,7 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
 
   private fun performAction() {
     val elements: Array<PsiElement> = getSelectedElements()
-    assertTrue("elements", elements.isNotEmpty())
+    assertTrue("no elements to refactor", elements.isNotEmpty())
 
     val processor = ExtractMethodWithResultObjectProcessor(project, editor, elements)
     val prepared = processor.prepare()

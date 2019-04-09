@@ -2,13 +2,12 @@ class CommentAfterSelectedFragment {
     void foo(boolean debugMode) {
         int i= 0;
 
-        NewMethodResult x = newMethod(debugMode);
+        NewMethodResult x = newMethod(i, debugMode);
         i = x.i;
         System.out.println(i);
     }
 
-    NewMethodResult newMethod(boolean debugMode) {
-        int i = 0;
+    NewMethodResult newMethod(int i, boolean debugMode) {
         if (debugMode) {
             i = 1;
         } /* comment */
