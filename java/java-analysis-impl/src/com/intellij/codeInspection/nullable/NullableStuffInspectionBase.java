@@ -296,8 +296,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                           @NotNull Set<? super Couple<PsiType>> visited) {
         if (!visited.add(Couple.of(expectedType, assignedType))) return false;
 
-        if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),
-                              JavaGenericsUtil.getCollectionItemType(assignedType, place.getResolveScope()))) {
+        GlobalSearchScope scope = holder.getFile().getResolveScope();
+        if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, scope),
+                              JavaGenericsUtil.getCollectionItemType(assignedType, scope))) {
           return true;
         }
 
