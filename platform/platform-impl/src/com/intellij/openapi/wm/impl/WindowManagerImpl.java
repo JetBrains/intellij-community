@@ -59,15 +59,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NonNls private static final String FRAME_ELEMENT = "frame";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-  static {
-    try {
-      System.loadLibrary("jawt");
-    }
-    catch (Throwable t) {
-      LOG.info("jawt failed to load", t);
-    }
-  }
-
   private Boolean myAlphaModeSupported;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
