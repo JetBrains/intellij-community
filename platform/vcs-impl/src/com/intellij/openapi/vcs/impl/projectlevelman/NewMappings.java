@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +20,12 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
@@ -46,13 +54,14 @@ public class NewMappings {
   private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
+  @NotNull private Disposable myFilePointerDisposable = Disposer.newDisposable();
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
-  private volatile List<String> myInvalidMappedPaths = Collections.emptyList();
   private boolean myActivated = false;
 
   @NotNull private final MergingUpdateQueue myRootUpdateQueue;
+  private final VirtualFilePointerListener myFilePointerListener;
 
   public NewMappings(Project project,
                      ProjectLevelVcsManagerImpl vcsManager,
@@ -72,19 +81,12 @@ public class NewMappings {
       }
     });
 
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
+    myFilePointerListener = new VirtualFilePointerListener() {
       @Override
-      public void afterRefreshFinish(boolean asynchronous) {
-        boolean mappedFilesChanged = exists(myMappedRoots, it -> !it.root.isValid()) ||
-                                     exists(myInvalidMappedPaths, it -> {
-                                       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(it);
-                                       return file != null && file.isDirectory();
-                                     });
-        if (mappedFilesChanged) {
-          scheduleMappedRootsUpdate();
-        }
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+        scheduleMappedRootsUpdate();
       }
-    }, myProject);
+    };
   }
 
   @TestOnly
@@ -152,9 +154,10 @@ public class NewMappings {
     Mappings newMappedRoots = collectMappedRoots(newMappings);
 
     synchronized (myUpdateLock) {
+      Disposer.dispose(myFilePointerDisposable);
       myMappings = newMappings;
       myMappedRoots = newMappedRoots.mappedRoots;
-      myInvalidMappedPaths = newMappedRoots.invalidMappedPaths;
+      myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
       if (myActivated) {
         updateActiveVcses();
@@ -184,26 +187,31 @@ public class NewMappings {
   @NotNull
   private Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
     AllVcsesI allVcsesI = AllVcses.getInstance(myProject);
+    VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
 
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
-    List<String> invalidMappings = new ArrayList<>();
+    Disposable pointerDisposable = Disposer.newDisposable();
 
     // direct mappings have priority over <Project> mappings
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) continue;
       AbstractVcs vcs = getMappingsVcs(mapping, allVcsesI);
+      String rootPath = mapping.getDirectory();
 
-      VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+      ReadAction.run(() -> {
+        VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
 
-      if (vcsRoot == null || !vcsRoot.isDirectory()) {
-        invalidMappings.add(mapping.getDirectory());
-      }
-      else if (!checkMappedRoot(vcs, vcsRoot)) {
-        mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
-      }
-      else {
-        mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-      }
+        if (vcsRoot != null && vcsRoot.isDirectory()) {
+          if (checkMappedRoot(vcs, vcsRoot)) {
+            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+          }
+          else {
+            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
+          }
+        }
+
+        pointerManager.create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
+      });
     }
 
     for (VcsDirectoryMapping mapping : mappings) {
@@ -213,15 +221,18 @@ public class NewMappings {
 
       List<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs, myDefaultVcsRootPolicy.getDefaultVcsRoots());
 
-      for (VirtualFile vcsRoot : defaultRoots) {
-        if (vcsRoot != null && vcsRoot.isDirectory()) {
-          mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+      ReadAction.run(() -> {
+        for (VirtualFile vcsRoot : defaultRoots) {
+          if (vcsRoot != null && vcsRoot.isDirectory()) {
+            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+
+            pointerManager.create(vcsRoot, pointerDisposable, myFilePointerListener);
+          }
         }
-      }
+      });
     }
 
-    return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)),
-                        unmodifiableList(invalidMappings));
+    return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
   }
 
   @Nullable
@@ -326,9 +337,10 @@ public class NewMappings {
     LOG.debug("dispose me");
 
     synchronized (myUpdateLock) {
+      Disposer.dispose(myFilePointerDisposable);
       myMappings = Collections.emptyList();
       myMappedRoots = Collections.emptyList();
-      myInvalidMappedPaths = Collections.emptyList();
+      myFilePointerDisposable = Disposer.newDisposable();
       updateActiveVcses();
     }
     myFileWatchRequestsManager.ping();
@@ -453,11 +465,11 @@ public class NewMappings {
 
   private static class Mappings {
     @NotNull public final List<MappedRoot> mappedRoots;
-    @NotNull public final List<String> invalidMappedPaths;
+    @NotNull public final Disposable filePointerDisposable;
 
-    private Mappings(@NotNull List<MappedRoot> mappedRoots, @NotNull List<String> invalidMappedPaths) {
+    private Mappings(@NotNull List<MappedRoot> mappedRoots, @NotNull Disposable filePointerDisposable) {
       this.mappedRoots = mappedRoots;
-      this.invalidMappedPaths = invalidMappedPaths;
+      this.filePointerDisposable = filePointerDisposable;
     }
   }
 }
