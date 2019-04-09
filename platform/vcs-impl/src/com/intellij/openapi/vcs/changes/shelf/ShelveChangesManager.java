@@ -865,7 +865,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
-    Set<VirtualFile> fileSet = newConcurrentSet();
+    Set<VirtualFile> fileSet = newHashSet();
     fileSet.addAll(map2SetNotNull(changes, Change::getVirtualFile));
     myShelvingFiles = fileSet;
   }
@@ -1170,7 +1170,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   @NotNull
   public Collection<VirtualFile> getShelvingFiles() {
-    return newArrayList(ContainerUtil.notNullize(myShelvingFiles));
+    return new HashSet<>(ContainerUtil.notNullize(myShelvingFiles));
   }
 
   private void removeFromList(@NotNull final ShelvedChangeList listCopy,
