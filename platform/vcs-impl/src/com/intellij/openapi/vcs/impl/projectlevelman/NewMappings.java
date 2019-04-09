@@ -242,29 +242,41 @@ public class NewMappings {
   }
 
   private boolean checkMappedRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile vcsRoot) {
-    if (vcs == null) return false;
-    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-    return rootChecker.validateRoot(vcsRoot.getPath());
+    try {
+      if (vcs == null) return false;
+      VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+      return rootChecker.validateRoot(vcsRoot.getPath());
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   @NotNull
   private List<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs<?> vcs, @NotNull Collection<VirtualFile> files) {
-    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-    HashSet<VirtualFile> checkedDirs = new HashSet<>();
+    try {
+      VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+      HashSet<VirtualFile> checkedDirs = new HashSet<>();
 
-    List<VirtualFile> gitRoots = new ArrayList<>();
-    for (VirtualFile f : files) {
-      while (f != null) {
-        ProgressManager.checkCanceled();
-        if (!checkedDirs.add(f)) break;
-        if (rootChecker.isRoot(f.getPath())) {
-          gitRoots.add(f);
-          break;
+      List<VirtualFile> gitRoots = new ArrayList<>();
+      for (VirtualFile f : files) {
+        while (f != null) {
+          ProgressManager.checkCanceled();
+          if (!checkedDirs.add(f)) break;
+          if (rootChecker.isRoot(f.getPath())) {
+            gitRoots.add(f);
+            break;
+          }
+          f = f.getParent();
         }
-        f = f.getParent();
       }
+      return gitRoots;
     }
-    return gitRoots;
+    catch (Throwable e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
   }
 
   public void mappingsChanged() {
