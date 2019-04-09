@@ -47,6 +47,7 @@ import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,7 +119,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   private static String readDesktopEntryKey(File file, String key) {
     LOG.debug("looking for '" + key + "' in " + file);
     String prefix = key + '=';
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
       return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
     }
     catch (IOException | UncheckedIOException e) {
