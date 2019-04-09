@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 
@@ -156,7 +157,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
                                           pair("$WM_CLASS$", wmClass));
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     File entryFile = new File(FileUtil.getTempDirectory(), wmClass + ".desktop");
-    FileUtil.writeToFile(entryFile, content);
+    FileUtil.writeToFile(entryFile, content.getBytes(StandardCharsets.UTF_8));
     return entryFile;
   }
 
