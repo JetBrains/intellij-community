@@ -344,16 +344,14 @@ public class EditorActionUtil {
 
   private static boolean isWordStop(@NotNull CharSequence text, @NotNull CaretStop wordStop,
                                     int offset, boolean isCamel, boolean isLexemeBoundary) {
-    return wordStop.isAtStart() && isWordOrLexemeStart(text, offset, isCamel, isLexemeBoundary) ||
-           wordStop.isAtEnd() && isWordOrLexemeEnd(text, offset, isCamel, isLexemeBoundary);
-  }
-
-  private static boolean isWordOrLexemeStart(@NotNull CharSequence text, int offset, boolean isCamel, boolean isLexemeBoundary) {
-    return isWordStart(text, offset, isCamel) || isLexemeBoundary && !isWordEnd(text, offset, isCamel);
-  }
-
-  private static boolean isWordOrLexemeEnd(@NotNull CharSequence text, int offset, boolean isCamel, boolean isLexemeBoundary) {
-    return isWordEnd(text, offset, isCamel) || isLexemeBoundary && !isWordStart(text, offset, isCamel);
+    if (wordStop.isAtStart() && wordStop.isAtEnd()) {
+      return isLexemeBoundary ||
+             isWordStart(text, offset, isCamel) ||
+             isWordEnd(text, offset, isCamel);
+    }
+    if (wordStop.isAtStart()) return isLexemeBoundary && !isWordEnd(text, offset, isCamel) || isWordStart(text, offset, isCamel);
+    if (wordStop.isAtEnd()) return isLexemeBoundary && !isWordStart(text, offset, isCamel) || isWordEnd(text, offset, isCamel);
+    return false;
   }
 
   /**
