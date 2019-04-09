@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -56,6 +57,9 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     new CharsetMethodMatcher("org.apache.commons.io.IOUtils", "toString", "java.net.URL", ""),
   };
 
+  private static final CallMatcher FOR_NAME_MATCHER =
+    CallMatcher.staticCall("java.nio.charset.Charset", "forName").parameterTypes(JAVA_LANG_STRING);
+
   private static final Map<String, String> SUPPORTED_CHARSETS =
     ContainerUtil.<String, String>immutableMapBuilder()
       .put("US-ASCII", "US_ASCII")
@@ -83,18 +87,17 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
           .map(matcher -> matcher.extractCharsetMatch(call))
           .nonNull()
           .findFirst().orElse(null);
-        if (match == null) {
-          PsiMethod forNameMethod = getMethod(call, "forName", 1);
-          if (forNameMethod == null) return;
-          PsiClass containingClass = forNameMethod.getContainingClass();
-          if (containingClass == null || !"java.nio.charset.Charset".equals(containingClass.getQualifiedName())) return;
-          PsiExpressionList arguments = call.getArgumentList();
-          if (arguments == null || arguments.getExpressionCount() != 1) return;
-          PsiExpression charset = arguments.getExpressions()[0];
-          addCharsetReplacement(call, charset);
-          return;
-        }
+        if (match == null) return;
         addCharsetReplacement(match.myStringCharset, match.myStringCharset);
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        super.visitMethodCallExpression(call);
+        if (!FOR_NAME_MATCHER.matches(call)) return;
+        PsiExpressionList arguments = call.getArgumentList();
+        PsiExpression charset = arguments.getExpressions()[0];
+        addCharsetReplacement(call, charset);
       }
 
       private void addCharsetReplacement(@NotNull PsiElement place, @NotNull PsiExpression charset) {
@@ -126,16 +129,6 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         return null;
       }
     };
-  }
-
-  @Contract("null, _, _ -> null")
-  private static PsiMethod getMethod(PsiCallExpression call, String methodName, int paramsCnt) {
-    if (!(call instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)call;
-    if (!methodName.equals(methodCallExpression.getMethodExpression().getReferenceName())) return null;
-    PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-    if (argumentList.getExpressionCount() != paramsCnt) return null;
-    return call.resolveMethod();
   }
 
   abstract static class CharsetCallMatcher {
@@ -223,10 +216,12 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
     @Override
     CharsetMatch extractCharsetMatch(PsiCallExpression call) {
-      PsiMethod method = getMethod(call, myMethodName, myParameters.length);
-      if (method == null) return null;
-      PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList == null) return null;
+      if (!(call instanceof PsiMethodCallExpression)) return null;
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)call;
+      if (!myMethodName.equals(methodCallExpression.getMethodExpression().getReferenceName())) return null;
+      PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList.getExpressionCount() != myParameters.length) return null;
+      PsiMethod method = call.resolveMethod();
       if (!checkMethod(method, JAVA_LANG_STRING)) return null;
       return createMatch(method, argumentList);
     }
@@ -269,14 +264,16 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
-      PsiElement anchor = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
+      PsiElement anchor = FOR_NAME_MATCHER.matches(expression) ? null : PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
       CommentTracker ct = new CommentTracker();
       String replacement = "java.nio.charset." + myConstantName;
       PsiReferenceExpression ref = (PsiReferenceExpression)ct.replaceAndRestoreComments(expression, replacement);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
-      PsiTryStatement tryStatement =
-        PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
-      while (tryStatement != null) {
+      if (anchor == null) return;
+      while (true) {
+        PsiTryStatement tryStatement =
+          PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
+        if (tryStatement == null) break;
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         if (PsiTreeUtil.isAncestor(tryBlock, anchor, true)) {
           for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
@@ -307,7 +304,6 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
           }
         }
         anchor = tryStatement;
-        tryStatement = PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
       }
     }
   }
