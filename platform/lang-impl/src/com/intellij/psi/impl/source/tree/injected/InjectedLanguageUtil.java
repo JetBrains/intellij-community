@@ -350,7 +350,7 @@ public class InjectedLanguageUtil {
 
       current = current.getParent();
 
-      if (result != null && !result.isEmpty()) {
+      if (result != null) {
         if (result.files != null) {
           for (PsiFile injectedPsiFile : result.files) {
             Place place = getShreds(injectedPsiFile);
@@ -384,7 +384,7 @@ public class InjectedLanguageUtil {
       }
     }
 
-    if (element != current) {
+    if (element != current && (probeUp || result != null)) {
       cacheResults(element, current, hostPsiFile, result);
     }
   }
