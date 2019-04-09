@@ -453,7 +453,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
     if (!myMouseListeners.contains(listener)) {
       Disposable listenerDisposable = myMouseListeners.add(listener, parent);
-      Disposer.register(listenerDisposable, this::onListenerRemoval);
+      Disposer.register(listenerDisposable, () -> UIUtil.invokeLaterIfNeeded(() -> removeListener(listener)));
       updateSortedList();
     }
     activateIfNeeded();
@@ -470,14 +470,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private void removeListener(@NotNull EventListener listener) {
-    myMouseListeners.remove(listener);
-  }
-
-  private void onListenerRemoval() {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    if (myMouseListeners.remove(listener)) {
       updateSortedList();
-      deactivateIfNeeded();
-    });
+    }
+    deactivateIfNeeded();
   }
 
   private void updateSortedList() {
