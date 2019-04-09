@@ -3,17 +3,23 @@ package git4idea.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.test.*
 import junit.framework.TestCase
 
 class GitLogIndexTest : GitSingleRepoTest() {
+  private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
+
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
   private val dataGetter: IndexDataGetter
@@ -58,6 +64,43 @@ class GitLogIndexTest : GitSingleRepoTest() {
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+  }
+
+  fun `test text filter`() {
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    val keyword = "keyword"
+    val expected = setOf(getCommitIndex(repo.addCommit("message with $keyword")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  fun `test author filter`() {
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    val author = VcsUserImpl("Name", "name@server.com")
+    val expected = setOf(getCommitIndex(makeCommit(author, file)))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
+
+    TestCase.assertEquals(expected, actual)
   }
 
   private fun getCommitIndex(hash: String): Int {
