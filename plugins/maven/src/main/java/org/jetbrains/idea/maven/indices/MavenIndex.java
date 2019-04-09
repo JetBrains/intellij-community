@@ -195,24 +195,19 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   private void doOpen() throws Exception {
-    try {
-      File dataDir;
-      if (myDataDirName == null) {
-        dataDir = createNewDataDir();
-        myDataDirName = dataDir.getName();
-      }
-      else {
-        dataDir = new File(myDir, myDataDirName);
-        dataDir.mkdirs();
-      }
-      if (myData != null) {
-        myData.close(true);
-      }
-      myData = new IndexData(dataDir);
+    File dataDir;
+    if (myDataDirName == null) {
+      dataDir = createNewDataDir();
+      myDataDirName = dataDir.getName();
     }
-    catch (Exception e) {
-      throw e;
+    else {
+      dataDir = new File(myDir, myDataDirName);
+      dataDir.mkdirs();
     }
+    if (myData != null) {
+      myData.close(true);
+    }
+    myData = new IndexData(dataDir);
   }
 
   private void cleanupBrokenData() {
