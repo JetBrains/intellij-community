@@ -47,7 +47,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         if (method == null) return;
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length > args.length) return;
-        boolean varArgCall = MethodCallUtils.isVarArgCall(call);
+        boolean varArgCall = method.isVarArgs() && MethodCallUtils.isVarArgCall(call);
         if (!varArgCall && parameters.length < args.length) return;
         for (int i = 0; i < args.length; i++) {
           PsiParameter parameter = parameters[Math.min(parameters.length - 1, i)];
