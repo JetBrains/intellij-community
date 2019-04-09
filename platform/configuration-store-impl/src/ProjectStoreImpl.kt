@@ -247,6 +247,10 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   override fun getDirectoryStoreFile(): VirtualFile? = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
   override fun getDirectoryStorePathOrBase(): String = PathUtilRt.getParentPath(projectFilePath)
+
+  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
+    // do nothing, dummy implementation for Upsource
+  }
 }
 
 private open class ProjectStoreImpl(project: Project, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
