@@ -272,12 +272,14 @@ public class LambdaRefactoringUtil {
       PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
       if (methodReferenceInCopy != null) {
         PsiClassType functionalInterfaceType = (PsiClassType)methodReferenceInCopy.getFunctionalInterfaceType();
+        if (functionalInterfaceType == null) return false;
         PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
         PsiClass funcClass = funcResult.getElement();
         PsiSubstitutor funcSubstitutor = funcResult.getSubstitutor();
         PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
 
         PsiClassType lambdaCopyType = (PsiClassType)lambdaCopy.getFunctionalInterfaceType();
+        if (lambdaCopyType == null) return false;
         PsiClassType.ClassResolveResult lambdaCopyResult = lambdaCopyType.resolveGenerics();
         PsiClass lambdaCopyClass = lambdaCopyResult.getElement();
         PsiSubstitutor lambdaCopySubstitutor = lambdaCopyResult.getSubstitutor();
