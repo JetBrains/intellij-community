@@ -30,6 +30,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     var rangeToReformat: TextRange? = null
 
+    var accumulatedShift = 0
+
     for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength)) {
       val range = affectedMarker.origin.range
       println("range = $range -> '${affectedMarker.origin.document.getText(range)}'")
@@ -40,7 +42,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         continue
       }
 
-      val contentTextRange = host.contentRange
+      val contentTextRange = host.contentRange.shiftRight(accumulatedShift)
 
       myEditor.caretModel.moveToOffset(contentTextRange.startOffset)
 
@@ -53,13 +55,13 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       println("newText = '$newText'")
 
       println("replacing '${myOrigDocument.getText(contentTextRange)}' with '$newText'")
-
+      accumulatedShift += newText.length - contentTextRange.length
       myOrigDocument.replaceString(contentTextRange.startOffset, contentTextRange.endOffset, newText)
       val changedRange = TextRange.from(contentTextRange.startOffset, newText.length)
       rangeToReformat = rangeToReformat?.union(changedRange) ?: changedRange
     }
     psiDocumentManager.commitDocument(myOrigDocument)
-    println("rangeToReformat = $rangeToReformat")
+    println("rangeToReformat = $rangeToReformat -> '${rangeToReformat?.substring(origPsiFile.text)}'")
     if (rangeToReformat != null) {
 
       CodeStyleManager.getInstance(myProject).reformatRange(

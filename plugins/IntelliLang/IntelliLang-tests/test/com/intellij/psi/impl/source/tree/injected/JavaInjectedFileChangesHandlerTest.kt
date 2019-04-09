@@ -54,8 +54,8 @@ class A {
 class A {
   void foo() {
     String a = "<html>line\n" +
-               "anotherline<caret>\n" +
-               "finalLine</html>";
+            "anotherline<caret>\n" +
+            "finalLine</html>";
   }
 }
       """)
@@ -70,9 +70,9 @@ class A {
 
 class A {
   void foo() {
-    @Language("HTML") String a = "<tr><td>statement_timeout<td><td>= 0</td></tr>;\n" +
-               "<tr><td>lock_timeout</td><td> = </td></tr>;\n" +
-               "<tr><td>client_encoding</td><td> = 'UTF8'</td>;";
+    @Language("HTML") String a = "<html>li" +
+            "herline\n" +
+            "finalLine</html>";
   }
 }
       """)
@@ -180,8 +180,7 @@ class A {
 class A {
   void foo(String bodyText) {
     String headText = "someText1";
-    @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>\n" +
-            "" + bodyText + "</body></html>";;
+    @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>\n" + bodyText + "</body></html>";
   }
 }
       """)
