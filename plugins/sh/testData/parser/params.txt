@@ -1070,7 +1070,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(function)('function')
           PsiWhiteSpace(' ')
           PsiElement(word)('addConf')

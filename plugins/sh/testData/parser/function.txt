@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(word)('wait_file')
           PsiElement(()('(')
           PsiElement())(')')
@@ -96,7 +96,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(function)('function')
           PsiWhiteSpace(' ')
           PsiElement(word)('wait_file')
@@ -192,7 +192,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(function)('function')
           PsiWhiteSpace(' ')
           PsiElement(word)('wait_file')
@@ -286,7 +286,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(word)('varr')
           PsiElement(()('(')
           PsiWhiteSpace('     ')

@@ -2,7 +2,7 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        FUNCTION_DEF
+        FUNCTION_DEFINITION
           PsiElement(word)('dump-host-id')
           PsiElement(()('(')
           PsiElement())(')')
