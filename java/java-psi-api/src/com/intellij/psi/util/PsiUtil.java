@@ -109,7 +109,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
     if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
-    final JavaResolveResult accessObject = getAccessObjectClass(type, expression.getProject());
+    JavaResolveResult accessObject = getAccessObjectClass(type, expression);
     if (accessObject != null) return accessObject;
 
     if (type == null && expression instanceof PsiReferenceExpression) {
@@ -121,7 +121,8 @@ public final class PsiUtil extends PsiUtilCore {
     return JavaResolveResult.EMPTY;
   }
 
-  private static JavaResolveResult getAccessObjectClass(PsiType type, Project project) {
+  @Nullable
+  private static JavaResolveResult getAccessObjectClass(@Nullable PsiType type, @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
@@ -141,14 +142,14 @@ public final class PsiUtil extends PsiUtilCore {
         String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " + packageName + ";\n ";
         classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
-          (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
+          (PsiJavaFile)PsiFileFactory.getInstance(place.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
         return new ClassCandidateInfo(freshParameter, PsiSubstitutor.EMPTY);
       }
     }
 
     if (type instanceof PsiArrayType) {
-      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), project);
+      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), place);
     }
     return null;
   }
