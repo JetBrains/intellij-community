@@ -5,11 +5,16 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class BashTypingTest extends LightCodeInsightFixtureTestCase {
   // @formatter:off
-  public void testRawString()           { doTypingTest("<caret>", "'", "'<caret>'");            }
-  public void testRawStringAfter()      { doTypingTest("'<caret>'", "'", "''<caret>");          }
   public void testString()              { doTypingTest("<caret>", "\"", "\"<caret>\"");         }
-  public void testStringAfter()         { doTypingTest("\"<caret>\"", "\"", "\"\"<caret>");     }
+  public void testRawString()           { doTypingTest("<caret>", "'", "'<caret>'");            }
   public void testBackQuote()           { doTypingTest("<caret>", "`", "`<caret>`");            }
+
+  public void testStringBeforeFoo()     { doTypingTest("<caret>foo", "\"", "\"<caret>foo");     }
+  public void testRawStringBeforeFoo()  { doTypingTest("<caret>foo", "'", "'<caret>foo");       }
+  public void testBackQuoteBeforeFoo()  { doTypingTest("<caret>foo", "`", "`<caret>foo");       }
+
+  public void testStringAfter()         { doTypingTest("\"<caret>\"", "\"", "\"\"<caret>");     }
+  public void testRawStringAfter()      { doTypingTest("'<caret>'", "'", "''<caret>");          }
   public void testBackQuoteAfter()      { doTypingTest("`<caret>`", "`", "``<caret>");          }
 
   public void testStringBackspace()     { doBackspaceTest("\"<caret>\"", "<caret>");            }

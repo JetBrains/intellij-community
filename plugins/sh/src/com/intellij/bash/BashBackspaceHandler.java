@@ -13,7 +13,7 @@ public class BashBackspaceHandler extends BackspaceHandlerDelegate {
 
   @Override
   public boolean charDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor) {
-    if ((c == '\"' || c == '`') && file instanceof BashFile) {
+    if ((c == '\"' || c == '`' || c == '\'') && file instanceof BashFile) {
       int offset = editor.getCaretModel().getOffset();
       if (offset < 0) return false;
       CharSequence charsSequence = editor.getDocument().getCharsSequence();

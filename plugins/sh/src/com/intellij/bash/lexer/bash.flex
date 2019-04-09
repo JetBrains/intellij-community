@@ -80,7 +80,8 @@ Quote                    = \"
 //SingleCharacter = [^\'] | {EscapedChar}
 //UnescapedCharacter = [^\']
 
-RawString                = '[^']*'
+UnclosedRawString        = '[^']*
+RawString                = {UnclosedRawString}'
 
 WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
 WordAfter                = {WordFirst} | [#!] // \[\]
@@ -367,7 +368,9 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     {Variable}                    { return VAR; }
 
     {Quote}                       { pushState(STRING_EXPRESSION); return QUOTE; }
-    {RawString}                   { return RAW_STRING; }
+
+    {RawString}                   |
+    {UnclosedRawString}           { return RAW_STRING; }
 }
 
 <YYINITIAL, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION, CASE_CONDITION, CASE_PATTERN, IF_CONDITION,
