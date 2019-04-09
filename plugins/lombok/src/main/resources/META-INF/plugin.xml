@@ -5,7 +5,7 @@
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
   <version>XXX</version>
 
-  <idea-version since-build="171.00"/>
+  <idea-version since-build="181.00"/>
 
   <description><![CDATA[ Description will be added by gradle build]]></description>
   <category>Tools Integration</category>
