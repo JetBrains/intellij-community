@@ -448,7 +448,7 @@ public class RecentProjectPanel extends JPanel {
         }
         ListUtil.removeIndices(MyList.this, childIndices);
         ApplicationManager.getApplication().invokeLater(() -> {
-          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials were removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
+          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials have been removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
         });
       }
     }
@@ -677,6 +677,7 @@ public class RecentProjectPanel extends JPanel {
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
   }
 
+  //todo better code to guess if it is a real file system path or just a tutorial's description
   public static boolean isFileSystemPath(String path) {
     return path.indexOf('/') != -1 || path.indexOf('\\') != -1;
   }
