@@ -448,7 +448,7 @@ public class RecentProjectPanel extends JPanel {
         }
         ListUtil.removeIndices(MyList.this, childIndices);
         ApplicationManager.getApplication().invokeLater(() -> {
-          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials were removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
+          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials have been removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
         });
       }
     }
