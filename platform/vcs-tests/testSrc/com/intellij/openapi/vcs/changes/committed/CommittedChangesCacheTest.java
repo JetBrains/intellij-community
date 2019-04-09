@@ -172,8 +172,8 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     final Change change = createChange("1.txt", 2);
     final CommittedChangeList list = myProvider.registerChangeList("test", change);
     myCache.refreshAllCaches();
-    VirtualFile baseDir = myProject.getBaseDir();
-    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, baseDir, myProvider.getLocationFor(VcsUtil.getFilePath(baseDir)));
+    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, myContentRoot,
+                                                                              myProvider.getLocationFor(VcsUtil.getFilePath(myTempDir)));
     assertEquals(list.getCommitDate(), cacheFile.getLastCachedDate());
     assertEquals(list.getCommitDate(), cacheFile.getFirstCachedDate());
     assertEquals(list.getNumber(), cacheFile.getLastCachedChangelist());
