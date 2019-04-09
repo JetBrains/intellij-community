@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
+/**
+ * Listener for {@link FileEditorManager} events. All methods are invoked in EDT.
+ */
 public interface FileEditorManagerListener extends EventListener{
   Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER =
     new Topic<>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
