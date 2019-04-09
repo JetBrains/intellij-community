@@ -2,8 +2,11 @@
 package com.intellij.execution.executors
 
 import com.intellij.execution.Executor
+import com.intellij.execution.Executor.shortenNameIfNeed
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.TextWithMnemonic
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -70,6 +73,8 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
 
     override fun getStartActionText(): String = settings.startActionText
 
+    override fun getStartActionText(configurationName: String): String = settings.getStartActionText(configurationName)
+
     override fun getContextActionId(): String {
       throw UnsupportedOperationException("ProxyExecutor can't be used to create context action")
     }
@@ -85,6 +90,14 @@ interface RunExecutorSettings {
   val icon: Icon
   val actionName: String
   val startActionText: String
+  /**
+   * @see com.intellij.execution.Executor.getStartActionText
+   */
+  @JvmDefault
+  fun getStartActionText(configurationName: String): String {
+    val configName = if (StringUtil.isEmpty(configurationName)) "" else " '" + shortenNameIfNeed(configurationName) + "'"
+    return TextWithMnemonic.parse(startActionText).append(configName).toString()
+  }
 
   fun isApplicable(project: Project): Boolean
 
