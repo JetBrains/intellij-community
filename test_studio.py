@@ -128,7 +128,7 @@ class StudioTests(unittest.TestCase):
       return
 
     required = [
-        "plugins/aswb-blaze/lib/aswb_blaze.jar",
+        "plugins/aswb-blaze/lib/aswb.jar",
         "plugins/aswb-blaze/aspect/intellij_info_bundled.bzl",
       ];
 
