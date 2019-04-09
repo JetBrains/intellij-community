@@ -335,7 +335,6 @@ idea.fatal.error.notification=disabled
         scramble()
       }
       setupJBre()
-      setupBundledMaven()
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
