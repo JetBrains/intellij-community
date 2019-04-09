@@ -221,7 +221,7 @@ public class EditorActionUtil {
     int newOffset = offset + 1;
     for (; newOffset < maxOffset; newOffset++) {
       final boolean isLexemeBoundary = advanceTokenOnBoundary(tokenIterator, newOffset);
-      if (isWordStop(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
     }
 
     return newOffset;
@@ -240,10 +240,22 @@ public class EditorActionUtil {
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
       final boolean isLexemeBoundary = retreatTokenOnBoundary(tokenIterator, newOffset);
-      if (isWordStop(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
     }
 
     return newOffset;
+  }
+
+  private static boolean isWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                          int offset, boolean isCamel, boolean isLexemeBoundary) {
+    if (wordStop.isAtStart() && wordStop.isAtEnd()) {
+      return isLexemeBoundary ||
+             isWordStart(text, offset, isCamel) ||
+             isWordEnd(text, offset, isCamel);
+    }
+    if (wordStop.isAtStart()) return isLexemeBoundary && !isWordEnd(text, offset, isCamel) || isWordStart(text, offset, isCamel);
+    if (wordStop.isAtEnd()) return isLexemeBoundary && !isWordStart(text, offset, isCamel) || isWordEnd(text, offset, isCamel);
+    return false;
   }
 
   private static boolean advanceTokenOnBoundary(@Nullable HighlighterIterator tokenIterator, int offset) {
@@ -342,18 +354,6 @@ public class EditorActionUtil {
     return isWordEnd(chars, offset, isCamel) || !isWordStart(chars, offset, isCamel) && isLexemeBoundary(editor, offset);
   }
 
-  private static boolean isWordStop(@NotNull CharSequence text, @NotNull CaretStop wordStop,
-                                    int offset, boolean isCamel, boolean isLexemeBoundary) {
-    if (wordStop.isAtStart() && wordStop.isAtEnd()) {
-      return isLexemeBoundary ||
-             isWordStart(text, offset, isCamel) ||
-             isWordEnd(text, offset, isCamel);
-    }
-    if (wordStop.isAtStart()) return isLexemeBoundary && !isWordEnd(text, offset, isCamel) || isWordStart(text, offset, isCamel);
-    if (wordStop.isAtEnd()) return isLexemeBoundary && !isWordStart(text, offset, isCamel) || isWordEnd(text, offset, isCamel);
-    return false;
-  }
-
   /**
    * Finds out whether there's a boundary between two lexemes of different type at given offset.
    */
@@ -367,14 +367,6 @@ public class EditorActionUtil {
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
     return retreatTokenOnBoundary(it, offset);
-  }
-
-  public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
-    return isWordBound(text, offset, isCamel, true);
-  }
-
-  public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
-    return isWordBound(text, offset, isCamel, false);
   }
 
   /**
@@ -925,7 +917,15 @@ public class EditorActionUtil {
     }
   }
 
-  public static boolean isWordBound(@NotNull CharSequence text, int offset, boolean isCamel, boolean isStart) {
+  public static boolean isWordStart(@NotNull CharSequence text, int offset, boolean isCamel) {
+    return isWordBoundary(text, offset, isCamel, true);
+  }
+
+  public static boolean isWordEnd(@NotNull CharSequence text, int offset, boolean isCamel) {
+    return isWordBoundary(text, offset, isCamel, false);
+  }
+
+  public static boolean isWordBoundary(@NotNull CharSequence text, int offset, boolean isCamel, boolean isStart) {
     if (offset < 0 || offset > text.length()) return false;
 
     final char prev = offset > 0 ? text.charAt(offset - 1) : 0;
