@@ -134,7 +134,7 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
-  public void visitFunctionDef(@NotNull BashFunctionDef o) {
+  public void visitFunctionDefinition(@NotNull BashFunctionDefinition o) {
     visitCommand(o);
   }
 

@@ -197,7 +197,7 @@ shell_command ::=   for_command
                   | if_command
                   | subshell_command
                   | block
-                  | function_def {recoverWhile=command_recover}
+                  | function_definition {recoverWhile=command_recover}
 
 while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
@@ -216,8 +216,8 @@ block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
 
 select_command ::= select w (';'? newlines any_block | newlines in_clause any_block)
 
-function_def ::=           word argument_list  newlines block
-                | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
+function_definition ::=           word argument_list  newlines block
+                       | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
 private argument_list ::= '(' ')'
 
 subshell_command ::= '(' list ')' {pin=1}

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashFunctionDefImpl extends BashCommandImpl implements BashFunctionDef {
+public class BashFunctionDefinitionImpl extends BashCommandImpl implements BashFunctionDefinition {
 
-  public BashFunctionDefImpl(ASTNode node) {
+  public BashFunctionDefinitionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitFunctionDef(this);
+    visitor.visitFunctionDefinition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

@@ -41,7 +41,7 @@ public interface BashTypes {
   IElementType EXP_EXPRESSION = new BashCompositeElementType("EXP_EXPRESSION");
   IElementType FOR_CLAUSE = new BashCompositeElementType("FOR_CLAUSE");
   IElementType FOR_COMMAND = new BashCompositeElementType("FOR_COMMAND");
-  IElementType FUNCTION_DEF = new BashCompositeElementType("FUNCTION_DEF");
+  IElementType FUNCTION_DEFINITION = new BashCompositeElementType("FUNCTION_DEFINITION");
   IElementType GENERIC_COMMAND_DIRECTIVE = new BashCompositeElementType("GENERIC_COMMAND_DIRECTIVE");
   IElementType HEREDOC = new BashCompositeElementType("HEREDOC");
   IElementType IF_COMMAND = new BashCompositeElementType("IF_COMMAND");
@@ -277,8 +277,8 @@ public interface BashTypes {
       else if (type == FOR_COMMAND) {
         return new BashForCommandImpl(node);
       }
-      else if (type == FUNCTION_DEF) {
-        return new BashFunctionDefImpl(node);
+      else if (type == FUNCTION_DEFINITION) {
+        return new BashFunctionDefinitionImpl(node);
       }
       else if (type == GENERIC_COMMAND_DIRECTIVE) {
         return new BashGenericCommandDirectiveImpl(node);

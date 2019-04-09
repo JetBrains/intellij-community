@@ -80,8 +80,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == FOR_COMMAND) {
       r = for_command(b, 0);
     }
-    else if (t == FUNCTION_DEF) {
-      r = function_def(b, 0);
+    else if (t == FUNCTION_DEFINITION) {
+      r = function_definition(b, 0);
     }
     else if (t == GENERIC_COMMAND_DIRECTIVE) {
       r = generic_command_directive(b, 0);
@@ -181,7 +181,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(ASSIGNMENT_COMMAND, BLOCK, CASE_COMMAND, COMMAND,
       COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
-      FUNCTION_DEF, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
+      FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
       INCLUDE_DIRECTIVE, LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
       SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND,
       UNTIL_COMMAND, WHILE_COMMAND),
@@ -1338,21 +1338,21 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // word argument_list  newlines block
-  //                 | function word argument_list? newlines block
-  public static boolean function_def(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "function_def")) return false;
-    if (!nextTokenIs(b, "<function def>", FUNCTION, WORD)) return false;
+  //                        | function word argument_list? newlines block
+  public static boolean function_definition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition")) return false;
+    if (!nextTokenIs(b, "<function definition>", FUNCTION, WORD)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, FUNCTION_DEF, "<function def>");
-    r = function_def_0(b, l + 1);
-    if (!r) r = function_def_1(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, FUNCTION_DEFINITION, "<function definition>");
+    r = function_definition_0(b, l + 1);
+    if (!r) r = function_definition_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // word argument_list  newlines block
-  private static boolean function_def_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "function_def_0")) return false;
+  private static boolean function_definition_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, WORD);
@@ -1365,13 +1365,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   // function word argument_list? newlines block
-  private static boolean function_def_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "function_def_1")) return false;
+  private static boolean function_definition_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_1")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeTokens(b, 1, FUNCTION, WORD);
     p = r; // pin = function|argument_list
-    r = r && report_error_(b, function_def_1_2(b, l + 1));
+    r = r && report_error_(b, function_definition_1_2(b, l + 1));
     r = p && report_error_(b, newlines(b, l + 1)) && r;
     r = p && block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
@@ -1379,8 +1379,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   // argument_list?
-  private static boolean function_def_1_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "function_def_1_2")) return false;
+  private static boolean function_definition_1_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "function_definition_1_2")) return false;
     argument_list(b, l + 1);
     return true;
   }
@@ -2304,7 +2304,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                   | if_command
   //                   | subshell_command
   //                   | block
-  //                   | function_def
+  //                   | function_definition
   public static boolean shell_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_command")) return false;
     boolean r;
@@ -2317,7 +2317,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = if_command(b, l + 1);
     if (!r) r = subshell_command(b, l + 1);
     if (!r) r = block(b, l + 1);
-    if (!r) r = function_def(b, l + 1);
+    if (!r) r = function_definition(b, l + 1);
     exit_section_(b, l, m, r, false, command_recover_parser_);
     return r;
   }

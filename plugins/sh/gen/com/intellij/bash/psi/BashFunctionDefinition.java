@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashFunctionDef extends BashCommand {
+public interface BashFunctionDefinition extends BashCommand {
 
   @Nullable
   BashBlock getBlock();
