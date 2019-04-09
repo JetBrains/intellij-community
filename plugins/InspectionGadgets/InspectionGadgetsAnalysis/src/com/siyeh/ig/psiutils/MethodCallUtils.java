@@ -109,6 +109,7 @@ public class MethodCallUtils {
 
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @NonNls @Nullable String... parameterTypeStrings) {
+    if (!checkMethodName(expression, methodName)) return false;
     if (parameterTypeStrings == null) {
       return isCallToMethod(expression, calledOnClassName, returnType, methodName, (PsiType[])null);
     }
@@ -171,6 +172,16 @@ public class MethodCallUtils {
 
   public static boolean isCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @Nullable PsiType... parameterTypes) {
+    if (!checkMethodName(expression, methodName)) return false;
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+    return MethodUtils.methodMatches(method, calledOnClassName, returnType, methodName, parameterTypes);
+  }
+
+  private static boolean checkMethodName(@NotNull PsiMethodCallExpression expression,
+                                         @Nullable @NonNls String methodName) {
     if (methodName != null) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
@@ -178,11 +189,7 @@ public class MethodCallUtils {
         return false;
       }
     }
-    final PsiMethod method = expression.resolveMethod();
-    if (method == null) {
-      return false;
-    }
-    return MethodUtils.methodMatches(method, calledOnClassName, returnType, methodName, parameterTypes);
+    return true;
   }
 
   public static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
