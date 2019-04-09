@@ -40,14 +40,14 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
   }
 }
 
-class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
+class JavaInjectedFileChangesHandler0 extends BaseInjectedFileChangesHandler {
 
   @NotNull
   private final RangeMarker myAltFullRange;
 
-  JavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
-                                 Document newDocument,
-                                 PsiFile injectedFile) {
+  JavaInjectedFileChangesHandler0(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
+                                  Document newDocument,
+                                  PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
 
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
@@ -109,6 +109,31 @@ class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
       myEditor.getCaretModel().moveToOffset(documentWindow.injectedToHost(e.getOffset()));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
+    //
+    //AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).later().submit(() -> {
+    //  final PsiFile origPsiFile1 = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
+    //  if (origPsiFile1 != null) {
+    //
+    //    //WriteCommandAction.writeCommandAction(myProject).run(() -> {
+    //    //  //try {
+    //    //  CodeStyleManager.getInstance(myProject).reformatRange(
+    //    //    origPsiFile1, hostStartOffset, myAltFullRange.getEndOffset(), true);
+    //    //  //}
+    //    //  //catch (IncorrectOperationException e1) {
+    //    //  //  LOG.error(e);
+    //    //  //}
+    //    //});
+    //
+    //
+    //    PsiElement newInjected = InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(origPsiFile1, hostStartOffset);
+    //    DocumentWindow documentWindow = newInjected == null ? null : InjectedLanguageUtil.getDocumentWindow(newInjected);
+    //    if (documentWindow != null) {
+    //      myEditor.getCaretModel().moveToOffset(documentWindow.injectedToHost(e.getOffset()));
+    //      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    //    }
+    //  }
+    //});
+
   }
 
   @Override
