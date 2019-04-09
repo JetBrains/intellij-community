@@ -240,7 +240,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         }
       }
       else {
-        visitPyElement(target);
+        target.accept(this);
       }
     }
   }

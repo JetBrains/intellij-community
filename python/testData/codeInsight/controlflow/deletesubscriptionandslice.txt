@@ -2,7 +2,8 @@
 1(2) element: PyAssignmentStatement
 2(3) WRITE ACCESS: foo
 3(4) element: PyDelStatement
-4(5) READ ACCESS: foo
-5(6) element: PyDelStatement
-6(7) READ ACCESS: foo
-7() element: null
+4(5) element: PySubscriptionExpression
+5(6) READ ACCESS: foo
+6(7) element: PyDelStatement
+7(8) READ ACCESS: foo
+8() element: null
