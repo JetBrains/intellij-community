@@ -1,5 +1,5 @@
 class Test {
-  void distributiveTest(int a, int b, int c, int d) {
+  void distributiveTest(int a, int b, int c, int d, double cc) {
     int e = /*1*/a * (b /*2*/<caret>+ c);
     int f = -/*1*/a * -/*2*/(b - -/*3*/c<caret>);
     int g = /*1*/a * (b +<caret> c) * d;
@@ -11,7 +11,7 @@ class Test {
     int m = a | (-c & <caret>b);
     int n = a & (c | <caret>b);
     int o = 2 * (3 - -a <caret>/ -/*1*/b * -/*2*/c);
-    int p = (a <caret>+/*1*/ b) /*2*// c;
+    double p = (a <caret>+/*1*/ b) /*2*// cc;
   }
 
   void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {

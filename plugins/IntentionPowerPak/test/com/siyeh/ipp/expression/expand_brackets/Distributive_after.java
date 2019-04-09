@@ -1,5 +1,5 @@
 class Test {
-  void distributiveTest(int a, int b, int c, int d) {
+  void distributiveTest(int a, int b, int c, int d, double cc) {
       /*2*/
       int e = /*1*/a * b + a * c;
       /*1*/
@@ -21,7 +21,7 @@ class Test {
       int o = 2 * 3 + 2 * a / b * c;
       /*1*/
       /*2*/
-      int p = a / c + b / c;
+      double p = a / cc + b / cc;
   }
 
   void distributiveBooleanTest(boolean a, boolean b, boolean c, boolean d) {

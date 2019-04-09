@@ -24,10 +24,13 @@ import java.util.List;
 
 public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
 
+  private boolean myStartInWriteAction = false;
+
   private static final Pass<PsiParenthesizedExpression> EXPAND_CALLBACK = new Pass<PsiParenthesizedExpression>() {
     @Override
     public void pass(@NotNull PsiParenthesizedExpression expression) {
       WriteCommandAction.writeCommandAction(expression.getProject(), expression.getContainingFile())
+        .withName(getName())
         .run(() -> replaceExpression(expression));
     }
   };
@@ -36,24 +39,30 @@ public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return getName();
   }
 
   @NotNull
   @Override
   public String getText() {
+    return getName();
+  }
+
+  private static String getName() {
     return IntentionPowerPackBundle.defaultableMessage("expand.brackets.intention.name");
   }
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return myStartInWriteAction;
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
-    return possibleInnerExpressions != null && possibleInnerExpressions.size() > 0;
+    if (possibleInnerExpressions == null || possibleInnerExpressions.isEmpty()) return false;
+    myStartInWriteAction = possibleInnerExpressions.size() == 1;
+    return true;
   }
 
   @Override
@@ -65,7 +74,7 @@ public class ExpandBracketsIntention extends BaseElementAtCaretIntentionAction {
 
   private static void processInnerExpression(@Nullable Editor editor, @NotNull List<PsiParenthesizedExpression> expressions) {
     if (expressions.size() == 1) {
-      EXPAND_CALLBACK.pass(expressions.get(0));
+      replaceExpression(expressions.get(0));
       return;
     }
     if (expressions.isEmpty() || editor == null) return;
