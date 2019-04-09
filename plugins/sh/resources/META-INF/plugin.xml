@@ -13,6 +13,7 @@
     <lang.parserDefinition language="Bash" implementationClass="com.intellij.bash.parser.BashParserDefinition"/>
     <lang.commenter language="Bash" implementationClass="com.intellij.bash.BashCommenter"/>
     <lang.quoteHandler language="Bash" implementationClass="com.intellij.bash.BashQuoteHandler"/>
+    <backspaceHandlerDelegate implementation="com.intellij.bash.BashBackspaceHandler"/>
 
     <annotator language="Bash" implementationClass="com.intellij.bash.BashAnnotator"/>
     <additionalTextAttributes scheme="Default" file="colors/BashDefault.xml"/>
