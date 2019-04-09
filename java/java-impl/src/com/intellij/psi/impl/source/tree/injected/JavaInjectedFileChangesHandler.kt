@@ -26,15 +26,16 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     println("e = $e")
     println("affectedRange = $affectedRange")
     val affectedMarkers = markers.filter { affectedRange.intersects(it.local) }
-    println("affectedMarkers = ${affectedMarkers.size}")
+    println("affectedMarkers = ${affectedMarkers.size}: ${affectedMarkers.map { it.origin.range }}")
 
     var rangeToReformat: TextRange? = null
 
     var accumulatedShift = 0
 
     for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength)) {
+      assert(myInjectedFile.isValid)
       val range = affectedMarker.origin.range
-      println("range = $range -> '${affectedMarker.origin.document.getText(range)}'")
+      println("range = $range -> '${myOrigDocument.getText(range)}'")
       println("markerText = '$markerText'")
       val host = affectedMarker.host
       if (host == null) {
@@ -42,7 +43,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         continue
       }
 
-      val contentTextRange = host.contentRange.shiftRight(accumulatedShift)
+      println("accumulatedShift = $accumulatedShift")
+      //      val contentTextRange = host.contentRange.shiftRight(accumulatedShift)
+      val contentTextRange = range
 
       myEditor.caretModel.moveToOffset(contentTextRange.startOffset)
 
@@ -68,9 +71,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         origPsiFile, rangeToReformat.startOffset, rangeToReformat.endOffset, true)
     }
     val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
-    InjectedLanguageUtil.getShreds(myInjectedFile).let { shreds ->
-      println("shreds count = ${shreds.size}")
-    }
+    //    InjectedLanguageUtil.getShreds(myInjectedFile).let { shreds ->
+    //      println("shreds count = ${shreds.size}")
+    //    }
 
     if (rangeToReformat != null) {
       val injectedDocumentsInRange = injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, rangeToReformat)
@@ -86,14 +89,19 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
       //    }
 
-      myInjectedFile = injectedPsiFiles.first()
+      val newInjectedFile = injectedPsiFiles.first()
+      if (newInjectedFile !== myInjectedFile) {
+        println("injected file updated")
+        myInjectedFile = newInjectedFile
+        markers.clear()
+        val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
+        println("markersFromShreds = $markersFromShreds")
+        markers.addAll(markersFromShreds)
+      }
     }
 
 
-    markers.clear()
-    val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
-    println("markersFromShreds = $markersFromShreds")
-    markers.addAll(markersFromShreds)
+
 
 
   }
