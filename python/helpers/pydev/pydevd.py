@@ -1479,6 +1479,10 @@ class DispatchReader(ReaderThread):
 
 
 def _should_use_existing_connection(setup):
+    '''
+    The new connection dispatch approach is used by PyDev when the `multiprocess` option is set,
+    the existing connection approach is used by PyCharm when the `multiproc` option is set.
+    '''
     return setup.get('multiproc', False)
 
 
