@@ -46,6 +46,7 @@ backend
 backref
 backtrace
 barcode
+baseclass
 basedir
 basename
 bashrc
@@ -69,6 +70,7 @@ bson
 btree
 buffered
 buffering
+bugprone
 buildable
 builtin
 bzip
@@ -139,8 +141,10 @@ couchbase
 coursecreator
 covariant
 cplusplus
+cppcoreguidelines
 cron
 ctrl
+cstyle
 cubemx
 customizer
 customizers
@@ -256,6 +260,7 @@ github
 gitlab
 globals
 google
+googletest
 goto
 gradle
 grapheme
@@ -282,6 +287,7 @@ hazelcast
 hdiv
 helvetica
 holdability
+hicpp
 hostname
 hprof
 href
@@ -484,6 +490,7 @@ nocopy
 nocreate
 nocycle
 nodegroup
+nodiscard
 noduplicate
 noexcept
 nohistory
