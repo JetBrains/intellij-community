@@ -713,7 +713,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       myUpdateAlarm.addRequest(() -> {
         final DebuggerStateManager contextManager = getContextManager();
         contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
-      }, 100, ModalityState.NON_MODAL);
+      }, ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, ModalityState.NON_MODAL);
     }
   }
 
