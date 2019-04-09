@@ -117,7 +117,7 @@ public abstract class IdeFrameDecorator implements Disposable {
         if (state) {
           myFrame.setBounds(defaultBounds);
         }
-        else if((extendedState & Frame.MAXIMIZED_BOTH) != 0) {
+        else {
           Object o = myFrame.getRootPane().getClientProperty("normalBounds");
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
