@@ -761,6 +761,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         StartupManagerImpl.runActivity(() -> component.projectOpened());
       }
     }
+
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    ProjectImpl.ourClassesAreLoaded = true;
   }
 
   private void fireProjectClosed(@NotNull Project project) {
