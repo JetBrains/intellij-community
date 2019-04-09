@@ -5,13 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 
-class ShelfFileWritingAccessProvider(val myProject: Project,
-                                     private val myShelveChangeManger: ShelveChangesManager) : WritingAccessProvider() {
+class ShelfFileWritingAccessProvider(val myProject: Project) : WritingAccessProvider() {
   override fun requestWriting(files: MutableCollection<out VirtualFile>): MutableCollection<VirtualFile> {
-    return files.filter { myShelveChangeManger.shelvingFiles.contains(it) }.toMutableList()
+    val shelvingFiles = ShelveChangesManager.getInstance(myProject).shelvingFiles
+    return files.intersect(shelvingFiles).toMutableSet()
   }
 
   override fun getReadOnlyMessage(): String {
-    return "The file is locked for editing while being shelved";
+    return "The file is locked for editing while being shelved"
   }
 }
