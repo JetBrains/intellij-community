@@ -15,6 +15,8 @@
     <lang.quoteHandler language="Bash" implementationClass="com.intellij.bash.BashQuoteHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.bash.BashBackspaceHandler"/>
 
+    <lang.psiStructureViewFactory language="Bash" implementationClass="com.intellij.bash.BashStructureViewFactory"/>
+
     <annotator language="Bash" implementationClass="com.intellij.bash.BashAnnotator"/>
     <additionalTextAttributes scheme="Default" file="colors/BashDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colors/BashDarcula.xml"/>
