@@ -113,6 +113,9 @@ open class FileBasedStorage(file: Path,
         try {
           dataWriter.writeTo(file, lineSeparator.separatorString)
         }
+        catch (e: ReadOnlyModificationException) {
+          throw e
+        }
         catch (e: Throwable) {
           throw RuntimeException("Cannot write ${file}", e)
         }
