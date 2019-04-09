@@ -122,6 +122,9 @@ public abstract class IdeFrameDecorator implements Disposable {
         myFrame.setVisible(true);
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
 
+        if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
+          myFrame.setExtendedState(extendedState);
+        }
         notifyFrameComponents(state);
       }
       return ActionCallback.DONE;
