@@ -212,7 +212,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
         private val activeColor = ObjectUtils.notNull(Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color
         ) { Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color }
-        val inactiveColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor") as Color
+       // val inactiveColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor") as Color
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -222,8 +222,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded()) {
-                g.color = if (myActive) activeColor else inactiveColor
+            if (isTopNeeded() && myActive) {
+                g.color = activeColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
 
