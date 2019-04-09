@@ -87,7 +87,8 @@ public class BashFilePathCompletionContributor extends CompletionContributor imp
             boolean isRoot = beforeSlash.isEmpty();
 
             if (beforeSlash.startsWith("/") || isRoot || beforeSlash.startsWith("~")) {  // absolute paths
-              String maybeFilePath = FileUtil.expandUserHome(unquote(beforeSlash));
+              String path = beforeSlash.equals("~") ? "~/" : beforeSlash;
+              String maybeFilePath = FileUtil.expandUserHome(unquote(path));
               File dir = isRoot ? new File("/") : new File(maybeFilePath);
               if (dir.exists() && dir.isDirectory()) {
                 File[] files = dir.listFiles();

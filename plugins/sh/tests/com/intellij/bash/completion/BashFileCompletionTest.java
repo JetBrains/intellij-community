@@ -7,12 +7,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,6 +77,31 @@ public class BashFileCompletionTest extends LightCodeInsightFixtureTestCase {
 
     myFixture.type(Lookup.NORMAL_SELECT_CHAR);
     assertEquals(path + "/" + quotedName + "/", myFixture.getFile().getText());
+  }
+
+  public void testHomeDirCompletion() {
+    myFixture.configureByText("a.sh", "~/<caret>");
+
+    LookupElement[] lookupElements = myFixture.completeBasic();
+    assertNotNull(lookupElements);
+  }
+
+  public void testCompletionWithPrefixMatch() throws IOException {
+    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
+    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
+
+    String path = myTempDirectory.getCanonicalPath();
+    myFixture.configureByText("a.sh", path + "/<caret>");
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FIRST_FILE_NAME, SECOND_FILE_NAME);
+
+    myFixture.type(Lookup.NORMAL_SELECT_CHAR);
+    assertNull(myFixture.completeBasic());
+
+    //To check prefix match caret should be here simple<caret>1.txt
+    CaretModel caret = myFixture.getEditor().getCaretModel();
+    caret.moveToOffset(caret.getOffset() - FileUtilRt.getExtension(FIRST_FILE_NAME).length() - 2);
+
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FIRST_FILE_NAME, SECOND_FILE_NAME);
   }
 
   public void testReplacement() throws Exception {
