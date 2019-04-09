@@ -61,6 +61,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -75,6 +76,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
+  private static final boolean WINDOWS_ALT_GRAPH_JAVA11 = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -406,8 +408,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (IdeEventQueue.JAVA_11_OR_LATER && SystemInfo.isWindows && e.isAltGraphDown()) return false; // don't search for shortcuts
+    if (WINDOWS_ALT_GRAPH_JAVA11 && e.isAltGraphDown() && e.getID() == KeyEvent.KEY_PRESSED) {
+      // remove AltGr modifier (with mouse modifiers) for future processing
+      removeModifiers(e, InputEvent.ALT_GRAPH_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
+                         | InputEvent.BUTTON1_MASK | InputEvent.BUTTON1_DOWN_MASK
+                         | InputEvent.BUTTON2_MASK | InputEvent.BUTTON2_DOWN_MASK
+                         | InputEvent.BUTTON3_MASK | InputEvent.BUTTON3_DOWN_MASK);
 
+      myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
+      if (myFirstKeyStroke == null) return false;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
     if (isCandidateForAltGr) {
@@ -961,6 +973,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);
+  }
+
+  public static void removeAltGraph(InputEvent e) {
+    if (e.isAltGraphDown()) removeModifiers(e, InputEvent.ALT_GRAPH_MASK | InputEvent.ALT_GRAPH_DOWN_MASK);
+  }
+
+  private static void removeModifiers(InputEvent e, int mask) {
+    try {
+      Field field = InputEvent.class.getDeclaredField("modifiers");
+      field.setAccessible(true);
+      field.setInt(e, ~mask & field.getInt(e));
+    }
+    catch (Exception ignored) {
+    }
   }
 
   public static boolean isAltGrLayout(Component component) {
