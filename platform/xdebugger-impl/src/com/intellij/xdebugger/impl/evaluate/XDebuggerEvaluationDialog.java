@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBUI;
@@ -27,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,6 +294,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
 
     final XDebuggerTree tree = myTreePanel.getTree();
+    disposeEvaluationResult();
     tree.markNodesObsolete();
     tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
     tree.selectNodeOnLoad(XDebuggerEvaluationDialog::isFirstChild, Conditions.alwaysFalse());
@@ -317,6 +321,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   public void doCancelAction() {
     getInputEditor().saveTextInHistory();
     super.doCancelAction();
+    disposeEvaluationResult();
+  }
+
+  private void disposeEvaluationResult() {
+    XDebuggerTreeNode oldRoot = myTreePanel.getTree().getRoot();
+    if(oldRoot instanceof Disposable) {
+      Disposer.dispose((Disposable)oldRoot);
+    }
   }
 
   @Override
