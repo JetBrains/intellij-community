@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 
 public class BashStringUtil {
   private static char[] ORIGIN_CHARS = new char[]{
-      ' ', '!', '"', '#', '$', '&', '\'', '(', ')', '*', ',', ';', '<', '>', '?', '[', '\\', ']', '^', '`', '{', '|', '}'
+      ' ', '!', '"', '#', '$', '&', '\'', '(', ')', '*', ',', ';', '<', '>', '=', '?', '[', '\\', ']', '^', '`', '{', '|', '}'
   };
   public static Set<Character> ORIGINS_SET = IntStream.range(0, ORIGIN_CHARS.length)
       .mapToObj(i -> ORIGIN_CHARS[i])

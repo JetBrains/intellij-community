@@ -1,7 +1,10 @@
 package com.intellij.bash.completion;
 
+import com.intellij.bash.BashStringUtil;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,11 +17,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.junit.Assume.assumeFalse;
+
 public class BashFileCompletionTest extends LightCodeInsightFixtureTestCase {
+  private static final String FOLDER_NAME = "example";
+  private static final String FIRST_FILE_NAME = "simple1.txt";
+  private static final String SECOND_FILE_NAME = "simple2.txt";
   private File myTempDirectory;
 
   @Override
   protected void setUp() throws Exception {
+    assumeFalse("Tests shouldn't run on Windows OS", SystemInfo.isWindows);
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(BashFileCompletionTest.class.getSimpleName().toLowerCase(), null, true);
   }
@@ -33,15 +42,59 @@ public class BashFileCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSimple() throws Exception {
-    if (SystemInfo.isWindows) return; // todo: use assume in setup, avoid copying
-
-    assert new File(myTempDirectory, "simple1.txt").createNewFile();
-    assert new File(myTempDirectory, "simple2.txt").createNewFile();
+    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
+    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");
-    myFixture.completeBasic();
-    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, "simple1.txt", "simple2.txt");
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FIRST_FILE_NAME, SECOND_FILE_NAME);
+  }
+
+  public void testFolderCompletion() throws Exception {
+    File folder = new File(myTempDirectory, FOLDER_NAME);
+    assert folder.mkdir();
+    assert new File(folder, FIRST_FILE_NAME).createNewFile();
+    assert new File(folder, SECOND_FILE_NAME).createNewFile();
+
+    String path = myTempDirectory.getCanonicalPath();
+    myFixture.configureByText("a.sh", path + "/<caret>");
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FOLDER_NAME);
+
+    myFixture.type(Lookup.NORMAL_SELECT_CHAR);
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FIRST_FILE_NAME, SECOND_FILE_NAME);
+  }
+
+  public void testFileNameEncoding() throws Exception {
+    String folderName = " '\"#$=,[]!<>|;{}()*?^&`";
+    assert new File(myTempDirectory, folderName).mkdir();
+
+    String path = myTempDirectory.getCanonicalPath();
+    myFixture.configureByText("a.sh", path + "/<caret>");
+    String quotedName = BashStringUtil.quote(folderName);
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, quotedName);
+
+    myFixture.type(Lookup.NORMAL_SELECT_CHAR);
+    assertEquals(path + "/" + quotedName + "/", myFixture.getFile().getText());
+  }
+
+  public void testReplacement() throws Exception {
+    assert new File(myTempDirectory, FOLDER_NAME).mkdir();
+    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
+    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
+
+    String path = myTempDirectory.getCanonicalPath();
+    myFixture.configureByText("a.sh", path + "/<caret>");
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FOLDER_NAME, FIRST_FILE_NAME, SECOND_FILE_NAME);
+
+    myFixture.type(Lookup.NORMAL_SELECT_CHAR);
+    CaretModel caret = myFixture.getEditor().getCaretModel();
+    caret.moveToOffset(caret.getOffset() - FOLDER_NAME.length() - 1);
+
+    doTestVariantsInner(CompletionType.BASIC, 1, CheckType.EQUALS, FOLDER_NAME, FIRST_FILE_NAME, SECOND_FILE_NAME);
+
+    myFixture.type(FIRST_FILE_NAME.charAt(0));
+    myFixture.type(Lookup.REPLACE_SELECT_CHAR);
+    assertEquals(path + "/" + FIRST_FILE_NAME + "/", myFixture.getFile().getText());
   }
 
   private void doTestVariantsInner(@NotNull CompletionType type, int count, CheckType checkType, String... variants) {
