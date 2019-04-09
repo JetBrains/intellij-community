@@ -364,7 +364,7 @@ public class NewMappings {
   public void cleanupMappings() {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
 
-    List<VcsDirectoryMapping> oldMappings = getDirectoryMappings();
+    List<VcsDirectoryMapping> oldMappings = new ArrayList<>(getDirectoryMappings());
 
     List<VcsDirectoryMapping> filteredMappings = new ArrayList<>();
 
