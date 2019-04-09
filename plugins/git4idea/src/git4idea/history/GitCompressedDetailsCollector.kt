@@ -59,7 +59,9 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
       renames.put(beforeId, afterId)
     }
     else {
-      addPath(firstPath, type)
+      val absolutePath = absolutePath(firstPath)
+      val pathId = pathsEncoder.encode(absolutePath, false)
+      addPath(absolutePath, pathId, type)
     }
     when (type) {
       Change.Type.NEW -> targetsCount++
@@ -67,11 +69,6 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
       else -> {
       }
     }
-  }
-
-  private fun addPath(path: String, type: Change.Type) {
-    val absolutePath = absolutePath(path)
-    addPath(absolutePath, pathsEncoder.encode(absolutePath, false), type)
   }
 
   private fun addPath(absolutePath: String, pathId: Int, type: Change.Type) {
