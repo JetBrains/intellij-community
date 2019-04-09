@@ -146,9 +146,7 @@ public class ShowFilePathAction extends DumbAwareAction {
       show(file, popup -> {
         DataManager dataManager = DataManager.getInstance();
         if (dataManager != null) {
-          dataManager
-            .getDataContextFromFocusAsync()
-            .onSuccess((popup::showInBestPositionFor));
+          dataManager.getDataContextFromFocusAsync().onSuccess((popup::showInBestPositionFor));
         }
       });
     }
