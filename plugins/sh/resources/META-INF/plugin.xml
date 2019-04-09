@@ -49,6 +49,11 @@
     <fileTypeDetector implementation="com.intellij.bash.BashFileTypeDetector"/>
     <highlightErrorFilter implementation="com.intellij.bash.BashErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.bash.BashErrorFilter"/>
+
+    <intentionAction>
+      <className>com.intellij.bash.rename.BashRenameIntention</className>
+      <category>Bash</category>
+    </intentionAction>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.bash.run.BashRunFileAction" text="Run File"
