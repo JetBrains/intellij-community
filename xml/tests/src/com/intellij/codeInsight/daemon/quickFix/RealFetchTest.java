@@ -25,7 +25,9 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
     IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    assertNotSame(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
+    String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
+    assertNotSame(url, location);
+    assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
