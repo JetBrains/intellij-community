@@ -1,0 +1,16 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('unset')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('todo_list')
+          SIMPLE_COMMAND_ELEMENT
+            CONDITIONAL_COMMAND
+              PsiElement([)('[')
+              VARIABLE
+                PsiElement(var)('$todo_id')
+              PsiElement(])(']')

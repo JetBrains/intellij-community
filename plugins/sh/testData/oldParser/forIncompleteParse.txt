@@ -1,0 +1,26 @@
+BASH_FILE
+  PsiComment(Comment)('#error markers must be present, but the incomplete if should be parsed without remaining elements')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          FOR_CLAUSE
+            PsiElement(word)('f')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('a')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiErrorElement:<compound list> expected, got ';'
+              <empty list>
+    PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:<pipeline command> expected, got 'done'
+    PsiElement(done)('done')

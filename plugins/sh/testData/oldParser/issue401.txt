@@ -1,0 +1,30 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('NAME_IN_CONTENT')
+          PsiElement(=)('=')
+          STRING
+            PsiElement(")('"')
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(parameter_expansion_body)('NAME_IN_CONTENT%<')
+                            PsiElement(})('}')
+                          PsiElement(")('"')
+              PsiElement())(')')
+            PsiElement(")('"')

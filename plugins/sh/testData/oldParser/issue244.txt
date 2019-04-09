@@ -1,0 +1,25 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          ASSIGNMENT_COMMAND
+            PsiElement(word)('result')
+            PsiElement(=)('=')
+            PsiElement($)('$')
+            ARITHMETIC_EXPANSION
+              PsiElement((()('((')
+              LITERAL_EXPRESSION
+                VARIABLE
+                  PsiElement(var)('$lhs')
+              PsiErrorElement:'))' expected, got '$operand'
+                <empty list>
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$operand')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            VARIABLE
+              PsiElement(var)('$rhs')
+  PsiErrorElement:'&', '&&', ';', <pipeline command>, '\n', '|' or '||' expected, got '))'
+    PsiElement()))('))')

@@ -1,0 +1,39 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('b')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('c')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('d')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')

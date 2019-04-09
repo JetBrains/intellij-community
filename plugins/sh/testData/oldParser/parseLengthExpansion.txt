@@ -1,0 +1,9 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          PsiErrorElement:<compound list> expected
+            <empty list>
+  PsiComment(Comment)('#a}')

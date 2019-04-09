@@ -1,0 +1,143 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(")('"')
+                PsiElement(word)('CREATE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('DATABASE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('dev')
+                PsiElement(")('"')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              STRING
+                PsiElement(")('"')
+                PsiElement(word)('CREATE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('DATABASE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('dev')
+                PsiElement(")('"')
+    PsiElement(||)('||')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''CREATE DATABASE dev'')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              STRING
+                PsiElement(")('"')
+                PsiElement(word)('CREATE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('DATABASE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('dev')
+                PsiElement(")('"')
+    PsiElement(||)('||')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(")('"')
+                PsiElement(word)('CREATE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('DATABASE')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('dev')
+                PsiElement(")('"')
+    PsiWhiteSpace(' ')
+    PsiElement(&&)('&&')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('hi')

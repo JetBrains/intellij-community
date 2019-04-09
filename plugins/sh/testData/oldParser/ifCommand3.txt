@@ -1,0 +1,69 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('b')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('c')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELIF_CLAUSE
+            PsiElement(elif)('elif')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('d')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
+              PsiWhiteSpace(' ')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('e')
+                PsiWhiteSpace(' ')
+                PsiElement(&)('&')
+          PsiErrorElement:'\n', elif, else or fi expected, got ';'
+            <empty list>
+    PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'&', '&&', ';', <pipeline command>, '\n' or '||' expected, got 'elif'
+    PsiElement(elif)('elif')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('a')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(then)('then')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('b')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(else)('else')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('f')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(fi)('fi')

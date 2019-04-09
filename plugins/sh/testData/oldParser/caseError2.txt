@@ -1,0 +1,10 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiErrorElement:'!', $, <string>, '@', '`', file descriptor, hex, int, number, octal, var, word or '{' expected, got 'esac'
+            <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(esac)('esac')

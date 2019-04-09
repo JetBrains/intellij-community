@@ -1,0 +1,18 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('read')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('v')
+          SIMPLE_COMMAND_ELEMENT
+            CONDITIONAL_COMMAND
+              PsiElement([)('[')
+              PsiElement(word)('i')
+              PsiElement(])(']')

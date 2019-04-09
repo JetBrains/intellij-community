@@ -1,0 +1,11 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            PsiErrorElement:'))' or <expression> expected, got '))'
+              <empty list>
+            PsiElement()))('))')

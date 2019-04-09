@@ -1,0 +1,64 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=~)('=~')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('abc')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('break_request')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(=~)('=~')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('Denied')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=~)('=~')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('..e*x')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(=~)('=~')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('^$')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')

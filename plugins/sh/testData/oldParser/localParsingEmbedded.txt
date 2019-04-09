@@ -1,0 +1,29 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('   ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('local')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      ASSIGNMENT_COMMAND
+                        PsiElement(word)('local1')
+                        PsiElement(=)('=')
+                        PsiElement(int)('1')
+              PsiElement(\n)('\n')
+            PsiElement(})('}')

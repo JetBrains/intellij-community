@@ -1,0 +1,30 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(word)('doIt')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('export')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      ASSIGNMENT_COMMAND
+                        PsiElement(word)('PATH')
+                        PsiElement(=)('=')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement(word)('a')
+                          PsiElement(")('"')
+              PsiElement(\n)('\n')
+            PsiElement(})('}')

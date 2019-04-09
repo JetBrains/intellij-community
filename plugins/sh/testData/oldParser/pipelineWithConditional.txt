@@ -1,0 +1,65 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('echo')
+    PsiWhiteSpace(' ')
+    PsiElement(&&)('&&')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('hi')
+            PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          FOR_CLAUSE
+            PsiElement(word)('f')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('a')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              PsiElement(&&)('&&')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  CONDITIONAL_COMMAND
+                    PsiElement([)('[')
+                    PsiWhiteSpace(' ')
+                    PsiElement(word)('-z')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('hi')
+                      PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(])(']')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')

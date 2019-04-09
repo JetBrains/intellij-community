@@ -1,0 +1,27 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        WHILE_COMMAND
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('b')
+              PsiElement(;)(';')
+            PsiErrorElement:'\n' or done expected, got 'fi'
+              <empty list>
+  PsiWhiteSpace(' ')
+  PsiElement(fi)('fi')

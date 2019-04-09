@@ -1,0 +1,11 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            LITERAL_EXPRESSION
+              PsiElement(int)('1')
+            PsiElement()))('))')

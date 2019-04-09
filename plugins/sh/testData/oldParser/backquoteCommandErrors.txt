@@ -1,0 +1,13 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(`)('`')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('echo')
+            PsiElement(\n)('\n')
+          PsiElement(`)('`')

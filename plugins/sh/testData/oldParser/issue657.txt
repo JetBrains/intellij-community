@@ -1,0 +1,27 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(int)('1024')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>>)('>>')
+              PsiWhiteSpace(' ')
+              PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(int)('1024')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiWhiteSpace(' ')
+              PsiElement(HEREDOC_MARKER_START)('1')

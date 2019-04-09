@@ -1,0 +1,98 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          PsiErrorElement:<compound list> expected, got '}'
+            <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('A')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('@')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('?')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('B:-B')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement($)('$')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement($)('$')
+                  SIMPLE_COMMAND_ELEMENT
+                    PsiElement(word)(':-x')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiWhiteSpace(' ')
+  PsiComment(Comment)('#means the pid with substitution operator')

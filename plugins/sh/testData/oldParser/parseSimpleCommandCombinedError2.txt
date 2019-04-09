@@ -1,0 +1,5 @@
+BASH_FILE
+  PsiErrorElement:<pipeline command>, '\n' or shebang expected, got '|'
+    PsiElement(|)('|')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('b')

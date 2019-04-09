@@ -1,0 +1,99 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          PsiErrorElement:<compound list> expected, got '}'
+            <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('a')
+          SIMPLE_COMMAND_ELEMENT
+            BASH_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('a')
+              PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(int)('1')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('1,a')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('1,a,2')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('z')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('a')
+              PsiElement(")('"')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('a')
+          SIMPLE_COMMAND_ELEMENT
+            BASH_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('1,2')
+              PsiElement(})('}')

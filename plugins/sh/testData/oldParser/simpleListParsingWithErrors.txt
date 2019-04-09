@@ -1,0 +1,17 @@
+BASH_FILE
+  PsiErrorElement:<pipeline command> expected, got '>>'
+    PsiElement(>>)('>>')
+  PsiWhiteSpace(' ')
+  PsiElement(>>)('>>')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('a')
+  PsiElement(\n)('\n')
+  PsiElement(word)('a')
+  PsiWhiteSpace(' ')
+  PsiElement(>)('>')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('a')
+  PsiWhiteSpace(' ')
+  PsiElement(word)('a')
+  PsiElement(\n)('\n')
+  PsiElement(|)('|')

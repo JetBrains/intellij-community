@@ -1,0 +1,19 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            LOGICAL_AND_EXPRESSION
+              LITERAL_EXPRESSION
+                VARIABLE
+                  PsiElement(var)('$a')
+              PsiWhiteSpace(' ')
+              PsiElement(&&)('&&')
+              PsiWhiteSpace(' ')
+              LITERAL_EXPRESSION
+                VARIABLE
+                  PsiElement(var)('$a')
+            PsiElement()))('))')

@@ -1,0 +1,9 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          PsiErrorElement:<list> expected, got ')'
+            <empty list>
+          PsiElement())(')')

@@ -1,0 +1,35 @@
+BASH_FILE
+  PsiComment(Comment)('#the following code is invalid code, it is parsed completely though')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        WHILE_COMMAND
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiErrorElement:<compound list> expected, got ';'
+              <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:<pipeline command> expected, got 'done'
+    PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  PsiElement(while)('while')
+  PsiWhiteSpace(' ')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(do)('do')
+  PsiWhiteSpace(' ')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(done)('done')

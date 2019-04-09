@@ -1,0 +1,43 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('var')
+                  SIMPLE_COMMAND_ELEMENT
+                    CONDITIONAL_COMMAND
+                      PsiElement([)('[')
+                      PsiElement(word)('1+2-var')
+                      PsiElement(])(']')
+            PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              <empty list>
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          PsiComment(Comment)('#var[1+2-var]}')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PIPELINE_COMMAND
+              PIPELINE
+                BLOCK
+                  PsiElement({)('{')
+                  PsiComment(Comment)('#var[1+2-var]#[a-z]}')
+                  COMPOUND_LIST
+                    PsiElement(\n)('\n')
+                    PIPELINE_COMMAND
+                      PIPELINE
+                        BLOCK
+                          PsiElement({)('{')
+                          PsiErrorElement:<compound list> expected
+                            <empty list>
+  PsiComment(Comment)('#A[1]}')

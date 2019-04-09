@@ -1,0 +1,35 @@
+BASH_FILE
+  COMMANDS_LIST
+    TRAP_COMMAND
+      PsiElement(trap)('trap')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TRAP_COMMAND
+      PsiElement(trap)('trap')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('-lp')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TRAP_COMMAND
+      PsiElement(trap)('trap')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('-p')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('SIGINT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TRAP_COMMAND
+      PsiElement(trap)('trap')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('functionName')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('SIGINT')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TRAP_COMMAND
+      PsiElement(trap)('trap')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('functionName')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(RAW_STRING)(''SIGINT'')

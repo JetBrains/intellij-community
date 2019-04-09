@@ -1,0 +1,96 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          FOR_CLAUSE
+            PsiElement((()('((')
+            PsiElement(;)(';')
+            PsiElement(;)(';')
+            PsiElement()))('))')
+          LIST_TERMINATOR
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('e')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          FOR_CLAUSE
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('i')
+              PsiElement(=)('=')
+              LITERAL_EXPRESSION
+                PsiElement(int)('1')
+            PsiElement(;)(';')
+            PsiElement(;)(';')
+            PsiElement()))('))')
+          LIST_TERMINATOR
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('e')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FOR_COMMAND
+          PsiElement(for)('for')
+          PsiWhiteSpace(' ')
+          FOR_CLAUSE
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('i')
+              PsiElement(=)('=')
+              LITERAL_EXPRESSION
+                PsiElement(int)('1')
+            PsiElement(;)(';')
+            COMPARISON_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('i')
+              PsiElement(<)('<')
+              LITERAL_EXPRESSION
+                PsiElement(int)('10')
+            PsiElement(;)(';')
+            PsiElement()))('))')
+          LIST_TERMINATOR
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('e')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')

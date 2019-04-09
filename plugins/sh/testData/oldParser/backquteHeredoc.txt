@@ -1,0 +1,21 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(`)('`')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('cat')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND_ELEMENT
+                    HEREDOC
+                      PsiElement(HEREDOC_MARKER_TAG)('<<')
+                      PsiElement(HEREDOC_MARKER_START)('EOF')
+                      PsiElement(\n)('\n')
+                      PsiElement(HEREDOC_CONTENT)(' X\nEOF`\nX')
+          PsiErrorElement:'&', ';', '\n' or '`' expected
+            <empty list>

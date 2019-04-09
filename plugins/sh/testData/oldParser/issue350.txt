@@ -1,0 +1,54 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('eval')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('executable')
+              PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(int)('2')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>)('>')
+              PsiElement(word)('/dev/null')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('res')
+          PsiElement(=)('=')
+          STRING
+            PsiElement(")('"')
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('eval')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        STRING
+                          PsiElement(")('"')
+                          VARIABLE
+                            PsiElement(var)('$executable')
+                          PsiElement(")('"')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(int)('2')
+                      SIMPLE_COMMAND_ELEMENT
+                        REDIRECTION
+                          PsiElement(>)('>')
+                          PsiElement(word)('/dev/null')
+              PsiElement())(')')
+            PsiElement(")('"')

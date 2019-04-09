@@ -1,0 +1,145 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('foo')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiErrorElement:'\n' or '{' expected, got '('
+            <empty list>
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('    ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)(':')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('foo')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiElement(\n)('\n')
+          PsiElement(\n)('\n')
+          PsiErrorElement:'\n' or '{' expected, got '('
+            <empty list>
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('    ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)(':')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(word)('foo')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiErrorElement:'\n' or '{' expected, got '('
+            <empty list>
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('    ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)(':')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(word)('foo')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiElement(\n)('\n')
+          PsiElement(\n)('\n')
+          PsiErrorElement:'\n' or '{' expected, got '('
+            <empty list>
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('    ')
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)(':')
+            PsiElement(\n)('\n')
+          PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(word)('foo')
+          PsiElement(()('(')
+          PsiElement())(')')
+          PsiErrorElement:'\n' or '{' expected, got 'if'
+            <empty list>
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('true')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)(':')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')

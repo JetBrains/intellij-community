@@ -1,0 +1,82 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([)('[')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('startpar')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    VARIABLE
+                      PsiElement(var)('$CONCURRENCY')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('test')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('-s')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('/etc/init.d/.depend.boot')
+              PsiWhiteSpace('  ')
+              PsiElement(||)('||')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  ASSIGNMENT_COMMAND
+                    PsiElement(word)('CONCURRENCY')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('none')
+                      PsiElement(")('"')
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('test')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('-s')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('/etc/init.d/.depend.start')
+              PsiWhiteSpace(' ')
+              PsiElement(||)('||')
+              PsiWhiteSpace(' ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  ASSIGNMENT_COMMAND
+                    PsiElement(word)('CONCURRENCY')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('none')
+                      PsiElement(")('"')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')

@@ -1,0 +1,18 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_DIRECTIVE
+          PsiElement(word)('.')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_DIRECTIVE
+          PsiElement(word)('.')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_DIRECTIVE
+          PsiElement(word)('source')

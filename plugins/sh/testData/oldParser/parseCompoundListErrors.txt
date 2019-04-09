@@ -1,0 +1,10 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(&)('&')
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')

@@ -1,0 +1,63 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(int)('1')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(")('"')
+                PsiElement(word)('x')
+                PsiElement(")('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(int)('1')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<)('<')
+              PsiWhiteSpace(' ')
+              PsiElement($)('$')
+              SUBSHELL_COMMAND
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('a')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('123#')
+          SIMPLE_COMMAND_ELEMENT
+            VARIABLE
+              PsiElement(var)('$a')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('variable')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('as')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('value')

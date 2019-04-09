@@ -1,0 +1,28 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('case')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('in')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('a')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('\"a\"')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
+            PsiElement(;)(';')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('esac')
+            PsiElement(")('"')

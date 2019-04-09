@@ -1,0 +1,129 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('a')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          COMMAND_SUBSTITUTION_COMMAND
+            PsiElement(`)('`')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('a')
+            PsiElement(`)('`')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('\$')
+          BASH_EXPANSION
+            PsiElement({)('{')
+            PsiElement(word)('a')
+            PsiElement(})('}')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace('  ')
+          PsiElement(])(']')
+  PsiWhiteSpace(' ')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace('  ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('a')
+            PsiElement())(')')
+          PsiWhiteSpace('  ')
+          PsiElement(]])(']]')

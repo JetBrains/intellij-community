@@ -1,0 +1,13 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          PsiElement(!)('!')
+          PsiElement(()('(')
+          PsiElement(word)('a')
+          PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')

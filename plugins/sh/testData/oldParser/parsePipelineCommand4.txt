@@ -1,0 +1,24 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PsiElement(!)('!')
+      PsiWhiteSpace(' ')
+      TIMESPEC
+        PsiElement(time)('time')
+      PsiWhiteSpace(' ')
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(|)('|')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('b')

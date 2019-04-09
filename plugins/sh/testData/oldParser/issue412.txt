@@ -1,0 +1,67 @@
+BASH_FILE
+  PsiComment(shebang)('#!/usr/bin/env bash\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$#')
+                  PsiWhiteSpace(' ')
+                  PsiElement(==)('==')
+                  PsiWhiteSpace(' ')
+                  PsiElement(int)('1')
+                  PsiWhiteSpace(' ')
+                  PsiElement(&&)('&&')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  VARIABLE
+                    PsiElement(var)('$1')
+                  PsiErrorElement:')' expected, got '=='
+                    <empty list>
+                  PsiWhiteSpace(' ')
+                  PsiElement(==)('==')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement(word)('a')
+                    PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(||)('||')
+                  PsiWhiteSpace(' ')
+                  VARIABLE
+                    PsiElement(var)('$1')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=~)('=~')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('"b")')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('  ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('pong')
+                        PsiElement(")('"')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')

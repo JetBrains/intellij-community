@@ -1,0 +1,3 @@
+for a;
+ { echo a
+ }

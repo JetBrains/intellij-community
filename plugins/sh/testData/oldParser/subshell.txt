@@ -1,0 +1,21 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('classes')
+          PsiElement(=)('=')
+          ASSIGNMENT_LIST
+            PsiElement(()('(')
+            ARRAY_ASSIGNMENT
+              LITERAL_EXPRESSION
+                STRING
+                  PsiElement(")('"')
+                  PsiElement(")('"')
+            PsiWhiteSpace(' ')
+            ARRAY_ASSIGNMENT
+              LITERAL_EXPRESSION
+                STRING
+                  PsiElement(")('"')
+                  PsiElement(")('"')
+            PsiElement())(')')
