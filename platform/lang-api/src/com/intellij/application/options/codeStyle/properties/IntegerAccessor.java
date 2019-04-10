@@ -22,6 +22,12 @@ public class IntegerAccessor extends CodeStyleFieldAccessor<Integer,Integer> {
     }
   }
 
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull Integer value) {
+    return String.valueOf(value);
+  }
+
   @Override
   protected Integer fromExternal(@NotNull Integer i) {
     return i;

@@ -109,6 +109,12 @@ class FieldAccessorFactory {
 
     @Nullable
     @Override
+    protected String valueToString(@NotNull String value) {
+      return value;
+    }
+
+    @Nullable
+    @Override
     protected Boolean fromExternal(@NotNull String str) {
       return "tab".equalsIgnoreCase(str);
     }

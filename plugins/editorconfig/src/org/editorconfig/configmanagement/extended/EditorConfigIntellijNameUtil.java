@@ -45,7 +45,7 @@ public class EditorConfigIntellijNameUtil {
   }
 
   @NotNull
-  private static String getLanguageProperty(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
+  public static String getLanguageProperty(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
     return IDE_PREFIX + mapper.getLanguageDomainId() + "_" + propertyName;
   }
 

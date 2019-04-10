@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.toCommaSeparatedString;
+
 public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<PackageEntryTable> {
 
   public static final String BLANK_LINE_ENTRY = "blank_line";
@@ -76,5 +78,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
       }
     }
     return externalList;
+  }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull List<String> value) {
+    return toCommaSeparatedString(value);
   }
 }

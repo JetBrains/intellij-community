@@ -38,4 +38,12 @@ public abstract class SchemeExporter<T extends Scheme> {
    * @return Target file extension without a dot, for example "xml".
    */
   public abstract String getExtension();
+
+  /**
+   * @param schemeName The initial scheme display name.
+   * @return The default file name to be used.
+   */
+  public String getDefaultFileName(@NotNull String schemeName) {
+    return schemeName;
+  }
 }

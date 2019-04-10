@@ -73,10 +73,10 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
       return new EditorConfigNumberDescriptor(null,  null);
     }
     else if (accessor instanceof ValueListPropertyAccessor) {
-      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null, null)), null,  null);
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null, ".*")), null,  null);
     }
     else if (accessor instanceof ExternalStringAccessor) {
-      return new EditorConfigStringDescriptor(null, null, null);
+      return new EditorConfigStringDescriptor(null, null, ".*");
     }
     else if (accessor instanceof VisualGuidesAccessor) {
       return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigNumberDescriptor(null, null)), null,  null);

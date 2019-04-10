@@ -161,7 +161,7 @@ public class Utils {
   }
 
   @NotNull
-  private static String buildPattern(FileType fileType) {
+  public static String buildPattern(FileType fileType) {
     final StringBuilder result = new StringBuilder();
     final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
     for (FileNameMatcher matcher : associations) {
