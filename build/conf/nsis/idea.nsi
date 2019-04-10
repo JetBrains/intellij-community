@@ -1664,7 +1664,7 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
 
-  ${UnStrStr} $R0 ${MUI_PRODUCT} "Rider"
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "Rider"
   StrCmp $R0 ${MUI_PRODUCT} build_tools 0
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Type" "Label"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" ""
@@ -1860,7 +1860,7 @@ skip_delete_caches:
     RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
 
 skip_delete_settings:
-  ${UnStrStr} $R0 ${MUI_PRODUCT} "Rider"
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "Rider"
   StrCmp $R0 ${MUI_PRODUCT} 0 skip_delete_tools
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
   StrCmp $R3 1 "" skip_delete_tools
