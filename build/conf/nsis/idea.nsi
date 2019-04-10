@@ -1663,17 +1663,23 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
-  ;do not show feedback web page checkbox for EAP builds.
-  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page
+
+  ${UnStrStr} $R0 ${MUI_PRODUCT} "Rider"
+  StrCmp $R0 ${MUI_PRODUCT} build_tools 0
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" ""
+  Goto feedback_web_page
+build_tools:
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" "$(confirm_delete_rider_buildtools)"
+  ; do not show feedback web page checkbox for EAP builds.
 feedback_web_page:
+  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" hide_feedback_checkbox feedback_web_page_exists
+feedback_web_page_exists:
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" hide_feedback_checkbox done
 hide_feedback_checkbox:
-    ; do not show feedback web page checkbox through products uninstall.
-    push $R1
-    !insertmacro INSTALLOPTIONS_READ $R1 "DeleteSettings.ini" "Settings" "NumFields"
-    IntOp $R1 $R1 - 1
-    !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Settings" "NumFields" "$R1"
-    pop $R1
+  ; do not show feedback web page checkbox through products uninstall.
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "Text" ""
 done:
   !insertmacro INSTALLOPTIONS_DISPLAY "DeleteSettings.ini"
 FunctionEnd
@@ -1848,14 +1854,24 @@ skip_delete_caches:
     StrCmp $2 "" skip_delete_settings
     StrCpy $config_path $2
     RmDir /r "$config_path"
-;    RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\config
     Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
     Delete "$INSTDIR\bin\idea.properties"
     StrCmp $R2 1 "" skip_delete_settings
     RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-;    RmDir $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}
 
 skip_delete_settings:
+  ${UnStrStr} $R0 ${MUI_PRODUCT} "Rider"
+  StrCmp $R0 ${MUI_PRODUCT} 0 skip_delete_tools
+  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
+  StrCmp $R3 1 "" skip_delete_tools
+    SetShellVarContext current
+    IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 continue_uninstall
+    RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+
+continue_uninstall:
+  StrCmp $baseRegKey "HKLM" 0 skip_delete_tools
+  SetShellVarContext all
+skip_delete_tools:
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
