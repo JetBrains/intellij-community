@@ -38,12 +38,6 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   }
 
   @Override
-  @Nullable
-  public PsiElement getHeredocMarkerIgnoringTabsEnd() {
-    return findChildByType(HEREDOC_MARKER_IGNORING_TABS_END);
-  }
-
-  @Override
   @NotNull
   public PsiElement getHeredocMarkerStart() {
     return findNotNullChildByType(HEREDOC_MARKER_START);

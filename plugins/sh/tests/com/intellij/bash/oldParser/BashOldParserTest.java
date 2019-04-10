@@ -33,25 +33,20 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testAssigmentCommands()                   { doTest(true); }
   public void testBackquoteCommand()                    { doTest(true); }
   public void testBackquoteCommandErrors()              { doTest(true); }
-  public void testBackquteHeredoc()                     { doTest(true); }
   public void testBacktickParsing()                     { doTest(true); }
   public void testBodyWithErrors()                      { doTest(true); }
-  public void testBraceParse()                          { doTest(true); }
-  public void testBraceParseInvalid()                   { doTest(true); }
+  public void testBraceExpansionParse()                 { doTest(true); }
+  public void testBraceExpansionParseInvalid()          { doTest(true); }
   public void testBuildInCommandDeclare()               { doTest(true); }
-  public void testCaseError1()                          { doTest(true); }
-  public void testCaseError2()                          { doTest(true); }
   public void testCaseSimple1()                         { doTest(true); }
   public void testCheckErrorMarkers()                   { doTest(true); }
   public void testCommandParseAssignment()              { doTest(true); }
   public void testCommandWithErrors()                   { doTest(true); }
-  public void testComplicated()                         { doTest(true); }
   public void testComplicatedHereDoc()                  { doTest(true); }
   public void testComplicatedHereDocs()                 { doTest(true); }
   public void testComposedCommand()                     { doTest(true); }
   public void testComposedDefaultValue()                { doTest(true); }
   public void testConditionalAdvancedExpressions()      { doTest(true); }
-  public void testConditionalError()                    { doTest(true); }
   public void testConditionalSingleTest()               { doTest(true); }
   public void testConditionalWithBackquote()            { doTest(true); }
   public void testDeclareParse()                        { doTest(true); }
@@ -60,19 +55,13 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testEmbeddedVars()                        { doTest(true); }
   public void testEmptyArithmeticExpression()           { doTest(true); }
   public void testEvalParse()                           { doTest(true); }
-  public void testExpansions()                          { doTest(true); }
-  public void testExportComplicated()                   { doTest(true); }
   public void testExportParse()                         { doTest(true); }
   public void testFileParsing3()                        { doTest(true); }
   public void testFileParsing4()                        { doTest(true); }
   public void testForCommand()                          { doTest(true); }
-  public void testForCommandError1()                    { doTest(true); }
-  public void testForErrors()                           { doTest(true); }
-  public void testForIncompleteParse()                  { doTest(true); }
   public void testForLoopCompoundBlock()                { doTest(true); }
   public void testFunction()                            { doTest(true); }
   public void testFunction2()                           { doTest(true); }
-  public void testFunctionDefError()                    { doTest(true); }
   public void testFunctionDefinition()                  { doTest(true); }
   public void testFunctionWithReadArgs()                { doTest(true); }
   public void testGetoptsBuiltin()                      { doTest(true); }
@@ -88,10 +77,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testIfCommand2()                          { doTest(true); }
   public void testIfCommand3()                          { doTest(true); }
   public void testIfCommand4()                          { doTest(true); }
-  public void testIfCommandError1()                     { doTest(true); }
-  public void testIfCommandError2()                     { doTest(true); }
-  public void testIfErrorConstruct()                    { doTest(true); }
-  public void testIfIncompleteParse()                   { doTest(true); }
   public void testIfParse()                             { doTest(true); }
   public void testIfWithFaultyRedirect()                { doTest(true); }
   public void testIfWithLocalVarRedirect()              { doTest(true); }
@@ -218,8 +203,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testRedirects()                           { doTest(true); }
   public void testRegExp()                              { doTest(true); }
   public void testSelectCommand1()                      { doTest(true); }
-  public void testSelectErrors()                        { doTest(true); }
-  public void testSelectIncompleteParse()               { doTest(true); }
   public void testSelectLoop()                          { doTest(true); }
   public void testShebang()                             { doTest(true); }
   public void testSimpleHereDocs()                      { doTest(true); }
@@ -229,20 +212,31 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testSquareArithmetic()                    { doTest(true); }
   public void testSubshell()                            { doTest(true); }
   public void testSubshellCommand1()                    { doTest(true); }
-  public void testSubshellCommandEmpty()                { doTest(true); }
-  public void testSubshellParse()                       { doTest(true); }
   public void testTrapParse()                           { doTest(true); }
   public void testTypesetParse()                        { doTest(true); }
   public void testUnsetArrayAssignment()                { doTest(true); }
-  public void testUntilIncompleteParse()                { doTest(true); }
   public void testUntilParse()                          { doTest(true); }
   public void testVariableArrayParsing()                { doTest(true); }
   public void testVariableDollar()                      { doTest(true); }
   public void testVariableParsing()                     { doTest(true); }
-  public void testWhileErrorConstruct()                 { doTest(true); }
-  public void testWhileIncompleteParse()                { doTest(true); }
-  public void testWhileLoopError1()                     { doTest(true); }
   public void testWhileLoopSimple()                     { doTest(true); }
   public void testWhileLoopSimple2()                    { doTest(true); }
   public void testWhileParse()                          { doTest(true); }
+  public void testIfCommandError1()                     { doTest(true); }
+  public void testIfCommandError2()                     { doTest(true); }
+  public void testIfErrorConstruct()                    { doTest(true); }
+  public void testIfIncompleteParse()                   { doTest(true); }
+  public void testSelectErrors()                        { doTest(true); }
+  public void testSelectIncompleteParse()               { doTest(true); }
+  public void testWhileErrorConstruct()                 { doTest(true); }
+  public void testWhileIncompleteParse()                { doTest(true); }
+  public void testWhileLoopError1()                     { doTest(true); }
+  public void testUntilIncompleteParse()                { doTest(true); }
+  public void testCaseError1()                          { doTest(true); }
+  public void testCaseError2()                          { doTest(true); }
+  public void testForCommandError1()                    { doTest(true); }
+  public void testForErrors()                           { doTest(true); }
+  public void testForIncompleteParse()                  { doTest(true); }
+  public void testFunctionDefError()                    { doTest(true); }
+  public void testConditionalError()                    { doTest(true); } //Start from here
 }

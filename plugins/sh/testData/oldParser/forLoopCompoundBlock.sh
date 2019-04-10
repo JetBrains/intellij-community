@@ -1,7 +1,3 @@
-for a in; do echo; done
-for f in 1; do {
-echo 1
-} done
 for f in 1; do {
 echo 1
 }

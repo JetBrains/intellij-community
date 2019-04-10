@@ -18,12 +18,21 @@ echo [ "foo" = "foo" ]
  X
 EOF`
 X
+
+((a ? b ? c :d : c))
+
+for f in 1; do {
+echo 1
+}    done
+
+
 function a
 for f in 1; do echo "k"; done;
 
 if read pid > c; then
       a
 fi
+
 if echo "sdfsd"; then
    echo "sdfsdf"
 else

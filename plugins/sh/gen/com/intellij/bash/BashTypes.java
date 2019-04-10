@@ -118,7 +118,6 @@ public interface BashTypes {
   IElementType GT = new BashTokenType(">");
   IElementType HEREDOC_CONTENT = new BashTokenType("HEREDOC_CONTENT");
   IElementType HEREDOC_MARKER_END = new BashTokenType("HEREDOC_MARKER_END");
-  IElementType HEREDOC_MARKER_IGNORING_TABS_END = new BashTokenType("HEREDOC_MARKER_IGNORING_TABS_END");
   IElementType HEREDOC_MARKER_START = new BashTokenType("HEREDOC_MARKER_START");
   IElementType HEREDOC_MARKER_TAG = new BashTokenType("HEREDOC_MARKER_TAG");
   IElementType HEX = new BashTokenType("hex");

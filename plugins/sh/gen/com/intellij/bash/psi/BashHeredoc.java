@@ -13,9 +13,6 @@ public interface BashHeredoc extends BashCompositeElement {
   @Nullable
   PsiElement getHeredocMarkerEnd();
 
-  @Nullable
-  PsiElement getHeredocMarkerIgnoringTabsEnd();
-
   @NotNull
   PsiElement getHeredocMarkerStart();
 
