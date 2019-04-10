@@ -1,12 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.List;
+
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.getValueList;
 
 public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccessor<T, List<String>> {
   public ValueListPropertyAccessor(@NotNull Object object, @NotNull Field field) {
@@ -27,8 +28,4 @@ public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccesso
     return getValueList(string);
   }
 
-  @NotNull
-  public static List<String> getValueList(@NotNull String string) {
-    return ContainerUtil.map(string.split(","), s -> s.trim());
-  }
 }

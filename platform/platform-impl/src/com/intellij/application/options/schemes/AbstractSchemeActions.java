@@ -397,7 +397,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(null, SchemeManager.getDisplayName(scheme) + "." + ext);
+      VirtualFileWrapper target = saver.save(null, exporter.getDefaultFileName(SchemeManager.getDisplayName(scheme)) + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
         String message;
