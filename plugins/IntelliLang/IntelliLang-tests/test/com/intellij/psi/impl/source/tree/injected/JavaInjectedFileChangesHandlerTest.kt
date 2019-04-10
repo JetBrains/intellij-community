@@ -21,28 +21,29 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     with(myFixture) {
 
       configureByText("classA.java", """
-class A {
-  void foo() {
-    String a = "{\"bca\":<caret> \n" +
-            "1}";
-  }
-}
-      """)
+          class A {
+            void foo() {
+              String a = "{\"bca\":<caret> \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
 
       val injectedFile = injectAndOpenInFragmentEditor("JSON")
       TestCase.assertEquals("{\"bca\": \n1}", injectedFile.text)
 
       injectedFile.edit { insertString(text.indexOf(":"), "\n") }
-      checkResult("""import org.intellij.lang.annotations.Language;
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
 
-class A {
-  void foo() {
-    @Language("JSON") String a = "{\"bca\"\n" +
-            ": \n" +
-            "1}";
-  }
-}
-      """)
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
     }
 
   }
@@ -51,14 +52,14 @@ class A {
     with(myFixture) {
 
       configureByText("classA.java", """
-class A {
-  void foo() {
-    String a = "<html>line\n" +
-            "anotherline<caret>\n" +
-            "finalLine</html>";
-  }
-}
-      """)
+          class A {
+            void foo() {
+              String a = "<html>line\n" +
+                      "anotherline<caret>\n" +
+                      "finalLine</html>";
+            }
+          }
+      """.trimIndent())
 
       val injectedFile = injectAndOpenInFragmentEditor("HTML")
       TestCase.assertEquals("<html>line\nanotherline\nfinalLine</html>", injectedFile.text)
@@ -66,16 +67,17 @@ class A {
       injectedFile.edit {
         findAndDelete("ne\nanot")
       }
-      checkResult("""import org.intellij.lang.annotations.Language;
-
-class A {
-  void foo() {
-    @Language("HTML") String a = "<html>li" +
-            "herline\n" +
-            "finalLine</html>";
-  }
-}
-      """)
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+  
+          class A {
+            void foo() {
+              @Language("HTML") String a = "<html>li" +
+                      "herline\n" +
+                      "finalLine</html>";
+            }
+          }
+      """.trimIndent())
     }
 
   }
@@ -85,49 +87,96 @@ class A {
     with(myFixture) {
 
       configureByText("classA.java", """
-class A {
-  void foo() {
-    String a = "{\"a\"<caret>: 1}";
-  }
-}
-      """)
+          class A {
+            void foo() {
+              String a = "{\"a\"<caret>: 1}";
+            }
+          }
+      """.trimIndent())
 
       val injectedFile = injectAndOpenInFragmentEditor("JSON")
       TestCase.assertEquals("{\"a\": 1}", injectedFile.text)
 
       injectedFile.edit { insertString(text.indexOf("a"), "bc") }
-      checkResult("""import org.intellij.lang.annotations.Language;
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
 
-class A {
-  void foo() {
-    @Language("JSON") String a = "{\"bca\": 1}";
-  }
-}
-      """)
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\": 1}";
+            }
+          }
+      """.trimIndent())
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
       injectedFile.edit { insertString(text.indexOf("1"), "\n") }
-      checkResult("""import org.intellij.lang.annotations.Language;
-
-class A {
-  void foo() {
-    @Language("JSON") String a = "{\"bca\": \n" +
-            "1}";
-  }
-}
-      """, true)
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+  
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent(), true)
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
       injectedFile.edit { insertString(text.indexOf(":"), "\n") }
-      checkResult("""import org.intellij.lang.annotations.Language;
-        
-class A {
-  void foo() {
-    @Language("JSON") String a = "{\"bca\"\n" +
-            ": \n" +
-            "1}";
-  }
-}
-      """, true)
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+          
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent(), true)
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
+    }
+
+  }
+
+
+  fun `test edit with guarded blocks`() {
+    with(myFixture) {
+
+      myFixture.configureByText("classA.java", """
+          class A {
+            void foo(String bodyText) {
+              String headText = "someText1";
+              String concatenation = "<html><head>" + headText + "</head><caret><body>" + bodyText + "</body></html>";
+            }
+          }
+      """.trimIndent())
+
+      val injectedFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html><head>someText1</head><body>missingValue</body></html>", injectedFile.text)
+
+      injectedFile.edit { insertString(text.indexOf("<body>"), "someInner") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+  
+          class A {
+            void foo(String bodyText) {
+              String headText = "someText1";
+              @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>" + bodyText + "</body></html>";
+            }
+          }
+      """.trimIndent(), true)
+
+      injectedFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+  
+          class A {
+            void foo(String bodyText) {
+              String headText = "someText1";
+              @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>\n" + bodyText + "</body></html>";
+            }
+          }
+      """.trimIndent())
+
     }
 
   }
@@ -147,47 +196,6 @@ class A {
     }
   }
 
-
-  fun `test edit with guarded blocks`() {
-    with(myFixture) {
-
-      myFixture.configureByText("classA.java", """
-class A {
-  void foo(String bodyText) {
-    String headText = "someText1";
-    String concatenation = "<html><head>" + headText + "</head><caret><body>" + bodyText + "</body></html>";
-  }
-}
-      """)
-
-      val injectedFile = injectAndOpenInFragmentEditor("HTML")
-      TestCase.assertEquals("<html><head>someText1</head><body>missingValue</body></html>", injectedFile.text)
-
-      injectedFile.edit { insertString(text.indexOf("<body>"), "someInner") }
-      checkResult("""import org.intellij.lang.annotations.Language;
-
-class A {
-  void foo(String bodyText) {
-    String headText = "someText1";
-    @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>" + bodyText + "</body></html>";
-  }
-}
-      """, true)
-
-      injectedFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
-      checkResult("""import org.intellij.lang.annotations.Language;
-
-class A {
-  void foo(String bodyText) {
-    String headText = "someText1";
-    @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>\n" + bodyText + "</body></html>";
-  }
-}
-      """)
-
-    }
-
-  }
 
   private fun PsiFile.edit(docFunction: Document.() -> Unit) {
     CommandProcessor.getInstance().executeCommand(project, {
