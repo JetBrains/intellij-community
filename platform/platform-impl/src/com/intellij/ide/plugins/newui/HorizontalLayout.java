@@ -21,14 +21,22 @@ public class HorizontalLayout extends AbstractLayoutManager {
     int width = 0;
     int height = 0;
     int count = parent.getComponentCount();
+    int visibleCount = 0;
 
     for (int i = 0; i < count; i++) {
-      Dimension size = parent.getComponent(i).getPreferredSize();
+      Component component = parent.getComponent(i);
+      if (!component.isVisible()) {
+        continue;
+      }
+      Dimension size = component.getPreferredSize();
       width += size.width;
       height = Math.max(height, size.height);
+      visibleCount++;
     }
 
-    width += (count - 1) * myOffset;
+    if (visibleCount > 1) {
+      width += (visibleCount - 1) * myOffset;
+    }
 
     Dimension size = new Dimension(width, height);
     JBInsets.addTo(size, parent.getInsets());
@@ -44,6 +52,9 @@ public class HorizontalLayout extends AbstractLayoutManager {
 
     for (int i = 0; i < count; i++) {
       Component component = parent.getComponent(i);
+      if (!component.isVisible()) {
+        continue;
+      }
       Dimension size = component.getPreferredSize();
       component.setBounds(x, insets.top + (height - size.height) / 2, size.width, size.height);
       x += size.width + myOffset;

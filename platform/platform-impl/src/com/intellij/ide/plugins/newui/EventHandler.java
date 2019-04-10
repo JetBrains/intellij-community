@@ -13,6 +13,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -28,6 +29,10 @@ public abstract class EventHandler {
   }
 
   public void removeCell(@NotNull CellPluginComponent component) {
+  }
+
+  public int getCellIndex(@NotNull CellPluginComponent component) {
+    return -1;
   }
 
   public void add(@NotNull Component component) {
@@ -61,7 +66,13 @@ public abstract class EventHandler {
   public void setSelection(@NotNull List<CellPluginComponent> components) {
   }
 
+  public void updateSelection() {
+  }
+
   public void clear() {
+  }
+
+  public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
   }
 
   public enum SelectionType {

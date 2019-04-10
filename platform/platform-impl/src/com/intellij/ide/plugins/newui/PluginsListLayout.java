@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PluginsListLayout extends AbstractLayoutManager {
+public class PluginsListLayout extends AbstractLayoutManager implements PagePluginLayout {
   private final ComponentCache myCache = new ComponentCache();
   int myLineHeight;
 
@@ -77,5 +77,10 @@ public class PluginsListLayout extends AbstractLayoutManager {
         myLineHeight = Math.max(myLineHeight, plugin.getPreferredSize().height);
       }
     }
+  }
+
+  @Override
+  public int getPageCount(@NotNull JComponent parent) {
+    return parent.getVisibleRect().height / myLineHeight;
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +19,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -49,6 +51,10 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   @NotNull
   public List<UIPluginGroup> getGroups() {
     return myGroups;
+  }
+
+  public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
+    myEventHandler.setSelectionListener(listener);
   }
 
   @NotNull
@@ -84,9 +90,11 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
           if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
             int fromIndex = group.ui.plugins.size();
             int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
-            int uiIndex = getComponentIndex(group.ui.plugins.get(fromIndex - 1));
+            CellPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
+            int uiIndex = getComponentIndex(lastComponent);
+            int eventIndex = myEventHandler.getCellIndex(lastComponent);
             PluginLogo.startBatchMode();
-            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex);
+            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
             PluginLogo.endBatchMode();
 
             if (group.descriptors.size() == group.ui.plugins.size()) {
@@ -142,45 +150,53 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
 
     int index;
+    int eventIndex;
 
     if (groupIndex == 0) {
       add(panel, 0);
       index = 1;
+      eventIndex = 0;
     }
     else if (groupIndex == -1) {
       add(panel);
-      index = -1;
+      index = eventIndex = -1;
     }
     else {
-      Component anchorPanel = myGroups.get(groupIndex + 1).panel;
-      int components = getComponentCount();
-      index = -1;
-
-      for (int i = 0; i < components; i++) {
-        if (getComponent(i) == anchorPanel) {
-          index = i;
-          break;
-        }
-      }
-
+      assert groupIndex < myGroups.size();
+      index = getComponentIndex(myGroups.get(groupIndex + 1).panel);
       assert index != -1;
       add(panel, index++);
+
+      eventIndex = getEventIndexForGroup(groupIndex + 1);
     }
 
     uiGroup.panel = panel;
 
-    addToGroup(group, descriptors, index);
+    addToGroup(group, descriptors, index, eventIndex);
   }
 
-  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int index) {
+  private int getEventIndexForGroup(int groupIndex) {
+    for (int i = groupIndex; i >= 0; i--) {
+      List<CellPluginComponent> plugins = myGroups.get(i).plugins;
+      if (!plugins.isEmpty()) {
+        return myEventHandler.getCellIndex(plugins.get(0));
+      }
+    }
+    return -1;
+  }
+
+  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int index, int eventIndex) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       CellPluginComponent pluginComponent = myFunction.fun(descriptor);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
-      myEventHandler.addCell(pluginComponent, index);
+      myEventHandler.addCell(pluginComponent, eventIndex);
       pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
       if (index != -1) {
         index++;
+      }
+      if (eventIndex != -1) {
+        eventIndex++;
       }
     }
   }
@@ -220,6 +236,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       myEventHandler.removeCell(plugin);
     }
 
+    myEventHandler.updateSelection();
     group.clear();
   }
 
@@ -230,6 +247,9 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     component.close();
     remove(component);
     myEventHandler.removeCell(component);
+    if (component.getSelection() == EventHandler.SelectionType.SELECTION) {
+      myEventHandler.updateSelection();
+    }
     group.descriptors.remove(descriptor);
   }
 
