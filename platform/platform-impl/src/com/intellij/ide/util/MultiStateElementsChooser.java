@@ -161,10 +161,10 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   private static void installActions(JTable table) {
     InputMap inputMap = table.getInputMap(WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "selectLastRow");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "selectFirstRow");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), TableActions.CtrlEnd.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), TableActions.CtrlHome.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.SHIFT_DOWN_MASK), TableActions.CtrlShiftHome.ID);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), TableActions.CtrlShiftEnd.ID);
   }
 
   @NotNull
