@@ -38,6 +38,21 @@ interface CellBuilder<T : JComponent> {
   fun focused(): CellBuilder<T>
   fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>
+  fun onReset(callback: () -> Unit): CellBuilder<T>
+  fun onIsModified(callback: () -> Boolean): CellBuilder<T>
+
+  fun <V> withBinding(
+    componentGet: () -> V,
+    componentSet: (V) -> Unit,
+    modelGet: () -> V,
+    modelSet: (V) -> Unit
+  ): CellBuilder<T> {
+    onApply { modelSet(componentGet()) }
+    onReset { componentSet(modelGet()) }
+    onIsModified { componentGet() != modelGet() }
+    return this
+  }
+
   fun enabled(isEnabled: Boolean)
   fun enableIfSelected(button: AbstractButton)
 
@@ -126,10 +141,10 @@ abstract class Cell {
     return component
   }
 
-  fun checkBox(text: String, prop: KMutableProperty0<Boolean>): CellBuilder<JBCheckBox> {
+  fun checkBox(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, prop.get())
-    return component()
-      .onApply { prop.set(component.isSelected) }
+    return component(comment = comment)
+      .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
   }
 
   inline fun <T> comboBox(propertyUiManager: BooleanPropertyWithListUiManager<T, out ComboBoxModel<T>>, growPolicy: GrowPolicy? = null, crossinline renderer: ListCellRendererWrapper<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit) {
@@ -154,8 +169,7 @@ abstract class Cell {
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
     val component = JTextField(prop.get(),columns ?: 0)
     val builder = component()
-    builder.onApply { prop.set(component.text) }
-    return builder
+    return builder.withBinding(component::getText, component::setText, prop.getter, prop.setter)
   }
 
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null): CellBuilder<JTextField> {
@@ -165,13 +179,12 @@ abstract class Cell {
   fun textField(getter: Supplier<String>, setter: Consumer<String>, columns: Int? = null): CellBuilder<JTextField> {
     val component = JTextField(getter.get(),columns ?: 0)
     val builder = component()
-    builder.onApply { setter.accept(component.text) }
-    return builder
+    return builder.withBinding(component::getText, component::setText, { getter.get() }, { setter.accept(it) })
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
     val component = JBIntSpinner(prop.get(), minValue, maxValue, step)
-    return component().onApply { prop.set(component.number) }
+    return component().withBinding(component::getNumber, component::setNumber, prop.getter, prop.setter)
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
