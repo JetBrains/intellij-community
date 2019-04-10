@@ -12,12 +12,15 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
   public void testWriter() throws IOException {
     CodeStyleSettings setting = CodeStyleSettings.getDefaults();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(output, setting).forLanguages(EditorConfigLanguage.INSTANCE)) {
+    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(getProject(), output, setting).forLanguages(EditorConfigLanguage.INSTANCE)) {
       writer.writeSettings();
     }
     String result = output.toString("UTF-8");
     assertEquals(
       "[*]\n" +
+      "charset=utf-8\n" +
+      "end_of_line=lf\n" +
+      "insert_final_newline=false\n" +
       "max_line_length = 120\n" +
       "ij_formatter_off_tag = @formatter:off\n" +
       "ij_formatter_on_tag = @formatter:on\n" +

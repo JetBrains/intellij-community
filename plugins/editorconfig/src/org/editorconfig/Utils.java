@@ -128,18 +128,21 @@ public class Utils {
     });
   }
 
-  private static String getEndOfFile() {
+  @NotNull
+  public static String getEndOfFile() {
     return StandardEditorConfigProperties.INSERT_FINAL_NEWLINE + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
   }
 
-  private static String getTrailingSpaces() {
+  @NotNull
+  public static String getTrailingSpaces() {
     final String spaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
     if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=false\n";
     if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=true\n";
     return "";
   }
 
-  private static String getLineEndings(Project project) {
+  @NotNull
+  public static String getLineEndings(@NotNull Project project) {
     final String separator = CodeStyle.getSettings(project).getLineSeparator();
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
@@ -150,7 +153,7 @@ public class Utils {
   }
 
   @NotNull
-  private static String getEncoding(Project project) {
+  public static String getEncoding(@NotNull Project project) {
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     for (Map.Entry<String, Charset> entry : EncodingManager.encodingMap.entrySet()) {
       if (entry.getValue() == charset) {

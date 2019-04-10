@@ -18,10 +18,12 @@ package com.intellij.application.options.schemes;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeExporter;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -34,6 +36,16 @@ import java.io.OutputStreamWriter;
  */
 public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   @Override
+  public void exportScheme(@Nullable Project project, @NotNull Scheme scheme, @NotNull OutputStream outputStream) throws Exception {
+    exportScheme(scheme, outputStream);
+  }
+
+  /**
+   * @deprecated Use {@link #exportScheme(Project, Scheme, OutputStream)}
+   */
+  @SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
+  @Override
+  @Deprecated
   public void exportScheme(@NotNull Scheme scheme, @NotNull OutputStream outputStream) throws Exception {
     assert scheme instanceof SerializableScheme;
     writeToStream((SerializableScheme)scheme, outputStream);
