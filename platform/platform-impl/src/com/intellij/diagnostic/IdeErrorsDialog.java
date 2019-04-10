@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -174,7 +175,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   protected JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
     myInfoLabel = new HypertextLabel();
-    myDisableLink = new HypertextLabel(url -> disablePlugin());
+    myDisableLink = new HypertextLabel(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) disablePlugin();
+    });
     myDisableLink.setText("<a href=\"\">" + UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")) + "</a>");
     myForeignPluginWarningLabel = new HypertextLabel();
 
@@ -1008,21 +1011,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static class HypertextLabel extends JTextPane {
     HypertextLabel() {
-      this(url -> {
-        if (url != null) {
-          BrowserUtil.browse(url);
-        }
-      });
+      this(BrowserHyperlinkListener.INSTANCE);
     }
 
-    HypertextLabel(Consumer<URL> linkListener) {
+    HypertextLabel(HyperlinkListener listener) {
       setEditorKit(new UIUtil.JBHtmlEditorKit());
       setEditable(false);
-      addHyperlinkListener(e -> {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          linkListener.accept(e.getURL());
-        }
-      });
+      addHyperlinkListener(listener);
     }
   }
 }
