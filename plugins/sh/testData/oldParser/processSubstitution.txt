@@ -1,0 +1,127 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PROCESS_SUBSTITUTION
+                PsiElement(<)('<')
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          PsiElement(word)('printf')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          STRING
+                            PsiElement(RAW_STRING)(''%s\n'')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          STRING
+                            PsiElement(")('"')
+                            PsiElement($)('$')
+                            SHELL_PARAMETER_EXPANSION
+                              PsiElement({)('{')
+                              PsiElement(parameter_expansion_body)('BEFORE[@]')
+                              PsiElement(})('}')
+                            PsiElement(")('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(|)('|')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND
+                        ASSIGNMENT_COMMAND
+                          PsiElement(word)('LC_ALL')
+                          PsiElement(=)('=')
+                          PsiElement(word)('C')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          PsiElement(word)('sort')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND
+          WHILE_COMMAND
+            PsiElement(while)('while')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('read')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('line')
+              PsiWhiteSpace(' ')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            DO_BLOCK
+              PsiElement(do)('do')
+              PsiWhiteSpace(' ')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        VARIABLE
+                          PsiElement(var)('$line')
+                PsiWhiteSpace(' ')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              PsiElement(done)('done')
+          PsiWhiteSpace(' ')
+          REDIRECTION_LIST
+            REDIRECTION
+              PROCESS_SUBSTITUTION
+                PsiElement(<)('<')
+                PsiWhiteSpace(' ')
+                PsiElement(<)('<')
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          PsiElement(word)('echo')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          PsiElement(word)(':')
+                PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PROCESS_SUBSTITUTION
+                PsiElement(<)('<')
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          PsiElement(word)('echo')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          PsiElement(word)('a')
+                PsiElement())(')')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            VARIABLE
+              PsiElement(var)('$var')

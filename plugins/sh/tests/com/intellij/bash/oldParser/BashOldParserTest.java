@@ -106,7 +106,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testIssue125()                            { doTest(true); }
   public void testIssue201()                            { doTest(true); }
   public void testIssue243()                            { doTest(true); }
-  public void testIssue244()                            { doTest(true); }
   public void testIssue265()                            { doTest(true); }
   public void testIssue272()                            { doTest(true); }
   public void testIssue302()                            { doTest(true); }
@@ -118,19 +117,19 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testIssue341()                            { doTest(true); }
   public void testIssue350()                            { doTest(true); }
   public void testIssue351()                            { doTest(true); }
-  public void testIssue367()                            { doTest(true); }
   public void testIssue389()                            { doTest(true); }
   public void testIssue393()                            { doTest(true); }
   public void testIssue401()                            { doTest(true); }
-  public void testIssue412()                            { doTest(true); }
   public void testIssue431()                            { doTest(true); }
   public void testIssue432()                            { doTest(true); }
-  public void testIssue460()                            { doTest(true); }
-  public void testIssue465()                            { doTest(true); }
   public void testIssue474()                            { doTest(true); }
   public void testIssue515()                            { doTest(true); }
   public void testIssue657()                            { doTest(true); }
   public void testIssue89()                             { doTest(true); }
+  public void testIssue244()                            { doTest(true); }
+  public void testIssue367()                            { doTest(true); }
+  public void testIssue412()                            { doTest(true); }
+  public void testIssue460()                            { doTest(true); }
   public void testLetParse()                            { doTest(true); }
   public void testLocalParsing()                        { doTest(true); }
   public void testLocalParsingEmbedded()                { doTest(true); }
@@ -161,7 +160,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseCompoundList3()                  { doTest(true); }
   public void testParseCompoundList5()                  { doTest(true); }
   public void testParseCompoundList6()                  { doTest(true); }
-  public void testParseCompoundListErrors()             { doTest(true); }
   public void testParseEmbeddedVar()                    { doTest(true); }
   public void testParseError1()                         { doTest(true); }
   public void testParseGroupCommand()                   { doTest(true); }
@@ -171,14 +169,12 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseList1Complex1()                  { doTest(true); }
   public void testParseList1Error1()                    { doTest(true); }
   public void testParseList1SimpleWithNewlines()        { doTest(true); }
-  public void testParsePipelineCommand1()               { doTest(true); }
   public void testParsePipelineCommand2()               { doTest(true); }
   public void testParsePipelineCommand3()               { doTest(true); }
   public void testParsePipelineCommand4()               { doTest(true); }
   public void testParseReplace()                        { doTest(true); }
   public void testParseSimpleCommand()                  { doTest(true); }
   public void testParseSimpleCommand2()                 { doTest(true); }
-  public void testParseSimpleCommandAssignment1()       { doTest(true); }
   public void testParseSimpleCommandCombined()          { doTest(true); }
   public void testParseSimpleCommandCombined3()         { doTest(true); }
   public void testParseSimpleCommandCombinedError()     { doTest(true); }
@@ -195,11 +191,11 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testPrintfNoVar()                         { doTest(true); }
   public void testPrintfVarDef()                        { doTest(true); }
   public void testProcessSubstitution()                 { doTest(true); }
+  public void testRedirectionProcessSubstitution()      { doTest(true); }
   public void testReadIsValid()                         { doTest(true); }
   public void testReadarrayParse()                      { doTest(true); }
   public void testRedirectErrors()                      { doTest(true); }
   public void testRedirectWithArithmeticCommand()       { doTest(true); }
-  public void testRedirectionProcessSubstitution()      { doTest(true); }
   public void testRedirects()                           { doTest(true); }
   public void testRegExp()                              { doTest(true); }
   public void testSelectCommand1()                      { doTest(true); }
@@ -238,5 +234,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testForErrors()                           { doTest(true); }
   public void testForIncompleteParse()                  { doTest(true); }
   public void testFunctionDefError()                    { doTest(true); }
+  public void testParseSimpleCommandAssignment1()       { doTest(true); }
   public void testConditionalError()                    { doTest(true); } //Start from here
 }

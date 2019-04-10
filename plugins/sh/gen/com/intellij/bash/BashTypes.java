@@ -71,6 +71,7 @@ public interface BashTypes {
   IElementType PIPELINE_COMMAND = new BashCompositeElementType("PIPELINE_COMMAND");
   IElementType POST_EXPRESSION = new BashCompositeElementType("POST_EXPRESSION");
   IElementType PRE_EXPRESSION = new BashCompositeElementType("PRE_EXPRESSION");
+  IElementType PROCESS_SUBSTITUTION = new BashCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new BashCompositeElementType("REDIRECTION");
   IElementType REDIRECTION_LIST = new BashCompositeElementType("REDIRECTION_LIST");
   IElementType SELECT_COMMAND = new BashCompositeElementType("SELECT_COMMAND");
@@ -370,6 +371,9 @@ public interface BashTypes {
       }
       else if (type == PRE_EXPRESSION) {
         return new BashPreExpressionImpl(node);
+      }
+      else if (type == PROCESS_SUBSTITUTION) {
+        return new BashProcessSubstitutionImpl(node);
       }
       else if (type == REDIRECTION) {
         return new BashRedirectionImpl(node);

@@ -119,6 +119,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == PIPELINE_COMMAND) {
       r = pipeline_command(b, 0);
     }
+    else if (t == PROCESS_SUBSTITUTION) {
+      r = process_substitution(b, 0);
+    }
     else if (t == REDIRECTION) {
       r = redirection(b, 0);
     }
@@ -1992,7 +1995,52 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // redirection_inner | '&>' w | num redirection_inner
+  // ('<' '<'?| '>') '(' list ')'
+  public static boolean process_substitution(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution")) return false;
+    if (!nextTokenIs(b, "<process substitution>", GT, LT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
+    r = process_substitution_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
+    r = p && report_error_(b, list(b, l + 1)) && r;
+    r = p && consumeToken(b, RIGHT_PAREN) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // '<' '<'?| '>'
+  private static boolean process_substitution_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = process_substitution_0_0(b, l + 1);
+    if (!r) r = consumeToken(b, GT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '<' '<'?
+  private static boolean process_substitution_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LT);
+    r = r && process_substitution_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '<'?
+  private static boolean process_substitution_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "process_substitution_0_0_1")) return false;
+    consumeToken(b, LT);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // redirection_inner | '&>' w | num redirection_inner | process_substitution
   public static boolean redirection(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection")) return false;
     boolean r;
@@ -2000,6 +2048,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = redirection_inner(b, l + 1);
     if (!r) r = redirection_1(b, l + 1);
     if (!r) r = redirection_2(b, l + 1);
+    if (!r) r = process_substitution(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

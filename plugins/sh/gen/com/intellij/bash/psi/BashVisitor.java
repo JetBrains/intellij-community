@@ -254,6 +254,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitExpression(o);
   }
 
+  public void visitProcessSubstitution(@NotNull BashProcessSubstitution o) {
+    visitCompositeElement(o);
+  }
+
   public void visitRedirection(@NotNull BashRedirection o) {
     visitCompositeElement(o);
   }

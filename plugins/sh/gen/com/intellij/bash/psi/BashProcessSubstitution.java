@@ -17,9 +17,6 @@ public interface BashProcessSubstitution extends BashCompositeElement {
   PsiElement getLeftParen();
 
   @Nullable
-  PsiElement getLt();
-
-  @Nullable
   PsiElement getRightParen();
 
 }

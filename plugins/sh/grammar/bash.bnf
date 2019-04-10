@@ -122,7 +122,7 @@ private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
 private w ::= word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
 
-redirection ::= redirection_inner | '&>' w | num redirection_inner
+redirection ::= redirection_inner | '&>' w | num redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (num | '-')
                             | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w+
 
@@ -144,6 +144,7 @@ command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUO
 
 conditional_command ::=  '[[' condition* (']]'|']'<<differentBracketsWarning>>)
                         |'[' condition* (']'|']]' <<differentBracketsWarning>>){pin(".*")=1}
+process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
 
 private literal ::= w | string | num
 simple_command_element ::= simple_command_element_inner
