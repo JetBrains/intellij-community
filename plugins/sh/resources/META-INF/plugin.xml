@@ -14,6 +14,8 @@
     <lang.commenter language="Bash" implementationClass="com.intellij.bash.BashCommenter"/>
     <lang.quoteHandler language="Bash" implementationClass="com.intellij.bash.BashQuoteHandler"/>
     <backspaceHandlerDelegate implementation="com.intellij.bash.BashBackspaceHandler"/>
+    <lineIndentProvider implementation="com.intellij.bash.BashLineIndentProvider"/>
+    <editor.backspaceModeOverride language="Bash" implementationClass="com.intellij.bash.BashBackspaceModeOverride"/>
 
     <lang.psiStructureViewFactory language="Bash" implementationClass="com.intellij.bash.BashStructureViewFactory"/>
 
