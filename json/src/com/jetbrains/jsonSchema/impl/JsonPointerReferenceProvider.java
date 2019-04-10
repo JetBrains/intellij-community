@@ -224,7 +224,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class JsonPointerReference extends JsonSchemaBaseReference<JsonValue> {
+  static class JsonPointerReference extends JsonSchemaBaseReference<JsonValue> {
     private final String myFullPath;
 
     JsonPointerReference(JsonValue element, TextRange textRange, String curPath) {
