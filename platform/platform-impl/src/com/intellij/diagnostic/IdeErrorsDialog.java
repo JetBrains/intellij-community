@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -44,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,10 +55,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -82,9 +84,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private int myIndex, myLastIndex = -1;
 
   private JLabel myCountLabel;
-  private HyperlinkLabel.Croppable myInfoLabel;
-  private HyperlinkLabel.Croppable myDisableLink;
-  private HyperlinkLabel.Croppable myForeignPluginWarningLabel;
+  private HypertextLabel myInfoLabel;
+  private HypertextLabel myDisableLink;
+  private HypertextLabel myForeignPluginWarningLabel;
   private JTextArea myCommentArea;
   private AttachmentsList myAttachmentsList;
   private JTextArea myAttachmentArea;
@@ -171,17 +173,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
-    myInfoLabel = new HyperlinkLabel.Croppable();
-
-    myDisableLink = new HyperlinkLabel.Croppable();
-    myDisableLink.setHyperlinkText(UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")));
-    myDisableLink.addHyperlinkListener(e -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        disablePlugin();
-      }
-    });
-
-    myForeignPluginWarningLabel = new HyperlinkLabel.Croppable();
+    myInfoLabel = new HypertextLabel();
+    myDisableLink = new HypertextLabel(url -> disablePlugin());
+    myDisableLink.setText("<a href=\"\">" + UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")) + "</a>");
+    myForeignPluginWarningLabel = new HypertextLabel();
 
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
@@ -442,7 +437,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     IdeaPluginDescriptor plugin = cluster.plugin;
 
     StringBuilder info = new StringBuilder();
-    String url = null;
 
     if (pluginId != null) {
       String name = plugin != null ? plugin.getName() : pluginId.toString();
@@ -468,15 +462,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
       info.append('.');
-      url = submissionInfo.getURL();
     }
     else if (message.isSubmitting()) {
       info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
     }
 
-    myInfoLabel.setHtmlText(XmlStringUtil.wrapInHtml(info));
-    myInfoLabel.setHyperlinkTarget(url);
-    myInfoLabel.setToolTipText(url);
+    myInfoLabel.setText(info.toString());
 
     myDisableLink.setVisible(pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString()));
 
@@ -484,26 +475,22 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
-      String contactUrl = plugin.getVendorUrl();
-      String contactEmail = plugin.getVendorEmail();
-      if (!StringUtil.isEmpty(vendor) && !StringUtil.isEmpty(contactUrl)) {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", vendor));
-        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      String vendorUrl = plugin.getVendorUrl();
+      if (StringUtil.isEmptyOrSpaces(vendorUrl)) {
+        String vendorEmail = plugin.getVendorEmail();
+        if (!StringUtil.isEmptyOrSpaces(vendorEmail)) {
+          vendorUrl = "mailto:" + StringUtil.trimStart(vendorEmail, "mailto:");
+        }
       }
-      else if (!StringUtil.isEmpty(contactUrl)) {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown"));
-        myForeignPluginWarningLabel.setHyperlinkTarget(contactUrl);
+      if (!StringUtil.isEmpty(vendor) && !StringUtil.isEmpty(vendorUrl)) {
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl));
       }
-      else if (!StringUtil.isEmpty(contactEmail)) {
-        contactEmail = StringUtil.trimStart(contactEmail, "mailto:");
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.vendor", contactEmail));
-        myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactEmail);
+      else if (!StringUtil.isEmptyOrSpaces(vendorUrl)) {
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl));
       }
       else {
-        myForeignPluginWarningLabel.setHtmlText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning"));
-        myForeignPluginWarningLabel.setHyperlinkTarget(null);
+        myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown"));
       }
-      myForeignPluginWarningLabel.setToolTipText(contactUrl);
     }
     else {
       myForeignPluginWarningLabel.setVisible(false);
@@ -1016,6 +1003,26 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     else {
       out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted"));
+    }
+  }
+
+  private static class HypertextLabel extends JTextPane {
+    HypertextLabel() {
+      this(url -> {
+        if (url != null) {
+          BrowserUtil.browse(url);
+        }
+      });
+    }
+
+    HypertextLabel(Consumer<URL> linkListener) {
+      setEditorKit(new UIUtil.JBHtmlEditorKit());
+      setEditable(false);
+      addHyperlinkListener(e -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          linkListener.accept(e.getURL());
+        }
+      });
     }
   }
 }
