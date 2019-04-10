@@ -323,6 +323,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun createRow(label: String?): Row {
     return createChildRow(label = label?.let { Label(it) })
   }
+
+  override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
+    return createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
+  }
+
+  override fun createNoteOrCommentRow(component: JComponent): Row {
+    val cc = CC()
+    cc.vertical.gapBefore = gapToBoundSize(if (subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
+    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
+
+    val row = createChildRow(label = null, noGrid = true)
+    row.addComponent(component, lazyOf(cc))
+    return row
+  }
 }
 
 class CellBuilderImpl<T : JComponent> internal constructor(

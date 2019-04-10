@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.RadioButton
+import com.intellij.ui.components.noteComponent
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 abstract class Row : Cell() {
@@ -53,6 +56,12 @@ abstract class Row : Cell() {
     return row
   }
 
+  inline fun buttonGroup(init: Row.() -> Unit): Row {
+    val row = createRow(null, ButtonGroup())
+    row.init()
+    return row
+  }
+
   /**
    * Shares cell between components.
    */
@@ -64,6 +73,12 @@ abstract class Row : Cell() {
 
   @PublishedApi
   internal abstract fun createRow(label: String?): Row
+
+  @PublishedApi
+  internal abstract fun createRow(label: String?, buttonGroup: ButtonGroup?): Row
+
+  @PublishedApi
+  internal abstract fun createNoteOrCommentRow(component: JComponent): Row
 
   @PublishedApi
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean)
