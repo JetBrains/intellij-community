@@ -52,7 +52,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -4424,6 +4423,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static class ExplosionPainter extends AbstractPainter {
     private final Point myExplosionLocation;
     private final Image myImage;
+    @NotNull private final Disposable myPainterListenersDisposable;
 
     private static final long TIME_PER_FRAME = 30;
     private final int myWidth;
@@ -4434,9 +4434,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private final AtomicBoolean nrp = new AtomicBoolean(true);
 
-    ExplosionPainter(final Point explosionLocation, Image image) {
+    ExplosionPainter(final Point explosionLocation, Image image, @NotNull Disposable painterListenersDisposable) {
       myExplosionLocation = new Point(explosionLocation.x, explosionLocation.y);
       myImage = image;
+      myPainterListenersDisposable = painterListenersDisposable;
       myWidth = myImage.getWidth(null);
       myHeight = myImage.getHeight(null);
     }
@@ -4464,8 +4465,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       UIUtil.drawImage(g, scaledImage, x, y, null);
       if (frameIndex == TOTAL_FRAMES) {
         nrp.set(false);
-        IdeGlassPane glassPane = IdeGlassPaneUtil.find(component);
-        ApplicationManager.getApplication().invokeLater(() -> glassPane.removePainter(this));
+        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myPainterListenersDisposable));
         component.repaint(x, y, myWidth, myHeight);
       }
       component.repaint(x, y, myWidth, myHeight);
@@ -4492,15 +4492,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               Point mouseLocationOnScreen = MouseInfo.getPointerInfo().getLocation();
               JComponent editorComponent = editor.getComponent();
               Point editorComponentLocationOnScreen = editorComponent.getLocationOnScreen();
+              Disposable painterListenersDisposable = Disposer.newDisposable("PainterListenersDisposable");
+              Disposer.register(editor.getDisposable(), painterListenersDisposable);
+              ExplosionPainter painter = new ExplosionPainter(
+                new Point(
+                  mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
+                  mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
+                ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject), painterListenersDisposable
+              );
               IdeGlassPaneUtil.installPainter(
                 editorComponent,
-                new ExplosionPainter(
-                  new Point(
-                    mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
-                    mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                  ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject)
-                ),
-                editor.getDisposable()
+                painter, painterListenersDisposable
               );
               return true;
             }

@@ -143,6 +143,7 @@ public class JBTabsImpl extends JComponent
   private boolean myTabLabelActionsAutoHide;
 
   private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
+  private Disposable myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
   @NonNls public static final String STRETCHED_BY_WIDTH = "Layout.stretchedByWidth";
@@ -360,7 +361,9 @@ public class JBTabsImpl extends JComponent
         if (!myTestMode) {
           final IdeGlassPane gp = IdeGlassPaneUtil.find(child);
           if (gp != null) {
-            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, child);
+            myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
+            Disposer.register(child, myTabActionsAutoHideListenerDisposable);
+            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
             myGlassPane = gp;
           }
 
@@ -557,7 +560,8 @@ public class JBTabsImpl extends JComponent
     removeTimerUpdate();
 
     if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
-      myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
+      Disposer.dispose(myTabActionsAutoHideListenerDisposable);
+      myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
       myGlassPane = null;
     }
   }
