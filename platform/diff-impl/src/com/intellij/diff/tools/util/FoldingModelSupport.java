@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -239,7 +240,10 @@ public class FoldingModelSupport {
 
       String[] descriptions = new String[myCount];
       for (int i = 0; i < myCount; i++) {
-        descriptions[i] = getDescription(ends[i], i);
+        String startDescription = getDescription(starts[i], i);
+        String endDescription = getDescription(ends[i], i);
+        if (Comparing.equal(startDescription, endDescription)) continue;
+        descriptions[i] = endDescription;
       }
 
       return new Data.Block(regions, descriptions);
