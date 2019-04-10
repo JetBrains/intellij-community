@@ -3,11 +3,8 @@
  */
 package org.jetbrains.plugins.gradle.internal.daemon;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import org.gradle.api.internal.file.DefaultFileCollectionFactory;
 import org.gradle.api.internal.file.FileCollectionFactory;
-import org.gradle.api.logging.Logging;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
@@ -16,6 +13,9 @@ import org.gradle.launcher.daemon.client.DaemonClientFactory;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Vladislav.Soroka
@@ -27,12 +27,20 @@ public abstract class DaemonAction {
     myServiceDirectoryPath = serviceDirectoryPath;
   }
 
-  protected ServiceRegistry getDaemonServices(DaemonClientFactory daemonClientFactory)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected ServiceRegistry getDaemonServices(DaemonClientFactory daemonClientFactory) {
     BuildLayoutParameters layout = new BuildLayoutParameters();
     if (myServiceDirectoryPath != null && !myServiceDirectoryPath.isEmpty()) {
       layout.setGradleUserHomeDir(new File(myServiceDirectoryPath));
     }
+    DaemonParameters daemonParameters = getDaemonParameters(layout);
+    return daemonClientFactory.createStopDaemonServices(new OutputEventListener() {
+      @Override
+      public void onOutput(OutputEvent event) { }
+    }, daemonParameters);
+  }
+
+  @NotNull
+  protected static DaemonParameters getDaemonParameters(BuildLayoutParameters layout) {
     DaemonParameters daemonParameters;
     boolean isGradle5Dot3OrNewer = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.3")) >= 0;
     if (!isGradle5Dot3OrNewer) {
@@ -45,15 +53,10 @@ public abstract class DaemonAction {
           .newInstance(layout, new DefaultFileCollectionFactory());
       }
       catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        Logging.getLogger(this.getClass())
-          .error("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
-        throw e;
+        throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
       }
     }
-    return daemonClientFactory.createStopDaemonServices(new OutputEventListener() {
-      @Override
-      public void onOutput(OutputEvent event) { }
-    }, daemonParameters);
+    return daemonParameters;
   }
 
   @NotNull
