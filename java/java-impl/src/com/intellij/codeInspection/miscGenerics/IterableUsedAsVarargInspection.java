@@ -55,9 +55,13 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
         String replacement = "new " + className + "[0]";
         argCopy.replace(factory.createExpressionFromText(replacement, argCopy));
         JavaResolveResult copyResult = callCopy.getMethodExpression().advancedResolve(false);
-        if (copyResult.getElement() != method) return;
-        PsiType substitutionWithArray = copyResult.getSubstitutor().substitute(componentType);
-        if (substitutionWithArray == null || TypeUtils.isJavaLangObject(substitutionWithArray)) return;
+        if (copyResult.getElement() == method) {
+          PsiType substitutionWithArray = copyResult.getSubstitutor().substitute(componentType);
+          if (substitutionWithArray == null || TypeUtils.isJavaLangObject(substitutionWithArray)) return;
+        } else {
+          PsiMethod newMethod = (PsiMethod)copyResult.getElement();
+          if (newMethod == null || !newMethod.isVarArgs() || newMethod.getParameterList().getParametersCount() != argCount) return;
+        }
         LocalQuickFix fix = null;
         if (InheritanceUtil.isInheritor(varArgExpression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fix = new AddToArrayFix(className);
@@ -86,7 +90,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
       if (!InheritanceUtil.isInheritor(expression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       String fullReplacementText =
-        ParenthesesUtils.getText(expression, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".toArray(new " + myClassName + "[0])";
+        ParenthesesUtils.getText(expression, ParenthesesUtils.METHOD_CALL_PRECEDENCE + 1) + ".toArray(new " + myClassName + "[0])";
       expression.replace(factory.createExpressionFromText(fullReplacementText, expression));
     }
   }
