@@ -15,10 +15,10 @@ import org.gradle.launcher.daemon.registry.DaemonStopEvent;
 import org.gradle.launcher.daemon.registry.DaemonStopEvents;
 import org.gradle.launcher.daemon.server.expiry.DaemonExpirationStatus;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +31,8 @@ public class DaemonStatusAction extends DaemonAction {
     super(serviceDirectoryPath);
   }
 
-  public List<DaemonState> run(DaemonClientFactory daemonClientFactory) {
+  public List<DaemonState> run(DaemonClientFactory daemonClientFactory)
+    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
     ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonConnector daemonConnector = daemonServices.get(DaemonConnector.class);
     DaemonRegistry daemonRegistry = daemonServices.get(DaemonRegistry.class);
