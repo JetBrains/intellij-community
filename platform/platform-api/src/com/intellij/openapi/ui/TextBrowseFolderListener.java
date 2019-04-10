@@ -32,7 +32,7 @@ public class TextBrowseFolderListener extends ComponentWithBrowseButton.BrowseFo
   }
 
   void setOwnerComponent(@NotNull TextFieldWithBrowseButton component) {
-    myTextComponent = component;
+    myTextComponent = component.getChildComponent();
   }
 
   FileChooserDescriptor getFileChooserDescriptor() {
