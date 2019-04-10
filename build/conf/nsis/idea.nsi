@@ -1665,7 +1665,7 @@ Function un.ConfirmDeleteSettings
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 5" "Text" "$(confirm_delete_settings)"
 
   ${UnStrStr} $R0 "${MUI_PRODUCT}" "Rider"
-  StrCmp $R0 ${MUI_PRODUCT} build_tools 0
+  StrCmp $R0 "${MUI_PRODUCT}" build_tools 0
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Type" "Label"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 7" "Text" ""
   Goto feedback_web_page
@@ -1861,7 +1861,7 @@ skip_delete_caches:
 
 skip_delete_settings:
   ${UnStrStr} $R0 "${MUI_PRODUCT}" "Rider"
-  StrCmp $R0 ${MUI_PRODUCT} 0 skip_delete_tools
+  StrCmp $R0 "${MUI_PRODUCT}" 0 skip_delete_tools
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
   StrCmp $R3 1 "" skip_delete_tools
     SetShellVarContext current
