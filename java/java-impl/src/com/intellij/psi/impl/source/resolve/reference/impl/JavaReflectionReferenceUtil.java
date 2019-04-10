@@ -103,7 +103,7 @@ public class JavaReflectionReferenceUtil {
   public static final String ATOMIC_INTEGER_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicIntegerFieldUpdater";
   public static final String ATOMIC_REFERENCE_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicReferenceFieldUpdater";
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
+  private static final RecursionGuard<PsiElement> ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
   @Contract("null -> null")
   public static ReflectiveType getReflectiveType(@Nullable PsiExpression context) {

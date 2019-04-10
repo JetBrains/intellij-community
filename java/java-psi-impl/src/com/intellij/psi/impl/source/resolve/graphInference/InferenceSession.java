@@ -380,7 +380,7 @@ public class InferenceSession {
 
   private boolean isOverloadCheck() {
     if (myContext != null) {
-      for (Object o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+      for (PsiElement o : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
         //method references do not contain nested arguments anyway
         if (o instanceof PsiExpressionList) {
           final PsiExpressionList element = (PsiExpressionList)o;
@@ -456,14 +456,14 @@ public class InferenceSession {
   }
   
   private static boolean ignoreConstraintTree(PsiExpression arg) {
-    for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-      if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
+    for (PsiElement expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+      if (PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class) == arg) {
         return true;
       }
     }
 
-    for (Object expr : LambdaUtil.ourParameterGuard.currentStack()) {
-      if (expr instanceof PsiParameter && ((PsiParameter)expr).getDeclarationScope() == arg) {
+    for (PsiParameter parameter : LambdaUtil.ourParameterGuard.currentStack()) {
+      if (parameter.getDeclarationScope() == arg) {
         return true;
       }
     }

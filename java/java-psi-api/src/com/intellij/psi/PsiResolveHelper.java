@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaPsiFacade#getResolveHelper()
  */
 public interface PsiResolveHelper {
-  RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
-  RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
+  RecursionGuard<PsiExpression> ourGuard = RecursionManager.createGuard("typeArgInference");
+  RecursionGuard<PsiElement> ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
   final class SERVICE {
     private static final NotNullLazyKey<PsiResolveHelper, Project> PSI_RESOLVER_KEY = ServiceManager.createLazyKey(PsiResolveHelper.class);

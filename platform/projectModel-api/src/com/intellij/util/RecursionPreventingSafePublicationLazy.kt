@@ -53,7 +53,7 @@ class RecursionPreventingSafePublicationLazy<T>(recursionKey: Any?, initializer:
   override fun toString(): String = if (isInitialized()) value.toString() else "Lazy value not initialized yet."
 
   companion object {
-    private val ourRecursionGuard = RecursionManager.createGuard("RecursionPreventingSafePublicationLazy")
+    private val ourRecursionGuard = RecursionManager.createGuard<Any>("RecursionPreventingSafePublicationLazy")
     private val ourNotNullizer = NotNullizer("RecursionPreventingSafePublicationLazy")
   }
 }

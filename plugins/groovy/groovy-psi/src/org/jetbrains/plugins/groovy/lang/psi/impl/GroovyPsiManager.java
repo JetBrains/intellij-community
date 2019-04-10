@@ -51,7 +51,7 @@ public class GroovyPsiManager {
   private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
+  private static final RecursionGuard<PsiElement> ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -174,7 +174,7 @@ public class GroovyPsiManager {
 
   @Nullable
   public static PsiType inferType(@NotNull PsiElement element, @NotNull Computable<? extends PsiType> computable) {
-    List<Object> stack = ourGuard.currentStack();
+    List<? extends PsiElement> stack = ourGuard.currentStack();
     if (stack.size() > 7) { //don't end up walking the whole project PSI
       ourGuard.prohibitResultCaching(stack.get(0));
       return null;
