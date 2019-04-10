@@ -519,22 +519,7 @@ public class RecentProjectPanel extends JPanel {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
         int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() - JBUI.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
-          int left = 1; int right = 1;
-          int center = fullText.length() / 2;
-          String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          while (fm.stringWidth(s) > maxWidth) {
-            if (left == right) {
-              left++;
-            } else {
-              right++;
-            }
-
-            if (center - left < 0 || center + right >= fullText.length()) {
-              return "";
-            }
-            s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          }
-          return s;
+          return truncateDescription(fullText, fm, maxWidth, isTutorial(action));
         }
       } catch (Exception e) {
         LOG.error("Path label font: " + pathLabel.getFont());
@@ -543,6 +528,52 @@ public class RecentProjectPanel extends JPanel {
       }
 
       return fullText;
+    }
+
+    private boolean isTutorial(ReopenProjectAction action) {
+      List<ProjectGroup> groups = RecentProjectsManager.getInstance().getGroups();
+      for (ProjectGroup group : groups) {
+        if (!group.isTutorials()) {
+          continue;
+        }
+
+        for (String project : group.getProjects()) {
+          if(project.contains(action.getProjectPath()))
+            return true;
+        }
+      }
+
+      return false;
+    }
+
+    @NotNull
+    private String truncateDescription(String fullText, FontMetrics fm, int maxWidth, boolean isTutorial) {
+      if (isTutorial) {
+        String tutorialTruncated = fullText;
+        while (fm.stringWidth(tutorialTruncated) > maxWidth) {
+          tutorialTruncated = tutorialTruncated.substring(0, tutorialTruncated.length() - 1);
+        }
+        return tutorialTruncated + "...";
+
+      }
+
+      int left = 1;
+      int right = 1;
+      int center = fullText.length() / 2;
+      String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      while (fm.stringWidth(s) > maxWidth) {
+        if (left == right) {
+          left++;
+        } else {
+          right++;
+        }
+
+        if (center - left < 0 || center + right >= fullText.length()) {
+          return "";
+        }
+        s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      }
+      return s;
     }
 
     @Override
