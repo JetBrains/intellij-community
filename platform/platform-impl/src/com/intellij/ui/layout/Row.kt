@@ -44,6 +44,8 @@ abstract class Row : Cell() {
   @PublishedApi
   internal abstract fun alignRight()
 
+  abstract fun largeGapAfter()
+
   inline fun row(label: String, init: Row.() -> Unit): Row {
     val row = createRow(label)
     row.init()

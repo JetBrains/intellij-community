@@ -12,6 +12,7 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
@@ -318,6 +319,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       throw IllegalStateException("right allowed only once")
     }
     rightIndex = components.size
+  }
+
+  override fun largeGapAfter() {
+    gapAfter = "${spacing.largeVerticalGap * 2}px!"
   }
 
   override fun createRow(label: String?): Row {
