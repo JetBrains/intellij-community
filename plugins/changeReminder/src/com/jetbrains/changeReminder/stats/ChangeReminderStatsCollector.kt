@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.openapi.project.Project
 import java.util.*
 
-enum class ChangeReminderEvent {
+internal enum class ChangeReminderEvent {
   HANDLER_REGISTERED,
   PLUGIN_DISABLED,
   PREDICTION_CALCULATED,
@@ -16,17 +16,17 @@ enum class ChangeReminderEvent {
   COMMIT_CANCELED
 }
 
-enum class ChangeReminderData {
+internal enum class ChangeReminderData {
   EXECUTION_TIME,
   SHOW_DIALOG_TIME
 }
 
-fun <T : Enum<*>> T.getReportedId() = this.name.toLowerCase(Locale.ENGLISH).replace('_', '.')
+internal fun <T : Enum<*>> T.getReportedId() = this.name.toLowerCase(Locale.ENGLISH).replace('_', '.')
 
-fun logEvent(project: Project, event: ChangeReminderEvent, factor: ChangeReminderData, value: Long) =
+internal fun logEvent(project: Project, event: ChangeReminderEvent, factor: ChangeReminderData, value: Long) =
   logEvent(project, event, mapOf(factor to value))
 
-fun logEvent(project: Project, event: ChangeReminderEvent, data: Map<ChangeReminderData, Long> = emptyMap()) {
+internal fun logEvent(project: Project, event: ChangeReminderEvent, data: Map<ChangeReminderData, Long> = emptyMap()) {
   val logData = FeatureUsageData()
 
   data.forEach { (factor, value) ->

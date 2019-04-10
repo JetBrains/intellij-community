@@ -16,7 +16,8 @@ import git4idea.GitCommit
 import git4idea.GitVcs
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.history.GitCommitRequirements
-import git4idea.history.GitCommitRequirements.*
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits
+import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitLogUtil
 
 private fun CheckinProjectPanel.gitCheckinOptions(): GitCheckinEnvironment.GitCheckinOptions? {
@@ -58,7 +59,7 @@ fun processCommitsFromHashes(project: Project, root: VirtualFile, hashes: List<S
 
 fun GitCommit.changedFilePaths(): List<FilePath> = this.changes.mapNotNull { ChangesUtil.getFilePath(it) }
 
-fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
+internal fun Collection<FilePath>.toPredictedFiles(changeListManager: ChangeListManager) = this.mapNotNull {
   val currentChange = changeListManager.getChange(it)
   when {
     currentChange != null -> PredictedChange(currentChange)
