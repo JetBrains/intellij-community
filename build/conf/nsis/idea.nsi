@@ -1498,7 +1498,7 @@ HKLM:
 
 cant_find_installation:
 ; compare installdir with default user location
-  ${UnStrStr} $R0 $INSTDIR $LOCALAPPDATA\${MANUFACTURER}
+  ${UnStrStr} $R0 $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}"
   StrCmp $R0 $INSTDIR HKCU 0
 
 ; compare installdir with default admin location
