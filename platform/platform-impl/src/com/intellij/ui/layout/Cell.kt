@@ -75,6 +75,8 @@ fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   return this
 }
 
+const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
+
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
 abstract class Cell {
@@ -143,6 +145,18 @@ abstract class Cell {
 
   fun checkBox(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, prop.get())
+    return component(comment = comment)
+      .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
+  }
+
+  fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text)
+    component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
+    return component(comment = comment)
+  }
+
+  fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, prop.get())
     return component(comment = comment)
       .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
   }

@@ -330,7 +330,28 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun createRow(label: String?, buttonGroup: ButtonGroup?): Row {
-    return createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
+    val row = createChildRow(label = label?.let { Label(it) }, buttonGroup = buttonGroup)
+    if (buttonGroup != null) {
+      builder.resetCallbacks.add {
+        selectRadioButtonInGroup(buttonGroup)
+      }
+    }
+    return row
+  }
+
+  private fun selectRadioButtonInGroup(buttonGroup: ButtonGroup) {
+    if (buttonGroup.selection == null && buttonGroup.buttonCount > 0) {
+      val e = buttonGroup.elements
+      while (e.hasMoreElements()) {
+        val radioButton = e.nextElement()
+        if (radioButton.getClientProperty(UNBOUND_RADIO_BUTTON) != null) {
+          buttonGroup.setSelected(radioButton.model, true)
+          return
+        }
+      }
+
+      buttonGroup.setSelected(buttonGroup.elements.nextElement().model, true)
+    }
   }
 
   override fun createNoteOrCommentRow(component: JComponent): Row {
