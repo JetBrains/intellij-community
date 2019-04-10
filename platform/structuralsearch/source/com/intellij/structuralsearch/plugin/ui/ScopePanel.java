@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -132,7 +132,7 @@ public class ScopePanel extends JPanel {
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
     else if (selectedScope != null) {
-      myScopesComboBox.init(myProject, true, false, selectedScope.getDisplayName(), SCOPE_FILTER);
+      myScopesComboBox.selectItem(selectedScope);
     }
     myToolbar.updateActionsImmediately();
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
