@@ -11,23 +11,23 @@ import java.awt.event.MouseEvent
 /**
  * Presentation, that delegates to [delegate], which can be dynamically changed.
  */
-class DynamicPresentation(delegate: InlayPresentation) : BasePresentation() {
+open class DynamicPresentation(delegate: InlayPresentation) : BasePresentation() {
+  private var listener: Listener
+  init {
+    listener = Listener()
+    delegate.addListener(listener)
+  }
+
   var delegate: InlayPresentation = delegate
     set(value) {
       if (value != field) {
+        field.removeListener(listener)
         field = value
-        val previousWidth = field.width
-        if (value.width == previousWidth) {
-          fireContentChanged(Rectangle(0, 0, width, 0)) // TODO
-        } else {
-          fireSizeChanged(Dimension(previousWidth, 0), Dimension(value.width, 0)) // TODO
-        }
+        listener = Listener()
+        value.addListener(listener)
+        fireContentChanged(Rectangle(0, 0, width, height))
       }
     }
-
-  init {
-    delegate.addListener(Listener())
-  }
 
   override val width: Int
     get() = delegate.width
