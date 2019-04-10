@@ -410,15 +410,19 @@ public class InjectedLanguageUtil {
    */
   @Nullable
   private static PsiElement skipNonInjectablePsi(@NotNull PsiElement element, boolean probeUp) {
-    if (!(element instanceof PsiLanguageInjectionHost) && element.getFirstChild() == null) {
+    if (!stopLookingForInjection(element) && element.getFirstChild() == null) {
       if (!probeUp) return null;
 
       element = element.getParent();
-      while (element != null && !(element instanceof PsiLanguageInjectionHost) && element.getFirstChild() == element.getLastChild()) {
+      while (element != null && !stopLookingForInjection(element) && element.getFirstChild() == element.getLastChild()) {
         element = element.getParent();
       }
     }
     return element;
+  }
+
+  private static boolean stopLookingForInjection(@NotNull PsiElement element) {
+    return element instanceof PsiFileSystemItem || element instanceof PsiLanguageInjectionHost;
   }
 
   private static boolean intersects(@NotNull PsiElement hostElement, @NotNull Place place) {
