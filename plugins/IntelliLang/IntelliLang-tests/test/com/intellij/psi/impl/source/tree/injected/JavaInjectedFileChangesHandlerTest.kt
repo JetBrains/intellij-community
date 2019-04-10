@@ -83,7 +83,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
   }
 
 
-  fun `test edit multipart in fragment-editor in 3 steps`() {
+  fun `test edit multipart in 4 steps`() {
     with(myFixture) {
 
       configureByText("classA.java", """
@@ -133,9 +133,69 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent(), true)
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
+      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
+      injectedFile.edit { deleteString(0, textLength) }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+          
+          class A {
+            void foo() {
+              @Language("JSON") String a = "";
+            }
+          }
+      """.trimIndent(), true)
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
     }
 
   }
+
+  fun `test delete empty line`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "<html>line\n<caret>" +
+                      "\n" +
+                      "finalLine</html>";
+            }
+          }
+      """.trimIndent())
+
+      val injectedFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html>line\n\nfinalLine</html>", injectedFile.text)
+
+      injectedFile.edit {
+        findAndDelete("\n")
+      }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+          
+          class A {
+            void foo() {
+              @Language("HTML") String a = "<html>line" +
+                      "\n" +
+                      "finalLine</html>";
+            }
+          }
+      """.trimIndent())
+      injectedFile.edit {
+        findAndDelete("\n")
+      }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+          
+          class A {
+            void foo() {
+              @Language("HTML") String a = "<html>line" +
+                      "finalLine</html>";
+            }
+          }
+      """.trimIndent())
+    }
+
+  }
+
 
 
   fun `test edit with guarded blocks`() {

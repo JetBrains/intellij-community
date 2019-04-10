@@ -13,10 +13,25 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseInjectedFileChangesHandler implements InjectedFileChangesHandler {
 
+  /**
+   * Host editor
+   */
   protected final Editor myEditor;
+
+  /**
+   * Host document
+   */
   protected final Document myOrigDocument;
+
+  /**
+   * Document created for the fragment editor
+   */
   protected final Document myNewDocument;
   protected final Project myProject;
+
+  /**
+   * File injected in the Host
+   */
   protected PsiFile myInjectedFile;
 
   public BaseInjectedFileChangesHandler(Editor editor, Document newDocument, PsiFile injectedFile) {
