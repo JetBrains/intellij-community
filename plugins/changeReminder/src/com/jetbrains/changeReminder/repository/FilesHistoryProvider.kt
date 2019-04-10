@@ -20,7 +20,8 @@ internal class FilesHistoryProvider(private val project: Project, private val ro
   private fun getCommitsData(commits: Collection<Int>): Map<Int, Commit> {
     val hashes = mutableMapOf<String, Int>()
     for (commit in commits) {
-      val hash = dataGetter.logStorage.getCommitId(commit)?.hash?.asString() ?: continue
+      val commitId = dataGetter.logStorage.getCommitId(commit) ?: continue
+      val hash = commitId.takeIf { commitId.root == root }?.hash?.asString() ?: continue
       hashes[hash] = commit
     }
 
