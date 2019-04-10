@@ -90,6 +90,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
 
   @Override
   protected boolean isNonClosedLiteral(HighlighterIterator iterator, CharSequence chars) {
+    if (iterator.getTokenType() == PyTokenTypes.FSTRING_END) return false;
     int end = iterator.getEnd();
     if (getLiteralStartOffset(chars, iterator.getStart()) >= end - 1) return true;
     char endSymbol = chars.charAt(end - 1);

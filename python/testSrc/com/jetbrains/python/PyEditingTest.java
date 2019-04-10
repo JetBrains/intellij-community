@@ -91,17 +91,23 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFStringQuotes() {
+  public void testFStringAutomaticallyInsertedClosingQuotes() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
-    assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 4, "'"));
     assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
   }
 
   // PY-32872
   public void testClosingQuotesCompletionForTripleQuotedFString() {
     assertEquals("f''''''\n", doTestTyping("f''\n", 3, "'"));
+  }
+
+  // PY-33901
+  public void testFStringManuallyInsertedClosingQuotes() {
+    assertEquals("f'foo'", doTestTyping("f'foo", 5, "'"));
+    assertEquals("f'''foo'''", doTestTyping("f'''foo''", 9, "'"));
   }
 
   public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
