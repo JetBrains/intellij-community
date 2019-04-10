@@ -340,6 +340,15 @@ public class PluginManagerCore {
         continue;
       }
       if (!optionalDependencies.contains(dependentPluginId)) {
+        // Android Studio: Some tests and run configurations run with platform prefix "Idea", which causes the Kotlin
+        // plugin to fail to load because our bundled Kotlin plugin has a hard dependency on com.intellij.modules.androidstudio.
+        // We work around that issue here by just ignoring the dependency.
+        // This workaround can likely be removed if and when there is no longer a special version of the Kotlin plugin built for Studio.
+        if (pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")
+            && dependentPluginId.getIdString().equals("com.intellij.modules.androidstudio")
+            && !PlatformUtils.isAndroidStudio()) {
+          continue;
+        }
         if (!check.value(dependentPluginId)) {
           return false;
         }
@@ -1102,7 +1111,7 @@ public class PluginManagerCore {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null && existingResults.add(descriptor)) {
         // Android Studio: we do not bundle the Maven plugin, and its presence on the classpath prevents the Kotlin plugin from loading.
-        if (PlatformUtils.isAndroidStudio() && descriptor.getPluginId().getIdString().equals("org.jetbrains.idea.maven")) {
+        if (descriptor.getPluginId().getIdString().equals("org.jetbrains.idea.maven")) {
           continue;
         }
         descriptor.setUseCoreClassLoader(true);
