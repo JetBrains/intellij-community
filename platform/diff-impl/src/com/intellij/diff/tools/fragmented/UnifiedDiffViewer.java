@@ -1317,7 +1317,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       @Nullable
       @Override
-      protected String getDescription(int lineNumber, int index) {
+      protected FoldedRangeDescription getDescription(int lineNumber, int index) {
         if (myProject == null) return null;
         int masterLine = myLineConvertor.convert(lineNumber);
         if (masterLine == -1) return null;
