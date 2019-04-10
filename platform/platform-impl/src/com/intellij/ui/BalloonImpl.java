@@ -1594,7 +1594,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     @Override
-    public boolean canBePreprocessed(MouseEvent e) {
+    public boolean canBePreprocessed(@NotNull MouseEvent e) {
       return false;
     }
   }
