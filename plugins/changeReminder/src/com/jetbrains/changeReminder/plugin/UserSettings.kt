@@ -15,8 +15,7 @@ class UserSettings : PersistentStateComponent<UserSettings.Companion.State> {
     data class State(var lastAction: UserAction = UserAction.COMMIT,
                      var step: Double = 0.0,
                      var threshold: Double = 0.55,
-                     var isTurnedOn: Boolean = true,
-                     var isPluginEnabled: Boolean = true)
+                     var isTurnedOn: Boolean = true)
 
     enum class UserAction {
       COMMIT,
@@ -36,12 +35,6 @@ class UserSettings : PersistentStateComponent<UserSettings.Companion.State> {
     get() = currentState.isTurnedOn
     set(value) {
       currentState.isTurnedOn = value
-    }
-
-  var isPluginEnabled: Boolean
-    get() = currentState.isPluginEnabled
-    set(value) {
-      currentState.isPluginEnabled = value
     }
 
   override fun loadState(state: State) {
