@@ -3,6 +3,7 @@ package com.intellij.testFramework.rules;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
@@ -37,7 +38,7 @@ public class TempDirectory extends TemporaryFolder {
       throw new IllegalStateException("apply() was not called");
     }
 
-    File dir = FileUtil.createTempDirectory(myName, "");
+    @SuppressWarnings("SSBasedInspection") File dir = File.createTempFile(UsefulTestCase.TEMP_DIR_MARKER + myName + "_", "");
     assertTrue("Cannot delete: " + dir.getPath(), dir.delete() || !dir.exists());
     assertTrue("Cannot create: " + dir.getPath(), dir.mkdir() || dir.isDirectory());
     myRoot = dir.getCanonicalFile();
