@@ -15,6 +15,7 @@ import org.gradle.launcher.daemon.protocol.Stop;
 import org.gradle.launcher.daemon.registry.DaemonInfo;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -28,7 +29,8 @@ public class DaemonStopAction extends DaemonAction {
     super(serviceDirectoryPath);
   }
 
-  public void run(DaemonClientFactory daemonClientFactory) {
+  public void run(DaemonClientFactory daemonClientFactory)
+    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
     ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonStopClient stopClient = daemonServices.get(DaemonStopClient.class);
     stopClient.stop();
