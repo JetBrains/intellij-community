@@ -65,6 +65,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                    final boolean prevSearchWholeFiles,
                    final Object selection,
                    @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
+    if (myProject != null) {
+      throw new IllegalStateException("scope chooser combo already initialized");
+    }
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
@@ -118,12 +121,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myUsageView = usageView;
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
-  private void selectItem(@Nullable Object selection) {
+  public void selectItem(@Nullable Object selection) {
     if (selection == null) return;
     JComboBox combo = getComboBox();
     DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
