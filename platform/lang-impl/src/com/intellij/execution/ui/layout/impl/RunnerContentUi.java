@@ -131,6 +131,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
   private MyDropAreaPainter myCurrentPainter;
+  private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
 
   private RunnerContentUi myOriginal;
   private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<>();
@@ -562,7 +563,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     if (myCurrentPainter == null) {
       myCurrentPainter = new MyDropAreaPainter();
-      IdeGlassPaneUtil.find(myComponent).addPainter(myComponent, myCurrentPainter, this);
+      myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
+      Disposer.register(this, myGlassPaneListenersDisposable);
+      IdeGlassPaneUtil.find(myComponent).addPainter(myComponent, myCurrentPainter, myGlassPaneListenersDisposable);
     }
     myCurrentPainter.processDropOver(this, dockable, dropTarget);
 
@@ -604,7 +607,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       myCurrentOverInfo = null;
       myCurrentOverImg = null;
 
-      IdeGlassPaneUtil.find(myComponent).removePainter(myCurrentPainter);
+      Disposer.dispose(myGlassPaneListenersDisposable);
+      myGlassPaneListenersDisposable = Disposer.newDisposable();
       myCurrentPainter = null;
     }
   }

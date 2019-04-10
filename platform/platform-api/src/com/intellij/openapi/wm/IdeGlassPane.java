@@ -22,25 +22,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 public interface IdeGlassPane {
-  void addMousePreprocessor(MouseListener listener, Disposable parent);
-  void addMouseMotionPreprocessor(MouseMotionListener listener, Disposable parent);
+  void addMousePreprocessor(@NotNull MouseListener listener, @NotNull Disposable parent);
+  void addMouseMotionPreprocessor(@NotNull MouseMotionListener listener, @NotNull Disposable parent);
 
-  void addPainter(final Component component, Painter painter, Disposable parent);
-  void removePainter(final Painter painter);
+  void addPainter(final Component component, @NotNull Painter painter, @NotNull Disposable parent);
 
-
-  void removeMousePreprocessor(MouseListener listener);
-  void removeMouseMotionPreprocessor(MouseMotionListener listener);
+  /**
+   * @deprecated to remove the listener, invoke {@code Disposer.dispose(disposable);} on the disposable
+   *  which you've passed to {@link #addMouseMotionPreprocessor(MouseMotionListener, Disposable)} instead
+   */
+  @Deprecated
+  void removeMouseMotionPreprocessor(@NotNull MouseMotionListener listener);
 
   void setCursor(@Nullable Cursor cursor, @NotNull Object requestor);
 
   interface TopComponent {
-    boolean canBePreprocessed(MouseEvent e);
+    boolean canBePreprocessed(@NotNull MouseEvent e);
   }
 }

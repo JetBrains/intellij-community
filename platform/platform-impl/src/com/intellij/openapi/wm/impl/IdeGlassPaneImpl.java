@@ -440,13 +440,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   @Override
-  public void addMousePreprocessor(final MouseListener listener, Disposable parent) {
+  public void addMousePreprocessor(@NotNull final MouseListener listener, @NotNull Disposable parent) {
     _addListener(listener, parent);
   }
 
 
   @Override
-  public void addMouseMotionPreprocessor(final MouseMotionListener listener, final Disposable parent) {
+  public void addMouseMotionPreprocessor(@NotNull final MouseMotionListener listener, @NotNull final Disposable parent) {
     _addListener(listener, parent);
   }
 
@@ -460,12 +460,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   @Override
-  public void removeMousePreprocessor(final MouseListener listener) {
-    removeListener(listener);
-  }
-
-  @Override
-  public void removeMouseMotionPreprocessor(final MouseMotionListener listener) {
+  public void removeMouseMotionPreprocessor(@NotNull MouseMotionListener listener) {
     removeListener(listener);
   }
 
@@ -530,19 +525,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   @Override
-  public void addPainter(final Component component, final Painter painter, final Disposable parent) {
+  public void addPainter(final Component component, @NotNull final Painter painter, @NotNull final Disposable parent) {
     getPainters().addPainter(painter, component);
     activateIfNeeded();
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        SwingUtilities.invokeLater(() -> removePainter(painter));
-      }
-    });
+    Disposer.register(parent, () -> SwingUtilities.invokeLater(() -> removePainter(painter)));
   }
 
-  @Override
-  public void removePainter(final Painter painter) {
+  private void removePainter(@NotNull Painter painter) {
     getPainters().removePainter(painter);
     deactivateIfNeeded();
   }
