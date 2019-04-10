@@ -258,7 +258,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       public void writeActionStarted(@NotNull Object action) {
         myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
       }
-    });
+    }, this);
 
     myChangedFilesCollector = new ChangedFilesCollector();
     myConnection = connection;

@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,7 +107,8 @@ public class CacheUpdateRunner {
       }
     };
     final Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(() -> application.addApplicationListener(canceller), ModalityState.any());
+    Disposable listenerDisposable = Disposer.newDisposable();
+    application.invokeAndWait(() -> application.addApplicationListener(canceller, listenerDisposable), ModalityState.any());
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     try {
@@ -127,7 +130,7 @@ public class CacheUpdateRunner {
       }
     }
     finally {
-      application.removeApplicationListener(canceller);
+      Disposer.dispose(listenerDisposable);
     }
 
     return isFinished.get();
