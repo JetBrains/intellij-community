@@ -13,7 +13,7 @@ interface InlayHintsSink<T : EditorCustomElementRenderer> {
   fun addInlay(offset: Int, relatesToPrecedingText: Boolean, renderer: T)
 }
 
-fun InlayHintsSink<PresentationRenderer>.addInlineElement(
+fun InlayHintsSink<PresentationRenderer>.addInlay(
   element: PsiElement,
   presentation: InlayPresentation,
   isBeforeElement: Boolean = true

@@ -11,6 +11,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.font.FontRenderContext
+import javax.swing.Icon
 import javax.swing.UIManager
 
 class PresentationFactory(val editor: EditorImpl) {
@@ -38,6 +39,8 @@ class PresentationFactory(val editor: EditorImpl) {
       )
     ) { it.with(editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)) }
   }
+
+  fun icon(icon: Icon) : IconPresentation = IconPresentation(icon, editor)
 
   fun roundedText(text: String): InlayPresentation {
     return rounding(8, 8, text(text))

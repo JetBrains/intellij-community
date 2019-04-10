@@ -8,6 +8,7 @@ import java.awt.Rectangle
 
 /**
  * Building block of inlay view.
+ * It's implementations are not expected to throw exceptions.
  */
 interface InlayPresentation : InputHandler {
   val width: Int

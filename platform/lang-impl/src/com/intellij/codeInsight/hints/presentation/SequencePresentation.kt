@@ -8,6 +8,9 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
+/**
+ * Allows to chain presentations into sequence. All presentations are aligned to upper border.
+ */
 class SequencePresentation(private val presentations: List<InlayPresentation>) : BasePresentation() {
   init {
     assert(presentations.isNotEmpty())
@@ -94,9 +97,12 @@ class SequencePresentation(private val presentations: List<InlayPresentation>) :
   }
 
   override fun mouseExited() {
-    presentationUnderCursor?.mouseExited()
-    presentationUnderCursor = null
+    try {
+      presentationUnderCursor?.mouseExited()
+    } finally {
+      presentationUnderCursor = null
+    }
   }
 
-  override fun toString(): String = presentations.joinToString(" ") { "[$it]" }
+  override fun toString(): String = presentations.joinToString(" ", "[", "]") { "$it" }
 }

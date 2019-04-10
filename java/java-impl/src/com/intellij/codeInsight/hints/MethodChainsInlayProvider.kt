@@ -50,7 +50,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
           val provider = this@MethodChainsInlayProvider
           listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
         }
-        sink.addInlineElement(currentCall, finalPresentation, isBeforeElement = false)
+        sink.addInlay(currentCall, finalPresentation, isBeforeElement = false)
       }
     }
   }
