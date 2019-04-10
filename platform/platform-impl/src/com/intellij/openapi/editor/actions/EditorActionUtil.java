@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
@@ -207,6 +208,20 @@ public class EditorActionUtil {
   private static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
+  }
+
+  @NotNull
+  public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+    int startOffset = editor.getCaretModel().getOffset();
+    int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.WORD_END, isCamel, handleQuoted);
+    return TextRange.create(startOffset, endOffset);
+  }
+
+  @NotNull
+  public static TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+    int endOffset = editor.getCaretModel().getOffset();
+    int startOffset = getPreviousCaretStopOffset(editor, CaretStopPolicy.WORD_START, isCamel, handleQuoted);
+    return TextRange.create(startOffset, endOffset);
   }
 
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
