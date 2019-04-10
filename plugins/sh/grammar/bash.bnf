@@ -166,8 +166,8 @@ array_assignment ::= newlines '='? expression newlines
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? commands_list?] newlines
             HEREDOC_CONTENT*
             (HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | <<eof>>)
-arithmetic_expansion ::= '((' expression '))' {pin=1}
-old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
+arithmetic_expansion ::= '((' expression? '))' {pin=1}
+old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
 assignment_command ::= (w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]

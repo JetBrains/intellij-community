@@ -1,1 +1,0 @@
-case a in esac

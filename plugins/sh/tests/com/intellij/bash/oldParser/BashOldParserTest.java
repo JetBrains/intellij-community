@@ -35,7 +35,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testBackquoteCommandErrors()              { doTest(true); }
   public void testBackquteHeredoc()                     { doTest(true); }
   public void testBacktickParsing()                     { doTest(true); }
-  public void testBash4Redirect()                       { doTest(true); }
   public void testBodyWithErrors()                      { doTest(true); }
   public void testBraceParse()                          { doTest(true); }
   public void testBraceParseInvalid()                   { doTest(true); }
@@ -43,7 +42,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testCaseError1()                          { doTest(true); }
   public void testCaseError2()                          { doTest(true); }
   public void testCaseSimple1()                         { doTest(true); }
-  public void testCaseSimple5()                         { doTest(true); }
   public void testCheckErrorMarkers()                   { doTest(true); }
   public void testCommandParseAssignment()              { doTest(true); }
   public void testCommandWithErrors()                   { doTest(true); }
@@ -199,7 +197,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseSimpleCommandCombined()          { doTest(true); }
   public void testParseSimpleCommandCombined3()         { doTest(true); }
   public void testParseSimpleCommandCombinedError()     { doTest(true); }
-  public void testParseSimpleCommandCombinedError2()    { doTest(true); }
   public void testParseSimpleList1()                    { doTest(true); }
   public void testParseSimpleList2()                    { doTest(true); }
   public void testParseSimpleList3()                    { doTest(true); }

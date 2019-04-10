@@ -218,7 +218,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression '))'
+  // '((' expression? '))'
   public static boolean arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_expansion")) return false;
     if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
@@ -226,10 +226,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_EXPANSION, null);
     r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, expression(b, l + 1, -1));
+    r = r && report_error_(b, arithmetic_expansion_1(b, l + 1));
     r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // expression?
+  private static boolean arithmetic_expansion_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_expansion_1")) return false;
+    expression(b, l + 1, -1);
+    return true;
   }
 
   /* ********************************************************** */
@@ -1793,7 +1800,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ARITH_SQUARE_LEFT old_arithmetic_expansion_expression ARITH_SQUARE_RIGHT
+  // ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT
   public static boolean old_arithmetic_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "old_arithmetic_expansion")) return false;
     if (!nextTokenIs(b, ARITH_SQUARE_LEFT)) return false;
@@ -1801,10 +1808,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, OLD_ARITHMETIC_EXPANSION, null);
     r = consumeToken(b, ARITH_SQUARE_LEFT);
     p = r; // pin = 1
-    r = r && report_error_(b, old_arithmetic_expansion_expression(b, l + 1));
+    r = r && report_error_(b, old_arithmetic_expansion_1(b, l + 1));
     r = p && consumeToken(b, ARITH_SQUARE_RIGHT) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // old_arithmetic_expansion_expression?
+  private static boolean old_arithmetic_expansion_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "old_arithmetic_expansion_1")) return false;
+    old_arithmetic_expansion_expression(b, l + 1);
+    return true;
   }
 
   /* ********************************************************** */

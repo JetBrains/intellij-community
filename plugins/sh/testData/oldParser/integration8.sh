@@ -1,4 +1,3 @@
 $action < ${DEVICE_PREFIX}
 ${#a}
-$ {#a}
-#this is a valid syntax in bash
+$ {#a} #this is an invalid syntax in bash

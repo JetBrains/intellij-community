@@ -12,3 +12,20 @@ echo [foo[1]]
 values[indx]=1
 
 echo [ "foo" = "foo" ]
+
+#========== FROM OLD PARSER ===========
+`cat <<EOF
+ X
+EOF`
+X
+function a
+for f in 1; do echo "k"; done;
+
+if read pid > c; then
+      a
+fi
+if echo "sdfsd"; then
+   echo "sdfsdf"
+else
+   echo "sdfsdf";
+fi

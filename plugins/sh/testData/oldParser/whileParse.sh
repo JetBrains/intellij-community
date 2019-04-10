@@ -1,1 +1,1 @@
- while a; do b; fi
+ while a; do b; done
