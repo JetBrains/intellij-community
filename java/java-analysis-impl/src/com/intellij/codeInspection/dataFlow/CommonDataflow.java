@@ -103,9 +103,14 @@ public class CommonDataflow {
    */
   public static class DataflowResult {
     private final Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
+    private final RunnerResult myResult;
+
+    public DataflowResult(RunnerResult result) {
+      myResult = result;
+    }
 
     DataflowResult copy() {
-      DataflowResult copy = new DataflowResult();
+      DataflowResult copy = new DataflowResult(myResult);
       myData.forEach((expression, point) -> copy.myData.put(expression, new DataflowPoint(point)));
       return copy;
     }
@@ -237,7 +242,7 @@ public class CommonDataflow {
     DataFlowRunner runner = new DataFlowRunner(false, block);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
-    if (result != RunnerResult.OK) return null;
+    if (result != RunnerResult.OK) return new DataflowResult(result);
     if (!(block instanceof PsiClass)) return visitor.myResult;
     DataflowResult dfr = visitor.myResult.copy();
     List<DfaMemoryState> states = visitor.myEndOfInitializerStates;
@@ -308,7 +313,7 @@ public class CommonDataflow {
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {
-    private DataflowResult myResult = new DataflowResult();
+    private DataflowResult myResult = new DataflowResult(RunnerResult.OK);
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
     @Override
