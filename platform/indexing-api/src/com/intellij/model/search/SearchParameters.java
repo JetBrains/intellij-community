@@ -4,6 +4,12 @@ package com.intellij.model.search;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Base interface of search parameters.
+ *
+ * @param <R> type of search result
+ */
+@SuppressWarnings("unused")
 public interface SearchParameters<R> {
 
   @NotNull

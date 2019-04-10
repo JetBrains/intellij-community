@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
-import com.intellij.model.search.SearchHelper
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.TextOccurrence
 import com.intellij.model.search.impl.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
-import com.intellij.psi.impl.search.PsiSearchHelperImpl.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.TextOccurenceProcessor
@@ -28,72 +27,71 @@ import gnu.trove.THashMap
 import java.util.*
 import java.util.function.Consumer
 
-class SearchHelperImpl : SearchHelper {
+private val LOG: Logger = logger(::LOG)
 
-  override fun <R> runSearch(parameters: SearchParameters<R>, processor: Processor<in R>): Boolean {
-    val initialQueries = paramsQueries(parameters)
-    return runSearch(parameters.project, initialQueries, processor)
-  }
+fun <R> runSearch(parameters: SearchParameters<R>, processor: Processor<in R>): Boolean {
+  val initialQueries = paramsQueries(parameters)
+  return runSearch(parameters.project, initialQueries, processor)
+}
 
-  private fun <R> runSearch(project: Project, queries: Collection<Query<out R>>, processor: Processor<in R>): Boolean {
-    val progress = indicatorOrEmpty
-    var currentQueries = queries
-    while (currentQueries.isNotEmpty()) {
-      progress.checkCanceled()
-      val layer = buildLayer(progress, project, currentQueries)
-      val layerResult = layer.runLayer(processor)
-      when (layerResult) {
-        is Result.Ok -> currentQueries = layerResult.subqueries
-        is Result.Stop -> return false
-      }
+private fun <R> runSearch(project: Project, queries: Collection<Query<out R>>, processor: Processor<in R>): Boolean {
+  val progress = indicatorOrEmpty
+  var currentQueries = queries
+  while (currentQueries.isNotEmpty()) {
+    progress.checkCanceled()
+    val layer = buildLayer(progress, project, currentQueries)
+    val layerResult = layer.runLayer(processor)
+    when (layerResult) {
+      is Result.Ok -> currentQueries = layerResult.subqueries
+      is Result.Stop -> return false
     }
-    return true
   }
+  return true
+}
 
-  private fun <R> buildLayer(progress: ProgressIndicator, project: Project, queries: Collection<Query<out R>>): Layer<out R> {
-    val queue = LinkedList<Query<out R>>()
-    queue.addAll(queries)
+private fun <R> buildLayer(progress: ProgressIndicator, project: Project, queries: Collection<Query<out R>>): Layer<out R> {
+  val queue = LinkedList<Query<out R>>()
+  queue.addAll(queries)
 
-    val queryRequests = HashMap<Query<*>, MutableCollection<Transformation<*, R>>>()
-    val wordRequests = LinkedList<WordRequest<out R>>()
-    val subqueryRequests = LinkedList<SubqueryRequest<*, *, out R>>()
+  val queryRequests = HashMap<Query<*>, MutableCollection<Transformation<*, R>>>()
+  val wordRequests = LinkedList<WordRequest<out R>>()
+  val subqueryRequests = LinkedList<SubqueryRequest<*, *, out R>>()
 
-    while (queue.isNotEmpty()) {
-      progress.checkCanceled()
-      val query = queue.remove()
-      val flatRequests = decompose(query)
-      for (queryRequest in flatRequests.queryRequests) {
-        queryRequests.getOrPut(queryRequest.query) { SmartList() }.add(queryRequest.transformation)
-      }
-      wordRequests.addAll(flatRequests.wordRequests)
-      subqueryRequests.addAll(flatRequests.subqueryRequests)
-      for (parametersRequest: ParametersRequest<*, out R> in flatRequests.parametersRequests.cancellable(progress)) {
-        handleParamRequest(progress, parametersRequest) { queue.offer(it) }
-      }
+  while (queue.isNotEmpty()) {
+    progress.checkCanceled()
+    val query = queue.remove()
+    val flatRequests = decompose(query)
+    for (queryRequest in flatRequests.queryRequests) {
+      queryRequests.getOrPut(queryRequest.query) { SmartList() }.add(queryRequest.transformation)
     }
-
-    return Layer(project, progress, queryRequests, wordRequests, subqueryRequests)
-  }
-
-  private fun <B, R> handleParamRequest(progress: ProgressIndicator,
-                                        request: ParametersRequest<B, out R>,
-                                        queue: (Query<out R>) -> Unit) {
-    val parameters: SearchParameters<B> = request.params
-    val paramsQueries: Collection<Query<out B>> = paramsQueries(parameters)
-    for (paramsQuery in paramsQueries.cancellable(progress)) {
-      queue(TransformingQuery(paramsQuery, request.transformation))
+    wordRequests.addAll(flatRequests.wordRequests)
+    subqueryRequests.addAll(flatRequests.subqueryRequests)
+    for (parametersRequest: ParametersRequest<*, out R> in flatRequests.parametersRequests.cancellable(progress)) {
+      handleParamRequest(progress, parametersRequest) { queue.offer(it) }
     }
   }
 
-  private fun <R> paramsQueries(parameters: SearchParameters<R>): Collection<Query<out R>> {
-    val subQueries = LinkedList<Query<out R>>()
-    DumbService.getInstance(parameters.project).runReadActionInSmartMode {
-      SearchRequestors.collectSearchRequests(parameters, Consumer {
-        subQueries.add(it)
-      })
-    }
-    return subQueries
+  return Layer(project, progress, queryRequests, wordRequests, subqueryRequests)
+}
+
+private fun <B, R> handleParamRequest(progress: ProgressIndicator,
+                                      request: ParametersRequest<B, out R>,
+                                      queue: (Query<out R>) -> Unit) {
+  val parameters: SearchParameters<B> = request.params
+  val paramsQueries: Collection<Query<out B>> = paramsQueries(parameters)
+  for (paramsQuery in paramsQueries.cancellable(progress)) {
+    queue(TransformingQuery(paramsQuery, request.transformation))
   }
+}
+
+private fun <R> paramsQueries(parameters: SearchParameters<R>): Collection<Query<out R>> {
+  val subQueries = LinkedList<Query<out R>>()
+  DumbService.getInstance(parameters.project).runReadActionInSmartMode {
+    SearchRequestors.collectSearchRequests(parameters, Consumer {
+      subQueries.add(it)
+    })
+  }
+  return subQueries
 }
 
 private sealed class Result<out T> {
@@ -153,7 +151,7 @@ private class Layer<T>(
     }
 
     val globalsIds: Map<Set<IdIndexEntry>, List<SearchWordRequest>> = globals.keys.groupBy {
-      getWordEntries(it.word, it.caseSensitive).toSet()
+      PsiSearchHelperImpl.getWordEntries(it.word, it.caseSensitive).toSet()
     }
     return myHelper.processGlobalRequests(globalsIds, progress, buildLocalProcessors(progress, globals))
   }
@@ -170,9 +168,9 @@ private class Layer<T>(
   }
 
   private fun processSingleRequest(request: SearchWordRequest, occurenceProcessors: Collection<OccurrenceProcessor>): Boolean {
-    val options = EnumSet.of(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE)
-    if (request.caseSensitive) options.add(Options.CASE_SENSITIVE_SEARCH)
-    if (request.shouldProcessInjectedPsi()) options.add(Options.PROCESS_INJECTED_PSI)
+    val options = EnumSet.of(PsiSearchHelperImpl.Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE)
+    if (request.caseSensitive) options.add(PsiSearchHelperImpl.Options.CASE_SENSITIVE_SEARCH)
+    if (request.shouldProcessInjectedPsi()) options.add(PsiSearchHelperImpl.Options.PROCESS_INJECTED_PSI)
 
     return myHelper.bulkProcessElementsWithWord(
       request.searchScope,
@@ -227,7 +225,7 @@ private fun buildLocalProcessors(progress: ProgressIndicator,
 
     val searcher = StringSearcher(request.word, request.caseSensitive, true, false)
     val adapted = adaptProcessors(request.shouldProcessInjectedPsi(), processors)
-    val localProcessor = localProcessor(progress, searcher, adapted)
+    val localProcessor = PsiSearchHelperImpl.localProcessor(progress, searcher, adapted)
 
     assert(!result.containsKey(request) || result[request] === localProcessor)
     result[request] = localProcessor
@@ -237,8 +235,6 @@ private fun buildLocalProcessors(progress: ProgressIndicator,
 
 private val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
-
-private val LOG = Logger.getInstance(SearchHelper::class.java)
 
 private fun adaptProcessors(processInjected: Boolean, processors: Collection<OccurrenceProcessor>): BulkOccurrenceProcessor {
   return BulkOccurrenceProcessor { scope, offsetsInScope, searcher ->

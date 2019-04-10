@@ -18,6 +18,9 @@ import java.util.Collection;
  */
 public interface SearchRequestor<P extends SearchParameters<R>, R> {
 
+  /**
+   * @return collection of queries to be executed when the search is run with {@code parameters}
+   */
   @NotNull
   Collection<? extends Query<? extends R>> collectSearchRequests(@NotNull P parameters);
 }
