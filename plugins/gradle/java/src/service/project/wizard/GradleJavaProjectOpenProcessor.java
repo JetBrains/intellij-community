@@ -7,7 +7,9 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.SelectExternalProjectStep;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
@@ -49,6 +51,11 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
 
   @Override
   protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
+    boolean isHeadlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
+    if (!isHeadlessEnvironment && !Registry.is("gradle.project.import.wizard.enable")) {
+      return setupGradleProjectSettings(file, wizardContext);
+    }
+
     final GradleProjectImportProvider projectImportProvider = new GradleProjectImportProvider(getBuilder());
     getBuilder().setFileToImport(file.getPath());
     getBuilder().prepare(wizardContext);
@@ -64,7 +71,7 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
 
     final boolean result;
     WizardContext dialogWizardContext = null;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (isHeadlessEnvironment) {
       result = setupGradleProjectSettingsInHeadlessMode(projectImportProvider, wizardContext);
     }
     else {
@@ -81,6 +88,23 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
       wizardContext.setProjectStorageFormat(dialogWizardContext.getProjectStorageFormat());
     }
     return result;
+  }
+
+  private boolean setupGradleProjectSettings(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
+    GradleProjectImportBuilder importBuilder = getBuilder();
+    importBuilder.setFileToImport(file.getPath());
+    wizardContext.setProjectBuilder(importBuilder);
+    Project project = wizardContext.getProject();
+    importBuilder.getControl(project).reset(wizardContext, null);
+    SelectExternalProjectStep selectExternalProjectStep = new SelectExternalProjectStep(wizardContext);
+    try {
+      selectExternalProjectStep.updateStep();
+      return selectExternalProjectStep.validate();
+    }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(wizardContext.getProject(), e.getMessage(), e.getTitle());
+      return false;
+    }
   }
 
   private boolean setupGradleProjectSettingsInHeadlessMode(GradleProjectImportProvider projectImportProvider,

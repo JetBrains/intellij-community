@@ -137,8 +137,11 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
         }
       }
 
-      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
+      Sdk jdk = wizardContext.getProjectJdk();
+      if (jdk == null) {
+        Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+        jdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
+      }
       if (jdk == null) {
         jdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
       }
