@@ -32,6 +32,8 @@ interface InlayPresentation : InputHandler {
 
   fun addListener(listener: PresentationListener)
 
+  fun removeListener(listener: PresentationListener)
+
   /**
    * For testings purposes
    */

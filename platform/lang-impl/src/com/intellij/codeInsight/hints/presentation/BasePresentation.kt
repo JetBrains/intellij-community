@@ -5,7 +5,7 @@ import java.awt.Dimension
 import java.awt.Rectangle
 
 abstract class BasePresentation : InlayPresentation {
-  val listeners = mutableListOf<PresentationListener>()
+  private val listeners = hashSetOf<PresentationListener>()
 
   override fun fireSizeChanged(previous: Dimension, current: Dimension) {
     for (listener in listeners) {
@@ -20,5 +20,9 @@ abstract class BasePresentation : InlayPresentation {
 
   override fun addListener(listener: PresentationListener) {
     listeners.add(listener)
+  }
+
+  override fun removeListener(listener: PresentationListener) {
+    listeners.remove(listener)
   }
 }
