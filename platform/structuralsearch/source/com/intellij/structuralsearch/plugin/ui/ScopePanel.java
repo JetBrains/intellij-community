@@ -6,6 +6,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.module.Module;
@@ -13,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -53,7 +55,7 @@ public class ScopePanel extends JPanel {
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
 
-  public ScopePanel(@NotNull Project project) {
+  public ScopePanel(@NotNull Project project, Disposable parent) {
     super(null);
     myProject = project;
 
@@ -63,6 +65,7 @@ public class ScopePanel extends JPanel {
     myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE));
     myScopesComboBox.init(project, true, false, "", SCOPE_FILTER);
     myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED));
+    Disposer.register(parent, myScopesComboBox);
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);
     myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY));
 

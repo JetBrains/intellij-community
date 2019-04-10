@@ -323,7 +323,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplacePanel = createReplacePanel();
     myReplacePanel.setVisible(myReplace);
 
-    myScopePanel = new ScopePanel(getProject());
+    myScopePanel = new ScopePanel(getProject(), myDisposable);
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
       myScopePanel.setScopeConsumer(scope -> initiateValidation());
