@@ -26,6 +26,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,37 +210,106 @@ public class EditorActionUtil {
   }
 
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
+    return getNextCaretStopOffset(editor, caretStopPolicy, isCamel, false);
+  }
+
+  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
+    return getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel, false);
+  }
+
+  @SuppressWarnings("Duplicates")
+  public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                           boolean isCamel, boolean handleQuoted) {
     final int maxOffset = getNextLineStopOffset(editor, caretStopPolicy.getLineStop());
 
     final CaretStop wordStop = caretStopPolicy.getWordStop();
     if (wordStop.equals(CaretStop.NONE)) return maxOffset;
 
-    final CharSequence text = editor.getDocument().getCharsSequence();
     final int offset = editor.getCaretModel().getOffset();
-    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
+    if (offset == maxOffset) return maxOffset;
 
-    int newOffset = offset + 1;
-    for (; newOffset < maxOffset; newOffset++) {
-      final boolean isLexemeBoundary = advanceTokenOnBoundary(tokenIterator, newOffset);
-      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+    if (handleQuoted) {
+      final int newOffset = getNextQuoteStopOffset(editor, offset, maxOffset, isCamel);
+      if (newOffset != offset && wordStop.isAtEnd()) return newOffset;
     }
 
-    return newOffset;
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
+
+    return getNextWordStopOffset(text, wordStop, offset, maxOffset, isCamel, tokenIterator, false);
   }
 
-  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
+  @SuppressWarnings("Duplicates")
+  public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
+                                               boolean isCamel, boolean handleQuoted) {
     final int minOffset = getPreviousLineStopOffset(editor, caretStopPolicy.getLineStop());
 
     final CaretStop wordStop = caretStopPolicy.getWordStop();
     if (wordStop.equals(CaretStop.NONE)) return minOffset;
 
-    final CharSequence text = editor.getDocument().getCharsSequence();
     final int offset = editor.getCaretModel().getOffset();
-    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
+    if (offset == minOffset) return minOffset;
 
+    if (handleQuoted) {
+      final int newOffset = getPreviousQuoteStopOffset(editor, offset, minOffset, isCamel);
+      if (newOffset != offset && wordStop.isAtStart()) return newOffset;
+    }
+
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset - 1);
+
+    return getPreviousWordStopOffset(text, wordStop, offset, minOffset, isCamel, tokenIterator, false);
+  }
+
+  private static int getNextQuoteStopOffset(@NotNull Editor editor, int offset, int maxOffset, boolean isCamel) {
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
+    if (tokenIterator == null) return offset;
+
+    // find the end of an opening quote: | "word" -> "|word"
+    int newOffset = getNextWordStopOffset(text, CaretStop.END, offset, maxOffset, isCamel, tokenIterator, true);
+    if (isTokenStart(tokenIterator, newOffset) && getQuoteAt(text, newOffset) != 0) return newOffset; // | ".""word" -> "."|"word"
+    if (isTokenStart(tokenIterator, newOffset - 1) && isQuotedToken(tokenIterator, text)) {  // "|word"
+      // find the start of a closing quote (must be only a single step away): "|word" -> "word|"
+      newOffset = getNextWordStopOffset(text, CaretStop.BOTH, newOffset, maxOffset, isCamel, tokenIterator, true);
+      if (isTokenEnd(tokenIterator, newOffset + 1)) return Math.min(maxOffset, newOffset + 1); // "word"|
+    }
+    return offset;
+  }
+
+  private static int getPreviousQuoteStopOffset(@NotNull Editor editor, int offset, int minOffset, boolean isCamel) {
+    final CharSequence text = editor.getDocument().getCharsSequence();
+    final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset - 1);
+    if (tokenIterator == null) return offset;
+
+    // find the start of a closing quote: "word|" <- "word" |
+    int newOffset = getPreviousWordStopOffset(text, CaretStop.START, offset, minOffset, isCamel, tokenIterator, true);
+    if (isTokenEnd(tokenIterator, newOffset) && getQuoteAt(text, newOffset - 1) != 0) return newOffset; // "word"|"." <- "word""." |
+    if (isTokenEnd(tokenIterator, newOffset + 1) && isQuotedToken(tokenIterator, text)) {  // "word|"
+      // find the end of an opening quote (must be only a single step away): "|word" <- "word|"
+      newOffset = getPreviousWordStopOffset(text, CaretStop.BOTH, newOffset, minOffset, isCamel, tokenIterator, true);
+      if (isTokenStart(tokenIterator, newOffset - 1)) return Math.max(minOffset, newOffset - 1); // |"word"
+    }
+    return offset;
+  }
+
+  private static int getNextWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                           int offset, int maxOffset, boolean isCamel,
+                                           @Nullable HighlighterIterator tokenIterator, boolean anyTokenBoundary) {
+    int newOffset = offset + 1;
+    for (; newOffset < maxOffset; newOffset++) {
+      final boolean isLexemeBoundary = advanceTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
+      if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
+    }
+    return newOffset;
+  }
+
+  private static int getPreviousWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
+                                               int offset, int minOffset, boolean isCamel,
+                                               @Nullable HighlighterIterator tokenIterator, boolean anyTokenBoundary) {
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
-      final boolean isLexemeBoundary = retreatTokenOnBoundary(tokenIterator, newOffset);
+      final boolean isLexemeBoundary = retreatTokenOnBoundary(tokenIterator, newOffset, anyTokenBoundary);
       if (isWordStopOffset(text, wordStop, newOffset, isCamel, isLexemeBoundary)) break;
     }
 
@@ -258,22 +328,47 @@ public class EditorActionUtil {
     return false;
   }
 
-  private static boolean advanceTokenOnBoundary(@Nullable HighlighterIterator tokenIterator, int offset) {
-    if (tokenIterator != null && offset == tokenIterator.getEnd()) {
+  private static boolean advanceTokenOnBoundary(@Nullable HighlighterIterator tokenIterator, int offset, boolean anyTokenBoundary) {
+    if (isTokenEnd(tokenIterator, offset)) {
       final IElementType leftToken = tokenIterator.getTokenType();
       tokenIterator.advance();
-      return isLexemeBoundary(leftToken, tokenIterator.getTokenType());
+      return anyTokenBoundary || isLexemeBoundary(leftToken, tokenIterator.getTokenType());
     }
     return false;
   }
 
-  private static boolean retreatTokenOnBoundary(@Nullable HighlighterIterator tokenIterator, int offset) {
-    if (tokenIterator != null && offset == tokenIterator.getStart()) {
+  private static boolean retreatTokenOnBoundary(@Nullable HighlighterIterator tokenIterator, int offset, boolean anyTokenBoundary) {
+    if (isTokenStart(tokenIterator, offset)) {
       final IElementType rightToken = tokenIterator.getTokenType();
       tokenIterator.retreat();
-      return isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
+      return anyTokenBoundary || isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
     }
     return false;
+  }
+
+  @Contract("null, _ -> false")
+  private static boolean isTokenStart(@Nullable HighlighterIterator tokenIterator, int offset) {
+    return tokenIterator != null && offset == tokenIterator.getStart();
+  }
+
+  @Contract("null, _ -> false")
+  private static boolean isTokenEnd(@Nullable HighlighterIterator tokenIterator, int offset) {
+    return tokenIterator != null && offset == tokenIterator.getEnd();
+  }
+
+  private static boolean isQuotedToken(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text) {
+    final int startOffset = tokenIterator.getStart();
+    final int endOffset = tokenIterator.getEnd();
+    if (endOffset - startOffset < 2) return false;
+    final char openingQuote = getQuoteAt(text, startOffset);
+    final char closingQuote = getQuoteAt(text, endOffset - 1);
+    return openingQuote != 0 && closingQuote == openingQuote;
+  }
+
+  private static char getQuoteAt(@NotNull CharSequence text, int offset) {
+    if (offset < 0 || offset >= text.length()) return 0;
+    final char ch = text.charAt(offset);
+    return (ch == '\'' || ch == '\"') ? ch : 0;
   }
 
   @Nullable
@@ -366,7 +461,7 @@ public class EditorActionUtil {
     if (CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(), offset - 1, offset + 1)) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
-    return retreatTokenOnBoundary(it, offset);
+    return retreatTokenOnBoundary(it, offset, false);
   }
 
   /**
