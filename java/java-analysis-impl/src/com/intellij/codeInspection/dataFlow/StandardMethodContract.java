@@ -201,6 +201,8 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public static List<StandardMethodContract> parseContract(String text) throws ParseException {
+    if (StringUtil.isEmptyOrSpaces(text)) return Collections.emptyList();
+
     List<StandardMethodContract> result = ContainerUtil.newArrayList();
     String[] split = StringUtil.replace(text, " ", "").split(";");
     for (int clauseIndex = 0; clauseIndex < split.length; clauseIndex++) {
