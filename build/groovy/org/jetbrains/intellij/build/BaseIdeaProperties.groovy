@@ -163,6 +163,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
         withProjectLibrary("JUnit3")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+        withoutProjectLibrary("kotlin-plugin") // Android Studio: we already copy Kotlin from prebuilts.
       }
     } as Consumer<PlatformLayout>
 
