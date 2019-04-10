@@ -17,10 +17,10 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
+import com.intellij.openapi.util.TextRange;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Words.html#Words">backward-kill-word</a> command.
@@ -41,21 +41,11 @@ public class KillToWordStartAction extends TextComponentEditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
-      CaretModel caretModel = editor.getCaretModel();
-      int caretOffset = caretModel.getOffset();
-      if (caretOffset <= 0) {
-        return;
+      boolean camelMode = editor.getSettings().isCamelWords();
+      final TextRange range = EditorActionUtil.getRangeToWordStart(editor, camelMode, true);
+      if (!range.isEmpty()) {
+        KillRingUtil.cut(editor, range.getStartOffset(), range.getEndOffset());
       }
-
-      boolean camel = editor.getSettings().isCamelWords();
-      for (int i = caretOffset - 1; i >= 0; i--) {
-        if (EditorActionUtil.isWordOrLexemeStart(editor, i, camel)) {
-          KillRingUtil.cut(editor, i, caretOffset);
-          return;
-        }
-      }
-
-      KillRingUtil.cut(editor, 0, caretOffset);
     }
   }
 }

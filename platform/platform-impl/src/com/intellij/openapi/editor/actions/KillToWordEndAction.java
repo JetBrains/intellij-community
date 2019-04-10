@@ -17,12 +17,10 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
-import com.intellij.util.text.CharArrayUtil;
+import com.intellij.openapi.util.TextRange;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Words.html#Words">kill-word</a> command.
@@ -43,31 +41,10 @@ public class KillToWordEndAction extends TextComponentEditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
-      CaretModel caretModel = editor.getCaretModel();
-      int caretOffset = caretModel.getOffset();
-      Document document = editor.getDocument();
-      if (caretOffset >= document.getTextLength()) {
-        return;
-      }
-
-      int caretLine = caretModel.getLogicalPosition().line;
-      int lineEndOffset = document.getLineEndOffset(caretLine);
-      boolean camel = editor.getSettings().isCamelWords();
-      for (int i = caretOffset + 1; i < lineEndOffset; i++) {
-        if (EditorActionUtil.isWordOrLexemeEnd(editor, i, camel)) {
-          KillRingUtil.cut(editor, caretOffset, i);
-          return;
-        }
-      }
-      
-      int end = lineEndOffset;
-      if (caretLine < document.getLineCount() - 1 && CharArrayUtil.isEmptyOrSpaces(document.getImmutableCharSequence(), caretOffset, end)) {
-        // No word end found between the current position and line end, hence, remove line feed sign if possible.
-        end++;
-      }
-
-      if (end > caretOffset) {
-        KillRingUtil.cut(editor, caretOffset, end);
+      boolean camelMode = editor.getSettings().isCamelWords();
+      final TextRange range = EditorActionUtil.getRangeToWordEnd(editor, camelMode, true);
+      if (!range.isEmpty()) {
+        KillRingUtil.cut(editor, range.getStartOffset(), range.getEndOffset());
       }
     }
   }

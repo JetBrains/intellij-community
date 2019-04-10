@@ -19,11 +19,11 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.TextRange;
 
 public class DeleteToWordEndAction extends TextComponentEditorAction {
   public DeleteToWordEndAction() {
@@ -59,11 +59,9 @@ public class DeleteToWordEndAction extends TextComponentEditorAction {
   }
 
   private static void deleteToWordEnd(Editor editor, boolean camelMode) {
-    int startOffset = editor.getCaretModel().getOffset();
-    int endOffset = EditorActionUtil.getNextCaretStopOffset(editor, CaretStopPolicy.WORD_END, camelMode);
-    if(endOffset > startOffset) {
-      Document document = editor.getDocument();
-      document.deleteString(startOffset, endOffset);
+    final TextRange range = EditorActionUtil.getRangeToWordEnd(editor, camelMode, true);
+    if (!range.isEmpty()) {
+      editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     }
   }
 }
