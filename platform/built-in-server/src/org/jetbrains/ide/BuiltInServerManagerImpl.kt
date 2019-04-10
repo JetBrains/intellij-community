@@ -17,8 +17,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.NetUtils
-import io.netty.channel.EventLoopGroup
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
@@ -58,9 +58,6 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
-
-  val eventLooGroup: EventLoopGroup
-    get() = server!!.eventLoopGroup
 
   companion object {
     @JvmField
@@ -104,6 +101,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       }
     }
   }
+
+  fun createServerBootstrap() = serverBootstrap(server!!.eventLoopGroup)
 
   override fun waitForStart(): BuiltInServerManager {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode || !ApplicationManager.getApplication().isDispatchThread)
