@@ -5,25 +5,14 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(&&)('&&')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('b')
-          PsiWhiteSpace(' ')
-          PsiElement(]])(']]')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('b')
+          LOGICAL_AND_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(&&)('&&')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('b')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
   PsiElement(\n)('\n')
@@ -33,29 +22,14 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('b')
-          PsiWhiteSpace(' ')
-          PsiElement(&&)('&&')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('c')
-          PsiWhiteSpace(' ')
-          PsiElement(]])(']]')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('-z')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(")('"')
-            PsiElement(")('"')
+          LOGICAL_OR_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(||)('||')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('b')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
   PsiElement(\n)('\n')
@@ -65,7 +39,20 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('a')
+          LOGICAL_OR_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(||)('||')
+            PsiWhiteSpace(' ')
+            LOGICAL_AND_CONDITION
+              LITERAL_CONDITION
+                PsiElement(word)('b')
+              PsiWhiteSpace(' ')
+              PsiElement(&&)('&&')
+              PsiWhiteSpace(' ')
+              LITERAL_CONDITION
+                PsiElement(word)('c')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
   PsiElement(\n)('\n')
@@ -75,18 +62,46 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement($)('$')
-          SUBSHELL_COMMAND
-            PsiElement(()('(')
-            COMPOUND_LIST
-              PIPELINE_COMMAND
-                PIPELINE
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      PsiElement(word)('a')
-            PsiElement())(')')
+          LITERAL_CONDITION
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            STRING
+              PsiElement(")('"')
+              PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('a')
+              PsiElement())(')')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')

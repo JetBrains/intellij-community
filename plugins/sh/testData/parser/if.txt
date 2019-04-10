@@ -11,13 +11,17 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(!)('!')
-                  PsiElement(word)('a')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  VARIABLE
-                    PsiElement(var)('$a')
+                  EQUALITY_CONDITION
+                    LOGICAL_BITWISE_CONDITION
+                      PsiElement(!)('!')
+                      LITERAL_CONDITION
+                        PsiElement(word)('a')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      VARIABLE
+                        PsiElement(var)('$a')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -52,11 +56,14 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')
@@ -87,11 +94,14 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -126,17 +136,20 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(int)('1')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(int)('1')
-                    PsiElement(")('"')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(int)('1')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(int)('1')
+                        PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -171,17 +184,20 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('foo')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('foo')
-                    PsiElement(")('"')
+                  ASSIGNMENT_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -216,17 +232,20 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('foo')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('foo')
-                    PsiElement(")('"')
+                  ASSIGNMENT_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -260,11 +279,14 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  PsiElement(int)('1')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -312,12 +334,15 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  VARIABLE
-                    PsiElement(var)('$#')
-                  PsiWhiteSpace(' ')
-                  PsiElement(<)('<')
-                  PsiWhiteSpace(' ')
-                  PsiElement(int)('2')
+                  COMPARISON_CONDITION
+                    LITERAL_CONDITION
+                      VARIABLE
+                        PsiElement(var)('$#')
+                    PsiWhiteSpace(' ')
+                    PsiElement(<)('<')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -370,12 +395,15 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  VARIABLE
-                    PsiElement(var)('$#')
-                  PsiWhiteSpace(' ')
-                  PsiElement(>)('>')
-                  PsiWhiteSpace(' ')
-                  PsiElement(int)('2')
+                  COMPARISON_CONDITION
+                    LITERAL_CONDITION
+                      VARIABLE
+                        PsiElement(var)('$#')
+                    PsiWhiteSpace(' ')
+                    PsiElement(>)('>')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -428,35 +456,41 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                  LOGICAL_AND_CONDITION
+                    EQUALITY_CONDITION
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                            PsiElement(})('}')
+                          PsiElement(")('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(!=)('!=')
+                      PsiWhiteSpace(' ')
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement(word)('true')
+                          PsiElement(")('"')
+                        PsiElement(\n)('\n')
+                    PsiWhiteSpace('      ')
+                    PsiElement(&&)('&&')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
-                  PsiElement(!=)('!=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('true')
-                    PsiElement(")('"')
-                  PsiElement(\n)('\n')
-                  PsiWhiteSpace('      ')
-                  PsiElement(&&)('&&')
-                  PsiWhiteSpace(' ')
-                  PsiElement(word)('-z')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                        PsiElement(})('}')
+                      PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -490,35 +524,41 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                  LOGICAL_AND_CONDITION
+                    EQUALITY_CONDITION
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(parameter_expansion_body)('USE_PREBUILT_HEXAOGON_BINARIES')
+                            PsiElement(})('}')
+                          PsiElement(")('"')
+                      PsiWhiteSpace(' ')
+                      PsiElement(!=)('!=')
+                      PsiWhiteSpace(' ')
+                      LITERAL_CONDITION
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement(word)('true')
+                          PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(&&)('&&')
+                    LITERAL_CONDITION
+                      PsiElement(\n)('\n')
+                      PsiWhiteSpace('      ')
+                      PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
-                  PsiElement(!=)('!=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('true')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(&&)('&&')
-                  PsiElement(\n)('\n')
-                  PsiWhiteSpace('      ')
-                  PsiElement(word)('-z')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(parameter_expansion_body)('QUALCOMM_SDK')
+                        PsiElement(})('}')
+                      PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -552,17 +592,20 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    VARIABLE
-                      PsiElement(var)('$key')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(")('"')
+                  ASSIGNMENT_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$key')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')
@@ -635,18 +678,21 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    VARIABLE
-                      PsiElement(var)('$PACKER_BUILD_NAME')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('virtualbox')
-                    PsiElement(")('"')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$PACKER_BUILD_NAME')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('virtualbox')
+                        PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -693,9 +739,11 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('-e')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-e')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('/etc/software.properties')
+                  LITERAL_CONDITION
+                    PsiElement(word)('/etc/software.properties')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -794,15 +842,18 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    VARIABLE
-                      PsiElement(var)('$VERSION_ID')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(!=)('!=')
-                  PsiWhiteSpace('  ')
-                  PsiElement(word)('16.04')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$VERSION_ID')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(!=)('!=')
+                    PsiWhiteSpace('  ')
+                    LITERAL_CONDITION
+                      PsiElement(word)('16.04')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(\n)('\n')
@@ -896,31 +947,34 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement(word)('10.12.6')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  COMMAND_SUBSTITUTION_COMMAND
-                    PsiElement(`)('`')
-                    COMPOUND_LIST
-                      PIPELINE_COMMAND
-                        PIPELINE
-                          SIMPLE_COMMAND
-                            GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('defaults')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              PsiElement(word)('read')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              PsiElement(word)('loginwindow')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              PsiElement(word)('SystemVersionStampAsString')
-                    PsiElement(`)('`')
+                  ASSIGNMENT_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('10.12.6')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      COMMAND_SUBSTITUTION_COMMAND
+                        PsiElement(`)('`')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  PsiElement(word)('defaults')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement(word)('read')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement(word)('loginwindow')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement(word)('SystemVersionStampAsString')
+                        PsiElement(`)('`')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')
@@ -996,13 +1050,15 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('-f')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-f')
                   PsiWhiteSpace(' ')
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(parameter_expansion_body)('NANO_KERNEL')
-                    PsiElement(})('}')
+                  LITERAL_CONDITION
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('NANO_KERNEL')
+                      PsiElement(})('}')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')
@@ -1102,7 +1158,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiElement(int)('1')
+              LITERAL_CONDITION
+                PsiElement(int)('1')
               PsiElement(])(']')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

@@ -11,9 +11,11 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('-e')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-e')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('/lib/init/splash-functions-base')
+                  LITERAL_CONDITION
+                    PsiElement(word)('/lib/init/splash-functions-base')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiWhiteSpace(' ')

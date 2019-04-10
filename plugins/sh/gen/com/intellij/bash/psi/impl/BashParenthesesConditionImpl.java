@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashProcessSubstitutionImpl extends BashCompositeElementImpl implements BashProcessSubstitution {
+public class BashParenthesesConditionImpl extends BashConditionImpl implements BashParenthesesCondition {
 
-  public BashProcessSubstitutionImpl(ASTNode node) {
+  public BashParenthesesConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitProcessSubstitution(this);
+    visitor.visitParenthesesCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,26 +27,14 @@ public class BashProcessSubstitutionImpl extends BashCompositeElementImpl implem
 
   @Override
   @Nullable
-  public BashCompoundList getCompoundList() {
-    return findChildByClass(BashCompoundList.class);
+  public BashCondition getCondition() {
+    return findChildByClass(BashCondition.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getGt() {
-    return findChildByType(GT);
-  }
-
-  @Override
-  @Nullable
+  @NotNull
   public PsiElement getLeftParen() {
-    return findChildByType(LEFT_PAREN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLt() {
-    return findChildByType(LT);
+    return findNotNullChildByType(LEFT_PAREN);
   }
 
   @Override

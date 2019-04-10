@@ -24,8 +24,9 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              VARIABLE
-                PsiElement(var)('$i')
+              LITERAL_CONDITION
+                VARIABLE
+                  PsiElement(var)('$i')
               PsiElement(])(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -44,5 +45,6 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiElement(int)('0')
+              LITERAL_CONDITION
+                PsiElement(int)('0')
               PsiElement(])(']')

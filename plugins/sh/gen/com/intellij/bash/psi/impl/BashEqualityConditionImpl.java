@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashConditionalCommandImpl extends BashCommandImpl implements BashConditionalCommand {
+public class BashEqualityConditionImpl extends BashConditionImpl implements BashEqualityCondition {
 
-  public BashConditionalCommandImpl(ASTNode node) {
+  public BashEqualityConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitConditionalCommand(this);
+    visitor.visitEqualityCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -33,26 +33,20 @@ public class BashConditionalCommandImpl extends BashCommandImpl implements BashC
 
   @Override
   @Nullable
-  public PsiElement getLeftDoubleBracket() {
-    return findChildByType(LEFT_DOUBLE_BRACKET);
+  public PsiElement getEq() {
+    return findChildByType(EQ);
   }
 
   @Override
   @Nullable
-  public PsiElement getLeftSquare() {
-    return findChildByType(LEFT_SQUARE);
+  public PsiElement getNe() {
+    return findChildByType(NE);
   }
 
   @Override
   @Nullable
-  public PsiElement getRightDoubleBracket() {
-    return findChildByType(RIGHT_DOUBLE_BRACKET);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightSquare() {
-    return findChildByType(RIGHT_SQUARE);
+  public PsiElement getRegexp() {
+    return findChildByType(REGEXP);
   }
 
 }

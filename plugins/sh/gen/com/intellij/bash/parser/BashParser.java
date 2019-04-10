@@ -59,6 +59,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == COMPOUND_LIST) {
       r = compound_list(b, 0);
     }
+    else if (t == CONDITION) {
+      r = condition(b, 0, -1);
+    }
     else if (t == CONDITIONAL_COMMAND) {
       r = conditional_command(b, 0);
     }
@@ -115,9 +118,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     }
     else if (t == PIPELINE_COMMAND) {
       r = pipeline_command(b, 0);
-    }
-    else if (t == PROCESS_SUBSTITUTION) {
-      r = process_substitution(b, 0);
     }
     else if (t == REDIRECTION) {
       r = redirection(b, 0);
@@ -179,6 +179,9 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
+    create_token_set_(ASSIGNMENT_CONDITION, COMPARISON_CONDITION, CONDITION, EQUALITY_CONDITION,
+      LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_BITWISE_CONDITION, LOGICAL_OR_CONDITION,
+      PARENTHESES_CONDITION),
     create_token_set_(ASSIGNMENT_COMMAND, BLOCK, CASE_COMMAND, COMMAND,
       COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
       FUNCTION_DEFINITION, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
@@ -1040,68 +1043,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (<<condOp>> newlines? | newlines? <<condOp>>) | lit | vars
-  static boolean conditional_body(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = conditional_body_0(b, l + 1);
-    if (!r) r = lit(b, l + 1);
-    if (!r) r = vars(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<condOp>> newlines? | newlines? <<condOp>>
-  private static boolean conditional_body_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = conditional_body_0_0(b, l + 1);
-    if (!r) r = conditional_body_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<condOp>> newlines?
-  private static boolean conditional_body_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = condOp(b, l + 1);
-    r = r && conditional_body_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines?
-  private static boolean conditional_body_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body_0_0_1")) return false;
-    newlines(b, l + 1);
-    return true;
-  }
-
-  // newlines? <<condOp>>
-  private static boolean conditional_body_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = conditional_body_0_1_0(b, l + 1);
-    r = r && condOp(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // newlines?
-  private static boolean conditional_body_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_body_0_1_0")) return false;
-    newlines(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // '[['conditional_body* (']]'|']'<<differentBracketsWarning>>)
-  //                         |'['conditional_body* (']'|']]' <<differentBracketsWarning>>)
+  // '[[' condition* (']]'|']'<<differentBracketsWarning>>)
+  //                         |'[' condition* (']'|']]' <<differentBracketsWarning>>)
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
@@ -1113,7 +1056,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '[['conditional_body* (']]'|']'<<differentBracketsWarning>>)
+  // '[[' condition* (']]'|']'<<differentBracketsWarning>>)
   private static boolean conditional_command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0")) return false;
     boolean r, p;
@@ -1126,12 +1069,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // conditional_body*
+  // condition*
   private static boolean conditional_command_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!conditional_body(b, l + 1)) break;
+      if (!condition(b, l + 1, -1)) break;
       if (!empty_element_parsed_guard_(b, "conditional_command_0_1", c)) break;
     }
     return true;
@@ -1160,7 +1103,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '['conditional_body* (']'|']]' <<differentBracketsWarning>>)
+  // '[' condition* (']'|']]' <<differentBracketsWarning>>)
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     boolean r, p;
@@ -1173,12 +1116,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // conditional_body*
+  // condition*
   private static boolean conditional_command_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!conditional_body(b, l + 1)) break;
+      if (!condition(b, l + 1, -1)) break;
       if (!empty_element_parsed_guard_(b, "conditional_command_1_1", c)) break;
     }
     return true;
@@ -1721,31 +1664,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal | '(' lit ')'
-  static boolean lit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lit")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = literal(b, l + 1);
-    if (!r) r = lit_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '(' lit ')'
-  private static boolean lit_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lit_1")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, LEFT_PAREN);
-    p = r; // pin = 1
-    r = r && report_error_(b, lit(b, l + 1));
-    r = p && consumeToken(b, RIGHT_PAREN) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
   // w | string | num
   static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
@@ -2069,33 +1987,6 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, AMP);
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, LINEFEED);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // ('<' | '>') '(' compound_list ')'
-  public static boolean process_substitution(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution")) return false;
-    if (!nextTokenIs(b, "<process substitution>", GT, LT)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
-    r = process_substitution_0(b, l + 1);
-    p = r; // pin = 1
-    r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
-    r = p && report_error_(b, compound_list(b, l + 1)) && r;
-    r = p && consumeToken(b, RIGHT_PAREN) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // '<' | '>'
-  private static boolean process_substitution_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LT);
-    if (!r) r = consumeToken(b, GT);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2712,6 +2603,145 @@ public class BashParser implements PsiParser, LightPsiParser {
     }
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // Expression root: condition
+  // Operator priority table:
+  // 0: BINARY(assignment_condition)
+  // 1: BINARY(logical_or_condition)
+  // 2: BINARY(logical_and_condition)
+  // 3: BINARY(equality_condition)
+  // 4: BINARY(comparison_condition)
+  // 5: PREFIX(logical_bitwise_condition)
+  // 6: ATOM(literal_condition)
+  // 7: PREFIX(parentheses_condition)
+  public static boolean condition(PsiBuilder b, int l, int g) {
+    if (!recursion_guard_(b, l, "condition")) return false;
+    addVariant(b, "<condition>");
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, "<condition>");
+    r = logical_bitwise_condition(b, l + 1);
+    if (!r) r = literal_condition(b, l + 1);
+    if (!r) r = parentheses_condition(b, l + 1);
+    p = r;
+    r = r && condition_0(b, l + 1, g);
+    exit_section_(b, l, m, null, r, p, null);
+    return r || p;
+  }
+
+  public static boolean condition_0(PsiBuilder b, int l, int g) {
+    if (!recursion_guard_(b, l, "condition_0")) return false;
+    boolean r = true;
+    while (true) {
+      Marker m = enter_section_(b, l, _LEFT_, null);
+      if (g < 0 && consumeTokenSmart(b, ASSIGN)) {
+        r = condition(b, l, 0);
+        exit_section_(b, l, m, ASSIGNMENT_CONDITION, r, true, null);
+      }
+      else if (g < 1 && consumeTokenSmart(b, OR_OR)) {
+        r = condition(b, l, 1);
+        exit_section_(b, l, m, LOGICAL_OR_CONDITION, r, true, null);
+      }
+      else if (g < 2 && consumeTokenSmart(b, AND_AND)) {
+        r = condition(b, l, 2);
+        exit_section_(b, l, m, LOGICAL_AND_CONDITION, r, true, null);
+      }
+      else if (g < 3 && equality_condition_0(b, l + 1)) {
+        r = condition(b, l, 3);
+        exit_section_(b, l, m, EQUALITY_CONDITION, r, true, null);
+      }
+      else if (g < 4 && comparison_condition_0(b, l + 1)) {
+        r = condition(b, l, 4);
+        exit_section_(b, l, m, COMPARISON_CONDITION, r, true, null);
+      }
+      else {
+        exit_section_(b, l, m, null, false, false, null);
+        break;
+      }
+    }
+    return r;
+  }
+
+  // '==' | '!=' | '=~'
+  private static boolean equality_condition_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "equality_condition_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, EQ);
+    if (!r) r = consumeTokenSmart(b, NE);
+    if (!r) r = consumeTokenSmart(b, REGEXP);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '<' | '>'
+  private static boolean comparison_condition_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "comparison_condition_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, LT);
+    if (!r) r = consumeTokenSmart(b, GT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  public static boolean logical_bitwise_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_bitwise_condition")) return false;
+    if (!nextTokenIsSmart(b, BANG)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, BANG);
+    p = r;
+    r = p && condition(b, l, 5);
+    exit_section_(b, l, m, LOGICAL_BITWISE_CONDITION, r, p, null);
+    return r || p;
+  }
+
+  // literal newlines | newlines literal
+  public static boolean literal_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literal_condition")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, LITERAL_CONDITION, "<literal condition>");
+    r = literal_condition_0(b, l + 1);
+    if (!r) r = literal_condition_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // literal newlines
+  private static boolean literal_condition_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literal_condition_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = literal(b, l + 1);
+    r = r && newlines(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // newlines literal
+  private static boolean literal_condition_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literal_condition_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = newlines(b, l + 1);
+    r = r && literal(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  public static boolean parentheses_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parentheses_condition")) return false;
+    if (!nextTokenIsSmart(b, LEFT_PAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, LEFT_PAREN);
+    p = r;
+    r = p && condition(b, l, -1);
+    r = p && report_error_(b, consumeToken(b, RIGHT_PAREN)) && r;
+    exit_section_(b, l, m, PARENTHESES_CONDITION, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */

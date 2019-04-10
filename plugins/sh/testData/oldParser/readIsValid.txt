@@ -14,5 +14,6 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiElement(word)('i')
+              LITERAL_CONDITION
+                PsiElement(word)('i')
               PsiElement(])(']')

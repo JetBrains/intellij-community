@@ -20,7 +20,8 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              PsiElement(word)(':echo:')
+              LITERAL_CONDITION
+                PsiElement(word)(':echo:')
               PsiElement(])(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST

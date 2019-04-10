@@ -443,34 +443,36 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('-z')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('CONTENT[')
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(")('"')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
-                        PsiElement(parameter_expansion_body)('index')
+                        PsiElement(parameter_expansion_body)('CONTENT[')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('index')
+                          PsiElement(})('}')
+                        PsiElement(parameter_expansion_body)('-')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('index')
+                          PsiElement(})('}')
+                        PsiElement(parameter_expansion_body)('-')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('index')
+                          PsiElement(})('}')
+                        PsiElement(parameter_expansion_body)(']-')
                         PsiElement(})('}')
-                      PsiElement(parameter_expansion_body)('-')
-                      PsiElement($)('$')
-                      SHELL_PARAMETER_EXPANSION
-                        PsiElement({)('{')
-                        PsiElement(parameter_expansion_body)('index')
-                        PsiElement(})('}')
-                      PsiElement(parameter_expansion_body)('-')
-                      PsiElement($)('$')
-                      SHELL_PARAMETER_EXPANSION
-                        PsiElement({)('{')
-                        PsiElement(parameter_expansion_body)('index')
-                        PsiElement(})('}')
-                      PsiElement(parameter_expansion_body)(']-')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                      PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')
@@ -1227,11 +1229,12 @@ BASH_FILE
                           CONDITIONAL_COMMAND
                             PsiElement([)('[')
                             PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(")('"')
-                              VARIABLE
-                                PsiElement(var)('$entryFound')
-                              PsiElement(")('"')
+                            LITERAL_CONDITION
+                              STRING
+                                PsiElement(")('"')
+                                VARIABLE
+                                  PsiElement(var)('$entryFound')
+                                PsiElement(")('"')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
@@ -1302,33 +1305,40 @@ BASH_FILE
                           CONDITIONAL_COMMAND
                             PsiElement([)('[')
                             PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(")('"')
-                              VARIABLE
-                                PsiElement(var)('$type')
-                              PsiElement(")('"')
+                            ASSIGNMENT_CONDITION
+                              LITERAL_CONDITION
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$type')
+                                  PsiElement(")('"')
+                              PsiWhiteSpace(' ')
+                              PsiElement(=)('=')
+                              PsiWhiteSpace(' ')
+                              LITERAL_CONDITION
+                                STRING
+                                  PsiElement(")('"')
+                                  PsiElement(word)('host')
+                                  PsiElement(")('"')
                             PsiWhiteSpace(' ')
-                            PsiElement(=)('=')
+                            LITERAL_CONDITION
+                              PsiElement(word)('-o')
                             PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(")('"')
-                              PsiElement(word)('host')
-                              PsiElement(")('"')
-                            PsiWhiteSpace(' ')
-                            PsiElement(word)('-o')
-                            PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(")('"')
-                              VARIABLE
-                                PsiElement(var)('$type')
-                              PsiElement(")('"')
-                            PsiWhiteSpace(' ')
-                            PsiElement(=)('=')
-                            PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(")('"')
-                              PsiElement(word)('guest')
-                              PsiElement(")('"')
+                            ASSIGNMENT_CONDITION
+                              LITERAL_CONDITION
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$type')
+                                  PsiElement(")('"')
+                              PsiWhiteSpace(' ')
+                              PsiElement(=)('=')
+                              PsiWhiteSpace(' ')
+                              LITERAL_CONDITION
+                                STRING
+                                  PsiElement(")('"')
+                                  PsiElement(word)('guest')
+                                  PsiElement(")('"')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
@@ -1422,11 +1432,12 @@ BASH_FILE
                                     CONDITIONAL_COMMAND
                                       PsiElement([)('[')
                                       PsiWhiteSpace(' ')
-                                      STRING
-                                        PsiElement(")('"')
-                                        VARIABLE
-                                          PsiElement(var)('$entryFound')
-                                        PsiElement(")('"')
+                                      LITERAL_CONDITION
+                                        STRING
+                                          PsiElement(")('"')
+                                          VARIABLE
+                                            PsiElement(var)('$entryFound')
+                                          PsiElement(")('"')
                                       PsiWhiteSpace(' ')
                                       PsiElement(])(']')
                                 PsiElement(;)(';')

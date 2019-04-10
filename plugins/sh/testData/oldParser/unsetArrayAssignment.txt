@@ -11,6 +11,7 @@ BASH_FILE
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
-              VARIABLE
-                PsiElement(var)('$todo_id')
+              LITERAL_CONDITION
+                VARIABLE
+                  PsiElement(var)('$todo_id')
               PsiElement(])(']')

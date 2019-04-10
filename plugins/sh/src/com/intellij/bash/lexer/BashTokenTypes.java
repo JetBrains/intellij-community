@@ -48,9 +48,6 @@ public interface BashTokenTypes extends BashTypes {
       IF, IN, SELECT, THEN, UNTIL, WHILE, TIME
   );
 
-  //arithmetic operators: misc
-  TokenSet arithmeticEqualityOps = TokenSet.create(NE, EQ);
-
   TokenSet arithLiterals = TokenSet.create(NUMBER, OCTAL, HEX);
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING, INT, COLON);

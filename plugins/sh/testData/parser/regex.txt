@@ -11,15 +11,18 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    VARIABLE
-                      PsiElement(var)('$JAVAC_VERSION')
-                    PsiElement(")('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(=~)('=~')
-                  PsiWhiteSpace(' ')
-                  PsiElement(word)('javac\ (1\.([789]|[1-9][0-9])).*$')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$JAVAC_VERSION')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=~)('=~')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(word)('javac\ (1\.([789]|[1-9][0-9])).*$')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
             PsiElement(;)(';')

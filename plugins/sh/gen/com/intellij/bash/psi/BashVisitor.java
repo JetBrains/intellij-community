@@ -26,6 +26,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCommand(o);
   }
 
+  public void visitAssignmentCondition(@NotNull BashAssignmentCondition o) {
+    visitCondition(o);
+  }
+
   public void visitAssignmentExpression(@NotNull BashAssignmentExpression o) {
     visitBinaryExpression(o);
   }
@@ -86,11 +90,19 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitComparisonCondition(@NotNull BashComparisonCondition o) {
+    visitCondition(o);
+  }
+
   public void visitComparisonExpression(@NotNull BashComparisonExpression o) {
     visitBinaryExpression(o);
   }
 
   public void visitCompoundList(@NotNull BashCompoundList o) {
+    visitCompositeElement(o);
+  }
+
+  public void visitCondition(@NotNull BashCondition o) {
     visitCompositeElement(o);
   }
 
@@ -112,6 +124,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitElseClause(@NotNull BashElseClause o) {
     visitCompositeElement(o);
+  }
+
+  public void visitEqualityCondition(@NotNull BashEqualityCondition o) {
+    visitCondition(o);
   }
 
   public void visitEqualityExpression(@NotNull BashEqualityExpression o) {
@@ -170,16 +186,32 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitLiteralCondition(@NotNull BashLiteralCondition o) {
+    visitCondition(o);
+  }
+
   public void visitLiteralExpression(@NotNull BashLiteralExpression o) {
     visitExpression(o);
+  }
+
+  public void visitLogicalAndCondition(@NotNull BashLogicalAndCondition o) {
+    visitCondition(o);
   }
 
   public void visitLogicalAndExpression(@NotNull BashLogicalAndExpression o) {
     visitBinaryExpression(o);
   }
 
+  public void visitLogicalBitwiseCondition(@NotNull BashLogicalBitwiseCondition o) {
+    visitCondition(o);
+  }
+
   public void visitLogicalBitwiseNegationExpression(@NotNull BashLogicalBitwiseNegationExpression o) {
     visitExpression(o);
+  }
+
+  public void visitLogicalOrCondition(@NotNull BashLogicalOrCondition o) {
+    visitCondition(o);
   }
 
   public void visitLogicalOrExpression(@NotNull BashLogicalOrExpression o) {
@@ -192,6 +224,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitOldArithmeticExpansion(@NotNull BashOldArithmeticExpansion o) {
     visitArithmeticExpansion(o);
+  }
+
+  public void visitParenthesesCondition(@NotNull BashParenthesesCondition o) {
+    visitCondition(o);
   }
 
   public void visitParenthesesExpression(@NotNull BashParenthesesExpression o) {
@@ -216,10 +252,6 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitPreExpression(@NotNull BashPreExpression o) {
     visitExpression(o);
-  }
-
-  public void visitProcessSubstitution(@NotNull BashProcessSubstitution o) {
-    visitCompositeElement(o);
   }
 
   public void visitRedirection(@NotNull BashRedirection o) {

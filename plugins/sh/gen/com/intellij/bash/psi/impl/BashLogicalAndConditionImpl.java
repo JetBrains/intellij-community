@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashConditionalCommandImpl extends BashCommandImpl implements BashConditionalCommand {
+public class BashLogicalAndConditionImpl extends BashConditionImpl implements BashLogicalAndCondition {
 
-  public BashConditionalCommandImpl(ASTNode node) {
+  public BashLogicalAndConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitConditionalCommand(this);
+    visitor.visitLogicalAndCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -32,27 +32,9 @@ public class BashConditionalCommandImpl extends BashCommandImpl implements BashC
   }
 
   @Override
-  @Nullable
-  public PsiElement getLeftDoubleBracket() {
-    return findChildByType(LEFT_DOUBLE_BRACKET);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getLeftSquare() {
-    return findChildByType(LEFT_SQUARE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightDoubleBracket() {
-    return findChildByType(RIGHT_DOUBLE_BRACKET);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightSquare() {
-    return findChildByType(RIGHT_SQUARE);
+  @NotNull
+  public PsiElement getAndAnd() {
+    return findNotNullChildByType(AND_AND);
   }
 
 }

@@ -5,21 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashConditionalCommand extends BashCommand {
+public interface BashComparisonCondition extends BashCondition {
 
   @NotNull
   List<BashCondition> getConditionList();
 
   @Nullable
-  PsiElement getLeftDoubleBracket();
+  PsiElement getGt();
 
   @Nullable
-  PsiElement getLeftSquare();
-
-  @Nullable
-  PsiElement getRightDoubleBracket();
-
-  @Nullable
-  PsiElement getRightSquare();
+  PsiElement getLt();
 
 }

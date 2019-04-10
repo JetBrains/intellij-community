@@ -5,7 +5,8 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('a')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')
   PsiElement(\n)('\n')
@@ -15,7 +16,8 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('x')
+          LITERAL_CONDITION
+            PsiElement(word)('x')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
   PsiElement(\n)('\n')
@@ -25,9 +27,11 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          PsiElement(word)('-f')
+          LITERAL_CONDITION
+            PsiElement(word)('-f')
           PsiWhiteSpace(' ')
-          PsiElement(word)('x')
+          LITERAL_CONDITION
+            PsiElement(word)('x')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
   PsiElement(\n)('\n')

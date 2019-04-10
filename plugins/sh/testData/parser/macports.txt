@@ -23,16 +23,18 @@ BASH_FILE
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  PsiElement(word)('-z')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-z')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(")('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(parameter_expansion_body)('MACPORTS')
-                      PsiElement(})('}')
-                    PsiElement(")('"')
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(parameter_expansion_body)('MACPORTS')
+                        PsiElement(})('}')
+                      PsiElement(")('"')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
             PsiElement(;)(';')

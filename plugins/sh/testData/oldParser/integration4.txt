@@ -38,15 +38,18 @@ BASH_FILE
                             CONDITIONAL_COMMAND
                               PsiElement([)('[')
                               PsiWhiteSpace(' ')
-                              PsiElement(int)('1')
-                              PsiWhiteSpace(' ')
-                              PsiElement(=)('=')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$backgrounded')
-                                PsiElement(")('"')
+                              ASSIGNMENT_CONDITION
+                                LITERAL_CONDITION
+                                  PsiElement(int)('1')
+                                PsiWhiteSpace(' ')
+                                PsiElement(=)('=')
+                                PsiWhiteSpace(' ')
+                                LITERAL_CONDITION
+                                  STRING
+                                    PsiElement(")('"')
+                                    VARIABLE
+                                      PsiElement(var)('$backgrounded')
+                                    PsiElement(")('"')
                               PsiWhiteSpace(' ')
                               PsiElement(])(']')
                         PsiElement(\n)('\n')

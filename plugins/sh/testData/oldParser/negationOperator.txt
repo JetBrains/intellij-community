@@ -5,9 +5,12 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          PsiElement(!)('!')
-          PsiElement(()('(')
-          PsiElement(word)('a')
-          PsiElement())(')')
+          LOGICAL_BITWISE_CONDITION
+            PsiElement(!)('!')
+            PARENTHESES_CONDITION
+              PsiElement(()('(')
+              LITERAL_CONDITION
+                PsiElement(word)('a')
+              PsiElement())(')')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')

@@ -40,12 +40,15 @@ BASH_FILE
                           CONDITIONAL_COMMAND
                             PsiElement([)('[')
                             PsiWhiteSpace(' ')
-                            VARIABLE
-                              PsiElement(var)('$#')
+                            LITERAL_CONDITION
+                              VARIABLE
+                                PsiElement(var)('$#')
                             PsiWhiteSpace(' ')
-                            PsiElement(word)('-gt')
+                            LITERAL_CONDITION
+                              PsiElement(word)('-gt')
                             PsiWhiteSpace(' ')
-                            PsiElement(int)('0')
+                            LITERAL_CONDITION
+                              PsiElement(int)('0')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
