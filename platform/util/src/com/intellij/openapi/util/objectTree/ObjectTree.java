@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class ObjectTree<T> {
+public final class ObjectTree<T extends Disposable> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
   
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
@@ -154,11 +154,11 @@ public final class ObjectTree<T> {
         }
       }
       else {
-        SmartList<Throwable> exceptions = new SmartList<>();
         ObjectNode<T> parent;
         synchronized (treeLock) {
           parent = node.getParent();
         }
+        List<Throwable> exceptions = new SmartList<>();
         node.execute(action, exceptions);
         if (parent != null) {
           synchronized (treeLock) {
@@ -175,7 +175,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private static void handleExceptions(List<Throwable> exceptions) {
+  private static void handleExceptions(List<? extends Throwable> exceptions) {
     if (!exceptions.isEmpty()) {
       for (Throwable exception : exceptions) {
         if (!(exception instanceof ProcessCanceledException)) {
