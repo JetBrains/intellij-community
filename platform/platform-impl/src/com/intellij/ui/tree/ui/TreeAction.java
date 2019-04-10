@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.ui.TreeActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -9,7 +10,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 
 abstract class TreeAction extends AbstractAction implements UIResource {
-  static final TreeAction SELECT_CHILD = new TreeAction("selectChild") {
+  static final TreeAction SELECT_CHILD = new TreeAction(TreeActions.Right.ID) {
     @Override
     void actionPerformed(@NotNull JTree tree, @NotNull TreePath path) {
       if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
@@ -25,7 +26,7 @@ abstract class TreeAction extends AbstractAction implements UIResource {
       }
     }
   };
-  static final TreeAction SELECT_PARENT = new TreeAction("selectParent") {
+  static final TreeAction SELECT_PARENT = new TreeAction(TreeActions.Left.ID) {
     @Override
     void actionPerformed(@NotNull JTree tree, @NotNull TreePath path) {
       if (tree.isExpanded(path)) {
