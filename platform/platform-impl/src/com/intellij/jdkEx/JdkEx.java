@@ -33,7 +33,7 @@ public class JdkEx {
   }
 
   public static boolean isCustomDecorationSupported() {
-    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWindows) {
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isWin10OrNewer) {
       try {
         MethodInvocator invocator = new MethodInvocator(false, Class.forName("java.awt.Window"), "setHasCustomDecoration");
         return invocator.isAvailable();
