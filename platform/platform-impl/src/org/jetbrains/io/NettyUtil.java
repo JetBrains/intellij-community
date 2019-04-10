@@ -2,7 +2,6 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.NettyKt;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -75,15 +74,6 @@ public final class NettyUtil {
              message.equals("\u0423\u0434\u0430\u043b\u0435\u043d\u043d\u044b\u0439 \u0445\u043e\u0441\u0442 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0440\u0430\u0437\u043e\u0440\u0432\u0430\u043b \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435");
     }
     return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
-  }
-
-  /**
-   * @deprecated Use BuiltInServerManager.getInstance().createClientBootstrap()
-   */
-  @NotNull
-  @Deprecated
-  public static Bootstrap nioClientBootstrap() {
-    return nioClientBootstrap(NettyKt.MultiThreadEventLoopGroup(2));
   }
 
   @NotNull
