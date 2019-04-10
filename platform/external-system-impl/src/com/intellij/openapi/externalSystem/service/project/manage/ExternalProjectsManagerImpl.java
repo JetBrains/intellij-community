@@ -52,6 +52,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
+  private final AtomicBoolean isDisposed = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
   @NotNull
   private ExternalProjectsState myState = new ExternalProjectsState();
@@ -182,8 +183,12 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   @Override
-  public void runWhenInitialized(Runnable runnable) {
+  public void runWhenInitialized(Runnable action) {
+    if (isDisposed.get()) return;
     synchronized (isInitializationFinished) {
+      Runnable runnable = () -> {
+        if (!isDisposed.get()) action.run();
+      };
       if (isInitializationFinished.get()) {
         ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
@@ -296,6 +301,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   @Override
   public void dispose() {
+    if (isDisposed.getAndSet(true)) return;
     myProjectsViews.clear();
     myRunManagerListener.detach();
     if (myWatcher != null) {
