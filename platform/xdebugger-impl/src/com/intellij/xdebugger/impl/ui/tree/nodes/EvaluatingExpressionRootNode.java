@@ -42,6 +42,7 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
         public void evaluated(@NotNull final XValue result) {
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
+          disposeLastResult();
           if (result instanceof Disposable) {
             myLastResult = (Disposable)result;
           }
@@ -56,12 +57,16 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
       });
     }
 
-    @Override
-    public void dispose() {
+    private void disposeLastResult() {
       if (myLastResult != null) {
         Disposer.dispose(myLastResult);
         myLastResult = null;
       }
+    }
+
+    @Override
+    public void dispose() {
+      disposeLastResult();
     }
   }
 

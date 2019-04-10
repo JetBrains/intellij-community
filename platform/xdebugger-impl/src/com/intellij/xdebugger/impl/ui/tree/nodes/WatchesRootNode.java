@@ -94,6 +94,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> implem
   @Override
   public void clearChildren() {
     super.clearChildren();
+    myChildren.forEach(Disposer::dispose);
     myChildren.clear();
   }
 
@@ -137,17 +138,23 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> implem
   }
 
   public int removeChildNode(XDebuggerTreeNode node) {
-    return removeChildNode(myChildren, node);
+    int index = removeChildNode(myChildren, node);
+    if (index >= 0 && node instanceof Disposable) {
+      Disposer.dispose((Disposable)node);
+    }
+    return index;
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
     int[] indices = getNodesIndices(nodes);
     TreeNode[] removed = getChildNodes(indices);
     myChildren.removeAll(nodes);
+    nodes.stream().filter(Disposable.class::isInstance).forEach(node -> Disposer.dispose((Disposable)node));
     fireNodesRemoved(indices, removed);
   }
 
   public void removeAllChildren() {
+    myChildren.forEach(Disposer::dispose);
     myChildren.clear();
     fireNodeStructureChanged();
   }
