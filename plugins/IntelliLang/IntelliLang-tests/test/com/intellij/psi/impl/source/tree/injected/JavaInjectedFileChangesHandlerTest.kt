@@ -173,8 +173,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           
           class A {
             void foo() {
-              @Language("HTML") String a = "<html>line" +
-                      "\n" +
+              @Language("HTML") String a = "<html>line\n" +
                       "finalLine</html>";
             }
           }

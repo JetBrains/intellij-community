@@ -14,6 +14,7 @@ import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
 import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 import kotlin.math.max
 
 internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
@@ -35,8 +36,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val hostsToRemove = SmartList<Marker>()
     val survivedMarkers = SmartList<Marker>()
 
-    for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength)) {
-      assert(myInjectedFile.isValid, { "injected file should be valid" })
+    for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength).let(
+      this::promoteLinesEnds)) {
+      assert(myInjectedFile.isValid) { "injected file should be valid" }
       val rangeInHost = affectedMarker.origin.range
       println("range = $rangeInHost -> '${myOrigDocument.getText(rangeInHost)}'")
       println("markerText = '$markerText'")
@@ -83,7 +85,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
         origPsiFile, rangeToReformat.startOffset, rangeToReformat.endOffset, true)
 
 
-
       if (hostsToRemove.isNotEmpty()) {
         rangeToReformat = removeHostsFromConcatenation(hostsToRemove) ?: rangeToReformat
         println("hostsToRemove remainig = $hostsToRemove")
@@ -104,21 +105,25 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     //      println("shreds count = ${shreds.size}")
     //    }
 
+    println("rangeToReformat-after = $rangeToReformat")
+
     if (rangeToReformat != null) {
 
-
       val injectedPsiFiles = run {
-        //        hostsToRemove.asSequence().mapNotNull { it.host }.firstOrNull()?.let { host ->
-        //          myEditor.caretModel.moveToOffset(host.contentRange.startOffset)
-        //          return@run injectedLanguageManager.getInjectedPsiFiles(host)?.mapNotNull { it.first as? PsiFile }.orEmpty()
-        //        }
+        survivedMarkers.asSequence().mapNotNull { it.host }.flatMap { host ->
+          //                  myEditor.caretModel.moveToOffset(host.contentRange.startOffset)
+          injectedLanguageManager.getInjectedPsiFiles(host)?.asSequence().orEmpty()
+            .mapNotNull { it.first as? PsiFile }
+            .filter { it.isValid }
+        }.toList().takeIf { it.any() }?.let { return@run it }
 
         println("searching for injections at $rangeToReformat -> '${rangeToReformat?.substring(origPsiFile.text.also {
           println("origPsiFile.text = '${origPsiFile.text}")
         })}'")
 
-        val injectedDocumentsInRange = injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, rangeToReformat)
-        injectedDocumentsInRange.map { dw -> psiDocumentManager.getPsiFile(dw) }
+
+        injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, rangeToReformat)
+          .mapNotNull { dw -> psiDocumentManager.getPsiFile(dw) }
       }
 
 
@@ -132,20 +137,43 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
       //    }
 
-      val newInjectedFile = injectedPsiFiles.first()
+      val newInjectedFile = injectedPsiFiles.firstOrNull()
       if (newInjectedFile != null && newInjectedFile !== myInjectedFile) {
         println("injected file updated")
         myInjectedFile = newInjectedFile
-        markers.clear()
-        val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
-        println("markersFromShreds = $markersFromShreds")
-        markers.addAll(markersFromShreds)
-        markers.firstOrNull()?.host?.contentRange?.let {
-          myEditor.caretModel.moveToOffset(it.startOffset)
-        }
+
+      }
+
+      markers.clear()
+      val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
+      println("markersFromShreds = $markersFromShreds")
+      markers.addAll(markersFromShreds)
+      markers.firstOrNull()?.host?.contentRange?.let {
+        myEditor.caretModel.moveToOffset(it.startOffset)
       }
     }
 
+  }
+
+  private fun promoteLinesEnds(mapping: List<Pair<Marker, String>>): Iterable<Pair<Marker, String>> {
+    val result = ArrayList<Pair<Marker, String>>(mapping.size);
+    var transfer = ""
+    val reversed = ContainerUtil.reverse(mapping)
+    for (i in reversed.indices) {
+      val (marker, text) = reversed[i]
+      if (text == "\n" && reversed.getOrNull(i + 1)?.second?.endsWith("\n") == false) {
+        result.add(Pair(marker, ""))
+        transfer += "\n"
+      }
+      else if (transfer != "") {
+        result.add(Pair(marker, text + transfer))
+        transfer = ""
+      }
+      else {
+        result.add(reversed[i])
+      }
+    }
+    return ContainerUtil.reverse(result)
   }
 
   private fun markersWholeRange(affectedMarkers: List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>>): TextRange? {
@@ -168,7 +196,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     return null
   }
 
-  private fun removeHostsFromConcatenation(hostsToRemove: MutableList<Marker>): TextRange? {
+  private fun removeHostsFromConcatenation(hostsToRemove: List<Marker>): TextRange? {
     val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().single()
     println("hostsToRemove = $hostsToRemove")
     val allToDelete = SmartList<PsiElement>()
@@ -184,7 +212,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       if (relatedElements.isNotEmpty()) {
         host.delete()
         marker.origin.dispose()
-        hostsToRemove.remove(marker)
+        //        hostsToRemove.remove(marker)
         for (related in relatedElements) {
           if (related.isValid) {
             related.delete()
