@@ -363,6 +363,16 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
+  override fun onReset(callback: () -> Unit): CellBuilder<T> {
+    builder.resetCallbacks.add(callback)
+    return this
+  }
+
+  override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
+    builder.isModifiedCallbacks.add(callback)
+    return this
+  }
+
   override fun enabled(isEnabled: Boolean) {
     component.isEnabled = isEnabled
   }
