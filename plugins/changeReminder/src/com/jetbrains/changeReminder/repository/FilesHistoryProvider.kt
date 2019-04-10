@@ -11,7 +11,7 @@ import com.jetbrains.changeReminder.processCommitsFromHashes
 
 data class Commit(val id: Int, val time: Long, val author: String, val files: Set<FilePath>)
 
-class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
+internal class FilesHistoryProvider(private val project: Project, private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
   private fun getCommitHashesWithFile(file: FilePath): Collection<Int> {
     val structureFilter = VcsLogFilterObject.fromPaths(setOf(file))
     return dataGetter.filter(listOf(structureFilter))

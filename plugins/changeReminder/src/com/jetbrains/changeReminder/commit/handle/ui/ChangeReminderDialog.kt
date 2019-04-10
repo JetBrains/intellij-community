@@ -19,7 +19,7 @@ import java.awt.BorderLayout
 import javax.swing.Action
 import javax.swing.JPanel
 
-class ChangeReminderDialog(private val project: Project, private val files: List<PredictedFile>) : DialogWrapper(project), DataProvider {
+internal class ChangeReminderDialog(private val project: Project, private val files: List<PredictedFile>) : DialogWrapper(project), DataProvider {
   init {
     init()
     title = "ChangeReminder Plugin"
