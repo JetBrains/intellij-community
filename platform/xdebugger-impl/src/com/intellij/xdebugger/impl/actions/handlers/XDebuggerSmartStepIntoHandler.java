@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
@@ -163,7 +164,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     DebuggerUIUtil.registerExtraHandleShortcuts(popup, SHOW_AD, XDebuggerActions.STEP_INTO, XDebuggerActions.SMART_STEP_INTO);
     UIUtil.maybeInstall(popup.getList().getInputMap(JComponent.WHEN_FOCUSED),
-                        "selectNextRow",
+                        ListActions.Down.ID,
                         KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
 
     popup.addListSelectionListener(new ListSelectionListener() {
