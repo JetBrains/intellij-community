@@ -39,7 +39,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   protected synchronized Collection<Language> getFilterItems() {
     final Collection<Language> result = super.getFilterItems();
     if (result == null) {
-      return result;
+      return null;
     }
     final Collection<Language> items = new HashSet<>(result);
     items.add(Language.ANY);

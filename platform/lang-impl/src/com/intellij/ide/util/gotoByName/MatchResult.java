@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MatchResult {
   public final String elementName;
-  final int matchingDegree;
-  final boolean startMatch;
+  private final int matchingDegree;
+  private final boolean startMatch;
 
   public MatchResult(String elementName, int matchingDegree, boolean startMatch) {
     this.elementName = elementName;
