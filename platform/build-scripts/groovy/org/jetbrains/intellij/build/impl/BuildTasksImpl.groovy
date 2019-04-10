@@ -122,8 +122,6 @@ class BuildTasksImpl extends BuildTasks {
       if (buildContext.productProperties.platformPrefix != null) {
         sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
       }
-      // Android Studio: we bundle the Kotlin plugin unconditionally, so we need to provide it here in order to load all plugins correctly.
-      sysproperty(key: "plugin.path", value: "$buildContext.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin")
       arg(value: "$classpathFile")
       arg(line: "com.intellij.idea.Main")
       arguments.each { arg(value: it) }

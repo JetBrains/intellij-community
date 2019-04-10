@@ -1225,35 +1225,6 @@ public class PluginManagerCore {
 
     long duration = System.currentTimeMillis() - start;
     getLogger().info("load plugin descriptors took " + duration + " ms");
-
-    // Android Studio: if we are running Studio internally (i.e., from a non-release build), we
-    // must load the Kotlin plugin with the same "core" UrlClassLoader that the platform uses.
-    // This is because the platform requires using a single class loader for all plugins when running internally.
-    // Note that `application` can be null during UI tests, so we cannot use methods like application.isInternal().
-    // Instead (as a proxy) we check whether the Android plugin is being loaded using the core class loader.
-    boolean androidUsesCoreClassLoader = result.stream().anyMatch(descriptor ->
-      "org.jetbrains.android".equals(descriptor.getPluginId().getIdString()) && descriptor.isUseCoreClassLoader()
-    );
-    if (isUnitTestMode() || androidUsesCoreClassLoader) {
-      result.stream()
-            .filter(descriptor -> "org.jetbrains.kotlin".equals(descriptor.getPluginId().getIdString()))
-            .findFirst()
-            .ifPresent((kotlinDescriptor) -> {
-              kotlinDescriptor.setUseCoreClassLoader(true);
-              try {
-                final ClassLoader loader = PluginManagerCore.class.getClassLoader();
-                final Method addUrlMethod = getAddUrlMethod(loader);
-                for (File aClassPath : kotlinDescriptor.getClassPath()) {
-                  final File file = aClassPath.getCanonicalFile();
-                  addUrlMethod.invoke(loader, file.toURI().toURL());
-                }
-              }
-              catch (Exception e) {
-                getLogger().error(e);
-              }
-            });
-    }
-
     return topoSortPlugins(result, errors);
   }
 

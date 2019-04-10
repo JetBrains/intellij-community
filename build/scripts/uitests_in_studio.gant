@@ -44,8 +44,7 @@ private runUiTests(boolean withCoverage) {
     "-Dsun.io.useCanonCaches=false",
     "-XX:ReservedCodeCacheSize=96m",
     "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
-    "-XX:+UseCodeCacheFlushing",
-    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin"
+    "-XX:+UseCodeCacheFlushing"
   ]
   if (withCoverage) {
     def agent = "${home}/plugins/coverage/lib/jacocoagent.jar"

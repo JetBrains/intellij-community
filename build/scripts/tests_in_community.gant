@@ -43,9 +43,7 @@ target("default": "Run tests") {
   options.suspendDebugProcess = true
   */
 
-  def jvmArgs = [
-    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin",
-  ]
+  List<String> jvmArgs = []
 
   TestingTasks.create(context, options).runTests(jvmArgs, "intellij.idea.community.main", null)
 }

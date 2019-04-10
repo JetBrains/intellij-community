@@ -14,7 +14,6 @@ iml_project(
         "//prebuilts/python/linux-x86",
         "//prebuilts/python/windows-x86",
         "//prebuilts/tools/common/kotlin-plugin-ij:kotlin_plugin",
-        "//prebuilts/tools/common/kotlin-plugin:kotlin-plugin-for-studio",
         "//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar",
         "//prebuilts/tools/common/m2/repository/com/jgoodies/jgoodies-common/1.4.0:jar",
         "//prebuilts/tools/common/offline-m2:android-gradle-2.3.2",  # TODO what do we need?
