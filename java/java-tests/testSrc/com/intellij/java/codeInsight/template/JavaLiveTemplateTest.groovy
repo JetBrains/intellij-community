@@ -9,18 +9,8 @@ import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
-import com.intellij.codeInsight.template.impl.ConstantNode
-import com.intellij.codeInsight.template.impl.EmptyNode
-import com.intellij.codeInsight.template.impl.MacroCallNode
-import com.intellij.codeInsight.template.impl.TemplateImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.codeInsight.template.impl.TextExpression
-import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteSmartMacro
-import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
-import com.intellij.codeInsight.template.macro.VariableOfTypeMacro
+import com.intellij.codeInsight.template.impl.*
+import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
@@ -511,7 +501,7 @@ class A {
     myFixture.checkResult '''
 class A {
   {
-    String s = "";
+    String s = "null";
     s.toString();
   }
 }'''
