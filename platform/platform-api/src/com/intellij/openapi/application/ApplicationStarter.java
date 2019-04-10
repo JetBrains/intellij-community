@@ -61,6 +61,13 @@ public interface ApplicationStarter {
     return false;
   }
 
+  /**
+   * If true, the command of this launcher can be processed when there is a modal dialog open.
+   */
+  default boolean allowAnyModalityState() {
+    return false;
+  }
+
   /** @see #canProcessExternalCommandLine */
   default void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
