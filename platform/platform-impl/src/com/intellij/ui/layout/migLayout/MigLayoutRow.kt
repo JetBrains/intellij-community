@@ -146,7 +146,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                            labeled = label != null,
                            noGrid = noGrid,
                            indent = indent + computeChildRowIndent(isSeparated),
-                           buttonGroup = buttonGroup)
+                           buttonGroup = buttonGroup ?: this.buttonGroup)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
