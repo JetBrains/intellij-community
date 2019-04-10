@@ -61,6 +61,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -806,16 +807,25 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
+  /**
+   * @param text  the text to try and load a configuration from
+   * @return {@code true}, if some configuration was found, even if it was broken or corrupted {@code false} otherwise.
+   */
   boolean loadConfiguration(String text) {
     if (text == null) {
       return false;
     }
-    final Configuration configuration = ConfigurationUtil.fromXml(text);
-    if (configuration == null) {
-      return false;
+    try {
+      final Configuration configuration = ConfigurationUtil.fromXml(text);
+      if (configuration == null) {
+        return false;
+      }
+      loadConfiguration(configuration);
+      securityCheck();
     }
-    loadConfiguration(configuration);
-    securityCheck();
+    catch (JDOMException e) {
+      ApplicationManager.getApplication().invokeLater(() -> reportMessage(e.getMessage(), false, myOptionsToolbar));
+    }
     return true;
   }
 
