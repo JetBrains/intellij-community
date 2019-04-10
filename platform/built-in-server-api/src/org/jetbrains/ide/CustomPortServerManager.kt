@@ -1,47 +1,30 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.ide;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.ide
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName
 
-import java.util.Map;
-
-public abstract class CustomPortServerManager {
-  public static final ExtensionPointName<CustomPortServerManager> EP_NAME = ExtensionPointName.create("org.jetbrains.customPortServerManager");
-
-  public abstract void cannotBind(Exception e, int port);
-
-  public interface CustomPortService {
-    boolean rebind();
-
-    boolean isBound();
+abstract class CustomPortServerManager {
+  companion object {
+    @JvmField
+    val EP_NAME = ExtensionPointName<CustomPortServerManager>("org.jetbrains.customPortServerManager")
   }
 
-  public abstract int getPort();
+  abstract val port: Int
 
-  public abstract boolean isAvailableExternally();
+  abstract val isAvailableExternally: Boolean
 
-  public abstract void setManager(@Nullable CustomPortService manager);
+  abstract fun cannotBind(e: Exception, port: Int)
+
+  interface CustomPortService {
+    val isBound: Boolean
+
+    fun rebind(): Boolean
+  }
+
+  abstract fun setManager(manager: CustomPortService?)
 
   /**
    * This server will accept only XML-RPC requests if this method returns not-null map of XMl-RPC handlers
    */
-  @Nullable
-  public Map<String, Object> createXmlRpcHandlers() {
-    return null;
-  }
+  open fun createXmlRpcHandlers(): Map<String, Any>? = null
 }

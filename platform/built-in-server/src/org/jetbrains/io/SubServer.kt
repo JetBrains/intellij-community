@@ -20,6 +20,9 @@ import java.net.InetSocketAddress
 internal class SubServer(private val user: CustomPortServerManager, private val server: BuiltInServer) : CustomPortServerManager.CustomPortService, Disposable {
   private var channelRegistrar: ChannelRegistrar? = null
 
+  override val isBound: Boolean
+    get() = channelRegistrar != null && !channelRegistrar!!.isEmpty
+
   init {
     user.setManager(this)
   }
@@ -64,10 +67,6 @@ internal class SubServer(private val user: CustomPortServerManager, private val 
       }
       return false
     }
-  }
-
-  override fun isBound(): Boolean {
-    return channelRegistrar != null && !channelRegistrar!!.isEmpty
   }
 
   private fun stop() {
