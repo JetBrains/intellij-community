@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -186,8 +187,12 @@ abstract class Cell {
     return builder.withBinding(component::getText, component::setText, prop.getter, prop.setter)
   }
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null): CellBuilder<JTextField> {
-    return textField(Supplier { prop.get().toString() }, Consumer { value -> value.toIntOrNull()?.let { prop.set(it) } }, columns)
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
+    return textField(
+      Supplier { prop.get().toString() },
+      Consumer { value -> value.toIntOrNull()?.let { prop.set(range?.fit(it) ?: it) } },
+      columns
+    )
   }
 
   fun textField(getter: Supplier<String>, setter: Consumer<String>, columns: Int? = null): CellBuilder<JTextField> {
