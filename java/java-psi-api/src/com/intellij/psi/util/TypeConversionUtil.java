@@ -1010,7 +1010,7 @@ public class TypeConversionUtil {
     return true;
   }
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("isAssignable");
+  private static final RecursionGuard<PsiType> ourGuard = RecursionManager.createGuard("isAssignable");
 
   public static boolean typesAgree(@NotNull final PsiType typeLeft,
                                    @NotNull final PsiType typeRight,

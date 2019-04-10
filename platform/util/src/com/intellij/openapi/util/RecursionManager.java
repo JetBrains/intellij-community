@@ -76,10 +76,10 @@ public class RecursionManager {
    * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
   @NotNull
-  public static RecursionGuard createGuard(@NonNls final String id) {
-    return new RecursionGuard() {
+  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+    return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
@@ -132,15 +132,16 @@ public class RecursionManager {
 
       @NotNull
       @Override
-      public List<Object> currentStack() {
-        ArrayList<Object> result = new ArrayList<>();
+      public List<Key> currentStack() {
+        ArrayList<Key> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.guardId.equals(id)) {
-            result.add(pair.userObject);
+            //noinspection unchecked
+            result.add((Key)pair.userObject);
           }
         }
-        return result;
+        return Collections.unmodifiableList(result);
       }
 
       @Override

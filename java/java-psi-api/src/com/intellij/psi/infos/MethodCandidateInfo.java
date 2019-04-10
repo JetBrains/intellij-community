@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
-  public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
+  public static final RecursionGuard<PsiElement> ourOverloadGuard = RecursionManager.createGuard("overload.guard");
   private static final ThreadLocal<Map<PsiElement, CurrentCandidateProperties>> CURRENT_CANDIDATE = ThreadLocal.withInitial(HashMap::new);
   @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
   @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;

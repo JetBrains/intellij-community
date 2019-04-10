@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PsiDiamondType extends PsiType {
-  public static final RecursionGuard ourDiamondGuard = RecursionManager.createGuard("diamondInference");
+  public static final RecursionGuard<PsiElement> ourDiamondGuard = RecursionManager.createGuard("diamondInference");
 
   public PsiDiamondType() {
     super(TypeAnnotationProvider.EMPTY);
