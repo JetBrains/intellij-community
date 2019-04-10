@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -54,6 +55,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                                 @Nullable String forcedPropName) {
     if (element instanceof FakePsiElement) return null;
     element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
+    if (originalElement != null && hasFileOrPointerReferences(originalElement.getReferences())) return null;
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
@@ -63,6 +65,15 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort, forcedPropName);
+  }
+
+  private static boolean hasFileOrPointerReferences(PsiReference[] references) {
+    for (PsiReference reference : references) {
+      if (reference instanceof PsiFileReference
+          || reference instanceof JsonPointerReferenceProvider.JsonSchemaIdReference
+          || reference instanceof JsonPointerReferenceProvider.JsonPointerReference) return true;
+    }
+    return false;
   }
 
   private static boolean isWhitespaceOrComment(@Nullable PsiElement originalElement) {
