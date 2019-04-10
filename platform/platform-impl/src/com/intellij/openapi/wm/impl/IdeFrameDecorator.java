@@ -97,17 +97,14 @@ public abstract class IdeFrameDecorator implements Disposable {
       if (myFrame == null) return ActionCallback.REJECTED;
 
       Rectangle bounds = myFrame.getBounds();
-      if (state && myFrame.getExtendedState() == Frame.NORMAL) {
+      int extendedState = myFrame.getExtendedState();
+      if (state && extendedState == Frame.NORMAL) {
         myFrame.getRootPane().putClientProperty("normalBounds", bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) return ActionCallback.REJECTED;
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
-        //if (IdeFrameDecorator.isCustomDecoration()) {
-        //  device.setFullScreenWindow(state? myFrame : null);
-        //  return ActionCallback.DONE;
-        //}
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
         myFrame.dispose();
         myFrame.setUndecorated(state);
@@ -125,6 +122,9 @@ public abstract class IdeFrameDecorator implements Disposable {
         myFrame.setVisible(true);
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
 
+        if (!state && (extendedState & Frame.MAXIMIZED_BOTH) != 0) {
+          myFrame.setExtendedState(extendedState);
+        }
         notifyFrameComponents(state);
       }
       return ActionCallback.DONE;

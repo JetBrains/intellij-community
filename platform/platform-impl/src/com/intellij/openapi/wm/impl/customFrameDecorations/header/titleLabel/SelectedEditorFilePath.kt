@@ -1,20 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.customFrameDecorations.titleLabel
+package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import sun.swing.SwingUtilities2
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
+import java.awt.event.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -33,7 +26,17 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     return clippedText.equals(path)
   }
 
-  private val label = JLabel().apply {
+  private val label = object : JLabel(){
+    override fun addNotify() {
+      super.addNotify()
+      getView().addComponentListener(resizedListener)
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      getView().removeComponentListener(resizedListener)
+    }
+  }.apply {
     isEnabled = false
   }
 
@@ -62,29 +65,9 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
 
   private fun init() {
     inited = true
-    var subscriptionDisposable: Disposable? = null
-
-    ApplicationManager.getApplication().messageBus.connect(disposable)
-      .subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-        override fun projectOpened(project: Project) {
-          if (subscriptionDisposable != null && !Disposer.isDisposed(subscriptionDisposable!!) ) {
-            Disposer.dispose(subscriptionDisposable!!)
-          }
-
-          val dsp = Disposer.newDisposable()
-          Disposer.register(disposable, dsp)
-          subscriptionDisposable = dsp
-
-          changeProject(project, dsp)
-        }
-      })
-
-    getView().addComponentListener(resizedListener)
-    Disposer.register(disposable, Disposable { getView().removeComponentListener(resizedListener) })
   }
 
-
-  protected open fun changeProject(project: Project, dsp: Disposable) {
+  fun setProject(project: Project) {
     projectName = project.name
     val fileEditorManager = FileEditorManager.getInstance(project)
 
@@ -97,7 +80,7 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
       }
     }
 
-    project.messageBus.connect(dsp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+    project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         updatePath()
       }
