@@ -8,7 +8,10 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
-class PresentationDelegate(delegate: InlayPresentation) : BasePresentation() {
+/**
+ * Presentation, that delegates to [delegate], which can be dynamically changed.
+ */
+class DynamicPresentation(delegate: InlayPresentation) : BasePresentation() {
   var delegate: InlayPresentation = delegate
     set(value) {
       if (value != field) {
