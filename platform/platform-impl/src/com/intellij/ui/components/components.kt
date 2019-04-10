@@ -238,7 +238,7 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
         super.onFileChosen(chosenFile)
       }
       else {
-        textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
+        textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
       }
     }
   })
