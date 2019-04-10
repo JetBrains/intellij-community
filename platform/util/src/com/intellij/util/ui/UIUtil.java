@@ -3492,6 +3492,7 @@ public class UIUtil {
    * @see SwingUtilities#getAncestorOfClass
    */
   @Nullable
+  @Contract(pure = true)
   public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
     while (component != null) {
       if (type.isInstance(component)) {
