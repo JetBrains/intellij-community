@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -140,7 +139,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 

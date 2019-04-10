@@ -1138,7 +1138,7 @@ public class ExternalSystemUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 
