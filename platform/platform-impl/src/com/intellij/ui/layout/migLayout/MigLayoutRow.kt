@@ -29,10 +29,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val indent: Int /* level number (nested rows) */) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
-    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, isParentRowLabeled: Boolean) {
+    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean) {
       val cc = CC()
       parent.createChildRow().addComponent(ComponentPanelBuilder.createCommentComponent(comment, true), lazyOf(cc))
-      cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(parent.spacing, component), true)
+      cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(parent.spacing, component) + indent, true)
       if (isParentRowLabeled) {
         cc.skip()
       }
@@ -144,7 +144,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = MigLayoutRow(this, componentConstraints, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = indent + computeChildRowIndent(),
+                           indent = indent + computeChildRowIndent(isSeparated),
                            buttonGroup = buttonGroup)
 
     if (isSeparated) {
@@ -199,13 +199,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun computeChildRowIndent(): Int {
+  private fun computeChildRowIndent(isSeparated: Boolean): Int {
+    if (isSeparated) {
+      return spacing.indentLevel
+    }
     val firstComponent = components.firstOrNull() ?: return 0
     if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
       return getCommentLeftInset(spacing, firstComponent)
     }
     else {
-      return spacing.horizontalGap * 3
+      return spacing.indentLevel
     }
   }
 
@@ -241,7 +244,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
       val isParentRowLabeled = labeled
       // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
-      createCommentRow(parent!!, comment, component, isParentRowLabeled)
+      createCommentRow(parent!!, comment, component, indent, isParentRowLabeled)
     }
 
     if (buttonGroup != null && component is JToggleButton) {
