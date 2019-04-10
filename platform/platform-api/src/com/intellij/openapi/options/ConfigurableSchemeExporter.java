@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ import java.io.OutputStream;
  */
 public abstract class ConfigurableSchemeExporter<C,T extends Scheme> extends SchemeExporter<T> {
   @Override
-  public final void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
+  public final void exportScheme(@Nullable Project project, @NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
     exportScheme(scheme, outputStream, null);
   }
 

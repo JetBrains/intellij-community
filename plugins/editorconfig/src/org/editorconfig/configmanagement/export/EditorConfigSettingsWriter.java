@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.export;
 import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.editorconfig.Utils;
@@ -22,12 +23,14 @@ import java.util.*;
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigSettingsWriter extends OutputStreamWriter {
-  private final CodeStyleSettings mySettings;
-  private       Set<Language>     myLanguages;
+  private final           CodeStyleSettings mySettings;
+  private                 Set<Language>     myLanguages;
+  private final @Nullable Project           myProject;
 
-  public EditorConfigSettingsWriter(@NotNull OutputStream out, CodeStyleSettings settings) {
+  public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings) {
     super(out, StandardCharsets.UTF_8);
     mySettings = settings;
+    myProject = project;
   }
 
   public EditorConfigSettingsWriter forLanguages(Language... languages) {
@@ -47,6 +50,12 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
 
   private void writeGeneralSection(@NotNull GeneralCodeStylePropertyMapper mapper) throws IOException {
     write("[*]\n");
+    if (myProject != null) {
+      write(Utils.getEncoding(myProject));
+      write(Utils.getLineEndings(myProject));
+    }
+    write(Utils.getEndOfFile());
+    write(Utils.getTrailingSpaces());
     writeProperties(getKeyValuePairs(mapper));
   }
 
