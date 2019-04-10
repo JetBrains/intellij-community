@@ -1,4 +1,0 @@
-BASH_FILE
-  PsiElement(time)('time')
-  PsiErrorElement:'!', '-p' or <command> expected, got ';'
-    PsiElement(;)(';')

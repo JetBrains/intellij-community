@@ -3,26 +3,26 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('x')
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiErrorElement:<command> or '\n' expected, got '='
-          <empty list>
-  PsiElement(=)('=')
-  PsiElement(DUMMY_BLOCK)
-    PsiWhiteSpace(' ')
-    PsiElement(int)('123')
-    PsiElement(\n)('\n')
-    PsiElement(word)('x')
-    PsiWhiteSpace(' ')
-    PsiElement($)('$')
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    PsiElement(int)('123')
-    PsiElement(\n)('\n')
-    PsiElement(word)('x')
-    PsiWhiteSpace(' ')
-    PsiElement(word)('^')
-    PsiElement(=)('=')
-  PsiWhiteSpace(' ')
-  PsiElement(int)('123')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('number')
+              PsiElement(|=)('|=')
+              LITERAL_EXPRESSION
+                PsiElement(int)('5')
+            PsiElement()))('))')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            ASSIGNMENT_EXPRESSION
+              LITERAL_EXPRESSION
+                PsiElement(word)('number')
+              PsiElement(&=)('&=')
+              LITERAL_EXPRESSION
+                PsiElement(int)('5')
+            PsiElement()))('))')

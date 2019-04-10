@@ -43,13 +43,7 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testCaseError1()                          { doTest(true); }
   public void testCaseError2()                          { doTest(true); }
   public void testCaseSimple1()                         { doTest(true); }
-  public void testCaseSimple2()                         { doTest(true); }
-  public void testCaseSimple3()                         { doTest(true); }
-  public void testCaseSimple4()                         { doTest(true); }
   public void testCaseSimple5()                         { doTest(true); }
-  public void testCaseSimple6()                         { doTest(true); }
-  public void testCaseSimple7()                         { doTest(true); }
-  public void testCaseSimple8()                         { doTest(true); }
   public void testCheckErrorMarkers()                   { doTest(true); }
   public void testCommandParseAssignment()              { doTest(true); }
   public void testCommandWithErrors()                   { doTest(true); }
@@ -74,9 +68,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testFileParsing3()                        { doTest(true); }
   public void testFileParsing4()                        { doTest(true); }
   public void testForCommand()                          { doTest(true); }
-  public void testForCommand2()                         { doTest(true); }
-  public void testForCommand3()                         { doTest(true); }
-  public void testForCommand4()                         { doTest(true); }
   public void testForCommandError1()                    { doTest(true); }
   public void testForErrors()                           { doTest(true); }
   public void testForIncompleteParse()                  { doTest(true); }
@@ -174,12 +165,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParse4()                              { doTest(true); }
   public void testParseAdvanced()                       { doTest(true); }
   public void testParseArithmeticCommand1()             { doTest(true); }
-  public void testParseArithmeticCommand2()             { doTest(true); }
-  public void testParseArithmeticCommand3()             { doTest(true); }
-  public void testParseArithmeticCommand5()             { doTest(true); }
-  public void testParseArithmeticCommand6()             { doTest(true); }
-  public void testParseArithmeticCommand7()             { doTest(true); }
-  public void testParseArithmeticCommand8()             { doTest(true); }
   public void testParseArrayAssignment()                { doTest(true); }
   public void testParseArrayVarAssign()                 { doTest(true); }
   public void testParseArrayVarRef()                    { doTest(true); }
@@ -196,7 +181,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseCompoundListErrors()             { doTest(true); }
   public void testParseEmbeddedVar()                    { doTest(true); }
   public void testParseError1()                         { doTest(true); }
-  public void testParseError2()                         { doTest(true); }
   public void testParseGroupCommand()                   { doTest(true); }
   public void testParseGroupCommandError()              { doTest(true); }
   public void testParseInvalidLengthExpansion()         { doTest(true); }
@@ -237,7 +221,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testRedirects()                           { doTest(true); }
   public void testRegExp()                              { doTest(true); }
   public void testSelectCommand1()                      { doTest(true); }
-  public void testSelectCommand2()                      { doTest(true); }
   public void testSelectErrors()                        { doTest(true); }
   public void testSelectIncompleteParse()               { doTest(true); }
   public void testSelectLoop()                          { doTest(true); }
@@ -249,8 +232,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testSquareArithmetic()                    { doTest(true); }
   public void testSubshell()                            { doTest(true); }
   public void testSubshellCommand1()                    { doTest(true); }
-  public void testSubshellCommand2()                    { doTest(true); }
-  public void testSubshellCommand3()                    { doTest(true); }
   public void testSubshellCommandEmpty()                { doTest(true); }
   public void testSubshellParse()                       { doTest(true); }
   public void testTrapParse()                           { doTest(true); }

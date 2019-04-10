@@ -1,3 +1,1 @@
-for a;
- { echo a
- }
+

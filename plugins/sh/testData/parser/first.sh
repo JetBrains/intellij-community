@@ -94,6 +94,7 @@ let count=0
 let indx+=1
 let indx-=1
 let indx=1*1
+let a=1 b=1
 
 typeset function="$1"
 typeset function+="$1"

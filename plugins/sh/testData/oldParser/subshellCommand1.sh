@@ -1,1 +1,2 @@
 (echo a &)
+(echo a)

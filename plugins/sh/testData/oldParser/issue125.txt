@@ -4,26 +4,6 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('1.')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('Write')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('the')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('following')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('code:')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
             PsiElement(word)('read')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -47,48 +27,6 @@ BASH_FILE
               VARIABLE
                 PsiElement(var)('$i')
               PsiElement(])(']')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('2.')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('Each')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('lang')
-              PsiElement([)('[')
-              VARIABLE
-                PsiElement(var)('$i')
-              PsiElement(])(']')
-              PsiElement(")('"')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('statement')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('throw')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('an')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('Unexpected')
-              PsiWhiteSpace(' ')
-              PsiElement(word)('token.')
-              PsiElement(")('"')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            PsiElement(word)('error')
-  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
