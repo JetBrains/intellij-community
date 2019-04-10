@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
-import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.util.messages.MessageBus
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -15,15 +13,14 @@ import java.awt.event.MouseEvent
 /**
  * Global mouse listener, that provide events to inlay hints at mouse coordinates.
  */
-class PresentationMouseHandler(val project: Project,
-                               val startupManager: StartupManager,
-                               val editorFactory: EditorFactory) : ProjectComponent {
+class PresentationMouseHandler(val editorFactory: EditorFactory,
+                               val messageBus: MessageBus) {
 
   private var activePresentation : InlayPresentation? = null
 
   private val mouseListener = object: EditorMouseListener {
     override fun mouseClicked(e: EditorMouseEvent) {
-      if (!e.isConsumed && project.isInitialized && !project.isDisposed) {
+      if (!e.isConsumed) {
         val editor = e.editor
         val event = e.mouseEvent
         val inlayPoint = event.point
@@ -47,7 +44,7 @@ class PresentationMouseHandler(val project: Project,
 
   private val mouseMotionListener = object: EditorMouseMotionListener {
     override fun mouseMoved(e: EditorMouseEvent) {
-      if (!e.isConsumed && project.isInitialized && !project.isDisposed) {
+      if (!e.isConsumed) {
         val editor = e.editor
         val event = e.mouseEvent
         // TODO here also may be handling of ESC key
@@ -68,18 +65,9 @@ class PresentationMouseHandler(val project: Project,
     }
   }
 
-
-  override fun projectOpened() {
+  init {
     val multicaster = editorFactory.eventMulticaster
-    multicaster.addEditorMouseListener(mouseListener, project)
-    multicaster.addEditorMouseMotionListener(mouseMotionListener, project)
+    multicaster.addEditorMouseListener(mouseListener)
+    multicaster.addEditorMouseMotionListener(mouseMotionListener)
   }
-
-  override fun projectClosed() {
-    val multicaster = editorFactory.eventMulticaster
-    multicaster.removeEditorMouseListener(mouseListener)
-    multicaster.removeEditorMouseMotionListener(mouseMotionListener)
-    activePresentation = null
-  }
-
 }
