@@ -52,8 +52,7 @@ internal val LOG = logger<BuiltInWebServer>()
 private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION,
-                                                         null)
+  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
 }
 
 class BuiltInWebServer : HttpRequestHandler() {
@@ -93,8 +92,8 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
-const val TOKEN_PARAM_NAME: String = "_ijt"
-const val TOKEN_HEADER_NAME: String = "x-ijt"
+const val TOKEN_PARAM_NAME = "_ijt"
+const val TOKEN_HEADER_NAME = "x-ijt"
 
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
