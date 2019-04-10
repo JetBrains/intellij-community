@@ -15,19 +15,20 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class JavaMethodSignature {
+  private static final Set<String> OBJECT_METHOD_NAMES = ContainerUtil.map2Set(Object.class.getDeclaredMethods(), Method::getName);
   private final String myMethodName;
   private final Class[] myMethodParameters;
 
@@ -47,14 +48,10 @@ public class JavaMethodSignature {
   @Nullable
   public final Method findMethod(final Class aClass) {
     Method method = getDeclaredMethod(aClass);
-    if (method == null && aClass.isInterface()) {
-      method = getDeclaredMethod(Object.class);
+    if (method == null && aClass.isInterface() && OBJECT_METHOD_NAMES.contains(myMethodName)) {
+      method = ReflectionUtil.getDeclaredMethod(Object.class, myMethodName, myMethodParameters);
     }
     return method;
-  }
-
-  private boolean processMethods(final Class aClass, Processor<Method> processor) {
-    return processMethodWithSupers(aClass, findMethod(aClass), processor);
   }
 
   @Nullable
@@ -63,56 +60,20 @@ public class JavaMethodSignature {
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
 
-  private boolean processMethodWithSupers(final Class aClass, final Method method, final Processor<Method> processor) {
-    if (method != null) {
-      if (!processor.process(method)) return false;
-    }
-    final Class superClass = aClass.getSuperclass();
-    if (superClass != null) {
-      if (!processMethods(superClass, processor)) return false;
-    }
-    else {
-      if (aClass.isInterface()) {
-        if (!processMethods(Object.class, processor)) return false;
+  List<Method> getAllMethods(Class startFrom) {
+    List<Method> result = new ArrayList<>();
+    for (Class superClass : JBIterable.from(ReflectionUtil.classTraverser(startFrom)).append(Object.class).unique()) {
+      for (Method method : superClass.getDeclaredMethods()) {
+        if (methodMatches(method)) {
+          result.add(method);
+        }
       }
     }
-    for (final Class anInterface : aClass.getInterfaces()) {
-      if (!processMethods(anInterface, processor)) return false;
-    }
-    return true;
-  }
-
-  public final List<Method> getAllMethods(final Class startFrom) {
-    final List<Method> result = new ArrayList<>();
-    processMethods(startFrom, Processors.cancelableCollectProcessor(result));
     return result;
   }
 
-  @Nullable
-  public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
-      @Override
-      protected boolean accept(Method method) {
-        final T annotation = method.getAnnotation(annotationClass);
-        return annotation != null && ReflectionUtil.isAssignable(method.getDeclaringClass(), startFrom);
-      }
-    };
-    processMethods(startFrom, processor);
-    return processor.getFoundValue();
-  }
-
-  @Nullable
-  public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
-      @Override
-      protected boolean accept(Method method) {
-        final T annotation = method.getAnnotation(annotationClass);
-        return annotation != null;
-      }
-    };
-    processMethods(startFrom, processor);
-    final Method foundMethod = processor.getFoundValue();
-    return foundMethod == null ? null : foundMethod.getAnnotation(annotationClass);
+  private boolean methodMatches(Method method) {
+    return myMethodName.equals(method.getName()) && Arrays.equals(method.getParameterTypes(), myMethodParameters);
   }
 
   public String toString() {
