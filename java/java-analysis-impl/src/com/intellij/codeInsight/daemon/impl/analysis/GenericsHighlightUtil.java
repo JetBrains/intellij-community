@@ -1466,7 +1466,9 @@ public class GenericsHighlightUtil {
       PsiClass superClass = superClassResolveResult.getElement();
       if (superClass == null) continue;
       PsiClassType superType = elementFactory.createType(superClass, superClassResolveResult.getSubstitutor());
-      final String notAccessibleErrorMessage = isTypeAccessible(superType, new HashSet<>(), checkParameters, resolveScope, factory);
+      HashSet<PsiClass> checked = new HashSet<>();
+      checked.add(aClass);
+      final String notAccessibleErrorMessage = isTypeAccessible(superType, checked, checkParameters, resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .descriptionAndTooltip(notAccessibleErrorMessage)
