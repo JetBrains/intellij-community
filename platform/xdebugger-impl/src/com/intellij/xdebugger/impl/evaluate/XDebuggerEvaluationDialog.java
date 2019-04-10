@@ -326,7 +326,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   private void disposeEvaluationResult() {
     XDebuggerTreeNode oldRoot = myTreePanel.getTree().getRoot();
-    if(oldRoot instanceof Disposable) {
+    if (oldRoot instanceof Disposable) {
       Disposer.dispose((Disposable)oldRoot);
     }
   }
