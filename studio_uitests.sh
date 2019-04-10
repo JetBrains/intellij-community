@@ -12,6 +12,8 @@ readonly test_groups="${UI_TEST_GROUPS:-DEFAULT,UNRELIABLE}"
 
 export DISPLAY=:10
 
+export ASPECTS_AGENT_LOG=$(realpath "${script_dir}/androidStudio/gui-tests/system/log")/aspects_agent_log.txt
+
 "${xvfb_script}" "${DISPLAY}" "$(realpath "${script_dir}/../..")" &
 readonly xvfb_script_pid=$!
 
