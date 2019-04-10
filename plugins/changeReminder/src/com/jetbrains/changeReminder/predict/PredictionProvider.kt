@@ -98,7 +98,7 @@ class PredictionProvider(private val minProb: Double = 0.55) {
       if (relatedFiles.size > MAX_RELATED_FILES_COUNT) {
         break
       }
-      if (oldCommit.files.size > MAX_HISTORY_COMMIT_SIZE) {
+      if (oldCommit.files.size < MAX_HISTORY_COMMIT_SIZE) {
         oldCommit.files.filter { it !in commit.files }.forEach { relatedFile ->
           relatedFiles.getOrPut(relatedFile) { mutableSetOf() }.add(oldCommit)
         }
