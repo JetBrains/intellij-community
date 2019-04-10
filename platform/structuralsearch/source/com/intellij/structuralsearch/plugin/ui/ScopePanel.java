@@ -3,12 +3,16 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
@@ -62,12 +66,12 @@ public class ScopePanel extends JPanel {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
-    myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE));
+    myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE, false));
     myScopesComboBox.init(project, true, false, "", SCOPE_FILTER);
-    myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED));
+    myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED, false));
     Disposer.register(parent, myScopesComboBox);
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);
-    myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY));
+    myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY, false));
 
     myScopeDetailsPanel.add(Scopes.Type.PROJECT.toString(), new JLabel());
     myScopeDetailsPanel.add(Scopes.Type.MODULE.toString(), shrinkWrap(myModulesComboBox));
@@ -117,6 +121,7 @@ public class ScopePanel extends JPanel {
   }
 
   public void setScope(@Nullable SearchScope selectedScope) {
+    setDefaultScopes();
     if (selectedScope instanceof LocalSearchScope && selectedScope.getDisplayName().startsWith("Hierarchy of ")) {
       // don't restore Class Hierarchy scope
       selectedScope = null;
@@ -141,6 +146,41 @@ public class ScopePanel extends JPanel {
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
+  private void setDefaultScopes() {
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
+      Module module = LangDataKeys.MODULE.getData(context);
+      if (module != null) {
+        myModulesComboBox.setSelectedModule(module);
+      }
+      Editor editor = CommonDataKeys.HOST_EDITOR.getData(context);
+      if (editor != null) {
+        Document document = editor.getDocument();
+        VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+        if (file != null) {
+          myDirectoryComboBox.setDirectory(file.getParent());
+        }
+        myScopesComboBox.selectItem(IdeBundle.message("scope.current.file"));
+      }
+      else {
+        VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+        if (files != null && files.length > 0) {
+          boolean found = false;
+          for (VirtualFile file : files) {
+            if (file.isDirectory()) {
+              myDirectoryComboBox.setDirectory(file);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            myScopesComboBox.selectItem("Selected Files"); // this scope name is not available in a properties file
+            myDirectoryComboBox.setDirectory(files[0].getParent());
+          }
+        }
+      }
+    });
+  }
+
   public void setScopeConsumer(@Nullable NullableConsumer<? super SearchScope> consumer) {
     myConsumer = consumer;
   }
@@ -150,7 +190,7 @@ public class ScopePanel extends JPanel {
     return myScope;
   }
 
-  void setScopeFromUI(@NotNull Scopes.Type type) {
+  void setScopeFromUI(@NotNull Scopes.Type type, boolean requestFocus) {
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -159,16 +199,17 @@ public class ScopePanel extends JPanel {
         final Module module = myModulesComboBox.getSelectedModule();
         if (module == null) return;
         myScope = GlobalSearchScope.moduleScope(module);
-        myModulesComboBox.requestFocus();
+        if (requestFocus) myModulesComboBox.requestFocus();
         break;
       case DIRECTORY:
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
-        myScope = (directory == null) ? null : GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
-        myDirectoryComboBox.getComboBox().requestFocus();
+        if (directory == null) return;
+        myScope = GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
+        if (requestFocus) myDirectoryComboBox.getComboBox().requestFocus();
         break;
       case NAMED:
         myScope = myScopesComboBox.getSelectedScope();
-        myScopesComboBox.requestFocus();
+        if (requestFocus) myScopesComboBox.requestFocus();
         break;
     }
     if (myConsumer != null) myConsumer.consume(myScope);
@@ -194,7 +235,7 @@ public class ScopePanel extends JPanel {
       if (state) {
         ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
         ScopePanel.this.myScopeType = myScopeType;
-        setScopeFromUI(myScopeType);
+        setScopeFromUI(myScopeType, true);
         myToolbar.updateActionsImmediately();
       }
     }
