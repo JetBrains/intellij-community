@@ -104,7 +104,7 @@ public class Disposer {
   private static class KeyDisposable implements Disposable {
     @NotNull private final String myKey;
 
-    public KeyDisposable(@NotNull String key) {myKey = key;}
+    KeyDisposable(@NotNull String key) {myKey = key;}
 
     @Override
     public void dispose() {
