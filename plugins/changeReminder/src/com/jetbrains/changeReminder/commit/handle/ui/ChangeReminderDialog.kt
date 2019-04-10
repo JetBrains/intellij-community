@@ -35,6 +35,7 @@ internal class ChangeReminderDialog(private val project: Project, private val fi
     val cancel = DialogWrapperExitAction("Cancel Commit", 1)
     cancel.putValue(DEFAULT_ACTION, 0)
     val commitAnyway = DialogWrapperExitAction("Commit Anyway", 0)
+    commitAnyway.putValue(FOCUSED_ACTION, 0)
     return arrayOf(cancel, commitAnyway)
   }
 
