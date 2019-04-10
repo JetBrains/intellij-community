@@ -175,7 +175,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return myRootNode;
   }
 
-  public ExecutionNode getBuildProgressRootNode() {
+  private ExecutionNode getBuildProgressRootNode() {
     return myBuildProgressRootNode;
   }
 

@@ -44,6 +44,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -409,7 +410,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (progressListener != null && event instanceof ExternalSystemTaskExecutionEvent) {
+            if (progressListener == null) return;
+            if (event instanceof ExternalSystemBuildEvent) {
+              progressListener.onEvent(((ExternalSystemBuildEvent)event).getBuildEvent());
+            }
+            else if (event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               progressListener.onEvent(buildEvent);
             }
