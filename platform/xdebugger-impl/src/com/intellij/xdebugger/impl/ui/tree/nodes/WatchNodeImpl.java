@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
@@ -21,7 +23,7 @@ import org.jetbrains.concurrency.Promises;
 /**
  * @author nik
  */
-public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
+public class WatchNodeImpl extends XValueNodeImpl implements WatchNode, Disposable {
   private final XExpression myExpression;
 
   public WatchNodeImpl(@NotNull XDebuggerTree tree,
@@ -186,6 +188,14 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     @Nullable
     public XReferrersProvider getReferrersProvider() {
       return myValue != null ? myValue.getReferrersProvider() : null;
+    }
+  }
+
+  @Override
+  public void dispose() {
+    XValue container = getValueContainer();
+    if (container instanceof Disposable) {
+      Disposer.dispose((Disposable)container);
     }
   }
 }

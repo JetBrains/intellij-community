@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -25,7 +27,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
+public class WatchesRootNode extends XValueContainerNode<XValueContainer> implements Disposable {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
 
@@ -56,7 +58,9 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myWatchesView = watchesView;
     myChildren = ContainerUtil.newArrayList();
     for (XExpression watchExpression : expressions) {
-      myChildren.add(new WatchNodeImpl(myTree, this, watchExpression, stackFrame));
+      WatchNodeImpl watchNode = new WatchNodeImpl(myTree, this, watchExpression, stackFrame);
+      myChildren.add(watchNode);
+      Disposer.register(this, watchNode);
     }
   }
 
@@ -120,6 +124,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     else {
       myChildren.add(index, message);
     }
+    Disposer.register(this, message);
     fireNodeInserted(index);
     TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {
@@ -177,6 +182,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, null);
       myChildren.add(targetIndex, messageNode);
+      Disposer.register(this, messageNode);
       fireNodeInserted(targetIndex);
       getTree().setSelectionRows(ArrayUtil.EMPTY_INT_ARRAY);
     }
@@ -184,5 +190,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       messageNode = node;
     }
     new WatchInplaceEditor(this, myWatchesView, messageNode, node).show();
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }
