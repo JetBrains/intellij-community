@@ -319,9 +319,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
+    disposeEvaluationResult();
     getInputEditor().saveTextInHistory();
     super.doCancelAction();
-    disposeEvaluationResult();
   }
 
   private void disposeEvaluationResult() {
