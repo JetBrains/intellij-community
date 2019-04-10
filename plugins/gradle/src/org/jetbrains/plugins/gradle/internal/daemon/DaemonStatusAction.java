@@ -18,7 +18,6 @@ import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,8 +30,7 @@ public class DaemonStatusAction extends DaemonAction {
     super(serviceDirectoryPath);
   }
 
-  public List<DaemonState> run(DaemonClientFactory daemonClientFactory)
-    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+  public List<DaemonState> run(DaemonClientFactory daemonClientFactory) {
     ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonConnector daemonConnector = daemonServices.get(DaemonConnector.class);
     DaemonRegistry daemonRegistry = daemonServices.get(DaemonRegistry.class);
