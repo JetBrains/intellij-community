@@ -209,7 +209,7 @@ public class HgStatusCommand {
         VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
         return changes;
       }
-      LOG.warn(errors.toString());
+      LOG.debug(errors.toString());
     }
     for (String line : result.getOutputLines()) {
       if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
