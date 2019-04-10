@@ -53,15 +53,18 @@ class TreeTableFixture(robot: Robot, target: TreeTable) :
 
       val tree = target().tree
       val path = ExtendedJTreePathFinder(tree).findMatchingPath(pathStrings.toList())
-
-      var x = target().location.x + (0 until column).sumBy { target().columnModel.getColumn(it).width }
-      x += target().columnModel.getColumn(column).width / 3
-      val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
+      val clickPoint = GuiTestUtilKt.computeOnEdt {
+        var x = target().location.x + (0 until column).sumBy { target().columnModel.getColumn(it).width }
+        x += target().columnModel.getColumn(column).width / 3
+        val y = JTreeLocation().pathBoundsAndCoordinates(tree, path).second.y
+        Point(x, y)
+      }!!
 
       val visibleHeight = target().visibleRect.height
-      target().scrollRectToVisible(Rectangle(Point(0, y + visibleHeight / 2), Dimension(0, 0)))
 
-      robot().click(target(), Point(x, y), MouseButton.LEFT_BUTTON, 1)
+      target().scrollRectToVisible(Rectangle(Point(0, clickPoint.y + visibleHeight / 2), Dimension(0, 0)))
+
+      robot().click(target(), clickPoint, MouseButton.LEFT_BUTTON, 1)
     }
   }
 }

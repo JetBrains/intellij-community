@@ -35,6 +35,7 @@ import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
 import com.intellij.testGuiFramework.generators.Utils.withRobot
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
@@ -187,7 +188,7 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
     return withRobot {
       val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(cmp, treePath) ?: throw Exception(
         "Checkbox component from cell renderer is null")
-      val pathBounds = cmp.getPathBounds(treePath)
+      val pathBounds = GuiTestUtilKt.computeOnEdt { cmp.getPathBounds(treePath) }!!
       val checkboxTreeBounds = Rectangle(pathBounds.x + checkboxComponent.x, pathBounds.y + checkboxComponent.y, checkboxComponent.width,
                                          checkboxComponent.height)
       checkboxTreeBounds.contains(cp)

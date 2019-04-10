@@ -68,20 +68,19 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   protected fun JTree.scrollToPath(path: TreePath) : PathInfo {
       robot.waitForIdle()
-      val result = GuiTestUtilKt.computeOnEdt {
+      GuiTestUtilKt.runOnEdt{
         ComponentPreconditions.checkEnabledAndShowing(this)
-        val pathInfo = this.getPathInfo(path)
-        scrollRectToVisible(pathInfo.bounds)
-        pathInfo
-      }!!
-      robot.waitForIdle()
-    return result
+      }
+    val pathInfo = this.getPathInfo(path)
+    scrollRectToVisible(pathInfo.bounds)
+    robot.waitForIdle()
+    return pathInfo
   }
 
   private fun JTree.isInnerExpandControl(): Boolean = this is SimpleTree || this is TreeTable
 
   private fun JTree.getExpandCoord(path: TreePath): Int {
-    val bounds = this.getPathBounds(path)
+    val bounds = GuiTestUtilKt.computeOnEdt { this.getPathBounds(path) }!!
 
     return if (isInnerExpandControl()) {
       // expand/collapse symbol is located inside path bounds
@@ -90,7 +89,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     else {
       // in other trees the expand/collapse symbol is located out of the path bounds
       // so we have to expand the bounds to the left
-      val expandControlRange = TreeUtil.getExpandControlRange(this, path)
+      val expandControlRange = GuiTestUtilKt.computeOnEdt { TreeUtil.getExpandControlRange(this, path) }
       when {
         expandControlRange != null -> expandControlRange.from + (expandControlRange.to - expandControlRange.from) / 2
         bounds.x < bounds.height / 2 -> x + 8
@@ -111,10 +110,17 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   // to be overridden by CheckboxTree to take into account size of the checkbox control
-  protected open fun getLabelXCoord(jTree: JTree, path: TreePath): Int = jTree.getPathBounds(path).x + 1
+  protected open fun getLabelXCoord(jTree: JTree, path: TreePath): Int {
+    val mouseZone = JBUI.scale(Registry.intValue("ide.splitter.mouseZone"))
+    val left = jTree.getScrollBounds(path).x + 1
+    return if(isTreeSecondComponentInParentSplitter(jTree) && left < mouseZone){
+      mouseZone + 1
+    }
+    else left
+  }
 
   private fun JTree.getScrollBounds(path: TreePath): Rectangle {
-    val bounds = this.getPathBounds(path)
+    val bounds = GuiTestUtilKt.computeOnEdt { this.getPathBounds(path) }!!
     return if (isInnerExpandControl()) {
       bounds
     }
@@ -141,7 +147,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.getPathInfo(path: TreePath): PathInfo {
-    val bounds = this.getPathBounds(path)
+    val bounds = GuiTestUtilKt.computeOnEdt { this.getPathBounds(path) }!!
     val clickY = bounds.y + bounds.height / 2
     return PathInfo(
       expandPoint = Point(getExpandCoord(path), clickY),
