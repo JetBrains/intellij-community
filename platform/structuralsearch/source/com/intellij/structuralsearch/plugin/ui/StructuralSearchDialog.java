@@ -700,7 +700,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     reportMessage(null, false, mySearchCriteriaEdit);
     if (myReplace) {
       try {
-        Replacer.checkSupportedReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
+        Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
       }
       catch (UnsupportedPatternException ex) {
         reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
