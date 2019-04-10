@@ -44,10 +44,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -177,28 +174,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
         }
       }.installOn(myTable);
     }
-    myTable.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        final int keyCode = e.getKeyCode();
 
-        int row;
-        if (keyCode == KeyEvent.VK_DOWN) {
-          row = getNextRow();
-        }
-        else if (keyCode == KeyEvent.VK_UP) {
-          row = getPrevRow();
-        }
-        else {
-          row = -1;
-        }
+    myTable.getActionMap().put(TableActions.Up.ID, createNavigationAction(false, false));
+    myTable.getActionMap().put(TableActions.Down.ID, createNavigationAction(true, false));
+    myTable.getActionMap().put(TableActions.ShiftUp.ID, createNavigationAction(false, true));
+    myTable.getActionMap().put(TableActions.ShiftDown.ID, createNavigationAction(true, true));
 
-        if (row != -1) {
-          selectRow(row, e.isShiftDown());
-          e.consume();
-        }
-      }
-    });
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       final String name = myModel.getColumnName(i);
@@ -358,6 +339,19 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffPanel.add(myDiffRequestProcessor.getComponent(), BorderLayout.CENTER);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
+  }
+
+  @NotNull
+  private AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        int row = goDown ? getNextRow() : getPrevRow();
+        if (row != -1) {
+          selectRow(row, withSelection);
+        }
+      }
+    };
   }
 
   private int getNextRow() {
