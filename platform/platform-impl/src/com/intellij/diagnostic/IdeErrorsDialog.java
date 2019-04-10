@@ -93,7 +93,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private HideableDecorator myNoticeDecorator;
   private JEditorPane myNoticeArea;
   private ComboBox<Developer> myAssigneeCombo;
-  private HyperlinkLabel myCredentialsLabel;
+  private HypertextLabel myCredentialsLabel;
 
   IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
     super(project, true);
@@ -279,8 +279,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
-    myCredentialsLabel = new HyperlinkLabel();
-    myCredentialsLabel.addHyperlinkListener(e -> {
+    myCredentialsLabel = new HypertextLabel(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
@@ -552,10 +551,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
       if (credentials != null && credentials.getUserName() != null) {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
+        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
-        myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
+        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
       }
     }
     else {
