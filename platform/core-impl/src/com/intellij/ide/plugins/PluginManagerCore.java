@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -94,7 +95,7 @@ public class PluginManagerCore {
 
   private static List<String> ourDisabledPlugins;
   private static MultiMap<String, String> ourBrokenPluginVersions;
-  private static IdeaPluginDescriptor[] ourPlugins;
+  private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
   private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
 
@@ -133,11 +134,9 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  public static synchronized IdeaPluginDescriptor[] getPlugins(@Nullable StartupProgress progress) {
-    if (ourPlugins == null) {
-      initPlugins(progress);
-    }
-    return ourPlugins;
+  public static IdeaPluginDescriptor[] getPlugins(@Nullable StartupProgress progress) {
+    IdeaPluginDescriptor[] result = ourPlugins.get();
+    return result == null ? initPlugins(progress) : result;
   }
 
   /**
@@ -152,12 +151,12 @@ public class PluginManagerCore {
     return ourLoadedPlugins;
   }
 
-  static synchronized boolean arePluginsInitialized() {
-    return ourPlugins != null;
+  static boolean arePluginsInitialized() {
+    return ourPlugins.get() != null;
   }
 
   public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
-    ourPlugins = descriptors;
+    ourPlugins.set(descriptors);
     ourLoadedPlugins = Collections.unmodifiableList(ContainerUtil.findAll(descriptors, (p) -> !shouldSkipPlugin(p)));
   }
 
@@ -507,21 +506,21 @@ public class PluginManagerCore {
   }
 
   public static void invalidatePlugins() {
-    ourPlugins = null;
+    ourPlugins.set(null);
     ourLoadedPlugins = null;
     ourDisabledPlugins = null;
   }
 
   public static boolean isPluginClass(@NotNull String className) {
-    return ourPlugins != null && getPluginByClassName(className) != null;
+    return ourPlugins.get() != null && getPluginByClassName(className) != null;
   }
 
-  private static void logPlugins() {
+  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl[] plugins) {
     List<String> bundled = new ArrayList<>();
     List<String> disabled = new ArrayList<>();
     List<String> custom = new ArrayList<>();
 
-    for (IdeaPluginDescriptor descriptor : ourPlugins) {
+    for (IdeaPluginDescriptor descriptor : plugins) {
       String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
 
@@ -1405,11 +1404,11 @@ public class PluginManagerCore {
       if (skipped != null) {
         return skipped.booleanValue();
       }
-      boolean result = detectReasonToNotLoad(descriptor, ourPlugins) != null || isBrokenPlugin(descriptor);
+      boolean result = detectReasonToNotLoad(descriptor, ourPlugins.get()) != null || isBrokenPlugin(descriptor);
       descriptorImpl.setSkipped(result);
       return result;
     }
-    return detectReasonToNotLoad(descriptor, ourPlugins) != null || isBrokenPlugin(descriptor);
+    return detectReasonToNotLoad(descriptor, ourPlugins.get()) != null || isBrokenPlugin(descriptor);
   }
 
   private static void checkEssentialPluginsAreAvailable(IdeaPluginDescriptorImpl[] plugins) {
@@ -1421,7 +1420,8 @@ public class PluginManagerCore {
     }
   }
 
-  private static void initializePlugins(@Nullable StartupProgress progress) {
+  @NotNull
+  private static IdeaPluginDescriptorImpl[] initializePlugins(@Nullable StartupProgress progress) {
     configureExtensions();
 
     List<String> errors = ContainerUtil.newArrayList();
@@ -1478,7 +1478,8 @@ public class PluginManagerCore {
     });
 
     ourLoadedPlugins = Collections.unmodifiableList(result);
-    ourPlugins = pluginDescriptors;
+    ourPlugins.set(pluginDescriptors);
+    return pluginDescriptors;
   }
 
   public static void fixDescriptors(@NotNull IdeaPluginDescriptorImpl[] pluginDescriptors,
@@ -1607,10 +1608,12 @@ public class PluginManagerCore {
     }
   }
 
-  private static void initPlugins(@Nullable StartupProgress progress) {
+  @NotNull
+  private static synchronized IdeaPluginDescriptorImpl[] initPlugins(@Nullable StartupProgress progress) {
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
+    IdeaPluginDescriptorImpl[] result;
     try {
-      initializePlugins(progress);
+      result = initializePlugins(progress);
     }
     catch (PicoPluginExtensionInitializationException e) {
       throw new PluginException(e, e.getPluginId());
@@ -1619,9 +1622,10 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    activity.end("plugin count: " + ourPlugins.length);
-    logPlugins();
+    activity.end("plugin count: " + result.length);
+    logPlugins(result);
     ClassUtilCore.clearJarURLCache();
+    return result;
   }
 
   @NotNull
