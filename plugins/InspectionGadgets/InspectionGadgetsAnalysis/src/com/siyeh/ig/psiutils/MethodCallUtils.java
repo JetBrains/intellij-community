@@ -109,10 +109,10 @@ public class MethodCallUtils {
 
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @NonNls @Nullable String... parameterTypeStrings) {
-    if (!checkMethodName(expression, methodName)) return false;
     if (parameterTypeStrings == null) {
       return isCallToMethod(expression, calledOnClassName, returnType, methodName, (PsiType[])null);
     }
+    if (!checkMethodName(expression, methodName)) return false;
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expression.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final PsiType[] parameterTypes = PsiType.createArray(parameterTypeStrings.length);
