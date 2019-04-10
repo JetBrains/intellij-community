@@ -40,6 +40,7 @@
     <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
+    <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>
   </extensions>
 
   <actions>
