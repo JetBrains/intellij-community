@@ -25,6 +25,8 @@ public class BashAnnotator implements Annotator {
     else if (o instanceof BashHeredoc) {
       annotateHeredoc((BashHeredoc) o, holder);
     }
+
+    // todo comment in case of poor performance because of the issue with EditorGutterComponentImpl#updateSize()
     else if (o instanceof BashGenericCommandDirective) {
       mark(o, holder, EXTERNAL_COMMAND);
     }
@@ -36,7 +38,7 @@ public class BashAnnotator implements Annotator {
     }
   }
 
-  private void annotateHeredoc(@NotNull BashHeredoc o, @NotNull AnnotationHolder holder) {
+  private static void annotateHeredoc(@NotNull BashHeredoc o, @NotNull AnnotationHolder holder) {
     holder.createAnnotation(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, o.getTextRange(), null).setTextAttributes(HERE_DOC);
     mark(o.getHeredocMarkerStart(), holder, HERE_DOC_START);
     mark(o.getHeredocMarkerEnd(), holder, HERE_DOC_END);
@@ -44,7 +46,7 @@ public class BashAnnotator implements Annotator {
     highlightVariables(o, holder);
   }
 
-  private void highlightVariables(@NotNull PsiElement container, @NotNull AnnotationHolder holder) {
+  private static void highlightVariables(@NotNull PsiElement container, @NotNull AnnotationHolder holder) {
     new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
