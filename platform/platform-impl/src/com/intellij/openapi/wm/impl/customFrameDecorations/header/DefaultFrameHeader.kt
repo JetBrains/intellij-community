@@ -8,6 +8,7 @@ import java.awt.Rectangle
 import java.util.ArrayList
 import javax.swing.JFrame
 import javax.swing.JLabel
+import javax.swing.UIManager
 
 class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
   private val titleLabel = JLabel()
@@ -20,6 +21,11 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
     add(titleLabel, "wmin 0, left, hmin $MIN_HEIGHT")
     add(buttonPanes.getView(), "top, wmin pref")
 
+  }
+
+  override fun updateActive() {
+    titleLabel.foreground = if (myActive) UIManager.getColor("Panel.foreground") else UIManager.getColor("Label.disabledForeground")
+    super.updateActive()
   }
 
   override fun addNotify() {
