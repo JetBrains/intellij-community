@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -107,16 +107,8 @@ public class ExistingTemplatesComponent {
         patternTreeModel.removeNodeFromParent(node);
         queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
       }).setRemoveActionUpdater(e -> {
-        final Object selection = patternTree.getLastSelectedPathComponent();
-        if (selection instanceof DefaultMutableTreeNode) {
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof Configuration) {
-            final Configuration configuration = (Configuration)userObject;
-            return !configuration.isPredefined();
-          }
-        }
-        return false;
+        final Configuration configuration = getSelectedConfiguration();
+        return configuration != null && !configuration.isPredefined();
       })
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
@@ -168,6 +160,18 @@ public class ExistingTemplatesComponent {
     TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
+  private Configuration getSelectedConfiguration() {
+    final Object selection = patternTree.getLastSelectedPathComponent();
+    if (!(selection instanceof DefaultMutableTreeNode)) {
+      return null;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+    if (!(node.getUserObject() instanceof Configuration)) {
+      return null;
+    }
+    return (Configuration)node.getUserObject();
+  }
+
   private void initialize() {
     final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     userTemplatesNode.removeAllChildren();
@@ -186,7 +190,7 @@ public class ExistingTemplatesComponent {
       new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER && patternTree.isVisible() && getSelectedConfiguration() != null) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
           }
         }
@@ -196,7 +200,9 @@ public class ExistingTemplatesComponent {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        owner.close(DialogWrapper.OK_EXIT_CODE);
+        if (patternTree.isVisible() && getSelectedConfiguration() != null) {
+          owner.close(DialogWrapper.OK_EXIT_CODE);
+        }
         return true;
       }
     }.installOn(component);
