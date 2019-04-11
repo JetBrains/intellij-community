@@ -135,7 +135,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
 
   internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    return withContext(createStoreEdtCoroutineContext(listOfNotNull(storageManager.componentManager?.let { InTransactionRule(it) }))) {
+    return withContext(createStoreEdtCoroutineContext(storageManager.componentManager?.let { InTransactionRule(it) })) {
       val errors = SmartList<Throwable>()
       val manager = doCreateSaveSessionManagerAndCommitComponents(forceSavingAllSettings, errors)
       saveResult.addErrors(errors)
