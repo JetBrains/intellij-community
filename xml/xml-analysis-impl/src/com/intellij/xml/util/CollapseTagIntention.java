@@ -98,12 +98,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   }
 
   protected static void applyFix(@NotNull final Project project, @NotNull final PsiElement tag) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(tag.getContainingFile())) {
-      return;
-    }
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
     if (child == null) return;
     final int offset = child.getTextRange().getStartOffset();
