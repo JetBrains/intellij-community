@@ -160,7 +160,7 @@ public class ExistingTemplatesComponent {
     TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
-  private Configuration getSelectedConfiguration() {
+  public Configuration getSelectedConfiguration() {
     final Object selection = patternTree.getLastSelectedPathComponent();
     if (!(selection instanceof DefaultMutableTreeNode)) {
       return null;
