@@ -43,7 +43,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -911,12 +910,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
 
-      component = new NonOpaquePanel((JComponent)component) {
-        @Override
-        public Dimension getPreferredSize() {
-          return UIUtil.updateListRowHeight(super.getPreferredSize());
-        }
-      };
+      component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = groupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
