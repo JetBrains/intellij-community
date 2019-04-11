@@ -428,7 +428,7 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory, projectDir);
           }
           break;
       }
