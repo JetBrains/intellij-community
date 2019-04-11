@@ -107,6 +107,11 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testInclusion() {
+    doInclusionTest(true);
+    doInclusionTest(false);
+  }
+
+  private void doInclusionTest(boolean onStubs) {
     myFixture.copyFileToProject("include.xml");
     doBuilderTest("inclusion.xml", "File:foo\n" +
                                    "  Element:foo\n" +
@@ -117,14 +122,17 @@ public class DomStubBuilderTest extends DomStubTest {
                                    "    Element:bar\n");
 
     PsiFile file = myFixture.getFile();
-    GCWatcher.tracking(file.getNode()).tryGc();
-    assertFalse(((PsiFileImpl) file).isContentsLoaded());
+    if (onStubs) {
+      GCWatcher.tracking(file.getNode()).tryGc();
+    }
+    assertEquals(!onStubs, ((PsiFileImpl) file).isContentsLoaded());
 
     DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
     assert element != null;
     List<Bar> bars = element.getRootElement().getBars();
     assertEquals(3, bars.size());
-    assertEquals("include.xml", bars.get(0).getXmlTag().getContainingFile().getName());
+    assertEquals("included", bars.get(0).getString().getValue());
+//    assertEquals("inclusion.xml", bar.getXmlTag().getContainingFile().getName());
   }
 
   public static class TestExtender extends DomExtender<Bar> {
