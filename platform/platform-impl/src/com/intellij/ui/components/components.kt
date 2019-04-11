@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkListener
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
@@ -94,17 +95,18 @@ fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): J
 
 @JvmOverloads
 fun htmlComponent(text: String = "",
-                  font: Font = UIUtil.getLabelFont(),
+                  font: Font? = null,
                   background: Color? = null,
                   foreground: Color? = null,
-                  lineWrap: Boolean = false): JEditorPane {
+                  lineWrap: Boolean = false,
+                  hyperlinkListener: HyperlinkListener? = BrowserHyperlinkListener.INSTANCE): JEditorPane {
   val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isEmpty()) {
-    pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
-  }
+  pane.text = text
   pane.border = null
   pane.disabledTextColor = UIUtil.getLabelDisabledForeground()
-  pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+  if (hyperlinkListener != null) {
+    pane.addHyperlinkListener(hyperlinkListener)
+  }
   return pane
 }
 
