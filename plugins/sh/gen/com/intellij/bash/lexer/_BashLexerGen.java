@@ -4,10 +4,9 @@ package com.intellij.bash.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.IntStack;
-import com.intellij.util.containers.Stack;
 import com.intellij.lexer.FlexLexer;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
-import static org.apache.commons.lang3.StringUtils.contains;
+import com.intellij.openapi.util.text.StringUtil;
 
 
 /**
@@ -828,8 +827,8 @@ public class _BashLexerGen implements FlexLexer {
       private boolean isArithmeticExpansion;
       private String heredocMarker;
       private boolean heredocWithWhiteSpaceIgnore;
-      private IntStack stateStack = new IntStack(20);
-      private IntStack parenStack = new IntStack(20);
+      private final IntStack stateStack = new IntStack(1_000);
+      private final IntStack parenStack = new IntStack(1_000);
 
       private void pushState(int state) {
         int currentState = yystate();
@@ -837,6 +836,7 @@ public class _BashLexerGen implements FlexLexer {
         stateStack.push(currentState);
         yybegin(state);
       }
+
       private void popState() {
         assert !stateStack.empty() : "States stack is empty";
         yybegin(stateStack.pop());
@@ -845,13 +845,16 @@ public class _BashLexerGen implements FlexLexer {
       private void pushParentheses(int parentheses) {
         parenStack.push(parentheses);
       }
+
       private void popParentheses() {
         assert !parenStack.empty() : "Parentheses stack is empty";
         parenStack.pop();
       }
+
       private boolean shouldCloseDoubleParen() {
         return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
       }
+
       private boolean shouldCloseSingleParen() {
         return !parenStack.empty() && parenStack.peek() == PARENTHESES;
       }
@@ -1583,7 +1586,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 208: break;
           case 91: 
-            { if (contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING;
+            { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING;
             } 
             // fall through
           case 209: break;

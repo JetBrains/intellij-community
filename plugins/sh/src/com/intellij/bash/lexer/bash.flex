@@ -2,10 +2,9 @@ package com.intellij.bash.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.IntStack;
-import com.intellij.util.containers.Stack;
 import com.intellij.lexer.FlexLexer;
 import static com.intellij.bash.lexer.BashTokenTypes.*;
-import static org.apache.commons.lang3.StringUtils.contains;
+import com.intellij.openapi.util.text.StringUtil;
 
 %%
 
@@ -25,8 +24,8 @@ import static org.apache.commons.lang3.StringUtils.contains;
       private boolean isArithmeticExpansion;
       private String heredocMarker;
       private boolean heredocWithWhiteSpaceIgnore;
-      private IntStack stateStack = new IntStack(20);
-      private IntStack parenStack = new IntStack(20);
+      private final IntStack stateStack = new IntStack(1_000);
+      private final IntStack parenStack = new IntStack(1_000);
 
       private void pushState(int state) {
         int currentState = yystate();
@@ -34,6 +33,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
         stateStack.push(currentState);
         yybegin(state);
       }
+
       private void popState() {
         assert !stateStack.empty() : "States stack is empty";
         yybegin(stateStack.pop());
@@ -42,13 +42,16 @@ import static org.apache.commons.lang3.StringUtils.contains;
       private void pushParentheses(int parentheses) {
         parenStack.push(parentheses);
       }
+
       private void popParentheses() {
         assert !parenStack.empty() : "Parentheses stack is empty";
         parenStack.pop();
       }
+
       private boolean shouldCloseDoubleParen() {
         return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
       }
+
       private boolean shouldCloseSingleParen() {
         return !parenStack.empty() && parenStack.peek() == PARENTHESES;
       }
@@ -147,7 +150,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 <STRING_EXPRESSION> {
     {Quote}                       { popState(); return QUOTE; }
-    {RawString}                   { if (contains(yytext(), '"')) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
+    {RawString}                   { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
 }
 
 <LET_EXPRESSION> {
