@@ -34,6 +34,11 @@ internal class InTransactionRule(private val disposable: Disposable) {
   private val transactionId = TransactionGuard.getInstance().contextTransaction
 
   fun dispatch(context: CoroutineContext, block: Runnable) {
+    if (ApplicationManager.getApplication().isDisposeInProgress) {
+      block.run()
+      return
+    }
+
     TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, Runnable {
       if (Disposer.isDisposed(disposable)) {
         context.get(Job)?.cancel()
