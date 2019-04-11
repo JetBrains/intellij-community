@@ -163,6 +163,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
+      // remove AltGr modifier to show a shortcut without AltGr in Settings
+      if (WINDOWS_ALT_GRAPH_JAVA11 && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
@@ -408,13 +410,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (WINDOWS_ALT_GRAPH_JAVA11 && e.isAltGraphDown() && e.getID() == KeyEvent.KEY_PRESSED) {
-      // remove AltGr modifier (with mouse modifiers) for future processing
-      removeModifiers(e, InputEvent.ALT_GRAPH_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
-                         | InputEvent.BUTTON1_MASK | InputEvent.BUTTON1_DOWN_MASK
-                         | InputEvent.BUTTON2_MASK | InputEvent.BUTTON2_DOWN_MASK
-                         | InputEvent.BUTTON3_MASK | InputEvent.BUTTON3_DOWN_MASK);
-
+    if (WINDOWS_ALT_GRAPH_JAVA11 && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
       myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
       if (myFirstKeyStroke == null) return false;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
@@ -975,18 +971,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return SwingUtilities.getRootPane(component);
   }
 
-  public static void removeAltGraph(InputEvent e) {
-    if (e.isAltGraphDown()) removeModifiers(e, InputEvent.ALT_GRAPH_MASK | InputEvent.ALT_GRAPH_DOWN_MASK);
-  }
-
-  private static void removeModifiers(InputEvent e, int mask) {
-    try {
-      Field field = InputEvent.class.getDeclaredField("modifiers");
-      field.setAccessible(true);
-      field.setInt(e, ~mask & field.getInt(e));
+  public static boolean removeAltGraph(InputEvent e) {
+    if (e.isAltGraphDown()) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        field.setInt(e, ~InputEvent.ALT_GRAPH_MASK & ~InputEvent.ALT_GRAPH_DOWN_MASK & field.getInt(e));
+        return true;
+      }
+      catch (Exception ignored) {
+      }
     }
-    catch (Exception ignored) {
-    }
+    return false;
   }
 
   public static boolean isAltGrLayout(Component component) {
