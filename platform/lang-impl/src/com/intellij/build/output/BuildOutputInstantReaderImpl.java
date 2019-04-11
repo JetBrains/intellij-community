@@ -147,6 +147,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
       myLinesBuffer.addLast(line);
       if (myLinesBuffer.size() > MAX_LINES_BUFFER_SIZE) {
         myLinesBuffer.removeFirst();
+        myCurrentIndex--;
       }
       return line;
     }
