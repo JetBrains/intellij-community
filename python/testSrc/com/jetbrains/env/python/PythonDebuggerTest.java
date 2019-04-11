@@ -840,12 +840,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("Done");
         assertFalse(output().contains("KeyboardInterrupt"));
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("python3.7");
-      }
     });
   }
 

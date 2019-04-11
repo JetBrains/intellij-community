@@ -1,3 +1,4 @@
+from __future__ import print_function
 from multiprocessing import Pool
 from time import sleep
 pool = Pool(4)
