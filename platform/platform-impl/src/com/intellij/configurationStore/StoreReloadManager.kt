@@ -29,5 +29,5 @@ interface StoreReloadManager {
 
   suspend fun reloadChangedStorageFiles()
 
-  fun storageFilesChanged(componentManager: ComponentManager, storages: Collection<StateStorage>)
+  fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>)
 }

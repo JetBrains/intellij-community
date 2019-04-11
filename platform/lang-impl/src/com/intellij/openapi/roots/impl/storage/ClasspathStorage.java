@@ -90,7 +90,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
           String eventPath = event.getPath();
           for (String path : paths) {
             if (path.equals(eventPath)) {
-              StoreReloadManager.getInstance().storageFilesChanged(module, Collections.singletonList(ClasspathStorage.this));
+              StoreReloadManager.getInstance().storageFilesChanged(Collections.singletonMap(module, Collections.singletonList(ClasspathStorage.this)));
               return;
             }
           }
