@@ -202,13 +202,13 @@ shell_command ::=   for_command
 while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
 
-for_command ::= for for_clause for_tail {pin=1}
+for_command ::= for for_clause for_tail
 for_clause ::= arithmetic_for_clause | in_for_clause
 private in_for_clause ::= w (';' newlines | newlines in_clause?)
-private arithmetic_for_clause ::= '((' expression? ';' newlines expression? ';' newlines expression? '))' {pin=1}
+private arithmetic_for_clause ::= '((' expression? ';' newlines expression? ';' newlines expression? '))'
 private for_tail ::= [list_terminator newlines] any_block
 
-private in_clause ::= "in" word_list list_terminator newlines {pin=1}
+private in_clause ::= "in" word_list list_terminator newlines
 
 private any_block ::= block | do_block
 do_block ::= do  compound_list done {pin(".*")=1 extends=block}
@@ -220,7 +220,7 @@ function_definition ::=           word argument_list  newlines block
                        | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
 private argument_list ::= '(' ')'
 
-subshell_command ::= '(' list ')' {pin=1}
+subshell_command ::= '(' list ')'
 
 if_command ::= if compound_list then_clause
                elif_clause*
@@ -231,7 +231,7 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-case_command ::= case w+ in case_clause_list esac {pin(".*")=1}
+case_command ::= case w+ in case_clause_list esac
 private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1}
 case_clause ::= newlines '('? pattern ')' (compound_case_list|newlines) {pin=3}
 
