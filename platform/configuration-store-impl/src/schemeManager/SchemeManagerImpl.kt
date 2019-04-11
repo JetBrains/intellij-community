@@ -364,6 +364,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       fileNameWithoutExtension = nameGenerator.generateUniqueName(schemeNameToFileName(processor.getSchemeKey(scheme)))
     }
 
+    val fileName = fileNameWithoutExtension!! + schemeExtension
+    // file will be overwritten, so, we don't need to delete it
+    filesToDelete.remove(fileName)
+
     val newDigest = element!!.digest()
     when {
       externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && externalInfo.isDigestEquals(newDigest) -> return
@@ -377,10 +381,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         return
       }
     }
-
-    val fileName = fileNameWithoutExtension!! + schemeExtension
-    // file will be overwritten, so, we don't need to delete it
-    filesToDelete.remove(fileName)
 
     // stream provider always use LF separator
     val byteOut = element.toBufferExposingByteArray()
