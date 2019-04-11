@@ -106,4 +106,8 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   protected String getComponentText() {
     return myAccessor.getText(myTextComponent).trim();
   }
+
+  protected void onFileChosen(@NotNull VirtualFile chosenFile) {
+    myAccessor.setText(myTextComponent, chosenFileToResultingText(chosenFile));
+  }
 }

@@ -219,7 +219,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     @NotNull
     @Override
     protected JComponent createEditor() {
-      myTextField = ExtendableTextField.createBrowsableField(myAction, this);
+      myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
 
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(LabeledComponent.create(myTextField, "Target name", BorderLayout.WEST), BorderLayout.NORTH);

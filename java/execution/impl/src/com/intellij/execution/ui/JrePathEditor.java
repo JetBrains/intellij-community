@@ -117,7 +117,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     myComboboxEditor = new JreComboboxEditor(myComboBoxModel) {
       @Override
       protected JTextField createEditorComponent() {
-        JBTextField field = ExtendableTextField.createBrowsableField(action, null);
+        JBTextField field = new ExtendableTextField().addBrowseExtension(action, null);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
           @Override public void focusGained(FocusEvent e) {

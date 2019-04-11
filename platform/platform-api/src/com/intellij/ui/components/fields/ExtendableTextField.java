@@ -116,12 +116,9 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
   }
 
   @ApiStatus.Experimental
-  public static ExtendableTextField createBrowsableField(@NotNull Runnable action, @Nullable Disposable parentDisposable) {
-    ExtendableTextField field = new ExtendableTextField();
-
+  public ExtendableTextField addBrowseExtension(@NotNull Runnable action, @Nullable Disposable parentDisposable) {
     KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
-    String tooltip = UIBundle.message("component.with.browse.button.browse.button.tooltip.text") +
-                     " (" + KeymapUtil.getKeystrokeText(keyStroke) + ")";
+    String tooltip = UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" + KeymapUtil.getKeystrokeText(keyStroke) + ")";
 
     ExtendableTextComponent.Extension browseExtension =
       ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover, tooltip, action);
@@ -131,9 +128,9 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
       public void actionPerformed(@NotNull AnActionEvent e) {
         action.run();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(keyStroke), field, parentDisposable);
-    field.addExtension(browseExtension);
+    }.registerCustomShortcutSet(new CustomShortcutSet(keyStroke), this, parentDisposable);
+    addExtension(browseExtension);
 
-    return field;
+    return this;
   }
 }
