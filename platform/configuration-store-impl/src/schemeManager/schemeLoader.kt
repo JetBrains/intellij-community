@@ -5,7 +5,6 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentList
@@ -57,8 +56,6 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     LOG.assertTrue(isApplied.compareAndSet(false, true))
     schemeManager.filesToDelete.addAll(filesToDelete)
     schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
-
-
 
     schemeManager.schemeToInfo.putAll(schemeToInfo)
 
@@ -202,16 +199,6 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
   private fun retainProbablyScheduledForDeleteFile(fileName: String) {
     filesToDelete.remove(fileName)
     preScheduledFilesToDelete.remove(fileName)
-  }
-}
-
-internal inline fun useSchemeLoader(executor: (Ref<SchemeLoader<Any, Any>>) -> Unit) {
-  val schemeLoaderRef = Ref<SchemeLoader<Any, Any>>()
-  executor(schemeLoaderRef)
-  val schemeLoader = schemeLoaderRef.get()
-  if (schemeLoader != null) {
-    schemeLoaderRef.set(null)
-    schemeLoader.apply()
   }
 }
 

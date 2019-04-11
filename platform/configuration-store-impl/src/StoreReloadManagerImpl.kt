@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
-import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -64,11 +63,9 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       runBatchUpdate(project.messageBus) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          useSchemeLoader { schemeLoaderRef ->
-            for ((tracker, files) in changedSchemes) {
-              LOG.runAndLogException {
-                tracker.reload(files, schemeLoaderRef)
-              }
+          for ((tracker, files) in changedSchemes) {
+            LOG.runAndLogException {
+              tracker.reload(files)
             }
           }
         }
