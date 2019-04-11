@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import sun.swing.SwingUtilities2
 import java.awt.event.*
@@ -12,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 
-open class SelectedEditorFilePath(val disposable: Disposable) {
+open class SelectedEditorFilePath() {
   companion object {
     const val fileSeparatorChar = '/'
     const val ellipsisSymbol = "\u2026"
@@ -26,15 +27,19 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     return clippedText.equals(path)
   }
 
+  private var added = false
+
   private val label = object : JLabel(){
     override fun addNotify() {
       super.addNotify()
-      getView().addComponentListener(resizedListener)
+      added = true
+      updateListeners()
     }
 
     override fun removeNotify() {
       super.removeNotify()
-      getView().removeComponentListener(resizedListener)
+      added = false
+      updateListeners()
     }
   }.apply {
     isEnabled = false
@@ -67,34 +72,73 @@ open class SelectedEditorFilePath(val disposable: Disposable) {
     inited = true
   }
 
-  fun setProject(project: Project) {
-    projectName = project.name
-    val fileEditorManager = FileEditorManager.getInstance(project)
+  private var disposable: Disposable? = null
+  private var project: Project? = null
 
-    fun updatePath() {
+  private fun updateListeners() {
+    if (added && project != null) {
+      installListeners()
+    } else {
+      unInstallListeners()
+    }
+  }
+
+  private fun installListeners() {
+    if (disposable != null) {
+      unInstallListeners()
+    }
+
+    project?.let {
+      val disp = Disposer.newDisposable()
+      Disposer.register(it, disp)
+      disposable = disp
+
+      it.messageBus.connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+          updatePath()
+        }
+
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          updatePath()
+        }
+
+        override fun selectionChanged(event: FileEditorManagerEvent) {
+          updatePath()
+        }
+      })
+    }
+
+    getView().addComponentListener(resizedListener)
+  }
+
+  private fun unInstallListeners() {
+    disposable?.let {
+      if (!Disposer.isDisposed(it))
+        Disposer.dispose(it)
+      disposable = null
+    }
+
+    getView().removeComponentListener(resizedListener)
+  }
+
+  private fun updatePath() {
+    path = ""
+    project?.let {
+      val fileEditorManager = FileEditorManager.getInstance(it)
+
       path = if (fileEditorManager is FileEditorManagerEx) {
         fileEditorManager.currentFile?.canonicalPath ?: ""
-      }
-      else {
+      } else {
         fileEditorManager?.selectedEditor?.file?.canonicalPath ?: ""
       }
     }
-
-    project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        updatePath()
-      }
-
-      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        updatePath()
-      }
-
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        updatePath()
-      }
-    })
-
     update()
+  }
+
+  fun setProject(project: Project) {
+    projectName = project.name
+    this.project = project
+    updateListeners()
   }
 
   private fun update() {

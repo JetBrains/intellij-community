@@ -134,6 +134,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     protected open fun installListeners() {
+        updateActive()
+
         window.addWindowListener(windowListener)
         window.addWindowStateListener(windowListener)
         window.addComponentListener(myComponentListener)
@@ -151,9 +153,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     abstract fun getHitTestSpots(): List<Rectangle>
 
-    protected open fun setActive(value: Boolean) {
+    private fun setActive(value: Boolean) {
         myActive = value
-        buttonPanes.isSelected = value
+        updateActive()
+    }
+
+    protected open fun updateActive() {
+        buttonPanes.isSelected = myActive
         buttonPanes.updateVisibility()
         customFrameTopBorder?.repaintBorder()
     }

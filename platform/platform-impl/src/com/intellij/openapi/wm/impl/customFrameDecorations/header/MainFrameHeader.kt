@@ -36,7 +36,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
       setCustomDecorationHitTestSpots()
     }
 
-    mySelectedEditorFilePath = CustomDecorationPath(this)
+    mySelectedEditorFilePath = CustomDecorationPath()
 
     val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
     pane.isOpaque = false
