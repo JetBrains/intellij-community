@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = logger<ComponentStoreImpl>()
+private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
 
 internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
@@ -173,7 +175,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (info.isModificationTrackingSupported) {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
-            LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
+            SAVE_MOD_LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
             if (isUseModificationCount) {
               continue
             }
@@ -185,7 +187,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             info.lastSaved = nowInSeconds
           }
           else {
-            LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+            SAVE_MOD_LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
             continue
           }
         }
