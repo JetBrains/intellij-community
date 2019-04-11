@@ -158,6 +158,10 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }
 
   override fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>) {
+    if (componentManagerToStorages.isEmpty()) {
+      return
+    }
+
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${componentManagerToStorages.map { "${it.key}: ${it.value.joinToString()}" }.joinToString("\n")}", Exception())
     }
