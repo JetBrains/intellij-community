@@ -89,11 +89,18 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
   @Nullable
   private CommandLineInfo parseCommandLine(@NotNull String commandLine) {
-    String prefix = notNullize(substringBeforeLast(commandLine, " "), getHelpCommand()).trim() + ' ';
+    String helpCommand = getHelpCommand();
+    if (helpCommand.startsWith(commandLine)) {
+      commandLine = helpCommand;
+    }
+    else if (!commandLine.startsWith(helpCommand)) {
+      return null;
+    }
+    String prefix = notNullize(substringBeforeLast(commandLine, " "), helpCommand).trim() + ' ';
     String toComplete = notNullize(substringAfterLast(commandLine, " "));
     List<String> commands = ContainerUtil.filter(prefix.trim().split(" "), it -> !it.isEmpty());
     if (commands.isEmpty()) return null;
-    if (!commands.get(0).equals(getHelpCommand())) return null;
+    if (!commands.get(0).equals(helpCommand)) return null;
     String externalProjectName = commands.size() > 1 ? commands.get(1) : "";
     return new CommandLineInfo(prefix, toComplete, externalProjectName, commands.subList(1, commands.size()));
   }
