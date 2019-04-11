@@ -42,9 +42,20 @@ internal class CodeStyleTest {
           <option name="USE_TAB_CHARACTER" value="true" />
         </indentOptions>
       </codeStyleSettings>
+      <codeStyleSettings language="MySQL">
+        <option name="KEEP_LINE_BREAKS" value="false" />
+      </codeStyleSettings>
+      <codeStyleSettings language="Oracle">
+        <option name="KEEP_LINE_BREAKS" value="false" />
+      </codeStyleSettings>
+      <codeStyleSettings language="PostgreSQL">
+        <option name="KEEP_LINE_BREAKS" value="false" />
+      </codeStyleSettings>
       <codeStyleSettings language="SQL">
         <option name="KEEP_LINE_BREAKS" value="false" />
-        <option name="KEEP_BLANK_LINES_IN_CODE" value="10" />
+      </codeStyleSettings>
+      <codeStyleSettings language="TSQL">
+        <option name="KEEP_LINE_BREAKS" value="false" />
       </codeStyleSettings>
     </code_scheme>""".trimIndent()
     settings.readExternal(JDOMUtil.load(loaded))
@@ -111,9 +122,20 @@ internal class CodeStyleTest {
             <option name="USE_TAB_CHARACTER" value="true" />
           </indentOptions>
         </codeStyleSettings>
+        <codeStyleSettings language="MySQL">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+        </codeStyleSettings>
+        <codeStyleSettings language="Oracle">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+        </codeStyleSettings>
+        <codeStyleSettings language="PostgreSQL">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+        </codeStyleSettings>
         <codeStyleSettings language="SQL">
           <option name="KEEP_LINE_BREAKS" value="false" />
-          <option name="KEEP_BLANK_LINES_IN_CODE" value="10" />
+        </codeStyleSettings>
+        <codeStyleSettings language="TSQL">
+          <option name="KEEP_LINE_BREAKS" value="false" />
         </codeStyleSettings>
       </code_scheme>""".trimIndent()
     }
