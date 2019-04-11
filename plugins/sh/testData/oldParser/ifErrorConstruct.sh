@@ -1,1 +1,2 @@
-function a { if a; then ; done }
+function a { if k; then ; done }
+echo "abc"

@@ -272,7 +272,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
     "case"                        { pushState(CASE_CONDITION); return CASE; }
     "esac"                        { if (yystate() == CASE_CONDITION) popState(); return ESAC; }
-    "done"                        { if (yystate() == OTHER_CONDITIONS) popState(); return DONE; }
+    "done"                        { if (yystate() == OTHER_CONDITIONS) { popState(); return DONE; } else return WORD; }
     "do"                          { return DO; }
     "elif"                        { return ELIF; }
     "else"                        { return ELSE; }
