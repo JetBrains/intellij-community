@@ -25,12 +25,10 @@ import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
 
 public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
@@ -39,8 +37,6 @@ public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements T
 
   public MacroComboBoxWithBrowseButton(FileChooserDescriptor descriptor, Project project) {
     super(new MacroComboBoxModel());
-
-    setEditable(true);
     descriptor.withShowHiddenFiles(true);
 
     Runnable action = new BrowseFolderRunnable<ComboBox<String>>(null, null, project, descriptor, this, accessor) {
@@ -72,15 +68,7 @@ public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements T
       }
     };
 
-    ComboBoxEditor editor = new BasicComboBoxEditor() {
-      @Override
-      protected JTextField createEditorComponent() {
-        JTextField editor = ExtendableTextField.createBrowsableField(action, project);
-        editor.setBorder(null);
-        return editor;
-      }
-    };
-    setEditor(editor);
+    initBrowsableEditor(action, project);
 
     Component component = editor.getEditorComponent();
     if (component instanceof JTextField) {

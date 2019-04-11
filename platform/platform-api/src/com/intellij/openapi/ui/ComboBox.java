@@ -1,23 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Due to many bugs and "features" in {@link JComboBox} implementation we provide
@@ -281,6 +287,32 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     finally {
       myPaintingNow = false;
     }
+  }
+
+  @ApiStatus.Experimental
+  public List<Runnable> initBrowsableEditor(@Nullable Disposable parentDisposable) {
+    List<Runnable> myActionList = new CopyOnWriteArrayList<>();
+
+    initBrowsableEditor(() -> {
+      for (Runnable runnable : myActionList) {
+        runnable.run();
+      }
+    }, parentDisposable);
+    return myActionList;
+  }
+
+  @ApiStatus.Experimental
+  public void initBrowsableEditor(@NotNull Runnable rootAction, @Nullable Disposable parentDisposable) {
+    ComboBoxEditor editor = new BasicComboBoxEditor() {
+      @Override
+      protected JTextField createEditorComponent() {
+        JTextField editor = new ExtendableTextField().addBrowseExtension(rootAction, parentDisposable);
+        editor.setBorder(null);
+        return editor;
+      }
+    };
+    setEditor(editor);
+    setEditable(true);
   }
 
   private static final class MyEditor implements ComboBoxEditor {
