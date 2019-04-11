@@ -21,9 +21,7 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Due to many bugs and "features" in {@link JComboBox} implementation we provide
@@ -290,23 +288,11 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   @ApiStatus.Experimental
-  public List<Runnable> initBrowsableEditor(@Nullable Disposable parentDisposable) {
-    List<Runnable> myActionList = new CopyOnWriteArrayList<>();
-
-    initBrowsableEditor(() -> {
-      for (Runnable runnable : myActionList) {
-        runnable.run();
-      }
-    }, parentDisposable);
-    return myActionList;
-  }
-
-  @ApiStatus.Experimental
-  public void initBrowsableEditor(@NotNull Runnable rootAction, @Nullable Disposable parentDisposable) {
+  public void initBrowsableEditor(@NotNull Runnable browseAction, @Nullable Disposable parentDisposable) {
     ComboBoxEditor editor = new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        JTextField editor = new ExtendableTextField().addBrowseExtension(rootAction, parentDisposable);
+        JTextField editor = new ExtendableTextField().addBrowseExtension(browseAction, parentDisposable);
         editor.setBorder(null);
         return editor;
       }
