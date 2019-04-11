@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -72,6 +73,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
+  private static final String DISABLE_PLUGIN_URL = "#disable";
+
   private static List<Developer> ourDevelopersList = Collections.emptyList();
 
   private final MessagePool myMessagePool;
@@ -82,9 +85,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private int myIndex, myLastIndex = -1;
 
   private JLabel myCountLabel;
-  private HypertextLabel myInfoLabel;
-  private HypertextLabel myDisableLink;
-  private HypertextLabel myForeignPluginWarningLabel;
+  private JTextComponent myInfoLabel;
+  private JTextComponent myForeignPluginWarningLabel;
   private JTextArea myCommentArea;
   private AttachmentsList myAttachmentsList;
   private JTextArea myAttachmentArea;
@@ -93,7 +95,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private HideableDecorator myNoticeDecorator;
   private JEditorPane myNoticeArea;
   private ComboBox<Developer> myAssigneeCombo;
-  private HypertextLabel myCredentialsLabel;
+  private JTextComponent myCredentialsLabel;
 
   IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
     super(project, true);
@@ -171,12 +173,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected JComponent createNorthPanel() {
     myCountLabel = new JBLabel();
-    myInfoLabel = new HypertextLabel();
-    myDisableLink = new HypertextLabel(e -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) disablePlugin();
+    myInfoLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && DISABLE_PLUGIN_URL.equals(e.getDescription())) {
+        disablePlugin();
+      }
+      else {
+        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
+      }
     });
-    myDisableLink.setText("<a href=\"\">" + UIUtil.removeMnemonic(DiagnosticBundle.message("error.list.disable.plugin")) + "</a>");
-    myForeignPluginWarningLabel = new HypertextLabel();
+    myForeignPluginWarningLabel = ComponentsKt.htmlComponent();
 
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
@@ -185,10 +190,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, CENTER, NONE, JBUI.insets(2), 0, 0));
-    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDisableLink, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(new JPanel(), new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, CENTER, BOTH, JBUI.emptyInsets(), 0, 0));  // expander
-    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 0.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myInfoLabel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -279,7 +282,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
-    myCredentialsLabel = new HypertextLabel(e -> {
+    myCredentialsLabel = ComponentsKt.htmlComponent("", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
@@ -426,7 +429,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     Throwable t = message.getThrowable();
     if (t instanceof MessagePool.TooManyErrorsException) {
       myInfoLabel.setText(t.getMessage());
-      myDisableLink.setVisible(false);
       myForeignPluginWarningLabel.setVisible(false);
       myNoticePanel.setVisible(false);
       return;
@@ -466,9 +468,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       info.append(' ').append(DiagnosticBundle.message("error.list.message.submitting"));
     }
 
-    myInfoLabel.setText(info.toString());
+    if (pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+      info.append(' ').append("<a href=\"" + DISABLE_PLUGIN_URL + "\">").append(DiagnosticBundle.message("error.list.disable.plugin")).append("</a>");
+    }
 
-    myDisableLink.setVisible(pluginId != null && !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString()));
+    myInfoLabel.setText(info.toString());
 
     ErrorReportSubmitter submitter = cluster.submitter;
     if (submitter == null && plugin != null && !PluginManagerMain.isDevelopedByJetBrains(plugin)) {
@@ -1002,18 +1006,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     else {
       out.append(' ').append(DiagnosticBundle.message("error.list.message.submitted"));
-    }
-  }
-
-  private static class HypertextLabel extends JTextPane {
-    HypertextLabel() {
-      this(BrowserHyperlinkListener.INSTANCE);
-    }
-
-    HypertextLabel(HyperlinkListener listener) {
-      setEditorKit(new UIUtil.JBHtmlEditorKit());
-      setEditable(false);
-      addHyperlinkListener(listener);
     }
   }
 }
