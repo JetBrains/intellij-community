@@ -20,7 +20,7 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
       return SaveResult.EMPTY
     }
 
-    val saveResult = withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
+    val saveResult = withContext(createStoreEdtCoroutineContext(InTransactionRule(project))) {
       runWriteAction {
         val r = SaveResult()
         saveSessions(extraSessions, r)

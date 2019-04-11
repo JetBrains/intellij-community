@@ -153,7 +153,7 @@ private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: Pa
       return emptyList()
     }
 
-    return withContext(createStoreEdtCoroutineContext(listOf(InTransactionRule(project)))) {
+    return withContext(createStoreEdtCoroutineContext(InTransactionRule(project))) {
       // do no create with capacity because very rarely a lot of modules will be modified
       val saveSessions: MutableList<SaveSession> = SmartList<SaveSession>()
       // commit components
