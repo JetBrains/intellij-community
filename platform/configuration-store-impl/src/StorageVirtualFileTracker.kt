@@ -114,9 +114,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           }
         }
 
-        for ((componentManager, changedStorages) in storageEvents) {
-          StoreReloadManager.getInstance().storageFilesChanged(componentManager, changedStorages)
-        }
+        StoreReloadManager.getInstance().storageFilesChanged(storageEvents)
       }
     })
   }

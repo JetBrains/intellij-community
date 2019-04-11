@@ -112,7 +112,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
     storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
-      storageFilesChanged(project, listOf(it))
+      storageFilesChanged(mapOf(project to listOf(it)))
     }
   }
 
@@ -157,33 +157,35 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     doReloadProject(project)
   }
 
-  override fun storageFilesChanged(componentManager: ComponentManager, storages: Collection<StateStorage>) {
+  override fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] registering to reload: ${storages.joinToString()}", Exception())
+      LOG.debug("[RELOAD] registering to reload: ${componentManagerToStorages.map { "${it.key}: ${it.value.joinToString()}" }.joinToString("\n")}", Exception())
     }
 
-    val project: Project? = when (componentManager) {
-      is Project -> componentManager
-      is Module -> componentManager.project
-      else -> null
-    }
-
-    if (project == null) {
-      val changes = changedApplicationFiles
-      synchronized (changes) {
-        changes.addAll(storages)
+    for ((componentManager, storages) in componentManagerToStorages) {
+      val project: Project? = when (componentManager) {
+        is Project -> componentManager
+        is Module -> componentManager.project
+        else -> null
       }
-    }
-    else {
-      val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
-      synchronized (changes) {
-        changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
-      }
-    }
 
-    for (storage in storages) {
-      if (storage is StateStorageBase<*>) {
-        storage.disableSaving()
+      if (project == null) {
+        val changes = changedApplicationFiles
+        synchronized(changes) {
+          changes.addAll(storages)
+        }
+      }
+      else {
+        val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
+        synchronized(changes) {
+          changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+        }
+      }
+
+      for (storage in storages) {
+        if (storage is StateStorageBase<*>) {
+          storage.disableSaving()
+        }
       }
     }
 
@@ -194,7 +196,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeChangeApplicator, project: Project) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] Registering scheme to reload: $events", Exception())
+      LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }
 
     val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, linkedMapOf())
