@@ -129,6 +129,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getShiftLeft() {
+    return findChildByType(SHIFT_LEFT);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getShiftRight() {
     return findChildByType(SHIFT_RIGHT);
   }

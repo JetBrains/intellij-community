@@ -163,7 +163,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseEmbeddedVar()                    { doTest(true); }
   public void testParseError1()                         { doTest(true); }
   public void testParseGroupCommand()                   { doTest(true); }
-  public void testParseGroupCommandError()              { doTest(true); }
   public void testParseInvalidLengthExpansion()         { doTest(true); }
   public void testParseLengthExpansion()                { doTest(true); }
   public void testParseList1Complex1()                  { doTest(true); }
@@ -174,7 +173,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParsePipelineCommand4()               { doTest(true); }
   public void testPiplelineParse()                      { doTest(true); }
   public void testParseReplace()                        { doTest(true); }
-  public void testParseSimpleCommand()                  { doTest(true); }
   public void testParseSimpleCommand2()                 { doTest(true); }
   public void testParseSimpleCommandCombined()          { doTest(true); }
   public void testParseSimpleCommandCombined3()         { doTest(true); }
@@ -221,7 +219,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testIfCommandError2()                     { doTest(true); }
   public void testIfErrorConstruct()                    { doTest(true); }
   public void testIfIncompleteParse()                   { doTest(true); }
-  public void testSelectErrors()                        { doTest(true); }
   public void testSelectIncompleteParse()               { doTest(true); }
   public void testWhileErrorConstruct()                 { doTest(true); }
   public void testWhileIncompleteParse()                { doTest(true); }
@@ -229,10 +226,12 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testUntilIncompleteParse()                { doTest(true); }
   public void testCaseError1()                          { doTest(true); }
   public void testCaseError2()                          { doTest(true); }
-  public void testForCommandError1()                    { doTest(true); }
-  public void testForErrors()                           { doTest(true); }
   public void testForIncompleteParse()                  { doTest(true); }
   public void testFunctionDefError()                    { doTest(true); }
   public void testParseSimpleCommandAssignment1()       { doTest(true); }
-  public void testConditionalError()                    { doTest(true); } //Start from here
+  public void testConditionalError()                    { doTest(true); }
+  public void testParseGroupCommandError()              { doTest(true); }
+  public void testSelectErrors()                        { doTest(true); }
+  public void testForCommandError1()                    { doTest(true); }
+  public void testForErrors()                           { doTest(true); }//Problem recovering with do / done
 }

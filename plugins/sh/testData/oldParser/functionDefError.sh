@@ -1,3 +1,7 @@
 function a b {
-echo
+echo "Example"
 }
+while a;
+do
+  b;
+done

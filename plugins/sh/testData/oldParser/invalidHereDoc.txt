@@ -30,5 +30,5 @@ BASH_FILE
                         PsiElement(HEREDOC_MARKER_START)('EOF')
                         PsiElement(\n)('\n')
                         PsiElement(HEREDOC_CONTENT)('  heredoccontent\n      EOF\ndone')
-              PsiErrorElement:'&', ';' or '\n' expected
+              PsiErrorElement:'&', '&&', ';', '\n' or '||' expected
                 <empty list>

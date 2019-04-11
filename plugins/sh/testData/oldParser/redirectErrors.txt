@@ -43,7 +43,7 @@ BASH_FILE
               PsiElement(>>)('>>')
               PsiElement(file descriptor)('&1')
   PsiElement(\n)('\n')
-  PsiErrorElement:<pipeline command> expected, got '<<'
+  PsiErrorElement:'<<' unexpected
     PsiElement(HEREDOC_MARKER_TAG)('<<')
   PsiElement(BAD_CHARACTER)('&')
   PsiElement(HEREDOC_MARKER_START)('1')

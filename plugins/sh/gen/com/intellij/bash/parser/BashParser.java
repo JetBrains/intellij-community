@@ -2037,7 +2037,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ('<&' | '>&') (num | '-')
-  //                             | ('>' | '<' | '>>' | '<<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
@@ -2081,7 +2081,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('>' | '<' | '>>' | '<<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
   private static boolean redirection_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
     boolean r;
@@ -2092,7 +2092,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '>' | '<' | '>>' | '<<<' | '<&' | '>&' | '&>>' | '<>' | '>|'
+  // '>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|'
   private static boolean redirection_inner_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1_0")) return false;
     boolean r;
@@ -2101,6 +2101,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, LT);
     if (!r) r = consumeToken(b, SHIFT_RIGHT);
     if (!r) r = consumeToken(b, REDIRECT_HERE_STRING);
+    if (!r) r = consumeToken(b, SHIFT_LEFT);
     if (!r) r = consumeToken(b, REDIRECT_LESS_AMP);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
     if (!r) r = consumeToken(b, REDIRECT_AMP_GREATER_GREATER);
