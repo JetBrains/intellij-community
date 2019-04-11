@@ -49,7 +49,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -199,16 +198,7 @@ public class SearchDialog extends DialogWrapper {
     caseSensitiveMatch = new JCheckBox(FindBundle.message("find.options.case.sensitive"), true);
     searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
 
-    final List<FileType> types = new ArrayList<>();
-
-    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
-        types.add(fileType);
-      }
-    }
-    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-
-    fileTypes = new FileTypeSelector(types);
+    fileTypes = new FileTypeSelector();
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes));
