@@ -63,6 +63,8 @@ public interface ApplicationStarter {
 
   /**
    * If true, the command of this launcher can be processed when there is a modal dialog open.
+   * Such a starter may not directly change the PSI/VFS/project model of the opened projects or open new projects.
+   * Such activities should be performed inside write-safe contexts (see {@link TransactionGuard}).
    */
   default boolean allowAnyModalityState() {
     return false;
