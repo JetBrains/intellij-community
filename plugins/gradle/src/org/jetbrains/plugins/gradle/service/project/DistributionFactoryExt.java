@@ -18,6 +18,7 @@ import org.gradle.tooling.internal.protocol.InternalBuildProgressListener;
 import org.gradle.util.DistributionLocator;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleUserHomeLookup;
+import org.gradle.wrapper.SystemPropertiesHandler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 
@@ -39,12 +40,12 @@ public class DistributionFactoryExt extends DistributionFactory {
     super(Time.clock());
   }
 
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
+  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome, File projectDir) {
     File propertiesFile = new File(wrapperPropertyFile);
     if (propertiesFile.exists()) {
       WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
       if (wrapper.getDistribution() != null) {
-        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleUserHome);
+        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleUserHome, projectDir);
         try {
           setDistributionField(connector, distribution);
         }
@@ -58,10 +59,10 @@ public class DistributionFactoryExt extends DistributionFactory {
   /**
    * Returns the default distribution to use for the specified project.
    */
-  private Distribution getWrappedDistribution(File propertiesFile, final File userHomeDir) {
+  private Distribution getWrappedDistribution(File propertiesFile, final File userHomeDir, File projectDir) {
     WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
     if (wrapper.getDistribution() != null) {
-      return new ZippedDistribution(wrapper.getConfiguration(), determineRealUserHomeDir(userHomeDir), Time.clock());
+      return new ZippedDistribution(wrapper.getConfiguration(), determineRealUserHomeDir(userHomeDir), projectDir, Time.clock());
     }
     return getDownloadedDistribution(GradleVersion.current().getVersion());
   }
@@ -118,11 +119,13 @@ public class DistributionFactoryExt extends DistributionFactory {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final File distributionBaseDir;
+    private final File projectDir;
     private final Clock clock;
 
-    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, File distributionBaseDir, Clock clock) {
+    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, File distributionBaseDir, File projectDir, Clock clock) {
       this.wrapperConfiguration = wrapperConfiguration;
       this.distributionBaseDir = distributionBaseDir;
+      this.projectDir = projectDir;
       this.clock = clock;
     }
 
@@ -141,6 +144,7 @@ public class DistributionFactoryExt extends DistributionFactory {
         File installDir;
         try {
           cancellationToken.addCallback(() -> installer.cancel());
+          readGradleProperties(determineRealUserHomeDir(userHomeDir));
           installDir = installer.install(determineRealUserHomeDir(userHomeDir), wrapperConfiguration);
         }
         catch (CancellationException e) {
@@ -166,6 +170,11 @@ public class DistributionFactoryExt extends DistributionFactory {
       }
 
       return userHomeDir != null ? userHomeDir : GradleUserHomeLookup.gradleUserHome();
+    }
+
+    private void readGradleProperties(File userHomeDir) {
+      System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(userHomeDir, "gradle.properties")));
+      System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));
     }
   }
 
