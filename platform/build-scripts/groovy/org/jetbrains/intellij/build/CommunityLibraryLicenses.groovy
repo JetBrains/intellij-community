@@ -137,7 +137,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
-    new LibraryLicense(name: "change-reminder-prediction-model", attachedTo: "intellij.vcs.changeReminder", version: "0.0.1",
+    new LibraryLicense(name: "change-reminder-prediction-model", attachedTo: "intellij.vcs.changeReminder", version: "0.0.11",
                        license: "Apache 2.0"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", version: "1.1", license: "codehaus",
                        url: "https://github.com/codehaus/classworlds",
