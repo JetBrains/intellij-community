@@ -543,7 +543,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
       Component cmp = null;
       if (isMoreItem(index)) {
-        cmp = RunAnythingMore.get(isSelected, hasFocus);
+        cmp = RunAnythingMore.get(isSelected);
       }
 
       if (cmp == null) {
@@ -553,7 +553,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected, hasFocus));
+          p.setBackground(UIUtil.getListBackground(isSelected, true));
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }

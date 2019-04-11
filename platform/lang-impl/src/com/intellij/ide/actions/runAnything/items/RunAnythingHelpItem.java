@@ -30,7 +30,7 @@ public class RunAnythingHelpItem extends RunAnythingItemBase {
 
     SimpleColoredComponent simpleColoredComponent = new SimpleColoredComponent();
     parseAndApplyStyleToParameters(simpleColoredComponent, myPlaceholder);
-    appendDescription(simpleColoredComponent, myDescription, UIUtil.getListForeground(isSelected, hasFocus));
+    appendDescription(simpleColoredComponent, myDescription, UIUtil.getListForeground(isSelected, true));
     setupIcon(simpleColoredComponent, myIcon);
 
     component.add(simpleColoredComponent, BorderLayout.WEST);

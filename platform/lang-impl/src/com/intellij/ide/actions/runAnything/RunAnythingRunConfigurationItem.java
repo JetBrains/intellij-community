@@ -40,7 +40,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
     }
 
     SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
-    descriptionComponent.append(description, new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected, hasFocus)));
+    descriptionComponent.append(description, new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected, true)));
     component.add(descriptionComponent, BorderLayout.EAST);
 
     return component;
