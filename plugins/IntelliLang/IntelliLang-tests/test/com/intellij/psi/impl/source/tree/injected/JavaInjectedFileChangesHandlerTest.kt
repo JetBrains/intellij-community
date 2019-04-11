@@ -149,6 +149,86 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test delete-insert-delete`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\"<caret>\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val injectedFile = quickEditHandler.newFile
+      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
+      injectedFile.edit { deleteString(0, textLength) }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("", injectedFile.text)
+      injectedFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
+      injectedFile.edit { deleteString(0, textLength) }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("", injectedFile.text)
+      injectedFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
+      injectedFile.edit { deleteString(0, textLength) }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON") String a = "";
+            }
+          }
+      """.trimIndent(), true)
+    }
+
+  }
+
   fun `test delete empty line`() {
     with(myFixture) {
 

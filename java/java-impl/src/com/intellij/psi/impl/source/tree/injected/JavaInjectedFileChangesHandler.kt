@@ -21,6 +21,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
 
   override fun commitToOriginal(e: DocumentEvent) {
+    //    myInjectedFile.let { if (!it.isValid) throw PsiInvalidElementAccessException(it) }
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     val origPsiFile = psiDocumentManager.getPsiFile(myOrigDocument)!!
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
@@ -36,17 +37,18 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     val hostsToRemove = SmartList<Marker>()
     val survivedMarkers = SmartList<Marker>()
 
-    for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength).let(
-      this::promoteLinesEnds)) {
-      assert(myInjectedFile.isValid) { "injected file should be valid" }
+    for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength)
+      .let(this::promoteLinesEnds)) {
+
       val rangeInHost = affectedMarker.origin.range
-      println("range = $rangeInHost -> '${myOrigDocument.getText(rangeInHost)}'")
+      println("range = ${logHostMarker(rangeInHost)}")
       println("markerText = '$markerText'")
-      val host = affectedMarker.host
-      if (host == null) {
-        println("no host for text:'$markerText' affectedMarker = ${affectedMarker.third.range}")
-        continue
-      }
+      //      val host = affectedMarker.host
+      //      if (host == null) {
+      //        println("no host for text:'$markerText' affectedMarker = ${affectedMarker.third.range}")
+      //        throw AssertionError("no host for text:'$markerText' affectedMarker = ${affectedMarker.hostSegment} " +
+      //                             "-> '${affectedMarker.hostSegment?.range?.let { myOrigDocument.getText(it) }}'")
+      //      }
 
       println("accumulatedShift = $accumulatedShift")
       //      val contentTextRange = host.contentRange.shiftRight(accumulatedShift)
@@ -61,7 +63,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
       println("newText = '$newText'")
 
-      println("replacing '${myOrigDocument.getText(rangeInHost)}' with '$newText'")
+      println("replacing ${logHostMarker(rangeInHost)} with '$newText'")
       if (newText.isEmpty()) {
         hostsToRemove.add(affectedMarker)
       }
@@ -74,6 +76,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       val changedRange = TextRange.from(rangeInHost.startOffset, newText.length)
       rangeToReformat = rangeToReformat?.union(changedRange) ?: changedRange
     }
+
+    println("survivedMarkers = [${survivedMarkers.size}]: $survivedMarkers")
 
     rangeToReformat = markersWholeRange(survivedMarkers) ?: rangeToReformat
 
@@ -97,10 +101,11 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
       }
 
-
     }
+
+    hostsToRemove.forEach { markers.remove(it) }
+
     rangeToReformat = markersWholeRange(survivedMarkers) ?: rangeToReformat
-    val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
     //    InjectedLanguageUtil.getShreds(myInjectedFile).let { shreds ->
     //      println("shreds count = ${shreds.size}")
     //    }
@@ -108,52 +113,85 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     println("rangeToReformat-after = $rangeToReformat")
 
     if (rangeToReformat != null) {
-
-      val injectedPsiFiles = run {
-        survivedMarkers.asSequence().mapNotNull { it.host }.flatMap { host ->
-          //                  myEditor.caretModel.moveToOffset(host.contentRange.startOffset)
-          injectedLanguageManager.getInjectedPsiFiles(host)?.asSequence().orEmpty()
-            .mapNotNull { it.first as? PsiFile }
-            .filter { it.isValid }
-        }.toList().takeIf { it.any() }?.let { return@run it }
-
-        println("searching for injections at $rangeToReformat -> '${rangeToReformat?.substring(origPsiFile.text.also {
-          println("origPsiFile.text = '${origPsiFile.text}")
-        })}'")
-
-
-        injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, rangeToReformat)
-          .mapNotNull { dw -> psiDocumentManager.getPsiFile(dw) }
-      }
-
-
-
-      //    affectedMarkers.asSequence().mapNotNull { it.host }.firstOrNull()?.let {host ->
-      //      val injectedPsiFiles = injectedLanguageManager.getInjectedPsiFiles(host)?.map { it.first }.orEmpty()
-      println("injectedPsiFiles = $injectedPsiFiles")
-      for (psiFile in injectedPsiFiles.filterIsInstance<PsiFile>()) {
-        val shreds = InjectedLanguageUtil.getShreds(psiFile)
-        println("shreds1 count = ${shreds.size} for $psiFile")
-      }
-      //    }
-
-      val newInjectedFile = injectedPsiFiles.firstOrNull()
-      if (newInjectedFile != null && newInjectedFile !== myInjectedFile) {
-        println("injected file updated")
-        myInjectedFile = newInjectedFile
-
-      }
-
-      markers.clear()
-      val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
-      println("markersFromShreds = $markersFromShreds")
-      markers.addAll(markersFromShreds)
-      markers.firstOrNull()?.host?.contentRange?.let {
-        myEditor.caretModel.moveToOffset(it.startOffset)
-      }
+      rebuildMarkers(rangeToReformat)
     }
 
   }
+
+  private fun rebuildMarkers(rangeToReformat: TextRange) {
+    val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
+    psiDocumentManager.commitDocument(myOrigDocument)
+
+    //    AppUIExecutor.onUiThread().withDocumentsCommitted(myProject)
+    //      //.later()
+    //      .submit {
+
+
+    val origPsiFile = psiDocumentManager.getPsiFile(myOrigDocument)!!
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
+
+
+    println("searching for injections at ${logHostMarker(rangeToReformat)}")
+    val injectedPsiFiles = run {
+      //          survivedMarkers.asSequence().mapNotNull { it.host }.flatMap { host ->
+      //            //                  myEditor.caretModel.moveToOffset(host.contentRange.startOffset)
+      //            injectedLanguageManager.getInjectedPsiFiles(host)?.asSequence().orEmpty()
+      //              .mapNotNull { it.first as? PsiFile }
+      //              .filter { it.isValid }
+      //          }.toList().takeIf { it.any() }?.let { return@run it }
+      //
+      //          println("searching for injections at $rangeToReformat -> '${rangeToReformat?.substring(origPsiFile.text.also {
+      //            println("origPsiFile.text = '${origPsiFile.text}")
+      //          })}'")
+
+
+      injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, rangeToReformat)
+        .mapNotNull { dw -> psiDocumentManager.getPsiFile(dw) }
+        .takeIf { it.isNotEmpty() }
+      ?: injectedLanguageManager.findInjectedElementAt(origPsiFile, rangeToReformat.startOffset + 1)?.let {
+        listOf(it.containingFile)
+      }
+      ?: emptyList()
+
+    }
+
+    //    affectedMarkers.asSequence().mapNotNull { it.host }.firstOrNull()?.let {host ->
+    //      val injectedPsiFiles = injectedLanguageManager.getInjectedPsiFiles(host)?.map { it.first }.orEmpty()
+    println("injectedPsiFiles = $injectedPsiFiles")
+    for (psiFile in injectedPsiFiles.filterIsInstance<PsiFile>()) {
+      val shreds = InjectedLanguageUtil.getShreds(psiFile)
+      println("shreds1 count = ${shreds.size} for $psiFile")
+    }
+    //    }
+
+    val newInjectedFile = injectedPsiFiles.firstOrNull()
+    if (newInjectedFile != null && newInjectedFile !== myInjectedFile) {
+      println("injected file updated")
+      myInjectedFile = newInjectedFile
+
+    }
+
+
+    markers.clear()
+    val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
+    println("markersFromShreds = $markersFromShreds")
+    markers.addAll(markersFromShreds)
+    markers.firstOrNull()?.host?.contentRange?.let {
+      myEditor.caretModel.moveToOffset(it.startOffset)
+    }
+
+    //      }
+  }
+
+  private fun logHostMarker(rangeInHost: TextRange?) =
+    "$rangeInHost -> '${rangeInHost?.let {
+      try {
+        myOrigDocument.getText(it)
+      }
+      catch (e: IndexOutOfBoundsException) {
+        e.toString()
+      }
+    }}'"
 
   private fun promoteLinesEnds(mapping: List<Pair<Marker, String>>): Iterable<Pair<Marker, String>> {
     val result = ArrayList<Pair<Marker, String>>(mapping.size);
@@ -179,7 +217,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   private fun markersWholeRange(affectedMarkers: List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>>): TextRange? {
     return affectedMarkers.asSequence()
       .filter { it.host?.isValid ?: false }
-      .mapNotNull { it.hostRange?.let { TextRange.create(it) } }
+      .mapNotNull { it.hostSegment?.range }
       .takeIf { it.any() }?.reduce(TextRange::union)
   }
 
@@ -197,12 +235,16 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
   private fun removeHostsFromConcatenation(hostsToRemove: List<Marker>): TextRange? {
-    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().single()
+    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
     println("hostsToRemove = $hostsToRemove")
     val allToDelete = SmartList<PsiElement>()
     for (marker in hostsToRemove.reversed()) {
 
-      val host = marker.host!!
+      val host = marker.host
+      if (host == null) {
+        println("no host at ${logHostMarker(marker.hostSegment?.range)}")
+        continue
+      }
 
       val relatedElements =
         getFollowingElements(host) ?: host.prevSiblings.takeWhile(::intermediateElement).toList()
@@ -224,13 +266,15 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       }
     }
 
-    psiPolyadicExpression.operands.singleOrNull()?.let { onlyRemaining ->
-      println("replacing last $onlyRemaining")
-      return psiPolyadicExpression.replace(onlyRemaining).textRange
-      //            .let { new ->
-      //            hostsToRemove.remove(onlyRemaining as PsiLanguageInjectionHost)
-      //            hostsToRemove.add(new as PsiLanguageInjectionHost)
-      //          }
+    if (psiPolyadicExpression != null) {
+      psiPolyadicExpression.operands.singleOrNull()?.let { onlyRemaining ->
+        println("replacing last $onlyRemaining")
+        return psiPolyadicExpression.replace(onlyRemaining).textRange
+        //            .let { new ->
+        //            hostsToRemove.remove(onlyRemaining as PsiLanguageInjectionHost)
+        //            hostsToRemove.add(new as PsiLanguageInjectionHost)
+        //          }
+      }
     }
 
     return null

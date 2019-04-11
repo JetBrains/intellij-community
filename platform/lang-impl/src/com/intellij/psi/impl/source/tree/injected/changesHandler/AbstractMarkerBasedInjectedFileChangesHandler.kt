@@ -100,7 +100,7 @@ typealias Marker = Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiL
 
 inline val Marker.host: PsiLanguageInjectionHost? get() = this.third.element
 
-inline val Marker.hostRange: Segment? get() = this.third.range
+inline val Marker.hostSegment: Segment? get() = this.third.range
 
 inline val Marker.origin: RangeMarker get() = this.first
 

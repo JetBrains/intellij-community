@@ -31,6 +31,9 @@ public abstract class BaseInjectedFileChangesHandler implements InjectedFileChan
 
   /**
    * File injected in the Host
+   *
+   * NOTE: implementations rarely need to access this field.
+   * It is useful mostly only for {@link PsiFile#isValid()} check but implementations could work even having {@link #myInjectedFile} invalidated
    */
   protected PsiFile myInjectedFile;
 
