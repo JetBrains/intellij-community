@@ -82,14 +82,13 @@ class SheetMessage implements Disposable {
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
     myWindow.setSize(myController.SHEET_NC_WIDTH, 0);
-
-    setWindowOpacity(0.0f);
+    myWindow.setOpacity(0.0f);
 
     ComponentAdapter componentListener = new ComponentAdapter() {
       @Override
       public void componentShown(@NotNull ComponentEvent e) {
         super.componentShown(e);
-        setWindowOpacity(1.0f);
+        myWindow.setOpacity(1.0f);
         myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
       }
     };
@@ -179,16 +178,6 @@ class SheetMessage implements Disposable {
       if (f.getState() == Frame.ICONIFIED) {
         f.setState(Frame.NORMAL);
       }
-    }
-  }
-
-  private void setWindowOpacity(float opacity) {
-    try {
-      Method setOpacityMethod = myWindow.getClass().getMethod("setOpacity", Float.TYPE);
-      setOpacityMethod.invoke(myWindow, opacity);
-    }
-    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-      LOG.error(e);
     }
   }
 
