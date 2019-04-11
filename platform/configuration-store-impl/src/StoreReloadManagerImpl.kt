@@ -157,7 +157,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     doReloadProject(project)
   }
 
-  override fun storageFilesChanged(componentManager: ComponentManager, storages: List<StateStorage>) {
+  override fun storageFilesChanged(componentManager: ComponentManager, storages: Collection<StateStorage>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${storages.joinToString()}", Exception())
     }
