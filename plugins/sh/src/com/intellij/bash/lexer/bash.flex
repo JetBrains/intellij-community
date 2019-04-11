@@ -17,52 +17,55 @@ import com.intellij.openapi.util.text.StringUtil;
 %type IElementType
 
 %{
-  public _BashLexerGen() { this(null); }
-      private static final int DOUBLE_PARENTHESES = 2;
-      private static final int PARENTHESES = 1;
+  public _BashLexerGen() {
+    this(null);
+  }
 
-      private boolean isArithmeticExpansion;
-      private String heredocMarker;
-      private boolean heredocWithWhiteSpaceIgnore;
-      private final IntStack stateStack = new IntStack(1_000);
-      private final IntStack parenStack = new IntStack(1_000);
+  private static final int DOUBLE_PARENTHESES = 2;
+  private static final int PARENTHESES = 1;
 
-      private void pushState(int state) {
-        int currentState = yystate();
-        assert currentState != YYINITIAL || stateStack.empty() : "Can't push initial state into the not empty stack";
-        stateStack.push(currentState);
-        yybegin(state);
-      }
+  private boolean isArithmeticExpansion;
+  private String heredocMarker;
+  private boolean heredocWithWhiteSpaceIgnore;
+  private final IntStack stateStack = new IntStack(1_000);
+  private final IntStack parenStack = new IntStack(1_000);
 
-      private void popState() {
-        assert !stateStack.empty() : "States stack is empty";
-        yybegin(stateStack.pop());
-      }
+  private void pushState(int state) {
+    int currentState = yystate();
+    assert currentState != YYINITIAL || stateStack.empty() : "Can't push initial state into the not empty stack";
+    stateStack.push(currentState);
+    yybegin(state);
+  }
 
-      private void pushParentheses(int parentheses) {
-        parenStack.push(parentheses);
-      }
+  private void popState() {
+    assert !stateStack.empty() : "States stack is empty";
+    yybegin(stateStack.pop());
+  }
 
-      private void popParentheses() {
-        assert !parenStack.empty() : "Parentheses stack is empty";
-        parenStack.pop();
-      }
+  private void pushParentheses(int parentheses) {
+    parenStack.push(parentheses);
+  }
 
-      private boolean shouldCloseDoubleParen() {
-        return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
-      }
+  private void popParentheses() {
+    assert !parenStack.empty() : "Parentheses stack is empty";
+    parenStack.pop();
+  }
 
-      private boolean shouldCloseSingleParen() {
-        return !parenStack.empty() && parenStack.peek() == PARENTHESES;
-      }
+  private boolean shouldCloseDoubleParen() {
+    return !parenStack.empty() && parenStack.peek() == DOUBLE_PARENTHESES;
+  }
 
-      protected void onReset() {
-        stateStack.clear();
-        parenStack.clear();
-        heredocWithWhiteSpaceIgnore = false;
-        heredocMarker = null;
-        isArithmeticExpansion = false;
-      }
+  private boolean shouldCloseSingleParen() {
+    return !parenStack.empty() && parenStack.peek() == PARENTHESES;
+  }
+
+  protected void onReset() {
+    stateStack.clear();
+    parenStack.clear();
+    heredocWithWhiteSpaceIgnore = false;
+    heredocMarker = null;
+    isArithmeticExpansion = false;
+  }
 %}
 
 /***** Custom user code *****/
