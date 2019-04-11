@@ -27,12 +27,6 @@ abstract class Row : Cell() {
     label(gapLeft = gapLeft)
   }
 
-  fun <T : Any> LayoutBuilderWithButtonGroup<T>.radioButton(text: String, id: T) {
-    val component = RadioButton(text)
-    propertyManager.addRadioButton(component, id, this@Row)
-    component()
-  }
-
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
