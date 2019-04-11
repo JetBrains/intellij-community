@@ -4,15 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.util.messages.Topic
 import kotlinx.coroutines.runBlocking
-
-val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
-
-interface StorageManagerListener {
-  // not called if change requestor is SaveSession
-  fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager)
-}
 
 interface StateStorageManager {
   val macroSubstitutor: PathMacroSubstitutor?
