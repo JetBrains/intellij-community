@@ -30,7 +30,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
         is VFileContentChangeEvent -> {
           val file = event.file
           if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
-            LOG.debug { "CHANGED $file" }
+            LOG.debug { "CHANGED ${file.path}" }
             list.add(UpdateScheme(file))
           }
         }
@@ -41,7 +41,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
           }
           else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
             val virtualFile = event.file
-            LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""} found)" }
+            LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""}found)" }
             virtualFile?.let {
               list.add(AddScheme(it))
             }
@@ -54,7 +54,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             handleDirectoryDeleted(file, list)
           }
           else if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
-            LOG.debug { "DELETED $file" }
+            LOG.debug { "DELETED ${file.path}" }
             list.add(RemoveScheme(file.name))
           }
         }
@@ -68,6 +68,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
 
   private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
+  @Suppress("MoveVariableDeclarationIntoWhen")
   private fun isMyDirectory(parent: VirtualFile): Boolean {
     val virtualDirectory = schemeManager.cachedVirtualDirectory
     return when (virtualDirectory) {
@@ -80,7 +81,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     if (!StringUtil.equals(file.nameSequence, schemeManager.ioDirectory.fileName.toString())) {
       return
     }
-    LOG.debug { "DIR DELETED $file" }
+    LOG.debug { "DIR DELETED ${file.path}" }
     if (file == schemeManager.virtualDirectory) {
       list.add(RemoveAllSchemes())
     }
@@ -92,11 +93,12 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
 
     val dir = schemeManager.virtualDirectory
-    if (event.file != dir) {
+    val virtualFile = event.file
+    if (virtualFile != dir) {
       return
     }
 
-    LOG.debug { "DIR CREATED ${event.file}" }
+    LOG.debug { "DIR CREATED ${virtualFile?.path}" }
 
     for (file in dir!!.children) {
       if (isMyFileWithoutParentCheck(file)) {
