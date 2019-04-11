@@ -21,10 +21,11 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-/*
- * This is not an extension point you are looking for.
+/**
+ * WARNING: This is not an extension point you are looking for.
  * <p/>
- * Please, consider using DiffTool, DiffExtension or introducing a better extension point instead.
+ * Please, consider using {@link com.intellij.diff.DiffTool}, {@link com.intellij.diff.DiffExtension} or introducing a better extension point into platform,
+ * rather than adding second usage of this one.
  */
 public interface DiffViewerWrapper {
   Key<DiffViewerWrapper> KEY = Key.create("Diff.DiffViewerWrapper");
