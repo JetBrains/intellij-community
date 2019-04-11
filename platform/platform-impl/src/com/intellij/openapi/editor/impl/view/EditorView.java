@@ -15,15 +15,13 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -51,6 +49,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
+  private final CharWidthCache myCharWidthCache;
   private final TabFragment myTabFragment;
 
   private FontRenderContext myFontRenderContext;
@@ -79,6 +78,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
     myLogicalPositionCache = new LogicalPositionCache(this);
+    myCharWidthCache = new CharWidthCache(this);
     myTabFragment = new TabFragment(this);
 
     myEditor.getContentComponent().addHierarchyListener(this);
@@ -342,6 +342,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
+    myCharWidthCache.clear();
     setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
     mySizeManager.reset();
   }
@@ -555,6 +556,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       }
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
+      myCharWidthCache.clear();
     }
   }
 
@@ -583,7 +585,11 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
     }
   }
-  
+
+  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+    return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+  }
+
   Insets getInsets() {
     return myEditor.getContentComponent().getInsets();
   }
