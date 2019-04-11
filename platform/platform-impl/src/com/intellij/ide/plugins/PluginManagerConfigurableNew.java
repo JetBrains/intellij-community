@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
@@ -737,7 +737,7 @@ public class PluginManagerConfigurableNew
       return true;
     }
 
-    List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginsModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {

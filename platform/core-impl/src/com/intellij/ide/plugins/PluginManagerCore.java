@@ -94,6 +94,8 @@ public class PluginManagerCore {
   static final String EDIT = "edit";
 
   private static List<String> ourDisabledPlugins;
+  private static Set<String> ourDisabledPluginSet;
+
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
@@ -195,12 +197,20 @@ public class PluginManagerCore {
   @NotNull
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
-      ourDisabledPlugins = new ArrayList<>();
+      List<String> result = new ArrayList<>();
+      ourDisabledPlugins = result;
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
-        loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
+        loadDisabledPlugins(PathManager.getConfigPath(), result);
       }
+      ourDisabledPluginSet = new THashSet<>(result);
     }
     return ourDisabledPlugins;
+  }
+
+  @NotNull
+  public static Set<String> getDisabledPluginSet() {
+    getDisabledPlugins();
+    return ourDisabledPluginSet;
   }
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
@@ -282,15 +292,21 @@ public class PluginManagerCore {
   }
 
   public static boolean disablePlugin(@NotNull String id) {
+    if (!getDisabledPluginSet().add(id)) {
+      return false;
+    }
+
     List<String> disabledPlugins = getDisabledPlugins();
-    if (disabledPlugins.contains(id)) return false;
     disabledPlugins.add(id);
     return trySaveDisabledPlugins(disabledPlugins);
   }
 
   public static boolean enablePlugin(@NotNull String id) {
+    if (!getDisabledPluginSet().remove(id)) {
+      return false;
+    }
+
     List<String> disabledPlugins = getDisabledPlugins();
-    if (!disabledPlugins.contains(id)) return false;
     disabledPlugins.remove(id);
     return trySaveDisabledPlugins(disabledPlugins);
   }
@@ -1036,7 +1052,7 @@ public class PluginManagerCore {
               pluginName = descriptor.getName();
             }
 
-            boolean disabled = getDisabledPlugins().contains(pluginId.getIdString());
+            boolean disabled = getDisabledPluginSet().contains(pluginId.getIdString());
             errors.add(IdeBundle.message(disabled ? "error.required.plugin.disabled" : "error.required.plugin.not.installed", name, pluginName));
           }
           it.remove();
@@ -1335,7 +1351,7 @@ public class PluginManagerCore {
       }
     }
     else {
-      reasonToNotLoad = getDisabledPlugins().contains(idString) ? "Plugin is disabled" : null;
+      reasonToNotLoad = getDisabledPluginSet().contains(idString) ? "Plugin is disabled" : null;
     }
 
     if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {

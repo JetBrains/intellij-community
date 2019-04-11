@@ -798,7 +798,7 @@ public class PluginManagerConfigurableNewLayout
       return true;
     }
 
-    List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {

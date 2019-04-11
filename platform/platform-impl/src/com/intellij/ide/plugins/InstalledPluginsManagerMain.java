@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -65,8 +65,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
   private static final String INSTALL_PLUGIN_FROM_DISK_BUTTON_LABEL = "Install plugin from disk...";
 
-  public InstalledPluginsManagerMain(PluginManagerUISettings uiSettings) {
-    super(uiSettings);
+  public InstalledPluginsManagerMain() {
     init();
 
     myActionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -206,7 +205,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return new PluginManagerConfigurable(PluginManagerUISettings.getInstance(), true) {
       @Override
       protected PluginManagerMain createPanel() {
-        return new AvailablePluginsManagerMain(InstalledPluginsManagerMain.this, myUISettings, vendorFilter);
+        return new AvailablePluginsManagerMain(InstalledPluginsManagerMain.this, vendorFilter);
       }
 
       @Override
@@ -314,7 +313,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   public boolean isModified() {
     final boolean modified = super.isModified();
     if (modified) return true;
-    final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    final Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     for (int i = 0; i < pluginsModel.getRowCount(); i++) {
       if (isPluginStateChanged(pluginsModel.getObjectAt(i), disabledPlugins)) {
         return true;
@@ -335,8 +334,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     return false;
   }
 
-  private boolean isPluginStateChanged(final IdeaPluginDescriptor pluginDescriptor,
-                                       final List<String> disabledPlugins) {
+  private boolean isPluginStateChanged(@NotNull IdeaPluginDescriptor pluginDescriptor, @NotNull Set<String> disabledPlugins) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
     final boolean enabledInTable = ((InstalledPluginsTableModel)pluginsModel).isEnabled(pluginId);
     if (pluginDescriptor.isEnabled() != enabledInTable) {
