@@ -43,6 +43,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -50,15 +52,18 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SwingActionDelegate;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -1199,10 +1204,37 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                       file.getPresentableUrl() +
                       DocumentationMarkup.DEFINITION_END +
                       DocumentationMarkup.CONTENT_START : "") +
+           getVcsStatus(psiFile.getProject(), file) +
+           getScope(psiFile.getProject(), file) +
            "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
            "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
            "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
            "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? DocumentationMarkup.CONTENT_END : "");
+  }
+
+  private static String getScope(Project project, VirtualFile file) {
+    FileColorManagerImpl colorManager = (FileColorManagerImpl)FileColorManager.getInstance(project);
+    Color color = colorManager.getRendererBackground(file);
+    if (color == null) return "";
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+      for (NamedScope scope : holder.getScopes()) {
+        PackageSet packageSet = scope.getValue();
+        String name = scope.getName();
+        if (packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(file, project, holder) &&
+            colorManager.getScopeColor(name) == color) {
+          return "<p><span class='grayed'>Scope:</span> <span bgcolor='" + ColorUtil.toHex(color) + "'>" + scope.getName() + "</span>";
+        }
+      }
+    }
+    return "";
+  }
+
+  @NotNull
+  private static String getVcsStatus(Project project, VirtualFile file) {
+    FileStatus status = ChangeListManager.getInstance(project).getStatus(file);
+    return status != FileStatus.NOT_CHANGED ?
+           "<p><span class='grayed'>VCS Status:</span> <span color='" + ColorUtil.toHex(status.getColor()) + "'>" + status.getText() + "</span>" :
+           "";
   }
 
   private Optional<QuickSearchComponent> findQuickSearchComponent() {
