@@ -288,6 +288,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public boolean isIgnoredFile(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getSwitchedBranch(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }

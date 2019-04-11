@@ -23,15 +23,28 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
 
   int getSize();
 
+  @Deprecated
   void addFiles(@NotNull Collection<? extends VirtualFile> files);
 
-  void addFile(@NotNull VirtualFile files);
+  void addFilePaths(@NotNull Collection<? extends FilePath> files);
 
+  @Deprecated
+  void addFile(@NotNull VirtualFile file);
+
+  void addFile(@NotNull FilePath file);
+
+  @Deprecated
   boolean containsFile(@NotNull VirtualFile file);
+
+  boolean containsFile(@NotNull FilePath file);
 
   @NotNull
   List<FilePath> removeIgnoredFiles(@NotNull Collection<? extends FilePath> files);
 
+  @Deprecated
   @NotNull
   Set<VirtualFile> getIgnoredFiles();
+
+  @NotNull
+  Set<FilePath> getIgnoredFilePaths();
 }

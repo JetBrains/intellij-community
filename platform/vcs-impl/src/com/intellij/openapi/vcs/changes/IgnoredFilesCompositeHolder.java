@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     return HolderType.IGNORED;
   }
 
-  public void addFile(@NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
+  public void addFile(@NotNull AbstractVcs vcs, @NotNull FilePath file) {
     myVcsIgnoredHolderMap.get(vcs).addFile(file);
   }
 
@@ -60,7 +60,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
       .anyMatch(holder -> holder instanceof VcsIgnoredFilesHolder && ((VcsIgnoredFilesHolder)holder).isInUpdatingMode());
   }
 
-  public boolean containsFile(@NotNull VirtualFile file) {
+  public boolean containsFile(@NotNull FilePath file) {
     final AbstractVcs vcs = myVcsManager.getVcsFor(file);
     if (vcs == null) return false;
     final IgnoredFilesHolder ignoredFilesHolder = myVcsIgnoredHolderMap.get(vcs);
@@ -68,9 +68,9 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   }
 
   @NotNull
-  public Collection<VirtualFile> values() {
-    final HashSet<VirtualFile> result = ContainerUtil.newHashSet();
-    result.addAll(StreamEx.of(myVcsIgnoredHolderMap.values()).flatCollection(IgnoredFilesHolder::values).toSet());
+  public Collection<FilePath> values() {
+    final HashSet<FilePath> result = ContainerUtil.newHashSet();
+    result.addAll(StreamEx.of(myVcsIgnoredHolderMap.values()).flatCollection(IgnoredFilesHolder::paths).toSet());
     return result;
   }
 

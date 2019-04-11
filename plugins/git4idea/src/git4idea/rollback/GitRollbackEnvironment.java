@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -193,9 +192,8 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       final GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
       for (FilePath path : files) {
-        final VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());
-        if (untrackedFilesHolder != null && vf != null) {
-          untrackedFilesHolder.add(vf);
+        if (untrackedFilesHolder != null && path.getIOFile().exists()) {
+          untrackedFilesHolder.add(path);
         }
       }
     }

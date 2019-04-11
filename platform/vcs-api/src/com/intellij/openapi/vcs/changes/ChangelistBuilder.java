@@ -58,10 +58,13 @@ public interface ChangelistBuilder {
 
   /**
    * Process a file that is not under version control.
-   *
+   * @deprecated use {@link #processUnversionedFile(FilePath)} instead
    * @param file a file to process
    */
+  @Deprecated
   void processUnversionedFile(VirtualFile file);
+
+  void processUnversionedFile(FilePath filePath);
 
   /**
    * Process a file that was deleted locally, but version
@@ -83,10 +86,13 @@ public interface ChangelistBuilder {
 
   /**
    * Process the file that is ignored by the version control.
-   *
+   * @deprecated use {@link #processIgnoredFile(FilePath)} instead
    * @param file an ignored file
    */
+  @Deprecated
   void processIgnoredFile(VirtualFile file);
+
+  void processIgnoredFile(FilePath filePath);
 
   /**
    * technically locked folder (for Subversion: locked in working copy to keep WC's state consistent)

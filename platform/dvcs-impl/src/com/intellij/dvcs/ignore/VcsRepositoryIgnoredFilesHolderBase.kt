@@ -36,7 +36,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   private val inUpdateMode = AtomicBoolean(false)
   private val updateQueue = MergingUpdateQueue(updateQueueName, 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
-  private val ignoredSet = hashSetOf<VirtualFile>()
+  private val ignoredSet = hashSetOf<FilePath>()
   private val SET_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
 
@@ -49,18 +49,32 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   override fun addFiles(files: Collection<VirtualFile>) {
+    throw UnsupportedOperationException()
+  }
+
+  override fun addFilePaths(files: Collection<FilePath>) {
     SET_LOCK.write { ignoredSet.addAll(files) }
   }
 
   override fun addFile(file: VirtualFile) {
+    throw UnsupportedOperationException()
+  }
+
+  override fun addFile(file: FilePath) {
     SET_LOCK.write { ignoredSet.add(file) }
   }
 
   override fun isInUpdateMode() = inUpdateMode.get()
 
-  override fun getIgnoredFiles(): Set<VirtualFile> = SET_LOCK.read { ignoredSet.toHashSet() }
+  override fun getIgnoredFiles(): Set<VirtualFile> = throw UnsupportedOperationException()
 
-  override fun containsFile(file: VirtualFile) =
+  override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
+
+  override fun containsFile(file: VirtualFile): Boolean {
+    throw UnsupportedOperationException()
+  }
+
+  override fun containsFile(file: FilePath) =
     SET_LOCK.read { isUnder(ignoredSet, file) }
 
   override fun getSize() = SET_LOCK.read { ignoredSet.size }
@@ -92,9 +106,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
 
   @Throws(VcsException::class)
-  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile>
+  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<FilePath>
 
-  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile> =
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> =
     try {
       requestIgnored(paths)
     }
@@ -123,7 +137,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     SET_LOCK.write {
       val iter = ignoredSet.iterator()
       while (iter.hasNext()) {
-        val filePath = VcsUtil.getFilePath(iter.next())
+        val filePath = iter.next()
         if (isUnder(filePathsSet, filePath)) {
           iter.remove()
           removedIgnoredFiles.add(filePath)
@@ -165,10 +179,10 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     LOG.debug("Check ignored for paths: ", paths)
     LOG.debug("Ignored found for paths: ", ignored)
     addNotContainedIgnores(ignored)
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Collection<VirtualFile>) =
+  private fun addNotContainedIgnores(ignored: Collection<FilePath>) =
     SET_LOCK.write {
       ignored.forEach { ignored ->
         if (!isUnder(ignoredSet, ignored)) {
@@ -184,10 +198,10 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       ignoredSet.clear()
       ignoredSet.addAll(ignored)
     }
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun <REPOSITORY> Set<VirtualFile>.filterByRepository(repository: REPOSITORY) =
+  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY) =
     filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
 
   private fun fireUpdateStarted() {
@@ -198,7 +212,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.multicaster.updateFinished(paths)
   }
 
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
   private fun isUnder(parents: Set<FilePath>, child: FilePath) = generateSequence(child) { it.parentPath }.any { it in parents }
 
   companion object {

@@ -321,9 +321,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         .setSwitchedRoots(changeListManager.getSwitchedRoots())
         .setLockedFolders(changeListManager.getLockedFolders())
         .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(changeListManager.getUnversionedFiles());
+        .setUnversioned(changeListManager.getUnversionedFilesPaths());
       if (myState.myShowIgnored) {
-        treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
+        treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
       }
       DefaultTreeModel newModel = treeModelBuilder.build();
 

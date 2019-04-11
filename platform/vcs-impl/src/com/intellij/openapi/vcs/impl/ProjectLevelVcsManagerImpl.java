@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -106,12 +107,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
   private final FileIndexFacade myExcludedIndex;
+  private final FileTypeManager myFileTypeManager;
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
   public ProjectLevelVcsManagerImpl(Project project,
                                     FileStatusManager manager,
                                     FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
+                                    FileTypeManager fileTypeManager,
                                     DefaultVcsRootPolicy defaultVcsRootPolicy) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
@@ -143,6 +146,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentRevisionCache = new ContentRevisionCache();
     VcsListener vcsListener = () -> myVcsHistoryCache.clearHistory();
     myExcludedIndex = excludedFileIndex;
+    myFileTypeManager = fileTypeManager;
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
@@ -826,6 +830,24 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
       else {
         return myExcludedIndex.isUnderIgnored(vf);
+      }
+    });
+  }
+
+  @Override
+  public boolean isIgnored(@NotNull FilePath filePath) {
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return false;
+
+      if (Registry.is("ide.hide.excluded.files")) {
+        VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
+        return vf != null && myExcludedIndex.isExcludedFile(vf);
+      }
+      else {
+        for (String name : StringUtil.tokenize(filePath.getPath(), "/\\")) {
+          if (myFileTypeManager.isFileIgnored(name)) return true;
+        }
+        return false;
       }
     });
   }

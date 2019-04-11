@@ -49,6 +49,10 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
+  public void processUnversionedFile(FilePath file) {
+  }
+
+  @Override
   public void processLocallyDeletedFile(final FilePath file) {
   }
 
@@ -62,6 +66,10 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
 
   @Override
   public void processIgnoredFile(final VirtualFile file) {
+  }
+
+  @Override
+  public void processIgnoredFile(FilePath file) {
   }
 
   @Override

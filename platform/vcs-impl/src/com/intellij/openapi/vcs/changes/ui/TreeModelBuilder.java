@@ -27,6 +27,7 @@ import java.util.function.Function;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.createLockedFolders;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.FilePathHierarchicalComparatorKt.FILE_PATH_HIERARCHICAL_COMPARATOR;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -169,28 +170,29 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles) {
+  public TreeModelBuilder setUnversioned(@Nullable List<FilePath> unversionedFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, unversionedFiles);
-    return insertSpecificNodeToModel(unversionedFiles, node);
+    return insertSpecificFilePathNodeToModel(unversionedFiles, node, FileStatus.UNKNOWN);
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, boolean updatingMode) {
+  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles, boolean updatingMode) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles, updatingMode);
-    return insertSpecificNodeToModel(ignoredFiles, node);
+    return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 
   @NotNull
-  private TreeModelBuilder insertSpecificNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
-                                                     @NotNull ChangesBrowserSpecificFilesNode node) {
+  private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
+                                                             @NotNull ChangesBrowserSpecificFilePathsNode node,
+                                                             @NotNull FileStatus status) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
-      insertFilesIntoNode(specificFiles, node);
+      insertFilePathIntoNode(specificFiles, node, status);
     }
     return this;
   }
@@ -265,6 +267,16 @@ public class TreeModelBuilder {
 
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
     return subtreeRoot;
+  }
+
+  private void insertFilePathIntoNode(@NotNull Collection<? extends FilePath> files,
+                                      @NotNull ChangesBrowserNode subtreeRoot,
+                                      @NotNull FileStatus status) {
+    List<FilePath> sortedFilePaths = sorted(files, FILE_PATH_HIERARCHICAL_COMPARATOR);
+    for (FilePath filePath : sortedFilePaths) {
+      insertChangeNode(filePath, subtreeRoot,
+                       ChangesBrowserNode.createChange(myProject, new Change(null, new CurrentContentRevision(filePath), status)));
+    }
   }
 
   private void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {

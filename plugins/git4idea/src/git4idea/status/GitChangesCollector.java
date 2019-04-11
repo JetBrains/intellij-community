@@ -65,7 +65,7 @@ class GitChangesCollector {
 
   @NotNull private final GitRepository myRepository;
   private final Collection<Change> myChanges = new HashSet<>();
-  private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
+  private final Set<FilePath> myUnversionedFiles = new HashSet<>();
   @NotNull private final Git myGit;
 
   /**
@@ -80,7 +80,7 @@ class GitChangesCollector {
   }
 
   @NotNull
-  Collection<VirtualFile> getUnversionedFiles() {
+  Collection<FilePath> getUnversionedFilePaths() {
     return myUnversionedFiles;
   }
 
@@ -179,7 +179,7 @@ class GitChangesCollector {
 
   private void collectUnversionedFiles() throws VcsException {
     GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
-    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
+    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFilePaths());
   }
 
   private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
