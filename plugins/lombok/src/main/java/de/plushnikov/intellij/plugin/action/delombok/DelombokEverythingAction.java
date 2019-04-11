@@ -2,8 +2,6 @@ package de.plushnikov.intellij.plugin.action.delombok;
 
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -16,6 +14,9 @@ import de.plushnikov.intellij.plugin.processor.clazz.builder.BuilderProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsOldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor;
@@ -25,6 +26,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
@@ -60,6 +62,8 @@ public class DelombokEverythingAction extends AbstractDelombokAction {
       findExtension(DelegateFieldProcessor.class),
       findExtension(DelegateMethodProcessor.class),
 
+      findExtension(FieldNameConstantsOldProcessor.class),
+      findExtension(FieldNameConstantsFieldProcessor.class),
       findExtension(FieldNameConstantsProcessor.class),
       findExtension(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
 

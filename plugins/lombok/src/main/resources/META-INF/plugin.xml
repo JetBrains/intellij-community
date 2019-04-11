@@ -105,6 +105,11 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor"/>
+
+    <processor
+      implementation="de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsOldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor"/>
+
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor"/>
 

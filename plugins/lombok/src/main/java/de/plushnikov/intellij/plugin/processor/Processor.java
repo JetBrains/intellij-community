@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,10 +26,14 @@ public interface Processor {
   @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
-  boolean isEnabled(@NotNull PropertiesComponent propertiesComponent);
+  default boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
+    return true;
+  }
 
   @NotNull
-  List<? super PsiElement> process(@NotNull PsiClass psiClass);
+  default List<? super PsiElement> process(@NotNull PsiClass psiClass) {
+    return Collections.emptyList();
+  }
 
   LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation);
 

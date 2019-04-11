@@ -54,7 +54,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
-      if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
+      if (supportAnnotationVariant(psiAnnotation) && validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
         result = new ArrayList<>();
         generatePsiElements(psiClass, psiAnnotation, result);
       }

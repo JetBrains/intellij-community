@@ -37,7 +37,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
     if (psiClass.getParent() instanceof PsiClass) {
       PsiClass parentClass = (PsiClass) psiClass.getParent();
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, getSupportedAnnotationClasses());
-      if (null != psiAnnotation) {
+      if (null != psiAnnotation && supportAnnotationVariant(psiAnnotation)) {
         ProblemEmptyBuilder problemBuilder = ProblemEmptyBuilder.getInstance();
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);

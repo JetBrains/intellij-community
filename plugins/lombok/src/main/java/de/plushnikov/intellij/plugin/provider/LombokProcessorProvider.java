@@ -78,9 +78,8 @@ public class LombokProcessorProvider {
   }
 
   @NotNull
-  public Collection<Processor> getLombokProcessors(@NotNull Class supportedClass) {
-    final Collection<Processor> result = lombokTypeProcessors.get(supportedClass);
-    return result == null ? Collections.emptySet() : result;
+  Collection<Processor> getLombokProcessors(@NotNull Class supportedClass) {
+    return lombokTypeProcessors.computeIfAbsent(supportedClass, k -> Collections.emptySet());
   }
 
   @NotNull
@@ -124,7 +123,7 @@ public class LombokProcessorProvider {
   }
 
   @NotNull
-  public Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
+  Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
     Collection<LombokProcessorData> result = Collections.emptyList();
     if (verifyLombokAnnotationPresent(psiMember)) {
       result = new ArrayList<>();

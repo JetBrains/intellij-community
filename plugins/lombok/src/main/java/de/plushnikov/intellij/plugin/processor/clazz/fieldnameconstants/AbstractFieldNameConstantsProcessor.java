@@ -32,6 +32,12 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   }
 
   @Override
+  protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
+    // new version of @FieldNameConstants has an attribute "asEnum", the old one not
+    return null != psiAnnotation.findAttributeValue("asEnum");
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     return validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
   }

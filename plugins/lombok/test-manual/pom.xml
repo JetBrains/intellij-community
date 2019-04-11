@@ -5,7 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.plushnikov.intellij.plugin</groupId>
   <artifactId>manual-lombok-test</artifactId>
+  <packaging>pom</packaging>
   <version>1.0</version>
+  <modules>
+    <module>old-lombok</module>
+  </modules>
 
   <properties>
     <slf4j.version>1.7.14</slf4j.version>

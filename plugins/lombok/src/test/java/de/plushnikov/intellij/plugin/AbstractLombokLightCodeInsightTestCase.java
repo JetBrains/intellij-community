@@ -62,7 +62,7 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeIn
     loadFilesFrom(LOMBOK_SRC_PATH);
   }
 
-  private void loadFilesFrom(final String srcPath) {
+  protected void loadFilesFrom(final String srcPath) {
     List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
     for (File javaFile : filesByMask) {
       String filePath = PathUtil.toSystemIndependentName(javaFile.getPath());
