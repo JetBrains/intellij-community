@@ -34,8 +34,6 @@ public class GradleRunAnythingProviderTest extends LightPlatformTestCase {
 
     linkProject(project, "projectPath", "projectA");
 
-    assertEmpty("Do not provide values for non-gradle command patterns", provider.getValues(dataContext, ""));
-
     // check tasks completions
     String[] allTasks = {"build", "buildNeeded", "aTask", ":sub:build", ":sub:aTask"};
     List<String> allTasksVariants = StreamEx.of(allTasks).map(s -> "gradle " + s).toList();
