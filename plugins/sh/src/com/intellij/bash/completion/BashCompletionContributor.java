@@ -1,7 +1,7 @@
 package com.intellij.bash.completion;
 
 import com.intellij.bash.BashLanguage;
-import com.intellij.bash.lexer.BashLexer;
+import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -37,15 +37,16 @@ public class BashCompletionContributor extends CompletionContributor implements 
         Collection<String> kws = Collections.emptyList();
         PsiElement original = parameters.getOriginalPosition();
         if (original == null || !original.getText().contains("/")) {
-          kws = suggestKeywords(parameters.getPosition());
-          for (String keywords : kws) {
-            result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
-          }
-          result.addAllElements(ContainerUtil.map(BUILTINS,
+          result.addAllElements(ContainerUtil.map(BUILTIN,
               s -> PrioritizedLookupElement.withPriority(LookupElementBuilder
                   .create(s)
                   .withIcon(PlatformIcons.FUNCTION_ICON)
                   .withInsertHandler(AddSpaceInsertHandler.INSTANCE), BUILTIN_PRIORITY)));
+
+          kws = suggestKeywords(parameters.getPosition());
+          for (String keywords : kws) {
+            result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
+          }
         }
 
         String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
@@ -76,7 +77,7 @@ public class BashCompletionContributor extends CompletionContributor implements 
 
       @Nullable
       private String kw2str(IElementType o) {
-        return BashLexer.HUMAN_READABLE_KEYWORDS.contains(o) ? o.toString() : null;
+        return BashTokenTypes.HUMAN_READABLE_KEYWORDS.contains(o) ? o.toString() : null;
       }
     };
     file.putUserData(GeneratedParserUtilBase.COMPLETION_STATE_KEY, state);
@@ -84,7 +85,7 @@ public class BashCompletionContributor extends CompletionContributor implements 
     return state.items;
   }
 
-  private static List<String> BUILTINS = ContainerUtil.newSmartList(
+  private static final List<String> BUILTIN = ContainerUtil.newSmartList(
       "alias", "bg", "bind", "break", "builtin", "caller", "cd", "command",
       "compgen", "complete", "continue", "declare", "dirs", "disown", "echo",
       "enable", "eval", "exec", "exit", "export", "false", "fc", "fg", "getopts",
