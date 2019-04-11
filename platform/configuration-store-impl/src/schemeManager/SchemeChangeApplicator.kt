@@ -3,7 +3,6 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import java.util.function.Function
@@ -36,18 +35,17 @@ internal fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<An
 }
 
 internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerImpl<Any, Any>) {
-  internal fun reload(events: Collection<SchemeChangeEvent>, schemaLoaderRef: Ref<SchemeLoader<Any, Any>>) {
+  internal fun reload(events: Collection<SchemeChangeEvent>) {
+    val lazySchemeLoader = lazy { schemeManager.createSchemeLoader() }
+    doReload(events, lazySchemeLoader)
+    if (lazySchemeLoader.isInitialized()) {
+      lazySchemeLoader.value.apply()
+    }
+  }
+
+  private fun doReload(events: Collection<SchemeChangeEvent>, lazySchemaLoader: Lazy<SchemeLoader<Any, Any>>) {
     val oldActiveScheme = schemeManager.activeScheme
     var newActiveScheme: Any? = null
-
-    val lazySchemaLoader = lazy {
-      var result = schemaLoaderRef.get()
-      if (result == null) {
-        result = schemeManager.createSchemeLoader()
-        schemaLoaderRef.set(result)
-      }
-      result
-    }
 
     val processor = schemeManager.processor
     for (event in events) {
