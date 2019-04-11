@@ -151,6 +151,13 @@ public class ChangesUtil {
   }
 
   @NotNull
+  public static Stream<VirtualFile> getFilesFromPaths(@NotNull Stream<? extends FilePath> paths) {
+    return paths
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull);
+  }
+
+  @NotNull
   public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<? extends Change> changes) {
     return changes
       .map(ChangesUtil::getAfterPath)

@@ -35,8 +35,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
@@ -46,9 +45,9 @@ import static java.util.stream.Collectors.toList;
 public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
@@ -163,13 +162,13 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
              ? new VirtualFileDeleteProvider()
              : null;
     }
-    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
+    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
     if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
       return getExactlySelectedVirtualFiles(this);
     }
-    if (IGNORED_FILES_DATA_KEY.is(dataId)) {
+    if (IGNORED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedIgnoredFiles();
     }
     if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
@@ -197,23 +196,23 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  public Stream<VirtualFile> getUnversionedFiles() {
+  public Stream<FilePath> getUnversionedFiles() {
     //noinspection unchecked
     Enumeration<ChangesBrowserNode> nodes = getRoot().children();
     ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
                                                                          ChangesBrowserUnversionedFilesNode.class);
     if (node == null) return Stream.empty();
-    return node.getFilesUnderStream();
+    return node.getFilePathsUnderStream();
   }
 
   @NotNull
-  public Stream<VirtualFile> getSelectedUnversionedFiles() {
-    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
+  public Stream<FilePath> getSelectedUnversionedFiles() {
+    return getSelectedFilePaths(UNVERSIONED_FILES_TAG);
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedIgnoredFiles() {
-    return getSelectedVirtualFiles(IGNORED_FILES_TAG);
+  private Stream<FilePath> getSelectedIgnoredFiles() {
+    return getSelectedFilePaths(IGNORED_FILES_TAG);
   }
 
   @NotNull
@@ -225,6 +224,13 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodesStream(tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
+      .distinct();
+  }
+
+  @NotNull
+  protected Stream<FilePath> getSelectedFilePaths(@Nullable Object tag) {
+    return getSelectionNodesStream(tag)
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
       .distinct();
   }
 
@@ -264,6 +270,16 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
+      .distinct();
+  }
+
+  @NotNull
+  static Stream<FilePath> getFilePaths(@Nullable TreePath[] paths, @Nullable Object tag) {
+    return stream(paths)
+      .filter(path -> isUnderTag(path, tag))
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
       .distinct();
   }
 
@@ -318,7 +334,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   private Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
       getAfterRevisionsFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
     ).distinct();
   }
 
@@ -326,7 +342,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
     ).distinct();
   }
 

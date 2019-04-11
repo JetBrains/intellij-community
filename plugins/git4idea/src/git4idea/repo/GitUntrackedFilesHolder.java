@@ -19,12 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFile;
+import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFilePaths;
 
 /**
  * <p>
@@ -86,8 +88,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private final GitRepositoryFiles myRepositoryFiles;
   private final Git myGit;
 
-  private final Set<VirtualFile> myDefinitelyUntrackedFiles = new HashSet<>();
-  private final Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<>();
+  private final Set<FilePath> myDefinitelyUntrackedFiles = new HashSet<>();
+  private final Set<FilePath> myPossiblyUntrackedFiles = new HashSet<>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
   private final Object RESCAN_LOCK = new Object();
@@ -123,7 +125,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   /**
    * Adds the file to the list of untracked.
    */
-  public void add(@NotNull VirtualFile file) {
+  public void add(@NotNull FilePath file) {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles.add(file);
       myPossiblyUntrackedFiles.add(file);
@@ -133,7 +135,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   /**
    * Adds several files to the list of untracked.
    */
-  public void add(@NotNull Collection<? extends VirtualFile> files) {
+  public void add(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles.addAll(files);
       myPossiblyUntrackedFiles.addAll(files);
@@ -143,7 +145,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   /**
    * Removes several files from untracked.
    */
-  public void remove(@NotNull Collection<? extends VirtualFile> files) {
+  public void remove(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       myDefinitelyUntrackedFiles.removeAll(files);
       myPossiblyUntrackedFiles.addAll(files);
@@ -155,9 +157,22 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * This method may be slow, if the full-refresh of untracked files is needed.
    * @return untracked files.
    * @throws VcsException if there is an unexpected error during Git execution.
+   * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
+  @Deprecated
   @NotNull
   public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
+   return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);
+  }
+
+  public void invalidate() {
+    synchronized (LOCK) {
+      myReady = false;
+    }
+  }
+
+  @NotNull
+  public Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
     synchronized (RESCAN_LOCK) {
       rescan();
     }
@@ -167,23 +182,17 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
   }
 
-  public void invalidate() {
-    synchronized (LOCK) {
-      myReady = false;
-    }
-  }
-
   /**
    * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
    */
   private void rescan() throws VcsException {
-    @Nullable Set<VirtualFile> suspiciousFiles;
+    @Nullable Set<FilePath> suspiciousFiles;
     synchronized (LOCK) {
       suspiciousFiles = myReady ? new HashSet<>(myPossiblyUntrackedFiles) : null;
       myPossiblyUntrackedFiles.clear();
     }
 
-    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
+    Set<FilePath> untrackedFiles = myGit.untrackedFilePaths(myProject, myRoot, suspiciousFiles);
 
     synchronized (LOCK) {
       if (suspiciousFiles != null) {
@@ -202,7 +211,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   @Override
   public void filesChanged(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
-    Set<VirtualFile> filesToRefresh = new HashSet<>();
+    Set<FilePath> filesToRefresh = new HashSet<>();
 
     for (VFileEvent event : events) {
       if (allChanged) {
@@ -213,9 +222,11 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
         allChanged = true;
       }
       else {
-        VirtualFile affectedFile = getAffectedFile(event);
-        if (notIgnored(affectedFile)) {
-          filesToRefresh.add(affectedFile);
+        Set<FilePath> affectedPaths = getAffectedFilePaths(event);
+        for (FilePath affectedFilePath : affectedPaths) {
+          if (notIgnored(affectedFilePath)) {
+            filesToRefresh.add(affectedFilePath);
+          }
         }
       }
     }
@@ -271,11 +282,11 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     myRepository.getIgnoredFilesHolder().startRescan(doAfterRescan);
   }
 
-  private boolean notIgnored(@Nullable VirtualFile file) {
+  private boolean notIgnored(@Nullable FilePath file) {
     return file != null && belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
   }
 
-  private boolean belongsToThisRepository(VirtualFile file) {
+  private boolean belongsToThisRepository(FilePath file) {
     return myRoot.equals(myVcsManager.getVcsRootFor(file));
   }
 }

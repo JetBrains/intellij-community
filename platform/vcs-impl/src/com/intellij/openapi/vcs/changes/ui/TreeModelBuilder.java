@@ -170,28 +170,29 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles) {
+  public TreeModelBuilder setUnversioned(@Nullable List<FilePath> unversionedFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, unversionedFiles);
-    return insertSpecificNodeToModel(unversionedFiles, node);
+    return insertSpecificFilePathNodeToModel(unversionedFiles, node, FileStatus.UNKNOWN);
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, boolean updatingMode) {
+  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles, boolean updatingMode) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles, updatingMode);
-    return insertSpecificNodeToModel(ignoredFiles, node);
+    return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 
   @NotNull
-  private TreeModelBuilder insertSpecificNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
-                                                     @NotNull ChangesBrowserSpecificFilesNode node) {
+  private TreeModelBuilder insertSpecificFilePathNodeToModel(@NotNull List<? extends FilePath> specificFiles,
+                                                             @NotNull ChangesBrowserSpecificFilePathsNode node,
+                                                             @NotNull FileStatus status) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     if (!node.isManyFiles()) {
       node.markAsHelperNode();
-      insertFilesIntoNode(specificFiles, node);
+      insertLocalFilePathIntoNode(specificFiles, node, status);
     }
     return this;
   }
@@ -277,6 +278,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
+    }
+  }
+
+  private void insertLocalFilePathIntoNode(@NotNull Collection<? extends FilePath> files,
+                                           @NotNull ChangesBrowserNode subtreeRoot,
+                                           @NotNull FileStatus status) {
+    List<FilePath> sortedFilePaths = sorted(files, PATH_COMPARATOR);
+    for (FilePath filePath : sortedFilePaths) {
+      insertChangeNode(filePath, subtreeRoot, ChangesBrowserNode.createFilePath(filePath, status));
     }
   }
 

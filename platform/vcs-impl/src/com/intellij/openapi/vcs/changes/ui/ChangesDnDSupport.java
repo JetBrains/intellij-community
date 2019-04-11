@@ -19,10 +19,10 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshel
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFiles;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getFilePaths;
 import static java.util.stream.Collectors.toList;
 
 public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
@@ -84,8 +84,8 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
 
     if (info.isMove()) {
       Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toArray(Change[]::new);
-      List<VirtualFile> unversionedFiles = getVirtualFiles(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList());
-      List<VirtualFile> ignoredFiles = getVirtualFiles(myTree.getSelectionPaths(), IGNORED_FILES_TAG).collect(toList());
+      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList());
+      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).collect(toList());
 
       if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
         result = new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));

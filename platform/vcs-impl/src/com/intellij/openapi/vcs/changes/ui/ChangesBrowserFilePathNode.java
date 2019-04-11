@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,6 +16,15 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
+
+  @Nullable
+  private FileStatus status;
+
+  public ChangesBrowserFilePathNode(@NotNull FilePath userObject, @Nullable FileStatus status) {
+    this(userObject);
+    this.status = status;
+  }
+
   public ChangesBrowserFilePathNode(FilePath userObject) {
     super(userObject);
   }
@@ -33,22 +43,29 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
     if (path.isDirectory() || !isLeaf()) {
-      renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(getRelativePath(path), getTextAttributes());
       if (!isLeaf()) {
         appendCount(renderer);
       }
     }
     else {
       if (renderer.isShowFlatten()) {
-        renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(path.getName(), getTextAttributes());
         appendParentPath(renderer, path.getParentPath());
       }
       else {
-        renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(getRelativePath(path), getTextAttributes());
       }
     }
 
     renderer.setIcon(path.getFileType(), path.isDirectory() || !isLeaf());
+  }
+
+  @NotNull
+  private SimpleTextAttributes getTextAttributes() {
+    return status != null
+           ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, status.getColor())
+           : SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @NotNull

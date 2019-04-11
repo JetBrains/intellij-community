@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PlaceProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +49,17 @@ public interface VcsContext extends PlaceProvider<String> {
     return Arrays.stream(getSelectedFiles());
   }
 
+  /**
+   * @deprecated use {@link #getSelectedUnversionedFilePaths}
+   */
+  @Deprecated
   @NotNull
   default List<VirtualFile> getSelectedUnversionedFiles() {
+    return ContainerUtil.mapNotNull(getSelectedUnversionedFilePaths(), FilePath::getVirtualFile);
+  }
+
+  @NotNull
+  default List<FilePath> getSelectedUnversionedFilePaths() {
     return emptyList();
   }
 

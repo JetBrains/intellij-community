@@ -5,10 +5,11 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,18 +114,18 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
 
-    final List<VirtualFile> toUpdate = new ArrayList<>();
+    final List<FilePath> toUpdate = new ArrayList<>();
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
     if (! toUpdate.isEmpty()) {
-      dragOwner.addUnversionedFiles(dropList, toUpdate);
+      dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
     }
   }
 
-  private static void addIfNotNull(final List<? super VirtualFile> unversionedFiles1, final List<? extends VirtualFile> ignoredFiles) {
+  private static void addIfNotNull(final List<? super FilePath> unversionedFiles, final List<? extends FilePath> ignoredFiles) {
     if (ignoredFiles != null) {
-      unversionedFiles1.addAll(ignoredFiles);
+      unversionedFiles.addAll(ignoredFiles);
     }
   }
 

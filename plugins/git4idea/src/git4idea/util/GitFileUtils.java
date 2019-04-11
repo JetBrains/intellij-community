@@ -22,7 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitBinaryHandler;
@@ -108,7 +110,7 @@ public class GitFileUtils {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().remove(addedFiles);
+    repository.getUntrackedFilesHolder().remove(ContainerUtil.map(addedFiles, VcsUtil::getFilePath));
   }
 
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
@@ -118,7 +120,7 @@ public class GitFileUtils {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().add(removedFiles);
+    repository.getUntrackedFilesHolder().add(ContainerUtil.map(removedFiles, VcsUtil::getFilePath));
   }
 
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile... files) throws VcsException {

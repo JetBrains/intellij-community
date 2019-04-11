@@ -88,8 +88,10 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @NotNull
   public static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
-    boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
-    if (hasExplicitUnversioned) return e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY));
+    if (hasExplicitUnversioned) {
+      return e.getRequiredData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).map(FilePath::getVirtualFile).filter(Objects::nonNull);
+    }
 
     // As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
     // not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in

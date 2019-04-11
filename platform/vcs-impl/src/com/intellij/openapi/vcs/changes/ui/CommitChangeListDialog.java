@@ -798,7 +798,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     @NotNull
     private List<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends VirtualFile> unversioned) {
-      return concat(map(changes, ChangeWrapper::new), map(unversioned, UnversionedFileWrapper::new));
+      return concat(map(changes, ChangeWrapper::new),
+                    map(unversioned, UnversionedFileWrapper::new));
     }
 
     @Override

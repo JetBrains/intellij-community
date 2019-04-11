@@ -24,10 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,6 +59,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -375,9 +373,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         .setSwitchedRoots(changeListManager.getSwitchedRoots())
         .setLockedFolders(changeListManager.getLockedFolders())
         .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(unversionedFiles);
+        .setUnversioned(changeListManager.getUnversionedFilesPaths());
       if (myState.myShowIgnored) {
-        treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
+        treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
       }
       for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
         extension.modifyTreeModelBuilder(treeModelBuilder);
@@ -611,8 +609,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @NotNull
-    private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends VirtualFile> unversioned) {
-      return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(UnversionedFileWrapper::new)).collect(toList());
+    private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends FilePath> unversioned) {
+      return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(FilePath::getVirtualFile).filter(
+        Objects::nonNull).map(UnversionedFileWrapper::new)).collect(toList());
     }
   }
 

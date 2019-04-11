@@ -3,7 +3,6 @@ package com.intellij.dvcs.ignore;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,15 +22,15 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
 
   int getSize();
 
-  void addFiles(@NotNull Collection<? extends VirtualFile> files);
+  void addFiles(@NotNull Collection<? extends FilePath> files);
 
-  void addFile(@NotNull VirtualFile files);
+  void addFile(@NotNull FilePath file);
 
-  boolean containsFile(@NotNull VirtualFile file);
+  boolean containsFile(@NotNull FilePath file);
 
   @NotNull
   List<FilePath> removeIgnoredFiles(@NotNull Collection<? extends FilePath> files);
 
   @NotNull
-  Set<VirtualFile> getIgnoredFiles();
+  Set<FilePath> getIgnoredFilePaths();
 }

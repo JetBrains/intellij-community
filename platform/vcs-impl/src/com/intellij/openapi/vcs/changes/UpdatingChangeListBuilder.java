@@ -100,10 +100,23 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processUnversionedFile(VirtualFile file) {
-    if (acceptFile(file, false)) {
-      myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
-      // if a file was previously marked as switched through recursion, remove it from switched list
-      myComposite.getSwitchedFileHolder().removeFile(file);
+    if (file != null) {
+      processUnversionedFile(VcsUtil.getFilePath(file));
+    }
+  }
+
+  @Override
+  public void processUnversionedFile(FilePath filePath) {
+    if (acceptFilePath(filePath, false)) {
+      myComposite.getPathHolder(FileHolder.HolderType.UNVERSIONED).addFile(filePath);
+      SwitchedFileHolder switchedFileHolder = myComposite.getSwitchedFileHolder();
+      if (!switchedFileHolder.isEmpty()) {
+        // if a file was previously marked as switched through recursion, remove it from switched list
+        VirtualFile file = filePath.getVirtualFile();
+        if (file != null) {
+          switchedFileHolder.removeFile(file);
+        }
+      }
     }
   }
 
@@ -136,8 +149,15 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void processIgnoredFile(VirtualFile file) {
-    if (acceptFile(file, false)) {
-      myComposite.getIgnoredFileHolder().addFile(myScope.getVcs(), file);
+    if (file != null) {
+      processIgnoredFile(VcsUtil.getFilePath(file));
+    }
+  }
+
+  @Override
+  public void processIgnoredFile(FilePath filePath) {
+    if (acceptFilePath(filePath, false)) {
+      myComposite.getIgnoredFileHolder().addFile(myScope.getVcs(), filePath);
     }
   }
 
@@ -197,5 +217,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return false;
     if (!allowIgnored && ReadAction.compute(() -> myVcsManager.isIgnored(file))) return false;
     return myScope.belongsTo(VcsUtil.getFilePath(file));
+  }
+
+  private boolean acceptFilePath(@Nullable FilePath filePath, boolean allowIgnored) {
+    checkIfDisposed();
+    if (filePath == null) return false;
+    if (!allowIgnored && ReadAction.compute(() -> myVcsManager.isIgnored(filePath))) return false;
+    return myScope.belongsTo(filePath);
   }
 }

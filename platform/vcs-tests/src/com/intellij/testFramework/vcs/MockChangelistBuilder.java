@@ -33,10 +33,10 @@ import java.util.List;
  */
 public class MockChangelistBuilder implements ChangelistBuilder {
   private final List<Change> myChanges = new ArrayList<>();
-  private final List<VirtualFile> myUnversionedFiles = new ArrayList<>();
+  private final List<FilePath> myUnversionedFiles = new ArrayList<>();
   private final List<FilePath> myLocallyDeletedFiles = new ArrayList<>();
   private final List<VirtualFile> myHijackedFiles = new ArrayList<>();
-  private final List<VirtualFile> myIgnoredFiles = new ArrayList<>();
+  private final List<FilePath> myIgnoredFiles = new ArrayList<>();
 
   @Override
   public void processChange(Change change, VcsKey vcsKey) {
@@ -66,6 +66,10 @@ public class MockChangelistBuilder implements ChangelistBuilder {
 
   @Override
   public void processUnversionedFile(VirtualFile file) {
+  }
+
+  @Override
+  public void processUnversionedFile(FilePath file) {
     myUnversionedFiles.add(file);
   }
 
@@ -86,6 +90,10 @@ public class MockChangelistBuilder implements ChangelistBuilder {
 
   @Override
   public void processIgnoredFile(VirtualFile file) {
+  }
+
+  @Override
+  public void processIgnoredFile(FilePath file) {
     myIgnoredFiles.add(file);
   }
 
@@ -122,7 +130,7 @@ public class MockChangelistBuilder implements ChangelistBuilder {
     return myChanges;
   }
 
-  public List<VirtualFile> getUnversionedFiles() {
+  public List<FilePath> getUnversionedFiles() {
     return myUnversionedFiles;
   }
 
@@ -134,7 +142,7 @@ public class MockChangelistBuilder implements ChangelistBuilder {
     return myHijackedFiles;
   }
 
-  public List<VirtualFile> getIgnoredFiles() {
+  public List<FilePath> getIgnoredFiles() {
     return myIgnoredFiles;
   }
 }

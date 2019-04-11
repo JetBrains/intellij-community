@@ -130,8 +130,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   @NotNull
   public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path) throws VcsException {
+    return createPathFromEscaped(vcsRoot, path, false);
+  }
+
+  @NotNull
+  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, GitUtil.unescapePath(path));
-    return VcsUtil.getFilePath(absolutePath, false);
+    return VcsUtil.getFilePath(absolutePath, isDirectory);
   }
 
   @NotNull

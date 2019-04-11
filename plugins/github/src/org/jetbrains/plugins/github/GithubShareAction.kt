@@ -21,10 +21,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -246,7 +243,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
             // ask for files to add
             val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
-            val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
+            val untrackedFiles =
+              filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
             trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
             val allFiles = ArrayList<VirtualFile>()

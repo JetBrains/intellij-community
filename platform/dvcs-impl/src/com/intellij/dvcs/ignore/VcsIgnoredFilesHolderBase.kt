@@ -4,10 +4,10 @@ package com.intellij.dvcs.ignore
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.FileHolder
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
-import com.intellij.openapi.vfs.VirtualFile
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
@@ -27,13 +27,13 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) {}
 
-  override fun addFile(file: VirtualFile) {
+  override fun addFile(file: FilePath) {
     findIgnoreHolderByFile(file)?.addFile(file)
   }
 
-  override fun containsFile(file: VirtualFile) = findIgnoreHolderByFile(file)?.containsFile(file) ?: false
+  override fun containsFile(file: FilePath) = findIgnoreHolderByFile(file)?.containsFile(file) ?: false
 
-  override fun values() = vcsIgnoredHolderMap.flatMap { it.value.ignoredFiles }
+  override fun values() = vcsIgnoredHolderMap.flatMap { it.value.ignoredFilePaths }
 
   override fun startRescan() {
     vcsIgnoredHolderMap.values.forEach { it.startRescan() }
@@ -43,7 +43,7 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
     vcsIgnoredHolderMap.clear()
   }
 
-  private fun findIgnoreHolderByFile(file: VirtualFile): VcsRepositoryIgnoredFilesHolder? =
+  private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? =
     repositoryManager.getRepositoryForFileQuick(file)?.let { repositoryForFile ->
       vcsIgnoredHolderMap[repositoryForFile]
     }
