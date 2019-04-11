@@ -435,8 +435,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     // set bounds even if maximized because on unmaximize we must restore previous frame bounds
     frame.setBounds(frameBounds);
 
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
     IdeMenuBar.installAppMenuIfNeeded(frame);
   }
@@ -480,11 +480,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         frame.setBounds(bounds);
       }
     }
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.addWindowListener(myActivationListener);
     if (addComponentListener) {
