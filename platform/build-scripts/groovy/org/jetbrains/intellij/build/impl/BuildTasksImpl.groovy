@@ -290,6 +290,11 @@ idea.fatal.error.notification=disabled
         }
       }
     }
+    return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
+  }
+
+  private DistributionJARsBuilder compilePlatformAndPluginModules(File patchedApplicationInfo,
+                                                                  LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
@@ -397,6 +402,22 @@ idea.fatal.error.notification=disabled
       }
     }
     logFreeDiskSpace("after building distributions")
+  }
+
+  @Override
+  void buildNonBundledPlugins(List<String> mainPluginModules) {
+    checkProductProperties()
+    checkPluginModules(mainPluginModules, "mainPluginModules", [] as Set<String>)
+    copyDependenciesFile()
+    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
+    def plugins = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
+    for (plugin in plugins) {
+      def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
+      pluginsToPublish[plugin] = spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec()
+    }
+    def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
+    distributionJARsBuilder.buildSearchableOptions()
+    distributionJARsBuilder.buildNonBundledPlugins()
   }
 
   private void setupJBre() {
