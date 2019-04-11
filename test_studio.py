@@ -167,16 +167,6 @@ class StudioTests(unittest.TestCase):
     if aswb:
       self.assertEqual("-Dstudio.projectview=true" in studio_sh_contents, True)
 
-  def test_offline_repo_contains_kotlin(self):
-    """Tests that the offline repo we bundle includes the kotlin gradle plugin"""
-    if aswb:
-      return # aswb does not include offline repo
-
-    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".tar.gz")
-    tar = tarfile.open(linux_artifact, "r:gz")
-
-    self.assertTrue(any(m for m in tar.getmembers() if "m2repository/org/jetbrains/kotlin/kotlin-gradle-plugin" in m.name))
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', required = True)

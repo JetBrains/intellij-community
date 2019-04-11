@@ -27,7 +27,6 @@ iml_project(
         "//tools/adt/idea/native/installer:uninstaller",
         "//tools/base/build-system:gradle-distrib",
         "//tools/base/templates",
-        "//tools/base/third_party/kotlin:kotlin-m2repository.zip",
         "//tools/idea/.idea/artifacts:xmls",
         "//tools/idea/.idea/libraries:xmls",
         "//tools/idea/build/lib:utilities",
