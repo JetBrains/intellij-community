@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 import java.nio.file.Paths
@@ -54,7 +53,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private fun addVfsChangesListener() {
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        val storageEvents = LinkedHashMap<ComponentManager, MutableList<StateStorage>>()
+        val storageEvents = LinkedHashMap<ComponentManager, LinkedHashSet<StateStorage>>()
         eventLoop@ for (event in events) {
           var storage: StateStorage?
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
@@ -111,7 +110,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
 
           if (isFireStorageFileChangedEvent(event)) {
             val componentManager = storage.storageManager.componentManager!!
-            storageEvents.getOrPut(componentManager) { SmartList() }.add(storage)
+            storageEvents.getOrPut(componentManager) { LinkedHashSet() }.add(storage)
           }
         }
 
