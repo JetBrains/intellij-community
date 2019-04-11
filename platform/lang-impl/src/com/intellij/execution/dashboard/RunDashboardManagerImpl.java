@@ -205,7 +205,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public Icon getToolWindowIcon() {
-    return AllIcons.Toolwindows.ToolWindowRun; // TODO [konstantin.aleev] provide new icon
+    return Registry.is("ide.service.view")
+           ? AllIcons.Toolwindows.ToolWindowServices
+           : AllIcons.Toolwindows.ToolWindowRun; // TODO [konstantin.aleev] provide new icon
   }
 
   @Override
