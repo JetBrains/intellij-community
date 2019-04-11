@@ -99,11 +99,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     return size;
   }
 
-  @NotNull
-  protected Changes getChangesHolder() {
-    return myChanges.get();
-  }
-
   public interface Changes {
     @NotNull
     Collection<Change> getMergedChanges() throws VcsException;
