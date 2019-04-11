@@ -53,7 +53,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private fun addVfsChangesListener() {
     messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        val storageEvents = LinkedHashMap<ComponentManager, LinkedHashSet<StateStorage>>()
+        var storageEvents: LinkedHashMap<ComponentManager, LinkedHashSet<StateStorage>>? = null
         eventLoop@ for (event in events) {
           var storage: StateStorage?
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
@@ -110,11 +110,16 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
 
           if (isFireStorageFileChangedEvent(event)) {
             val componentManager = storage.storageManager.componentManager!!
+            if (storageEvents == null) {
+              storageEvents = LinkedHashMap()
+            }
             storageEvents.getOrPut(componentManager) { LinkedHashSet() }.add(storage)
           }
         }
 
-        StoreReloadManager.getInstance().storageFilesChanged(storageEvents)
+        if (storageEvents != null) {
+          StoreReloadManager.getInstance().storageFilesChanged(storageEvents)
+        }
       }
     })
   }
