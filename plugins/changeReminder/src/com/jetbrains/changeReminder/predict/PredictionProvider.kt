@@ -3,7 +3,7 @@ package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
-import com.jetbrains.changeReminder.prediction.model.MLWhiteBox
+import com.jetbrains.changeReminder.prediction.model.PredictionModel
 import com.jetbrains.changeReminder.repository.Commit
 import kotlin.math.max
 import kotlin.math.min
@@ -120,7 +120,7 @@ class PredictionProvider(private val minProb: Double = 0.55) {
     getRelatedFiles(commit, history)
       .asSequence()
       .map { (candidateFile, candidateFileHistory) ->
-        val fileScore = MLWhiteBox.makePredict(collectFileFactors(commit, candidateFile, candidateFileHistory))
+        val fileScore = PredictionModel.makePrediction(collectFileFactors(commit, candidateFile, candidateFileHistory))
         candidateFile to fileScore
       }
       .filter { it.second > minProb }
