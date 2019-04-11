@@ -4,6 +4,7 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.LOG
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.StoreReloadManagerImpl
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,6 +30,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
         is VFileContentChangeEvent -> {
           val file = event.file
           if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            LOG.debug { "CHANGED $file" }
             list.add(UpdateScheme(file))
           }
         }
@@ -38,7 +40,9 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             handleDirectoryCreated(event, list)
           }
           else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
-            event.file?.let {
+            val virtualFile = event.file
+            LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""} found)" }
+            virtualFile?.let {
               list.add(AddScheme(it))
             }
           }
@@ -50,6 +54,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             handleDirectoryDeleted(file, list)
           }
           else if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            LOG.debug { "DELETED $file" }
             list.add(RemoveScheme(file.name))
           }
         }
@@ -75,7 +80,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     if (!StringUtil.equals(file.nameSequence, schemeManager.ioDirectory.fileName.toString())) {
       return
     }
-
+    LOG.debug { "DIR DELETED $file" }
     if (file == schemeManager.virtualDirectory) {
       list.add(RemoveAllSchemes())
     }
@@ -90,6 +95,8 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     if (event.file != dir) {
       return
     }
+
+    LOG.debug { "DIR CREATED ${event.file}" }
 
     for (file in dir!!.children) {
       if (isMyFileWithoutParentCheck(file)) {
