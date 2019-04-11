@@ -21,7 +21,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -95,7 +94,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   protected static void applyFix(@NotNull final Project project, @NotNull final PsiElement tag) {
@@ -110,12 +109,9 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     final int offset = child.getTextRange().getStartOffset();
     VirtualFile file = tag.getContainingFile().getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      assert document != null;
-      document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      CodeStyleManager.getInstance(project).reformat(tag);
-    });
+    assert document != null;
+    document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    CodeStyleManager.getInstance(project).reformat(tag);
   }
 }
