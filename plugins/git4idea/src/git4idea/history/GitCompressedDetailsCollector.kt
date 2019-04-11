@@ -39,8 +39,9 @@ internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile
   }
 }
 
-internal class CompressedRecordBuilder(private val root: VirtualFile,
+internal class CompressedRecordBuilder(root: VirtualFile,
                                        private val pathsEncoder: VcsLogIndexer.PathsEncoder) : GitLogRecordBuilder<GitCompressedRecord> {
+  private val rootPath = root.path
   private var changes = TIntObjectHashMap<Change.Type>()
   private var parents = TIntHashSet()
   private var renames = TIntIntHashMap()
@@ -81,7 +82,7 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
     var parentPathId = pathsEncoder.encode(parentPath, true)
 
     while (!parents.contains(parentPathId)) {
-      if (FileUtil.PATH_HASHING_STRATEGY.equals(root.path, parentPath)) break
+      if (FileUtil.PATH_HASHING_STRATEGY.equals(rootPath, parentPath)) break
 
       parents.add(parentPathId)
 
@@ -90,7 +91,7 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
     }
   }
 
-  private fun absolutePath(firstPath: String) = root.path + "/" + firstPath
+  private fun absolutePath(path: String) = "$rootPath/$path"
 
   override fun build(options: MutableMap<GitLogParser.GitLogOption, String>, supportsRawBody: Boolean): GitCompressedRecord {
     parents.forEach {
