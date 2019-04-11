@@ -96,6 +96,8 @@
     REDIRECT_HERE_STRING = "<<<"
     REDIRECT_LESS_AMP = "<&"
     REDIRECT_GREATER_AMP = ">&"
+    REDIRECT_AMP_GREATER = "&>"
+    REDIRECT_AMP_GREATER_GREATER = "&>>"
     REDIRECT_LESS_GREATER = "<>"
     REDIRECT_GREATER_BAR = ">|"
 
@@ -124,7 +126,7 @@ private w ::= word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'f
 
 redirection ::= redirection_inner | '&>' w | num redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (num | '-')
-                            | ('>' | '<' | '>>' | '<<' | '<<<' | '<&' | '>&' | '<<-' | '<>' | '>|') w+
+                            | ('>' | '<' | '>>' | '<<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
 
 private num ::= number | int | hex | octal
 string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
@@ -161,7 +163,7 @@ private simple_command_element_inner ::=  assignment_command
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START ['|'? commands_list?] newlines
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [('|&'|'|')? commands_list?] newlines
             HEREDOC_CONTENT*
             (HEREDOC_MARKER_END | <<eof>>)
 arithmetic_expansion ::= '((' expression? '))' {pin=1}
@@ -185,7 +187,7 @@ command ::= shell_command redirection_list?
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
-private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|&' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
 
 shell_command ::=   for_command
                   | case_command
@@ -264,7 +266,7 @@ pipeline_command ::=  '!'? pipeline
 
 let_command ::= let expression
 
-pipeline ::= command ('|' newlines command)* {pin(".*")=1}
+pipeline ::= command (('|&'|'|') newlines command)* {pin(".*")=1}
 
 time_opt ::= '-p'
 timespec ::= time time_opt?

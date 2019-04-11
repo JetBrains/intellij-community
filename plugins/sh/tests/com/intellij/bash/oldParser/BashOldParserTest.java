@@ -172,6 +172,7 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParsePipelineCommand2()               { doTest(true); }
   public void testParsePipelineCommand3()               { doTest(true); }
   public void testParsePipelineCommand4()               { doTest(true); }
+  public void testPiplelineParse()                      { doTest(true); }
   public void testParseReplace()                        { doTest(true); }
   public void testParseSimpleCommand()                  { doTest(true); }
   public void testParseSimpleCommand2()                 { doTest(true); }
@@ -187,7 +188,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testParseWord2()                          { doTest(true); }
   public void testParsingArrayVar()                     { doTest(true); }
   public void testPipelineWithConditional()             { doTest(true); }
-  public void testPiplelineParse()                      { doTest(true); }
   public void testPrintfNoVar()                         { doTest(true); }
   public void testPrintfVarDef()                        { doTest(true); }
   public void testProcessSubstitution()                 { doTest(true); }
@@ -203,7 +203,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testShebang()                             { doTest(true); }
   public void testSimpleHereDocs()                      { doTest(true); }
   public void testSimpleListParsing()                   { doTest(true); }
-  public void testSimpleListParsingWithErrors()         { doTest(true); }
   public void testSpecialVars()                         { doTest(true); }
   public void testSquareArithmetic()                    { doTest(true); }
   public void testSubshell()                            { doTest(true); }

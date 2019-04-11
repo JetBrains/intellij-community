@@ -87,6 +87,18 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
 
   @Override
   @Nullable
+  public PsiElement getRedirectAmpGreater() {
+    return findChildByType(REDIRECT_AMP_GREATER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRedirectAmpGreaterGreater() {
+    return findChildByType(REDIRECT_AMP_GREATER_GREATER);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getRedirectGreaterAmp() {
     return findChildByType(REDIRECT_GREATER_AMP);
   }
@@ -113,12 +125,6 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
   @Nullable
   public PsiElement getRedirectLessGreater() {
     return findChildByType(REDIRECT_LESS_GREATER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getShiftLeft() {
-    return findChildByType(SHIFT_LEFT);
   }
 
   @Override

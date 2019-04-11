@@ -55,4 +55,10 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
     return findChildByType(PIPE);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getPipeAmp() {
+    return findChildByType(PIPE_AMP);
+  }
+
 }

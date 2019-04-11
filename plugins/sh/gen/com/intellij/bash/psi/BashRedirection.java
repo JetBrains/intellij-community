@@ -38,6 +38,12 @@ public interface BashRedirection extends BashCompositeElement {
   PsiElement getMinus();
 
   @Nullable
+  PsiElement getRedirectAmpGreater();
+
+  @Nullable
+  PsiElement getRedirectAmpGreaterGreater();
+
+  @Nullable
   PsiElement getRedirectGreaterAmp();
 
   @Nullable
@@ -51,9 +57,6 @@ public interface BashRedirection extends BashCompositeElement {
 
   @Nullable
   PsiElement getRedirectLessGreater();
-
-  @Nullable
-  PsiElement getShiftLeft();
 
   @Nullable
   PsiElement getShiftRight();

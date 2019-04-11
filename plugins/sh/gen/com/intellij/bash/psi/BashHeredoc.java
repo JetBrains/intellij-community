@@ -22,4 +22,7 @@ public interface BashHeredoc extends BashCompositeElement {
   @Nullable
   PsiElement getPipe();
 
+  @Nullable
+  PsiElement getPipeAmp();
+
 }

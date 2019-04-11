@@ -56,10 +56,6 @@ public interface BashTokenTypes extends BashTypes {
   // test Operators
   TokenSet conditionalOperators = TokenSet.create(OR_OR, AND_AND, BANG, EQ, REGEXP, GT, LT);
 
-  //Bash 4:
-  IElementType REDIRECT_AMP_GREATER_GREATER = new BashTokenType("&>>");
-  IElementType REDIRECT_AMP_GREATER = new BashTokenType("&>");
-
   //this must NOT include PIPE_AMP because it's a command separator and not a real redirect token
   TokenSet redirectionSet = TokenSet.create(GT, LT, SHIFT_RIGHT,
       REDIRECT_HERE_STRING, REDIRECT_LESS_GREATER,

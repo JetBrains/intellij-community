@@ -162,6 +162,8 @@ public interface BashTypes {
   IElementType QMARK = new BashTokenType("?");
   IElementType QUOTE = new BashTokenType("\"");
   IElementType RAW_STRING = new BashTokenType("RAW_STRING");
+  IElementType REDIRECT_AMP_GREATER = new BashTokenType("&>");
+  IElementType REDIRECT_AMP_GREATER_GREATER = new BashTokenType("&>>");
   IElementType REDIRECT_GREATER_AMP = new BashTokenType(">&");
   IElementType REDIRECT_GREATER_BAR = new BashTokenType(">|");
   IElementType REDIRECT_HERE_STRING = new BashTokenType("<<<");

@@ -341,12 +341,12 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
     "|&"                          { return PIPE_AMP; }
 
     /***** Redirections *****/
+    "&>>"                         { return REDIRECT_AMP_GREATER_GREATER; }
     "<&"                          { return REDIRECT_LESS_AMP; }
     ">&"                          { return REDIRECT_GREATER_AMP; }
     "<>"                          { return REDIRECT_LESS_GREATER; }
     "&>"                          { return REDIRECT_AMP_GREATER; }
     ">|"                          { return REDIRECT_GREATER_BAR; }
-    "&>>"                         { return REDIRECT_AMP_GREATER_GREATER; }
 
     "<<<"                         { return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
