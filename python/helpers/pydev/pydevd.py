@@ -11,7 +11,6 @@ if sys.version_info[:2] < (2, 6):
 import atexit
 import os
 import traceback
-import time
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
@@ -182,11 +181,12 @@ class CheckOutputThread(PyDBDaemonThread):
 
     def wait_pydb_threads_to_finish(self, timeout=0.5):
         pydev_log.debug("Waiting for pydb daemon threads to finish")
-        pydb_daemon_threads = PyDBDaemonThread.created_pydb_daemon_threads
+        pydb_daemon_threads = self.created_pydb_daemon_threads
         started_at = time.time()
         while time.time() < started_at + timeout:
             if len(pydb_daemon_threads) == 1 and pydb_daemon_threads.get(self, None):
                 return
+            time.sleep(0.01)
         pydev_log.debug("The following pydb threads may not finished correctly: %s"
                         % ', '.join([t.getName() for t in pydb_daemon_threads if t is not self]))
 
