@@ -101,6 +101,8 @@ public class PluginManagerCore {
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
   private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
 
+  private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
+
   static String myPluginError;
   static List<String> myPlugins2Disable;
   static LinkedHashSet<String> myPlugins2Enable;
@@ -1351,7 +1353,7 @@ public class PluginManagerCore {
       }
     }
     else {
-      reasonToNotLoad = getDisabledPluginSet().contains(idString) ? "Plugin is disabled" : null;
+      reasonToNotLoad = getDisabledPluginSet().contains(idString) ? PLUGIN_IS_DISABLED_REASON : null;
     }
 
     if (reasonToNotLoad == null && descriptor instanceof IdeaPluginDescriptorImpl && isIncompatible(descriptor)) {
@@ -1541,7 +1543,9 @@ public class PluginManagerCore {
       }
       else {
         descriptor.setEnabled(false);
-        getLogger().info(String.format("Plugin '%s' can't be loaded because: %s", descriptor.getName(), toNotLoadReason));
+        if (toNotLoadReason != PLUGIN_IS_DISABLED_REASON) {
+          getLogger().info("Plugin '" + descriptor.getName() + "' can't be loaded because: " + toNotLoadReason);
+        }
         disabledPluginNames.put(descriptor.getPluginId().getIdString(), descriptor.getName());
         initClassLoader(parentLoader, descriptor);
       }
