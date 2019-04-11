@@ -200,7 +200,7 @@ public final class StandardMethodContract extends MethodContract {
                       .toList();
   }
 
-  public static List<StandardMethodContract> parseContract(String text) throws ParseException {
+  public static List<StandardMethodContract> parseContract(@NotNull String text) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(text)) return Collections.emptyList();
 
     List<StandardMethodContract> result = ContainerUtil.newArrayList();
