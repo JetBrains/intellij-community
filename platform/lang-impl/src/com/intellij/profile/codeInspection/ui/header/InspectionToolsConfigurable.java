@@ -4,6 +4,7 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -20,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public abstract class InspectionToolsConfigurable implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
+  private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   public static final String ID = "Errors";
   public static final String DISPLAY_NAME = "Inspections";
 
@@ -156,6 +159,12 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     myAbstractSchemesPanel.reset();
     final InspectionProfileModifiableModel currentModifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(getCurrentProfile());
     myAbstractSchemesPanel.selectScheme(currentModifiableModel);
+    InspectionProfileModifiableModel selected = myAbstractSchemesPanel.getSelectedScheme();
+    if (selected == null) {
+      LOG.error("No profile is selected. Current profile: " + getCurrentProfile().getName() + " . Existing profiles: " +
+                Arrays.toString(InspectionProfileSchemesModel.getSortedProfiles(myApplicationProfileManager, myProjectProfileManager).stream().map(p -> p.getName()).toArray()));
+      myAbstractSchemesPanel.selectAnyProfile();
+    }
     showProfile(currentModifiableModel);
 
     final SingleInspectionProfilePanel panel = getSelectedPanel();

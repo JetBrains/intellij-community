@@ -270,6 +270,18 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return myConfigurable.getPreferredFocusedComponent();
   }
 
+  public void selectAnyProfile() {
+    List<SingleInspectionProfilePanel> panels = myModel.getProfilePanels();
+    if (panels.isEmpty()) {
+      LOG.error("No profiles to select.");
+      return;
+    }
+    selectScheme(panels.get(0).getProfile());
+    if (getSelectedScheme() == null) {
+      LOG.error("Selected scheme is still null.");
+    }
+  }
+
   @Nullable("returns null if xml has invalid format")
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
                                                               @NotNull BaseInspectionProfileManager profileManager,
