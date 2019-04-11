@@ -27,7 +27,7 @@ class ExternalSystemActionsCollector {
       val context = FUSUsageContext.create(
         place.nullize(true) ?: "undefined place",
         "fromContextMenu.$isFromContextMenu",
-        systemId?.let { escapeSystemId(it) } ?: "undefined.system",
+        systemId?.let { getAnonymizedSystemId(it) } ?: "undefined.system",
         *additionalContextData
       )
 
