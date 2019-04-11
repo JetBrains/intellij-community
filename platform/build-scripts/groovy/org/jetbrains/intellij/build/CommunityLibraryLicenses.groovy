@@ -194,7 +194,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "error-prone-annotations", libraryName: "error-prone-annotations", version: "2.3.1", license: "Apache 2.0",
                        url: "https://github.com/google/error-prone",
                        licenseUrl: "https://github.com/google/error-prone/blob/master/COPYING"),
-    new LibraryLicense(name: "FiraCode", attachedTo: "intellij.platform.resources", version: "1.205", license: "OFL",
+    new LibraryLicense(name: "FiraCode", attachedTo: "intellij.platform.resources", version: "1.206", license: "OFL",
                        url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "intellij.java.coverage", version: "2.3.15", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
