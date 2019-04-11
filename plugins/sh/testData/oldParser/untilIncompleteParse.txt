@@ -1,0 +1,77 @@
+BASH_FILE
+  PsiComment(Comment)('#error markers must be present, but the incomplete if should be parsed without remaining elements')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        UNTIL_COMMAND
+          PsiElement(until)('until')
+          PsiErrorElement:<compound list> expected, got ';'
+            <empty list>
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'do'
+      PsiElement(do)('do')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'done'
+      PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        UNTIL_COMMAND
+          PsiElement(until)('until')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiErrorElement:<compound list> expected, got ';'
+              <empty list>
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'done'
+      PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        UNTIL_COMMAND
+          PsiElement(until)('until')
+          PsiErrorElement:<compound list> expected, got ';'
+            <empty list>
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'do'
+      PsiElement(do)('do')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('a')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'done'
+      PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('Example')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('text')
+              PsiElement(")('"')

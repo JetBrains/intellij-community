@@ -1,0 +1,23 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiErrorElement:'!', $, <string>, '@', '`', file descriptor, hex, int, number, octal, var, word or '{' expected, got 'esac'
+            <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('Example')
+              PsiElement(")('"')

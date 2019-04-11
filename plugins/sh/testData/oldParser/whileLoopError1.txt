@@ -1,0 +1,84 @@
+BASH_FILE
+  PsiComment(Comment)('#the following code is invalid code, it is parsed completely though')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        WHILE_COMMAND
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiErrorElement:<compound list> expected, got ';'
+              <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'done'
+      PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        WHILE_COMMAND
+          PsiElement(while)('while')
+          PsiErrorElement:<compound list> expected, got ';'
+            <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'do'
+      PsiElement(do)('do')
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'done'
+      PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('Example')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('text')
+              PsiElement(")('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        WHILE_COMMAND
+          PsiElement(while)('while')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('b')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')

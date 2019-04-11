@@ -2,3 +2,4 @@
 until; do; done
 until a; do; done
 until; do a; done
+echo "Example text"

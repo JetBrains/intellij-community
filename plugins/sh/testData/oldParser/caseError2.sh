@@ -1,1 +1,2 @@
 case esac
+echo "Example"

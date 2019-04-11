@@ -182,12 +182,18 @@ generic_command_directive ::= simple_command_element_inner {extends=simple_comma
 
 command ::= shell_command redirection_list?
           | include_command
-          | simple_command {recoverWhile=command_recover}
+          | simple_command
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
-private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|&' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_TAG | RAW_STRING | case | do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+//private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*'
+//| '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-'
+//| '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']'
+//| ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|&' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT
+//| EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_TAG | RAW_STRING | case
+//| do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content //todo:: String
+//| string_end | then | time | trap | until | var | while | word)
 
 shell_command ::=   for_command
                   | case_command
@@ -197,7 +203,7 @@ shell_command ::=   for_command
                   | if_command
                   | subshell_command
                   | block
-                  | function_definition {recoverWhile=command_recover}
+                  | function_definition
 
 while_command ::= while compound_list do_block
 until_command ::= until compound_list do_block
@@ -238,14 +244,15 @@ case_clause ::= newlines '('? pattern ')' (compound_case_list|newlines) {pin=3}
 pattern ::= w+ ('|' w+)* {pin('.*')=1}
 
 compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
-compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1}
+compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 }
 list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
+//private compound_list_recover ::= !(then|elif|else|fi|'}'|done|'\n')
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
   pin=1
-  recoverWhile=command_recover
+//  recoverWhile=command_recover
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
@@ -262,7 +269,10 @@ pipeline_command ::=  '!'? pipeline
                     | timespec '!'? pipeline
                     | '!' timespec pipeline
                     | trap_command
-                    | let_command
+                    | let_command {recoverWhile=pipeline_recover}
+
+private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
+|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT)
 
 let_command ::= let expression
 

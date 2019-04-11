@@ -1,0 +1,155 @@
+BASH_FILE
+  PsiComment(Comment)('#code with errors')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('a')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('b')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(word)('c')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELIF_CLAUSE
+            PsiElement(elif)('elif')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('d')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
+              PsiWhiteSpace(' ')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('e')
+                PsiWhiteSpace(' ')
+                PsiElement(&)('&')
+          PsiErrorElement:<pipeline command>, '\n', elif, else or fi expected, got ';'
+            <empty list>
+    PsiElement(;)(';')
+    PsiErrorElement:<pipeline command> expected, got 'else'
+      PsiElement(else)('else')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('c')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'elif'
+      PsiElement(elif)('elif')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('a')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'then'
+      PsiElement(then)('then')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('b')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'else'
+      PsiElement(else)('else')
+  PsiWhiteSpace(' ')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement(word)('f')
+    PsiElement(;)(';')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:<pipeline command> expected, got 'fi'
+      PsiElement(fi)('fi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([)('[')
+                  PsiWhiteSpace(' ')
+                  ASSIGNMENT_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('foo')
+                        PsiElement(")('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(])(']')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('    ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      PsiElement(int)('1')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('Example')
+              PsiElement(")('"')

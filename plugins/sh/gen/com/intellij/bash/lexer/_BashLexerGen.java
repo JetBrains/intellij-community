@@ -1735,7 +1735,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 230: break;
           case 113: 
-            { if (yystate() == OTHER_CONDITIONS) { popState(); return DONE; } else return WORD;
+            { if (yystate() == OTHER_CONDITIONS) popState(); return DONE;
             } 
             // fall through
           case 231: break;

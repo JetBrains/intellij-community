@@ -182,9 +182,6 @@ public interface BashTypes {
   IElementType SHIFT_LEFT_ASSIGN = new BashTokenType("<<=");
   IElementType SHIFT_RIGHT = new BashTokenType(">>");
   IElementType SHIFT_RIGHT_ASSIGN = new BashTokenType(">>=");
-  IElementType STRING_BEGIN = new BashTokenType("string_begin");
-  IElementType STRING_CONTENT = new BashTokenType("string_content");
-  IElementType STRING_END = new BashTokenType("string_end");
   IElementType THEN = new BashTokenType("then");
   IElementType TIME = new BashTokenType("time");
   IElementType TRAP = new BashTokenType("trap");
@@ -385,9 +382,6 @@ public interface BashTypes {
       }
       else if (type == SELECT_COMMAND) {
         return new BashSelectCommandImpl(node);
-      }
-      else if (type == SHELL_COMMAND) {
-        return new BashShellCommandImpl(node);
       }
       else if (type == SHELL_PARAMETER_EXPANSION) {
         return new BashShellParameterExpansionImpl(node);
