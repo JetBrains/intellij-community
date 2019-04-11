@@ -52,7 +52,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private final CharWidthCache myCharWidthCache;
   private final TabFragment myTabFragment;
 
-  private FontRenderContext myFontRenderContext;
+  private FontRenderContext myFontRenderContext; // guarded by myLock
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -94,7 +94,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   FontRenderContext getFontRenderContext() {
-    return myFontRenderContext;
+    synchronized (myLock) {
+      return myFontRenderContext;
+    }
   }
 
   EditorSizeManager getSizeManager() {
@@ -327,6 +329,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     synchronized (myLock) {
       myPlainSpaceWidth = -1;
       myTabSize = -1;
+      setFontRenderContext(null);
     }
     switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
       case LTR:
@@ -338,7 +341,6 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       default:
         myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
     }
-    setFontRenderContext(null);
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -538,6 +540,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
+  // guarded by myLock
   private boolean setFontRenderContext(FontRenderContext context) {
     FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
     if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
@@ -550,10 +553,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
-    if (setFontRenderContext(context)) {
-      synchronized (myLock) {
+    boolean contextUpdated = false;
+    synchronized (myLock) {
+      if (setFontRenderContext(context)) {
         myPlainSpaceWidth = -1;
+        contextUpdated = true;
       }
+    }
+    if (contextUpdated) {
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
