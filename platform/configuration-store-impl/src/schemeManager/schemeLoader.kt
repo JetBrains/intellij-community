@@ -6,6 +6,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.createDataDigest
 import com.intellij.configurationStore.digest
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
@@ -58,6 +59,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
+    LOG.debug { "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})" }
     schemeManager.filesToDelete.addAll(filesToDelete)
     schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
 
@@ -108,7 +110,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       // is from file with old extension
       if (existingInfo != null && schemeManager.schemeExtension != existingInfo.fileExtension) {
         schemeToInfo.remove(existingScheme)
-        filesToDelete.add(existingInfo.fileName)
+        existingInfo.scheduleDelete(filesToDelete, "from file with old extension")
 
         schemes.removeAt(existingSchemeIndex)
         if (existingSchemeIndex < newSchemesOffset) {
@@ -123,6 +125,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
 
     if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
       // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
+      LOG.debug { "Schedule to delete: $fileName (reason: extension mismatch)" }
       filesToDelete.add(fileName)
     }
     else {
@@ -274,7 +277,8 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
 
   fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
 
-  fun scheduleDelete(filesToDelete: MutableSet<String>) {
+  fun scheduleDelete(filesToDelete: MutableSet<String>, reason: String) {
+    LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }
     filesToDelete.add(fileName)
   }
 
