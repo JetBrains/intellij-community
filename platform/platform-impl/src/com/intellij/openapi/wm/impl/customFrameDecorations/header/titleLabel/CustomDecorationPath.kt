@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 import com.intellij.openapi.Disposable
 import java.awt.Rectangle
 
-class CustomDecorationPath(disposable: Disposable) : SelectedEditorFilePath(disposable) {
+class CustomDecorationPath() : SelectedEditorFilePath() {
   fun getListenerBounds(): List<Rectangle> {
     val mouseInsets = 2
     val projectLabelRect = getView().bounds

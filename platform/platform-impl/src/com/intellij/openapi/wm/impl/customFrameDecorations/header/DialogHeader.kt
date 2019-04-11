@@ -22,18 +22,14 @@ class DialogHeader(val window: Window) : CustomHeader(window) {
 
     override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)
 
-    override fun setActive(value: Boolean) {
-        titleLabel.foreground = if (value) getActiveColor() else UIManager.getColor("Label.disabledForeground")
-        super.setActive(value)
+    override fun updateActive() {
+        titleLabel.foreground = if (myActive) UIManager.getColor("Panel.foreground") else UIManager.getColor("Label.disabledForeground")
+        super.updateActive()
     }
 
     override fun windowStateChanged() {
         super.windowStateChanged()
         titleLabel.text = getTitle()
-    }
-
-    private fun getActiveColor(): Color? {
-        return UIManager.getColor("Panel.foreground")
     }
 
     override fun addNotify() {
