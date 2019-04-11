@@ -28,14 +28,7 @@ public class BashBraceMatcher implements PairedBraceMatcher, BashTokenTypes {
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType tokenType) {
-    return WHITESPACE == tokenType
-        || commentTokens.contains(tokenType)
-        || tokenType == SEMI
-        || tokenType == COMMA
-        || tokenType == RIGHT_PAREN
-        || tokenType == RIGHT_SQUARE
-        || tokenType == RIGHT_CURLY
-        || null == tokenType;
+    return true;
   }
 
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
