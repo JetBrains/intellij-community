@@ -425,9 +425,49 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           scheduleUpdate(resultNode);
           return;
         }
+        expandFirstError(getRootElement());  // Android Studio: temporary fix for b/129727063
       }
     }
     scheduleUpdate(currentNode);
+  }
+
+  // Android Studio: temporary fix for b/129727063
+  // We don't want to upstream this as this is a temporary fix until
+  // Jetbrains comes with their new UI expected in 2019.2.
+  private void expandFirstError(@NotNull ExecutionNode rootElement) {
+    ExecutionNode current = rootElement;
+    ExecutionNode lastExpanded = current;
+    while (current != null) {
+      current.setAutoExpandNode(true);
+      lastExpanded = current;
+      SimpleNode[] children = current.getChildren();
+      ExecutionNode next = null;
+      for (SimpleNode node : children) {
+        ExecutionNode child = (ExecutionNode)node;
+        String name = child.getName();
+        if (name != null && name.startsWith("Run")) {
+          child.setAutoExpandNode(false);
+          continue;
+        }
+
+        if (child.getResult() instanceof MessageEventResult) {
+          MessageEvent.Kind kind = ((MessageEventResult)child.getResult()).getKind();
+          if (kind == MessageEvent.Kind.ERROR) {
+            next = child;
+            break;
+          }
+        }
+      }
+      current = next;
+    }
+
+    while (lastExpanded.getChildren().length > 0) {
+      lastExpanded = (ExecutionNode)lastExpanded.getChildAt(0);
+      lastExpanded.setAutoExpandNode(true);
+    }
+    myTreeModel.select(lastExpanded, myTree, p -> {
+    });
+    ApplicationManager.getApplication().invokeLater(() -> TreeUtil.collapseAll(myTree, 0));
   }
 
   protected void expand(TreeTableTree tree) {
