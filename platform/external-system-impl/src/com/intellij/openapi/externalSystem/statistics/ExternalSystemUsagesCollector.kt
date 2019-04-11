@@ -17,7 +17,7 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
     val usages = mutableSetOf<UsageDescriptor>()
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
       if (!manager.getSettingsProvider().`fun`(project).getLinkedProjectsSettings().isEmpty()) {
-        usages.add(UsageDescriptor(manager.getSystemId().readableName))
+        usages.add(UsageDescriptor(getAnonymizedSystemId(manager.getSystemId())))
       }
     }
 
