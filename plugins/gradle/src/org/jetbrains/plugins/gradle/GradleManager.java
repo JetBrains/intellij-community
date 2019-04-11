@@ -201,6 +201,12 @@ public final class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
+      if (distributionType==DistributionType.DEFAULT_WRAPPED) {
+        File wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(pair.second);
+        if (wrapperPropertiesFile!=null && wrapperPropertiesFile.isFile()) {
+          result.setWrapperPropertyFile(wrapperPropertiesFile.getAbsolutePath());
+        }
+      }
       String ideProjectPath;
       if (project.getBasePath() == null ||
           (project.getProjectFilePath() != null && StringUtil.endsWith(project.getProjectFilePath(), ".ipr"))) {
