@@ -123,7 +123,6 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   protected class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
-    // without interner each commit will have it's own instance of this string
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
     @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
 
