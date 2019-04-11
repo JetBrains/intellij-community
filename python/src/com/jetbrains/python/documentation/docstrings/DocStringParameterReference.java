@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.Lists;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -28,14 +29,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -48,7 +47,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     myType = refType;
   }
 
-  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE, GLOBAL_VARIABLE}
+  public enum ReferenceType {PARAMETER, PARAMETER_TYPE, KEYWORD, VARIABLE, CLASS_VARIABLE, INSTANCE_VARIABLE, GLOBAL_VARIABLE, METHOD}
 
   @Override
   public PsiElement resolve() {
@@ -82,7 +81,22 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     if (owner instanceof PyFile && myType == ReferenceType.GLOBAL_VARIABLE) {
       return resolveGlobalVariable(((PyFile)owner));
     }
+    if (owner instanceof PyFile && myType == ReferenceType.METHOD) {
+      return resolveMethod(owner.getProject());
+    }
     return null;
+  }
+
+  @Nullable
+  private PsiElement resolveMethod(@NotNull Project project) {
+    String fqn = getCanonicalText();
+    int lastSep = fqn.lastIndexOf(".");
+    String className = fqn.substring(0, lastSep);
+    String methodName = fqn.substring(lastSep);
+
+    return PyClassNameIndex.find(className, project, false).stream().findFirst().flatMap(cl ->
+                                                                                         Optional.ofNullable(cl.findMethodByName(methodName, false, null))
+    ).orElse(null);
   }
 
   @Nullable

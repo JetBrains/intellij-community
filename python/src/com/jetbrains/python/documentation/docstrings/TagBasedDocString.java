@@ -70,6 +70,11 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
       lineno++;
     }
     myDescription = builder.toString();
+    processTagValues();
+  }
+
+  protected void processTagValues() {
+    // No-op
   }
 
   public abstract List<String> getAdditionalTags();
@@ -92,7 +97,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   }
 
   @NotNull
-  private Map<Substring, Substring> getTagValuesMap(String key) {
+  protected Map<Substring, Substring> getTagValuesMap(String key) {
     Map<Substring, Substring> map = myArgTagValues.get(key);
     if (map == null) {
       map = Maps.newLinkedHashMap();
@@ -153,6 +158,10 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     return lineno;
   }
 
+  public String[] getMethodReferenceTags() {
+    return new String[]{};
+  }
+
   protected static List<String> toUniqueStrings(List<?> objects) {
     final List<String> result = new ArrayList<>(objects.size());
     for (Object o : objects) {
@@ -211,6 +220,21 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     results.addAll(getTagArguments(PARAM_TAGS));
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));
     return results;
+  }
+
+  @NotNull
+  protected String[] getParamTags() {
+    return PARAM_TAGS;
+  }
+
+  @NotNull
+  protected String[] getParamTypeTags() {
+    return PARAM_TYPE_TAGS;
+  }
+
+  @NotNull
+  protected String[] getVariableTags() {
+    return VARIABLE_TAGS;
   }
 
   @Override

@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -29,10 +32,52 @@ public class SphinxDocString extends TagBasedDocString {
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "key" };
   public static String[] ALL_TAGS = new String[] { ":param", ":parameter", ":arg", ":argument", ":keyword", ":key",
                                                    ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",
-                                                   ":return", ":returns", ":rtype", ":except", ":exception" };
+                                                   ":return", ":returns", ":rtype", ":except", ":exception", ":py:meth" };
+  public static final Map<String, DocStringParameterReference.ReferenceType> tag2RefType;
+  public static final Map<Pair<String, Pattern>, DocStringParameterReference.ReferenceType> tagPattern2RefType;
+  public static final String METHOD = "method";
+
+  static {
+    tag2RefType = new HashMap<>();
+    tag2RefType.put(":py:meth", DocStringParameterReference.ReferenceType.METHOD);
+
+    tagPattern2RefType = tag2RefType.entrySet().stream().map(kv ->
+      new Pair<>(
+        new Pair<>(
+          kv.getKey(),
+          Pattern.compile("(" + kv.getKey() + ":`[^`]*`)")
+        ),
+        kv.getValue())
+    ).collect(Collectors.toMap(kv -> kv.getFirst(), kv -> kv.getSecond()));
+  }
 
   public SphinxDocString(@NotNull final Substring docstringText) {
     super(docstringText, ":");
+  }
+
+  @Override
+  protected void processTagValues() {
+    super.processTagValues();
+
+    List<Substring> allSubstrs = new ArrayList<>();
+    allSubstrs.addAll(mySimpleTagValues.values());
+    allSubstrs.addAll(myArgTagValues.entrySet().stream().flatMap(kv -> kv.getValue().values().stream()).collect(Collectors.toList()));
+
+    for (Substring value : allSubstrs) {
+      final String valStr = value.toString();
+
+      for (Pair<String, Pattern> tagPattern : tagPattern2RefType.keySet()) {
+        String tag = tagPattern.getFirst();
+        Matcher matcher = tagPattern.getSecond().matcher(valStr);
+        while (matcher.find()) {
+          // TODO: add correct position
+          int offset = tag.length() + 2 + matcher.start();
+
+          // TODO: check if null is ok
+          getTagValuesMap(METHOD).put(new Substring(value.getSuperString(), value.getStartOffset() + offset, value.getStartOffset() + matcher.end() - 1), null);
+        }
+      }
+    }
   }
 
   @Nullable
@@ -127,5 +172,10 @@ public class SphinxDocString extends TagBasedDocString {
   @Override
   public String getDescription() {
     return myDescription.replaceAll("\n", "<br/>");
+  }
+
+  @Override
+  public String[] getMethodReferenceTags() {
+    return new String[] {METHOD};
   }
 }

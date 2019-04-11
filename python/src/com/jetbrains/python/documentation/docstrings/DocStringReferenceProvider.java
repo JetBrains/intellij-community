@@ -58,11 +58,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
           final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
           final Set<TextRange> nameReferenceRanges = new HashSet<>();
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
+                                            taggedDocString.getTagArguments(taggedDocString.getParamTags()),
                                             nameReferenceRanges,
                                             ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            taggedDocString.getTagArguments(TagBasedDocString.PARAM_TYPE_TAGS),
+                                            taggedDocString.getTagArguments(taggedDocString.getParamTypeTags()),
                                             nameReferenceRanges,
                                             ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
@@ -82,6 +82,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                             taggedDocString.getTagArguments("ivar"),
                                             nameReferenceRanges,
                                             ReferenceType.INSTANCE_VARIABLE));
+          result.addAll(referencesFromNames(expr, offset, docString,
+                                            taggedDocString.getTagArguments(taggedDocString.getMethodReferenceTags()),
+                                            nameReferenceRanges,
+                                            ReferenceType.METHOD));
+
           result.addAll(returnTypes(element, docString, offset));
         }
         else if (docString instanceof SectionBasedDocString) {
