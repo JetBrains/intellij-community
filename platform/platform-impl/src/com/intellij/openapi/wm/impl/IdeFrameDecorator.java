@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -188,6 +189,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecoration() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
+  }
+
+  public static boolean isCustomDecorationActive() {
+    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && ApplicationManager.getApplication().isInternal());
   }
 }
