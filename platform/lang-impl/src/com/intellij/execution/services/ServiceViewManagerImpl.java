@@ -45,8 +45,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   boolean hasServices() {
-    for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : EP_NAME.getExtensions()) {
-      if (!contributor.getNodes(myProject).isEmpty()) return true;
+    for (ServiceViewContributor<?> contributor : EP_NAME.getExtensions()) {
+      if (!contributor.getServices(myProject).isEmpty()) return true;
     }
     return false;
   }

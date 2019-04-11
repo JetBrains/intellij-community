@@ -32,7 +32,6 @@ import com.intellij.ui.tree.Searchable;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,10 +71,10 @@ class ServiceView extends JPanel implements Disposable {
   private final JBPanelWithEmptyText myMessagePanel;
   private final JComponent myToolbar;
 
-  private final Map<Object, ServiceViewContributor.ViewDescriptor> myViewDescriptors = new HashMap<>();
+  private final Map<Object, ServiceViewDescriptor> myViewDescriptors = new HashMap<>();
   private final Map<Object, ServiceViewContributor> myContributors = new HashMap<>();
   private final Map<ServiceViewContributor, ServiceViewContributor.ViewDescriptorRenderer> myRenderers = new HashMap<>();
-  private final Map<Object, ServiceViewContributor.SubtreeDescriptor> mySubtrees = new HashMap<>();
+  private final Map<Object, ServiceViewContributor> mySubServiceContributors = new HashMap<>();
   private final Set<JComponent> myDetailsComponents = ContainerUtil.createWeakSet();
 
   private final MyTreeModel myTreeModel;
@@ -117,9 +116,9 @@ class ServiceView extends JPanel implements Disposable {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }
       else if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        return TreeUtil.collectSelectedUserObjects(myTree).toArray();
+        return ContainerUtil.map2Array(TreeUtil.collectSelectedUserObjects(myTree), o -> o instanceof GroupNode ? ((GroupNode)o).group : o);
       }
-      ServiceViewContributor.ViewDescriptor descriptor = getSelectedDescriptor();
+      ServiceViewDescriptor descriptor = getSelectedDescriptor();
       DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
       if (dataProvider != null) {
         return RecursionManager.doPreventingRecursion(this, false, () -> dataProvider.getData(dataId));
@@ -134,7 +133,7 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   @Nullable
-  private ServiceViewContributor.ViewDescriptor getSelectedDescriptor() {
+  private ServiceViewDescriptor getSelectedDescriptor() {
     return myViewDescriptors.get(getSelectedObject());
   }
 
@@ -186,13 +185,13 @@ class ServiceView extends JPanel implements Disposable {
     Object newSelection = ContainerUtil.getOnlyItem(selected);
     if (Comparing.equal(newSelection, myLastSelection)) return;
 
-    ServiceViewContributor.ViewDescriptor oldDescriptor = myLastSelection == null ? null : myViewDescriptors.get(myLastSelection);
+    ServiceViewDescriptor oldDescriptor = myLastSelection == null ? null : myViewDescriptors.get(myLastSelection);
     if (oldDescriptor != null) {
       oldDescriptor.onNodeUnselected();
     }
 
     myLastSelection = newSelection;
-    ServiceViewContributor.ViewDescriptor newDescriptor = newSelection == null ? null : myViewDescriptors.get(newSelection);
+    ServiceViewDescriptor newDescriptor = newSelection == null ? null : myViewDescriptors.get(newSelection);
 
     if (newDescriptor != null) {
       newDescriptor.onNodeSelected();
@@ -382,6 +381,7 @@ class ServiceView extends JPanel implements Disposable {
 
   private class MyTreeModel extends BaseTreeModel<Object> implements InvokerSupplier, Searchable {
     final Object myRoot = ObjectUtils.sentinel("services root");
+    final Map<ServiceViewContributor, List<?>> myServicesChildren = FactoryMap.create(this::getContributorChildren);
     final Invoker myInvoker = new Invoker.BackgroundThread(this);
 
     @NotNull
@@ -398,7 +398,10 @@ class ServiceView extends JPanel implements Disposable {
 
     @Override
     public boolean isLeaf(Object object) {
-      return object != myRoot && !(object instanceof GroupNode) && mySubtrees.get(object) == null;
+      if (object == myRoot || object instanceof GroupNode) return false;
+
+      ServiceViewContributor contributor = mySubServiceContributors.get(object);
+      return contributor == null || myServicesChildren.get(contributor).isEmpty();
     }
 
     @Override
@@ -409,53 +412,50 @@ class ServiceView extends JPanel implements Disposable {
       if (parent instanceof GroupNode) {
         return new ArrayList<>(((GroupNode)parent).children);
       }
-
-      //noinspection unchecked
-      ServiceViewContributor.SubtreeDescriptor<Object> subtree = mySubtrees.get(parent);
-      if (subtree == null) return Collections.emptyList();
-
-      List<Object> result = new SmartList<>();
-      for (Object item : subtree.getItems()) {
-        if (item instanceof NodeDescriptor) {
-          ((NodeDescriptor)item).update();
-        }
-        myViewDescriptors.put(item, subtree.getItemDescriptor(item));
-        mySubtrees.put(item, subtree.getNodeSubtree(item));
-        myContributors.put(item, myContributors.get(parent));
-        result.add(item);
+      ServiceViewContributor contributor = mySubServiceContributors.get(parent);
+      if (contributor != null) {
+        return myServicesChildren.get(contributor);
       }
-      return result;
+      return Collections.emptyList();
     }
 
     @NotNull
     private List<?> getRootChildren() {
-      Set<Object> rootChildren = new LinkedHashSet<>();
-      Map<TreePath, GroupNode> groupNodes = FactoryMap.create(GroupNode::new);
-      for (@SuppressWarnings("unchecked") ServiceViewContributor<Object, Object, Object> contributor : ServiceViewManagerImpl.EP_NAME.getExtensions()) {
-        for (Object node : contributor.getNodes(myProject)) {
-          if (node instanceof NodeDescriptor) {
-            ((NodeDescriptor)node).update();
-          }
-          myViewDescriptors.put(node, contributor.getNodeDescriptor(node));
-          mySubtrees.put(node, contributor.getNodeSubtree(node));
-          myContributors.put(node, contributor);
-          List<Object> groups = contributor.getGroups(node);
-          Object child = node;
-          if (!groups.isEmpty()) {
-            TreePath path = new TreePath(groups.toArray()).pathByAddingChild(node);
-            while (path.getParentPath() != null) {
-              GroupNode groupNode = groupNodes.get(path.getParentPath());
-              myViewDescriptors.put(groupNode, contributor.getGroupDescriptor(groupNode.path.getLastPathComponent()));
-              myContributors.put(groupNode, contributor);
-              groupNode.children.add(child);
-              child = groupNode;
-              path = path.getParentPath();
-            }
-          }
-          rootChildren.add(child);
-        }
+      List<Object> result = new ArrayList<>();
+      for (ServiceViewContributor<?> contributor : ServiceViewManagerImpl.EP_NAME.getExtensions()) {
+        result.addAll(getContributorChildren(contributor));
       }
-      return new ArrayList<>(rootChildren);
+      return result;
+    }
+
+    private <T> List<?> getContributorChildren(ServiceViewContributor<T> contributor) {
+      Set<Object> children = new LinkedHashSet<>();
+      Map<Object, GroupNode> groupNodes = FactoryMap.create(GroupNode::new);
+      for (T service : contributor.getServices(myProject)) {
+        Object node = service instanceof ServiceViewProvidingContributor ? ((ServiceViewProvidingContributor)service).asService() : service;
+        if (service instanceof ServiceViewContributor) {
+          mySubServiceContributors.put(node, (ServiceViewContributor)service);
+        }
+        if (node instanceof NodeDescriptor) {
+          ((NodeDescriptor)node).update();
+        }
+        myViewDescriptors.put(node, contributor.getServiceDescriptor(service));
+        myContributors.put(node, contributor);
+        Object child = node;
+        if (contributor instanceof ServiceViewGroupingContributor) {
+          ServiceViewGroupingContributor<T, Object> groupingContributor = (ServiceViewGroupingContributor<T, Object>)contributor;
+          Object group = groupingContributor.groupBy(service);
+          if (group != null) {
+            GroupNode groupNode = groupNodes.get(group);
+            myViewDescriptors.put(groupNode, groupingContributor.getGroupDescriptor(group));
+            myContributors.put(groupNode, contributor);
+            groupNode.children.add(node);
+            child = groupNode;
+          }
+        }
+        children.add(child);
+      }
+      return new ArrayList<>(children);
     }
 
     @Override
@@ -468,6 +468,7 @@ class ServiceView extends JPanel implements Disposable {
     }
 
     void refreshAll() {
+      myServicesChildren.clear();
       treeStructureChanged(null, null, null);
     }
   }
@@ -495,13 +496,13 @@ class ServiceView extends JPanel implements Disposable {
       if (value == myTreeModel.getRoot() || value instanceof LoadingNode) {
         return myColoredRender;
       }
-      ServiceViewContributor.ViewDescriptor nodeDescriptor = myViewDescriptors.get(value);
+      ServiceViewDescriptor nodeDescriptor = myViewDescriptors.get(value);
       ServiceViewContributor contributor = myContributors.get(value);
       if (!myRenderers.containsKey(contributor)) {
         myRenderers.put(contributor, contributor.getViewDescriptorRenderer());
       }
       ServiceViewContributor.ViewDescriptorRenderer renderer = myRenderers.get(contributor);
-      Object renderedValue = value instanceof GroupNode ? ((GroupNode)value).path.getLastPathComponent() : value;
+      Object renderedValue = value instanceof GroupNode ? ((GroupNode)value).group : value;
       Component component = renderer == null ? null :
                             renderer.getRendererComponent(myTree, renderedValue, nodeDescriptor, selected, hasFocus);
       if (component == null) {
@@ -512,24 +513,23 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   private static class GroupNode {
-    final TreePath path;
+    final Object group;
     final Set<Object> children = new LinkedHashSet<>();
 
-    GroupNode(TreePath path) {
-      this.path = path;
+    GroupNode(@NotNull Object group) {
+      this.group = group;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      GroupNode node = (GroupNode)o;
-      return Objects.equals(path, node.path);
+      return group.equals(((GroupNode)o).group);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(path);
+      return group.hashCode();
     }
   }
 
@@ -558,7 +558,7 @@ class ServiceView extends JPanel implements Disposable {
     ServiceView serviceView = ServiceViewManagerImpl.getServiceView(project);
     if (serviceView == null || serviceView.myLastSelection == null) return AnAction.EMPTY_ARRAY;
 
-    ServiceViewContributor.ViewDescriptor descriptor = serviceView.myViewDescriptors.get(serviceView.myLastSelection);
+    ServiceViewDescriptor descriptor = serviceView.myViewDescriptors.get(serviceView.myLastSelection);
     ActionGroup group = toolbar ? descriptor.getToolbarActions() : descriptor.getPopupActions();
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
