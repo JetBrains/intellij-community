@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.editorconfig.Utils;
+import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap;
@@ -52,7 +53,10 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     write("[*]\n");
     if (myProject != null) {
       write(Utils.getEncoding(myProject));
-      write(Utils.getLineEndings(myProject));
+    }
+    String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
+    if (lineSeparator != null) {
+      write(LineEndingsManager.lineEndingsKey + " = " + lineSeparator + "\n");
     }
     write(Utils.getEndOfFile());
     write(Utils.getTrailingSpaces());

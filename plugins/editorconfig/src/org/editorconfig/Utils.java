@@ -30,6 +30,7 @@ import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -142,14 +143,21 @@ public class Utils {
   }
 
   @NotNull
-  public static String getLineEndings(@NotNull Project project) {
+  private static String getLineEndings(@NotNull Project project) {
     final String separator = CodeStyle.getSettings(project).getLineSeparator();
+    String s = getLineSeparatorString(separator);
+    if (s != null) return LineEndingsManager.lineEndingsKey + "=" + s + "\n";
+    return "";
+  }
+
+  @Nullable
+  public static String getLineSeparatorString(@NotNull String separator) {
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
-        return LineEndingsManager.lineEndingsKey + "=" + s.name().toLowerCase(Locale.US) + "\n";
+        return s.name().toLowerCase(Locale.US);
       }
     }
-    return "";
+    return null;
   }
 
   @NotNull
