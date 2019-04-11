@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.SchemeProcessor
@@ -355,7 +356,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
     if (element.isEmpty()) {
-      externalInfo?.scheduleDelete(filesToDelete)
+      externalInfo?.scheduleDelete(filesToDelete, "empty")
       return
     }
 
@@ -375,9 +376,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       // we must check it only here to avoid delete old scheme just because it is empty (old idea save -> new idea delete on open)
       processor is LazySchemeProcessor && processor.isSchemeDefault(scheme, newDigest) -> {
-        if (externalInfo != null) {
-          filesToDelete.add(externalInfo.fileName)
-        }
+        externalInfo?.scheduleDelete(filesToDelete, "equals to default")
         return
       }
     }
@@ -419,7 +418,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               file = oldFile
             }
             else {
-              externalInfo.scheduleDelete(filesToDelete)
+              externalInfo.scheduleDelete(filesToDelete, "renamed")
             }
           }
         }
@@ -434,14 +433,14 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
       else {
         if (renamed) {
-          filesToDelete.add(externalInfo!!.fileName)
+          externalInfo!!.scheduleDelete(filesToDelete, "renamed")
         }
         ioDirectory.resolve(fileName).write(byteOut.internalBuffer, 0, byteOut.size())
       }
     }
     else {
       if (renamed) {
-        externalInfo!!.scheduleDelete(filesToDelete)
+        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
       }
       provider!!.write(providerPath, byteOut.internalBuffer, byteOut.size(), roamingType)
     }
@@ -470,7 +469,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     val bundledScheme = schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme))
     if (bundledScheme == null) {
       if ((processor as? LazySchemeProcessor)?.isSchemeEqualToBundled(scheme) == true) {
-        externalInfo?.scheduleDelete(filesToDelete)
+        externalInfo?.scheduleDelete(filesToDelete, "equals to bundled")
         return true
       }
       return false
@@ -483,7 +482,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       } ?: return false
     }
     if (bundledExternalInfo.isDigestEquals(newDigest)) {
-      externalInfo?.scheduleDelete(filesToDelete)
+      externalInfo?.scheduleDelete(filesToDelete, "equals to bundled")
       return true
     }
     return false
@@ -501,6 +500,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
         errors.catch {
           val spec = "$fileSpec/$name"
           if (provider.delete(spec, roamingType)) {
+            LOG.debug { "$spec deleted from provider $provider" }
             iterator.remove()
           }
         }
@@ -510,6 +510,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     if (filesToDelete.isEmpty()) {
       return
     }
+
+    LOG.debug { "Delete scheme files: ${filesToDelete.joinToString()}" }
 
     if (isUseVfs) {
       virtualDirectory?.let { virtualDir ->
@@ -564,7 +566,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       iterator.remove()
       if (isScheduleToDelete) {
-        info.scheduleDelete(filesToDelete)
+        info.scheduleDelete(filesToDelete, "requested to delete")
       }
     }
   }
@@ -597,7 +599,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       iterator.remove()
 
       if (isScheduleToDelete && processor.isExternalizable(scheme)) {
-        schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete)
+        schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete, "requested to delete (removeFirstScheme)")
       }
       return scheme
     }
