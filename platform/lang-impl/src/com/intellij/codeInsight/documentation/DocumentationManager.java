@@ -60,6 +60,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -681,7 +682,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
         PsiReference ref = TargetElementUtil.findReference(editor, offset);
-        PsiElement contextElement = file == null ? null : file.findElementAt(offset);
+        PsiElement contextElement = file == null ? null : ObjectUtils.coalesce(file.findElementAt(offset), file);
         PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
         if (targetElement != null) {
           PsiUtilCore.ensureValid(targetElement);
