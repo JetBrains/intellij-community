@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.fileTypes.FileTypeExtensionPoint
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -504,12 +503,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE))
   }
 
-  void testLoadForDefaultProject() throws Exception {
+  void testLoadForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
 
-  void testSkipForDefaultProject() throws Exception {
+  void testSkipForDefaultProject() {
     configureByFile()
     myFixture.testHighlighting(true, true, true)
   }
@@ -529,8 +528,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                     } """)
     myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
     myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
-    myFixture.addClass("package foo.bar; public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
-                       "  public boolean canBePerformed(com.intellij.openapi.actionSystem.DataContext context) {" +
+    myFixture.addClass("package foo.bar; import org.jetbrains.annotations.NotNull;" +
+                       "public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
+                       "    @Override " +
+                       "    public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) {" +
                        "    return true;" +
                        "  }" +
                        "}")
