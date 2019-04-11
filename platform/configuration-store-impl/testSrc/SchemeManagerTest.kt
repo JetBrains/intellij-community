@@ -22,6 +22,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -246,6 +247,100 @@ internal class SchemeManagerTest {
     schemeManager.reload()
 
     assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
+  }
+
+  /**
+   * This test shows how the interaction between [SchemeManagerImpl] and a []StreamProvider] with different
+   * naming styles (e.g. a custom naming logic exposed by [SchemeManagerIprProvider.load]) can put [SchemeManagerImpl]
+   * into a bad state where it deletes a scheme right after it tries to save it.
+   *
+   * This errors shows up as inconsistent outputs from the stream provider used by the scheme manager.  An in-production
+   * example of this is [com.intellij.execution.impl.RunManagerImpl], where two identical consecutive calls to
+   * [RunManagerImpl.getState] can return different results.
+   *
+   * The steps to reproduce the error is inlined with the code below.
+   */
+  @Test
+  fun `scheme manager with dependencies using different scheme naming styles`() {
+    /**
+     * A simple schemes processor that names it's scheme keys with a custom suffix.
+     */
+
+    val dir = tempDirManager.newPath()
+
+    /**
+     * 1. Create a [StreamProvider] that will later be used to load scheme elements with custom scheme names.
+     *    An instance of [SchemeManagerIprProvider] satisfies this criteria.
+     */
+    val streamProvider = SchemeManagerIprProvider("scheme")
+
+    /**
+     * 2. Create a [SchemeProcessor] with custom naming scheme.  See SchemesProcessorWithUniqueNaming in the test
+     *    as an example.
+     */
+    class SchemeProcessorWithUniqueNaming : TestSchemesProcessor() {
+      override fun getSchemeKey(scheme: TestScheme) = scheme.name + "someSuffix"
+    }
+
+    val schemeProcessor = SchemeProcessorWithUniqueNaming()
+
+    /**
+     * 3. Create a [SchemeManagerImpl] with the [StreamProvider] from #1 and [SchemeProcessor] from #2.  We now have
+     *    a SchemeManager that can be manipulated to exhibit the error.
+     */
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, schemeProcessor, streamProvider, dir)
+
+    /**
+     * 4. Add a scheme and save it. The scheme manager will now have a scheme named in the style of our
+     * [SchemeProcessorWithUniqueNaming] from #2.
+     */
+    schemeManager.addScheme(TestScheme("first"))
+    schemeManager.save()
+
+    /**
+     * 5. Obtain the scheme by writing its contents into an element, and then load the element with a different naming scheme.
+     *    This creates the scenario where schemeManager and streamProvider refers to the same scheme with different names.
+     */
+    val element = Element("state")
+    streamProvider.writeState(element)
+    streamProvider.load(element) { elementToLoad -> elementToLoad.name + "someOtherSuffix" }
+
+    /**
+     * 6. [SchemeManagerImpl.reload] reloads it's schemes by deleting it's current set of schemes and reloading it.
+     *    Note that the file to delete here and what scheme manager thinks the scheme belongs to have different names.  These
+     *    different names come from the different naming styles we defined earlier in the test.
+     */
+    schemeManager.reload()
+
+    /**
+     * 7. By calling [SchemeManagerImpl.save], we delete the file our currently existing scheme uses.
+     *    Now [SchemeManagerImpl.save] should remove that deleted file from it's list of staged files to delete.
+     *    However, because the file names don't match, the file isn't removed.  This means the file is STILL staged
+     *    for deletion.  The saving process also corrects the scheme's file name if it's different from what [SchemeManager]
+     *    sees; this restores our scheme to use the same name given by our scheme processor from #2.
+     */
+    schemeManager.save()
+    val firstElement = Element("state")
+    streamProvider.writeState(firstElement)
+
+    /**
+     * We have now successfully put our SchemeManagerImpl in the BAD STATE:
+     * - [SchemeManagerImpl] has a file staged for deletion.
+     * - [SchemeManagerImpl] ALSO has an existing scheme that is backed by the same file.
+     *
+     * This means [SchemeManagerImpl] will delete the file backing a scheme that's still in use.  The deletion happens
+     * on the next call to [SchemeManagerImpl.save].
+     */
+
+    /**
+     * 8. Calling save will delete the file backing our scheme that's still in use.  [streamProvider.writeState] will now
+     *    write an empty element, because the backing file was deleted.
+     */
+    schemeManager.save()
+    val secondElement = Element("state")
+    streamProvider.writeState(secondElement)
+
+    assertThat(firstElement.children.size).isEqualTo(secondElement.children.size)
   }
 
   @Test fun `save only if scheme differs from bundled`() {
