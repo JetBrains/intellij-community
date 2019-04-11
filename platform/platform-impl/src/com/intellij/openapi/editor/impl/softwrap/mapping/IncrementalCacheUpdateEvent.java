@@ -115,7 +115,7 @@ public class IncrementalCacheUpdateEvent {
   /**
    * Returns offset, till which soft wrap recalculation should proceed
    */
-  int getMandatoryEndOffset() {
+  public int getMandatoryEndOffset() {
     return myMandatoryEndOffset;
   }
 
@@ -127,14 +127,14 @@ public class IncrementalCacheUpdateEvent {
     return myActualEndOffset;
   }
 
-  void setActualEndOffset(int actualEndOffset) {
+  public void setActualEndOffset(int actualEndOffset) {
     myActualEndOffset = actualEndOffset;
   }
 
   /**
    * Returns change in document length for the event causing soft wrap recalculation.
    */
-  int getLengthDiff() {
+  public int getLengthDiff() {
     return myLengthDiff;
   }
 

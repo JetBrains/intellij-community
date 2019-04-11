@@ -43,7 +43,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
     myStorage = storage;
   }
 
-  boolean matchesOldSoftWrap(SoftWrap newSoftWrap, int lengthDiff) {
+  public boolean matchesOldSoftWrap(SoftWrap newSoftWrap, int lengthDiff) {
     return Collections.binarySearch(myAffectedByUpdateSoftWraps, new SoftWrapImpl(new TextChangeImpl(newSoftWrap.getText(),
                                                                                                      newSoftWrap.getStart() - lengthDiff,
                                                                                                      newSoftWrap.getEnd() - lengthDiff),
