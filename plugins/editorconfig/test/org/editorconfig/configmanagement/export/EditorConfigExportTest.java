@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.export;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.LineSeparator;
 import org.editorconfig.language.EditorConfigLanguage;
 
 import java.io.ByteArrayOutputStream;
@@ -10,7 +11,9 @@ import java.io.IOException;
 
 public class EditorConfigExportTest extends LightPlatformTestCase {
   public void testWriter() throws IOException {
-    CodeStyleSettings setting = CodeStyleSettings.getDefaults();
+
+    CodeStyleSettings setting = CodeStyleSettings.getDefaults().clone();
+    setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(getProject(), output, setting).forLanguages(EditorConfigLanguage.INSTANCE)) {
       writer.writeSettings();
@@ -19,7 +22,7 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
     assertEquals(
       "[*]\n" +
       "charset=utf-8\n" +
-      "end_of_line=lf\n" +
+      "end_of_line = crlf\n" +
       "insert_final_newline=false\n" +
       "max_line_length = 120\n" +
       "ij_formatter_off_tag = @formatter:off\n" +
