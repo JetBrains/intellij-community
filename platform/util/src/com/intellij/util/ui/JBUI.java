@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -1234,4 +1235,16 @@ public class JBUI {
   @Deprecated
   @SuppressWarnings("AbstractClassNeverImplemented")
   public abstract static class JBIcon extends JBScalableIcon {}
+
+  /**
+   * @deprecated Use {@link JBCachingScalableIcon}.
+   */
+  @Deprecated
+  public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends JBCachingScalableIcon<T> {
+    protected CachingScalableJBIcon() {}
+
+    public CachingScalableJBIcon(CachingScalableJBIcon icon) {
+      super(icon);
+    }
+  }
 }
