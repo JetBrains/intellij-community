@@ -323,7 +323,7 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
   }
   else if (virtualFile.exists()) {
     if (virtualFile.isWritable) {
-      deleteFile(requestor, virtualFile)
+      virtualFile.delete(requestor)
     }
     else {
       throw ReadOnlyModificationException(virtualFile, object : SaveSession {
@@ -334,10 +334,6 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
       })
     }
   }
-}
-
-internal fun deleteFile(requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile) {
-  virtualFile.delete(requestor)
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
