@@ -16,6 +16,8 @@ import com.intellij.openapi.util.text.StringUtil;
 %function advance
 %type IElementType
 
+%line
+
 %{
   public _BashLexerGen() {
     this(null);
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private static final int DOUBLE_PARENTHESES = 2;
   private static final int PARENTHESES = 1;
 
+  private int yyline;
   private boolean isArithmeticExpansion;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
@@ -365,7 +368,7 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 
 //    {AssignListWord}              { return WORD; }
 
-    {Shebang}                     { return SHEBANG; }
+    ^{Shebang}                    { if (yyline == 0) return SHEBANG; else return COMMENT; }
     {Comment}                     { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT; }
 
     {WhiteSpace}+                 |
