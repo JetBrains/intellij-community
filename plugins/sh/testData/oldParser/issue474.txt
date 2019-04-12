@@ -18,13 +18,15 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('cat')
-  PsiWhiteSpace(' ')
-  PsiErrorElement:<pipeline command> expected, got '<<'
-    PsiElement(HEREDOC_MARKER_TAG)('<<')
-  PsiElement(HEREDOC_MARKER_START)('EOF')
-  PsiElement(;)(';')
-  PsiElement(\n)('\n')
-  PsiElement(HEREDOC_CONTENT)('This block also should have no syntax error.\nBut causes an error at the beginning of the line of "This block also..."\n')
-  PsiElement(HEREDOC_MARKER_END)('EOF')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiElement(HEREDOC_MARKER_START)('EOF')
+              PsiElement(;)(';')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('This block also should have no syntax error.\nBut causes an error at the beginning of the line of "This block also..."\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')

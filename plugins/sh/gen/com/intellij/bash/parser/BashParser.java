@@ -1236,7 +1236,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [('|&'|'|')? commands_list?] newlines
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?] newlines
   //             HEREDOC_CONTENT*
   //             (HEREDOC_MARKER_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
@@ -1253,45 +1253,56 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [('|&'|'|')? commands_list?]
+  // [commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?]
   private static boolean heredoc_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2")) return false;
     heredoc_2_0(b, l + 1);
     return true;
   }
 
-  // ('|&'|'|')? commands_list?
+  // commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?
   private static boolean heredoc_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = heredoc_2_0_0(b, l + 1);
-    r = r && heredoc_2_0_1(b, l + 1);
+    if (!r) r = heredoc_2_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // ('|&'|'|')?
+  // commands_list heredoc_pipeline_separator?
   private static boolean heredoc_2_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2_0_0")) return false;
-    heredoc_2_0_0_0(b, l + 1);
+    boolean r;
+    Marker m = enter_section_(b);
+    r = commands_list(b, l + 1);
+    r = r && heredoc_2_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // heredoc_pipeline_separator?
+  private static boolean heredoc_2_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2_0_0_1")) return false;
+    heredoc_pipeline_separator(b, l + 1);
     return true;
   }
 
-  // '|&'|'|'
-  private static boolean heredoc_2_0_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_0_0")) return false;
+  // heredoc_pipeline_separator commands_list?
+  private static boolean heredoc_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, PIPE_AMP);
-    if (!r) r = consumeToken(b, PIPE);
+    r = heredoc_pipeline_separator(b, l + 1);
+    r = r && heredoc_2_0_1_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // commands_list?
-  private static boolean heredoc_2_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_1")) return false;
+  private static boolean heredoc_2_0_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_2_0_1_1")) return false;
     commands_list(b, l + 1);
     return true;
   }
@@ -1314,6 +1325,22 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, HEREDOC_MARKER_END);
     if (!r) r = eof(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '&&' | '||' | '&' | '|' | '|&' | ';'
+  static boolean heredoc_pipeline_separator(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_pipeline_separator")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, AND_AND);
+    if (!r) r = consumeToken(b, OR_OR);
+    if (!r) r = consumeToken(b, AMP);
+    if (!r) r = consumeToken(b, PIPE);
+    if (!r) r = consumeToken(b, PIPE_AMP);
+    if (!r) r = consumeToken(b, SEMI);
     exit_section_(b, m, null, r);
     return r;
   }

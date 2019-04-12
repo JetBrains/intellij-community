@@ -113,3 +113,8 @@ EO\F
 cat <<- 'DONE' |
 echo
 DONE
+
+dist/build/shellcheck/shellcheck << 'EOF' || die "execution failed"
+#!/bin/sh
+echo "Hello World"
+EOF

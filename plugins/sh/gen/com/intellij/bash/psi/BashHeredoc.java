@@ -11,6 +11,12 @@ public interface BashHeredoc extends BashCompositeElement {
   BashCommandsList getCommandsList();
 
   @Nullable
+  PsiElement getAmp();
+
+  @Nullable
+  PsiElement getAndAnd();
+
+  @Nullable
   PsiElement getHeredocMarkerEnd();
 
   @NotNull
@@ -20,9 +26,15 @@ public interface BashHeredoc extends BashCompositeElement {
   PsiElement getHeredocMarkerTag();
 
   @Nullable
+  PsiElement getOrOr();
+
+  @Nullable
   PsiElement getPipe();
 
   @Nullable
   PsiElement getPipeAmp();
+
+  @Nullable
+  PsiElement getSemi();
 
 }

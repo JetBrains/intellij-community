@@ -33,6 +33,18 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
 
   @Override
   @Nullable
+  public PsiElement getAmp() {
+    return findChildByType(AMP);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getAndAnd() {
+    return findChildByType(AND_AND);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getHeredocMarkerEnd() {
     return findChildByType(HEREDOC_MARKER_END);
   }
@@ -51,6 +63,12 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
 
   @Override
   @Nullable
+  public PsiElement getOrOr() {
+    return findChildByType(OR_OR);
+  }
+
+  @Override
+  @Nullable
   public PsiElement getPipe() {
     return findChildByType(PIPE);
   }
@@ -59,6 +77,12 @@ public class BashHeredocImpl extends BashCompositeElementImpl implements BashHer
   @Nullable
   public PsiElement getPipeAmp() {
     return findChildByType(PIPE_AMP);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSemi() {
+    return findChildByType(SEMI);
   }
 
 }

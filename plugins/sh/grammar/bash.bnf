@@ -163,9 +163,11 @@ private simple_command_element_inner ::=  assignment_command
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [('|&'|'|')? commands_list?] newlines
+heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?] newlines
             HEREDOC_CONTENT*
             (HEREDOC_MARKER_END | <<eof>>)
+private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
+
 arithmetic_expansion ::= '((' expression? '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
@@ -248,11 +250,9 @@ compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of
 list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
-//private compound_list_recover ::= !(then|elif|else|fi|'}'|done|'\n')
 
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
   pin=1
-//  recoverWhile=command_recover
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' |  '\n') newlines
 
