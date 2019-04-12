@@ -747,7 +747,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     }
 
-    String rgb = color == NULL_COLOR_MARKER ? "" : Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+    String rgb = "";
+    if (color != NULL_COLOR_MARKER) {
+      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      int alpha = 0xFF & color.getAlpha();
+      if (alpha != 0xFF) rgb += Integer.toString(alpha, 16);
+    }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
