@@ -66,9 +66,9 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
         continue
       }
 
-      changedScheme?.let {
-        schemeManager.removeScheme(it)
-        processor.onSchemeDeleted(it)
+      if (changedScheme != null) {
+        schemeManager.removeScheme(changedScheme, isScheduleToDelete = false /* remove only from runtime model */)
+        processor.onSchemeDeleted(changedScheme)
       }
 
       val newScheme = readSchemeFromFile(file, lazySchemaLoader.value, schemeManager)
