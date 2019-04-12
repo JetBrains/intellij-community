@@ -1155,7 +1155,7 @@ public class JBUI {
    * @deprecated Use {@link JBUIScale.ScaleType}.
    */
   @Deprecated
-  enum ScaleType {
+  public enum ScaleType {
     USR_SCALE,
     SYS_SCALE,
     OBJ_SCALE,
