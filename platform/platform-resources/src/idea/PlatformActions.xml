@@ -630,6 +630,7 @@
           <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
           <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
           <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+          <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
         </group>
 
         <group id="EditorToggleActions" popup="true">

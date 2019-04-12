@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -17,7 +18,6 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +127,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
       AnAction action = getAction((GotoActionModel.MatchedValue)element);
       if (action != null) {
         String description = action.getTemplatePresentation().getDescription();
-        if (Registry.is("show.configurables.ids.in.settings.always")) {
+        if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
           String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
           return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
         }

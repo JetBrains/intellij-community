@@ -14,6 +14,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -38,7 +39,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,8 +82,8 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.BiPredicate;
 
 /**
@@ -142,6 +146,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
     myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, myTreeActionsOwner);
+    Disposer.register(this, myTreeModelWrapper);
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModelWrapper) {
       @Override
@@ -179,12 +184,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
     StructureViewComponent.registerAutoExpandListener(myTree, myTreeModel);
-    Disposer.register(this, myTreeModelWrapper);
 
     ModelListener modelListener = () -> rebuild(false);
     myTreeModel.addModelListener(modelListener);
     Disposer.register(this, () -> myTreeModel.removeModelListener(modelListener));
     myTree.setCellRenderer(new NodeRenderer());
+    myProject.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, o -> rebuild(false));
 
     myTree.setTransferHandler(new TransferHandler() {
       @Override
