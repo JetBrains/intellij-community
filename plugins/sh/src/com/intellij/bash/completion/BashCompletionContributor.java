@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -34,7 +33,7 @@ public class BashCompletionContributor extends CompletionContributor implements 
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
 
-        Collection<String> kws = Collections.emptyList();
+        Collection<String> kws = ContainerUtil.newSmartList();
         PsiElement original = parameters.getOriginalPosition();
         if (original == null || !original.getText().contains("/")) {
           result.addAllElements(ContainerUtil.map(BUILTIN,
@@ -48,6 +47,8 @@ public class BashCompletionContributor extends CompletionContributor implements 
             result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
           }
         }
+
+        kws.addAll(BUILTIN);
 
         String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
         if (prefix.isEmpty() && parameters.isAutoPopup()) {
