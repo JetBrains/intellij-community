@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameViewHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -80,7 +81,7 @@ import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
-  public static final int DEFAULT_HEIGHT = 490;
+  public static final int DEFAULT_HEIGHT = 460;
   public static final int MAX_DEFAULT_WIDTH = 777;
   private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
@@ -101,8 +102,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setGlassPane(glassPane);
     glassPane.setVisible(false);
 
+    int defaultHeight = DEFAULT_HEIGHT;
     if (IdeFrameDecorator.isCustomDecoration()) {
-      setContentPane(CustomFrameDialogContent.Companion.getContent(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background")));
+      CustomFrameViewHolder holder =
+        CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
+      setContentPane(holder.getContent());
+
+      defaultHeight+=holder.getHeaderHeight();
     } else {
       setContentPane(myScreen.getWelcomePanel());
     }
@@ -111,7 +117,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
 
-    getRootPane().setPreferredSize(JBUI.size(width, Math.min(DEFAULT_HEIGHT, getPreferredSize().height)));
+    getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     setResizable(false);
 
     Dimension size = getPreferredSize();
