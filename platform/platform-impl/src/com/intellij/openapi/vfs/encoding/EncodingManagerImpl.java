@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -46,6 +46,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   static class State {
     @NotNull
-    private Charset myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
+    private Charset myDefaultEncoding = StandardCharsets.UTF_8;
 
     @Attribute("default_encoding")
     @NotNull

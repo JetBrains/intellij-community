@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableConsumer;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -129,7 +129,7 @@ public class WorkingContextManager {
       Element element = new Element("context");
       saveContext(element);
       String s = new XMLOutputter().outputString(element);
-      entry.setData(s.getBytes(CharsetToolkit.UTF8_CHARSET));
+      entry.setData(s.getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -173,7 +173,7 @@ public class WorkingContextManager {
 
   private boolean loadContext(String zipPostfix, String entryName) {
     return doEntryAction(zipPostfix, entryName, entry -> {
-      String s = new String(entry.getData(), CharsetToolkit.UTF8_CHARSET);
+      String s = new String(entry.getData(), StandardCharsets.UTF_8);
       loadContext(JDOMUtil.load(s));
     });
   }

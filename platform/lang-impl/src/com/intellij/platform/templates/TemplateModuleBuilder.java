@@ -32,9 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -51,6 +49,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -284,7 +283,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                 pI.checkCanceled();
               }
               FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-              String text = new String(content, CharsetToolkit.UTF8_CHARSET);
+              String text = new String(content, StandardCharsets.UTF_8);
               consumer.setCurrentFile(file.getName(), text);
               return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
             }
@@ -364,7 +363,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       }
     }
     return StringUtilRt.convertLineSeparators(patchedContent, CodeStyle.getDefaultSettings().getLineSeparator()).
-      getBytes(CharsetToolkit.UTF8_CHARSET);
+      getBytes(StandardCharsets.UTF_8);
   }
 
   @Nullable

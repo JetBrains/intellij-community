@@ -58,6 +58,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -1021,7 +1022,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          final String path,
                                          final List<? extends FilePatch> remainingPatches,
                                          CommitContext commitContext) {
-    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8_CHARSET)) {
+    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8)) {
       UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
     }
     catch (IOException e) {

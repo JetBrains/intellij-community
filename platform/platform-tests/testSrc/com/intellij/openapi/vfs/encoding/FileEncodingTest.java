@@ -72,7 +72,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = CharsetToolkit.US_ASCII_CHARSET;
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
-  private static final String UTF8_XML_PROLOG = prolog(CharsetToolkit.UTF8_CHARSET);
+  private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
   private static final byte[] NO_BOM = ArrayUtil.EMPTY_BYTE_ARRAY;
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
@@ -203,7 +203,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   public void testDefaultXml() {
     VirtualFile xml = find("xDefault.xml");
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, xml.getCharset());
+    assertEquals(StandardCharsets.UTF_8, xml.getCharset());
   }
 
   public void testIbm866() {
@@ -271,7 +271,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                       "</html>");
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
   public void testHtmlEncodingPreferBOM() throws IOException {
@@ -281,7 +281,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                                       "</html>",
                                       WINDOWS_1252);
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
   }
 
@@ -348,9 +348,9 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       }
     });
 
-    EncodingProjectManager.getInstance(getProject()).setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(file, StandardCharsets.UTF_8);
     //text in editor changed
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     UIUtil.dispatchAllInvocationEvents();
     assertTrue(changed[0]);
     changed[0] = false;
@@ -435,16 +435,16 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testBOMPersistsAfterEditing() throws IOException {
-    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, XML_TEST_BODY, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, XML_TEST_BODY, StandardCharsets.UTF_8);
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     Document document = getDocument(file);
     setText(document, "hren");
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
@@ -452,9 +452,9 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testBOMPersistsAfterIndexRescan() throws IOException {
-    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, XML_TEST_BODY, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, XML_TEST_BODY, StandardCharsets.UTF_8);
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     Document document = getDocument(file);
@@ -465,7 +465,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
     Charset charset = LoadTextUtil.detectCharsetAndSetBOM(file, bytes, file.getFileType());
-    assertEquals(CharsetToolkit.UTF8_CHARSET, charset);
+    assertEquals(StandardCharsets.UTF_8, charset);
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     assertTrue(CharsetToolkit.hasUTF8Bom(bytes));
@@ -505,11 +505,11 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertEquals(CharsetToolkit.UTF_16BE_CHARSET, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
 
-    EncodingUtil.saveIn(document, null, file, CharsetToolkit.UTF8_CHARSET);
+    EncodingUtil.saveIn(document, null, file, StandardCharsets.UTF_8);
 
     byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertNull(file.getBOM());
 
     assertFalse(CharsetToolkit.hasUTF8Bom(bytes));
@@ -520,7 +520,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                                       "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
                                       "<body>" + THREE_RUSSIAN_LETTERS +
                                       "</body></html>",
-                                      CharsetToolkit.UTF8_CHARSET);
+                                      StandardCharsets.UTF_8);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -589,7 +589,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     File fc = FileUtil.createTempDirectory("", "");
     VirtualFile root = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fc));
     PsiTestUtil.addContentRoot(getModule(), root);
@@ -598,7 +598,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     setContentOnDisk(new File(file.getPath()), null, THREE_RUSSIAN_LETTERS, WINDOWS_1251);
     file.refresh(false, false);
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     Assert.assertNull(file.getBOM());
 
 
@@ -610,7 +610,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testExternalChangeClearsAutoDetectedFromBytesFlag() throws IOException {
-    VirtualFile file = createTempFile("txt", null, THREE_RUSSIAN_LETTERS, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", null, THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     getDocument(file);
 
     assertEquals(LoadTextUtil.AutoDetectionReason.FROM_BYTES, LoadTextUtil.getCharsetAutoDetectionReason(file));
@@ -623,14 +623,14 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
   public void testSafeToConvert() throws IOException {
     String text = "xxx";
-    VirtualFile file = createTempFile("txt", null, text, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", null, text, StandardCharsets.UTF_8);
     byte[] bytes = file.contentsToByteArray();
     assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
     assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(file, text, bytes, CharsetToolkit.UTF_16BE_CHARSET));
 
     String rustext = THREE_RUSSIAN_LETTERS;
-    VirtualFile rusfile = createTempFile("txt", null, rustext, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile rusfile = createTempFile("txt", null, rustext, StandardCharsets.UTF_8);
     byte[] rusbytes = rusfile.contentsToByteArray();
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(rusfile, rustext, rusbytes, US_ASCII));
     assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(rusfile, rustext, rusbytes, WINDOWS_1251));
@@ -645,14 +645,14 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
   public void testSafeToReloadUtf8Bom() throws IOException {
     String text = THREE_RUSSIAN_LETTERS;
-    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, StandardCharsets.UTF_8);
     byte[] bytes = file.contentsToByteArray();
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, US_ASCII));
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET));
   }
   public void testSafeToReloadUtf8NoBom() throws IOException {
     String text = THREE_RUSSIAN_LETTERS;
-    VirtualFile file = createTempFile("txt", null, text, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", null, text, StandardCharsets.UTF_8);
     byte[] bytes = file.contentsToByteArray();
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, US_ASCII));
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET));
@@ -662,15 +662,15 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = createTempFile("txt", null, text, US_ASCII);
     byte[] bytes = file.contentsToByteArray();
     assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToReloadIn(file, text, bytes, WINDOWS_1251));
-    assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToReloadIn(file, text, bytes, CharsetToolkit.UTF8_CHARSET));
+    assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToReloadIn(file, text, bytes, StandardCharsets.UTF_8));
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET));
   }
 
   public void testUndoChangeEncoding() throws IOException {
-    VirtualFile file = createTempFile("txt", null, "xxx", CharsetToolkit.UTF8_CHARSET);
-    file.setCharset(CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", null, "xxx", StandardCharsets.UTF_8);
+    file.setCharset(StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     assertNull(documentManager.getCachedDocument(file));
@@ -679,8 +679,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertEquals(WINDOWS_1251, file.getCharset());
 
     Document document = ObjectUtils.assertNotNull(documentManager.getDocument(file));
-    change(file, CharsetToolkit.UTF8_CHARSET);
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    change(file, StandardCharsets.UTF_8);
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
     globalUndo();
     UIUtil.dispatchAllInvocationEvents();
@@ -701,33 +701,33 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testCantReloadBOMDetected() throws IOException {
-    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, THREE_RUSSIAN_LETTERS, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     file.contentsToByteArray();
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
     assertEquals(THREE_RUSSIAN_LETTERS, document.getText());
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, CharsetToolkit.UTF_16LE_CHARSET);
     UIUtil.dispatchAllInvocationEvents();
 
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
   public void testExternalChangeStrippedBOM() throws IOException {
     String text = "text";
-    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, StandardCharsets.UTF_8);
     file.contentsToByteArray();
     Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
 
     assertEquals(text, document.getText());
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
-    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), text.getBytes(CharsetToolkit.UTF8_CHARSET));
+    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), text.getBytes(StandardCharsets.UTF_8));
     file.refresh(false, false);
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(text, document.getText());
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     assertNull(file.getBOM());
   }
 
@@ -914,7 +914,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertNotNull(file);
 
     assertNull(file.getBOM());
-    assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
   public void testEncodingRedetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {

@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class GitAnnotationProvider implements AnnotationProviderEx {
@@ -170,7 +170,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = new String(h.run(), CharsetToolkit.UTF8_CHARSET);
+    String output = new String(h.run(), StandardCharsets.UTF_8);
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 

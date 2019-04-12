@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +31,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -212,7 +212,7 @@ public class RepositoryHelper {
 
   private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)),
-                                                          CharsetToolkit.UTF8_CHARSET)) {
+                                                          StandardCharsets.UTF_8)) {
       return parsePluginList(reader);
     }
   }

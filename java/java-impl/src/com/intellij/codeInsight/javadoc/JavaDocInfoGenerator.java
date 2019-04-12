@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -50,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -1117,7 +1117,7 @@ public class JavaDocInfoGenerator {
       try (InputStream commentStream = JavaDocInfoGenerator.class.getResourceAsStream(resourceName)) {
         if (commentStream == null) return null;
         byte[] bytes = FileUtil.loadBytes(commentStream);
-        text = new String(bytes, CharsetToolkit.UTF8_CHARSET);
+        text = new String(bytes, StandardCharsets.UTF_8);
       }
       text = StringUtil.replace(text, "<ClassName>", containingClassName);
       return JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText(text);

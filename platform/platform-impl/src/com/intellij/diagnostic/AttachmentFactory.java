@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -6,12 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author yole
@@ -65,7 +65,7 @@ public class AttachmentFactory {
     }
     else {
       byte[] bytes = FileUtil.loadBytes(content);
-      String displayText = isBinary ? "[File is binary]" : new String(bytes, CharsetToolkit.UTF8_CHARSET);
+      String displayText = isBinary ? "[File is binary]" : new String(bytes, StandardCharsets.UTF_8);
       return new Attachment(path, bytes, displayText);
     }
   }

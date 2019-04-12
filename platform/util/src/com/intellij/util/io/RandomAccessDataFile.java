@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -21,11 +7,11 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
@@ -142,11 +128,11 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     int len = getInt(addr);
     byte[] bytes = new byte[len];
     get(addr + 4, bytes, 0, len);
-    return new String(bytes, CharsetToolkit.UTF8_CHARSET);
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   public void putUTF(long addr, String value) {
-    final byte[] bytes = value.getBytes(CharsetToolkit.UTF8_CHARSET);
+    final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
     putInt(addr, bytes.length);
     put(addr + 4, bytes, 0, bytes.length);
   }

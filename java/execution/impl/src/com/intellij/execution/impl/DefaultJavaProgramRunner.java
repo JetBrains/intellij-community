@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
@@ -53,6 +52,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -236,7 +236,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
             InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
               .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
-            String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
+            String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
             List<ThreadState> threads = ThreadDumpParser.parse(text);
             DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
             return;

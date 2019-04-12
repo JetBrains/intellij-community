@@ -4,9 +4,9 @@ package com.intellij.ide.plugins;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +39,7 @@ public class BundledPluginsLister implements ApplicationStarter {
         out = System.out;
       }
 
-      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET))) {
+      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
         IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
 
         List<String> modules = Arrays.stream(plugins)

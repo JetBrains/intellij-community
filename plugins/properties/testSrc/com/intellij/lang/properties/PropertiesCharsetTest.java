@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -110,7 +111,7 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   public void testDefaultCharset() {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
 
     PlatformTestUtil.withEncoding("UTF-8", () -> {
       configureByText("\\u1234\\uxxxx\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y");
@@ -136,7 +137,7 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   public void testCharsBelow128() throws Exception {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
 
     configureByText("xxx=\\u3210\\uzzzz\\n\\t\\y");
     List<IProperty> properties = ((PropertiesFile)myFile).getProperties();
@@ -156,7 +157,7 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
   public void testForceRefresh() throws Exception {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, null);
-    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
 
     configureByText("xxx=\\u1234");
@@ -179,11 +180,11 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
 
   public void testChangeEncodingMustReloadFile() throws Exception {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, false);
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
 
     configureByText("xxx=\\u1234");
-    assertEquals(CharsetToolkit.UTF8_CHARSET, myFile.getVirtualFile().getCharset());
+    assertEquals(StandardCharsets.UTF_8, myFile.getVirtualFile().getCharset());
 
     Charset win = Charset.forName("windows-1251");
     EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, win);
@@ -194,11 +195,11 @@ public class PropertiesCharsetTest extends CodeInsightTestCase {
 
   public void testBOMMarkedFileWithNativeConversion() throws Exception {
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
     UIUtil.dispatchAllInvocationEvents();
 
     VirtualFile file =
-      createTempFile("properties", CharsetToolkit.UTF8_BOM, "general-notice=\\u062a\\u0648\\u062c\\u0647", CharsetToolkit.UTF8_CHARSET);
+      createTempFile("properties", CharsetToolkit.UTF8_BOM, "general-notice=\\u062a\\u0648\\u062c\\u0647", StandardCharsets.UTF_8);
     PropertiesFile propertiesFile = (PropertiesFile)getPsiManager().findFile(file);
     assertNotNull(propertiesFile);
 

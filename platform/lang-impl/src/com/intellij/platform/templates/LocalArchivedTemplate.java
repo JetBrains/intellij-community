@@ -10,7 +10,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -138,7 +138,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
+              return StreamUtil.readText(stream, StandardCharsets.UTF_8);
             }
           }
           return null;

@@ -70,6 +70,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -998,7 +999,7 @@ public class MavenUtil {
       try {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
-          Reader reader = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
+          Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
           NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
             @Override
             public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {

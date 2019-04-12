@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,6 +14,7 @@ import org.junit.AssumptionViolatedException;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
@@ -209,7 +209,7 @@ public class IoTestUtil {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < namesAndTexts.length; i += 2) {
         stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
-        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
+        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(StandardCharsets.UTF_8));
         stream.closeEntry();
       }
       return jarFile;

@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -207,7 +208,7 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(psi instanceof PsiBinaryFile);
     assertEquals(FileTypes.UNKNOWN, virtualFile.getFileType());
 
-    setBinaryContent(virtualFile, "xxxxxxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(virtualFile, "xxxxxxx".getBytes(StandardCharsets.UTF_8));
     assertEquals(FileTypes.PLAIN_TEXT, virtualFile.getFileType());
     PsiFile after = getPsiManager().findFile(virtualFile);
     assertNotSame(psi, after);
@@ -773,7 +774,7 @@ public class FileTypesTest extends PlatformTestCase {
     EncodingProjectManagerImpl manager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(getProject());
     String oldProject = manager.getDefaultCharsetName();
     try {
-      VirtualFile file = createTempFile("sldkfjlskdfj", null, "123456789", CharsetToolkit.UTF8_CHARSET);
+      VirtualFile file = createTempFile("sldkfjlskdfj", null, "123456789", StandardCharsets.UTF_8);
       manager.setEncoding(file, CharsetToolkit.WIN_1251_CHARSET);
       file.setCharset(CharsetToolkit.WIN_1251_CHARSET);
       UIUtil.dispatchAllInvocationEvents();
@@ -788,11 +789,11 @@ public class FileTypesTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
 
-      manager.setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+      manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
       manager.setEncoding(file, CharsetToolkit.US_ASCII_CHARSET);
       UIUtil.dispatchAllInvocationEvents();
@@ -800,11 +801,11 @@ public class FileTypesTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(CharsetToolkit.US_ASCII_CHARSET, file.getCharset());
 
-      manager.setEncoding(file, CharsetToolkit.UTF8_CHARSET);
+      manager.setEncoding(file, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
+      assertEquals(StandardCharsets.UTF_8, file.getCharset());
     }
     finally {
       manager.setDefaultCharsetName(oldProject);

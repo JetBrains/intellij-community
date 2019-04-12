@@ -2,7 +2,6 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
@@ -10,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class Attachment {
@@ -29,7 +29,7 @@ public class Attachment {
   }
 
   public Attachment(@NotNull String path, @NotNull String content) {
-    this(path, content, content.getBytes(CharsetToolkit.UTF8_CHARSET), null);
+    this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
   }
 
   public Attachment(@NotNull String path, @NotNull byte[] bytes, @NotNull String displayText) {

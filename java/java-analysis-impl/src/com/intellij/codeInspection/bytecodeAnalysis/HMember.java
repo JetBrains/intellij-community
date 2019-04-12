@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter.getMessageDigest;
@@ -28,13 +28,13 @@ public final class HMember implements MemberDescriptor {
     if (md == null) {
       md = getMessageDigest();
     }
-    byte[] classDigest = md.digest(method.internalClassName.getBytes(CharsetToolkit.UTF8_CHARSET));
+    byte[] classDigest = md.digest(method.internalClassName.getBytes(StandardCharsets.UTF_8));
     ByteBuffer classBuffer = ByteBuffer.wrap(classDigest);
     myClassHi = classBuffer.getLong();
     myClassLo = classBuffer.getShort();
 
-    md.update(method.methodName.getBytes(CharsetToolkit.UTF8_CHARSET));
-    md.update(method.methodDesc.getBytes(CharsetToolkit.UTF8_CHARSET));
+    md.update(method.methodName.getBytes(StandardCharsets.UTF_8));
+    md.update(method.methodDesc.getBytes(StandardCharsets.UTF_8));
     byte[] sigDigest = md.digest();
     myMethod = ByteBuffer.wrap(sigDigest).getInt();
   }

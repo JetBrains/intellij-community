@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -12,6 +12,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 
@@ -86,9 +87,9 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       VirtualFile virtualFile2 = createFileInCommand("g.java");
       assertEquals(WINDOWS_1251, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
-      EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, CharsetToolkit.UTF8_CHARSET);
+      EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, StandardCharsets.UTF_8);
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+      assertEquals(StandardCharsets.UTF_8, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       Editor editor = getEditor(virtualFile);
       Editor editor2 = getEditor(virtualFile2);

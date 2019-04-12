@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
@@ -23,7 +9,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -42,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -54,7 +40,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   public boolean isJdk7Compatible() {
     return true;
   }
-  
+
   @Override
   public boolean acceptsCoverageEngine(@NotNull CoverageEngine engine) {
     return engine instanceof JavaCoverageEngine;
@@ -96,11 +82,11 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
       public Collection<ClassInfo> getClasses() {
         final Collection<ClassInfo> classes = super.getClasses();
         JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
-        if (!suite.isTrackTestFolders() || 
-            javaCoverageSuite.getExcludedClassNames().length > 0 || 
+        if (!suite.isTrackTestFolders() ||
+            javaCoverageSuite.getExcludedClassNames().length > 0 ||
             javaCoverageSuite.getExcludedPackageNames().length > 0) {
           final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-          final GlobalSearchScope productionScope = !suite.isTrackTestFolders() ? GlobalSearchScopesCore.projectProductionScope(project) 
+          final GlobalSearchScope productionScope = !suite.isTrackTestFolders() ? GlobalSearchScopesCore.projectProductionScope(project)
                                                                                 : GlobalSearchScope.projectScope(project);
           for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext(); ) {
             final ClassInfo aClass = iterator.next();
@@ -124,7 +110,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   protected static void write2file(File tempFile, String arg) throws IOException {
-    FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(CharsetToolkit.UTF8_CHARSET), true);
+    FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 
   protected static File createTempFile() throws IOException {

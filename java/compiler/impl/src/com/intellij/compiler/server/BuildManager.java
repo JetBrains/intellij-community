@@ -91,6 +91,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -1353,7 +1354,7 @@ public class BuildManager implements Disposable {
   @Nullable
   private static Pair<Date, File> readUsageFile(File usageFile) {
     try {
-      List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
+      List<String> lines = FileUtil.loadLines(usageFile, StandardCharsets.UTF_8.name());
       if (!lines.isEmpty()) {
         final String dateString = lines.get(0);
         final Date date;

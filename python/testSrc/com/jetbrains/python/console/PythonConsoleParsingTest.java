@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -10,6 +9,8 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author traff
@@ -96,7 +97,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setOriginalFile(originalFile);
 
-    originalFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    originalFile.setCharset(StandardCharsets.UTF_8);
     originalFile.putUserData(LanguageLevel.KEY, myLanguageLevel);
     PyConsoleUtil.markIPython(originalFile);
     return createFile(virtualFile);

@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -38,7 +38,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   private ContentRevisionVirtualFile(@NotNull ContentRevision contentRevision) {
     super(contentRevision.getFile().getPath(), VcsFileSystem.getInstance());
     myContentRevision = contentRevision;
-    setCharset(CharsetToolkit.UTF8_CHARSET);
+    setCharset(StandardCharsets.UTF_8);
   }
 
   @Override

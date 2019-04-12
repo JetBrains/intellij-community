@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +31,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
@@ -154,7 +155,7 @@ public final class LoadTextUtil {
   }
 
   // private fake charsets for files which have one-byte-for-ascii-characters encoding but contain seven bits characters only. used for optimization since we don't have to encode-decode bytes here.
-  private static final Charset INTERNAL_SEVEN_BIT_UTF8 = new SevenBitCharset(CharsetToolkit.UTF8_CHARSET);
+  private static final Charset INTERNAL_SEVEN_BIT_UTF8 = new SevenBitCharset(StandardCharsets.UTF_8);
   private static final Charset INTERNAL_SEVEN_BIT_ISO_8859_1 = new SevenBitCharset(CharsetToolkit.ISO_8859_1_CHARSET);
   private static final Charset INTERNAL_SEVEN_BIT_WIN_1251 = new SevenBitCharset(CharsetToolkit.WIN_1251_CHARSET);
   private static class SevenBitCharset extends Charset {
@@ -207,7 +208,7 @@ public final class LoadTextUtil {
     Charset hardCodedCharset = charsetName == null ? guessed.hardCodedCharset : CharsetToolkit.forName(charsetName);
 
     if (hardCodedCharset == null && guessed.guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return new DetectResult(CharsetToolkit.UTF8_CHARSET, guessed.guessed, guessed.BOM);
+      return new DetectResult(StandardCharsets.UTF_8, guessed.guessed, guessed.BOM);
     }
     return new DetectResult(hardCodedCharset, guessed.guessed, guessed.BOM);
   }
@@ -251,7 +252,7 @@ public final class LoadTextUtil {
     Charset result = charset;
     // optimisation
     if (info.guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
-      if (charset == CharsetToolkit.UTF8_CHARSET) {
+      if (charset == StandardCharsets.UTF_8) {
         result = INTERNAL_SEVEN_BIT_UTF8;
       }
       else if (charset == CharsetToolkit.ISO_8859_1_CHARSET) {
@@ -309,7 +310,7 @@ public final class LoadTextUtil {
     }
     CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(startOffset, endOffset);
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return new DetectResult(CharsetToolkit.UTF8_CHARSET, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
+      return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }
     return new DetectResult(null, guessed, null);
   }
@@ -330,7 +331,7 @@ public final class LoadTextUtil {
           charset = CharsetToolkit.US_ASCII_CHARSET;
           break;
         case VALID_UTF8:
-          charset = CharsetToolkit.UTF8_CHARSET;
+          charset = StandardCharsets.UTF_8;
           break;
         case INVALID_UTF8:
         case BINARY:
