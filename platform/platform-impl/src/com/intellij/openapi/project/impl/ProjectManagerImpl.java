@@ -69,7 +69,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final DefaultProjectTimed myDefaultProjectTimed = new DefaultProjectTimed(this);
+  private final DefaultProject myDefaultProject = new DefaultProject();
   private final ProjectManagerListener myBusPublisher;
   private final ExcludeRootsCache myExcludeRootsCache;
 
@@ -150,7 +150,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public void dispose() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     // dispose manually, because TimedReference.dispose() can already be called (in Timed.disposeTimed()) and then default project resurrected
-    Disposer.dispose(myDefaultProjectTimed);
+    Disposer.dispose(myDefaultProject);
   }
 
   @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
@@ -289,7 +289,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   static ProjectEx createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
     if (isDefault) {
-      return new DefaultProject("");
+      return new DefaultProject();
     }
     return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
@@ -330,7 +330,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   public boolean isDefaultProjectInitialized() {
     synchronized (lock) {
-      return myDefaultProjectTimed.isCached();
+      return myDefaultProject.isCached();
     }
   }
 
@@ -339,12 +339,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public Project getDefaultProject() {
     synchronized (lock) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
-      Project defaultProject = myDefaultProjectTimed.get();
-      // disable "the only project" optimization since we have now more than one project.
-      // (even though the default project is not a real project, it can be used indirectly in e.g. "Settings|Code Style" code fragments PSI)
-      updateTheOnlyProjectField();
-      return defaultProject;
+      // call instance method to reset timeout
+      LOG.assertTrue(!myDefaultProject.isDisposed());
     }
+    return myDefaultProject;
   }
 
   @Override
