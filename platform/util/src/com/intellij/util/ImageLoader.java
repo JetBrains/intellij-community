@@ -487,6 +487,7 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
+    // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
     return loadFromStream(inputStream, ScaleContext.create(), null);
   }
 
@@ -505,7 +506,6 @@ public class ImageLoader implements Serializable {
    */
   public static Image loadFromStream(@NotNull final InputStream inputStream, final ScaleContext ctx, ImageFilter filter) {
     try {
-      // for backward compatibility assume the image size includes SYS_SCALE
       ImageDesc desc = new ImageDesc(inputStream, ctx.getScale(PIX_SCALE));
       Image image = desc.load(false);
       return ImageConverterChain.create().withFilter(filter).withHiDPI(ctx).convert(image, desc);
