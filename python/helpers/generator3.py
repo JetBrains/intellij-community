@@ -168,6 +168,46 @@ def list_binaries(paths):
     return list(res.values())
 
 
+def is_source_file(path):
+    good_extension = (
+            # Want to see that files despite of their encoding.
+            path.endswith('.py')
+            or path.endswith('-nspkg.pth')
+            or path.endswith('.html')
+    )
+    if good_extension:
+        return True
+    bad_extension = (
+            # plotlywidget/static/index.js.map is 8.7 MiB.
+            # Many map files from notebook are near 2 MiB.
+            path.endswith('.js.map')
+
+            # uvloop/loop.c contains 6.4 MiB of code.
+            # Some header files from tensorflow has size more than 1 MiB.
+            or path.endswith('.h')
+            or path.endswith('.c')
+
+            # Test data of pycrypto, many files are near 1 MiB.
+            or path.endswith('.rsp')
+
+            # No need to read these files even if they are small.
+            or path.endswith('.pyc')
+            or path.endswith('.pyo')
+            or path.endswith('.so')
+            or path.endswith('.dll')
+    )
+    if bad_extension:
+        return False
+    try:
+        with open(path, 'rb') as candidate_stream:
+            for _, candidate_line in zip(range(10), candidate_stream):
+                candidate_line.decode('utf-8')
+    except (EnvironmentError, UnicodeDecodeError):
+        return False
+    else:
+        return True
+
+
 def list_sources(paths):
     # noinspection PyBroadException
     try:
@@ -181,8 +221,8 @@ def list_sources(paths):
 
             for root, files in walk_python_path(path):
                 for name in files:
-                    if name.endswith('.py') or name.endswith('-nspkg.pth'):
-                        file_path = os.path.join(root, name)
+                    file_path = os.path.join(root, name)
+                    if is_source_file(file_path):
                         say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
         sys.stdout.flush()
