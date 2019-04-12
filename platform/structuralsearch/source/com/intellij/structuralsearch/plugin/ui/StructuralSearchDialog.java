@@ -270,7 +270,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         if (myReplace) {
           setTextForEditor(text, myReplaceCriteriaEdit);
         }
-        myScopePanel.setScope(null);
+        myScopePanel.setScopesFromContext();
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -825,7 +825,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     myConfiguration = createConfiguration(configuration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
-    myScopePanel.setScope(matchOptions.getScope());
+    myScopePanel.setScopesFromContext();
+    SearchScope scope = matchOptions.getScope();
+    if (scope != null) myScopePanel.setScope(scope);
 
     UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
