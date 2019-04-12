@@ -307,7 +307,6 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     TreeColumnCellRenderer(@NotNull JTable table) {
       myTable = table;
-      setHorizontalAlignment(SwingConstants.CENTER);
       setVerticalAlignment(SwingConstants.CENTER);
     }
 
