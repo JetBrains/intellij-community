@@ -59,15 +59,18 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeIn
       new File(LOMBOK_SRC_PATH).getCanonicalPath());
 
     super.setUp();
-    loadFilesFrom(LOMBOK_SRC_PATH);
+    loadLombokFilesFrom(LOMBOK_SRC_PATH);
   }
 
-  protected void loadFilesFrom(final String srcPath) {
+  protected void loadLombokFilesFrom(final String srcPath) {
     List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
-    for (File javaFile : filesByMask) {
-      String filePath = PathUtil.toSystemIndependentName(javaFile.getPath());
-      myFixture.copyFileToProject(filePath, filePath.substring(srcPath.lastIndexOf("/") + 1));
-    }
+    filesByMask.stream().map(File::getPath).filter(this::acceptLombokFile).map(PathUtil::toSystemIndependentName).forEach(
+      filePath -> myFixture.copyFileToProject(filePath, filePath.substring(srcPath.lastIndexOf("/") + 1))
+    );
+  }
+
+  protected boolean acceptLombokFile(String javaFilePath) {
+    return true;
   }
 
   protected PsiFile loadToPsiFile(String fileName) {
