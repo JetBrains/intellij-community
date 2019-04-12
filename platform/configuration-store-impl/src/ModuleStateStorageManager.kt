@@ -15,7 +15,6 @@ import com.intellij.util.LineSeparator
 import org.jdom.Element
 import java.io.FileNotFoundException
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -98,7 +97,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
       }
       else {
         runAndHandleExceptions {
-          val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
+          val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
           lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
           return JDOMUtil.load(charBuffer)
         }

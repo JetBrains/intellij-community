@@ -24,7 +24,6 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -129,7 +128,7 @@ open class FileBasedStorage(file: Path,
       if (result == null) {
         result = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
         // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
-        result?.charset = StandardCharsets.UTF_8
+        result?.charset = Charsets.UTF_8
         cachedVirtualFile = result
       }
       return cachedVirtualFile
@@ -235,7 +234,7 @@ internal fun writeFile(file: Path?,
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      val contentString = content.toByteArray().toString(StandardCharsets.UTF_8)
+      val contentString = content.toByteArray().toString(Charsets.UTF_8)
       LOG.warn("Content equals, but it must be handled not on this level: file ${result.name}, content:\n$contentString")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
