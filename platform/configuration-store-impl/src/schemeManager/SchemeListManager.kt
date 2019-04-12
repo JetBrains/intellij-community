@@ -119,3 +119,10 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     return result
   }
 }
+
+private fun ExternalizableScheme.renameScheme(newName: String) {
+  if (newName != name) {
+    name = newName
+    LOG.assertTrue(newName == name)
+  }
+}
