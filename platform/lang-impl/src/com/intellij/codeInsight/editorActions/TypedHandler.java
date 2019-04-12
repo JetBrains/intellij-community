@@ -352,7 +352,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     return editor;
   }
 
-  public static void handleAfterLParen(@NotNull Editor editor, @NotNull FileType fileType, char lparenChar){
+  private static void handleAfterLParen(@NotNull Editor editor, @NotNull FileType fileType, char lparenChar){
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     boolean atEndOfDocument = offset == editor.getDocument().getTextLength();
