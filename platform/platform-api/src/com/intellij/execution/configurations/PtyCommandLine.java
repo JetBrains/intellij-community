@@ -52,6 +52,8 @@ public class PtyCommandLine extends GeneralCommandLine {
   private int myInitialColumns = -1;
   private int myInitialRows = -1;
 
+  private boolean myWindowsAnsiColorEnabled = false;
+
   public PtyCommandLine() { }
 
   /**
@@ -122,6 +124,15 @@ public class PtyCommandLine extends GeneralCommandLine {
       myInitialColumns = ((PtyCommandLine)original).myInitialColumns;
       myInitialRows = ((PtyCommandLine)original).myInitialRows;
     }
+  }
+
+  /**
+   * Enable ANSI colors with consoleMode=true.
+   * When consoleMode=false, ANSI colors are enabled by default.
+   * @param windowsAnsiColorEnabled true if ANSI colors should be enabled
+   */
+  public void withWindowsAnsiColorEnabled(boolean windowsAnsiColorEnabled) {
+    myWindowsAnsiColorEnabled = windowsAnsiColorEnabled;
   }
 
   @NotNull
@@ -216,7 +227,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
-      .setRedirectErrorStream(isRedirectErrorStream());
+      .setRedirectErrorStream(isRedirectErrorStream())
+      .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled);
     return builder.start();
   }
 }
