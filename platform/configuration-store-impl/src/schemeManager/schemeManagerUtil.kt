@@ -2,15 +2,7 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.progress.ProcessCanceledException
-
-internal fun ExternalizableScheme.renameScheme(newName: String) {
-  if (newName != name) {
-    name = newName
-    LOG.assertTrue(newName == name)
-  }
-}
 
 internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
   try {
