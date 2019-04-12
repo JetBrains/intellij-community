@@ -4,6 +4,8 @@ public enum ConfigKey {
 
   CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
 
+  COPYABLE_ANNOTATIONS("lombok.copyableAnnotations", ""),
+
   LOG_FIELDNAME("lombok.log.fieldName", "log"),
   LOG_FIELD_IS_STATIC("lombok.log.fieldIsStatic", "true"),
 

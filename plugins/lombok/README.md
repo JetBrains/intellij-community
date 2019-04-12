@@ -145,6 +145,7 @@ Developed By
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@yiftizur** Yiftach Tzur](https://github.com/yiftizur)
+- [**@sluongng** Son Luong Ngoc](https://github.com/sluongng)
 
 Supporters
 --------
