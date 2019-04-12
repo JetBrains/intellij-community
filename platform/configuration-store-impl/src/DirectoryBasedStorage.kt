@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
@@ -157,7 +156,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       var dir = storage.virtualFile
       if (copiedStorageData!!.isEmpty()) {
         if (dir != null && dir.exists()) {
-          deleteFile(this, dir)
+          dir.delete(this)
         }
         storage.setStorageData(stateMap)
         return
@@ -200,17 +199,14 @@ open class DirectoryBasedStorage(private val dir: Path,
 
     private fun deleteFiles(dir: VirtualFile) {
       val copiedStorageData = copiedStorageData!!
-
-      runWriteAction {
-        for (file in dir.children) {
-          val fileName = file.name
-          if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
-            if (file.isWritable) {
-              file.delete(this)
-            }
-            else {
-              throw ReadOnlyModificationException(file, null)
-            }
+      for (file in dir.children) {
+        val fileName = file.name
+        if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
+          if (file.isWritable) {
+            file.delete(this)
+          }
+          else {
+            throw ReadOnlyModificationException(file, null)
           }
         }
       }
