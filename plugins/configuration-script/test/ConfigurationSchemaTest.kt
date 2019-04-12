@@ -10,14 +10,13 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
-import java.nio.charset.StandardCharsets
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
 internal class ConfigurationSchemaTest : CompletionTestCase() {
   private var schemaFile: LightVirtualFile? = null
   override fun setUp() {
     super.setUp()
-    schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), StandardCharsets.UTF_8, 0)
+    schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, generateConfigurationSchema(), Charsets.UTF_8, 0)
   }
 
   fun `test map and description`() {

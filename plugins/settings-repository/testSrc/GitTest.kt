@@ -20,7 +20,6 @@ import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.deletePath
 import org.jetbrains.settingsRepository.git.writePath
 import org.junit.Test
-import java.nio.charset.StandardCharsets
 import java.util.*
 
 val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
@@ -189,7 +188,7 @@ internal class GitTest : GitTestCase() {
     sync(SyncType.MERGE)
 
     restoreRemoteAfterPush()
-    fs.file(SAMPLE_FILE_NAME, data.toString(StandardCharsets.UTF_8)).compare()
+    fs.file(SAMPLE_FILE_NAME, data.toString(Charsets.UTF_8)).compare()
   }
 
   @Test fun `merge - theirs file deleted, my modified, accept theirs`() = runBlocking<Unit> {

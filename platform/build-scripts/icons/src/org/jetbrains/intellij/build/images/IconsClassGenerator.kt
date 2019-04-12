@@ -12,7 +12,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -104,7 +103,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
     val iconsClassInfo = getIconsClassInfo(module) ?: return
     val outFile = iconsClassInfo.outFile
     val oldText = try {
-      Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8)
+      Files.readAllBytes(outFile).toString(Charsets.UTF_8)
     }
     catch (ignored: NoSuchFileException) {
       null

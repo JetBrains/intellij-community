@@ -16,7 +16,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
-import java.nio.charset.StandardCharsets
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
@@ -42,7 +41,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 
   inner class MyJsonSchemaFileProvider : JsonSchemaFileProvider, DumbAware {
     private val schemeFile = lazy {
-      LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, StandardCharsets.UTF_8, 0)
+      LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, Charsets.UTF_8, 0)
     }
 
     override fun getName() = "IntelliJ Configuration"
