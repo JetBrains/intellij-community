@@ -13,6 +13,7 @@ from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
 from _pydev_bundle.pydev_console_types import CodeFragment, Command
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_vars, pydevd_save_locals
+from _pydevd_bundle.pydevd_console_pytest import enable_pytest_output
 
 try:
     import __builtin__
@@ -40,6 +41,8 @@ if 'IPYTHONENABLE' in os.environ:
     IPYTHON = os.environ['IPYTHONENABLE'] == 'True'
 else:
     IPYTHON = True
+
+PYTEST_RUN_CONFIG = 'PYTEST_RUN_CONFIG' in os.environ
 
 try:
     try:
@@ -175,6 +178,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
     updated_globals = {}
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals)  # locals later because it has precedence over the actual globals
+
+    if PYTEST_RUN_CONFIG:
+        enable_pytest_output()
 
     if IPYTHON:
         need_more = exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)

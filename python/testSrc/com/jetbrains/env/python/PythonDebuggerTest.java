@@ -1977,4 +1977,33 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testDebugConsolePytest() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_debug_console_pytest.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
+      }
+
+      @Override
+      protected boolean usePytestRunner() {
+        return true;
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        consoleExec("print('a = %s' % a)");
+        waitForOutput("a = 1");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pytest");
+      }
+    });
+  }
 }
