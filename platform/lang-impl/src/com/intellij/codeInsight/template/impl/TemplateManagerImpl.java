@@ -245,21 +245,20 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
-    CustomTemplateCallback templateCallback = new CustomTemplateCallback(editor, file);
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
       (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
       isApplicable(customLiveTemplate, editor, file));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
-      Document document = editor.getDocument();
+      CustomTemplateCallback templateCallback = new CustomTemplateCallback(editor, file);
       for (CustomLiveTemplate customLiveTemplate : customCandidates) {
         String key = customLiveTemplate.computeTemplateKey(templateCallback);
         if (key != null) {
           int offsetBeforeKey = caretOffset - key.length();
-          CharSequence text = document.getImmutableCharSequence();
+          CharSequence text = editor.getDocument().getImmutableCharSequence();
           if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-            return () -> customLiveTemplate.expand(key, new CustomTemplateCallback(editor, file));
+            return () -> customLiveTemplate.expand(key, templateCallback);
           }
         }
       }
