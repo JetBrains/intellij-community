@@ -186,7 +186,7 @@ public class NewListPluginComponent extends CellPluginComponent {
         myVersion.setText(myPlugin.getVersion() + " " + UIUtil.rightArrow() + " " + descriptor.getVersion());
       }
       if (myUpdateButton == null) {
-        myNameAndButtons.addButtonComponent(myUpdateButton = new UpdateButton());
+        myNameAndButtons.addButtonAsFirstComponent(myUpdateButton = new UpdateButton());
         myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myUpdateDescriptor, false));
       }
       else {
@@ -341,6 +341,12 @@ public class NewListPluginComponent extends CellPluginComponent {
     enableRestart();
   }
 
+  public void updatePlugin() {
+    if (!myMarketplace && myUpdateButton != null && myUpdateButton.isVisible()) {
+      myUpdateButton.doClick();
+    }
+  }
+
   private boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
@@ -360,7 +366,11 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull java.util.List<? extends CellPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends CellPluginComponent> selection) {
+    if (myMarketplace) {
+      return;
+    }
+
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -393,7 +403,9 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     if (updateButtons != null) {
       group.add(new ListPluginComponent.ButtonAnAction(updateButtons));
-      return;
+      if (size > 1) {
+        return;
+      }
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
@@ -425,7 +437,11 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   @Override
-  public void handleKeyAction(int keyCode, @NotNull java.util.List<? extends CellPluginComponent> selection) {
+  public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
+    if (myMarketplace) {
+      return;
+    }
+
     for (CellPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;

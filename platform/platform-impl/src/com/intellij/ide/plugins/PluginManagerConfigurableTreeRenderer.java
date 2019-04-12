@@ -71,11 +71,11 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
     }
   }
 
-  private static class CountComponent extends JLabel {
+  public static class CountComponent extends JLabel {
     @SuppressWarnings("UseJBColor")
     private final Color myOvalColor = JBColor.namedColor("Counter.background", new Color(0xCC9AA7B0, true));
 
-    private CountComponent() {
+    public CountComponent() {
       setBorder(null);
       setFont(UIUtil.getLabelFont(SystemInfo.isMac || (SystemInfo.isLinux && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()))
                                   ? UIUtil.FontSize.SMALL
@@ -105,8 +105,10 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
-      g.setColor(getBackground());
-      g.fillRect(0, 0, width, height);
+      if (isOpaque()) {
+        g.setColor(getBackground());
+        g.fillRect(0, 0, width, height);
+      }
 
       g.setColor(myOvalColor);
       g.fillRoundRect(getTextOffset() + (width - ovalWidth) / 2, (height - ovalHeight) / 2, ovalWidth, ovalHeight, corner, corner);

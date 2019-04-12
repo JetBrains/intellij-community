@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,6 +148,14 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     if (group.rightAction != null) {
       panel.add(group.rightAction, BorderLayout.EAST);
+    }
+    else if (!ContainerUtil.isEmpty(group.rightActions)) {
+      JPanel actions = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
+      panel.add(actions, BorderLayout.EAST);
+
+      for (JComponent action : group.rightActions) {
+        actions.add(action);
+      }
     }
 
     int index;

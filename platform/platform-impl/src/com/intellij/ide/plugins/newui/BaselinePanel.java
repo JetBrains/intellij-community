@@ -288,6 +288,16 @@ public class BaselinePanel extends NonOpaquePanel {
     add(component, null);
   }
 
+  public void addButtonAsFirstComponent(@NotNull JComponent component) {
+    if (myButtonComponents.isEmpty()) {
+      myButtonComponents.add(component);
+    }
+    else {
+      myButtonComponents.add(0, component);
+    }
+    add(component, null);
+  }
+
   public void removeButtonComponent(@NotNull JComponent component) {
     myButtonComponents.remove(component);
     remove(component);
