@@ -89,8 +89,9 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
       return;
     }
     for (Result result : annotationResult) {
-      int startOffset = document.getLineStartOffset(result.line - 1) + result.column - 1;
-      int endOffset = document.getLineStartOffset(result.endLine - 1) + result.endColumn - 1;
+      CharSequence sequence = document.getCharsSequence();
+      int startOffset = calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
+      int endOffset = calcOffset(sequence, document.getLineStartOffset(result.endLine - 1) ,result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
       long code = result.code;
       String message = result.message;
@@ -101,6 +102,16 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
           "</html>";
       holder.createAnnotation(severity(result.level), range, message, html);
     }
+  }
+
+  private static int calcOffset(CharSequence sequence, int startOffset, int column) {
+    int i = 1;
+    while (i < column) {
+      int c = Character.codePointAt(sequence, startOffset);
+      i += c == '\t' ? 8 : 1;
+      startOffset++;
+    }
+    return startOffset;
   }
 
   @NotNull
