@@ -1086,7 +1086,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @NotNull
     SimpleTextAttributes getTextAttributes();
 
+    @Nullable
+    Object getTag();
+
     int split(int offset, @NotNull SimpleTextAttributes attributes);
+
+    void setFragment(@NotNull String text);
+
+    void setTag(@Nullable Object tag);
+
+    void setTextAttributes(@NotNull SimpleTextAttributes attributes);
   }
 
   private class MyIterator implements ColoredIterator {
@@ -1120,6 +1129,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
     }
 
+    @Nullable
+    @Override
+    public Object getTag() {
+      synchronized (myFragments) {
+        return myFragments.get(myIndex).tag;
+      }
+    }
+
     @Override
     public int split(int offset, @NotNull SimpleTextAttributes attributes) {
       synchronized (myFragments) {
@@ -1143,7 +1160,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         return myOffset;
       }
     }
-
     @Override
     public boolean hasNext() {
       synchronized (myFragments) {
@@ -1163,6 +1179,27 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setFragment(@NotNull String text) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).text = text;
+      }
+    }
+
+    @Override
+    public void setTag(@Nullable Object tag) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).tag = tag;
+      }
+    }
+
+    @Override
+    public void setTextAttributes(@NotNull SimpleTextAttributes attributes) {
+      synchronized (myFragments) {
+        myFragments.get(myIndex).attributes = attributes;
+      }
     }
   }
 
