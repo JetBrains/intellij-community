@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -447,7 +448,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     if (child == null) {
       throw new IOException("Cannot create child file '" + file + "' at " + parent.getPath());
     }
-    if (child.getCharset().equals(CharsetToolkit.UTF8_CHARSET)) {
+    if (child.getCharset().equals(StandardCharsets.UTF_8)) {
       Project project = ProjectLocator.getInstance().guessProjectForFile(child);
       EncodingManager encodingManager = project == null ? EncodingManager.getInstance() : EncodingProjectManager.getInstance(project);
       if (encodingManager.shouldAddBOMForNewUtf8File()) {

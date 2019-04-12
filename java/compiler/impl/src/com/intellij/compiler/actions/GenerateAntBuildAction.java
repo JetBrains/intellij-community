@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class GenerateAntBuildAction extends CompileActionBase {
@@ -239,7 +240,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
    * @throws FileNotFoundException        if file not found
    */
   private static PrintWriter makeWriter(final File buildxmlFile) throws UnsupportedEncodingException, FileNotFoundException {
-    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), CharsetToolkit.UTF8_CHARSET));
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(buildxmlFile), StandardCharsets.UTF_8));
   }
 
   private void ensureFilesWritable(Project project, File[] files) throws IOException {

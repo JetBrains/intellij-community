@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -26,6 +25,7 @@ import org.jetbrains.java.generate.element.FieldElement;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
@@ -45,7 +45,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
    */
   protected static String readFile(String resource, Class<? extends TemplatesManager> templatesManagerClass) throws IOException {
     BufferedInputStream in = new BufferedInputStream(templatesManagerClass.getResourceAsStream(resource));
-    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET)));
+    return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, StandardCharsets.UTF_8)));
   }
 
   @Override

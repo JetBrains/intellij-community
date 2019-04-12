@@ -29,7 +29,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
                                                          private val oldSchemes: ConcurrentList<T>,
                                                          private val preScheduledFilesToDelete: MutableSet<String>,
                                                          private val isDuringLoad: Boolean) {
-  private val filesToDelete = THashSet<String>()
+  private val filesToDelete: MutableSet<String> = THashSet<String>()
 
   private val schemes = oldSchemes.toMutableList()
   private var newSchemesOffset = schemes.size
@@ -55,7 +55,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
-    if (!filesToDelete.isEmpty && !preScheduledFilesToDelete.isEmpty()) {
+    if (!filesToDelete.isEmpty() || !preScheduledFilesToDelete.isEmpty()) {
       LOG.debug { "Schedule to delete: ${filesToDelete.joinToString()} (and preScheduledFilesToDelete: ${preScheduledFilesToDelete.joinToString()})" }
       schemeManager.filesToDelete.addAll(filesToDelete)
       schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)

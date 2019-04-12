@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -346,7 +347,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     GeneralSettings settings = GeneralSettings.getInstance();
     boolean safeWrite = settings.isUseSafeWrite();
     SafeWriteRequestor requestor = new SafeWriteRequestor() { };
-    byte[] testData = "hello".getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] testData = "hello".getBytes(StandardCharsets.UTF_8);
 
     try {
       settings.setUseSafeWrite(false);

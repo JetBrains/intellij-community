@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.OneTimeString;
 import com.intellij.credentialStore.OneTimeStringKt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -159,7 +159,7 @@ public class EncryptionUtil {
    * @return the UTF-8 encoded string
    */
   public static byte[] getUTF8Bytes(String string) {
-    return string.getBytes(CharsetToolkit.UTF8_CHARSET);
+    return string.getBytes(StandardCharsets.UTF_8);
   }
 
   /**
