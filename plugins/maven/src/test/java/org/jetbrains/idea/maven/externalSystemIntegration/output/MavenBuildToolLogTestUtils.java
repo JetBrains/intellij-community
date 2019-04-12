@@ -27,7 +27,6 @@ import java.util.function.Function;
 import static com.intellij.build.events.MessageEvent.Kind.WARNING;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 
 public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
@@ -255,27 +254,6 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
         return null;
       }
       return myLines.get(myPosition);
-    }
-
-
-    @Override
-    public BuildOutputInstantReader append(CharSequence csq) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public BuildOutputInstantReader append(CharSequence csq, int start, int end) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public BuildOutputInstantReader append(char c) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void close() {
-
     }
   }
 }
