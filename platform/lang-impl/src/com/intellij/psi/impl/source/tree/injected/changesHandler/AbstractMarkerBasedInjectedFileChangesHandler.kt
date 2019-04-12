@@ -56,8 +56,8 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
     throw RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +
                                           " myInjectedFile.isValid = ${myInjectedFile.isValid}, isValid = $isValid",
                                           *listOfNotNull(
-                                            Attachment("host", markers.firstOrNull()?.host?.text ?: "<null>"),
-                                            Attachment("markers", markers.toString()),
+                                            Attachment("hosts", markers.joinToString("\n\n") { it.host?.text ?: "<null>" }),
+                                            Attachment("markers", markers.joinToString("\n") { it.toString() }),
                                             Attachment("injected document", this.myNewDocument.text),
                                             exception?.let { Attachment("exception", it) }
                                           ).toTypedArray()

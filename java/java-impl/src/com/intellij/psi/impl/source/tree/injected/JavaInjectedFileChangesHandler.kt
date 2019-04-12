@@ -51,10 +51,11 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
       myOrigDocument.replaceString(rangeInHost.startOffset, rangeInHost.endOffset, newText)
       val changedRange = TextRange.from(rangeInHost.startOffset, newText.length)
-      workingRange = workingRange?.union(changedRange) ?: changedRange
+      println("workingRange accumulated = ${logHostMarker(workingRange)}")
+      workingRange = workingRange union changedRange
     }
 
-    workingRange = markersWholeRange(affectedMarkers) ?: workingRange ?: failAndReport("no workingRange", e)
+    workingRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no workingRange", e)
 
     psiDocumentManager.commitDocument(myOrigDocument)
     println("workingRange = ${logHostMarker(workingRange)}")
@@ -62,6 +63,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     if (markersToRemove.isNotEmpty()) {
       workingRange = removeHostsFromConcatenation(markersToRemove) ?: workingRange
     }
+
+    println("range to reformat = ${logHostMarker(workingRange)}")
 
     CodeStyleManager.getInstance(myProject).reformatRange(
       origPsiFile, workingRange.startOffset, workingRange.endOffset, true)
@@ -195,6 +198,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     get() = ElementManipulators.getManipulator(this).getRangeInElement(this).shiftRight(textRange.startOffset)
 
 }
+
+private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 private fun intermediateElement(psi: PsiElement) =
   psi is PsiWhiteSpace || (psi is PsiJavaToken && psi.tokenType == JavaTokenType.PLUS)

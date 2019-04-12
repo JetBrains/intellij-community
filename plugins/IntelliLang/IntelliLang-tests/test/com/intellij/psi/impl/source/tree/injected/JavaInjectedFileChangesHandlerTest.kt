@@ -69,7 +69,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-  
+
           class A {
             void foo() {
               @Language("HTML") String a = "<html>li" +
@@ -111,7 +111,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       injectedFile.edit { insertString(text.indexOf("1"), "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-  
+
           class A {
             void foo() {
               @Language("JSON") String a = "{\"bca\": \n" +
@@ -123,7 +123,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       injectedFile.edit { insertString(text.indexOf(":"), "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-          
+
           class A {
             void foo() {
               @Language("JSON") String a = "{\"bca\"\n" +
@@ -137,7 +137,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       injectedFile.edit { deleteString(0, textLength) }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-          
+
           class A {
             void foo() {
               @Language("JSON") String a = "";
@@ -250,7 +250,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-          
+
           class A {
             void foo() {
               @Language("HTML") String a = "<html>line\n" +
@@ -263,7 +263,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-          
+
           class A {
             void foo() {
               @Language("HTML") String a = "<html>line" +
@@ -295,7 +295,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       injectedFile.edit { insertString(text.indexOf("<body>"), "someInner") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-  
+
           class A {
             void foo(String bodyText) {
               String headText = "someText1";
@@ -307,7 +307,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       injectedFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
-  
+
           class A {
             void foo(String bodyText) {
               String headText = "someText1";
@@ -316,6 +316,60 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
+    }
+
+  }
+
+  fun `test sequential add in fragment editor`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+               @Language("JSON")  String a = "{\n" +
+                    "  \"begin\": true,\n" +
+                    "  \"fieldstart\": -1,<caret>\n" +
+                    "  \"end\": false\n" +
+                    "}";
+            }
+          }
+      """.trimIndent())
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val injectedFile = quickEditHandler.newFile
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+
+      var shift = injectedFile.text.indexAfter("-1,\n")
+
+      repeat(5) {
+        quickEditHandler.newFile.edit {
+          val s = "  \"field$it\": $it,\n"
+          insertString(shift, s)
+          shift += s.length
+        }
+      }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      checkResult("classA.java", """
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+               @Language("JSON")  String a = "{\n" +
+                    "  \"begin\": true,\n" +
+                       "  \"fieldstart\": -1,\n" +
+                       "  \"field0\": 0,\n" +
+                       "  \"field1\": 1,\n" +
+                       "  \"field2\": 2,\n" +
+                       "  \"field3\": 3,\n" +
+                       "  \"field4\": 4,\n" +
+                       "  \"end\": false\n" +
+                    "}";
+            }
+          }
+      """.trimIndent(), true)
     }
 
   }
@@ -348,6 +402,11 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }, "change doc", "")
   }
 
+  private fun commit() = PsiDocumentManager.getInstance(project).commitDocument(myFixture.editor.document)
+
+  private fun moveCaret(shift: Int, columnShift: Int = 0) =
+    myFixture.editor.caretModel.moveCaretRelatively(shift, columnShift, false, false, false)
+
   private fun Document.findAndDelete(substring: String) {
     val start = this.text.indexOf(substring)
     deleteString(start, start + substring.length)
@@ -355,4 +414,9 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 
+}
+
+private fun String.indexAfter(string: String): Int {
+  val r = indexOf(string)
+  return if (r == -1) -1 else r + string.length
 }
