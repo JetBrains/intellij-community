@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
@@ -51,6 +52,7 @@ class EditorModel {
   List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
   final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
   private boolean isLocalScrollBarStabilized = false;
+  AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
 
   private final JPanel panelMain;
   private final ExecutorService myPageReaderExecutor =
@@ -252,9 +254,14 @@ class EditorModel {
     update();
   }
 
-  // TODO: 2019-04-10 optimise by request merging
   void requestUpdate() {
-    ApplicationManager.getApplication().invokeLater(() -> update());
+    // elimination of duplicates of update() tasks in EDT queue
+    if (isUpdateRequested.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        isUpdateRequested.set(false);
+        update();
+      });
+    }
   }
 
   // FIXME: 2019-04-12 scrolling to caret causes jumping over pages (goto any place in file and press "left" or "right")
@@ -415,11 +422,13 @@ class EditorModel {
     int symbolOffsetToEndOfTargetVisiblePage = getSymbolOffsetToStartOfPage(visibleTargetPageIndex + 1, pagesInDocument);
     int topOfTargetVisiblePage = offsetToY(symbolOffsetToBeginningOfTargetVisiblePage);
 
-    int bottomOfExpectedVisibleArea = topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset + editor.getScrollingModel().getVisibleArea().height;
+    int bottomOfExpectedVisibleArea =
+      topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset + editor.getScrollingModel().getVisibleArea().height;
     if (bottomOfExpectedVisibleArea > editor.getContentComponent().getHeight()) {
       int indexOfLastPage = tryGetIndexOfNeededPageInList(pagesAmountInFile - 1, pagesInDocument);
-      if (indexOfLastPage == -1)
+      if (indexOfLastPage == -1) {
         return false;
+      }
       targetVisiblePosition.verticalScrollOffset -= bottomOfExpectedVisibleArea - editor.getContentComponent().getHeight();
       return true;
     }
