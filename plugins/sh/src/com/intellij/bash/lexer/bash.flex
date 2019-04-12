@@ -131,6 +131,10 @@ EscapedCurly             = "\\{" | "\\}"
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
 
+RegexWord                = [^\r\n\\\"' \t] | {EscapedChar}
+RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
+RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
+
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
@@ -221,8 +225,8 @@ HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMar
 }
 
 <REGULAR_EXPRESSION> {
-  {WhiteSpace}+                                         {return WHITESPACE;}
-  ([^ ]| {EscapedWhiteSpace})+ / {WhiteSpace}* "]]"     { popState(); return WORD; }
+  {WhiteSpace}+                   { return WHITESPACE;}
+  {RegexInQuotes}                 { popState(); return WORD; }
 }
 
 <PARAMETER_EXPANSION> {
