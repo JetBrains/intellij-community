@@ -23,7 +23,8 @@ import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
  *
  * @see ColorIcon
  */
-public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+// public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
   private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
   public static final Icon ICON_18 = JBUI.scale(create(18));
@@ -97,6 +98,12 @@ public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
     width = icon.width;
     height = icon.height;
     myUseCache = icon.myUseCache;
+  }
+
+  @NotNull
+  @Override
+  public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
+    return super.scale(scale);
   }
 
   @NotNull
