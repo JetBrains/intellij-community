@@ -1,5 +1,6 @@
 package com.intellij.bash.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -10,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -19,14 +21,20 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 // todo: rewrite with the future API, see IDEA-203568
 public class BashExternalFormatter implements ExternalFormatProcessor {
+  private final static Logger LOG = Logger.getInstance(BashExternalFormatter.class);
+
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
     return file instanceof BashFile;
@@ -54,11 +62,22 @@ public class BashExternalFormatter implements ExternalFormatProcessor {
     long before = document.getModificationStamp();
     documentManager.saveDocument(document);
 
+    List<String> params = ContainerUtil.newSmartList();
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    CodeStyleSettings settings = psiFile == null ? null : CodeStyle.getSettings(psiFile);
+    if (settings != null) {
+      if (!settings.useTabCharacter(file.getFileType())) {
+        int tabSize = settings.getIndentSize(file.getFileType());
+        params.add("-i=" + tabSize);
+      }
+    }
+    params.add(realPath);
+
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath(shFmtExecutable)
-          .withParameters(realPath);
+          .withParameters(params);
 
       OSProcessHandler handler = new OSProcessHandler(commandLine);
       handler.addProcessListener(new CapturingProcessAdapter() {
@@ -83,19 +102,20 @@ public class BashExternalFormatter implements ExternalFormatProcessor {
             });
           }
           else {
-            showFailedNotification();
+            showFailedNotification(getOutput().getStderr());
           }
         }
       });
       handler.startNotify();
     }
     catch (ExecutionException e) {
-      showFailedNotification();
+      showFailedNotification(e.getMessage());
     }
   }
 
-  private static void showFailedNotification() {
+  private static void showFailedNotification(String stderr) {
     // todo: add notification
+    LOG.debug(stderr);
   }
 
   @NotNull
