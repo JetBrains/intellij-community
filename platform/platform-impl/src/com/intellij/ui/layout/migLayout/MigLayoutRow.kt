@@ -404,6 +404,12 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
+  override fun <V> enableIfSelected(comboBox: JComboBox<V>, predicate: (V?) -> Boolean): CellBuilderImpl<T> {
+    component.isEnabled = predicate(comboBox.selectedItem as V?)
+    comboBox.addActionListener { component.isEnabled = predicate(comboBox.selectedItem as V?) }
+    return this
+  }
+
   override fun actsAsLabel() {
     builder.updateComponentConstraints(component) { spanX = 1 }
   }
