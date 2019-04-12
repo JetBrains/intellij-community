@@ -27,6 +27,6 @@ public class FieldNameConstantsOldTest extends AbstractLombokParsingTestCase {
 
   @Override
   protected boolean acceptLombokFile(String javaFilePath) {
-    return !javaFilePath.endsWith("FieldNameConstants.java") || javaFilePath.startsWith(".\\old");
+    return !javaFilePath.endsWith("FieldNameConstants.java") || javaFilePath.startsWith("." + File.separator + "old");
   }
 }
