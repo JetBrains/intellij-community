@@ -2,6 +2,7 @@
   <dictionary name="ignatov">
     <words>
       <w>heredoc</w>
+      <w>shellcheck</w>
     </words>
   </dictionary>
 </component>
