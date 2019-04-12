@@ -10,10 +10,7 @@ import com.intellij.largeFilesEditor.changes.*;
 import com.intellij.largeFilesEditor.encoding.EditorManagerAccess;
 import com.intellij.largeFilesEditor.encoding.EditorManagerAccessorImpl;
 import com.intellij.largeFilesEditor.encoding.EncodingWidget;
-import com.intellij.largeFilesEditor.file.FileManager;
-import com.intellij.largeFilesEditor.file.FileManagerImpl;
-import com.intellij.largeFilesEditor.file.LoadPageCallback;
-import com.intellij.largeFilesEditor.file.SaveFileCallback;
+import com.intellij.largeFilesEditor.file.*;
 import com.intellij.largeFilesEditor.search.SearchManager;
 import com.intellij.largeFilesEditor.search.SearchManagerImpl;
 import com.intellij.largeFilesEditor.search.SearchResult;
@@ -144,8 +141,8 @@ public class EditorManagerImpl extends UserDataHolderBase
 
     tokenLock = createTokenLock();
 
-    tokenLock.trySetNewToken(new AccessGettingPageToken(Reason.NAVIGATION_BY_USER, 0));
-    fileManager.needToOpenNewPage(tokenLock.getActiveToken());
+    //tokenLock.trySetNewToken(new AccessGettingPageToken(Reason.NAVIGATION_BY_USER, 0));
+    //fileManager.needToOpenNewPage(tokenLock.getActiveToken());
     editorModel.updateCurrentPageLabelAndAdditionalInfo();
     editorModel.updateGuiActions();
   }
@@ -669,6 +666,11 @@ public class EditorManagerImpl extends UserDataHolderBase
   private EditorModel.DataProvider implementDataProviderForEditorModel() {
     return new EditorModel.DataProvider() {
       @Override
+      public Page getPage(long pageNumber) throws IOException {
+        return fileManager.getPage_wait(pageNumber);
+      }
+
+      @Override
       public long getPagesAmount() throws IOException {
         return fileManager.getPagesAmount();
       }
@@ -691,6 +693,11 @@ public class EditorManagerImpl extends UserDataHolderBase
       @Override
       public boolean isSavingLaunched() {
         return tokenLock.getActiveToken() != null && tokenLock.getActiveToken().getReason() == Reason.SAVING;
+      }
+
+      @Override
+      public void requestReadPage(long pageNumber, ReadingPageResultHandler readingPageResultHandler) {
+        fileManager.requestReadPage(pageNumber, readingPageResultHandler);
       }
     };
   }

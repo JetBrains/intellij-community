@@ -37,4 +37,6 @@ public interface FileManager {
   String getFileName();
 
   FileDataProviderForSearch getFileDataProviderForSearch();
+
+  void requestReadPage(long pageNumber, ReadingPageResultHandler readingPageResultHandler);
 }

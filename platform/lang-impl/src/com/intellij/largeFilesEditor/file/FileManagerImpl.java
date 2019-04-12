@@ -9,6 +9,7 @@ import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger logger = Logger.getInstance(FileManagerImpl.class);
@@ -37,7 +41,11 @@ public class FileManagerImpl implements FileManager {
 
   private final ExecutorService needToOpenNewPageExecutor = new ThreadPoolExecutor(
     1, 1, 0L, TimeUnit.MILLISECONDS, new OnePlacePushingQueue<>());
-  private final ExecutorService savingFileExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService savingFileExecutor =
+    ConcurrencyUtil.newSingleThreadExecutor("Large File Editor Saving File Executor");
+  private final ExecutorService readingPageExecutor =
+    ConcurrencyUtil.newSingleThreadExecutor("Large File Editor Reading File Executor");
+
   private SavingFileTask lastExecutedSavingFileTask;
 
 
@@ -175,6 +183,20 @@ public class FileManagerImpl implements FileManager {
         return FileManagerImpl.this.getFileName();
       }
     };
+  }
+
+  @Override
+  public void requestReadPage(long pageNumber, ReadingPageResultHandler readingPageResultHandler) {
+    readingPageExecutor.execute(() -> {
+      try {
+        Page page = getPage_wait(pageNumber);
+        readingPageResultHandler.run(page);
+      }
+      catch (IOException e) {
+        logger.warn(e);
+        readingPageResultHandler.run(null);
+      }
+    });
   }
 
   private class NeedToOpenNewPageTask implements Runnable {
