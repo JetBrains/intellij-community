@@ -53,8 +53,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
@@ -75,7 +75,6 @@ public class ActionsTree {
 
   private String myFilter = null;
 
-  private boolean myPaintInternalInfo;
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
   public ActionsTree() {
@@ -159,17 +158,6 @@ public class ActionsTree {
     });
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    if (Registry.is("show.configurables.ids.in.settings")) {
-      new HeldDownKeyListener() {
-        @Override
-        protected void heldKeyTriggered(JComponent component, boolean pressed) {
-          myPaintInternalInfo = pressed;
-          // an easy way to repaint the tree
-          ((Tree)component).setCellRenderer(new KeymapsRenderer());
-        }
-      }.installOn(myTree);
-    }
-
     myComponent = ScrollPaneFactory.createScrollPane(myTree,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -619,7 +607,7 @@ public class ActionsTree {
         if (!myHaveLink) {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
-          if (actionId != null && myPaintInternalInfo) {
+          if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
             String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
               Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
