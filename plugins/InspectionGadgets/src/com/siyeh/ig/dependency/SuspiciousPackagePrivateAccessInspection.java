@@ -17,7 +17,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
@@ -126,19 +125,6 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
           UElement sourceNode = getReferenceNameElement(node);
           if (sourceNode != null) {
             checkAccess(sourceNode, member, getAccessObjectType(node.getQualifierExpression()));
-          }
-        }
-        return true;
-      }
-
-      @Override
-      public boolean visitTypeReferenceExpression(@NotNull UTypeReferenceExpression node) {
-        //in Kotlin implementation of UAST USimpleNameReferenceExpression::resolve returns null for reference to type in local variable declaration,
-        // so we need to have this case specifically
-        if (!(node.getSourcePsi() instanceof PsiTypeElement)) {
-          PsiClass resolved = PsiTypesUtil.getPsiClass(node.getType());
-          if (resolved != null) {
-            checkAccess(node, resolved, null);
           }
         }
         return true;
