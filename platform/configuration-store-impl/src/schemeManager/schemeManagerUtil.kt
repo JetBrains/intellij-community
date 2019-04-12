@@ -4,9 +4,9 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.LOG
 import com.intellij.openapi.progress.ProcessCanceledException
 
-internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
+internal inline fun <T> catchAndLog(file: () -> String, runnable: () -> T): T? {
   try {
-    runnable()
+    return runnable()
   }
   catch (e: ProcessCanceledException) {
     throw e
@@ -14,6 +14,7 @@ internal inline fun catchAndLog(file: () -> String, runnable: () -> Unit) {
   catch (e: Throwable) {
     LOG.error("Cannot read scheme ${file()}", e)
   }
+  return null
 }
 
 internal fun nameIsMissed(bytes: ByteArray): RuntimeException {

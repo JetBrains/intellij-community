@@ -205,6 +205,14 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     filesToDelete.remove(fileName)
     preScheduledFilesToDelete.remove(fileName)
   }
+
+  fun removeUpdatedScheme(changedScheme: MUTABLE_SCHEME) {
+    val index = ContainerUtil.indexOfIdentity(schemes, changedScheme)
+    if (LOG.assertTrue(index >= 0)) {
+      schemes.removeAt(index)
+      schemeToInfo.remove(changedScheme)
+    }
+  }
 }
 
 internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boolean, consumer: (name: String?, parser: XmlPullParser) -> Unit) {

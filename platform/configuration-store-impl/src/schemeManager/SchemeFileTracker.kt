@@ -108,12 +108,12 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
   }
 }
 
-internal data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
+internal data class UpdateScheme(override val file: VirtualFile) : SchemeChangeEvent, SchemeAddOrUpdateEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
   }
 }
 
-private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
+private data class AddScheme(override val file: VirtualFile) : SchemeChangeEvent, SchemeAddOrUpdateEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
     if (!file.isValid) {
       return
@@ -130,8 +130,10 @@ private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent 
   }
 }
 
-private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
+internal data class RemoveScheme(val fileName: String) : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    LOG.assertTrue(!schemaLoader.isInitialized())
+
     // do not schedule scheme file removing because file was already removed
     val scheme = schemeManager.removeFirstScheme(isScheduleToDelete = false) {
       fileName == getSchemeFileName(schemeManager, it)
@@ -140,8 +142,10 @@ private data class RemoveScheme(private val fileName: String) : SchemeChangeEven
   }
 }
 
-private class RemoveAllSchemes : SchemeChangeEvent {
+internal class RemoveAllSchemes : SchemeChangeEvent {
   override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    LOG.assertTrue(!schemaLoader.isInitialized())
+
     schemeManager.cachedVirtualDirectory = null
     // do not schedule scheme file removing because files were already removed
     schemeManager.removeExternalizableSchemesFromRuntimeState()

@@ -5,10 +5,15 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import gnu.trove.THashSet
 import java.util.function.Function
 
 internal interface SchemeChangeEvent {
   fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>)
+}
+
+internal interface SchemeAddOrUpdateEvent {
+  val file: VirtualFile
 }
 
 private fun findExternalizableSchemeByFileName(fileName: String, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
@@ -21,21 +26,19 @@ internal fun <T : Any> getSchemeFileName(schemeManager: SchemeManagerImpl<T, T>,
   return "${schemeManager.getFileName(scheme)}${schemeManager.schemeExtension}"
 }
 
-internal fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>, schemeManager: SchemeManagerImpl<Any, Any>): Any? {
+internal fun <T : Any> readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<T, T>, schemeManager: SchemeManagerImpl<T, T>): T? {
   val fileName = file.name
   if (file.isDirectory || !schemeManager.canRead(fileName)) {
     return null
   }
 
-  catchAndLog({ file.path }) {
+  return catchAndLog({ file.path }) {
     schemeLoader.loadScheme(fileName, null, file.contentsToByteArray())
   }
-
-  return null
 }
 
 internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerImpl<Any, Any>) {
-  internal fun reload(events: Collection<SchemeChangeEvent>) {
+  fun reload(events: Collection<SchemeChangeEvent>) {
     val lazySchemeLoader = lazy { schemeManager.createSchemeLoader() }
     doReload(events, lazySchemeLoader)
     if (lazySchemeLoader.isInitialized()) {
@@ -48,7 +51,7 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
     var newActiveScheme: Any? = null
 
     val processor = schemeManager.processor
-    for (event in events) {
+    for (event in sortSchemeChangeEvents(events)) {
       event.execute(lazySchemaLoader, schemeManager)
 
       if (event !is UpdateScheme) {
@@ -67,7 +70,7 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
       }
 
       if (changedScheme != null) {
-        schemeManager.removeScheme(changedScheme, isScheduleToDelete = false /* remove only from runtime model */)
+        lazySchemaLoader.value.removeUpdatedScheme(changedScheme)
         processor.onSchemeDeleted(changedScheme)
       }
 
@@ -99,6 +102,65 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
       processor.onCurrentSchemeSwitched(oldActiveScheme, newActiveScheme)
     }
   }
+}
+
+// exposed for test only
+internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>): Collection<SchemeChangeEvent> {
+  if (inputEvents.size < 2) {
+    return inputEvents
+  }
+
+  var isThereSomeRemoveEvent = false
+
+
+  val existingAddOrUpdate = THashSet<String>()
+  val removedFileNames = THashSet<String>()
+  val result = ArrayList(inputEvents)
+  // first, remove any event before RemoveAllSchemes and remove RemoveScheme event if there is any subsequent add/update
+  for (i in (result.size - 1) downTo 0) {
+    val event = result.get(i)
+    if (event is RemoveAllSchemes) {
+      for (j in (i - 1) downTo 0) {
+        result.removeAt(j)
+      }
+      break
+    }
+    else if (event is SchemeAddOrUpdateEvent) {
+      val fileName = event.file.name
+      if (removedFileNames.contains(fileName)) {
+        result.removeAt(i)
+      }
+      else {
+        existingAddOrUpdate.add(fileName)
+      }
+    }
+    else if (event is RemoveScheme) {
+      if (existingAddOrUpdate.contains(event.fileName)) {
+        result.removeAt(i)
+      }
+      else {
+        isThereSomeRemoveEvent = true
+        removedFileNames.add(event.fileName)
+      }
+    }
+  }
+
+  fun weight(event: SchemeChangeEvent): Int {
+    return when (event) {
+      is SchemeAddOrUpdateEvent -> 1
+      else -> 0
+    }
+  }
+
+  if (isThereSomeRemoveEvent) {
+    // second, move all RemoveScheme to first place, to ensure that SchemeLoader will be not created during processing of RemoveScheme event
+    // (because RemoveScheme removes schemes from scheme manager directly)
+    result.sortWith(Comparator { o1, o2 ->
+      weight(o1) - weight(o2)
+    })
+  }
+
+  return result
 }
 
 private fun callSchemeContentChangedIfSupported(changedScheme: Any?, fileName: String, file: VirtualFile, schemeManager: SchemeManagerImpl<Any, Any>): Boolean {

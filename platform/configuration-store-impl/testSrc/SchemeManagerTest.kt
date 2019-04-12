@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.configurationStore.schemeManager.SchemeFileTracker
-import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.ExternalizableScheme
@@ -10,12 +9,10 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.*
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
@@ -29,6 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Function
 
@@ -253,6 +251,66 @@ internal class SchemeManagerTest {
     schemeManager.reload()
 
     assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
+  }
+
+  @Test
+  fun `reload several schemes`() {
+    doReloadTest(UpdateScheme::class.java)
+  }
+
+  @Test
+  fun `reload - remove and add`() {
+    doReloadTest(RemoveScheme::class.java)
+  }
+
+  private fun doReloadTest(kind: Class<out SchemeChangeEvent>) {
+    val dir = fsRule.fs.getPath("/test").createDirectories()
+    fun writeScheme(index: Int, value: String): TestScheme {
+      val name = "s$index"
+      val data = "data $value for scheme $index"
+      dir.resolve("$name.xml").write("""<scheme name="$name" data="$data" />""")
+      return TestScheme(name, data)
+    }
+
+    var s1 = writeScheme(1, "foo")
+    var s2 = writeScheme(2, "foo")
+
+    fun createVirtualFile(scheme: TestScheme): VirtualFile {
+      val fileName = "${scheme.name}.xml"
+      val file = dir.resolve(fileName)
+      return LightVirtualFile(fileName, null, file.readText(), Charsets.UTF_8, Files.getLastModifiedTime(file).toMillis())
+    }
+
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
+
+    s1 = writeScheme(1, "bar")
+    s2 = writeScheme(2, "bar")
+
+    @Suppress("UNCHECKED_CAST")
+    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager as SchemeManagerImpl<Any, Any>)
+    if (kind == UpdateScheme::class.java) {
+      schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
+    }
+    else {
+      val sF2 = createVirtualFile(s2)
+      val updateEventS1 = UpdateScheme(createVirtualFile(s1))
+      val updateEventS2 = UpdateScheme(sF2)
+      val events = listOf(updateEventS1, RemoveScheme(sF2.name), updateEventS2)
+
+      assertThat(sortSchemeChangeEvents(events)).containsExactly(updateEventS1, updateEventS2)
+
+      val removeAllSchemes = RemoveAllSchemes()
+      assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), updateEventS2, removeAllSchemes))).containsExactly(removeAllSchemes)
+      assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), removeAllSchemes, updateEventS2))).containsExactly(removeAllSchemes, updateEventS2)
+      assertThat(sortSchemeChangeEvents(listOf(removeAllSchemes, updateEventS2, RemoveScheme(sF2.name)))).containsExactly(removeAllSchemes, RemoveScheme(sF2.name))
+
+      schemeChangeApplicator.reload(events)
+    }
+
+    schemeManager.save()
+    assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
   }
 
   /**
