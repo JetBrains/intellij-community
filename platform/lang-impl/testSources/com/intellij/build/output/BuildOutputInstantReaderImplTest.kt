@@ -29,12 +29,25 @@ class BuildOutputInstantReaderImplTest {
       }
       reader.pushBack(count)
       return@BuildOutputParser false
-
     }
 
     doTest(mutableListOf(
       createParser("[info]", INFO),
       greedyParser,
+      createParser("[error]", ERROR),
+      createParser("[warning]", WARNING)))
+  }
+
+  @Test
+  fun `test bad parser pushed back too many lines`() {
+    val badParser = BuildOutputParser { _, reader, _ ->
+      reader.pushBack(getMaxLinesBufferSize() * 2)
+      return@BuildOutputParser false
+    }
+
+    doTest(mutableListOf(
+      createParser("[info]", INFO),
+      badParser,
       createParser("[error]", ERROR),
       createParser("[warning]", WARNING)))
   }

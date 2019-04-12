@@ -32,7 +32,7 @@ import java.util.Collections;
 public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAcceptor {
   @NotNull private final BuildProgressListener myBuildProgressListener;
   @NotNull private final Project myProject;
-  @NotNull private final BuildOutputInstantReader myInstantReader;
+  @NotNull private final BuildOutputInstantReaderImpl myInstantReader;
   @NotNull private final ExternalSystemTaskId myTaskId;
   @NotNull private final String myWorkingDir;
   @NotNull private final MavenLogOutputParser myParser;
