@@ -1,9 +1,10 @@
 // "Transform body to single exit-point form" "true"
 class Test {
     String test(int x) {
-        String result = "foo";
+        String result;
         switch (x) {
             case 1:
+                result = "foo";
                 break;
             case 2:
                 result = "bar";
