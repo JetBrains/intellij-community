@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
@@ -271,7 +271,7 @@ public class PerformanceWatcher implements Disposable {
           myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
         }
         else {
-          updateStacktraceCommonPart(edtStack);
+          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
 
@@ -301,15 +301,16 @@ public class PerformanceWatcher implements Disposable {
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
-    for(int i=0; i < myStacktraceCommonPart.size() && i < stackTraceElements.length; i++) {
-      StackTraceElement el1 = myStacktraceCommonPart.get(myStacktraceCommonPart.size()-i-1);
-      StackTraceElement el2 = stackTraceElements [stackTraceElements.length-i-1];
+  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
+                                                         final StackTraceElement[] stackTraceElements) {
+    for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
+      StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
+      StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
       if (!el1.equals(el2)) {
-        myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
-        break;
+        return commonPart.subList(commonPart.size() - i, commonPart.size());
       }
     }
+    return commonPart;
   }
 
   private class SwingThreadRunnable implements Runnable {

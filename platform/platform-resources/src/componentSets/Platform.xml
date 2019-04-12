@@ -155,6 +155,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.diagnostic.IdeaFreezeReporter</implementation-class>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.openapi.util.registry.RegistryExtensionCollector</implementation-class>
     </component>
 
