@@ -101,8 +101,8 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
     else {
       val changedComponentNames = oldData.getChangedComponentNames(newData)
-      LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}" }
       if (changedComponentNames.isNotEmpty()) {
+        LOG.debug { "analyzeExternalChangesAndUpdateIfNeed: changedComponentNames $changedComponentNames for ${toString()}" }
         componentNames.addAll(changedComponentNames)
       }
     }

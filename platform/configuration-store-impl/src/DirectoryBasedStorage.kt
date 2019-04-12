@@ -5,7 +5,6 @@ import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
@@ -23,7 +22,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
-abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: StateSplitter,
+abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: com.intellij.openapi.components.StateSplitter,
                                          protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
@@ -75,7 +74,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 }
 
 open class DirectoryBasedStorage(private val dir: Path,
-                                 @Suppress("DEPRECATION") splitter: StateSplitter,
+                                 @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
   override val isUseVfsForWrite: Boolean
     get() = true

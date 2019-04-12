@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.InvalidDataException
-import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -95,7 +94,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (component is PersistentStateComponent<*>) {
         componentName = initPersistenceStateComponent(component, getStateSpec(component), isService)
       }
-      else if (component is JDOMExternalizable) {
+      else if (component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
         initJdomExternalizable(component, componentName)
       }
@@ -252,7 +251,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
     val component = info.component
     @Suppress("DEPRECATION")
-    if (component is JDOMExternalizable) {
+    if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: ComponentManagerImpl.getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
         session.getProducer(it)?.setState(component, effectiveComponentName, component)
@@ -285,7 +284,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String): String? {
     doAddComponent(componentName, component, null)
 
     if (loadPolicy != StateLoadPolicy.LOAD) {
@@ -493,13 +492,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val componentNames = SmartHashSet<String>()
     for (storage in changedStorages) {
-      try {
+      LOG.runAndLogException {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
         // not saved -> user does own modification -> new (on disk) state will be overwritten and not applied
         storage.analyzeExternalChangesAndUpdateIfNeed(componentNames)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
 
