@@ -13,6 +13,7 @@ from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
 from _pydev_bundle.pydev_console_types import CodeFragment, Command
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_vars, pydevd_save_locals
+from _pydev_bundle import pydev_log
 
 try:
     import __builtin__
@@ -40,6 +41,10 @@ if 'IPYTHONENABLE' in os.environ:
     IPYTHON = os.environ['IPYTHONENABLE'] == 'True'
 else:
     IPYTHON = True
+
+PYTEST_RUN_CONFIG = False
+if 'PYTEST_RUN_CONFIG' in os.environ:
+    PYTEST_RUN_CONFIG = True
 
 try:
     try:
@@ -158,6 +163,33 @@ class ConsoleWriter(InteractiveInterpreter):
         sys.stderr.write(''.join(lines))
 
 
+def enable_pytest_output():
+    try:
+        import _pytest
+
+        if hasattr(_pytest, "debugging"):
+            from _pytest.debugging import pytestPDB as _pytestDebug
+        elif hasattr(_pytest, "pdb"):
+            from _pytest.pdb import pytestPDB as _pytestDebug
+        else:
+            raise ValueError("Failed to find debugger in _pytest")
+
+        plugin_manager = _pytestDebug._pluginmanager
+        if plugin_manager is not None:
+            capman = plugin_manager.getplugin("capturemanager")
+            if hasattr(capman, "suspend"):  # pytest 4
+                capman.suspend(in_=True)
+            elif hasattr(capman, "suspend_global_capture"):  # pytest 3
+                capman.suspend_global_capture(in_=True)
+            elif hasattr(capman, "suspendcapture"):  # pytest 2
+                capman.suspendcapture(in_=True)
+            else:
+                raise ValueError("Failed to find suspend method")
+
+    except Exception:
+        pydev_log.debug("Failed to enable pytest output: %s" % traceback.format_exc())
+
+
 def console_exec(thread_id, frame_id, expression, dbg):
     """returns 'False' in case expression is partially correct
     """
@@ -175,6 +207,9 @@ def console_exec(thread_id, frame_id, expression, dbg):
     updated_globals = {}
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals)  # locals later because it has precedence over the actual globals
+
+    if PYTEST_RUN_CONFIG:
+        enable_pytest_output()
 
     if IPYTHON:
         need_more = exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
