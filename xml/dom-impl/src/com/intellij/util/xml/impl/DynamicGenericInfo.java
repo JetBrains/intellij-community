@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -44,11 +43,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myAttributes = staticGenericInfo.getAttributes();
     myFixeds = staticGenericInfo.getFixed();
     myCollections = staticGenericInfo.getCollections();
-  }
-
-  @Override
-  public Invocation createInvocation(final JavaMethod method) {
-    return myStaticGenericInfo.createInvocation(method);
   }
 
   @Override

@@ -46,6 +46,8 @@ class InvocationCache {
     );
   private final Map<Class, Object> myClassAnnotations;
   private final Class myType;
+  final StaticGenericInfo genericInfo;
+
 
   static {
     addCoreInvocations(DomElement.class);
@@ -123,19 +125,23 @@ class InvocationCache {
     myType = type;
     myJavaMethods = ConcurrentFactoryMap.createMap(key -> JavaMethod.getMethod(myType, key));
     myClassAnnotations = ConcurrentFactoryMap.createMap(annoClass -> myType.getAnnotation(annoClass));
+    genericInfo = new StaticGenericInfo(type);
   }
 
   @Nullable
   Invocation getInvocation(Method method) {
-    return myInvocations.get(method);
+    Invocation invocation = myInvocations.get(method);
+    if (invocation == null) {
+      invocation = genericInfo.createInvocation(getInternedMethod(method));
+      if (invocation != null) {
+        myInvocations.put(method, invocation);
+      }
+    }
+    return invocation;
   }
 
   JavaMethod getInternedMethod(Method method) {
     return myJavaMethods.get(method);
-  }
-
-  void putInvocation(Method method, Invocation invocation) {
-    myInvocations.put(method, invocation);
   }
 
   boolean isTagValueGetter(JavaMethod method) {

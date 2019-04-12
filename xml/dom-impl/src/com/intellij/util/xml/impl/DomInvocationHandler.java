@@ -696,13 +696,15 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     invocation = myInvocationCache.getInvocation(method);
     if (invocation != null) return invocation;
 
-    JavaMethod javaMethod = myInvocationCache.getInternedMethod(method);
-    invocation = myGenericInfo.createInvocation(javaMethod);
-    if (invocation != null) {
-      myInvocationCache.putInvocation(method, invocation);
-      return invocation;
-    }
+    invocation = createAccessorInvocation(method);
+    myAccessorInvocations = myAccessorInvocations.plus(method, invocation);
+    return invocation;
+  }
 
+  @NotNull
+  private Invocation createAccessorInvocation(Method method) {
+    Invocation invocation;
+    JavaMethod javaMethod = myInvocationCache.getInternedMethod(method);
     if (myInvocationCache.isTagValueGetter(javaMethod)) {
       invocation = new GetInvocation(createConverter(javaMethod));
     }
@@ -712,7 +714,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     else {
       throw new RuntimeException("No implementation for method " + method.toString() + " in class " + myType);
     }
-    myAccessorInvocations = myAccessorInvocations.plus(method, invocation);
     return invocation;
   }
 
