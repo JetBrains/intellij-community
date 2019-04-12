@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.Closeable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -21,7 +22,7 @@ import java.util.function.Consumer;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
+public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader, Closeable, Appendable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.build.output.BuildOutputInstantReader");
   private static final int MAX_LINES_BUFFER_SIZE = 50;
 
@@ -58,7 +59,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
           continue;
         }
         for (BuildOutputParser parser : parsers) {
-          if (parser.parse(line, this, messageConsumer)) {
+          if (parser.parse(line, new BuildOutputInstantReaderWrapper(this), messageConsumer)) {
             break;
           }
         }
@@ -72,7 +73,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   }
 
   @Override
-  public BuildOutputInstantReader append(CharSequence csq) {
+  public BuildOutputInstantReaderImpl append(CharSequence csq) {
     for (int i = 0; i < csq.length(); i++) {
       append(csq.charAt(i));
     }
@@ -80,13 +81,13 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   }
 
   @Override
-  public BuildOutputInstantReader append(CharSequence csq, int start, int end) {
+  public BuildOutputInstantReaderImpl append(CharSequence csq, int start, int end) {
     append(csq.subSequence(start, end));
     return this;
   }
 
   @Override
-  public BuildOutputInstantReader append(char c) {
+  public BuildOutputInstantReaderImpl append(char c) {
     if (myBuffer == null) {
       myBuffer = new StringBuilder();
     }
@@ -139,6 +140,10 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   @Nullable
   @Override
   public String readLine() {
+    if (myCurrentIndex < -1) {
+      LOG.error("Wrong buffered output lines index");
+      myCurrentIndex = -1;
+    }
     if (myClosed.get()) {
       if (myCurrentIndex > 0 && myLinesBuffer.size() > myCurrentIndex) {
         return myLinesBuffer.get(myCurrentIndex++);
@@ -181,12 +186,50 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
   @Override
   public String getCurrentLine() {
-    return myLinesBuffer.size() > myCurrentIndex ? myLinesBuffer.get(myCurrentIndex) : null;
+    return myCurrentIndex >= 0 && myLinesBuffer.size() > myCurrentIndex ? myLinesBuffer.get(myCurrentIndex) : null;
   }
 
   @ApiStatus.Experimental
   @TestOnly
   static int getMaxLinesBufferSize() {
     return MAX_LINES_BUFFER_SIZE;
+  }
+
+  private static class BuildOutputInstantReaderWrapper implements BuildOutputInstantReader {
+    private final BuildOutputInstantReaderImpl myReader;
+    private int myLinesRead = 0;
+
+    public BuildOutputInstantReaderWrapper(@NotNull BuildOutputInstantReaderImpl reader) {myReader = reader;}
+
+    @Override
+    public Object getBuildId() {
+      return myReader.myBuildId;
+    }
+
+    @Nullable
+    @Override
+    public String readLine() {
+      String line = myReader.readLine();
+      if (line != null) myLinesRead++;
+      return line;
+    }
+
+    @Override
+    public void pushBack() {
+      pushBack(1);
+    }
+
+    @Override
+    public void pushBack(int numberOfLines) {
+      if (numberOfLines > myLinesRead) {
+        numberOfLines = myLinesRead;
+      }
+      myReader.pushBack(numberOfLines);
+    }
+
+    @Override
+    public String getCurrentLine() {
+      return myReader.getCurrentLine();
+    }
   }
 }
