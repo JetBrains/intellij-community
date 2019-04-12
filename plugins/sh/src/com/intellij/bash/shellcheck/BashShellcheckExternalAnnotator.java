@@ -3,6 +3,7 @@ package com.intellij.bash.shellcheck;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.bash.psi.BashFile;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -10,12 +11,15 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,16 +95,46 @@ public class BashShellcheckExternalAnnotator extends ExternalAnnotator<String, C
     for (Result result : annotationResult) {
       CharSequence sequence = document.getCharsSequence();
       int startOffset = calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
-      int endOffset = calcOffset(sequence, document.getLineStartOffset(result.endLine - 1) ,result.endColumn);
+      int endOffset = calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
       long code = result.code;
       String message = result.message;
+      String scCode = "SC" + code;
       String html =
           "<html>" +
-          "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
-          "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>SC" + code + "</a>.</p>" +
-          "</html>";
-      holder.createAnnotation(severity(result.level), range, message, html);
+              "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
+              "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
+              "</html>";
+      holder.createAnnotation(severity(result.level), range, message, html).registerFix(new IntentionAction() {
+        @NotNull
+        @Override
+        public String getText() {
+          return "Suppress shellcheck inspection " + scCode;
+        }
+
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return "Bash";
+        }
+
+        @Override
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+          return true;
+        }
+
+        @Override
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          int lineStartOffset = DocumentUtil.getLineStartOffset(startOffset, document);
+          CharSequence indent = DocumentUtil.getIndent(document, lineStartOffset);
+          document.insertString(lineStartOffset, indent + "# shellcheck disable=" + scCode + "\n");
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return true;
+        }
+      });
     }
   }
 
