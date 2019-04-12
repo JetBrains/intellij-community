@@ -37,7 +37,7 @@ import static java.awt.Adjustable.VERTICAL;
 /**
  * @author Sergey.Malenkov
  */
-class DefaultScrollBarUI extends ScrollBarUI {
+public class DefaultScrollBarUI extends ScrollBarUI {
   static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
   static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
 
@@ -48,7 +48,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private final int myThicknessMax;
   private final int myThicknessMin;
 
-  JScrollBar myScrollBar;
+  protected JScrollBar myScrollBar;
 
   final ScrollBarPainter.Track myTrack = new ScrollBarPainter.Track(() -> myScrollBar);
   final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar, false);
@@ -57,11 +57,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private int myCachedValue;
   private int myOldValue;
 
-  DefaultScrollBarUI() {
+  public DefaultScrollBarUI() {
     this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
   }
 
-  DefaultScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
+  public DefaultScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
