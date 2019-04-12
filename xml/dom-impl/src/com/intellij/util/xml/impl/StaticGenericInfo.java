@@ -142,13 +142,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     if (myCustomDescription != null && method.equals(myCustomDescription.getGetterMethod())) {
-      return new Invocation() {
-        @NotNull
-        @Override
-        public Object invoke(DomInvocationHandler<?, ?> handler, Object[] args) {
-          return myCustomDescription.getValues(handler);
-        }
-      };
+      return (handler, args) -> myCustomDescription.getValues(handler);
     }
 
     final Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>> pair = myCompositeCollectionAdditionMethods.get(signature);
