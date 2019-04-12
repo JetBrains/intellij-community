@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -78,6 +80,9 @@ public class RelaxedDirectInheritorChecker {
     return locals == 1 && theFQN != null;
   }
 
+  /**
+   * This assumes that {@code inheritorCandidate} is in the use scope of {@link #myBaseClass}
+   */
   public boolean checkInheritance(@NotNull PsiClass inheritorCandidate) {
     if (!inheritorCandidate.isValid() || !myBaseClass.isValid()) return false;
     if (myFileIndex.isInSourceContent(inheritorCandidate.getContainingFile().getVirtualFile())) {
@@ -96,7 +101,21 @@ public class RelaxedDirectInheritorChecker {
       }
     }
 
+    if (inheritorCandidate instanceof PsiCompiledElement && isEnumOrAnnotationInheritor(inheritorCandidate)) {
+      return true;
+    }
+
     return inheritorCandidate.isInheritor(myBaseClass, false);
+  }
+
+  private boolean isEnumOrAnnotationInheritor(@NotNull PsiClass inheritorCandidate) {
+    if (inheritorCandidate.isEnum() && CommonClassNames.JAVA_LANG_ENUM.equals(myBaseClass.getQualifiedName())) {
+      return true;
+    }
+    if (inheritorCandidate.isAnnotationType() && CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(myBaseClass.getQualifiedName())) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isAccessibleLight(@NotNull PsiClass inheritorCandidate, @NotNull PsiClass base) {
