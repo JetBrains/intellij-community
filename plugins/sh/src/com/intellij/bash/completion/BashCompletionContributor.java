@@ -2,6 +2,7 @@ package com.intellij.bash.completion;
 
 import com.intellij.bash.BashLanguage;
 import com.intellij.bash.lexer.BashTokenTypes;
+import com.intellij.bash.psi.BashCommandsList;
 import com.intellij.bash.psi.BashFile;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,8 +66,9 @@ public class BashCompletionContributor extends CompletionContributor implements 
   private static Collection<String> suggestKeywords(PsiElement position) {
     TextRange posRange = position.getTextRange();
     BashFile posFile = (BashFile) position.getContainingFile();
-    final TextRange range = new TextRange(0, posRange.getStartOffset());
-    final String text = range.isEmpty() ? CompletionInitializationContext.DUMMY_IDENTIFIER : range.substring(posFile.getText());
+    BashCommandsList parent = PsiTreeUtil.getTopmostParentOfType(position, BashCommandsList.class);
+    TextRange range = new TextRange(parent == null ? 0 : parent.getTextRange().getStartOffset(), posRange.getStartOffset());
+    String text = range.isEmpty() ? CompletionInitializationContext.DUMMY_IDENTIFIER : range.substring(posFile.getText());
 
     PsiFile file = PsiFileFactory.getInstance(posFile.getProject()).createFileFromText("a.sh", BashLanguage.INSTANCE, text, true, false);
     int completionOffset = posRange.getStartOffset() - range.getStartOffset();
