@@ -226,6 +226,22 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
+  public void testWriteColorWithAlpha() throws Exception {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
+    scheme.setName("test");
+    scheme.setColor(ColorKey.createColorKey("BASE_COLOR"), new Color(0x80, 0x81, 0x82));
+    scheme.setColor(ColorKey.createColorKey("ALPHA_COLOR"), new Color(0x80, 0x81, 0x82, 0x83));
+    EditorColorSchemeTestCase.assertXmlOutputEquals(
+      "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <colors>\n" +
+      "    <option name=\"ALPHA_COLOR\" value=\"80818283\" />\n" +
+      "    <option name=\"BASE_COLOR\" value=\"808182\" />\n" +
+      "  </colors>\n" +
+      "</scheme>",
+      serialize(scheme));
+  }
+
   public void testWriteInheritedFromDefault() throws Exception {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
