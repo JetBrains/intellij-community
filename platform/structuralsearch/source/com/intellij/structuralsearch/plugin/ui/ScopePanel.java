@@ -121,7 +121,6 @@ public class ScopePanel extends JPanel {
   }
 
   public void setScope(@Nullable SearchScope selectedScope) {
-    setDefaultScopes();
     if (selectedScope instanceof LocalSearchScope && selectedScope.getDisplayName().startsWith("Hierarchy of ")) {
       // don't restore Class Hierarchy scope
       selectedScope = null;
@@ -139,14 +138,14 @@ public class ScopePanel extends JPanel {
       myDirectoryComboBox.setDirectory(directory);
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
-    else if (selectedScope != null) {
+    else if (selectedScope != null && selectedScope != GlobalSearchScope.projectScope(myProject)) {
       myScopesComboBox.selectItem(selectedScope);
     }
     myToolbar.updateActionsImmediately();
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
-  private void setDefaultScopes() {
+  public void setScopesFromContext() {
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
       Module module = LangDataKeys.MODULE.getData(context);
       if (module != null) {
