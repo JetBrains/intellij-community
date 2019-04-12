@@ -19,6 +19,7 @@ public class PluginsGroup {
   public String title;
   public JLabel titleLabel;
   public LinkLabel<Object> rightAction;
+  public List<JComponent> rightActions;
   public final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
   public UIPluginGroup ui;
   public Runnable clearCallback;
@@ -33,10 +34,18 @@ public class PluginsGroup {
     descriptors.clear();
     titleLabel = null;
     rightAction = null;
+    rightActions = null;
     if (clearCallback != null) {
       clearCallback.run();
       clearCallback = null;
     }
+  }
+
+  public void addRightAction(@NotNull JComponent component) {
+    if (rightActions == null) {
+      rightActions = new ArrayList<>();
+    }
+    rightActions.add(component);
   }
 
   public void titleWithCount() {
