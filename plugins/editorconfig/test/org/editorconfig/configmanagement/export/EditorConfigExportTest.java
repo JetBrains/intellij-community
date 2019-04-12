@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.export;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.LineSeparator;
+import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.language.EditorConfigLanguage;
 
 import java.io.ByteArrayOutputStream;
@@ -11,7 +12,6 @@ import java.io.IOException;
 
 public class EditorConfigExportTest extends LightPlatformTestCase {
   public void testWriter() throws IOException {
-
     CodeStyleSettings setting = CodeStyleSettings.getDefaults().clone();
     setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -37,6 +37,27 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
       "ij_editorconfig_space_before_colon = false\n" +
       "ij_editorconfig_space_before_comma = false\n" +
       "ij_editorconfig_spaces_around_assignment_operators = true\n",
+
+      result);
+  }
+
+  public void testFilterByPropertyKind() throws IOException {
+    CodeStyleSettings setting = CodeStyleSettings.getDefaults().clone();
+    setting.LINE_SEPARATOR = LineSeparator.CRLF.getSeparatorString();
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    try (EditorConfigSettingsWriter writer =
+           new EditorConfigSettingsWriter(getProject(), output, setting)
+             .forLanguages(EditorConfigLanguage.INSTANCE)
+             .forPropertyKinds(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)) {
+      writer.writeSettings();
+    }
+    String result = output.toString("UTF-8");
+    assertEquals(
+      "[*]\n" +
+      "charset=utf-8\n" +
+      "end_of_line = crlf\n" +
+      "insert_final_newline=false\n" +
+      "max_line_length = 120\n",
 
       result);
   }

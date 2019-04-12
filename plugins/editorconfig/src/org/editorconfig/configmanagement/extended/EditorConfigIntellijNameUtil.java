@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class EditorConfigIntellijNameUtil {
-  final static String IDE_PREFIX = "ij_";
+  public final static String IDE_PREFIX = "ij_";
   final static String GENERIC_PROPERTY_PREFIX = "any_";
   final static String GENERIC_OPTION_KEY_PREFIX = IDE_PREFIX + GENERIC_PROPERTY_PREFIX;
 
