@@ -549,6 +549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
 
     myFocusModeModel = new FocusModeModel(this);
+    Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
 
     myLatencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
@@ -564,6 +565,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Segment getFocusModeRange() {
     return myFocusModeModel.getFocusModeRange();
+  }
+
+  public FocusModeModel getFocusModeModel() {
+    return myFocusModeModel;
   }
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
@@ -974,7 +979,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    putUserData(FocusModeModel.FOCUS_MODE_RANGES, null);
     if (myFocusModeModel != null) {
       myFocusModeModel.clearFocusMode();
     }
