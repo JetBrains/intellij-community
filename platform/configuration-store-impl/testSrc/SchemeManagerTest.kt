@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.*
 import com.intellij.util.loadElement
@@ -46,6 +47,10 @@ internal class SchemeManagerTest {
   @Rule
   @JvmField
   val tempDirManager = TemporaryDirectory()
+
+  @Rule
+  @JvmField
+  val fsRule = InMemoryFsRule()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
@@ -155,12 +160,12 @@ internal class SchemeManagerTest {
     scheme.save(dir.resolve("1.icls"))
     TestScheme("local", "false").save(dir.resolve("1.xml"))
 
-    class ATestSchemesProcessor : TestSchemesProcessor(), SchemeExtensionProvider {
+    class ATestSchemeProcessor : TestSchemeProcessor(), SchemeExtensionProvider {
       override val schemeExtension = ".icls"
     }
 
     // use provider to specify exact order of files (it is critical to test both variants - old, new or new, old)
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemesProcessor(), object : StreamProvider {
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
       override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -206,7 +211,7 @@ internal class SchemeManagerTest {
 
   @Test fun setSchemes() {
     val dir = tempDirManager.newPath()
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
@@ -232,8 +237,9 @@ internal class SchemeManagerTest {
     assertThat(dir).doesNotExist()
   }
 
-  @Test fun `reload schemes`() {
-    val dir = tempDirManager.newPath()
+  @Test
+  fun `reload schemes`() {
+    val dir = fsRule.fs.getPath("/test").createDirectories()
     val schemeManager = createSchemeManager(dir)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
@@ -278,7 +284,7 @@ internal class SchemeManagerTest {
      * 2. Create a [SchemeProcessor] with custom naming scheme.  See SchemesProcessorWithUniqueNaming in the test
      *    as an example.
      */
-    class SchemeProcessorWithUniqueNaming : TestSchemesProcessor() {
+    class SchemeProcessorWithUniqueNaming : TestSchemeProcessor() {
       override fun getSchemeKey(scheme: TestScheme) = scheme.name + "someSuffix"
     }
 
@@ -464,7 +470,7 @@ internal class SchemeManagerTest {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val busDisposable = Disposer.newDisposable()
     try {
-      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
+      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
         @Suppress("UNCHECKED_CAST")
         val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project)
         ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
@@ -492,14 +498,14 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy { SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }.hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy { SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemeProcessor()) }.hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
-    assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -519,7 +525,7 @@ internal class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
@@ -572,7 +578,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
   override fun writeScheme() = serialize()!!
 }
 
-open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
+open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
                             attributeProvider: Function<in String, String?>,
