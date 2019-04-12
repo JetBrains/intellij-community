@@ -9,9 +9,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * This class provides a prediction about forgotten (to commit or modify) files, based on the VCS history of given files.
- *
- * To get more information about decision function used here, see the README.md file.
+ * This class provides a prediction about forgotten (to commit or modify) files.
+ * Plugin uses the VCS repository history and ML algorithms to make the predictions.
  */
 class PredictionProvider(private val minProb: Double = 0.55) {
   companion object {
