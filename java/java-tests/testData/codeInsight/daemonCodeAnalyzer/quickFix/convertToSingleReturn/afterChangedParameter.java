@@ -1,12 +1,13 @@
 // "Transform body to single exit-point form" "true"
 class Test {
     String test2(List<String> list, String foo, String bar) {
-        String result = foo;
+        String result = null;
         boolean finished = false;
         for (String s : list) {
             for (int i = 0; i < 10; i++) {
                 bar = s;
                 if (s.length() == i) {
+                    result = foo;
                     finished = true;
                     break;
                 }

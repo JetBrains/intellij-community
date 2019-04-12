@@ -13,11 +13,12 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.NULL;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -146,7 +147,7 @@ class FinishMarker {
       if (nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, nonTerminalReturns.iterator().next());
       }
-      return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
+      return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns));
     }
     if (PsiType.BOOLEAN.equals(returnType)) {
       if (nonTerminalReturnValues.size() == 1) {
@@ -173,7 +174,25 @@ class FinishMarker {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, value);
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns));
+  }
+
+  @Nullable
+  private static PsiExpression findBestExpression(PsiReturnStatement terminalReturn, List<PsiExpression> nonTerminalReturns) {
+    List<PsiExpression> bestGroup = StreamEx.of(nonTerminalReturns)
+      .filter(FinishMarker::canMoveToStart)
+      .groupingBy(PsiExpression::getText, LinkedHashMap::new, Collectors.toList())
+      .values()
+      .stream()
+      .max(Comparator.comparingInt(List::size))
+      .orElse(Collections.emptyList());
+    if (bestGroup.size() >= 2) {
+      return bestGroup.get(0);
+    }
+    if (terminalReturn != null && canMoveToStart(terminalReturn.getReturnValue())) {
+      return terminalReturn.getReturnValue();
+    }
+    return null;
   }
 
   @NotNull
@@ -217,9 +236,10 @@ class FinishMarker {
         return new FinishMarker(FinishMarkerType.VALUE_NON_EQUAL, factory.createExpressionFromText(text, null));
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns));
   }
 
+  @Contract("null -> false")
   static boolean canMoveToStart(PsiExpression value) {
     if (!ExpressionUtils.isSafelyRecomputableExpression(value)) return false;
     PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(value), PsiReferenceExpression.class);

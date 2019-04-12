@@ -2,18 +2,15 @@
 class Test {
     int test(String s) {
         int res = -2;
-        boolean finished = false;
         try {
-            res = Integer.parseInt(s);
-            finished = true;
+            res = Math.abs(Integer.parseInt(s));
         } catch (NumberFormatException ex) {
             boolean result = s.isEmpty();
             if (result) {
                 res = -1;
-                finished = true;
             }
         }
-        if (!finished) {
+        if (res == -2) {
             System.out.println("oops");
         }
         return res;
