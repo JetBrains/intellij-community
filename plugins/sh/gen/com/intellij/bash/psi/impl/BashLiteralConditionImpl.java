@@ -63,12 +63,6 @@ public class BashLiteralConditionImpl extends BashConditionImpl implements BashL
 
   @Override
   @Nullable
-  public PsiElement getAt() {
-    return findChildByType(AT);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getBang() {
     return findChildByType(BANG);
   }

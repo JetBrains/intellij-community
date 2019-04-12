@@ -26,93 +26,39 @@ public class BashLiteralExpressionImpl extends BashExpressionImpl implements Bas
   }
 
   @Override
-  @Nullable
-  public BashArithmeticExpansion getArithmeticExpansion() {
-    return findChildByClass(BashArithmeticExpansion.class);
+  @NotNull
+  public List<BashArithmeticExpansion> getArithmeticExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashArithmeticExpansion.class);
   }
 
   @Override
-  @Nullable
-  public BashBashExpansion getBashExpansion() {
-    return findChildByClass(BashBashExpansion.class);
+  @NotNull
+  public List<BashBashExpansion> getBashExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashBashExpansion.class);
   }
 
   @Override
-  @Nullable
-  public BashCommand getCommand() {
-    return findChildByClass(BashCommand.class);
+  @NotNull
+  public List<BashCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashCommand.class);
   }
 
   @Override
-  @Nullable
-  public BashShellParameterExpansion getShellParameterExpansion() {
-    return findChildByClass(BashShellParameterExpansion.class);
+  @NotNull
+  public List<BashShellParameterExpansion> getShellParameterExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }
 
   @Override
-  @Nullable
-  public BashString getString() {
-    return findChildByClass(BashString.class);
+  @NotNull
+  public List<BashString> getStringList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashString.class);
   }
 
   @Override
-  @Nullable
-  public BashVariable getVariable() {
-    return findChildByClass(BashVariable.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getAt() {
-    return findChildByType(AT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getBang() {
-    return findChildByType(BANG);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDollar() {
-    return findChildByType(DOLLAR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getFiledescriptor() {
-    return findChildByType(FILEDESCRIPTOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getWord() {
-    return findChildByType(WORD);
+  @NotNull
+  public List<BashVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashVariable.class);
   }
 
 }

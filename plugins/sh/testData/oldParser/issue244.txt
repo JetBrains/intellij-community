@@ -1,0 +1,20 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('result')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          ARITHMETIC_EXPANSION
+            PsiElement((()('((')
+            LITERAL_EXPRESSION
+              VARIABLE
+                PsiElement(var)('$lhs')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$operand')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$rhs')
+            PsiElement()))('))')

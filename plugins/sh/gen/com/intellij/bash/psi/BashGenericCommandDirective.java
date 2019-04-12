@@ -32,9 +32,6 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
   BashVariable getVariable();
 
   @Nullable
-  PsiElement getAt();
-
-  @Nullable
   PsiElement getBang();
 
   @Nullable

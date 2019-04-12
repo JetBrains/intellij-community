@@ -13,7 +13,7 @@ BASH_FILE
             PATTERN
               PsiElement(word)(';')
               PsiElement(word)(';')
-            PsiErrorElement:'!', $, ')', <string>, '@', '`', file descriptor, hex, int, number, octal, var, word, '{' or '|' expected, got 'esac'
+            PsiErrorElement:'!', $, ')', <string>, '`', file descriptor, hex, int, number, octal, var, word, '{' or '|' expected, got 'esac'
               <empty list>
           PsiWhiteSpace(' ')
           PsiElement(esac)('esac')

@@ -81,12 +81,6 @@ public class BashSimpleCommandElementImpl extends BashCompositeElementImpl imple
 
   @Override
   @Nullable
-  public PsiElement getAt() {
-    return findChildByType(AT);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getBang() {
     return findChildByType(BANG);
   }

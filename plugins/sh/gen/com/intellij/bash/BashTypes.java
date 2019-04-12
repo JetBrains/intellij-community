@@ -95,7 +95,6 @@ public interface BashTypes {
   IElementType ARITH_SQUARE_LEFT = new BashTokenType("ARITH_SQUARE_LEFT");
   IElementType ARITH_SQUARE_RIGHT = new BashTokenType("ARITH_SQUARE_RIGHT");
   IElementType ASSIGN = new BashTokenType("=");
-  IElementType AT = new BashTokenType("@");
   IElementType BACKQUOTE = new BashTokenType("`");
   IElementType BACKSLASH = new BashTokenType("\\\\");
   IElementType BANG = new BashTokenType("!");

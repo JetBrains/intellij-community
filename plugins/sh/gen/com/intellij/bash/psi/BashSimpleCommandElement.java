@@ -35,9 +35,6 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashVariable getVariable();
 
   @Nullable
-  PsiElement getAt();
-
-  @Nullable
   PsiElement getBang();
 
   @Nullable

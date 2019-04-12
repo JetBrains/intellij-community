@@ -35,8 +35,6 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testBackquoteCommandErrors()              { doTest(true); }
   public void testBacktickParsing()                     { doTest(true); }
   public void testBodyWithErrors()                      { doTest(true); }
-  public void testBraceExpansionParse()                 { doTest(true); }
-  public void testBraceExpansionParseInvalid()          { doTest(true); }
   public void testBuildInCommandDeclare()               { doTest(true); }
   public void testCaseSimple1()                         { doTest(true); }
   public void testCheckErrorMarkers()                   { doTest(true); }

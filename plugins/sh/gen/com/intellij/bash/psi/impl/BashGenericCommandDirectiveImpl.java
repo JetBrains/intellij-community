@@ -75,12 +75,6 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
 
   @Override
   @Nullable
-  public PsiElement getAt() {
-    return findChildByType(AT);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getBang() {
     return findChildByType(BANG);
   }

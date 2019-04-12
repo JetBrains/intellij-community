@@ -12,9 +12,7 @@ BASH_FILE
                 STRING
                   PsiElement(")('"')
                   PsiElement(")('"')
-            PsiWhiteSpace(' ')
-            ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+                PsiWhiteSpace(' ')
                 STRING
                   PsiElement(")('"')
                   PsiElement(")('"')

@@ -7,49 +7,22 @@ import com.intellij.psi.PsiElement;
 
 public interface BashLiteralExpression extends BashExpression {
 
-  @Nullable
-  BashArithmeticExpansion getArithmeticExpansion();
+  @NotNull
+  List<BashArithmeticExpansion> getArithmeticExpansionList();
 
-  @Nullable
-  BashBashExpansion getBashExpansion();
+  @NotNull
+  List<BashBashExpansion> getBashExpansionList();
 
-  @Nullable
-  BashCommand getCommand();
+  @NotNull
+  List<BashCommand> getCommandList();
 
-  @Nullable
-  BashShellParameterExpansion getShellParameterExpansion();
+  @NotNull
+  List<BashShellParameterExpansion> getShellParameterExpansionList();
 
-  @Nullable
-  BashString getString();
+  @NotNull
+  List<BashString> getStringList();
 
-  @Nullable
-  BashVariable getVariable();
-
-  @Nullable
-  PsiElement getAt();
-
-  @Nullable
-  PsiElement getBang();
-
-  @Nullable
-  PsiElement getDollar();
-
-  @Nullable
-  PsiElement getFiledescriptor();
-
-  @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
-
-  @Nullable
-  PsiElement getWord();
+  @NotNull
+  List<BashVariable> getVariableList();
 
 }

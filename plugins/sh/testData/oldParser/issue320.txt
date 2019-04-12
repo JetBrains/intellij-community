@@ -10,9 +10,7 @@ BASH_FILE
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
                 PsiElement(int)('1')
-            PsiWhiteSpace(' ')
-            ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+                PsiWhiteSpace(' ')
                 PsiElement(int)('2')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -27,9 +25,7 @@ BASH_FILE
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
                 PsiElement(int)('0')
-            PsiWhiteSpace(' ')
-            ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+                PsiWhiteSpace(' ')
                 PsiElement(int)('1')
             PsiElement())(')')
   PsiElement(\n)('\n')

@@ -122,7 +122,7 @@ CaseFirst                = {EscapedChar} | [^|\"'$)(# \n\r\f\t\f]
 CaseAfter                = {EscapedChar} | [^|\"'$`)( \n\r\f\t\f;]
 CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 
-Filedescriptor           = "&" {IntegerLiteral} | "&-"
+Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
 EscapedCurly             = "\\{" | "\\}"

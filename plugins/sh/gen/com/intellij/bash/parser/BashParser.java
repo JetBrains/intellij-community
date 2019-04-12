@@ -2592,13 +2592,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | '@' | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
+  // word | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, WORD);
-    if (!r) r = consumeToken(b, AT);
     if (!r) r = consumeToken(b, BANG);
     if (!r) r = vars(b, l + 1);
     if (!r) r = consumeToken(b, DOLLAR);
@@ -3083,12 +3082,17 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // literal
+  // literal+
   public static boolean literal_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_expression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LITERAL_EXPRESSION, "<literal expression>");
     r = literal(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!literal(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "literal_expression", c)) break;
+    }
     exit_section_(b, l, m, r, false, null);
     return r;
   }

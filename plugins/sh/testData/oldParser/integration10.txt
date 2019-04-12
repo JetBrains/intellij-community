@@ -1,0 +1,66 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(`)('`')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('a')
+              PsiElement(`)('`')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(`)('`')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        PsiElement(word)('a')
+              PsiElement(`)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          COMMAND_SUBSTITUTION_COMMAND
+            PsiElement(`)('`')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            PsiElement(`)('`')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('one')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(`)('`')
+              PsiWhiteSpace(' ')
+              PsiElement(`)('`')
+          PsiWhiteSpace('  ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('two')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(`)('`')
+              PsiElement(`)('`')

@@ -26,9 +26,6 @@ public interface BashLiteralCondition extends BashCondition {
   BashVariable getVariable();
 
   @Nullable
-  PsiElement getAt();
-
-  @Nullable
   PsiElement getBang();
 
   @Nullable

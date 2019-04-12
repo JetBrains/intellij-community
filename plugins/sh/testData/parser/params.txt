@@ -901,13 +901,9 @@ BASH_FILE
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
                 PsiElement(int)('1')
-            PsiWhiteSpace(' ')
-            ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+                PsiWhiteSpace(' ')
                 PsiElement(int)('2')
-            PsiWhiteSpace(' ')
-            ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+                PsiWhiteSpace(' ')
                 PsiElement(int)('3')
             PsiWhiteSpace('  ')
             PsiElement())(')')
