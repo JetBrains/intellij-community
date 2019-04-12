@@ -5,12 +5,19 @@ import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.injection.Injectable
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.StoringFixPresenter
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
@@ -276,7 +283,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
   }
 
 
-
   fun `test edit with guarded blocks`() {
     with(myFixture) {
 
@@ -320,39 +326,26 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-  fun `test sequential add in fragment editor`() {
+  fun `test sequential add in fragment editor undo-repeat`() {
     with(myFixture) {
 
-      configureByText("classA.java", """
+      val fileName = "classA.java"
+
+      val initialText = """
           import org.intellij.lang.annotations.Language;
 
           class A {
             void foo() {
                @Language("JSON")  String a = "{\n" +
                     "  \"begin\": true,\n" +
-                    "  \"fieldstart\": -1,<caret>\n" +
+                    "  \"fieldstart\": -1,\n" +
                     "  \"end\": false\n" +
                     "}";
             }
           }
-      """.trimIndent())
+      """.trimIndent()
 
-      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
-      val injectedFile = quickEditHandler.newFile
-      injectionTestFixture.assertInjectedLangAtCaret("JSON")
-
-      var shift = injectedFile.text.indexAfter("-1,\n")
-
-      repeat(5) {
-        quickEditHandler.newFile.edit {
-          val s = "  \"field$it\": $it,\n"
-          insertString(shift, s)
-          shift += s.length
-        }
-      }
-
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      checkResult("classA.java", """
+      val fiveFieldsFilled = """
           import org.intellij.lang.annotations.Language;
 
           class A {
@@ -369,7 +362,42 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
                     "}";
             }
           }
-      """.trimIndent(), true)
+      """.trimIndent()
+
+      configureByText(fileName, initialText)
+
+      myFixture.editor.caretModel.moveToOffset(file.text.indexAfter("-1"))
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val injectedFile = quickEditHandler.newFile
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+
+      openFileInEditor(injectedFile.virtualFile)
+
+      fun fillFields(num: Int) {
+        var shift = injectedFile.text.indexAfter("-1,\n")
+        repeat(num) {
+          quickEditHandler.newFile.edit("add field$it") {
+            val s = "  \"field$it\": $it,\n"
+            insertString(shift, s)
+            shift += s.length
+          }
+        }
+      }
+
+      fillFields(5)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      checkResult(fileName, fiveFieldsFilled, true)
+
+      repeat(5) {
+        undo(editor)
+      }
+      checkResult(fileName, initialText, true)
+
+      fillFields(5)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      checkResult(fileName, fiveFieldsFilled, true)
+
     }
 
   }
@@ -390,16 +418,32 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
   }
 
 
-  private fun PsiFile.edit(docFunction: Document.() -> Unit) {
+  private fun undo(editor: Editor) = runWithUndoManager(editor, UndoManager::undo)
+
+  private fun redo(editor: Editor) = runWithUndoManager(editor, UndoManager::redo)
+
+  private fun runWithUndoManager(editor: Editor, action: (UndoManager, TextEditor) -> Unit) {
+    UIUtil.invokeAndWaitIfNeeded(Runnable {
+      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      try {
+        val undoManager = UndoManager.getInstance(project)
+        val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+        action(undoManager, textEditor)
+      }
+      finally {
+        Messages.setTestDialog(oldTestDialog)
+      }
+    })
+  }
+
+  private fun PsiFile.edit(actionName: String = "change doc", groupId: Any = actionName, docFunction: Document.() -> Unit) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
         val manager = PsiDocumentManager.getInstance(project)
         val document = manager.getDocument(this) ?: throw AssertionError("document is null")
         document.docFunction()
-        manager.commitDocument(document)
-        //        manager.commitAllDocuments()
       }
-    }, "change doc", "")
+    }, actionName, groupId)
   }
 
   private fun commit() = PsiDocumentManager.getInstance(project).commitDocument(myFixture.editor.document)

@@ -3,15 +3,18 @@ package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.Trinity
 import com.intellij.psi.*
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -19,6 +22,25 @@ import kotlin.math.max
 
 internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
+
+
+  private val myOrigCreationStamp = myOrigDocument.modificationStamp // store creation stamp for UNDO tracking
+
+  init {
+    // Undo breaks local markers completely, so rebuilding them in that case
+    myOrigDocument.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (UndoManager.getInstance(myProject).isUndoInProgress) {
+          PsiDocumentManagerBase.addRunOnCommit(myOrigDocument) {
+            if (myOrigCreationStamp <= myOrigDocument.modificationStamp) {
+              rebuildMarkers(markersWholeRange(markers) ?: failAndReport("cant get marker range"))
+            }
+          }
+        }
+      }
+    }, this)
+
+  }
 
   override fun commitToOriginal(e: DocumentEvent) {
     //    myInjectedFile.let { if (!it.isValid) throw PsiInvalidElementAccessException(it) }
