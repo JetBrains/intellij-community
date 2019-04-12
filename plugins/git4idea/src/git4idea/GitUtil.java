@@ -564,6 +564,18 @@ public class GitUtil {
           case 'n':
             rc.append('\n');
             break;
+          case 'r':
+            rc.append('\r');
+            break;
+          case 'a':
+            rc.append('\u0007');
+            break;
+          case 'b':
+            rc.append('\b');
+            break;
+          case 'f':
+            rc.append('\f');
+            break;
           case '"':
             rc.append('"');
             break;
