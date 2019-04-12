@@ -248,7 +248,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       createCommentRow(parent!!, comment, component, indent, isParentRowLabeled)
     }
 
-    if (buttonGroup != null && component is JToggleButton) {
+    if (buttonGroup != null && component is JRadioButton) {
       buttonGroup.add(component)
     }
 
@@ -398,9 +398,10 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     component.isEnabled = isEnabled
   }
 
-  override fun enableIfSelected(button: AbstractButton) {
+  override fun enableIfSelected(button: AbstractButton): CellBuilderImpl<T> {
     component.isEnabled = button.isSelected
     button.addChangeListener { component.isEnabled = button.isSelected }
+    return this
   }
 
   override fun actsAsLabel() {

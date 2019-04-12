@@ -55,7 +55,7 @@ interface CellBuilder<T : JComponent> {
   }
 
   fun enabled(isEnabled: Boolean)
-  fun enableIfSelected(button: AbstractButton)
+  fun enableIfSelected(button: AbstractButton): CellBuilder<T>
 
   fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidation { if (callback(it)) ValidationInfo(message, it) else null }
@@ -125,10 +125,9 @@ abstract class Cell {
   inline fun checkBox(text: String,
                       isSelected: Boolean = false,
                       comment: String? = null,
-                      propertyUiManager: BooleanPropertyUiManager? = null,
                       vararg constraints: CCFlags,
                       crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
-    val component = checkBox(text, isSelected, comment, propertyUiManager, *constraints)
+    val component = checkBox(text, isSelected, comment, *constraints)
     component.addActionListener(ActionListener {
       actionListener(it, component)
     })
@@ -136,18 +135,21 @@ abstract class Cell {
   }
 
   @JvmOverloads
-  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
+  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, vararg constraints: CCFlags = emptyArray()): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
-    propertyUiManager?.registerCheckBox(component)
     component(*constraints, comment = comment)
     return component
   }
 
   fun checkBox(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, prop.get())
+    return checkBox(text, prop.getter, prop.setter, comment)
+  }
+
+  fun checkBox(text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBCheckBox> {
+    val component = JBCheckBox(text, getter())
     return component(comment = comment)
-      .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
+      .withBinding(component::isSelected, component::setSelected, getter, setter)
   }
 
   fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
@@ -162,23 +164,29 @@ abstract class Cell {
       .withBinding(component::isSelected, component::setSelected, prop.getter, prop.setter)
   }
 
-  inline fun <T> comboBox(propertyUiManager: BooleanPropertyWithListUiManager<T, out ComboBoxModel<T>>, growPolicy: GrowPolicy? = null, crossinline renderer: ListCellRendererWrapper<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit) {
-    comboBox(propertyUiManager.listModel, propertyUiManager, growPolicy, object : ListCellRendererWrapper<T?>() {
-      override fun customize(list: JList<*>, value: T?, index: Int, isSelected: Boolean, hasFocus: Boolean) {
-        if (value != null) {
-          renderer(value, index, isSelected)
-        }
-      }
-    })
-  }
-
-  fun <T> comboBox(model: ComboBoxModel<T>, propertyUiManager: BooleanPropertyWithListUiManager<*, *>? = null, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null) {
+  fun <T> comboBox(model: ComboBoxModel<T>, getter: () -> T?, setter: (T?) -> Unit, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
     val component = ComboBox(model)
-    propertyUiManager?.manage(component)
     if (renderer != null) {
       component.renderer = renderer
     }
-    component(growPolicy = growPolicy)
+    val builder = component(growPolicy = growPolicy)
+    return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, getter, setter)
+  }
+
+  fun <T> comboBox(
+    model: ComboBoxModel<T>,
+    getter: () -> T?,
+    setter: (T?) -> Unit,
+    growPolicy: GrowPolicy? = null,
+    renderer: ColoredListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit
+  ): CellBuilder<ComboBox<T>> {
+    return comboBox(model, getter, setter, growPolicy, object : ColoredListCellRenderer<T?>() {
+      override fun customizeCellRenderer(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        if (value != null) {
+          renderer(this, value, index, selected)
+        }
+      }
+    })
   }
 
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
@@ -189,16 +197,16 @@ abstract class Cell {
 
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
     return textField(
-      Supplier { prop.get().toString() },
-      Consumer { value -> value.toIntOrNull()?.let { prop.set(range?.fit(it) ?: it) } },
+      { prop.get().toString() },
+      { value -> value.toIntOrNull()?.let { prop.set(range?.fit(it) ?: it) } },
       columns
     )
   }
 
-  fun textField(getter: Supplier<String>, setter: Consumer<String>, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(getter.get(),columns ?: 0)
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(getter(),columns ?: 0)
     val builder = component()
-    return builder.withBinding(component::getText, component::setText, { getter.get() }, { setter.accept(it) })
+    return builder.withBinding(component::getText, component::setText, getter, setter)
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
