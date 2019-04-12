@@ -885,17 +885,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return Collections.unmodifiableList(elements);
   }
 
-  private List<? extends DomElement> addIncludedElements(List<? extends DomElement> elements, XmlName xmlName) {
-    assert myStub != null;
-    List<DomElement> result = new SmartList<>(elements);
-    for (Stub stub : myStub.getChildrenStubs()) {
-      if (stub instanceof XIncludeStub) {
-        ((XIncludeStub)stub).resolve(this, result, xmlName);
-      }
-    }
-    return result;
-  }
-
   private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag) {
     if (description instanceof CollectionChildDescriptionImpl) {
       return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag);
