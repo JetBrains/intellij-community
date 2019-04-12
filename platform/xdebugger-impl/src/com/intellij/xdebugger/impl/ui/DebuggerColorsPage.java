@@ -56,9 +56,7 @@ public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySor
   @Override
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return new ColorDescriptor[] {
-      new ColorDescriptor(OptionsBundle.message("options.java.attribute.descriptor.recursive.call"), DebuggerColors.RECURSIVE_CALL_ATTRIBUTES, ColorDescriptor.Kind.BACKGROUND)
-    };
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @Override

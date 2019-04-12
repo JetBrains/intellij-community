@@ -16,7 +16,6 @@ public interface DebuggerColors {
   TextAttributesKey NOT_TOP_FRAME_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("NOT_TOP_FRAME_ATTRIBUTES");
   TextAttributesKey EVALUATED_EXPRESSION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_ATTRIBUTES");
   TextAttributesKey EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES");
-  ColorKey RECURSIVE_CALL_ATTRIBUTES = ColorKey.createColorKey("RECURSIVE_CALL_ATTRIBUTES", new Color(255, 255, 215));
 
   int BREAKPOINT_HIGHLIGHTER_LAYER = HighlighterLayer.ADDITIONAL_SYNTAX + 1;
 
