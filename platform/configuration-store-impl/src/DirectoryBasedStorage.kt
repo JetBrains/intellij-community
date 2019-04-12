@@ -102,7 +102,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     private val dirtyFileNames = SmartHashSet<String>()
-    private var someFileRemoved = false
+    private var isSomeFileRemoved = false
 
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
@@ -132,7 +132,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         if (copiedStorageData == null) {
           copiedStorageData = originalStates.toMutableMap()
         }
-        someFileRemoved = true
+        isSomeFileRemoved = true
         copiedStorageData!!.remove(key)
       }
     }
@@ -171,7 +171,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       if (!dirtyFileNames.isEmpty) {
         saveStates(dir, stateMap)
       }
-      if (someFileRemoved && dir.exists()) {
+      if (isSomeFileRemoved && dir.exists()) {
         deleteFiles(dir)
       }
 
@@ -199,10 +199,12 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun deleteFiles(dir: VirtualFile) {
+      val copiedStorageData = copiedStorageData!!
+
       runWriteAction {
         for (file in dir.children) {
           val fileName = file.name
-          if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {
+          if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
             if (file.isWritable) {
               file.delete(this)
             }
