@@ -241,8 +241,10 @@ abstract class Cell {
 
   fun gearButton(vararg actions: AnAction) {
     val label = JLabel(AllIcons.General.GearPlain)
+    label.disabledIcon = AllIcons.General.GearPlain
     object : ClickListener() {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        if (!label.isEnabled) return true
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
             when (dataId) {
