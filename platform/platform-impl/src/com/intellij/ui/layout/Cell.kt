@@ -56,6 +56,7 @@ interface CellBuilder<T : JComponent> {
 
   fun enabled(isEnabled: Boolean)
   fun enableIfSelected(button: AbstractButton): CellBuilder<T>
+  fun <V> enableIfSelected(comboBox: JComboBox<V>, predicate: (V?) -> Boolean): CellBuilder<T>
 
   fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidation { if (callback(it)) ValidationInfo(message, it) else null }
