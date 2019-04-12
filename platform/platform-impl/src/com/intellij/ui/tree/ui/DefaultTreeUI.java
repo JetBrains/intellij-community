@@ -30,6 +30,7 @@ import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.ExpandableItemsHandler.RENDERER_DISABLED;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
+import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
 @SuppressWarnings("unused")
 public final class DefaultTreeUI extends BasicTreeUI {
@@ -57,7 +58,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Nullable
   private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
-    if (selected) return UIUtil.getTreeSelectionBackground(tree.hasFocus());
+    if (selected) {
+      Object property = tree.getClientProperty(TREE_TABLE_TREE_KEY);
+      if (property instanceof JTable) return ((JTable)property).getSelectionBackground();
+      return UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(property));
+    }
     Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof TreeNodeBackgroundSupplier) {
       TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
