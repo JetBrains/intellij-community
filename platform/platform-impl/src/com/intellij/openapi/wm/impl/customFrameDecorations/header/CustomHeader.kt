@@ -216,9 +216,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
         val thickness = 1
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
-        private val activeColor = ObjectUtils.notNull(Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color
-        ) { Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color }
-       // val inactiveColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.3d.shadowColor") as Color
+        private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
+         Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
