@@ -420,8 +420,7 @@ public class ConfigImportHelper {
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile);
-        List<String> updatedLines =
-          ContainerUtil.map(lines, line -> line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line);
+        List<String> updatedLines = ContainerUtil.map(lines, ConfigImportHelper::replaceVMOptions);
         if (!updatedLines.equals(lines)) {
           PathKt.write(vmOptionsFile, StringUtil.join(updatedLines, "\n"));
         }
@@ -430,6 +429,11 @@ public class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static String replaceVMOptions(String line) {
+    line = line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line;
+    return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
   private static boolean blockImport(@NotNull Path path, Path oldConfig, Path newConfig) {
