@@ -16,7 +16,7 @@ import java.net.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-val log = KLoggers.logger("authTokenInteractive")
+val log = KLoggers.inferredLogger()
 
 suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
 
