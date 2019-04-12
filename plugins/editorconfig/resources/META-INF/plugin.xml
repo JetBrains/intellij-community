@@ -12,6 +12,10 @@
 
   <actions>
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
+    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction"
+            text="EditorConfig File" description="Create new EditorConfig file">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFile"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

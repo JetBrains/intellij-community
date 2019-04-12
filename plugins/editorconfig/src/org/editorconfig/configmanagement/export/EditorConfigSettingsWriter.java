@@ -24,9 +24,13 @@ import java.util.*;
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigSettingsWriter extends OutputStreamWriter {
-  private final           CodeStyleSettings mySettings;
-  private                 Set<Language>     myLanguages;
-  private final @Nullable Project           myProject;
+  private final           CodeStyleSettings        mySettings;
+  private final @Nullable Project                  myProject;
+
+  // region Filters
+  private Set<Language>                       myLanguages;
+  private final Set<EditorConfigPropertyKind> myPropertyKinds = EnumSet.allOf(EditorConfigPropertyKind.class);
+  // endregion
 
   public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings) {
     super(out, StandardCharsets.UTF_8);
@@ -37,6 +41,12 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   public EditorConfigSettingsWriter forLanguages(Language... languages) {
     myLanguages = new HashSet<>(languages.length);
     myLanguages.addAll(Arrays.asList(languages));
+    return this;
+  }
+
+  public EditorConfigSettingsWriter forPropertyKinds(EditorConfigPropertyKind... kinds) {
+    myPropertyKinds.clear();
+    myPropertyKinds.addAll(Arrays.asList(kinds));
     return this;
   }
 
@@ -51,15 +61,17 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
 
   private void writeGeneralSection(@NotNull GeneralCodeStylePropertyMapper mapper) throws IOException {
     write("[*]\n");
-    if (myProject != null) {
-      write(Utils.getEncoding(myProject));
+    if (myPropertyKinds.contains(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)) {
+      if (myProject != null) {
+        write(Utils.getEncoding(myProject));
+      }
+      String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
+      if (lineSeparator != null) {
+        write(LineEndingsManager.lineEndingsKey + " = " + lineSeparator + "\n");
+      }
+      write(Utils.getEndOfFile());
+      write(Utils.getTrailingSpaces());
     }
-    String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
-    if (lineSeparator != null) {
-      write(LineEndingsManager.lineEndingsKey + " = " + lineSeparator + "\n");
-    }
-    write(Utils.getEndOfFile());
-    write(Utils.getTrailingSpaces());
     writeProperties(getKeyValuePairs(mapper));
   }
 
@@ -79,15 +91,22 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     }
   }
 
-  private static List<OutPair> getKeyValuePairs(@NotNull AbstractCodeStylePropertyMapper mapper) {
+  private List<OutPair> getKeyValuePairs(@NotNull AbstractCodeStylePropertyMapper mapper) {
     List<OutPair> optionValueList = new ArrayList<>();
     for (String property : orderOptions(mapper.enumProperties())) {
       CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
-      String name = getEditorConfigName(mapper, property);
-      if (name != null) {
-        String value = accessor.getAsString();
-        if (value != null && !value.trim().isEmpty() && isAllowed(value)) {
-          optionValueList.add(new OutPair(name, value));
+      EditorConfigPropertyKind propertyKind = IntellijPropertyKindMap.getPropertyKind(property);
+      boolean isIntelliJProperty = !propertyKind.equals(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD);
+      if (
+        isIntelliJProperty && myPropertyKinds.contains(EditorConfigPropertyKind.LANGUAGE) ||
+        !isIntelliJProperty && myPropertyKinds.contains(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)
+      ) {
+        String name = getEditorConfigName(mapper, property);
+        if (name != null) {
+          String value = accessor.getAsString();
+          if (value != null && !value.trim().isEmpty() && isAllowed(value)) {
+            optionValueList.add(new OutPair(name, value));
+          }
         }
       }
     }
