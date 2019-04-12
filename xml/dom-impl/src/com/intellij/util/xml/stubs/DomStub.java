@@ -62,7 +62,8 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   }
 
   public boolean matches(XmlName name) {
-    return name.getLocalName().equals(getName()) && StringUtil.notNullize(name.getNamespaceKey()).equals(getNamespaceKey());
+    return name.getLocalName().contentEquals(XmlUtil.getLocalName(getName())) &&
+           StringUtil.notNullize(name.getNamespaceKey()).equals(getNamespaceKey());
   }
 
   public List<DomStub> getChildrenByName(XmlName xmlName) {
