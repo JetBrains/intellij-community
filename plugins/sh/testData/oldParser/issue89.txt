@@ -1,0 +1,16 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('foo')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiErrorElement:'&', ';' or '\n' expected, got '}'
+                <empty list>
+            PsiElement(})('}')

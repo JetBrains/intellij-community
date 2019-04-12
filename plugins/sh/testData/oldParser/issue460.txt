@@ -1,0 +1,113 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('git')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND_ELEMENT
+                    PsiElement(word)('log')
+                PsiWhiteSpace(' ')
+                PsiElement(|)('|')
+                PsiWhiteSpace(' ')
+                GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('cat')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+        PsiWhiteSpace(' ')
+        PsiElement(|&)('|&')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('perl')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-pe')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(RAW_STRING)(''s/^/\t$1/g'')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            PsiElement(word)('declare')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            PsiElement(word)('-f')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(word)('cmd_')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(parameter_expansion_body)('ACTION')
+                PsiElement(})('}')
+              PsiElement(")('"')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>&)('>&')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('/dev/null')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        BLOCK
+          PsiElement({)('{')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('\t')
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('show_help')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND_ELEMENT
+                    STRING
+                      PsiElement(")('"')
+                      VARIABLE
+                        PsiElement(var)('$ACTION')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('is')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('not')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('a')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('valid')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('command')
+                      PsiElement(")('"')
+            PsiElement(;)(';')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('\t')
+            PIPELINE_COMMAND
+              PIPELINE
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    PsiElement(word)('exit')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND_ELEMENT
+                    PsiElement(int)('1')
+            PsiElement(;)(';')
+            PsiElement(\n)('\n')
+          PsiElement(})('}')
+    PsiElement(;)(';')
