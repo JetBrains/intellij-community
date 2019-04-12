@@ -3,12 +3,13 @@ package com.intellij.build.output;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.MessageEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.Closeable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -21,7 +22,7 @@ import java.util.function.Consumer;
  * @author Vladislav.Soroka
  */
 public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.build.output.BuildOutputInstantReader");
   private static final int MAX_LINES_BUFFER_SIZE = 50;
 
   private final Object myBuildId;
@@ -31,7 +32,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
   private int myCurrentIndex = -1;
   private final LinkedList<String> myLinesBuffer = new LinkedList<>();
-  public static final String SHUTDOWN_PILL = new String("Poison Pill Shutdown");
+  private static final String SHUTDOWN_PILL = new String("Poison Pill Shutdown");
 
   private final Thread myThread;
   private final AtomicBoolean myStarted = new AtomicBoolean();
@@ -116,6 +117,12 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
     if (myBuffer == null) {
       return;
     }
+    if (myClosed.get()) {
+      LOG.warn("Build output reader closed");
+      myBuffer.setLength(0);
+      return;
+    }
+
     String line = myBuffer.toString();
     myBuffer.setLength(0);
     try {
@@ -132,7 +139,12 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   @Nullable
   @Override
   public String readLine() {
-    if (myClosed.get()) return null;
+    if (myClosed.get()) {
+      if (myCurrentIndex > 0 && myLinesBuffer.size() > myCurrentIndex) {
+        return myLinesBuffer.get(myCurrentIndex++);
+      }
+      return null;
+    }
 
     myCurrentIndex++;
     if (myLinesBuffer.size() > myCurrentIndex) {
@@ -147,6 +159,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
       myLinesBuffer.addLast(line);
       if (myLinesBuffer.size() > MAX_LINES_BUFFER_SIZE) {
         myLinesBuffer.removeFirst();
+        myCurrentIndex--;
       }
       return line;
     }
@@ -158,7 +171,7 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
 
   @Override
   public void pushBack() {
-    myCurrentIndex--;
+    pushBack(1);
   }
 
   @Override
@@ -169,5 +182,11 @@ public class BuildOutputInstantReaderImpl implements BuildOutputInstantReader {
   @Override
   public String getCurrentLine() {
     return myLinesBuffer.size() > myCurrentIndex ? myLinesBuffer.get(myCurrentIndex) : null;
+  }
+
+  @ApiStatus.Experimental
+  @TestOnly
+  static int getMaxLinesBufferSize() {
+    return MAX_LINES_BUFFER_SIZE;
   }
 }
