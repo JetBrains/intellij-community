@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import groovy.transform.CompileStatic
 import org.apache.tools.tar.TarEntry
 import org.apache.tools.tar.TarInputStream
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipFile
-
 /**
  * Validates that paths specified in product-info.json file are correct
  */
@@ -128,7 +127,7 @@ class ProductInfoValidator {
           if (entry.name == entryPath) {
             def output = new ByteArrayOutputStream()
             inputStream.copyEntryContents(output)
-            return new String(output.toByteArray(), CharsetToolkit.UTF8_CHARSET)
+            return new String(output.toByteArray(), StandardCharsets.UTF_8)
           }
         }
         return false
