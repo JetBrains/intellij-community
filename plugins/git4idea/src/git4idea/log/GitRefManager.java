@@ -60,16 +60,16 @@ public class GitRefManager implements VcsLogRefManager {
   private static final String REMOTE_TABLE_SEPARATOR = " & ";
   private static final String SEPARATOR = "/";
 
-  protected enum RefType {
+  private enum RefType {
     OTHER,
     HEAD,
     TAG,
     NON_TRACKING_LOCAL_BRANCH,
     NON_TRACKED_REMOTE_BRANCH,
     TRACKING_LOCAL_BRANCH,
-    MASTER,
     TRACKED_REMOTE_BRANCH,
-    ORIGIN_MASTER
+    FAVORITE_LOCAL_BRANCH,
+    FAVORITE_REMOTE_BRANCH
   }
 
   @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
@@ -79,9 +79,9 @@ public class GitRefManager implements VcsLogRefManager {
 
   public GitRefManager(@NotNull Project project, @NotNull RepositoryManager<GitRepository> repositoryManager) {
     myRepositoryManager = repositoryManager;
-    myBranchLayoutComparator = new GitBranchLayoutComparator(repositoryManager);
-    myLabelsComparator = new GitLabelComparator(repositoryManager);
     myBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+    myBranchLayoutComparator = new GitBranchLayoutComparator(repositoryManager, myBranchManager);
+    myLabelsComparator = new GitLabelComparator(repositoryManager, myBranchManager);
   }
 
   @NotNull
@@ -362,18 +362,19 @@ public class GitRefManager implements VcsLogRefManager {
   private static class GitLabelComparator extends GitRefComparator {
     private static final RefType[] ORDERED_TYPES = {
       RefType.HEAD,
-      RefType.MASTER,
+      RefType.FAVORITE_LOCAL_BRANCH,
+      RefType.FAVORITE_REMOTE_BRANCH,
       RefType.TRACKING_LOCAL_BRANCH,
       RefType.NON_TRACKING_LOCAL_BRANCH,
-      RefType.ORIGIN_MASTER,
       RefType.TRACKED_REMOTE_BRANCH,
       RefType.NON_TRACKED_REMOTE_BRANCH,
       RefType.TAG,
       RefType.OTHER
     };
 
-    GitLabelComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
-      super(repositoryManager);
+    GitLabelComparator(@NotNull RepositoryManager<GitRepository> repositoryManager,
+                       @NotNull GitBranchManager branchManager) {
+      super(repositoryManager, branchManager);
     }
 
     @Override
@@ -384,9 +385,9 @@ public class GitRefManager implements VcsLogRefManager {
 
   private static class GitBranchLayoutComparator extends GitRefComparator {
     private static final RefType[] ORDERED_TYPES = {
-      RefType.ORIGIN_MASTER,
+      RefType.FAVORITE_REMOTE_BRANCH,
       RefType.TRACKED_REMOTE_BRANCH,
-      RefType.MASTER,
+      RefType.FAVORITE_LOCAL_BRANCH,
       RefType.TRACKING_LOCAL_BRANCH,
       RefType.NON_TRACKING_LOCAL_BRANCH,
       RefType.NON_TRACKED_REMOTE_BRANCH,
@@ -395,8 +396,9 @@ public class GitRefManager implements VcsLogRefManager {
       RefType.OTHER
     };
 
-    GitBranchLayoutComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
-      super(repositoryManager);
+    GitBranchLayoutComparator(@NotNull RepositoryManager<GitRepository> repositoryManager,
+                              @NotNull GitBranchManager branchManager) {
+      super(repositoryManager, branchManager);
     }
 
     @Override
@@ -407,22 +409,24 @@ public class GitRefManager implements VcsLogRefManager {
 
   private abstract static class GitRefComparator implements Comparator<VcsRef> {
     @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
+    @NotNull private final GitBranchManager myBranchManager;
 
-    GitRefComparator(@NotNull RepositoryManager<GitRepository> repositoryManager) {
+    GitRefComparator(@NotNull RepositoryManager<GitRepository> repositoryManager,
+                     @NotNull GitBranchManager branchManager) {
       myRepositoryManager = repositoryManager;
+      myBranchManager = branchManager;
     }
 
     @Override
     public int compare(@NotNull VcsRef ref1, @NotNull VcsRef ref2) {
       int power1 = ArrayUtil.find(getOrderedTypes(), getType(ref1));
       int power2 = ArrayUtil.find(getOrderedTypes(), getType(ref2));
-      if (power1 != power2) {
-        return power1 - power2;
-      }
+      int powerDelta = power1 - power2;
+      if (powerDelta != 0) return powerDelta;
+
       int namesComparison = ref1.getName().compareTo(ref2.getName());
-      if (namesComparison != 0) {
-        return namesComparison;
-      }
+      if (namesComparison != 0) return namesComparison;
+
       return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
     }
 
@@ -431,39 +435,42 @@ public class GitRefManager implements VcsLogRefManager {
     @NotNull
     private RefType getType(@NotNull VcsRef ref) {
       VcsRefType type = ref.getType();
-      if (type == HEAD) {
-        return RefType.HEAD;
-      }
-      else if (type == TAG) {
-        return RefType.TAG;
-      }
-      else if (type == LOCAL_BRANCH) {
-        if (ref.getName().equals(MASTER)) {
-          return RefType.MASTER;
+      if (type == HEAD) return RefType.HEAD;
+      if (type == TAG) return RefType.TAG;
+
+      if (type == LOCAL_BRANCH || type == REMOTE_BRANCH) {
+        boolean remoteBranch = type == REMOTE_BRANCH;
+
+        GitRepository repo = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
+        if (repo == null) {
+          LOG.error("Undefined root " + ref.getRoot());
         }
-        return isTracked(ref, false) ? RefType.TRACKING_LOCAL_BRANCH : RefType.NON_TRACKING_LOCAL_BRANCH;
+
+        if (isFavorite(ref, repo, remoteBranch)) return remoteBranch ? RefType.FAVORITE_REMOTE_BRANCH : RefType.FAVORITE_LOCAL_BRANCH;
+        if (isTracked(ref, repo, remoteBranch)) return remoteBranch ? RefType.TRACKED_REMOTE_BRANCH : RefType.TRACKING_LOCAL_BRANCH;
+        return remoteBranch ? RefType.NON_TRACKED_REMOTE_BRANCH : RefType.NON_TRACKING_LOCAL_BRANCH;
       }
-      else if (type == REMOTE_BRANCH) {
-        if (ref.getName().equals(ORIGIN_MASTER)) {
-          return RefType.ORIGIN_MASTER;
-        }
-        return isTracked(ref, true) ? RefType.TRACKED_REMOTE_BRANCH : RefType.NON_TRACKED_REMOTE_BRANCH;
+
+      return RefType.OTHER;
+    }
+
+    private static boolean isTracked(@NotNull VcsRef ref, @Nullable GitRepository repository, boolean remoteBranch) {
+      if (repository == null) return false;
+      if (remoteBranch) {
+        return ContainerUtil.exists(repository.getBranchTrackInfos(), info ->
+          info.getRemoteBranch().getNameForLocalOperations().equals(ref.getName()));
       }
       else {
-        return RefType.OTHER;
+        return ContainerUtil.exists(repository.getBranchTrackInfos(), info ->
+          info.getLocalBranch().getName().equals(ref.getName()));
       }
     }
 
-    private boolean isTracked(@NotNull final VcsRef ref, final boolean remoteBranch) {
-      GitRepository repo = myRepositoryManager.getRepositoryForRoot(ref.getRoot());
-      if (repo == null) {
-        LOG.error("Undefined root " + ref.getRoot());
-        return false;
-      }
-      return ContainerUtil.exists(repo.getBranchTrackInfos(), info -> remoteBranch ?
-                                                                      info.getRemoteBranch().getNameForLocalOperations()
-                                                                        .equals(ref.getName()) :
-                                                                      info.getLocalBranch().getName().equals(ref.getName()));
+    private boolean isFavorite(@NotNull VcsRef ref, @Nullable GitRepository repository, boolean remoteBranch) {
+      GitBranchType branchType = remoteBranch ? GitBranchType.REMOTE : GitBranchType.LOCAL;
+      if (myBranchManager.isFavorite(branchType, null, ref.getName())) return true;
+      if (repository != null && myBranchManager.isFavorite(branchType, repository, ref.getName())) return true;
+      return false;
     }
   }
 }
