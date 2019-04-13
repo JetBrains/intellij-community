@@ -21,6 +21,7 @@ import org.gradle.wrapper.GradleUserHomeLookup;
 import org.gradle.wrapper.SystemPropertiesHandler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,7 +41,15 @@ public class DistributionFactoryExt extends DistributionFactory {
     super(Time.clock());
   }
 
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome, File projectDir) {
+  @Deprecated
+  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
+    setWrappedDistribution(connector, wrapperPropertyFile, gradleUserHome, null);
+  }
+
+  public static void setWrappedDistribution(GradleConnector connector,
+                                            String wrapperPropertyFile,
+                                            File gradleUserHome,
+                                            @Nullable File projectDir) {
     File propertiesFile = new File(wrapperPropertyFile);
     if (propertiesFile.exists()) {
       WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
@@ -59,7 +68,7 @@ public class DistributionFactoryExt extends DistributionFactory {
   /**
    * Returns the default distribution to use for the specified project.
    */
-  private Distribution getWrappedDistribution(File propertiesFile, final File userHomeDir, File projectDir) {
+  private Distribution getWrappedDistribution(File propertiesFile, final File userHomeDir, @Nullable File projectDir) {
     WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
     if (wrapper.getDistribution() != null) {
       return new ZippedDistribution(wrapper.getConfiguration(), determineRealUserHomeDir(userHomeDir), projectDir, Time.clock());
@@ -119,10 +128,13 @@ public class DistributionFactoryExt extends DistributionFactory {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final File distributionBaseDir;
-    private final File projectDir;
+    @Nullable private final File projectDir;
     private final Clock clock;
 
-    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, File distributionBaseDir, File projectDir, Clock clock) {
+    private ZippedDistribution(WrapperConfiguration wrapperConfiguration,
+                               File distributionBaseDir,
+                               @Nullable File projectDir,
+                               Clock clock) {
       this.wrapperConfiguration = wrapperConfiguration;
       this.distributionBaseDir = distributionBaseDir;
       this.projectDir = projectDir;
@@ -172,9 +184,11 @@ public class DistributionFactoryExt extends DistributionFactory {
       return userHomeDir != null ? userHomeDir : GradleUserHomeLookup.gradleUserHome();
     }
 
-    private void readGradleProperties(File userHomeDir, File projectDir) {
+    private void readGradleProperties(File userHomeDir, @Nullable File projectDir) {
       System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(userHomeDir, "gradle.properties")));
-      System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));
+      if (projectDir != null) {
+        System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));
+      }
     }
   }
 
