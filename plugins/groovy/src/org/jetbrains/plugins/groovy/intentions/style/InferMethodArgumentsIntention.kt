@@ -11,6 +11,7 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceVariableGraph
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -67,12 +68,16 @@ internal class InferMethodArgumentsIntention : Intention() {
    */
   private fun createBoundedTypeParameterElement(variable: InferenceVariable,
                                                 factory: GroovyPsiElementFactory,
-                                                restoreNameSubstitution: PsiSubstitutor): PsiTypeParameter {
+                                                restoreNameSubstitution: PsiSubstitutor,
+                                                relationSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY): PsiTypeParameter {
     val typeParameterAmongSuperclasses = variable.getBounds(InferenceBound.UPPER).firstOrNull {
       restoreNameSubstitution.substitute(it) != it
     }
-    val superTypes = if (typeParameterAmongSuperclasses != null)
-      arrayOf(restoreNameSubstitution.substitute(typeParameterAmongSuperclasses) as PsiClassType)
+    val superTypes = if (typeParameterAmongSuperclasses != null) {
+      val directSuperType = if (relationSubstitutor.substitute(variable) != variable.type()) variable.type()
+      else typeParameterAmongSuperclasses
+      arrayOf(restoreNameSubstitution.substitute(relationSubstitutor.substitute(directSuperType)) as PsiClassType)
+    }
     else
       variable.getBounds(InferenceBound.UPPER)
         .filter { it != PsiType.getJavaLangObject(variable.manager, variable.resolveScope) }
@@ -96,38 +101,55 @@ internal class InferMethodArgumentsIntention : Intention() {
 
     val inferenceSession = GroovyInferenceSession(method.typeParameters, PsiSubstitutor.EMPTY, method,
                                                   propagateVariablesToNestedSessions = true)
-    collectOuterMethodCalls(method, inferenceSession)
     collectInnerMethodCalls(method, inferenceSession)
-    val strictInstantiated = HashSet<InferenceVariable>()
+    val strictInferenceVariables = HashSet<InferenceVariable>()
     for (param in defaultTypeParameters) {
-      // set fixed instantiation for parameters whose type parameter was known before inference
-      inferenceSession.getInferenceVariable(inferenceSession.substituteWithInferenceVariables(param.type())).instantiation = param.type()
-      strictInstantiated.add(inferenceSession.getInferenceVariable(inferenceSession.substituteWithInferenceVariables(param.type())))
+      val strictInferenceVariable = inferenceSession.getInferenceVariable(inferenceSession.substituteWithInferenceVariables(param.type()))
+      strictInferenceVariable.instantiation = param.type()
+      strictInferenceVariables.add(strictInferenceVariable)
     }
     inferenceSession.inferSubst()
     val inferenceVars = ArrayList<InferenceVariable>()
     for (typeParameter in method.typeParameters) {
       inferenceVars.add(inferenceSession.getInferenceVariable(inferenceSession.substituteWithInferenceVariables(typeParameter.type())))
     }
-    val order = resolveInferenceVariableOrder(inferenceVars, inferenceSession)
-    for (equalInferenceVariables in order) {
-      if (equalInferenceVariables.size > 1 || isDependsOnInferenceVariable(equalInferenceVariables[0])) {
-        if (equalInferenceVariables[0].variable in strictInstantiated) {
-          continue
-        }
-        val newTypeParam = createBoundedTypeParameterElement(equalInferenceVariables[0].variable, elementFactory,
-                                                             inferenceSession.restoreNameSubstitution)
+    val graph = createInferenceVariableGraph(inferenceVars, inferenceSession)
+    val representatives = inferenceVars.map { graph.getRepresentative(it)!! }.toSet()
+    val representativeSubstitutor = collectPresentativeSubstitutor(graph)
+    for (variable in representatives) {
+      if (inferenceVars.any {
+          it.instantiation == PsiType.NULL &&
+          graph.getRepresentative(it) === variable &&
+          it !in strictInferenceVariables
+        }) {
+        val newTypeParam = createBoundedTypeParameterElement(variable, elementFactory,
+                                                             inferenceSession.restoreNameSubstitution, representativeSubstitutor)
         defaultTypeParameterList.add(newTypeParam)
-        equalInferenceVariables.map { it.variable }.forEach { it.instantiation = newTypeParam.type() }
+        variable.instantiation = newTypeParam.type()
+        inferenceVars.filter {
+          it.instantiation == null && graph.getRepresentative(it) === variable && it !in strictInferenceVariables
+        }.forEach { it.instantiation = newTypeParam.type() }
       }
     }
-    val infrenceSubstitutor = inferenceSession.inferSubst()
+    val inferenceSubstitutor = inferenceSession.inferSubst()
     for (param in parameterIndex.keys) {
-      param.setType(infrenceSubstitutor.substitute(param.type))
+      param.setType(inferenceSubstitutor.substitute(param.type))
     }
     method.typeParameterList?.replace(defaultTypeParameterList)
   }
 
+
+  private fun collectPresentativeSubstitutor(graph: InferenceVariableGraph): PsiSubstitutor {
+    var representativeSubstitutor = PsiSubstitutor.EMPTY
+    graph.nodes.keys.forEach {
+      representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type());
+      val upperType = graph.getParent(it)?.type()
+      if (upperType != null) {
+        representativeSubstitutor = representativeSubstitutor.put(it, upperType)
+      }
+    }
+    return representativeSubstitutor
+  }
 
   private fun setUpParameterSignature(method: GrMethod,
                                       parameterIndex: Map<GrParameter, PsiTypeParameter>,
@@ -166,10 +188,17 @@ internal class InferMethodArgumentsIntention : Intention() {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         classType ?: return classType
+        //todo: below if should be removed in future
+        if (classType.parameters.isEmpty()) {
+          return classType
+        }
         val parameters = classType.parameters
         val replacedParameters = parameters.map { it.accept(this) }.toArray(emptyArray())
         val resolveResult = classType.resolveGenerics()
-        return elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        val correctSuperclass = elementFactory.createType(resolveResult.element ?: return null, *replacedParameters)
+        val typeParam = elementFactory.createTypeParameter(generator.name, arrayOf(correctSuperclass))
+        typeParameterList.add(typeParam)
+        return typeParam.type()
       }
 
       override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {

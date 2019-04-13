@@ -68,4 +68,7 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
     doTest(true)
   }
 
+  void testDeepEqualityOfWildcards() {
+    doTest(true)
+  }
 }

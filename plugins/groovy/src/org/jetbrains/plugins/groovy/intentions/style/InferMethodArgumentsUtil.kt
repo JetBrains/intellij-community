@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceVariableGraph
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 
@@ -29,40 +30,29 @@ class NameGenerator {
 
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceVariable>
 
-fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>,
-                                  session: InferenceSession): List<List<InferenceVariableDependency>> {
+fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
+                                 session: GroovyInferenceSession): InferenceVariableGraph {
   val nodes = LinkedHashMap<InferenceVariable, InferenceGraphNode>()
-  val dependencies = LinkedHashMap<InferenceVariable, InferenceVariableDependency>()
-  inferenceVars.forEach { nodes[it] = InferenceGraphNode(it); dependencies[it] = InferenceVariableDependency(it) }
+  inferenceVars.forEach { nodes[it] = InferenceGraphNode(it); }
+
   for (inferenceVar in inferenceVars) {
     val node = nodes[inferenceVar]!!
     for (dependency in inferenceVar.getDependencies(session)) {
       val dependencyNode = nodes[dependency] ?: continue
-      if (dependency.type() in inferenceVar.getBounds(InferenceBound.UPPER) ||
-          inferenceVar.type() in dependency.getBounds(InferenceBound.LOWER) ||
-          inferenceVar.type() in dependency.getBounds(InferenceBound.EQ)) {
+      if (dependency.type() in inferenceVar.getBounds(InferenceBound.EQ) || inferenceVar.type() in dependency.getBounds(
+          InferenceBound.EQ)) {
+        dependencyNode.addDependency(node)
         node.addDependency(dependencyNode)
-        dependencies[inferenceVar]!!.upper.add(dependency)
-        dependencies[dependency]!!.lower.add(inferenceVar)
+      }
+      if (dependency.type() in inferenceVar.getBounds(InferenceBound.UPPER) ||
+          inferenceVar.type() in dependency.getBounds(InferenceBound.LOWER)) {
+        node.addDependency(dependencyNode)
       }
       if (dependency.type() in inferenceVar.getBounds(InferenceBound.LOWER) ||
-          inferenceVar.type() in dependency.getBounds(InferenceBound.UPPER) ||
-          dependency.type() in inferenceVar.getBounds(InferenceBound.EQ)) {
+          inferenceVar.type() in dependency.getBounds(InferenceBound.UPPER)) {
         dependencyNode.addDependency(node)
-        dependencies[inferenceVar]!!.lower.add(dependency)
-        dependencies[dependency]!!.upper.add(inferenceVar)
       }
     }
   }
-  return InferenceVariablesOrder.initNodes(nodes.values).map { it.value.map { dependencies[it]!! } }
-}
-
-
-fun isDependsOnInferenceVariable(variableDependency: InferenceVariableDependency): Boolean {
-  return variableDependency.upper.isNotEmpty() || variableDependency.lower.isNotEmpty()
-}
-
-data class InferenceVariableDependency(val variable: InferenceVariable) {
-  val upper: MutableList<InferenceVariable> = ArrayList()
-  val lower: MutableList<InferenceVariable> = ArrayList()
+  return InferenceVariableGraph(InferenceVariablesOrder.initNodes(nodes.values).map { it.value }, session)
 }
