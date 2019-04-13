@@ -208,6 +208,9 @@ public class PluginManagerConfigurableNewLayout
         });
       }
     });
+    actions.addSeparator();
+    actions.add(new ChangePluginStateAction(false));
+    actions.add(new ChangePluginStateAction(true));
 
     return actions;
   }
@@ -546,14 +549,6 @@ public class PluginManagerConfigurableNewLayout
 
           downloaded.addRightAction(myUpdateCounter);
 
-          DefaultActionGroup actions = new DefaultActionGroup();
-          actions.add(new ChangeStateAction(false, downloaded));
-          actions.add(new ChangeStateAction(true, downloaded));
-
-          JComponent toolbar = TabHeaderComponent.createToolbar(null, actions);
-          toolbar.setOpaque(false); // XXX: height
-          downloaded.addRightAction(toolbar);
-
           downloaded.sortByName();
           downloaded.titleWithCount(downloadedEnabled);
           myInstalledPanel.addGroup(downloaded);
@@ -693,21 +688,36 @@ public class PluginManagerConfigurableNewLayout
     };
   }
 
-  private class ChangeStateAction extends AnAction {
+  private class ChangePluginStateAction extends AnAction {
     private final boolean myEnable;
-    private final PluginsGroup myGroup;
 
-    private ChangeStateAction(boolean enable, @NotNull PluginsGroup group) {
-      super(enable ? "Enable All" : "Disable All");
+    private ChangePluginStateAction(boolean enable) {
+      super(enable ? "Enable All Downloaded Plugins" : "Disable All Downloaded Plugins");
       myEnable = enable;
-      myGroup = group;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      IdeaPluginDescriptor[] descriptors =
-        myGroup.ui.plugins.stream().filter(component -> myPluginModel.isEnabled(component.myPlugin) != myEnable)
+      IdeaPluginDescriptor[] descriptors;
+      PluginsGroup group = myPluginModel.getDownloadedGroup();
+
+      if (group == null) {
+        ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+        List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
+
+        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+          if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString()) &&
+              !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
+            descriptorList.add(descriptor);
+          }
+        }
+
+        descriptors = descriptorList.toArray(new IdeaPluginDescriptor[0]);
+      }
+      else {
+        descriptors = group.ui.plugins.stream().filter(component -> myPluginModel.isEnabled(component.myPlugin) != myEnable)
           .map(component -> component.myPlugin).toArray(IdeaPluginDescriptor[]::new);
+      }
 
       if (descriptors.length > 0) {
         myPluginModel.changeEnableDisable(descriptors, myEnable);

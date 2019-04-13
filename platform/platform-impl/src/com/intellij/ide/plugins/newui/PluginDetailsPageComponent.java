@@ -199,27 +199,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersionSize.setFont(UIUtil.getLabelFont());
 
     int offset = JBUI.scale(10);
-    JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
-    panel1.add(myVersion);
-    if (myMarketplace) {
-      panel1.add(myTagPanel = new TagPanel(mySearchListener));
-    }
-    else {
-      myVendor = new LinkPanel(panel1);
-    }
+    JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
     centerPanel.add(panel1);
-
-    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(offset));
-    centerPanel.add(panel2);
     if (myMarketplace) {
       myRating =
-        GridCellPluginComponent.createRatingLabel(panel2, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
+        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Rating, CellPluginComponent.GRAY_COLOR, false);
 
       myDownloads =
-        GridCellPluginComponent.createRatingLabel(panel2, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
-
-      myVendor = new LinkPanel(panel2);
+        GridCellPluginComponent.createRatingLabel(panel1, null, "", AllIcons.Plugins.Downloads, CellPluginComponent.GRAY_COLOR, false);
     }
+    myVendor = new LinkPanel(panel1);
+
+    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUI.scale(7)));
+    if (myMarketplace) {
+      panel2.add(myTagPanel = new TagPanel(mySearchListener));
+    }
+    panel2.add(myVersion);
+    centerPanel.add(panel2);
   }
 
   private void createBottomPanel() {
@@ -358,7 +354,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myVendor.hide();
     }
     else {
-      myVendor.show("By " + vendor, null);
+      myVendor.show(vendor, null); // TODO: link for search
     }
 
     if (bundled) {
