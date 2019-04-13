@@ -50,7 +50,7 @@ class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOpt
       row {
         val c = checkBox("Create", retypeOptions::enableLargeIndexing).actsAsLabel()
         spinner(retypeOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
-          .enableIfSelected(c)
+          .enableIf(c.selected)
         label("files to start background indexing")
       }
       buttonGroup(retypeOptions::retypeCurrentFile) {
@@ -61,10 +61,10 @@ class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOpt
         row {
           val r = radioButton("Retype", false)
           spinner(retypeOptions::fileCount, 1, 5000)
-            .enableIfSelected(r)
+            .enableIf(r.selected)
           label("files with different sizes and extension")
           textField(retypeOptions::retypeExtension, 5)
-            .enableIfSelected(r)
+            .enableIf(r.selected)
         }
       }
       row {

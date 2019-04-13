@@ -229,7 +229,7 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
                 growPolicy = GrowPolicy.MEDIUM_TEXT,
                 renderer = { value, _, _ -> append("${value.userId} (${value.keyId})") }
               )
-                .enableIfSelected(usePgpKey)
+                .enableIf(usePgpKey.selected)
                 .component
             }
           }
