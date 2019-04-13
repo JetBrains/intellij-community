@@ -1453,27 +1453,30 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // include_directive (simple_command_element | <<keywordsRemapped>>)*
+  // include_directive (simple_command_element | <<keywordsRemapped>>)+
   public static boolean include_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "include_command")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, INCLUDE_COMMAND, "<include command>");
     r = include_directive(b, l + 1);
-    p = r; // pin = 1
     r = r && include_command_1(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
-  // (simple_command_element | <<keywordsRemapped>>)*
+  // (simple_command_element | <<keywordsRemapped>>)+
   private static boolean include_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "include_command_1")) return false;
-    while (true) {
+    boolean r;
+    Marker m = enter_section_(b);
+    r = include_command_1_0(b, l + 1);
+    while (r) {
       int c = current_position_(b);
       if (!include_command_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "include_command_1", c)) break;
     }
-    return true;
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   // simple_command_element | <<keywordsRemapped>>

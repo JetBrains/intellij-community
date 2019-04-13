@@ -185,7 +185,7 @@ command ::= shell_command redirection_list?
           | include_command
           | simple_command
 
-include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)*
+include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
 //private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*'

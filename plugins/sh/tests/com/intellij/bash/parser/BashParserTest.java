@@ -39,4 +39,5 @@ public class BashParserTest extends ParsingTestCase {
   public void testCommands()      { doTest(true); }
   public void testRegex()         { doTest(true); }
   public void testRedirection()   { doTest(true); }
+  public void testSource()        { doTest(true); }
 }

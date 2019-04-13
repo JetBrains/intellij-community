@@ -1,0 +1,33 @@
+BASH_FILE
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('a')
+          PsiElement(=)('=')
+          PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(word)('source')
+          PsiElement(=)('=')
+          STRING
+            PsiElement(")('"')
+            VARIABLE
+              PsiElement(var)('$1')
+            PsiElement(")('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        INCLUDE_COMMAND
+          INCLUDE_DIRECTIVE
+            PsiElement(word)('.')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            STRING
+              PsiElement(")('"')
+              PsiElement(int)('1')
+              PsiElement(")('"')
