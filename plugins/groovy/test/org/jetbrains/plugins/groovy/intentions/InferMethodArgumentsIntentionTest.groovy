@@ -63,4 +63,9 @@ class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
   void testInferWildcardsDependencies() {
     doTest(true)
   }
+
+  void testRelatedWildcards() {
+    doTest(true)
+  }
+
 }

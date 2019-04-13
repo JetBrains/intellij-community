@@ -42,15 +42,15 @@ fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>,
           inferenceVar.type() in dependency.getBounds(InferenceBound.LOWER) ||
           inferenceVar.type() in dependency.getBounds(InferenceBound.EQ)) {
         node.addDependency(dependencyNode)
-        dependencies[inferenceVar]!!.dependencies.add(dependency)
-        dependencies[dependency]!!.dependencies.add(inferenceVar)
+        dependencies[inferenceVar]!!.upper.add(dependency)
+        dependencies[dependency]!!.lower.add(inferenceVar)
       }
       if (dependency.type() in inferenceVar.getBounds(InferenceBound.LOWER) ||
           inferenceVar.type() in dependency.getBounds(InferenceBound.UPPER) ||
           dependency.type() in inferenceVar.getBounds(InferenceBound.EQ)) {
         dependencyNode.addDependency(node)
-        dependencies[inferenceVar]!!.dependencies.add(dependency)
-        dependencies[dependency]!!.dependencies.add(inferenceVar)
+        dependencies[inferenceVar]!!.lower.add(dependency)
+        dependencies[dependency]!!.upper.add(inferenceVar)
       }
     }
   }
@@ -59,9 +59,10 @@ fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>,
 
 
 fun isDependsOnInferenceVariable(variableDependency: InferenceVariableDependency): Boolean {
-  return variableDependency.dependencies.isNotEmpty()
+  return variableDependency.upper.isNotEmpty() || variableDependency.lower.isNotEmpty()
 }
 
 data class InferenceVariableDependency(val variable: InferenceVariable) {
-  val dependencies: MutableList<InferenceVariable> = ArrayList()
+  val upper: MutableList<InferenceVariable> = ArrayList()
+  val lower: MutableList<InferenceVariable> = ArrayList()
 }

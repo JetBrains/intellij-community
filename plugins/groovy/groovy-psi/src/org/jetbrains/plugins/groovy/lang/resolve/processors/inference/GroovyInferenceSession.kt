@@ -5,6 +5,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -18,7 +19,8 @@ class GroovyInferenceSession(
   context: PsiElement,
   val skipClosureBlock: Boolean = true,
   private val expressionPredicates: Set<ExpressionPredicate> = emptySet(),
-  private val propagateVariablesToNestedSessions: Boolean = false
+  private val propagateVariablesToNestedSessions: Boolean = false,
+  private val parent: GroovyInferenceSession? = null
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
   private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
@@ -50,6 +52,16 @@ class GroovyInferenceSession(
     return null
   }
 
+  override fun substituteWithInferenceVariables(type: PsiType?): PsiType {
+    val result = super.substituteWithInferenceVariables(type)
+    if (propagateVariablesToNestedSessions && (result == type || result == null) && parent != null) {
+      return parent.substituteWithInferenceVariables(result)
+    }
+    else {
+      return result
+    }
+  }
+
   fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
     if (mapping == null) return
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
@@ -71,9 +83,12 @@ class GroovyInferenceSession(
                          context: PsiElement,
                          result: GroovyResolveResult,
                          f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = GroovyInferenceSession(params, siteSubstitutor.putAll(
-      if (propagateVariablesToNestedSessions) inferenceSubstitution else PsiSubstitutor.EMPTY), context, skipClosureBlock, expressionPredicates,
-                                               propagateVariablesToNestedSessions)
+    val additionalSubstitution = if (propagateVariablesToNestedSessions) inferenceSubstitution else PsiSubstitutor.EMPTY
+    val nestedSession = GroovyInferenceSession(params, siteSubstitutor.putAll(additionalSubstitution), context,
+                                               skipClosureBlock,
+                                               expressionPredicates,
+                                               propagateVariablesToNestedSessions,
+                                               parent = this)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     nestedSessions[result] = nestedSession
