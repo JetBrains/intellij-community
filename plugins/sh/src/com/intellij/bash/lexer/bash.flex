@@ -78,16 +78,12 @@ LineTerminator           = \r\n | \r | \n
 LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
 EscapedWhiteSpace        = "\\ "
-//WhiteSpaceLineContinuation={WhiteSpace}
 
 Shebang                  = #\! {InputCharacter}* {LineTerminator}?
 Comment                  = # {InputCharacter}*
 
 EscapedChar              = "\\" [^\n]
 Quote                    = \"
-
-//SingleCharacter = [^\'] | {EscapedChar}
-//UnescapedCharacter = [^\']
 
 UnclosedRawString        = '[^']*
 RawString                = {UnclosedRawString}'
@@ -96,23 +92,12 @@ WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedC
 WordAfter                = {WordFirst} | [#!] // \[\]
 Word                     = {WordFirst}{WordAfter}*
 
-
-//ParamExpansionWordFirst  = [a-zA-Z0-9_] | {EscapedChar} | {LineContinuation}
-//ParamExpansionWord       = {ParamExpansionWordFirst}+
-
-//AssignListWordFirst      = [[\p{Letter}]||[0-9_/@?.*:&%\^~,]] | {EscapedChar} | {LineContinuation}
-//AssignListWordAfter      =  {AssignListWordFirst} | [#!]
-//AssignListWord           = {AssignListWordFirst}{AssignListWordAfter}*
-
 ArithWordFirst           = [a-zA-Z_@.] | {EscapedChar} | {LineContinuation}
 ArithWordAfter           = {ArithWordFirst} | [0-9#!]
-// No "[" | "]"
 ArithWord                = {ArithWordFirst}{ArithWordAfter}*
 
 AssignmentWord           = [[:letter:]||[_]] [[:letter:]||[0-9_]]*
 Variable                 = \$ {AssignmentWord} | \$[@$#0-9?!*_-]
-
-//ArithExpr                = ({ArithWord} | [0-9a-z+*-] | {Variable} )+
 
 IntegerLiteral           = [0] | ([1-9][0-9]*) | (6[0-4]|[1-5][0-9]|[2-9]) # [[:letter:]||[:digit:]]*  // todo: fix Rule can never be matched
 HexIntegerLiteral        = "0" [xX] [0-9a-fA-F]+
@@ -126,7 +111,6 @@ Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage
 AssigOp                  = "=" | "+="
 
 EscapedCurly             = "\\{" | "\\}"
-
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -382,8 +366,6 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
     {IntegerLiteral}              { return INT; }
     {HexIntegerLiteral}           { return HEX; }
     {OctalIntegerLiteral}         { return OCTAL; }
-
-//    {AssignListWord}              { return WORD; }
 
     ^{Shebang}                    { if (yyline == 0) return SHEBANG; else return COMMENT; }
     {Comment}                     { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT; }
