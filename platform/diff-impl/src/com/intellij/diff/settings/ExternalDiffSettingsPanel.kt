@@ -15,11 +15,20 @@
  */
 package com.intellij.diff.settings
 
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffRequestFactory
+import com.intellij.diff.merge.MergeResult
+import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings
+import com.intellij.diff.tools.external.ExternalDiffToolUtil
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.layout.*
 import javax.swing.AbstractButton
 import javax.swing.JComponent
@@ -54,6 +63,12 @@ class ExternalDiffSettingsPanel {
         }
         row {
           checkBox("Use by default", settings::isDiffDefault)
+        }
+        row {
+          cell {
+            button("Test Diff") { showTestDiff() }
+            button("Test Three-Side Diff") { showTestThreeDiff() }
+          }
         }.largeGapAfter()
       }
 
@@ -70,6 +85,9 @@ class ExternalDiffSettingsPanel {
         }
         row {
           checkBox("Trust process exit code", settings::isMergeTrustExitCode)
+        }
+        row {
+          button("Test Merge") { showTestMerge() }
         }
       }
 
@@ -105,5 +123,58 @@ class ExternalDiffSettingsPanel {
     val pathField = TextFieldWithBrowseButton()
     pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
     return pathField().withBinding(pathField::getText, pathField::setText, modelGet, modelSet)
+  }
+
+  private fun showTestDiff() {
+    panel.apply()
+
+    try {
+      val factory = DiffContentFactory.getInstance()
+      val contents = listOf(factory.create("Left file content"), factory.create("Right file content"))
+      val titles = listOf("Left.txt", "Right.txt")
+      ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
+    }
+    catch (e: Exception) {
+      Messages.showErrorDialog(e.message, "Can't Show Diff")
+    }
+  }
+
+  private fun showTestThreeDiff() {
+    panel.apply()
+
+    try {
+      val factory = DiffContentFactory.getInstance()
+      val contents = listOf(factory.create("Left file content"), factory.create("Base file content"), factory.create("Right file content"))
+      val titles = listOf("Left.txt", "Base.txt", "Right.txt")
+      ExternalDiffToolUtil.execute(null, ExternalDiffSettings.instance, contents, titles, null)
+    }
+    catch (e: Exception) {
+      Messages.showErrorDialog(e.message, "Can't Show Diff")
+    }
+  }
+
+  private fun showTestMerge() {
+    panel.apply()
+
+    try {
+      val factory = DiffRequestFactory.getInstance()
+      val document = DocumentImpl("Original output file content")
+
+      val callback = { result: MergeResult ->
+        val message = when (result) {
+          MergeResult.CANCEL -> "Merge conflict resolve was canceled."
+          else -> "Merge conflict resolve successful.\nResolved content is:\n" +
+                  StringUtil.shortenPathWithEllipsis(document.text, 60)
+        }
+        Messages.showInfoMessage(panel, message, "Test Complete")
+      }
+      val contents = listOf("Left file content", "Base file content", "Right file content")
+      val titles = listOf("Left.txt", "Base.txt", "Right.txt")
+      val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
+      ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest)
+    }
+    catch (e: Exception) {
+      Messages.showErrorDialog(e.message, "Can't Show Merge")
+    }
   }
 }
