@@ -29,9 +29,11 @@ class NameGenerator {
 
 typealias InferenceGraphNode = InferenceVariablesOrder.InferenceGraphNode<InferenceVariable>
 
-fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>, session: InferenceSession): List<List<InferenceVariable>> {
+fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>,
+                                  session: InferenceSession): List<List<InferenceVariableDependency>> {
   val nodes = LinkedHashMap<InferenceVariable, InferenceGraphNode>()
-  inferenceVars.forEach { nodes[it] = InferenceGraphNode(it) }
+  val dependencies = LinkedHashMap<InferenceVariable, InferenceVariableDependency>()
+  inferenceVars.forEach { nodes[it] = InferenceGraphNode(it); dependencies[it] = InferenceVariableDependency(it) }
   for (inferenceVar in inferenceVars) {
     val node = nodes[inferenceVar]!!
     for (dependency in inferenceVar.getDependencies(session)) {
@@ -40,13 +42,26 @@ fun resolveInferenceVariableOrder(inferenceVars: Collection<InferenceVariable>, 
           inferenceVar.type() in dependency.getBounds(InferenceBound.LOWER) ||
           inferenceVar.type() in dependency.getBounds(InferenceBound.EQ)) {
         node.addDependency(dependencyNode)
+        dependencies[inferenceVar]!!.dependencies.add(dependency)
+        dependencies[dependency]!!.dependencies.add(inferenceVar)
       }
       if (dependency.type() in inferenceVar.getBounds(InferenceBound.LOWER) ||
           inferenceVar.type() in dependency.getBounds(InferenceBound.UPPER) ||
           dependency.type() in inferenceVar.getBounds(InferenceBound.EQ)) {
         dependencyNode.addDependency(node)
+        dependencies[inferenceVar]!!.dependencies.add(dependency)
+        dependencies[dependency]!!.dependencies.add(inferenceVar)
       }
     }
   }
-  return InferenceVariablesOrder.initNodes(nodes.values).map { it.value }
+  return InferenceVariablesOrder.initNodes(nodes.values).map { it.value.map { dependencies[it]!! } }
+}
+
+
+fun isDependsOnInferenceVariable(variableDependency: InferenceVariableDependency): Boolean {
+  return variableDependency.dependencies.isNotEmpty()
+}
+
+data class InferenceVariableDependency(val variable: InferenceVariable) {
+  val dependencies: MutableList<InferenceVariable> = ArrayList()
 }
