@@ -32,7 +32,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
       }
     }
 
-    if (!isElementFieldMethodOrInnerClass(modifierListParent)) {
+    if (!isElementFieldOrMethodOrInnerClass(modifierListParent)) {
       return false;
     }
 
@@ -55,12 +55,13 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     }
 
     // STATIC
-    if (isElementFieldMethodOrInnerClass(parent)) {
+    if (isElementFieldOrMethodOrInnerClass(parent)) {
       modifiers.add(PsiModifier.STATIC);
     }
   }
 
-  private boolean isElementFieldMethodOrInnerClass(PsiElement element) {
-    return element instanceof PsiField || element instanceof PsiMethod || (element instanceof PsiClass && element.getParent() instanceof PsiClass);
+  private boolean isElementFieldOrMethodOrInnerClass(PsiElement element) {
+    return element instanceof PsiField || element instanceof PsiMethod ||
+      (element instanceof PsiClass && element.getParent() instanceof PsiClass && !((PsiClass) element.getParent()).isInterface());
   }
 }

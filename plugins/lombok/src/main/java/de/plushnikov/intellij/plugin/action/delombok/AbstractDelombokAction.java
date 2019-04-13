@@ -98,21 +98,11 @@ public abstract class AbstractDelombokAction extends AnAction {
   }
 
   protected void process(@NotNull final Project project, @NotNull final PsiJavaFile psiJavaFile) {
-    executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        getHandler().invoke(project, psiJavaFile);
-      }
-    });
+    executeCommand(project, () -> getHandler().invoke(project, psiJavaFile));
   }
 
   protected void process(@NotNull final Project project, @NotNull final PsiFile psiFile, @NotNull final PsiClass psiClass) {
-    executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        getHandler().invoke(project, psiFile, psiClass);
-      }
-    });
+    executeCommand(project, () -> getHandler().invoke(project, psiFile, psiClass));
   }
 
   private void executeCommand(final Project project, final Runnable action) {

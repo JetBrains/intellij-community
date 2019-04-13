@@ -58,7 +58,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
           if (psiClassUp.getContext() instanceof PsiFile) {
             return true;
           }
-          Boolean isStatic = isStatic(psiClassUp.getModifierList());
+          boolean isStatic = isStatic(psiClassUp.getModifierList());
           if (isStatic || checkWrongType(psiClassUp)) {
             contextUp = contextUp.getContext();
           } else {
