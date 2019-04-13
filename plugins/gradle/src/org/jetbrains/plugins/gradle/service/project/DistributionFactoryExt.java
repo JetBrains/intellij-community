@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
@@ -21,6 +22,7 @@ import org.gradle.wrapper.GradleUserHomeLookup;
 import org.gradle.wrapper.SystemPropertiesHandler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -28,6 +30,8 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 import static org.gradle.internal.FileUtils.hasExtension;
@@ -154,10 +158,23 @@ public class DistributionFactoryExt extends DistributionFactory {
       if (installedDistribution == null) {
         final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock);
         File installDir;
+        Set<String> propertiesToCleanup = ContainerUtil.newHashSet();
+        Map<String, String> propertiesToRestore = ContainerUtil.newHashMap();
         try {
           cancellationToken.addCallback(() -> installer.cancel());
-          readGradleProperties(determineRealUserHomeDir(userHomeDir), projectDir);
-          installDir = installer.install(determineRealUserHomeDir(userHomeDir), wrapperConfiguration);
+          File effectiveGradleUserHome = determineRealUserHomeDir(userHomeDir);
+          Map<String, String> gradleProperties = readGradleProperties(effectiveGradleUserHome, projectDir);
+          gradleProperties.forEach((key, value) -> {
+            String property = System.getProperty(key);
+            if (property != null) {
+              propertiesToRestore.put(key, property);
+            }
+            else {
+              propertiesToCleanup.add(key);
+            }
+            System.setProperty(key, value);
+          });
+          installDir = installer.install(effectiveGradleUserHome, wrapperConfiguration);
         }
         catch (CancellationException e) {
           throw new BuildCancelledException(
@@ -169,6 +186,10 @@ public class DistributionFactoryExt extends DistributionFactory {
         catch (Exception e) {
           throw new GradleConnectionException(
             String.format("Could not install Gradle distribution from '%s'.", wrapperConfiguration.getDistribution()), e);
+        }
+        finally {
+          propertiesToRestore.forEach((key, value) -> System.setProperty(key, value));
+          propertiesToCleanup.forEach(key -> System.clearProperty(key));
         }
         installedDistribution = new InstalledDistribution(installDir, getDisplayName(), getDisplayName());
       }
@@ -184,11 +205,14 @@ public class DistributionFactoryExt extends DistributionFactory {
       return userHomeDir != null ? userHomeDir : GradleUserHomeLookup.gradleUserHome();
     }
 
-    private void readGradleProperties(File userHomeDir, @Nullable File projectDir) {
-      System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(userHomeDir, "gradle.properties")));
+    @NotNull
+    private static Map<String, String> readGradleProperties(File userHomeDir, @Nullable File projectDir) {
+      Map<String, String> gradleProperties = ContainerUtil.newHashMap();
+      gradleProperties.putAll(SystemPropertiesHandler.getSystemProperties(new File(userHomeDir, "gradle.properties")));
       if (projectDir != null) {
-        System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));
+        gradleProperties.putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));
       }
+      return gradleProperties;
     }
   }
 
