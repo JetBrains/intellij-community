@@ -488,7 +488,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   public SearchScope getUseScope() {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     if (owner instanceof PyFunction) {
-      return new LocalSearchScope(owner);
+      return owner.getUseScope();
     }
     return new LocalSearchScope(getContainingFile());
   }

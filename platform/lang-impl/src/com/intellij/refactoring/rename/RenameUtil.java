@@ -36,6 +36,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -79,8 +80,9 @@ public class RenameUtil {
     List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
 
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-
-    Collection<PsiReference> refs = processor.findReferences(element, searchInStringsAndComments);
+    SearchScope useScope = searchScope.intersectWith(
+      PsiSearchHelper.getInstance(element.getProject()).getUseScope(element));
+    Collection<PsiReference> refs = processor.findReferences(element, useScope, searchInStringsAndComments);
     for (final PsiReference ref : refs) {
       if (ref == null) {
         LOG.error("null reference from processor " + processor);
