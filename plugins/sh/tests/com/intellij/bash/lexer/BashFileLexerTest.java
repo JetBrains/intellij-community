@@ -36,6 +36,14 @@ public class BashFileLexerTest extends LexerTestCase {
   public void testSelect()      { doFileTest("sh"); }
   public void testBinaryData()  { doFileTest("bash"); }
 
+  @Override
+  protected void doFileTest(String fileExt) {
+    super.doFileTest(fileExt);
+//    todo: fix shebang and uncomment
+//    String text = loadTestDataFile("." + fileExt);
+//    checkCorrectRestart(text);
+  }
+
   public void testShouldBeFixed() {
     try {
       doFileTest("sh");
