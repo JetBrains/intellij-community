@@ -2,7 +2,6 @@ public class BuilderSimplePreDefined {
   private int myInt;
   private String myString;
 
-  @java.beans.ConstructorProperties({"myInt", "myString"})
   BuilderSimplePreDefined(int myInt, String myString) {
     this.myInt = myInt;
     this.myString = myString;

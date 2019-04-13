@@ -8,7 +8,6 @@ public class DataSimple {
     Object[] z;
     String a;
 
-    @java.beans.ConstructorProperties({"finalX"})
     public DataSimple(int finalX) {
         this.finalX = finalX;
     }

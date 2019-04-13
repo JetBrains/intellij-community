@@ -5,7 +5,6 @@ public class BuilderSingularMap {
 
   private java.util.Map<String, String> myMap;
 
-  @java.beans.ConstructorProperties({"myMap"})
   BuilderSingularMap(Map<String, String> myMap) {
     this.myMap = myMap;
   }
