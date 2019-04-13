@@ -135,6 +135,8 @@ RegexWord                = [^\r\n\\\"' \t] | {EscapedChar}
 RegexWordWithWhiteSpace  = [^\"'] | {EscapedChar}
 RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteSpace}+\" | {RegexWord}+
 
+HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
+
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
 %state LET_EXPRESSION
@@ -148,6 +150,8 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 %state STRING_EXPRESSION
 %state REGULAR_EXPRESSION
 
+%state HERE_STRING
+
 %state HERE_DOC_START_MARKER
 %state HERE_DOC_END_MARKER
 %state HERE_DOC_PIPELINE
@@ -160,7 +164,8 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 
 <STRING_EXPRESSION> {
     {Quote}                       { popState(); return QUOTE; }
-    {RawString}                   { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }  else return RAW_STRING; }
+    {RawString}                   { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
+                                    else return RAW_STRING; }
 }
 
 <LET_EXPRESSION> {
@@ -247,6 +252,14 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
   {CasePattern}                   { return WORD; }
 }
 
+<HERE_STRING> {
+  ">"  | ";" | "|" | "(" | ")"  |
+  "&"                           { popState(); yypushback(1);}
+  {LineTerminator}              { popState(); return LINEFEED; }
+  {WhiteSpace}+                 { popState(); return WHITESPACE; }
+  {HereString}*                 { return WORD; }
+}
+
 <HERE_DOC_START_MARKER> {
   {HeredocMarkerInQuotes}         { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
                                       heredocMarker = yytext().subSequence(1, yylength()-1).toString();
@@ -265,7 +278,7 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 <HERE_DOC_END_MARKER> {
   {WhiteSpace}+                   { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE; }
   {HeredocMarker}+                { if (yytext().toString().equals(heredocMarker))
-                                    { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
+                                  { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
                                     else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
   [^]                             { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
 }
@@ -297,7 +310,7 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
 }
 
 <YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE, STRING_EXPRESSION,
-  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION> {
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, PARENTHESES_COMMAND_SUBSTITUTION, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
@@ -355,7 +368,7 @@ RegexInQuotes            = '{RegexWordWithWhiteSpace}+' | \"{RegexWordWithWhiteS
     "&>"                          { return REDIRECT_AMP_GREATER; }
     ">|"                          { return REDIRECT_GREATER_BAR; }
 
-    "<<<"                         { return REDIRECT_HERE_STRING; }
+    "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
                                     { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }

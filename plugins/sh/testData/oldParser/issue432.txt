@@ -8,8 +8,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(")('"')
                 PsiElement(word)('CREATE')
@@ -67,8 +66,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''CREATE DATABASE dev'')
     PsiWhiteSpace(' ')
@@ -120,8 +118,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(")('"')
                 PsiElement(word)('CREATE')
@@ -151,8 +148,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiElement(;)(';')
@@ -175,8 +171,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiElement(;)(';')
@@ -198,8 +193,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiElement(;)(';')
@@ -224,8 +218,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiWhiteSpace(' ')
@@ -252,8 +245,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiElement(&)('&')
@@ -279,8 +271,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
-              PsiElement(<<<)('<<<')
-              PsiWhiteSpace(' ')
+              PsiElement(<<<)('<<< ')
               STRING
                 PsiElement(RAW_STRING)(''hi'')
     PsiElement(&)('&')

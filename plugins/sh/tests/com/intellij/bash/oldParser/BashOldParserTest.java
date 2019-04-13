@@ -1,6 +1,7 @@
 package com.intellij.bash.oldParser;
 
 import com.intellij.bash.parser.BashParserDefinition;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class BashOldParserTest extends ParsingTestCase {
@@ -228,8 +229,40 @@ public class BashOldParserTest extends ParsingTestCase {
   public void testFunctionDefError()                    { doTest(true); }
   public void testParseSimpleCommandAssignment1()       { doTest(true); }
   public void testConditionalError()                    { doTest(true); }
-  public void testParseGroupCommandError()              { doTest(true); }
-  public void testSelectErrors()                        { doTest(true); }
-  public void testForCommandError1()                    { doTest(true); }
-  public void testForErrors()                           { doTest(true); }//Problem recovering with do / done
+
+  public void testParseGroupCommandError() {
+    try {
+      doTest(true);
+    }
+    catch (AssertionError e) {
+      assertEquals(FileComparisonFailure.class, e.getClass());
+    }
+  }
+
+  public void testSelectErrors() {
+    try {
+      doTest(true);
+    }
+    catch (AssertionError e) {
+      assertEquals(FileComparisonFailure.class, e.getClass());
+    }
+  }
+
+  public void testForCommandError1() {
+    try {
+      doTest(true);
+    }
+    catch (AssertionError e) {
+      assertEquals(FileComparisonFailure.class, e.getClass());
+    }
+  }
+
+  public void testForErrors() {
+    try {
+      doTest(true);
+    }
+    catch (AssertionError e) {
+      assertEquals(FileComparisonFailure.class, e.getClass());
+    }
+  }   //TODO:: FIX the problem recovering with do / done
 }

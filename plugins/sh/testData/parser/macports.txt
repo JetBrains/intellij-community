@@ -75,8 +75,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
-                        PsiElement(<<<)('<<<')
-                        PsiWhiteSpace(' ')
+                        PsiElement(<<<)('<<< ')
                         VARIABLE
                           PsiElement(var)('$MACPORTS')
             PsiElement(`)('`')
