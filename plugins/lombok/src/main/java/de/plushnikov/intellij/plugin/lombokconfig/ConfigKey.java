@@ -11,7 +11,8 @@ public enum ConfigKey {
 
   EQUALSANDHASHCODE_CALL_SUPER("lombok.equalsAndHashCode.callSuper", "warn"),
   EQUALSANDHASHCODE_DO_NOT_USE_GETTERS("lombok.equalsAndHashCode.doNotUseGetters", "false"),
-  ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.suppressConstructorProperties", "false"),
+  ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.suppressConstructorProperties", "true"),
+  ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES("lombok.anyConstructor.addConstructorProperties", "false"),
 
   TOSTRING_CALL_SUPER("lombok.toString.callSuper", "skip"),
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),

@@ -4,13 +4,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
-import java.io.IOException;
-
 public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokParsingTestCase {
-  public void doTest() throws IOException {
+  public void doTest() {
     final String fullFileName = getTestName(true).replace('$', '/') + ".java";
-    final String subPath = fullFileName.substring(0, fullFileName.lastIndexOf('/'));
-    final String fileName = fullFileName.substring(fullFileName.lastIndexOf('/') + 1);
+    final int lastIndexOf = fullFileName.lastIndexOf('/');
+    final String subPath = fullFileName.substring(0, lastIndexOf);
+    final String fileName = fullFileName.substring(lastIndexOf + 1);
 
     myFixture.copyFileToProject(getBasePath() + "/" + subPath + "/before/lombok.config", subPath + "/before/lombok.config");
 

@@ -240,9 +240,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    final boolean suppressConstructorProperties = useJavaDefaults || readAnnotationOrConfigProperty(psiAnnotation, psiClass, "suppressConstructorProperties", ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES);
-
-    final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, suppressConstructorProperties, useJavaDefaults, params, psiAnnotation);
+    final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
     if (staticConstructorRequired) {
       PsiMethod staticConstructor = createStaticConstructor(psiClass, methodModifier, staticName, useJavaDefaults, params, psiAnnotation);
       return Arrays.asList(constructor, staticConstructor);
@@ -250,7 +248,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return Collections.singletonList(constructor);
   }
 
-  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier, boolean suppressConstructorProperties,
+  private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier,
                                       boolean useJavaDefaults, @NotNull Collection<PsiField> params, @NotNull PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder constructorBuilder = new LombokLightMethodBuilder(psiClass.getManager(), getConstructorName(psiClass))
       .withConstructor(true)
@@ -265,12 +263,16 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
     }
 
-    if (!suppressConstructorProperties && !useJavaDefaults && !fieldNames.isEmpty()) {
-      String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
-        fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
-        "} ) ";
-      constructorBuilder.withAnnotation(constructorPropertiesAnnotation);
+    if (!fieldNames.isEmpty()) {
+      boolean addConstructorProperties = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
+      if (addConstructorProperties || !configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES, psiClass)) {
+        final String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
+          fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
+          "} ) ";
+        constructorBuilder.withAnnotation(constructorPropertiesAnnotation);
+      }
     }
+
     constructorBuilder.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
 
     if (!useJavaDefaults) {

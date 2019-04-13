@@ -1,9 +1,7 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
-import java.io.IOException;
-
 /**
- * Unit tests for IntelliJPlugin for Lombok with activated config system
+ * Unit tests for Constructor and @ConstructorProperties generation
  */
 public class ConstructorTest extends AbstractLombokConfigSystemTestCase {
 
@@ -16,15 +14,39 @@ public class ConstructorTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/constructor";
   }
 
-  public void testSuppressConstructorProperties$NoArgsConstructorTest() throws IOException {
+  public void testDefault$NoArgsConstructorTest() {
     doTest();
   }
 
-  public void testSuppressConstructorProperties$AllArgsConstructorTest() throws IOException {
+  public void testDefault$AllArgsConstructorTest() {
     doTest();
   }
 
-  public void testSuppressConstructorProperties$RequiredArgsConstructorTest() throws IOException {
+  public void testDefault$RequiredArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testSuppressConstructorProperties$NoArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testSuppressConstructorProperties$AllArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testSuppressConstructorProperties$RequiredArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testAddConstructorProperties$NoArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testAddConstructorProperties$AllArgsConstructorTest() {
+    doTest();
+  }
+
+  public void testAddConstructorProperties$RequiredArgsConstructorTest() {
     doTest();
   }
 }
