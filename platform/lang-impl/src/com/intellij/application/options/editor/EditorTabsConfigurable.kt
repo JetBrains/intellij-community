@@ -140,7 +140,7 @@ class EditorTabsConfigurable : EditorOptionsProvider {
   }
 
   private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
-    enableIfSelected(myEditorTabPlacement) { it != UISettings.TABS_NONE }
+    enableIf(myEditorTabPlacement.hasSelection { it != UISettings.TABS_NONE })
   }
 
   override fun reset() {

@@ -17,6 +17,7 @@ import net.miginfocom.layout.CC
 import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
@@ -398,15 +399,9 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     component.isEnabled = isEnabled
   }
 
-  override fun enableIfSelected(button: AbstractButton): CellBuilderImpl<T> {
-    component.isEnabled = button.isSelected
-    button.addChangeListener { component.isEnabled = button.isSelected }
-    return this
-  }
-
-  override fun <V> enableIfSelected(comboBox: JComboBox<V>, predicate: (V?) -> Boolean): CellBuilderImpl<T> {
-    component.isEnabled = predicate(comboBox.selectedItem as V?)
-    comboBox.addActionListener { component.isEnabled = predicate(comboBox.selectedItem as V?) }
+  override fun enableIf(predicate: ComponentPredicate): CellBuilder<T> {
+    component.isEnabled = predicate()
+    predicate.addListener { component.isEnabled = it }
     return this
   }
 
