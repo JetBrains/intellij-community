@@ -26,6 +26,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   private JCheckBox myEnableLombokVersionWarning;
   private JCheckBox myMissingLombokWarning;
   private JPanel mySupportPanel;
+  private JCheckBox myAnnotationProcessingWarning;
 
   private PropertiesComponent myPropertiesComponent;
   private LombokProcessorProvider myLombokProcessorProvider;
@@ -74,6 +75,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
     myEnableLombokVersionWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false));
     myMissingLombokWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false));
+    myAnnotationProcessingWarning.setSelected(ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true));
   }
 
   @Override
@@ -85,6 +87,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
       myEnableLogSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOG_ENABLED) ||
       myEnableConstructorSupport.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_CONSTRUCTOR_ENABLED) ||
       myEnableLombokVersionWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, false) ||
+      myAnnotationProcessingWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true) ||
       myMissingLombokWarning.isSelected() != ProjectSettings.isEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, false);
   }
 
@@ -101,6 +104,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
 
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_LOMBOK_VERSION_CHECK_ENABLED, myEnableLombokVersionWarning.isSelected());
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_MISSING_LOMBOK_CHECK_ENABLED, myMissingLombokWarning.isSelected());
+    ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, myAnnotationProcessingWarning.isSelected());
 
     myLombokProcessorProvider.initProcessors();
   }

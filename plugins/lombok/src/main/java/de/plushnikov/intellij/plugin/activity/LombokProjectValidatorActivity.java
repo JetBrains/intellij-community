@@ -76,7 +76,8 @@ public class LombokProjectValidatorActivity implements StartupActivity {
 
     // Annotation Processing check
     boolean annotationProcessorsEnabled = hasAnnotationProcessorsEnabled(project);
-    if (hasLombokLibrary && !annotationProcessorsEnabled) {
+    if (hasLombokLibrary && !annotationProcessorsEnabled &&
+      ProjectSettings.isEnabled(project, ProjectSettings.IS_ANNOTATION_PROCESSING_CHECK_ENABLED, true)) {
 
       String annotationProcessorsConfigName = new AnnotationProcessorsConfigurable(project).getDisplayName();
 
