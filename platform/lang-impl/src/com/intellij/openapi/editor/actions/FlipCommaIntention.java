@@ -131,7 +131,7 @@ public class FlipCommaIntention implements IntentionAction {
   }
 
   private static boolean isComma(@Nullable PsiElement element) {
-    return element != null && element.getText().equals(",");
+    return element != null && element.textMatches(",");
   }
 
   @NotNull
