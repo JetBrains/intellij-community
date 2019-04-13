@@ -121,6 +121,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myPluginUpdatesService = service;
   }
 
+  @Nullable
+  public PluginsGroup getDownloadedGroup() {
+    return myDownloaded;
+  }
+
   @NotNull
   public static Set<IdeaPluginDescriptor> getInstallingPlugins() {
     return myInstallingPlugins;

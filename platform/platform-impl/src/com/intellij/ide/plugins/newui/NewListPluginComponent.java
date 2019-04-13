@@ -157,7 +157,7 @@ public class NewListPluginComponent extends CellPluginComponent {
 
     String vendor = myPlugin.isBundled() ? null : myPlugin.getVendor();
     if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = GridCellPluginComponent.createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, "By " + vendor, null, null, true);
+      myVendor = GridCellPluginComponent.createRatingLabel(panel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
     }
   }
 
