@@ -255,9 +255,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-    ActionMap map = tree.getActionMap();
-    TreeAction.SELECT_CHILD.putInto(map);
-    TreeAction.SELECT_PARENT.putInto(map);
+    TreeAction.installTo(tree.getActionMap());
   }
 
   @Override
