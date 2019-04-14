@@ -69,7 +69,7 @@ public class SendEventLogAction extends AnAction {
 
   private static class EventLogTestSettingsService extends EventLogExternalSettingsService implements EventLogSettingsService {
     private EventLogTestSettingsService() {
-      super(FUS_RECORDER);
+      super(FUS_RECORDER, true);
     }
 
     @Override
