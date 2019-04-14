@@ -13,7 +13,7 @@ class InferenceVariableGraph(merges: List<List<InferenceVariable>>, session: Gro
 
   private val representativeMap: MutableMap<InferenceVariable, InferenceVariable> = HashMap()
   val nodes: MutableMap<InferenceVariable, InferenceVariableNode> = HashMap()
-  private val variableInstantiations: MutableMap<InferenceVariable, PsiType> = HashMap()
+  val variableInstantiations: MutableMap<InferenceVariable, PsiType> = HashMap()
 
   init {
     merges.flatten().forEach { variableInstantiations[it] = it.instantiation; it.instantiation = PsiType.NULL }

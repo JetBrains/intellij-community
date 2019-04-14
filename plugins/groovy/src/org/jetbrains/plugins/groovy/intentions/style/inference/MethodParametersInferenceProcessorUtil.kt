@@ -84,7 +84,7 @@ fun getConstantInferenceVariables(constantTypeParameters: Array<PsiTypeParameter
 
 fun collectRepresentativeSubstitutor(graph: InferenceVariableGraph): PsiSubstitutor {
   var representativeSubstitutor = PsiSubstitutor.EMPTY
-  graph.nodes.keys.forEach {
+  graph.variableInstantiations.keys.forEach {
     representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type());
     val upperType = graph.getParent(it)?.type()
     if (upperType != null) {
