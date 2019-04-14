@@ -17,6 +17,9 @@ public interface BashLiteralCondition extends BashCondition {
   BashCommand getCommand();
 
   @Nullable
+  BashNum getNum();
+
+  @Nullable
   BashShellParameterExpansion getShellParameterExpansion();
 
   @Nullable
@@ -33,18 +36,6 @@ public interface BashLiteralCondition extends BashCondition {
 
   @Nullable
   PsiElement getFiledescriptor();
-
-  @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
 
   @Nullable
   PsiElement getWord();

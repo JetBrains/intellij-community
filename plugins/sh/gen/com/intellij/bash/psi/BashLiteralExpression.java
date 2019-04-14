@@ -17,6 +17,9 @@ public interface BashLiteralExpression extends BashExpression {
   List<BashCommand> getCommandList();
 
   @NotNull
+  List<BashNum> getNumList();
+
+  @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();
 
   @NotNull

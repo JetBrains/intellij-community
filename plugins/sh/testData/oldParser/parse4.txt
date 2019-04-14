@@ -7,5 +7,6 @@ BASH_FILE
           ARITHMETIC_EXPANSION
             PsiElement((()('((')
             LITERAL_EXPRESSION
-              PsiElement(int)('1')
+              NUM
+                PsiElement(int)('1')
             PsiElement()))('))')

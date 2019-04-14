@@ -13,7 +13,7 @@ BASH_FILE
             PATTERN
               PsiElement(word)(';')
               PsiElement(word)(';')
-            PsiErrorElement:'!', $, ')', <string>, '`', file descriptor, hex, int, number, octal, var, word, '{' or '|' expected, got 'esac'
+            PsiErrorElement:'!', $, ')', <num>, <string>, '`', file descriptor, var, word, '{' or '|' expected, got 'esac'
               <empty list>
           PsiWhiteSpace(' ')
           PsiElement(esac)('esac')
@@ -23,10 +23,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('Example')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('Example')
+            PsiElement(")('"')

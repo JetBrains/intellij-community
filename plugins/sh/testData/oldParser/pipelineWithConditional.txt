@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('echo')
+          LITERAL
+            PsiElement(word)('echo')
     PsiWhiteSpace(' ')
     PsiElement(&&)('&&')
     PsiWhiteSpace(' ')
@@ -45,7 +46,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
               PsiWhiteSpace(' ')
               PsiElement(&&)('&&')
               PsiWhiteSpace(' ')

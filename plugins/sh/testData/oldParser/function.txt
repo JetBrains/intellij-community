@@ -15,11 +15,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('export')
+                      LITERAL
+                        PsiElement(word)('export')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('PATH')
+                        LITERAL
+                          PsiElement(word)('PATH')
                         PsiElement(=)('=')
                         PsiWhiteSpace(' ')
                         STRING

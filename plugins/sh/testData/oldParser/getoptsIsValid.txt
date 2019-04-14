@@ -4,12 +4,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('getopts')
+            LITERAL
+              PsiElement(word)('getopts')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('x')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('varX')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -17,13 +18,14 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('getopts')
+            LITERAL
+              PsiElement(word)('getopts')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('x')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('varX')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('p1')

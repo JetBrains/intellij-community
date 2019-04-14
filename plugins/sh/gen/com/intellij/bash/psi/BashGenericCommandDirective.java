@@ -17,6 +17,9 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
   BashHeredoc getHeredoc();
 
   @Nullable
+  BashLiteral getLiteral();
+
+  @Nullable
   BashOldArithmeticExpansion getOldArithmeticExpansion();
 
   @Nullable
@@ -24,9 +27,6 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
 
   @Nullable
   BashShellParameterExpansion getShellParameterExpansion();
-
-  @Nullable
-  BashString getString();
 
   @Nullable
   BashVariable getVariable();
@@ -39,20 +39,5 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
 
   @Nullable
   PsiElement getFiledescriptor();
-
-  @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
-
-  @Nullable
-  PsiElement getWord();
 
 }

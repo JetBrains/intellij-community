@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('declare')
+            LITERAL
+              PsiElement(word)('declare')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND
@@ -20,7 +21,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('declare')
+            LITERAL
+              PsiElement(word)('declare')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND
@@ -39,7 +41,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('declare')
+            LITERAL
+              PsiElement(word)('declare')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND

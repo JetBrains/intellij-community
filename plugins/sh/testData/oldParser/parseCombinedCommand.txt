@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('ssh')
+            LITERAL
+              PsiElement(word)('ssh')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement($)('$')
@@ -12,7 +13,7 @@ BASH_FILE
               PsiElement({)('{')
               PsiElement(parameter_expansion_body)('GROUND_USER')
               PsiElement(})('}')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('@')
           SIMPLE_COMMAND_ELEMENT
             PsiElement($)('$')

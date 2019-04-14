@@ -10,9 +10,10 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('read')
+                    LITERAL
+                      PsiElement(word)('read')
                   PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
+                  LITERAL
                     PsiElement(word)('pid')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
@@ -30,7 +31,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('a')
+                    LITERAL
+                      PsiElement(word)('a')
               PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
           PsiElement(fi)('fi')

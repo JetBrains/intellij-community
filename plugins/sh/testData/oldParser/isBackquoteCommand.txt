@@ -8,7 +8,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -21,13 +22,14 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
             PsiElement(`)('`')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -47,7 +49,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
             PsiElement(`)('`')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -58,9 +61,10 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('a')
               PsiElement(`)('`')
   PsiElement(\n)('\n')
@@ -71,10 +75,10 @@ BASH_FILE
           COMMAND_SUBSTITUTION_COMMAND
             PsiElement(`)('`')
             PsiElement(`)('`')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('a')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
@@ -121,5 +125,5 @@ BASH_FILE
       PIPELINE
         COMMAND_SUBSTITUTION_COMMAND
           PsiElement(`)('`')
-          PsiErrorElement:'+=', <list>, '=' or '`' expected
+          PsiErrorElement:<list> or '`' expected
             <empty list>

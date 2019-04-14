@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -15,7 +16,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
@@ -25,7 +27,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('b')
+                    LITERAL
+                      PsiElement(word)('b')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')

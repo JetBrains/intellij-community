@@ -31,7 +31,8 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('break_request')
+                        LITERAL
+                          PsiElement(word)('break_request')
                 PsiElement())(')')
             PsiWhiteSpace(' ')
             PsiElement(=~)('=~')

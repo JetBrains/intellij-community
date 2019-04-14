@@ -23,7 +23,8 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('in')
                       PsiWhiteSpace(' ')
-                      PsiElement(int)('1')
+                      NUM
+                        PsiElement(int)('1')
                       LIST_TERMINATOR
                         PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -34,7 +35,8 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('echo')
+                              LITERAL
+                                PsiElement(word)('echo')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
                       PsiElement(done)('done')
@@ -64,7 +66,8 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('in')
                       PsiWhiteSpace(' ')
-                      PsiElement(int)('1')
+                      NUM
+                        PsiElement(int)('1')
                       LIST_TERMINATOR
                         PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -75,7 +78,8 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('echo')
+                              LITERAL
+                                PsiElement(word)('echo')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
                       PsiElement(done)('done')
@@ -99,19 +103,24 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('export')
+                      LITERAL
+                        PsiElement(word)('export')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('a')
+                        LITERAL
+                          PsiElement(word)('a')
                         PsiElement(=)('=')
-                        PsiElement(int)('1')
+                        NUM
+                          PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('b')
+                        LITERAL
+                          PsiElement(word)('b')
                         PsiElement(=)('=')
-                        PsiElement(int)('2')
+                        NUM
+                          PsiElement(int)('2')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(})('}')

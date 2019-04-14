@@ -8,6 +8,7 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('echo')
+                  LITERAL
+                    PsiElement(word)('echo')
             PsiElement(\n)('\n')
           PsiElement(`)('`')

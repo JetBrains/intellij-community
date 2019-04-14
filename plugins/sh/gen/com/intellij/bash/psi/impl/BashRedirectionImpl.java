@@ -44,6 +44,12 @@ public class BashRedirectionImpl extends BashCompositeElementImpl implements Bas
   }
 
   @Override
+  @NotNull
+  public List<BashNum> getNumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashNum.class);
+  }
+
+  @Override
   @Nullable
   public BashProcessSubstitution getProcessSubstitution() {
     return findChildByClass(BashProcessSubstitution.class);

@@ -11,7 +11,7 @@ import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 import com.intellij.psi.PsiReference;
 
-public class BashStringImpl extends BashCompositeElementImpl implements BashString {
+public class BashStringImpl extends BashLiteralImpl implements BashString {
 
   public BashStringImpl(ASTNode node) {
     super(node);

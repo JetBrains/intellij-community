@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('result')
+          LITERAL
+            PsiElement(word)('result')
           PsiElement(=)('=')
           PsiElement($)('$')
           ARITHMETIC_EXPANSION

@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -17,7 +18,8 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -25,7 +27,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -36,7 +39,8 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -44,7 +48,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -57,14 +62,16 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                   PsiWhiteSpace(' ')
                   PsiElement(&&)('&&')
                   PsiWhiteSpace(' ')
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('false')
+                        LITERAL
+                          PsiElement(word)('false')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -72,7 +79,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -83,14 +91,16 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                   PsiWhiteSpace(' ')
                   PsiElement(&&)('&&')
                   PsiWhiteSpace(' ')
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('false')
+                        LITERAL
+                          PsiElement(word)('false')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -98,7 +108,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -112,7 +123,8 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                 PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -120,7 +132,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -132,5 +145,6 @@ BASH_FILE
                   PIPELINE_COMMAND
                     PIPELINE
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('true')
+                        LITERAL
+                          PsiElement(word)('true')
                 PsiElement())(')')

@@ -20,7 +20,8 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           GENERIC_COMMAND_DIRECTIVE
-                            PsiElement(word)('k')
+                            LITERAL
+                              PsiElement(word)('k')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     THEN_CLAUSE
@@ -41,10 +42,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('abc')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('abc')
+            PsiElement(")('"')

@@ -3,16 +3,19 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('.')
+          LITERAL
+            PsiElement(word)('.')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('.')
+          LITERAL
+            PsiElement(word)('.')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('source')
+          LITERAL
+            PsiElement(word)('source')

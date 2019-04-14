@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('eval')
+            LITERAL
+              PsiElement(word)('eval')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement($)('$')
@@ -15,13 +16,13 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          PsiElement(word)('ZZ')
-                          PsiElement(=)('=')
-                          PsiElement(int)('1')
-                          PsiElement(")('"')
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('ZZ')
+                        PsiElement(=)('=')
+                        PsiElement(int)('1')
+                        PsiElement(")('"')
               PsiElement())(')')

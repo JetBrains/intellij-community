@@ -4,12 +4,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('ipseckey')
+            LITERAL
+              PsiElement(word)('ipseckey')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-n')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('monitor')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -25,7 +26,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('IPSECKEY_PID')
+          LITERAL
+            PsiElement(word)('IPSECKEY_PID')
           PsiElement(=)('=')
           VARIABLE
             PsiElement(var)('$!')
@@ -36,12 +38,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('ipseckey')
+            LITERAL
+              PsiElement(word)('ipseckey')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-n')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('monitor')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -57,7 +60,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('IPSECKEY_PID')
+          LITERAL
+            PsiElement(word)('IPSECKEY_PID')
           PsiElement(=)('=')
           VARIABLE
             PsiElement(var)('$!')
@@ -72,11 +76,11 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('telnet')
+            LITERAL
+              PsiElement(word)('telnet')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$TEST_REMOTE_DST3')
+          VARIABLE
+            PsiElement(var)('$TEST_REMOTE_DST3')
     PsiWhiteSpace(' ')
     PsiElement(&)('&')
   PsiElement(\n)('\n')
@@ -84,7 +88,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('tpid')
+          LITERAL
+            PsiElement(word)('tpid')
           PsiElement(=)('=')
           VARIABLE
             PsiElement(var)('$!')

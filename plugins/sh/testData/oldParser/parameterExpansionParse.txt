@@ -6,7 +6,7 @@ BASH_FILE
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiErrorElement:$, parameter_expansion_body or '}' expected, got '}'
+            PsiErrorElement:parameter_expansion_body expected, got '}'
               <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')

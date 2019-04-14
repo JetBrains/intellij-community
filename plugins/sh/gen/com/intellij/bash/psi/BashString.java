@@ -6,7 +6,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 
-public interface BashString extends BashCompositeElement {
+public interface BashString extends BashLiteral {
 
   @NotNull
   List<BashArithmeticExpansion> getArithmeticExpansionList();

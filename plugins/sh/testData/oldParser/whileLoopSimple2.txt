@@ -9,7 +9,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
@@ -18,6 +19,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('b')
+                    LITERAL
+                      PsiElement(word)('b')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

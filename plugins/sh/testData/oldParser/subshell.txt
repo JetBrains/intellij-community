@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('classes')
+          LITERAL
+            PsiElement(word)('classes')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
             PsiElement(()('(')

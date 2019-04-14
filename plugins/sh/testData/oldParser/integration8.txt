@@ -35,6 +35,6 @@ BASH_FILE
           PsiWhiteSpace(' ')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiErrorElement:$, '+=', '=', parameter_expansion_body or '}' expected
+            PsiErrorElement:parameter_expansion_body expected
               <empty list>
   PsiComment(Comment)('#a} #this is an invalid syntax in bash')

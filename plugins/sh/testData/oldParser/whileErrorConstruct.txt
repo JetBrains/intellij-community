@@ -20,7 +20,8 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           GENERIC_COMMAND_DIRECTIVE
-                            PsiElement(word)('a')
+                            LITERAL
+                              PsiElement(word)('a')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
                     DO_BLOCK
@@ -57,7 +58,8 @@ BASH_FILE
                       PIPELINE_COMMAND
                         PIPELINE
                           GENERIC_COMMAND_DIRECTIVE
-                            PsiElement(word)('a')
+                            LITERAL
+                              PsiElement(word)('a')
                       PsiElement(;)(';')
                       PsiElement(\n)('\n')
                     DO_BLOCK
@@ -67,7 +69,8 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('b')
+                              LITERAL
+                                PsiElement(word)('b')
                         PsiElement(;)(';')
                         PsiElement(\n)('\n')
                       PsiElement(done)('done')
@@ -103,7 +106,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PsiErrorElement:<pipeline command> expected, got 'done'
@@ -116,12 +120,12 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('Example')
-              PsiWhiteSpace(' ')
-              PsiElement(word)('text')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('Example')
+            PsiWhiteSpace(' ')
+            PsiElement(word)('text')
+            PsiElement(")('"')

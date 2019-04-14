@@ -186,6 +186,10 @@ public class BashVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitLiteral(@NotNull BashLiteral o) {
+    visitSimpleCommandElement(o);
+  }
+
   public void visitLiteralCondition(@NotNull BashLiteralCondition o) {
     visitCondition(o);
   }
@@ -220,6 +224,10 @@ public class BashVisitor extends PsiElementVisitor {
 
   public void visitMulExpression(@NotNull BashMulExpression o) {
     visitBinaryExpression(o);
+  }
+
+  public void visitNum(@NotNull BashNum o) {
+    visitLiteral(o);
   }
 
   public void visitOldArithmeticExpansion(@NotNull BashOldArithmeticExpansion o) {
@@ -287,7 +295,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitString(@NotNull BashString o) {
-    visitCompositeElement(o);
+    visitLiteral(o);
   }
 
   public void visitSubshellCommand(@NotNull BashSubshellCommand o) {
@@ -319,7 +327,7 @@ public class BashVisitor extends PsiElementVisitor {
   }
 
   public void visitVariable(@NotNull BashVariable o) {
-    visitCompositeElement(o);
+    visitLiteral(o);
   }
 
   public void visitWhileCommand(@NotNull BashWhileCommand o) {

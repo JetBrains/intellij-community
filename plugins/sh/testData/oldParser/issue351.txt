@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('b')
+          LITERAL
+            PsiElement(word)('b')
     PsiWhiteSpace(' ')
     PsiElement(&)('&')
     PsiWhiteSpace(' ')

@@ -5,9 +5,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('set')
+            LITERAL
+              PsiElement(word)('set')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-eux')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -47,7 +48,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('exit')
+                    LITERAL
+                      PsiElement(word)('exit')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -55,30 +57,33 @@ BASH_FILE
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
-        ASSIGNMENT_COMMAND
-          PsiElement(word)('VER')
-          PsiElement(=)('=')
-          COMMAND_SUBSTITUTION_COMMAND
-            PsiElement(`)('`')
-            COMPOUND_LIST
-              PIPELINE_COMMAND
-                PIPELINE
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('sed')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+        SIMPLE_COMMAND
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('VER')
+            PsiElement(=)('=')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(`)('`')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('sed')
+                      PsiWhiteSpace(' ')
                       STRING
                         PsiElement(")('"')
                         PsiElement(word)('s/MacPorts-\(.*\)-.*-.*.pkg/\1/')
                         PsiElement(")('"')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      REDIRECTION
-                        PsiElement(<<<)('<<< ')
-                        VARIABLE
-                          PsiElement(var)('$MACPORTS')
-            PsiElement(`)('`')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND_ELEMENT
+                        REDIRECTION
+                          PsiElement(<<<)('<<< ')
+                          VARIABLE
+                            PsiElement(var)('$MACPORTS')
+              PsiElement(`)('`')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -86,60 +91,56 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('curl')
+            LITERAL
+              PsiElement(word)('curl')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-L')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('https://github.com/macports/macports-base/releases/download/v')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$VER')
-          SIMPLE_COMMAND_ELEMENT
+          VARIABLE
+            PsiElement(var)('$VER')
+          LITERAL
             PsiElement(word)('/')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$MACPORTS')
+          VARIABLE
+            PsiElement(var)('$MACPORTS')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-o')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$TMPDIR')
-          SIMPLE_COMMAND_ELEMENT
+          VARIABLE
+            PsiElement(var)('$TMPDIR')
+          LITERAL
             PsiElement(word)('/')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$MACPORTS')
+          VARIABLE
+            PsiElement(var)('$MACPORTS')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('sudo')
+            LITERAL
+              PsiElement(word)('sudo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('installer')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-pkg')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$TMPDIR')
-          SIMPLE_COMMAND_ELEMENT
+          VARIABLE
+            PsiElement(var)('$TMPDIR')
+          LITERAL
             PsiElement(word)('/')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$MACPORTS')
+          VARIABLE
+            PsiElement(var)('$MACPORTS')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-target')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('/')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -147,12 +148,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('sudo')
+            LITERAL
+              PsiElement(word)('sudo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('/opt/local/bin/port')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('sync')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -160,23 +162,23 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('rm')
+            LITERAL
+              PsiElement(word)('rm')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$TMPDIR')
-          SIMPLE_COMMAND_ELEMENT
+          VARIABLE
+            PsiElement(var)('$TMPDIR')
+          LITERAL
             PsiElement(word)('/')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$MACPORTS')
+          VARIABLE
+            PsiElement(var)('$MACPORTS')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('MSG')
+          LITERAL
+            PsiElement(word)('MSG')
           PsiElement(=)('=')
           STRING
             PsiElement(")('"')
@@ -188,14 +190,15 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('alsactlrestore')
-                      SIMPLE_COMMAND_ELEMENT
-                        VARIABLE
-                          PsiElement(var)('$CARD2')
+                        LITERAL
+                          PsiElement(word)('alsactlrestore')
+                      VARIABLE
+                        PsiElement(var)('$CARD2')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
                           PsiElement(>&)('>&')
-                          PsiElement(int)('1')
+                          NUM
+                            PsiElement(int)('1')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
                           PsiElement(>)('>')

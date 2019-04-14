@@ -45,6 +45,12 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
 
   @Override
   @Nullable
+  public BashLiteral getLiteral() {
+    return findChildByClass(BashLiteral.class);
+  }
+
+  @Override
+  @Nullable
   public BashOldArithmeticExpansion getOldArithmeticExpansion() {
     return findChildByClass(BashOldArithmeticExpansion.class);
   }
@@ -59,12 +65,6 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
   @Nullable
   public BashShellParameterExpansion getShellParameterExpansion() {
     return findChildByClass(BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashString getString() {
-    return findChildByClass(BashString.class);
   }
 
   @Override
@@ -89,36 +89,6 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
   @Nullable
   public PsiElement getFiledescriptor() {
     return findChildByType(FILEDESCRIPTOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getWord() {
-    return findChildByType(WORD);
   }
 
 }

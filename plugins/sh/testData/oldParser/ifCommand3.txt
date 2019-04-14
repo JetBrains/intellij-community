@@ -9,7 +9,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -20,9 +21,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('b')
+                      LITERAL
+                        PsiElement(word)('b')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('c')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -33,7 +35,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('d')
+                    LITERAL
+                      PsiElement(word)('d')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             THEN_CLAUSE
@@ -43,7 +46,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('e')
+                      LITERAL
+                        PsiElement(word)('e')
                 PsiWhiteSpace(' ')
                 PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -54,7 +58,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('a')
+                    LITERAL
+                      PsiElement(word)('a')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             THEN_CLAUSE
@@ -64,7 +69,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('b')
+                      LITERAL
+                        PsiElement(word)('b')
                 PsiElement(;)(';')
           PsiWhiteSpace(' ')
           ELSE_CLAUSE
@@ -74,7 +80,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('f')
+                    LITERAL
+                      PsiElement(word)('f')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
           PsiElement(fi)('fi')

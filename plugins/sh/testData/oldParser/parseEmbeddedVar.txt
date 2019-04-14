@@ -22,7 +22,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
               PsiElement())(')')
             PsiElement(")('"')
   PsiElement(\n)('\n')
@@ -39,7 +40,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(int)('123')
+                      NUM
+                        PsiElement(int)('123')
               PsiElement())(')')
             PsiElement(")('"')
   PsiElement(\n)('\n')

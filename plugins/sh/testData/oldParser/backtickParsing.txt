@@ -15,7 +15,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('echo')
+                  LITERAL
+                    PsiElement(word)('echo')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -44,7 +45,8 @@ BASH_FILE
                   ARITHMETIC_EXPANSION
                     PsiElement((()('((')
                     LITERAL_EXPRESSION
-                      PsiElement(int)('123')
+                      NUM
+                        PsiElement(int)('123')
                     PsiElement()))('))')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
@@ -60,6 +62,7 @@ BASH_FILE
                   OLD_ARITHMETIC_EXPANSION
                     PsiElement(ARITH_SQUARE_LEFT)('$[')
                     LITERAL_EXPRESSION
-                      PsiElement(int)('123')
+                      NUM
+                        PsiElement(int)('123')
                     PsiElement(ARITH_SQUARE_RIGHT)(']')
           PsiElement(`)('`')

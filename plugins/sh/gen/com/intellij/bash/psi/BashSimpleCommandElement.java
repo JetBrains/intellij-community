@@ -20,6 +20,9 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
   BashHeredoc getHeredoc();
 
   @Nullable
+  BashLiteral getLiteral();
+
+  @Nullable
   BashOldArithmeticExpansion getOldArithmeticExpansion();
 
   @Nullable
@@ -27,9 +30,6 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
 
   @Nullable
   BashShellParameterExpansion getShellParameterExpansion();
-
-  @Nullable
-  BashString getString();
 
   @Nullable
   BashVariable getVariable();
@@ -42,20 +42,5 @@ public interface BashSimpleCommandElement extends BashCompositeElement {
 
   @Nullable
   PsiElement getFiledescriptor();
-
-  @Nullable
-  PsiElement getHex();
-
-  @Nullable
-  PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
-
-  @Nullable
-  PsiElement getOctal();
-
-  @Nullable
-  PsiElement getWord();
 
 }

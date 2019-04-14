@@ -35,7 +35,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(word)('XCODE_VERSION')
+                    LITERAL
+                      PsiElement(word)('XCODE_VERSION')
                     PsiElement(=)('=')
                     STRING
                       PsiElement(")('"')
@@ -71,7 +72,8 @@ BASH_FILE
                       PsiElement(==)('==')
                       PsiWhiteSpace(' ')
                       LITERAL_CONDITION
-                        PsiElement(int)('1')
+                        NUM
+                          PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     PsiElement(&&)('&&')
                     PsiWhiteSpace(' ')
@@ -116,12 +118,12 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('pong')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('pong')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

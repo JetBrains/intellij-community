@@ -57,6 +57,12 @@ public class BashForClauseImpl extends BashCompositeElementImpl implements BashF
 
   @Override
   @NotNull
+  public List<BashNum> getNumList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashNum.class);
+  }
+
+  @Override
+  @NotNull
   public List<BashShellParameterExpansion> getShellParameterExpansionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, BashShellParameterExpansion.class);
   }

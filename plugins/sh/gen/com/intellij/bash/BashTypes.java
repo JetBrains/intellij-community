@@ -54,6 +54,7 @@ public interface BashTypes {
   IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
   IElementType LET_COMMAND = new BashCompositeElementType("LET_COMMAND");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
+  IElementType LITERAL = new BashCompositeElementType("LITERAL");
   IElementType LITERAL_CONDITION = new BashCompositeElementType("LITERAL_CONDITION");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
   IElementType LOGICAL_AND_CONDITION = new BashCompositeElementType("LOGICAL_AND_CONDITION");
@@ -63,6 +64,7 @@ public interface BashTypes {
   IElementType LOGICAL_OR_CONDITION = new BashCompositeElementType("LOGICAL_OR_CONDITION");
   IElementType LOGICAL_OR_EXPRESSION = new BashCompositeElementType("LOGICAL_OR_EXPRESSION");
   IElementType MUL_EXPRESSION = new BashCompositeElementType("MUL_EXPRESSION");
+  IElementType NUM = new BashCompositeElementType("NUM");
   IElementType OLD_ARITHMETIC_EXPANSION = new BashCompositeElementType("OLD_ARITHMETIC_EXPANSION");
   IElementType PARENTHESES_CONDITION = new BashCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new BashCompositeElementType("PARENTHESES_EXPRESSION");
@@ -319,6 +321,9 @@ public interface BashTypes {
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);
       }
+      else if (type == LITERAL) {
+        return new BashLiteralImpl(node);
+      }
       else if (type == LITERAL_CONDITION) {
         return new BashLiteralConditionImpl(node);
       }
@@ -345,6 +350,9 @@ public interface BashTypes {
       }
       else if (type == MUL_EXPRESSION) {
         return new BashMulExpressionImpl(node);
+      }
+      else if (type == NUM) {
+        return new BashNumImpl(node);
       }
       else if (type == OLD_ARITHMETIC_EXPANSION) {
         return new BashOldArithmeticExpansionImpl(node);

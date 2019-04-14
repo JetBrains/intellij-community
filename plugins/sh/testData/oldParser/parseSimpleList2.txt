@@ -4,13 +4,15 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('c')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('d')
+          LITERAL
+            PsiElement(word)('d')

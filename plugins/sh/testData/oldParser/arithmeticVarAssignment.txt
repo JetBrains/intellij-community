@@ -13,7 +13,8 @@ BASH_FILE
                 PsiElement(word)('c')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             COMPARISON_EXPRESSION
@@ -21,7 +22,8 @@ BASH_FILE
                 PsiElement(word)('c')
               PsiElement(<=)('<=')
               LITERAL_EXPRESSION
-                PsiElement(int)('5')
+                NUM
+                  PsiElement(int)('5')
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             POST_EXPRESSION
@@ -41,17 +43,17 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('Welcome')
-                        PsiWhiteSpace(' ')
-                        VARIABLE
-                          PsiElement(var)('$c')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('times...')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('Welcome')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$c')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('times...')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

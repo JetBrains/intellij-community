@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -20,7 +21,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC

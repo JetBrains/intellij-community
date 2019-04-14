@@ -11,28 +11,28 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cd')
+                      LITERAL
+                        PsiElement(word)('cd')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        COMMAND_SUBSTITUTION_COMMAND
-                          PsiElement(`)('`')
-                          COMPOUND_LIST
-                            PIPELINE_COMMAND
-                              PIPELINE
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
+                    STRING
+                      PsiElement(")('"')
+                      COMMAND_SUBSTITUTION_COMMAND
+                        PsiElement(`)('`')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
                                     PsiElement(word)('dirname')
-                                  PsiWhiteSpace(' ')
-                                  SIMPLE_COMMAND_ELEMENT
-                                    STRING
-                                      PsiElement(")('"')
-                                      VARIABLE
-                                        PsiElement(var)('$0')
-                                      PsiElement(")('"')
-                          PsiElement(`)('`')
-                        PsiElement(")('"')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$0')
+                                  PsiElement(")('"')
+                        PsiElement(`)('`')
+                      PsiElement(")('"')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -45,14 +45,14 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
                   PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    STRING
-                      PsiElement(")('"')
-                      VARIABLE
-                        PsiElement(var)('$0')
-                      PsiElement(")('"')
+                  STRING
+                    PsiElement(")('"')
+                    VARIABLE
+                      PsiElement(var)('$0')
+                    PsiElement(")('"')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
@@ -69,14 +69,14 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          VARIABLE
-                            PsiElement(var)('$0')
-                          PsiElement(")('"')
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$0')
+                        PsiElement(")('"')
               PsiElement(`)('`')
             PsiElement(")('"')
   PsiElement(\n)('\n')
@@ -93,36 +93,37 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cd')
+                      LITERAL
+                        PsiElement(word)('cd')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        COMMAND_SUBSTITUTION_COMMAND
-                          PsiElement(`)('`')
-                          COMPOUND_LIST
-                            PIPELINE_COMMAND
-                              PIPELINE
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
+                    STRING
+                      PsiElement(")('"')
+                      COMMAND_SUBSTITUTION_COMMAND
+                        PsiElement(`)('`')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
                                     PsiElement(word)('dirname')
-                                  PsiWhiteSpace(' ')
-                                  SIMPLE_COMMAND_ELEMENT
-                                    STRING
-                                      PsiElement(")('"')
-                                      VARIABLE
-                                        PsiElement(var)('$0')
-                                      PsiElement(")('"')
-                          PsiElement(`)('`')
-                        PsiElement(")('"')
-                    SIMPLE_COMMAND_ELEMENT
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(")('"')
+                                  VARIABLE
+                                    PsiElement(var)('$0')
+                                  PsiElement(")('"')
+                        PsiElement(`)('`')
+                      PsiElement(")('"')
+                    LITERAL
                       PsiElement(word)('/..')
               PsiElement(;)(';')
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('pwd')
+                    LITERAL
+                      PsiElement(word)('pwd')
             PsiElement())(')')
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
@@ -140,35 +141,36 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('cd')
+                        LITERAL
+                          PsiElement(word)('cd')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          COMMAND_SUBSTITUTION_COMMAND
-                            PsiElement(`)('`')
-                            COMPOUND_LIST
-                              PIPELINE_COMMAND
-                                PIPELINE
-                                  SIMPLE_COMMAND
-                                    GENERIC_COMMAND_DIRECTIVE
+                      STRING
+                        PsiElement(")('"')
+                        COMMAND_SUBSTITUTION_COMMAND
+                          PsiElement(`)('`')
+                          COMPOUND_LIST
+                            PIPELINE_COMMAND
+                              PIPELINE
+                                SIMPLE_COMMAND
+                                  GENERIC_COMMAND_DIRECTIVE
+                                    LITERAL
                                       PsiElement(word)('dirname')
-                                    PsiWhiteSpace(' ')
-                                    SIMPLE_COMMAND_ELEMENT
-                                      STRING
-                                        PsiElement(")('"')
-                                        VARIABLE
-                                          PsiElement(var)('$0')
-                                        PsiElement(")('"')
-                            PsiElement(`)('`')
-                          PsiElement(")('"')
-                      SIMPLE_COMMAND_ELEMENT
+                                  PsiWhiteSpace(' ')
+                                  STRING
+                                    PsiElement(")('"')
+                                    VARIABLE
+                                      PsiElement(var)('$0')
+                                    PsiElement(")('"')
+                          PsiElement(`)('`')
+                        PsiElement(")('"')
+                      LITERAL
                         PsiElement(word)('/..')
                 PsiElement(;)(';')
                 PsiWhiteSpace(' ')
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('pwd')
+                      LITERAL
+                        PsiElement(word)('pwd')
               PsiElement())(')')
             PsiElement(")('"')

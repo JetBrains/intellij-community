@@ -6,11 +6,11 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('tee')
+            LITERAL
+              PsiElement(word)('tee')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(RAW_STRING)(''/lib/systemd/system/add-localhost.service'')
+          STRING
+            PsiElement(RAW_STRING)(''/lib/systemd/system/add-localhost.service'')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -26,41 +26,41 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mkdir')
+            LITERAL
+              PsiElement(word)('mkdir')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-p')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('/etc/systemd/system/')
-              PsiElement($)('$')
-              SHELL_PARAMETER_EXPANSION
-                PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('MAIN_SERVICE')
-                PsiElement(})('}')
-              PsiElement(word)('.service.d')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('/etc/systemd/system/')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('MAIN_SERVICE')
+              PsiElement(})('}')
+            PsiElement(word)('.service.d')
+            PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('tee')
+            LITERAL
+              PsiElement(word)('tee')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('/etc/systemd/system/')
-              PsiElement($)('$')
-              SHELL_PARAMETER_EXPANSION
-                PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('MAIN_SERVICE')
-                PsiElement(})('}')
-              PsiElement(word)('.service.d/add-localhost.conf')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('/etc/systemd/system/')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(parameter_expansion_body)('MAIN_SERVICE')
+              PsiElement(})('}')
+            PsiElement(word)('.service.d/add-localhost.conf')
+            PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -76,9 +76,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('systemctl')
+            LITERAL
+              PsiElement(word)('systemctl')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('daemon-reload')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -86,12 +87,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('systemctl')
+            LITERAL
+              PsiElement(word)('systemctl')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('enable')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('add-localhost.service')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -100,11 +102,11 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('tee')
+            LITERAL
+              PsiElement(word)('tee')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
+          STRING
+            PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -120,14 +122,14 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('chmod')
+            LITERAL
+              PsiElement(word)('chmod')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('+x')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
+          STRING
+            PsiElement(RAW_STRING)(''/etc/add-localhost.sh'')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -135,9 +137,11 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('ACCOUNT')
+          LITERAL
+            PsiElement(word)('ACCOUNT')
           PsiElement(=)('=')
-          PsiElement(int)('1000')
+          NUM
+            PsiElement(int)('1000')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -145,9 +149,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('tee')
+            LITERAL
+              PsiElement(word)('tee')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('aa.prop')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -167,9 +172,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('tee')
+            LITERAL
+              PsiElement(word)('tee')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('empty.prop')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -187,7 +193,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -215,7 +222,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -243,7 +251,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -271,7 +280,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -299,7 +309,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -314,12 +325,13 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('sudo')
+                        LITERAL
+                          PsiElement(word)('sudo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('tee')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, with the variable contents substituted.\n')
@@ -333,7 +345,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -348,21 +361,22 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('sudo')
+                        LITERAL
+                          PsiElement(word)('sudo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('-u')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('foo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('tee')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('-a')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('/path/to/your/file')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('This line will write to the file.\n${THIS} will also write to the file, without the variable contents substituted.\n')
@@ -379,7 +393,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('true')
+                  LITERAL
+                    PsiElement(word)('true')
             PsiWhiteSpace(' ')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -392,7 +407,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cat')
+                      LITERAL
+                        PsiElement(word)('cat')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       HEREDOC
@@ -420,7 +436,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -434,33 +451,33 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('fmt')
+                      LITERAL
+                        PsiElement(word)('fmt')
                     PsiWhiteSpace(' ')
                     PsiElement(|)('|')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('mail')
+                        LITERAL
+                          PsiElement(word)('mail')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('-s')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          PsiElement(word)('Warning:')
-                          PsiWhiteSpace(' ')
-                          VARIABLE
-                            PsiElement(var)('$account')
-                          PsiWhiteSpace(' ')
-                          PsiElement(word)('Exceeds')
-                          PsiWhiteSpace(' ')
-                          PsiElement(word)('Quota')
-                          PsiElement(")('"')
-                      PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('Warning:')
+                        PsiWhiteSpace(' ')
                         VARIABLE
                           PsiElement(var)('$account')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('Exceeds')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('Quota')
+                        PsiElement(")('"')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$account')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('Your disk usage is ${usage}MB but you have only been allocated\n${MAXDISKUSAGE}MB.\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
@@ -471,7 +488,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -493,7 +511,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('framework_failure_')
+                      LITERAL
+                        PsiElement(word)('framework_failure_')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('  text example\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')
@@ -504,7 +523,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -521,7 +541,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -537,7 +558,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -556,7 +578,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('dist/build/shellcheck/shellcheck')
+            LITERAL
+              PsiElement(word)('dist/build/shellcheck/shellcheck')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -571,15 +594,15 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('die')
+                        LITERAL
+                          PsiElement(word)('die')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          PsiElement(word)('execution')
-                          PsiWhiteSpace(' ')
-                          PsiElement(word)('failed')
-                          PsiElement(")('"')
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('execution')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('failed')
+                        PsiElement(")('"')
               PsiElement(\n)('\n')
               PsiElement(HEREDOC_CONTENT)('#!/bin/sh\necho "Hello World"\n')
               PsiElement(HEREDOC_MARKER_END)('EOF')

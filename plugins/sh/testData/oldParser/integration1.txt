@@ -32,7 +32,7 @@ BASH_FILE
                     INCLUDE_DIRECTIVE
                       PsiElement(word)('.')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('/lib/init/splash-functions-base')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
@@ -58,9 +58,10 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('return')
+                                LITERAL
+                                  PsiElement(word)('return')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              NUM
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')

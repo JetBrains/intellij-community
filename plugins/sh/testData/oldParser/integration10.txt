@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
@@ -14,9 +15,10 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('a')
               PsiElement(`)('`')
           PsiWhiteSpace(' ')
@@ -28,9 +30,10 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      LITERAL
                         PsiElement(word)('a')
               PsiElement(`)('`')
   PsiElement(\n)('\n')
@@ -44,13 +47,14 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
             PsiWhiteSpace(' ')
             PsiElement(`)('`')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('one')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND
@@ -58,7 +62,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(`)('`')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('two')
           SIMPLE_COMMAND_ELEMENT
             COMMAND_SUBSTITUTION_COMMAND

@@ -3,4 +3,5 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('getopts')
+          LITERAL
+            PsiElement(word)('getopts')

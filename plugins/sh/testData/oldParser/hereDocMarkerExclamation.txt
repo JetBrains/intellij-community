@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('x')
+            LITERAL
+              PsiElement(word)('x')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC

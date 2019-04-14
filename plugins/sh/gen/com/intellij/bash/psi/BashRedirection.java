@@ -16,6 +16,9 @@ public interface BashRedirection extends BashCompositeElement {
   @NotNull
   List<BashCommand> getCommandList();
 
+  @NotNull
+  List<BashNum> getNumList();
+
   @Nullable
   BashProcessSubstitution getProcessSubstitution();
 

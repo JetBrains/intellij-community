@@ -37,12 +37,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('test')
+                      LITERAL
+                        PsiElement(word)('test')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-s')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('/etc/init.d/.depend.boot')
               PsiWhiteSpace('  ')
               PsiElement(||)('||')
@@ -50,7 +51,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(word)('CONCURRENCY')
+                    LITERAL
+                      PsiElement(word)('CONCURRENCY')
                     PsiElement(=)('=')
                     STRING
                       PsiElement(")('"')
@@ -62,12 +64,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('test')
+                      LITERAL
+                        PsiElement(word)('test')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-s')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('/etc/init.d/.depend.start')
               PsiWhiteSpace(' ')
               PsiElement(||)('||')
@@ -75,7 +78,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(word)('CONCURRENCY')
+                    LITERAL
+                      PsiElement(word)('CONCURRENCY')
                     PsiElement(=)('=')
                     STRING
                       PsiElement(")('"')

@@ -9,7 +9,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -19,7 +20,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('b')
+                    LITERAL
+                      PsiElement(word)('b')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
           PsiElement(fi)('fi')
@@ -43,18 +45,20 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('then')
+            LITERAL
+              PsiElement(word)('then')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('b')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('fi')
+          LITERAL
+            PsiElement(word)('fi')
       PsiWhiteSpace(' ')
-      PsiErrorElement:'(', '+=', <simple command element>, '=', '|' or '|&' expected, got ']'
+      PsiErrorElement:'(', <assignment command>, <simple command element>, '|' or '|&' expected, got ']'
         PsiElement(])(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -67,7 +71,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -77,7 +82,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('b')
+                    LITERAL
+                      PsiElement(word)('b')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
           PsiElement(fi)('fi')

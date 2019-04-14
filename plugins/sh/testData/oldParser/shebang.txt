@@ -7,7 +7,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('#!/bin/sh')
   PsiElement(\n)('\n')
@@ -16,9 +17,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('a')
     PsiElement(;)(';')
   PsiWhiteSpace(' ')
@@ -32,15 +34,15 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('printf')
+            LITERAL
+              PsiElement(word)('printf')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('#')
-              PsiElement(!)('!')
-              PsiElement(word)('/bin/sh\n')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('#')
+            PsiElement(!)('!')
+            PsiElement(word)('/bin/sh\n')
+            PsiElement(")('"')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -64,7 +66,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('echo')
+          LITERAL
+            PsiElement(word)('echo')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiComment(Comment)('#!/bin/sh\n')
@@ -73,4 +76,5 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('echo')
+          LITERAL
+            PsiElement(word)('echo')

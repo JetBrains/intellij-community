@@ -10,15 +10,15 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('test')
+                    LITERAL
+                      PsiElement(word)('test')
                   PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
-                    STRING
-                      PsiElement(")('"')
-                      PsiElement(word)('X')
-                      VARIABLE
-                        PsiElement(var)('$1')
-                      PsiElement(")('"')
+                  STRING
+                    PsiElement(")('"')
+                    PsiElement(word)('X')
+                    VARIABLE
+                      PsiElement(var)('$1')
+                    PsiElement(")('"')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -29,7 +29,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cat')
+                      LITERAL
+                        PsiElement(word)('cat')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       HEREDOC
@@ -41,6 +42,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

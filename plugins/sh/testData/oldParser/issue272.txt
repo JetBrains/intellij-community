@@ -5,14 +5,16 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('declare')
+            LITERAL
+              PsiElement(word)('declare')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND
-              PsiElement(word)('ar')
+              LITERAL
+                PsiElement(word)('ar')
               PsiElement(=)('=')
               ASSIGNMENT_LIST
                 PsiElement(()('(')
@@ -23,7 +25,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             PsiElement($)('$')
@@ -46,7 +49,8 @@ BASH_FILE
                 PsiElement(word)('j')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                PsiElement(int)('0')
+                NUM
+                  PsiElement(int)('0')
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             COMPARISON_EXPRESSION
@@ -77,12 +81,12 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('Example')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('Example')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

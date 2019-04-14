@@ -14,9 +14,10 @@ BASH_FILE
                     PIPELINE
                       SIMPLE_COMMAND
                         GENERIC_COMMAND_DIRECTIVE
-                          PsiElement(word)('uname')
+                          LITERAL
+                            PsiElement(word)('uname')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
+                        LITERAL
                           PsiElement(word)('-s')
                 PsiElement(`)('`')
             PsiWhiteSpace(' ')
@@ -46,9 +47,10 @@ BASH_FILE
                     PIPELINE
                       SIMPLE_COMMAND
                         GENERIC_COMMAND_DIRECTIVE
-                          PsiElement(word)('uname')
+                          LITERAL
+                            PsiElement(word)('uname')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
+                        LITERAL
                           PsiElement(word)('-s')
                 PsiElement())(')')
             PsiWhiteSpace(' ')

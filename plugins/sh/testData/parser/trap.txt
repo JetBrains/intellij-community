@@ -3,52 +3,68 @@ BASH_FILE
     TRAP_COMMAND
       PsiElement(trap)('trap')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-p')
+      LITERAL
+        PsiElement(word)('-p')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-l')
+      LITERAL
+        PsiElement(word)('-l')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-lp')
+      LITERAL
+        PsiElement(word)('-lp')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-pl')
+      LITERAL
+        PsiElement(word)('-pl')
       PsiWhiteSpace(' ')
       STRING
         PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
-      PsiElement(int)('1')
+      NUM
+        PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     TRAP_COMMAND
       PsiElement(trap)('trap')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-p')
+      LITERAL
+        PsiElement(word)('-p')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-l')
+      LITERAL
+        PsiElement(word)('-l')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-lp')
+      LITERAL
+        PsiElement(word)('-lp')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-pl')
+      LITERAL
+        PsiElement(word)('-pl')
       PsiWhiteSpace(' ')
       STRING
         PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
-      PsiElement(int)('1')
+      NUM
+        PsiElement(int)('1')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-p')
+      LITERAL
+        PsiElement(word)('-p')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-l')
+      LITERAL
+        PsiElement(word)('-l')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-lp')
+      LITERAL
+        PsiElement(word)('-lp')
       PsiWhiteSpace(' ')
-      PsiElement(word)('-pl')
+      LITERAL
+        PsiElement(word)('-pl')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('avr')
+          LITERAL
+            PsiElement(word)('avr')
           PsiElement(=)('=')
-          PsiElement(int)('1')
+          NUM
+            PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     TRAP_COMMAND
@@ -64,9 +80,11 @@ BASH_FILE
     TRAP_COMMAND
       PsiElement(trap)('trap')
       PsiWhiteSpace(' ')
-      PsiElement(word)('1.0')
+      LITERAL
+        PsiElement(word)('1.0')
       PsiWhiteSpace(' ')
-      PsiElement(int)('1')
+      NUM
+        PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     TRAP_COMMAND

@@ -11,7 +11,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('a')
+                  LITERAL
+                    PsiElement(word)('a')
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           THEN_CLAUSE
@@ -22,9 +23,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('b')
+                      LITERAL
+                        PsiElement(word)('b')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('c')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -35,7 +37,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('d')
+                    LITERAL
+                      PsiElement(word)('d')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             THEN_CLAUSE
@@ -45,7 +48,8 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('e')
+                      LITERAL
+                        PsiElement(word)('e')
                 PsiWhiteSpace(' ')
                 PsiElement(&)('&')
           PsiErrorElement:<pipeline command>, '\n', elif, else or fi expected, got ';'
@@ -58,7 +62,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('c')
+          LITERAL
+            PsiElement(word)('c')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PsiErrorElement:<pipeline command> expected, got 'elif'
@@ -68,7 +73,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PsiErrorElement:<pipeline command> expected, got 'then'
@@ -78,7 +84,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('b')
+          LITERAL
+            PsiElement(word)('b')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PsiErrorElement:<pipeline command> expected, got 'else'
@@ -88,7 +95,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('f')
+          LITERAL
+            PsiElement(word)('f')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PsiErrorElement:<pipeline command> expected, got 'fi'
@@ -133,9 +141,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    NUM
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -146,10 +155,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('Example')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('Example')
+            PsiElement(")('"')

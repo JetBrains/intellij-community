@@ -27,12 +27,6 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
 
   @Override
   @Nullable
-  public BashArithmeticExpansion getArithmeticExpansion() {
-    return findChildByClass(BashArithmeticExpansion.class);
-  }
-
-  @Override
-  @Nullable
   public BashArrayExpression getArrayExpression() {
     return findChildByClass(BashArrayExpression.class);
   }
@@ -44,81 +38,15 @@ public class BashAssignmentCommandImpl extends BashCommandImpl implements BashAs
   }
 
   @Override
-  @Nullable
-  public BashBashExpansion getBashExpansion() {
-    return findChildByClass(BashBashExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashShellParameterExpansion getShellParameterExpansion() {
-    return findChildByClass(BashShellParameterExpansion.class);
-  }
-
-  @Override
-  @Nullable
-  public BashString getString() {
-    return findChildByClass(BashString.class);
-  }
-
-  @Override
-  @Nullable
-  public BashVariable getVariable() {
-    return findChildByClass(BashVariable.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getBang() {
-    return findChildByType(BANG);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getDollar() {
-    return findChildByType(DOLLAR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getFiledescriptor() {
-    return findChildByType(FILEDESCRIPTOR);
+  @NotNull
+  public BashLiteral getLiteral() {
+    return findNotNullChildByClass(BashLiteral.class);
   }
 
   @Override
   @Nullable
   public PsiElement getPlusAssign() {
     return findChildByType(PLUS_ASSIGN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getWord() {
-    return findChildByType(WORD);
   }
 
 }

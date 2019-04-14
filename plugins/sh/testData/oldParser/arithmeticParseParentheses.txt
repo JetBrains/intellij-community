@@ -8,7 +8,8 @@ BASH_FILE
             PARENTHESES_EXPRESSION
               PsiElement(()('(')
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
               PsiElement())(')')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -22,12 +23,14 @@ BASH_FILE
               PsiElement(()('(')
               MUL_EXPRESSION
                 LITERAL_EXPRESSION
-                  PsiElement(int)('1')
+                  NUM
+                    PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(*)('*')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  PsiElement(int)('2')
+                  NUM
+                    PsiElement(int)('2')
               PsiElement())(')')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -39,7 +42,8 @@ BASH_FILE
             PsiElement((()('((')
             MUL_EXPRESSION
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(*)('*')
               PsiWhiteSpace(' ')
@@ -47,12 +51,14 @@ BASH_FILE
                 PsiElement(()('(')
                 ADD_EXPRESSION
                   LITERAL_EXPRESSION
-                    PsiElement(int)('2')
+                    NUM
+                      PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(+)('+')
                   PsiWhiteSpace(' ')
                   LITERAL_EXPRESSION
-                    PsiElement(int)('3')
+                    NUM
+                      PsiElement(int)('3')
                 PsiElement())(')')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -68,18 +74,21 @@ BASH_FILE
                 PsiElement(()('(')
                 ADD_EXPRESSION
                   LITERAL_EXPRESSION
-                    PsiElement(int)('2')
+                    NUM
+                      PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(+)('+')
                   PsiWhiteSpace(' ')
                   LITERAL_EXPRESSION
-                    PsiElement(int)('3')
+                    NUM
+                      PsiElement(int)('3')
                 PsiElement())(')')
               PsiWhiteSpace(' ')
               PsiElement(/)('/')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                PsiElement(int)('2')
+                NUM
+                  PsiElement(int)('2')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -95,12 +104,14 @@ BASH_FILE
                 PsiElement(()('(')
                 ADD_EXPRESSION
                   LITERAL_EXPRESSION
-                    PsiElement(int)('2')
+                    NUM
+                      PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(+)('+')
                   PsiWhiteSpace(' ')
                   LITERAL_EXPRESSION
-                    PsiElement(int)('3')
+                    NUM
+                      PsiElement(int)('3')
                 PsiElement())(')')
               PsiWhiteSpace(' ')
               PsiElement(/)('/')
@@ -110,10 +121,12 @@ BASH_FILE
                 ADD_EXPRESSION
                   MUL_EXPRESSION
                     LITERAL_EXPRESSION
-                      PsiElement(int)('1')
+                      NUM
+                        PsiElement(int)('1')
                     PsiElement(/)('/')
                     LITERAL_EXPRESSION
-                      PsiElement(int)('2')
+                      NUM
+                        PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(+)('+')
                   PsiWhiteSpace(' ')
@@ -122,16 +135,19 @@ BASH_FILE
                       PsiElement(()('(')
                       MUL_EXPRESSION
                         LITERAL_EXPRESSION
-                          PsiElement(int)('3')
+                          NUM
+                            PsiElement(int)('3')
                         PsiElement(*)('*')
                         LITERAL_EXPRESSION
-                          PsiElement(int)('4')
+                          NUM
+                            PsiElement(int)('4')
                       PsiElement())(')')
                     PsiWhiteSpace(' ')
                     PsiElement(/)('/')
                     PsiWhiteSpace(' ')
                     LITERAL_EXPRESSION
-                      PsiElement(int)('5')
+                      NUM
+                        PsiElement(int)('5')
                 PsiElement())(')')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
@@ -149,7 +165,8 @@ BASH_FILE
               PARENTHESES_EXPRESSION
                 PsiElement(()('(')
                 LITERAL_EXPRESSION
-                  PsiElement(int)('3')
+                  NUM
+                    PsiElement(int)('3')
                 PsiElement())(')')
               PsiWhiteSpace(' ')
               PsiElement(*)('*')

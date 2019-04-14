@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('TOMCAT_HOST_LIST')
+          LITERAL
+            PsiElement(word)('TOMCAT_HOST_LIST')
           ARRAY_EXPRESSION
             PsiElement([)('[')
             LITERAL_EXPRESSION

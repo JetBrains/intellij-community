@@ -9,7 +9,8 @@ BASH_FILE
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
           PsiWhiteSpace(' ')
-          PsiElement(int)('1')
+          NUM
+            PsiElement(int)('1')
           LIST_TERMINATOR
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -27,9 +28,10 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('echo')
+                              LITERAL
+                                PsiElement(word)('echo')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            NUM
                               PsiElement(int)('1')
                       PsiElement(\n)('\n')
                     PsiElement(})('}')
@@ -47,7 +49,8 @@ BASH_FILE
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
           PsiWhiteSpace(' ')
-          PsiElement(int)('1')
+          NUM
+            PsiElement(int)('1')
           LIST_TERMINATOR
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
@@ -65,9 +68,10 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('echo')
+                              LITERAL
+                                PsiElement(word)('echo')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            NUM
                               PsiElement(int)('1')
                       PsiElement(\n)('\n')
                     PsiElement(})('}')
@@ -92,11 +96,11 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      VARIABLE
-                        PsiElement(var)('$A')
+                    VARIABLE
+                      PsiElement(var)('$A')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')

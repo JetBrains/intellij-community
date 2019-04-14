@@ -10,12 +10,13 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('a')
+                    LITERAL
+                      PsiElement(word)('a')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
                     PsiElement(word)('then')
                   PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
+                  LITERAL
                     PsiElement(word)('b')
             PsiElement(;)(';')
           PsiErrorElement:'\n' or then expected, got 'fi'
@@ -28,10 +29,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('abc')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('abc')
+            PsiElement(")('"')

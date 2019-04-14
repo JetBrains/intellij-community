@@ -3,7 +3,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
           PsiElement(=)('=')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -11,12 +12,12 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('eval')
+            LITERAL
+              PsiElement(word)('eval')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('ech')
-              VARIABLE
-                PsiElement(var)('$a')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('ech')
+            VARIABLE
+              PsiElement(var)('$a')
+            PsiElement(")('"')

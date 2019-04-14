@@ -121,19 +121,21 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | '!' | vars | '$' | string | num | bash_expansion | 'file descriptor'
+private w ::= word | string | num | not_lvalue
+private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
 
 redirection ::= redirection_inner | '&>' w | num redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (num | '-')
                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
 
-private num ::= number | int | hex | octal
+num ::= number | int | hex | octal {extends=literal}
 string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
   pin(".*")=1
   methods=[getReferences]
+  extends=literal
 }
 
-variable ::= var
+variable ::= var {extends=literal}
 private vars ::= variable | composed_var | command_substitution_command
 private composed_var ::= '$' &('(' | '((' | '{' | ARITH_SQUARE_LEFT) composed_var_inner {pin=2}
 private composed_var_inner ::= arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion
@@ -147,17 +149,17 @@ conditional_command ::=  '[[' condition* (']]'|']'<<differentBracketsWarning>>)
                         |'[' condition* (']'|']]' <<differentBracketsWarning>>){pin(".*")=1}
 process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
 
-private literal ::= w | string | num
+literal ::= word | string | num | variable {extends=simple_command_element}
 simple_command_element ::= simple_command_element_inner
-private simple_command_element_inner ::=  assignment_command
-                                        | literal
+private simple_command_element_inner ::=  literal assignment_command?
+                                        | not_lvalue
                                         | redirection
                                         | composed_var
                                         | heredoc
                                         | conditional_command
                                         | command_substitution_command
                                         | arithmetic_expansion
-                                        | old_arithmetic_expansion
+                                        | old_arithmetic_expansion {pin(".*")=1}
 
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
@@ -171,8 +173,8 @@ arithmetic_expansion ::= '((' expression? '))' {pin=1}
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
-assignment_command ::= (w | variable) array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
-                       {'=' <<parseUntilSpace literal >>}* {pin=0}
+left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+                            {'=' <<parseUntilSpace literal >>}* {pin=0}
 
 redirection_list ::= redirection redirection*
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
@@ -330,7 +332,7 @@ index_expression ::= expression '[' expression ']'
 array_expression ::= '[' expression ']'
 parentheses_expression ::= '(' expression ')' {pin=1}
 
-literal_expression ::= literal+
+literal_expression ::= w+
 
 condition ::=
     assignment_condition
@@ -349,4 +351,4 @@ equality_condition ::= condition ('==' | '!=' | '=~') condition
 comparison_condition ::= condition ('<' | '>') condition
 logical_bitwise_condition ::= '!' condition
 parentheses_condition ::= '(' condition ')'
-literal_condition ::= (literal newlines | newlines literal)
+literal_condition ::= (w newlines | newlines w)

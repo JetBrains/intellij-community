@@ -3,30 +3,36 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
                 PsiWhiteSpace(' ')
-                PsiElement(int)('2')
+                NUM
+                  PsiElement(int)('2')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('b')
+          LITERAL
+            PsiElement(word)('b')
           PsiElement(=)('=')
           ASSIGNMENT_LIST
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
-                PsiElement(int)('0')
+                NUM
+                  PsiElement(int)('0')
                 PsiWhiteSpace(' ')
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -48,7 +54,8 @@ BASH_FILE
                           PsiElement(word)('a')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
-                          PsiElement(int)('0')
+                          NUM
+                            PsiElement(int)('0')
                         PsiElement(])(']')
                       PsiWhiteSpace(' ')
                       PsiElement(==)('==')
@@ -58,7 +65,8 @@ BASH_FILE
                           PsiElement(word)('b')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
-                          PsiElement(int)('1')
+                          NUM
+                            PsiElement(int)('1')
                         PsiElement(])(']')
                     PsiWhiteSpace(' ')
                     PsiElement()))('))')
@@ -72,13 +80,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('OK')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('OK')
+                      PsiElement(")('"')
               PsiElement(;)(';')
           PsiWhiteSpace(' ')
           PsiElement(fi)('fi')

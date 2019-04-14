@@ -24,15 +24,15 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('echo')
+                                LITERAL
+                                  PsiElement(word)('echo')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('Dummy')
-                                  PsiWhiteSpace(' ')
-                                  PsiElement(word)('text')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('Dummy')
+                                PsiWhiteSpace(' ')
+                                PsiElement(word)('text')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(})('}')

@@ -14,7 +14,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(word)('foo')
+                    LITERAL
+                      PsiElement(word)('foo')
                     PsiElement(=)('=')
                     STRING
                       PsiElement(")('"')
@@ -26,7 +27,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('shift')
+                    LITERAL
+                      PsiElement(word)('shift')
               PsiElement(;)(';')
               PsiWhiteSpace(' ')
               PIPELINE_COMMAND
@@ -48,7 +50,8 @@ BASH_FILE
                               PsiElement(word)('-gt')
                             PsiWhiteSpace(' ')
                             LITERAL_CONDITION
-                              PsiElement(int)('0')
+                              NUM
+                                PsiElement(int)('0')
                             PsiWhiteSpace(' ')
                             PsiElement(])(']')
                       PsiElement(;)(';')
@@ -90,9 +93,10 @@ BASH_FILE
                                     PIPELINE
                                       SIMPLE_COMMAND
                                         GENERIC_COMMAND_DIRECTIVE
-                                          PsiElement(word)('return')
+                                          LITERAL
+                                            PsiElement(word)('return')
                                         PsiWhiteSpace(' ')
-                                        SIMPLE_COMMAND_ELEMENT
+                                        NUM
                                           PsiElement(int)('1')
                               PsiElement(;;)(';;')
                               PsiWhiteSpace(' ')
@@ -102,7 +106,8 @@ BASH_FILE
                         PIPELINE_COMMAND
                           PIPELINE
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('shift')
+                              LITERAL
+                                PsiElement(word)('shift')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
                       PsiElement(done)('done')

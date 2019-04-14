@@ -16,11 +16,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('local')
+                      LITERAL
+                        PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('file')
+                        LITERAL
+                          PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
                           PsiElement(")('"')
@@ -39,7 +41,8 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('test')
+                              LITERAL
+                                PsiElement(word)('test')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement($)('$')
@@ -51,24 +54,23 @@ BASH_FILE
                                   PsiElement(--)('--')
                                 PsiElement()))('))')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            NUM
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-o')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$file')
-                                PsiElement(")('"')
+                            STRING
+                              PsiElement(")('"')
+                              VARIABLE
+                                PsiElement(var)('$file')
+                              PsiElement(")('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -80,9 +82,10 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('sleep')
+                                LITERAL
+                                  PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              NUM
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -112,11 +115,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('local')
+                      LITERAL
+                        PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('file')
+                        LITERAL
+                          PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
                           PsiElement(")('"')
@@ -135,7 +140,8 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('test')
+                              LITERAL
+                                PsiElement(word)('test')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement($)('$')
@@ -147,24 +153,23 @@ BASH_FILE
                                   PsiElement(--)('--')
                                 PsiElement()))('))')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            NUM
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-o')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$file')
-                                PsiElement(")('"')
+                            STRING
+                              PsiElement(")('"')
+                              VARIABLE
+                                PsiElement(var)('$file')
+                              PsiElement(")('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -176,9 +181,10 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('sleep')
+                                LITERAL
+                                  PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              NUM
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -206,11 +212,13 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('local')
+                      LITERAL
+                        PsiElement(word)('local')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('file')
+                        LITERAL
+                          PsiElement(word)('file')
                         PsiElement(=)('=')
                         STRING
                           PsiElement(")('"')
@@ -229,7 +237,8 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             GENERIC_COMMAND_DIRECTIVE
-                              PsiElement(word)('test')
+                              LITERAL
+                                PsiElement(word)('test')
                             PsiWhiteSpace(' ')
                             SIMPLE_COMMAND_ELEMENT
                               PsiElement($)('$')
@@ -241,24 +250,23 @@ BASH_FILE
                                   PsiElement(--)('--')
                                 PsiElement()))('))')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            NUM
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-o')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-f')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
-                              STRING
-                                PsiElement(")('"')
-                                VARIABLE
-                                  PsiElement(var)('$file')
-                                PsiElement(")('"')
+                            STRING
+                              PsiElement(")('"')
+                              VARIABLE
+                                PsiElement(var)('$file')
+                              PsiElement(")('"')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -270,9 +278,10 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('sleep')
+                                LITERAL
+                                  PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              NUM
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -308,9 +317,10 @@ BASH_FILE
         PsiWhiteSpace(' ')
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          NUM
             PsiElement(int)('1')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('# what a wonderful language')

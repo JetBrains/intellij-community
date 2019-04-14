@@ -12,15 +12,20 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
-            PsiElement(int)('1')
+            NUM
+              PsiElement(int)('1')
             PsiWhiteSpace(' ')
-            PsiElement(int)('2')
+            NUM
+              PsiElement(int)('2')
             PsiWhiteSpace(' ')
-            PsiElement(int)('3')
+            NUM
+              PsiElement(int)('3')
             PsiWhiteSpace(' ')
-            PsiElement(int)('4')
+            NUM
+              PsiElement(int)('4')
             PsiWhiteSpace(' ')
-            PsiElement(int)('5')
+            NUM
+              PsiElement(int)('5')
             LIST_TERMINATOR
               PsiElement(\n)('\n')
           DO_BLOCK
@@ -32,18 +37,18 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('Welcome')
-                        PsiWhiteSpace(' ')
-                        VARIABLE
-                          PsiElement(var)('$i')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('times')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('Welcome')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$i')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('times')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -110,9 +115,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    NUM
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')

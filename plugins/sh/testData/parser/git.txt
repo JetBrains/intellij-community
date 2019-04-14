@@ -24,25 +24,26 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('***')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('GIT:')
-                        PsiWhiteSpace(' ')
-                        VARIABLE
-                          PsiElement(var)('$repo')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('***')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('GIT:')
+                      PsiWhiteSpace(' ')
+                      VARIABLE
+                        PsiElement(var)('$repo')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
                     ASSIGNMENT_COMMAND
-                      PsiElement(word)('FOLDER_PREFIX')
+                      LITERAL
+                        PsiElement(word)('FOLDER_PREFIX')
                       PsiElement(=)('=')
                       STRING
                         PsiElement(")('"')
@@ -53,7 +54,8 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       ASSIGNMENT_COMMAND
-                        PsiElement(word)('AUTHORS_REWRITE_TABLE_FILE')
+                        LITERAL
+                          PsiElement(word)('AUTHORS_REWRITE_TABLE_FILE')
                         PsiElement(=)('=')
                         STRING
                           PsiElement(")('"')
@@ -62,16 +64,16 @@ BASH_FILE
                           PsiElement(word)('/authors-rewrite-table')
                           PsiElement(")('"')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('clone')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('--mirror')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('hg::')
                     SIMPLE_COMMAND_ELEMENT
                       PsiElement($)('$')
@@ -81,47 +83,47 @@ BASH_FILE
                           PIPELINE_COMMAND
                             PIPELINE
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('pwd')
+                                LITERAL
+                                  PsiElement(word)('pwd')
                         PsiElement())(')')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('/hg/')
-                    SIMPLE_COMMAND_ELEMENT
-                      VARIABLE
-                        PsiElement(var)('$repo')
+                    VARIABLE
+                      PsiElement(var)('$repo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('git/')
-                    SIMPLE_COMMAND_ELEMENT
-                      VARIABLE
-                        PsiElement(var)('$repo')
+                    VARIABLE
+                      PsiElement(var)('$repo')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('pushd')
+                      LITERAL
+                        PsiElement(word)('pushd')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('git/')
-                    SIMPLE_COMMAND_ELEMENT
-                      VARIABLE
-                        PsiElement(var)('$repo')
+                    VARIABLE
+                      PsiElement(var)('$repo')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('remote')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('remove')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('origin')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
@@ -132,25 +134,26 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('branch')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('--list')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(RAW_STRING)(''branches/*__closed__*'')
+                    STRING
+                      PsiElement(RAW_STRING)(''branches/*__closed__*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cut')
+                      LITERAL
+                        PsiElement(word)('cut')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-c12-')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
@@ -163,18 +166,19 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             ASSIGNMENT_COMMAND
-                              PsiElement(word)('IFS')
+                              LITERAL
+                                PsiElement(word)('IFS')
                               PsiElement(=)('=')
                               STRING
                                 PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('read')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-r')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('branchname')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -187,46 +191,45 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('tag')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('branch')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -239,25 +242,26 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('branch')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('--list')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(RAW_STRING)(''branches/*__head__*'')
+                    STRING
+                      PsiElement(RAW_STRING)(''branches/*__head__*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cut')
+                      LITERAL
+                        PsiElement(word)('cut')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-c12-')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
@@ -270,18 +274,19 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             ASSIGNMENT_COMMAND
-                              PsiElement(word)('IFS')
+                              LITERAL
+                                PsiElement(word)('IFS')
                               PsiElement(=)('=')
                               STRING
                                 PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('read')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-r')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('branchname')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -294,46 +299,45 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('tag')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('branch')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -346,25 +350,26 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('branch')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('--list')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(RAW_STRING)(''branches/*'')
+                    STRING
+                      PsiElement(RAW_STRING)(''branches/*'')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cut')
+                      LITERAL
+                        PsiElement(word)('cut')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-c12-')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
@@ -377,18 +382,19 @@ BASH_FILE
                         PIPELINE
                           SIMPLE_COMMAND
                             ASSIGNMENT_COMMAND
-                              PsiElement(word)('IFS')
+                              LITERAL
+                                PsiElement(word)('IFS')
                               PsiElement(=)('=')
                               STRING
                                 PsiElement(RAW_STRING)('''')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('read')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('-r')
                             PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND_ELEMENT
+                            LITERAL
                               PsiElement(word)('branchname')
                       PsiElement(;)(';')
                     PsiWhiteSpace(' ')
@@ -401,46 +407,45 @@ BASH_FILE
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('branch')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                         PsiWhiteSpace('    ')
                         PIPELINE_COMMAND
                           PIPELINE
                             SIMPLE_COMMAND
                               GENERIC_COMMAND_DIRECTIVE
-                                PsiElement(word)('git')
+                                LITERAL
+                                  PsiElement(word)('git')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('branch')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
+                              LITERAL
                                 PsiElement(word)('-D')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                STRING
-                                  PsiElement(")('"')
-                                  PsiElement(word)('branches/')
-                                  VARIABLE
-                                    PsiElement(var)('$branchname')
-                                  PsiElement(")('"')
+                              STRING
+                                PsiElement(")('"')
+                                PsiElement(word)('branches/')
+                                VARIABLE
+                                  PsiElement(var)('$branchname')
+                                PsiElement(")('"')
                         PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
                       PsiElement(done)('done')
@@ -450,24 +455,25 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        PsiElement(word)('Available')
-                        PsiWhiteSpace(' ')
-                        PsiElement(word)('branches:')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('Available')
+                      PsiWhiteSpace(' ')
+                      PsiElement(word)('branches:')
+                      PsiElement(")('"')
               PsiElement(\n)('\n')
               PsiWhiteSpace('  ')
               PIPELINE_COMMAND
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('branch')
               PsiElement(\n)('\n')
               PsiElement(\n)('\n')
@@ -476,18 +482,20 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('branch')
                   PsiWhiteSpace(' ')
                   PsiElement(|)('|')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('cut')
+                      LITERAL
+                        PsiElement(word)('cut')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('-b3-')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -500,9 +508,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('tag')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
@@ -515,6 +524,7 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('popd')
+                    LITERAL
+                      PsiElement(word)('popd')
               PsiElement(\n)('\n')
             PsiElement(done)('done')

@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mysql')
+            LITERAL
+              PsiElement(word)('mysql')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -24,9 +25,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('hi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -34,7 +36,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mysql')
+            LITERAL
+              PsiElement(word)('mysql')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -52,9 +55,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('hi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -62,7 +66,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mysql')
+            LITERAL
+              PsiElement(word)('mysql')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -76,9 +81,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('hi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -86,7 +92,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mysql')
+            LITERAL
+              PsiElement(word)('mysql')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -104,9 +111,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('hi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -114,7 +122,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('mysql')
+            LITERAL
+              PsiElement(word)('mysql')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -134,9 +143,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('hi')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -144,7 +154,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('output')
+          LITERAL
+            PsiElement(word)('output')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -154,7 +165,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('tr')
+                      LITERAL
+                        PsiElement(word)('tr')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
@@ -177,7 +189,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('output')
+          LITERAL
+            PsiElement(word)('output')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -187,7 +200,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('tr')
+                      LITERAL
+                        PsiElement(word)('tr')
                     PsiWhiteSpace('  ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
@@ -211,7 +225,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('output')
+          LITERAL
+            PsiElement(word)('output')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -221,7 +236,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('tr')
+                      LITERAL
+                        PsiElement(word)('tr')
                     PsiWhiteSpace('  ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
@@ -236,7 +252,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('output')
+          LITERAL
+            PsiElement(word)('output')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -246,7 +263,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('tr')
+                      LITERAL
+                        PsiElement(word)('tr')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION

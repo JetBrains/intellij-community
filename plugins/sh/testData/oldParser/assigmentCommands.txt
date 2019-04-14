@@ -4,34 +4,45 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND
-              PsiElement(word)('a')
+              LITERAL
+                PsiElement(word)('a')
               PsiElement(=)('=')
-              PsiElement(word)('a')
+              LITERAL
+                PsiElement(word)('a')
               PsiElement(=)('=')
-              PsiElement(word)('b')
+              LITERAL
+                PsiElement(word)('b')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
           PsiElement(=)('=')
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
           PsiElement(=)('=')
-          PsiElement(word)('b')
+          LITERAL
+            PsiElement(word)('b')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
           PsiElement(=)('=')
-          PsiElement(word)('b')
+          LITERAL
+            PsiElement(word)('b')
           PsiElement(=)('=')
-          PsiElement(word)('c')
+          LITERAL
+            PsiElement(word)('c')
           PsiElement(=)('=')
-          PsiElement(word)('d')
+          LITERAL
+            PsiElement(word)('d')

@@ -4,10 +4,13 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('local')
+            LITERAL
+              PsiElement(word)('local')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ASSIGNMENT_COMMAND
-              PsiElement(word)('local1')
+              LITERAL
+                PsiElement(word)('local1')
               PsiElement(=)('=')
-              PsiElement(int)('1')
+              NUM
+                PsiElement(int)('1')

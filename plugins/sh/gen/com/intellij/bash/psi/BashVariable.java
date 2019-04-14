@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashVariable extends BashCompositeElement {
+public interface BashVariable extends BashLiteral {
 
   @NotNull
   PsiElement getVar();

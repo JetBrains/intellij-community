@@ -8,7 +8,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('echo')
+                  LITERAL
+                    PsiElement(word)('echo')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -21,9 +22,10 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
                   PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND_ELEMENT
+                  LITERAL
                     PsiElement(word)('a')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
@@ -36,7 +38,8 @@ BASH_FILE
             PIPELINE_COMMAND
               PIPELINE
                 GENERIC_COMMAND_DIRECTIVE
-                  PsiElement(word)('echo')
+                  LITERAL
+                    PsiElement(word)('echo')
           PsiElement(`)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -56,13 +59,15 @@ BASH_FILE
               PIPELINE
                 SIMPLE_COMMAND
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
                   PsiWhiteSpace(' ')
                   SIMPLE_COMMAND_ELEMENT
                     PsiElement($)('$')
                     ARITHMETIC_EXPANSION
                       PsiElement((()('((')
                       LITERAL_EXPRESSION
-                        PsiElement(int)('1')
+                        NUM
+                          PsiElement(int)('1')
                       PsiElement()))('))')
           PsiElement(`)('`')

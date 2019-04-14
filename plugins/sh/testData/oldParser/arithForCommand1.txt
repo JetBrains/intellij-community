@@ -20,7 +20,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('e')
+                    LITERAL
+                      PsiElement(word)('e')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')
@@ -38,7 +39,8 @@ BASH_FILE
                 PsiElement(word)('i')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
             PsiElement(;)(';')
             PsiElement(;)(';')
             PsiElement()))('))')
@@ -52,7 +54,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('e')
+                    LITERAL
+                      PsiElement(word)('e')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')
@@ -70,14 +73,16 @@ BASH_FILE
                 PsiElement(word)('i')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
             PsiElement(;)(';')
             COMPARISON_EXPRESSION
               LITERAL_EXPRESSION
                 PsiElement(word)('i')
               PsiElement(<)('<')
               LITERAL_EXPRESSION
-                PsiElement(int)('10')
+                NUM
+                  PsiElement(int)('10')
             PsiElement(;)(';')
             PsiElement()))('))')
           LIST_TERMINATOR
@@ -90,7 +95,8 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('e')
+                    LITERAL
+                      PsiElement(word)('e')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')

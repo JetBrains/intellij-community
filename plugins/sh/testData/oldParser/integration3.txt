@@ -38,16 +38,14 @@ BASH_FILE
                       VARIABLE
                         PsiElement(var)('$debug')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        VARIABLE
-                          PsiElement(var)('$script')
-                        PsiElement(")('"')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    STRING
+                      PsiElement(")('"')
                       VARIABLE
-                        PsiElement(var)('$action')
+                        PsiElement(var)('$script')
+                      PsiElement(")('"')
+                    PsiWhiteSpace(' ')
+                    VARIABLE
+                      PsiElement(var)('$action')
               PsiWhiteSpace(' ')
               PsiElement(&)('&')
               PsiElement(\n)('\n')
@@ -55,15 +53,18 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('startup_progress')
+                    LITERAL
+                      PsiElement(word)('startup_progress')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
               PIPELINE_COMMAND
                 PIPELINE
                   ASSIGNMENT_COMMAND
-                    PsiElement(word)('backgrounded')
+                    LITERAL
+                      PsiElement(word)('backgrounded')
                     PsiElement(=)('=')
-                    PsiElement(int)('1')
+                    NUM
+                      PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
           PsiElement(;;)(';;')

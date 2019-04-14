@@ -6,7 +6,7 @@ BASH_FILE
           INCLUDE_DIRECTIVE
             PsiElement(word)('.')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('a')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -16,11 +16,10 @@ BASH_FILE
           INCLUDE_DIRECTIVE
             PsiElement(word)('.')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('a')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('a')
+            PsiElement(")('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -29,16 +28,15 @@ BASH_FILE
           INCLUDE_DIRECTIVE
             PsiElement(word)('.')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('a')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('a')
+            PsiElement(")('"')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('abc')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('def')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -48,7 +46,7 @@ BASH_FILE
           INCLUDE_DIRECTIVE
             PsiElement(word)('.')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('x')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT

@@ -4,9 +4,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('unset')
+            LITERAL
+              PsiElement(word)('unset')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('todo_list')
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND

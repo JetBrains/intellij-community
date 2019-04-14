@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -19,7 +20,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -34,7 +36,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -50,7 +53,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -65,7 +69,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC
@@ -80,7 +85,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             HEREDOC

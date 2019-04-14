@@ -4,13 +4,16 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           ASSIGNMENT_COMMAND
-            PsiElement(word)('a')
+            LITERAL
+              PsiElement(word)('a')
             PsiElement(=)('=')
-            PsiElement(int)('1')
+            NUM
+              PsiElement(int)('1')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             ARITHMETIC_EXPANSION
               PsiElement((()('((')
               LITERAL_EXPRESSION
-                PsiElement(int)('1')
+                NUM
+                  PsiElement(int)('1')
               PsiElement()))('))')

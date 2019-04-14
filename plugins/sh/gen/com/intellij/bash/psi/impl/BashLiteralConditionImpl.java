@@ -45,6 +45,12 @@ public class BashLiteralConditionImpl extends BashConditionImpl implements BashL
 
   @Override
   @Nullable
+  public BashNum getNum() {
+    return findChildByClass(BashNum.class);
+  }
+
+  @Override
+  @Nullable
   public BashShellParameterExpansion getShellParameterExpansion() {
     return findChildByClass(BashShellParameterExpansion.class);
   }
@@ -77,30 +83,6 @@ public class BashLiteralConditionImpl extends BashConditionImpl implements BashL
   @Nullable
   public PsiElement getFiledescriptor() {
     return findChildByType(FILEDESCRIPTOR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getHex() {
-    return findChildByType(HEX);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getInt() {
-    return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOctal() {
-    return findChildByType(OCTAL);
   }
 
   @Override

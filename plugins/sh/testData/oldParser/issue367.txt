@@ -5,7 +5,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('branch')
+          LITERAL
+            PsiElement(word)('branch')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -15,18 +16,19 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('git')
+                      LITERAL
+                        PsiElement(word)('git')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('rev-parse')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('--abbrev-ref')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('HEAD')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    NUM
                       PsiElement(int)('2')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
@@ -39,7 +41,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('output')
+          LITERAL
+            PsiElement(word)('output')
           PsiElement(=)('=')
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -49,7 +52,8 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('tr')
+                      LITERAL
+                        PsiElement(word)('tr')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       CONDITIONAL_COMMAND
@@ -169,28 +173,28 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('echo')
+                      LITERAL
+                        PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
-                      STRING
-                        PsiElement(")('"')
-                        VARIABLE
-                          PsiElement(var)('$output')
-                        PsiWhiteSpace(' ')
-                        PsiElement($)('$')
-                        SUBSHELL_COMMAND
-                          PsiElement(()('(')
-                          COMPOUND_LIST
-                            PIPELINE_COMMAND
-                              PIPELINE
-                                GENERIC_COMMAND_DIRECTIVE
-                                  REDIRECTION
-                                    PsiElement(<)('<')
-                                    PsiWhiteSpace(' ')
-                                    VARIABLE
-                                      PsiElement(var)('$1')
-                          PsiElement())(')')
-                        PsiElement(")('"')
+                    STRING
+                      PsiElement(")('"')
+                      VARIABLE
+                        PsiElement(var)('$output')
+                      PsiWhiteSpace(' ')
+                      PsiElement($)('$')
+                      SUBSHELL_COMMAND
+                        PsiElement(()('(')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              GENERIC_COMMAND_DIRECTIVE
+                                REDIRECTION
+                                  PsiElement(<)('<')
+                                  PsiWhiteSpace(' ')
+                                  VARIABLE
+                                    PsiElement(var)('$1')
+                        PsiElement())(')')
+                      PsiElement(")('"')
                     PsiWhiteSpace(' ')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION

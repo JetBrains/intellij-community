@@ -3,17 +3,20 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     PIPELINE_COMMAND
       PIPELINE
         GENERIC_COMMAND_DIRECTIVE
-          PsiElement(word)('a')
+          LITERAL
+            PsiElement(word)('a')
     PsiElement(;)(';')

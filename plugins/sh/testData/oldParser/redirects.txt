@@ -13,7 +13,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -26,7 +27,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(int)('2')
+            NUM
+              PsiElement(int)('2')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PsiElement(>)('>')
@@ -37,9 +39,10 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          NUM
             PsiElement(int)('2')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -51,7 +54,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)(':')
+            LITERAL
+              PsiElement(word)(':')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -78,12 +82,14 @@ BASH_FILE
               PIPELINE_COMMAND
                 PIPELINE
                   GENERIC_COMMAND_DIRECTIVE
-                    PsiElement(word)('echo')
+                    LITERAL
+                      PsiElement(word)('echo')
             PsiElement())(')')
           PsiWhiteSpace(' ')
           REDIRECTION_LIST
             REDIRECTION
-              PsiElement(int)('2')
+              NUM
+                PsiElement(int)('2')
               PsiElement(>)('>')
               PsiElement(word)('OUT')
   PsiElement(\n)('\n')
@@ -92,16 +98,18 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('exec')
+            LITERAL
+              PsiElement(word)('exec')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          NUM
             PsiElement(int)('9')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PsiElement(<&)('<&')
               PsiWhiteSpace(' ')
-              PsiElement(int)('0')
+              NUM
+                PsiElement(int)('0')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -116,7 +124,7 @@ BASH_FILE
           INCLUDE_DIRECTIVE
             PsiElement(word)('.')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('x')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT

@@ -4,7 +4,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('cat')
+            LITERAL
+              PsiElement(word)('cat')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -16,31 +17,32 @@ BASH_FILE
                     PIPELINE
                       SIMPLE_COMMAND
                         GENERIC_COMMAND_DIRECTIVE
-                          PsiElement(word)('printf')
+                          LITERAL
+                            PsiElement(word)('printf')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
-                          STRING
-                            PsiElement(RAW_STRING)(''%s\n'')
+                        STRING
+                          PsiElement(RAW_STRING)(''%s\n'')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
-                          STRING
-                            PsiElement(")('"')
-                            PsiElement($)('$')
-                            SHELL_PARAMETER_EXPANSION
-                              PsiElement({)('{')
-                              PsiElement(parameter_expansion_body)('BEFORE[@]')
-                              PsiElement(})('}')
-                            PsiElement(")('"')
+                        STRING
+                          PsiElement(")('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(parameter_expansion_body)('BEFORE[@]')
+                            PsiElement(})('}')
+                          PsiElement(")('"')
                       PsiWhiteSpace(' ')
                       PsiElement(|)('|')
                       PsiWhiteSpace(' ')
                       SIMPLE_COMMAND
                         ASSIGNMENT_COMMAND
-                          PsiElement(word)('LC_ALL')
+                          LITERAL
+                            PsiElement(word)('LC_ALL')
                           PsiElement(=)('=')
-                          PsiElement(word)('C')
+                          LITERAL
+                            PsiElement(word)('C')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
+                        LITERAL
                           PsiElement(word)('sort')
                 PsiElement())(')')
   PsiElement(\n)('\n')
@@ -56,9 +58,10 @@ BASH_FILE
                 PIPELINE
                   SIMPLE_COMMAND
                     GENERIC_COMMAND_DIRECTIVE
-                      PsiElement(word)('read')
+                      LITERAL
+                        PsiElement(word)('read')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND_ELEMENT
+                    LITERAL
                       PsiElement(word)('line')
               PsiWhiteSpace(' ')
               PsiElement(;)(';')
@@ -71,11 +74,11 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('echo')
+                        LITERAL
+                          PsiElement(word)('echo')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        VARIABLE
-                          PsiElement(var)('$line')
+                      VARIABLE
+                        PsiElement(var)('$line')
                 PsiWhiteSpace(' ')
                 PsiElement(;)(';')
               PsiWhiteSpace(' ')
@@ -93,9 +96,10 @@ BASH_FILE
                     PIPELINE
                       SIMPLE_COMMAND
                         GENERIC_COMMAND_DIRECTIVE
-                          PsiElement(word)('echo')
+                          LITERAL
+                            PsiElement(word)('echo')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
+                        LITERAL
                           PsiElement(word)(':')
                 PsiElement())(')')
   PsiElement(\n)('\n')
@@ -104,7 +108,8 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('echo')
+            LITERAL
+              PsiElement(word)('echo')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -116,12 +121,12 @@ BASH_FILE
                     PIPELINE
                       SIMPLE_COMMAND
                         GENERIC_COMMAND_DIRECTIVE
-                          PsiElement(word)('echo')
+                          LITERAL
+                            PsiElement(word)('echo')
                         PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND_ELEMENT
+                        LITERAL
                           PsiElement(word)('a')
                 PsiElement())(')')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            VARIABLE
-              PsiElement(var)('$var')
+          VARIABLE
+            PsiElement(var)('$var')

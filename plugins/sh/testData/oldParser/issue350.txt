@@ -4,15 +4,15 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('eval')
+            LITERAL
+              PsiElement(word)('eval')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiElement(word)('executable')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiElement(word)('executable')
+            PsiElement(")('"')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          NUM
             PsiElement(int)('2')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -23,7 +23,8 @@ BASH_FILE
     PIPELINE_COMMAND
       PIPELINE
         ASSIGNMENT_COMMAND
-          PsiElement(word)('res')
+          LITERAL
+            PsiElement(word)('res')
           PsiElement(=)('=')
           STRING
             PsiElement(")('"')
@@ -35,16 +36,16 @@ BASH_FILE
                   PIPELINE
                     SIMPLE_COMMAND
                       GENERIC_COMMAND_DIRECTIVE
-                        PsiElement(word)('eval')
+                        LITERAL
+                          PsiElement(word)('eval')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        STRING
-                          PsiElement(")('"')
-                          VARIABLE
-                            PsiElement(var)('$executable')
-                          PsiElement(")('"')
+                      STRING
+                        PsiElement(")('"')
+                        VARIABLE
+                          PsiElement(var)('$executable')
+                        PsiElement(")('"')
                       PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
+                      NUM
                         PsiElement(int)('2')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION

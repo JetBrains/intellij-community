@@ -4,22 +4,22 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('read')
+            LITERAL
+              PsiElement(word)('read')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-e')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('-p')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(")('"')
-              PsiWhiteSpace('   ')
-              PsiElement(word)('Language:')
-              PsiElement(")('"')
+          STRING
+            PsiElement(")('"')
+            PsiWhiteSpace('   ')
+            PsiElement(word)('Language:')
+            PsiElement(")('"')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('lang')
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
@@ -34,17 +34,18 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            PsiElement(word)('read')
+            LITERAL
+              PsiElement(word)('read')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            STRING
-              PsiElement(RAW_STRING)(''test'')
+          STRING
+            PsiElement(RAW_STRING)(''test'')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
+          LITERAL
             PsiElement(word)('a')
           SIMPLE_COMMAND_ELEMENT
             CONDITIONAL_COMMAND
               PsiElement([)('[')
               LITERAL_CONDITION
-                PsiElement(int)('0')
+                NUM
+                  PsiElement(int)('0')
               PsiElement(])(']')

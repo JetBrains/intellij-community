@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashVariableImpl extends BashCompositeElementImpl implements BashVariable {
+public class BashVariableImpl extends BashLiteralImpl implements BashVariable {
 
   public BashVariableImpl(ASTNode node) {
     super(node);
