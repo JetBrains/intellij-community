@@ -12,7 +12,7 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            NUM
+            NUMBER
               PsiElement(int)('1')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -55,7 +55,7 @@ BASH_FILE
         GENERIC_COMMAND_DIRECTIVE
           REDIRECTION
             PsiElement(>&)('>&')
-            NUM
+            NUMBER
               PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -64,7 +64,7 @@ BASH_FILE
         GENERIC_COMMAND_DIRECTIVE
           REDIRECTION
             PsiElement(>>)('>>')
-            NUM
+            NUMBER
               PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -74,7 +74,7 @@ BASH_FILE
           REDIRECTION
             PsiElement(>>)('>>')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -84,7 +84,7 @@ BASH_FILE
           REDIRECTION
             PsiElement(>&)('>&')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -92,7 +92,7 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            NUM
+            NUMBER
               PsiElement(int)('2')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION

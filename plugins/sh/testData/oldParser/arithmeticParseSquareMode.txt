@@ -5,7 +5,7 @@ BASH_FILE
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           LITERAL_CONDITION
-            NUM
+            NUMBER
               PsiElement(int)('1')
           PsiElement(])(']')
   PsiElement(\n)('\n')

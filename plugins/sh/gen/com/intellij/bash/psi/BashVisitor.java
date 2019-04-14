@@ -226,7 +226,7 @@ public class BashVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
-  public void visitNum(@NotNull BashNum o) {
+  public void visitNumber(@NotNull BashNumber o) {
     visitLiteral(o);
   }
 

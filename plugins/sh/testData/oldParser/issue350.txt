@@ -12,7 +12,7 @@ BASH_FILE
             PsiElement(word)('executable')
             PsiElement(")('"')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('2')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
@@ -45,7 +45,7 @@ BASH_FILE
                           PsiElement(var)('$executable')
                         PsiElement(")('"')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('2')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION

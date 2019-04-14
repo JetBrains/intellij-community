@@ -39,7 +39,7 @@ BASH_FILE
                 PsiElement(word)('i')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement(;)(';')
             PsiElement(;)(';')
@@ -73,7 +73,7 @@ BASH_FILE
                 PsiElement(word)('i')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement(;)(';')
             COMPARISON_EXPRESSION
@@ -81,7 +81,7 @@ BASH_FILE
                 PsiElement(word)('i')
               PsiElement(<)('<')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('10')
             PsiElement(;)(';')
             PsiElement()))('))')

@@ -165,7 +165,7 @@ BASH_FILE
             LITERAL
               PsiElement(word)('tail')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('24')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -188,7 +188,7 @@ BASH_FILE
             LITERAL
               PsiElement(word)('tail')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('25')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -214,7 +214,7 @@ BASH_FILE
           LITERAL
             PsiElement(word)('-n')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('25')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -337,7 +337,7 @@ BASH_FILE
                         LITERAL
                           PsiElement(word)('--strip-components')
                         PsiElement(=)('=')
-                        NUM
+                        NUMBER
                           PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     LITERAL
@@ -391,11 +391,11 @@ BASH_FILE
               PsiWhiteSpace(' ')
               ADD_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
                 PsiElement(+)('+')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('2')
               PsiWhiteSpace(' ')
               PsiElement()))('))')
@@ -417,11 +417,11 @@ BASH_FILE
             PsiWhiteSpace(' ')
             ADD_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiElement(+)('+')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('2')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
@@ -456,11 +456,11 @@ BASH_FILE
             PsiWhiteSpace(' ')
             ADD_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiElement(-)('-')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('2')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
@@ -558,12 +558,12 @@ BASH_FILE
             LITERAL
               PsiElement(word)('exec')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('10')
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PsiElement(<&)('<&')
-              NUM
+              NUMBER
                 PsiElement(int)('0')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# stdin replaced with a file supplied as a first argument')
@@ -695,7 +695,7 @@ BASH_FILE
                     LITERAL
                       PsiElement(word)('-maxdepth')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     LITERAL
@@ -781,7 +781,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('-maxdepth')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       LITERAL
@@ -811,7 +811,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
             PsiElement(done)('done')
@@ -1059,7 +1059,7 @@ BASH_FILE
             LITERAL
               PsiElement(word)('f')
             PsiElement(=)('=')
-            NUM
+            NUMBER
               PsiElement(int)('1')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -1067,7 +1067,7 @@ BASH_FILE
               LITERAL
                 PsiElement(word)('b')
               PsiElement(=)('=')
-              NUM
+              NUMBER
                 PsiElement(int)('2')
           PsiWhiteSpace(' ')
           LITERAL
@@ -1100,7 +1100,7 @@ BASH_FILE
           PsiElement(word)('count')
         PsiElement(=)('=')
         LITERAL_EXPRESSION
-          NUM
+          NUMBER
             PsiElement(int)('0')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -1112,7 +1112,7 @@ BASH_FILE
           PsiElement(word)('indx')
         PsiElement(+=)('+=')
         LITERAL_EXPRESSION
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -1124,7 +1124,7 @@ BASH_FILE
           PsiElement(word)('indx')
         PsiElement(-=)('-=')
         LITERAL_EXPRESSION
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -1137,11 +1137,11 @@ BASH_FILE
         PsiElement(=)('=')
         MUL_EXPRESSION
           LITERAL_EXPRESSION
-            NUM
+            NUMBER
               PsiElement(int)('1')
           PsiElement(*)('*')
           LITERAL_EXPRESSION
-            NUM
+            NUMBER
               PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -1154,13 +1154,13 @@ BASH_FILE
             PsiElement(word)('a')
           PsiElement(=)('=')
           LITERAL_EXPRESSION
-            NUM
+            NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
             PsiElement(word)('b')
         PsiElement(=)('=')
         LITERAL_EXPRESSION
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

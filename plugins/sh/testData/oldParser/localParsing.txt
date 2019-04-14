@@ -12,5 +12,5 @@ BASH_FILE
               LITERAL
                 PsiElement(word)('local1')
               PsiElement(=)('=')
-              NUM
+              NUMBER
                 PsiElement(int)('1')

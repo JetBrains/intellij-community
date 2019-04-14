@@ -63,28 +63,28 @@ BASH_FILE
             CONDITIONAL_EXPRESSION
               ADD_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
                 PsiElement(+)('+')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('2')
               PsiWhiteSpace(' ')
               PsiElement(?)('?')
               PsiWhiteSpace(' ')
               MUL_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('3')
                 PsiElement(*)('*')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('4')
               PsiWhiteSpace(' ')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('5')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -97,24 +97,24 @@ BASH_FILE
             CONDITIONAL_EXPRESSION
               EQUALITY_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(==)('==')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(?)('?')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('0')
               PsiWhiteSpace(' ')
               PsiElement(:)(':')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('0')
             PsiElement()))('))')

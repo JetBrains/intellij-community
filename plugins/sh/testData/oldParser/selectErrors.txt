@@ -9,7 +9,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('1')
           LIST_TERMINATOR
             PsiElement(;)(';')
@@ -32,7 +32,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('echo')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiElement(\n)('\n')
                     PsiElement(})('}')
@@ -51,7 +51,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     PsiElement(word)('in')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
                     LIST_TERMINATOR
                       PsiElement(;)(';')
@@ -73,7 +73,7 @@ BASH_FILE
                                         LITERAL
                                           PsiElement(word)('echo')
                                       PsiWhiteSpace(' ')
-                                      NUM
+                                      NUMBER
                                         PsiElement(int)('1')
                                 PsiElement(\n)('\n')
                               PsiElement(})('}')

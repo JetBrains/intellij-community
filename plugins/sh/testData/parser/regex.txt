@@ -72,7 +72,7 @@ BASH_FILE
                       PsiElement(==)('==')
                       PsiWhiteSpace(' ')
                       LITERAL_CONDITION
-                        NUM
+                        NUMBER
                           PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     PsiElement(&&)('&&')

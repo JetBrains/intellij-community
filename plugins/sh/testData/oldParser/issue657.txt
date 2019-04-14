@@ -11,12 +11,12 @@ BASH_FILE
             PsiElement((()('((')
             BITWISE_SHIFT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('3952941204')
               PsiWhiteSpace(' ')
               PsiElement(>>)('>>')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('10')
             PsiElement()))('))')

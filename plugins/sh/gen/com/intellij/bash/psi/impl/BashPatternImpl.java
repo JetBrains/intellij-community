@@ -45,8 +45,8 @@ public class BashPatternImpl extends BashCompositeElementImpl implements BashPat
 
   @Override
   @NotNull
-  public List<BashNum> getNumList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashNum.class);
+  public List<BashNumber> getNumberList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, BashNumber.class);
   }
 
   @Override

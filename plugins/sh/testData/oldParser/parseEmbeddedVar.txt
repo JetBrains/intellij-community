@@ -40,7 +40,7 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      NUM
+                      NUMBER
                         PsiElement(int)('123')
               PsiElement())(')')
             PsiElement(")('"')

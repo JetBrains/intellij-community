@@ -45,8 +45,8 @@ public class BashLiteralConditionImpl extends BashConditionImpl implements BashL
 
   @Override
   @Nullable
-  public BashNum getNum() {
-    return findChildByClass(BashNum.class);
+  public BashNumber getNumber() {
+    return findChildByClass(BashNumber.class);
   }
 
   @Override

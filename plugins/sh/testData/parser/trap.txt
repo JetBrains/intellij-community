@@ -18,7 +18,7 @@ BASH_FILE
       STRING
         PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
-      NUM
+      NUMBER
         PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -40,7 +40,7 @@ BASH_FILE
       STRING
         PsiElement(RAW_STRING)(''exit'')
       PsiWhiteSpace(' ')
-      NUM
+      NUMBER
         PsiElement(int)('1')
       PsiWhiteSpace(' ')
       LITERAL
@@ -63,7 +63,7 @@ BASH_FILE
           LITERAL
             PsiElement(word)('avr')
           PsiElement(=)('=')
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -83,7 +83,7 @@ BASH_FILE
       LITERAL
         PsiElement(word)('1.0')
       PsiWhiteSpace(' ')
-      NUM
+      NUMBER
         PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST

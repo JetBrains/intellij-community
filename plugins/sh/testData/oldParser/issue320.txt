@@ -10,10 +10,10 @@ BASH_FILE
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
                 PsiWhiteSpace(' ')
-                NUM
+                NUMBER
                   PsiElement(int)('2')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -28,10 +28,10 @@ BASH_FILE
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('0')
                 PsiWhiteSpace(' ')
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -54,7 +54,7 @@ BASH_FILE
                           PsiElement(word)('a')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
-                          NUM
+                          NUMBER
                             PsiElement(int)('0')
                         PsiElement(])(']')
                       PsiWhiteSpace(' ')
@@ -65,7 +65,7 @@ BASH_FILE
                           PsiElement(word)('b')
                         PsiElement([)('[')
                         LITERAL_EXPRESSION
-                          NUM
+                          NUMBER
                             PsiElement(int)('1')
                         PsiElement(])(']')
                     PsiWhiteSpace(' ')

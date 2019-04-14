@@ -121,14 +121,14 @@ private file ::=
 private newlines ::= '\n'*
 private simple_list ::= (commands_list ['&' | ';' | newlines])*
 private word_list ::= w+
-private w ::= word | string | num | not_lvalue
+private w ::= word | string | number | not_lvalue
 private not_lvalue ::= '!' | vars | '$' | bash_expansion | 'file descriptor'
 
-redirection ::= redirection_inner | '&>' w | num redirection_inner | process_substitution
-private redirection_inner ::= ('<&' | '>&') (num | '-')
+redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
+private redirection_inner ::= ('<&' | '>&') (number | '-')
                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
 
-num ::= number | int | hex | octal {extends=literal}
+number ::= int | hex | octal {extends=literal}
 string ::= ('"' (word | vars | <<notQuote>>)* '"') | RAW_STRING {
   pin(".*")=1
   methods=[getReferences]
@@ -149,7 +149,7 @@ conditional_command ::=  '[[' condition* (']]'|']'<<differentBracketsWarning>>)
                         |'[' condition* (']'|']]' <<differentBracketsWarning>>){pin(".*")=1}
 process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
 
-literal ::= word | string | num | variable {extends=simple_command_element}
+literal ::= word | string | number | variable {extends=simple_command_element}
 simple_command_element ::= simple_command_element_inner
 private simple_command_element_inner ::=  literal assignment_command?
                                         | not_lvalue

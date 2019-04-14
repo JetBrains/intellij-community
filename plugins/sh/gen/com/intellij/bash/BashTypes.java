@@ -64,7 +64,7 @@ public interface BashTypes {
   IElementType LOGICAL_OR_CONDITION = new BashCompositeElementType("LOGICAL_OR_CONDITION");
   IElementType LOGICAL_OR_EXPRESSION = new BashCompositeElementType("LOGICAL_OR_EXPRESSION");
   IElementType MUL_EXPRESSION = new BashCompositeElementType("MUL_EXPRESSION");
-  IElementType NUM = new BashCompositeElementType("NUM");
+  IElementType NUMBER = new BashCompositeElementType("NUMBER");
   IElementType OLD_ARITHMETIC_EXPANSION = new BashCompositeElementType("OLD_ARITHMETIC_EXPANSION");
   IElementType PARENTHESES_CONDITION = new BashCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new BashCompositeElementType("PARENTHESES_EXPRESSION");
@@ -151,7 +151,6 @@ public interface BashTypes {
   IElementType MULT = new BashTokenType("*");
   IElementType MULT_ASSIGN = new BashTokenType("*=");
   IElementType NE = new BashTokenType("!=");
-  IElementType NUMBER = new BashTokenType("number");
   IElementType OCTAL = new BashTokenType("octal");
   IElementType OR_OR = new BashTokenType("||");
   IElementType PARAMETER_EXPANSION_BODY = new BashTokenType("parameter_expansion_body");
@@ -351,8 +350,8 @@ public interface BashTypes {
       else if (type == MUL_EXPRESSION) {
         return new BashMulExpressionImpl(node);
       }
-      else if (type == NUM) {
-        return new BashNumImpl(node);
+      else if (type == NUMBER) {
+        return new BashNumberImpl(node);
       }
       else if (type == OLD_ARITHMETIC_EXPANSION) {
         return new BashOldArithmeticExpansionImpl(node);

@@ -37,19 +37,19 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(word)('in')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('2')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('3')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('4')
                       PsiWhiteSpace(' ')
-                      NUM
+                      NUMBER
                         PsiElement(int)('5')
                       LIST_TERMINATOR
                         PsiElement(\n)('\n')

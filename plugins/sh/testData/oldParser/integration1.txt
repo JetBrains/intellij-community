@@ -61,7 +61,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('return')
                               PsiWhiteSpace(' ')
-                              NUM
+                              NUMBER
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')

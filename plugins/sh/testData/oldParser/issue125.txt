@@ -46,6 +46,6 @@ BASH_FILE
             CONDITIONAL_COMMAND
               PsiElement([)('[')
               LITERAL_CONDITION
-                NUM
+                NUMBER
                   PsiElement(int)('0')
               PsiElement(])(']')

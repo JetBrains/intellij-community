@@ -57,7 +57,7 @@ BASH_FILE
                             LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
                             LITERAL
@@ -85,7 +85,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              NUM
+                              NUMBER
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -156,7 +156,7 @@ BASH_FILE
                             LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
                             LITERAL
@@ -184,7 +184,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              NUM
+                              NUMBER
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -253,7 +253,7 @@ BASH_FILE
                             LITERAL
                               PsiElement(word)('-eq')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('0')
                             PsiWhiteSpace(' ')
                             LITERAL
@@ -281,7 +281,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('sleep')
                               PsiWhiteSpace(' ')
-                              NUM
+                              NUMBER
                                 PsiElement(int)('1')
                         PsiElement(;)(';')
                       PsiWhiteSpace(' ')
@@ -320,7 +320,7 @@ BASH_FILE
             LITERAL
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('# what a wonderful language')

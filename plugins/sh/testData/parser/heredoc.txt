@@ -140,7 +140,7 @@ BASH_FILE
           LITERAL
             PsiElement(word)('ACCOUNT')
           PsiElement(=)('=')
-          NUM
+          NUMBER
             PsiElement(int)('1000')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

@@ -63,7 +63,7 @@ BASH_FILE
                     LITERAL
                       PsiElement(word)('backgrounded')
                     PsiElement(=)('=')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiWhiteSpace('    ')

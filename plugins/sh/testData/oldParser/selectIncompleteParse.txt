@@ -134,7 +134,7 @@ BASH_FILE
           PsiElement(word)('a')
           PsiWhiteSpace(' ')
           PsiElement(word)('in')
-          PsiErrorElement:'!', $, <num>, <string>, '`', file descriptor, var, word or '{' expected, got ';'
+          PsiErrorElement:'!', $, <number>, <string>, '`', file descriptor, var, word or '{' expected, got ';'
             <empty list>
           LIST_TERMINATOR
             PsiElement(;)(';')

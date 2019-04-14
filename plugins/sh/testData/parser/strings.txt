@@ -9,7 +9,7 @@ BASH_FILE
               PsiElement(word)(''')
               PsiElement(")('"')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('1234')
           PsiWhiteSpace(' ')
           STRING
@@ -333,7 +333,7 @@ BASH_FILE
                 PIPELINE_COMMAND
                   PIPELINE
                     GENERIC_COMMAND_DIRECTIVE
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
               PsiElement())(')')
             PsiElement(")('"')
@@ -348,7 +348,7 @@ BASH_FILE
             ARITHMETIC_EXPANSION
               PsiElement((()('((')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiElement()))('))')
             PsiElement(")('"')

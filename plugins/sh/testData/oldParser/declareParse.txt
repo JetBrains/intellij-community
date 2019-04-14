@@ -12,7 +12,7 @@ BASH_FILE
               LITERAL
                 PsiElement(word)('a')
               PsiElement(=)('=')
-              NUM
+              NUMBER
                 PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -28,7 +28,7 @@ BASH_FILE
               LITERAL
                 PsiElement(word)('a')
               PsiElement(=)('=')
-              NUM
+              NUMBER
                 PsiElement(int)('1')
           PsiWhiteSpace(' ')
           LITERAL
@@ -77,7 +77,7 @@ BASH_FILE
                           LITERAL
                             PsiElement(word)('echo')
                         PsiWhiteSpace(' ')
-                        NUM
+                        NUMBER
                           PsiElement(int)('123')
                 PsiElement())(')')
   PsiElement(\n)('\n')
@@ -105,7 +105,7 @@ BASH_FILE
                           LITERAL
                             PsiElement(word)('echo')
                         PsiWhiteSpace(' ')
-                        NUM
+                        NUMBER
                           PsiElement(int)('123')
                 PsiElement())(')')
   PsiElement(\n)('\n')

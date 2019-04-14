@@ -20,7 +20,7 @@ public interface BashSelectCommand extends BashCommand {
   BashListTerminator getListTerminator();
 
   @NotNull
-  List<BashNum> getNumList();
+  List<BashNumber> getNumberList();
 
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();

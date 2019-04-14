@@ -8,7 +8,7 @@ BASH_FILE
             UNARY_EXPRESSION
               PsiElement(-)('-')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -21,7 +21,7 @@ BASH_FILE
             PRE_EXPRESSION
               PsiElement(--)('--')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')

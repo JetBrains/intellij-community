@@ -19,13 +19,13 @@ BASH_FILE
               PsiWhiteSpace(' ')
               ADD_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(hex)('0x888')
                 PsiWhiteSpace(' ')
                 PsiElement(-)('-')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(octal)('007')
               PsiWhiteSpace(' ')
               PsiElement(ARITH_SQUARE_RIGHT)(']')
@@ -49,7 +49,7 @@ BASH_FILE
                 POST_EXPRESSION
                   POST_EXPRESSION
                     LITERAL_EXPRESSION
-                      NUM
+                      NUMBER
                         PsiElement(hex)('0x888')
                     PsiWhiteSpace(' ')
                     PsiElement(--)('--')
@@ -107,7 +107,7 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            NUM
+            NUMBER
               PsiElement(int)('234')
           PsiWhiteSpace(' ')
           LITERAL

@@ -6,7 +6,7 @@ BASH_FILE
           OLD_ARITHMETIC_EXPANSION
             PsiElement(ARITH_SQUARE_LEFT)('$[')
             LITERAL_EXPRESSION
-              NUM
+              NUMBER
                 PsiElement(int)('1')
             PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')

@@ -6,7 +6,7 @@ BASH_FILE
           LITERAL
             PsiElement(word)('a')
           PsiElement(=)('=')
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -42,7 +42,7 @@ BASH_FILE
           VARIABLE
             PsiElement(var)('$Foo')
           PsiElement(=)('=')
-          NUM
+          NUMBER
             PsiElement(int)('1230')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

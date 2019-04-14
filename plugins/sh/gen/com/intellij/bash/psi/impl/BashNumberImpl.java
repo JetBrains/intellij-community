@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.bash.BashTypes.*;
 import com.intellij.bash.psi.*;
 
-public class BashNumImpl extends BashLiteralImpl implements BashNum {
+public class BashNumberImpl extends BashLiteralImpl implements BashNumber {
 
-  public BashNumImpl(ASTNode node) {
+  public BashNumberImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull BashVisitor visitor) {
-    visitor.visitNum(this);
+    visitor.visitNumber(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -35,12 +35,6 @@ public class BashNumImpl extends BashLiteralImpl implements BashNum {
   @Nullable
   public PsiElement getInt() {
     return findChildByType(INT);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNumber() {
-    return findChildByType(NUMBER);
   }
 
   @Override

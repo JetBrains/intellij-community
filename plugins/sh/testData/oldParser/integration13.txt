@@ -18,6 +18,6 @@ BASH_FILE
                 PsiElement(word)('a')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')

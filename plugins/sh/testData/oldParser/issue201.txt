@@ -20,7 +20,7 @@ BASH_FILE
             LOGICAL_BITWISE_NEGATION_EXPRESSION
               PsiElement(!)('!')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('123')
             PsiElement()))('))')
   PsiElement(\n)('\n')

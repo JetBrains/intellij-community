@@ -10,10 +10,10 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('2')
             LIST_TERMINATOR
               PsiElement(\n)('\n')
@@ -41,10 +41,10 @@ BASH_FILE
             PsiWhiteSpace(' ')
             PsiElement(word)('in')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
-            NUM
+            NUMBER
               PsiElement(int)('2')
             LIST_TERMINATOR
               PsiElement(;)(';')

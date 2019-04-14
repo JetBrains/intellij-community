@@ -40,7 +40,7 @@ BASH_FILE
                               PsiWhiteSpace(' ')
                               ASSIGNMENT_CONDITION
                                 LITERAL_CONDITION
-                                  NUM
+                                  NUMBER
                                     PsiElement(int)('1')
                                 PsiWhiteSpace(' ')
                                 PsiElement(=)('=')

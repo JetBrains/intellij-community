@@ -38,7 +38,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -59,13 +59,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -100,13 +100,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -124,7 +124,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -173,7 +173,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -222,7 +222,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -270,7 +270,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('2')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -291,13 +291,13 @@ BASH_FILE
                   PsiWhiteSpace(' ')
                   EQUALITY_CONDITION
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                     PsiWhiteSpace(' ')
                     PsiElement(==)('==')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('1')
                   PsiWhiteSpace(' ')
                   PsiElement(])(']')
@@ -315,7 +315,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
@@ -330,7 +330,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('2')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -356,7 +356,7 @@ BASH_FILE
                     PsiElement(<)('<')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
@@ -418,7 +418,7 @@ BASH_FILE
                     PsiElement(>)('>')
                     PsiWhiteSpace(' ')
                     LITERAL_CONDITION
-                      NUM
+                      NUMBER
                         PsiElement(int)('2')
                   PsiWhiteSpace(' ')
                   PsiElement(]])(']]')
@@ -523,7 +523,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('exit')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -592,7 +592,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('exit')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -730,7 +730,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           ELSE_CLAUSE
@@ -848,7 +848,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('echo')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
               PsiElement(\n)('\n')
           PsiElement(fi)('fi')
@@ -1200,7 +1200,7 @@ BASH_FILE
             CONDITIONAL_COMMAND
               PsiElement([)('[')
               LITERAL_CONDITION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiElement(])(']')
   PsiElement(\n)('\n')

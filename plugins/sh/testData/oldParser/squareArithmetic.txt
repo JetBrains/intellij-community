@@ -7,7 +7,7 @@ BASH_FILE
             PsiElement(ARITH_SQUARE_LEFT)('$[')
             MUL_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('10')
               PsiElement(/)('/')
               LITERAL_EXPRESSION

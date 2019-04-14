@@ -44,7 +44,7 @@ BASH_FILE
                                   LITERAL
                                     PsiElement(word)('echo')
                                 PsiWhiteSpace(' ')
-                                NUM
+                                NUMBER
                                   PsiElement(int)('1')
                           PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')
@@ -60,7 +60,7 @@ BASH_FILE
                                   LITERAL
                                     PsiElement(word)('echo')
                                 PsiWhiteSpace(' ')
-                                NUM
+                                NUMBER
                                   PsiElement(int)('0')
                           PsiElement(\n)('\n')
                       PsiWhiteSpace('  ')

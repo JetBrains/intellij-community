@@ -47,7 +47,7 @@ BASH_FILE
             LITERAL
               PsiElement(word)('echo')
           PsiWhiteSpace(' ')
-          NUM
+          NUMBER
             PsiElement(int)('1')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -543,7 +543,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('-s')
                                 PsiWhiteSpace(' ')
-                                NUM
+                                NUMBER
                                   PsiElement(int)('2')
                                 SIMPLE_COMMAND_ELEMENT
                                   REDIRECTION
@@ -595,7 +595,7 @@ BASH_FILE
                                   LITERAL
                                     PsiElement(word)('n')
                                   PsiElement(=)('=')
-                                  NUM
+                                  NUMBER
                                     PsiElement(int)('0')
                         PsiElement(;)(';')
                         PsiWhiteSpace(' ')
@@ -613,7 +613,7 @@ BASH_FILE
                                       PsiElement(word)('n')
                                     PsiElement(+)('+')
                                     LITERAL_EXPRESSION
-                                      NUM
+                                      NUMBER
                                         PsiElement(int)('1')
                                 PsiElement()))('))')
                         PsiElement(;)(';')
@@ -633,7 +633,7 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     REDIRECTION_LIST
                       REDIRECTION
-                        NUM
+                        NUMBER
                           PsiElement(int)('2')
                         PsiElement(>)('>')
                         PsiElement(word)('/dev/null')
@@ -1016,7 +1016,7 @@ BASH_FILE
                               SIMPLE_COMMAND_ELEMENT
                                 REDIRECTION
                                   PsiElement(>&)('>&')
-                                  NUM
+                                  NUMBER
                                     PsiElement(int)('2')
                         PsiElement(;)(';')
                         PsiWhiteSpace(' ')
@@ -1027,7 +1027,7 @@ BASH_FILE
                                 LITERAL
                                   PsiElement(word)('exit')
                               PsiWhiteSpace(' ')
-                              NUM
+                              NUMBER
                                 PsiElement(int)('1')
                         PsiElement(\n)('\n')
                     PsiWhiteSpace('  ')
@@ -1041,7 +1041,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('return')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('0')
               PsiElement(\n)('\n')
             PsiElement(})('}')
@@ -1179,12 +1179,12 @@ BASH_FILE
                     LITERAL
                       PsiElement(word)('DEBUGGING')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('1')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION
                         PsiElement(>&)('>&')
-                        NUM
+                        NUMBER
                           PsiElement(int)('2')
               PsiElement(\n)('\n')
               PsiWhiteSpace('\t')
@@ -1311,7 +1311,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('return')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
@@ -1653,7 +1653,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('return')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
@@ -1708,7 +1708,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('return')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
@@ -1768,7 +1768,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('return')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
@@ -1828,7 +1828,7 @@ BASH_FILE
                               LITERAL
                                 PsiElement(word)('return')
                             PsiWhiteSpace(' ')
-                            NUM
+                            NUMBER
                               PsiElement(int)('1')
                       PsiWhiteSpace(' ')
                       PsiElement(;)(';')
@@ -1899,7 +1899,7 @@ BASH_FILE
                     PsiElement(word)('indx')
                   PsiElement(=)('=')
                   LITERAL_EXPRESSION
-                    NUM
+                    NUMBER
                       PsiElement(int)('0')
               PsiElement(\n)('\n')
               PsiWhiteSpace('    ')
@@ -2144,7 +2144,7 @@ BASH_FILE
                                         LITERAL
                                           PsiElement(word)('return')
                                       PsiWhiteSpace(' ')
-                                      NUM
+                                      NUMBER
                                         PsiElement(int)('1')
                                 PsiWhiteSpace(' ')
                                 PsiElement(;)(';')
@@ -2295,7 +2295,7 @@ BASH_FILE
                                           LITERAL
                                             PsiElement(word)('return')
                                         PsiWhiteSpace(' ')
-                                        NUM
+                                        NUMBER
                                           PsiElement(int)('1')
                                   PsiElement(\n)('\n')
                               PsiWhiteSpace('        ')
@@ -2417,7 +2417,7 @@ BASH_FILE
                       LITERAL
                         PsiElement(word)('return')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('0')
               PsiElement(\n)('\n')
             PsiElement(})('}')

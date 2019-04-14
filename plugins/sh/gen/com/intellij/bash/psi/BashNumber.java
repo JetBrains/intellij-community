@@ -5,16 +5,13 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface BashNum extends BashLiteral {
+public interface BashNumber extends BashLiteral {
 
   @Nullable
   PsiElement getHex();
 
   @Nullable
   PsiElement getInt();
-
-  @Nullable
-  PsiElement getNumber();
 
   @Nullable
   PsiElement getOctal();

@@ -197,7 +197,7 @@ BASH_FILE
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION
                           PsiElement(>&)('>&')
-                          NUM
+                          NUMBER
                             PsiElement(int)('1')
                       SIMPLE_COMMAND_ELEMENT
                         REDIRECTION

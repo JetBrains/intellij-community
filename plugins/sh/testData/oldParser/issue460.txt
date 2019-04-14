@@ -108,7 +108,7 @@ BASH_FILE
                     LITERAL
                       PsiElement(word)('exit')
                   PsiWhiteSpace(' ')
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
             PsiElement(;)(';')
             PsiElement(\n)('\n')

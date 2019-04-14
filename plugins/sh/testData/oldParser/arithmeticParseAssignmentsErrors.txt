@@ -7,11 +7,11 @@ BASH_FILE
             PsiElement((()('((')
             ASSIGNMENT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiElement(=)('=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -23,13 +23,13 @@ BASH_FILE
             PsiElement((()('((')
             ASSIGNMENT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(+=)('+=')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -41,13 +41,13 @@ BASH_FILE
             PsiElement((()('((')
             ASSIGNMENT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(-=)('-=')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -59,13 +59,13 @@ BASH_FILE
             PsiElement((()('((')
             ASSIGNMENT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(*=)('*=')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -77,12 +77,12 @@ BASH_FILE
             PsiElement((()('((')
             ASSIGNMENT_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(%=)('%=')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')

@@ -10,7 +10,7 @@ BASH_FILE
                 PsiElement(word)('number')
               PsiElement(|=)('|=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('5')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -25,6 +25,6 @@ BASH_FILE
                 PsiElement(word)('number')
               PsiElement(&=)('&=')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('5')
             PsiElement()))('))')

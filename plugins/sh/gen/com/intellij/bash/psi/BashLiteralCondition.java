@@ -17,7 +17,7 @@ public interface BashLiteralCondition extends BashCondition {
   BashCommand getCommand();
 
   @Nullable
-  BashNum getNum();
+  BashNumber getNumber();
 
   @Nullable
   BashShellParameterExpansion getShellParameterExpansion();

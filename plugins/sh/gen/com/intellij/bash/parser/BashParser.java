@@ -110,8 +110,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == LITERAL) {
       r = literal(b, 0);
     }
-    else if (t == NUM) {
-      r = num(b, 0);
+    else if (t == NUMBER) {
+      r = number(b, 0);
     }
     else if (t == OLD_ARITHMETIC_EXPANSION) {
       r = old_arithmetic_expansion(b, 0);
@@ -188,7 +188,7 @@ public class BashParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
-    create_token_set_(LITERAL, NUM, SIMPLE_COMMAND_ELEMENT, STRING,
+    create_token_set_(LITERAL, NUMBER, SIMPLE_COMMAND_ELEMENT, STRING,
       VARIABLE),
     create_token_set_(ASSIGNMENT_CONDITION, COMPARISON_CONDITION, CONDITION, EQUALITY_CONDITION,
       LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_BITWISE_CONDITION, LOGICAL_OR_CONDITION,
@@ -1593,14 +1593,14 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | string | num | variable
+  // word | string | number | variable
   public static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, LITERAL, "<literal>");
     r = consumeToken(b, WORD);
     if (!r) r = string(b, l + 1);
-    if (!r) r = num(b, l + 1);
+    if (!r) r = number(b, l + 1);
     if (!r) r = variable(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1651,13 +1651,12 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // number | int | hex | octal
-  public static boolean num(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "num")) return false;
+  // int | hex | octal
+  public static boolean number(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "number")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, NUM, "<num>");
-    r = consumeToken(b, NUMBER);
-    if (!r) r = consumeToken(b, INT);
+    Marker m = enter_section_(b, l, _NONE_, NUMBER, "<number>");
+    r = consumeToken(b, INT);
     if (!r) r = consumeToken(b, HEX);
     if (!r) r = consumeToken(b, OCTAL);
     exit_section_(b, l, m, r, false, null);
@@ -2048,7 +2047,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // redirection_inner | '&>' w | num redirection_inner | process_substitution
+  // redirection_inner | '&>' w | number redirection_inner | process_substitution
   public static boolean redirection(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection")) return false;
     boolean r;
@@ -2072,19 +2071,19 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // num redirection_inner
+  // number redirection_inner
   private static boolean redirection_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = num(b, l + 1);
+    r = number(b, l + 1);
     r = r && redirection_inner(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   /* ********************************************************** */
-  // ('<&' | '>&') (num | '-')
+  // ('<&' | '>&') (number | '-')
   //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
@@ -2096,7 +2095,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('<&' | '>&') (num | '-')
+  // ('<&' | '>&') (number | '-')
   private static boolean redirection_inner_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_0")) return false;
     boolean r;
@@ -2118,12 +2117,12 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // num | '-'
+  // number | '-'
   private static boolean redirection_inner_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = num(b, l + 1);
+    r = number(b, l + 1);
     if (!r) r = consumeToken(b, MINUS);
     exit_section_(b, m, null, r);
     return r;
@@ -2634,13 +2633,13 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word | string | num | not_lvalue
+  // word | string | number | not_lvalue
   static boolean w(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "w")) return false;
     boolean r;
     r = consumeToken(b, WORD);
     if (!r) r = string(b, l + 1);
-    if (!r) r = num(b, l + 1);
+    if (!r) r = number(b, l + 1);
     if (!r) r = not_lvalue(b, l + 1);
     return r;
   }

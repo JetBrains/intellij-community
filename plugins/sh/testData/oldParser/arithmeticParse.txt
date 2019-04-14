@@ -6,7 +6,7 @@ BASH_FILE
           ARITHMETIC_EXPANSION
             PsiElement((()('((')
             LITERAL_EXPRESSION
-              NUM
+              NUMBER
                 PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -39,13 +39,13 @@ BASH_FILE
             PsiElement((()('((')
             ADD_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
               PsiWhiteSpace(' ')
               PsiElement(+)('+')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('1')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -74,19 +74,19 @@ BASH_FILE
             ADD_EXPRESSION
               MUL_EXPRESSION
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('1')
                 PsiWhiteSpace(' ')
                 PsiElement(*)('*')
                 PsiWhiteSpace(' ')
                 LITERAL_EXPRESSION
-                  NUM
+                  NUMBER
                     PsiElement(int)('2')
               PsiWhiteSpace(' ')
               PsiElement(-)('-')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('3')
             PsiElement()))('))')
   PsiElement(\n)('\n')
@@ -98,12 +98,12 @@ BASH_FILE
             PsiElement((()('((')
             MUL_EXPRESSION
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('10')
               PsiWhiteSpace(' ')
               PsiElement(%)('%')
               PsiWhiteSpace(' ')
               LITERAL_EXPRESSION
-                NUM
+                NUMBER
                   PsiElement(int)('3')
             PsiElement()))('))')

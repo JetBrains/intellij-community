@@ -23,7 +23,7 @@ public interface BashForClause extends BashCompositeElement {
   BashListTerminator getListTerminator();
 
   @NotNull
-  List<BashNum> getNumList();
+  List<BashNumber> getNumberList();
 
   @NotNull
   List<BashShellParameterExpansion> getShellParameterExpansionList();

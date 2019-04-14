@@ -28,7 +28,7 @@ BASH_FILE
                     LITERAL
                       PsiElement(word)('HEAD')
                     PsiWhiteSpace(' ')
-                    NUM
+                    NUMBER
                       PsiElement(int)('2')
                     SIMPLE_COMMAND_ELEMENT
                       REDIRECTION

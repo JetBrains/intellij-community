@@ -4,7 +4,7 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            NUM
+            NUMBER
               PsiElement(int)('1')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
@@ -21,7 +21,7 @@ BASH_FILE
       PIPELINE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
-            NUM
+            NUMBER
               PsiElement(int)('1')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT
