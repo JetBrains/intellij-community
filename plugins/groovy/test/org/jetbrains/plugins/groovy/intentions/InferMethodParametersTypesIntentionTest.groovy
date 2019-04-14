@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
   InferMethodParametersTypesIntentionTest() {
-    super("Infer method arguments")
+    super("Infer method parameters types")
   }
 
 
