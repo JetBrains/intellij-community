@@ -48,12 +48,19 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   }
 
   public EventLogExternalSettingsService(@NotNull String recorderId) {
-    super(getConfigUrl(recorderId), null);
+    super(getConfigUrl(recorderId, false), null);
+  }
+
+  public EventLogExternalSettingsService(@NotNull String recorderId, boolean isTest) {
+    super(getConfigUrl(recorderId, isTest), null);
   }
 
   @NotNull
-  private static String getConfigUrl(@NotNull String recorderId) {
+  private static String getConfigUrl(@NotNull String recorderId, boolean isTest) {
     final String templateUrl = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+    if (isTest) {
+      return String.format(templateUrl, "test/" + recorderId);
+    }
     return String.format(templateUrl, recorderId);
   }
 
