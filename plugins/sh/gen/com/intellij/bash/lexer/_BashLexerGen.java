@@ -915,7 +915,6 @@ public class _BashLexerGen implements FlexLexer {
   private static final int DOUBLE_PARENTHESES = 2;
   private static final int PARENTHESES = 1;
 
-  private int yyline;
   private boolean isArithmeticExpansion;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
@@ -1138,58 +1137,6 @@ public class _BashLexerGen implements FlexLexer {
     while (true) {
       zzMarkedPosL = zzMarkedPos;
 
-      boolean zzR = false;
-      int zzCh;
-      int zzCharCount;
-      for (zzCurrentPosL = zzStartRead  ;
-           zzCurrentPosL < zzMarkedPosL ;
-           zzCurrentPosL += zzCharCount ) {
-        zzCh = Character.codePointAt(zzBufferL, zzCurrentPosL/*, zzMarkedPosL*/);
-        zzCharCount = Character.charCount(zzCh);
-        switch (zzCh) {
-        case '\u000B':  // fall through
-        case '\u000C':  // fall through
-        case '\u0085':  // fall through
-        case '\u2028':  // fall through
-        case '\u2029':
-          yyline++;
-          zzR = false;
-          break;
-        case '\r':
-          yyline++;
-          zzR = true;
-          break;
-        case '\n':
-          if (zzR)
-            zzR = false;
-          else {
-            yyline++;
-          }
-          break;
-        default:
-          zzR = false;
-        }
-      }
-
-      if (zzR) {
-        // peek one character ahead if it is \n (if we have counted one line too much)
-        boolean zzPeek;
-        if (zzMarkedPosL < zzEndReadL)
-          zzPeek = zzBufferL.charAt(zzMarkedPosL) == '\n';
-        else if (zzAtEOF)
-          zzPeek = false;
-        else {
-          boolean eof = zzRefill();
-          zzEndReadL = zzEndRead;
-          zzMarkedPosL = zzMarkedPos;
-          zzBufferL = zzBuffer;
-          if (eof) 
-            zzPeek = false;
-          else 
-            zzPeek = zzBufferL.charAt(zzMarkedPosL) == '\n';
-        }
-        if (zzPeek) yyline--;
-      }
       if (zzMarkedPosL > zzStartRead) {
         switch (zzBufferL.charAt(zzMarkedPosL-1)) {
         case '\n':
@@ -1683,7 +1630,7 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 194: break;
           case 75: 
-            { if (yyline == 0) return SHEBANG; else return COMMENT;
+            { if (getTokenStart() == 0) return SHEBANG; else return COMMENT;
             } 
             // fall through
           case 195: break;

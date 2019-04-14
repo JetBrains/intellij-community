@@ -39,9 +39,8 @@ public class BashFileLexerTest extends LexerTestCase {
   @Override
   protected void doFileTest(String fileExt) {
     super.doFileTest(fileExt);
-//    todo: fix shebang and uncomment
-//    String text = loadTestDataFile("." + fileExt);
-//    checkCorrectRestart(text);
+    String text = loadTestDataFile("." + fileExt);
+    checkCorrectRestart(text);
   }
 
   public void testShouldBeFixed() {
