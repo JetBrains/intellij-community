@@ -48,6 +48,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,24 +239,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         return myInlineThisOnly;
       }
     }, conflicts, JavaLanguage.INSTANCE);
-
-    final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(myMethod);
-    for (PsiReturnStatement statement : returnStatements) {
-      PsiExpression value = statement.getReturnValue();
-      if (value != null && !(value instanceof PsiCallExpression) &&
-          RemoveUnusedVariableUtil.checkSideEffects(value, null, new ArrayList<>())) {
-        for (UsageInfo info : usagesIn) {
-          PsiReference reference = info.getReference();
-          if (reference != null) {
-            InlineUtil.TailCallType type = InlineUtil.getTailCallType(reference);
-            if (type == InlineUtil.TailCallType.Simple) {
-              conflicts.putValue(statement, "Inlined result would contain parse errors");
-              break;
-            }
-          }
-        }
-      }
-    }
 
     addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
 
@@ -916,7 +899,18 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
              RemoveUnusedVariableUtil.checkSideEffects(returnValue, null, new ArrayList<>())) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
-            returnStatement.getParent().addBefore(exprStatement, returnStatement);
+            PsiElement returnParent = returnStatement.getParent();
+            exprStatement = (PsiExpressionStatement)returnParent.addBefore(exprStatement, returnStatement);
+            if (!PsiUtil.isStatement(exprStatement)) {
+              PsiExpression expression = exprStatement.getExpression();
+              List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+              CommentTracker ct = new CommentTracker();
+              sideEffects.forEach(ct::markUnchanged);
+              for (PsiStatement sideEffect : StatementExtractor.generateStatements(sideEffects, expression)) {
+                returnParent.addBefore(sideEffect, exprStatement);
+              }
+              ct.deleteAndRestoreComments(exprStatement);
+            }
             statement = myFactory.createStatementFromText("return;", null);
           } else {
             statement = (PsiStatement)returnStatement.copy();
