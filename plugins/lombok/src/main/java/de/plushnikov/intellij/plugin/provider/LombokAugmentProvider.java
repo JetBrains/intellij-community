@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -71,7 +70,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
-    if (DumbService.isDumb(typeElement.getProject()) || !valProcessor.isEnabled(typeElement.getProject())) {
+    if (!valProcessor.isEnabled(typeElement.getProject())) {
       return null;
     }
     return valProcessor.inferType(typeElement);
