@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -34,7 +35,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.CoreMatchers.*;
-
 
 public class OutputLineSplitterTest extends LightPlatformTestCase {
   private static final List<Key> ALL_TYPES = Arrays.asList(ProcessOutputTypes.STDERR, ProcessOutputTypes.STDOUT, ProcessOutputTypes.SYSTEM);
@@ -51,17 +51,6 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
 
   private OutputEventSplitter mySplitter;
   final Map<Key, Console> myOutput = new THashMap<>();
-
-  private static void appendToLastListItem(@NotNull final List<String> list, @NotNull final String text) {
-    if (list.isEmpty()) {
-      list.add(text);
-    }
-    else {
-      final int lastIndex = list.size() - 1;
-      final String lastItem = list.get(lastIndex);
-      list.set(lastIndex, lastItem + text);
-    }
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -86,8 +75,8 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     Assert.assertArrayEquals("Text prior to service message start prefix are flushed",
                              new String[]{"hello"}, myOutput.get(ProcessOutputTypes.STDOUT).toArray());
     mySplitter.flush();
-    Assert.assertArrayEquals("Incomplete service messages are flushed",
-                             new String[]{"hello##"}, myOutput.get(ProcessOutputTypes.STDOUT).toArray());
+    Assert.assertArrayEquals("Rest of the string not flushed after explicit #flush call",
+                             new String[]{"hello", "##"}, myOutput.get(ProcessOutputTypes.STDOUT).toArray());
   }
 
   public void testCharStream() {
@@ -101,8 +90,9 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
         i += step;
       }
       mySplitter.flush();
-      Assert.assertArrayEquals(new String[]{"##teamcity[start bar='1']", "message\nanothermessage", "##teamcity[end]", "fuu\n"},
-                               myOutput.get(ProcessOutputTypes.STDOUT).toArray());
+      final List<String> actual = myOutput.get(ProcessOutputTypes.STDOUT).toList();
+      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[end]"));
+      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[start bar='1']"));
       myOutput.clear();
     }
   }
@@ -117,7 +107,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
     final String[] stdout = myOutput.get(ProcessOutputTypes.STDOUT).toArray();
     Assert.assertArrayEquals(new String[]{
-      "\nStarting...\n", "##teamcity[name1]", "Done 1\n\n", "##teamcity[name2]", "Done 2",
+      "\n", "Starting...\n", "##teamcity[name1]", "Done 1\n", "\n", "##teamcity[name2]", "Done 2",
       "##teamcity[name3]", "Test print", "##teamcity[message key='spam']",
       "##teamcity[name5]",
       "##teamcity[name6]", "Info", "##teamcity[name7]"
@@ -161,13 +151,6 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
 
           mySplitter.process(s, each);
           List<String> list = written.get(each);
-          if (!list.isEmpty()) {
-            String last = list.get(list.size() - 1);
-            if (!last.endsWith("\n")) {
-              list.set(list.size() - 1, last + s);
-              continue;
-            }
-          }
           list.add(s);
         }
       }).get();
@@ -202,13 +185,8 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
           String prefix = type.toString() + ":";
           mySplitter.process(prefix, type);
           mySplitter.process(s, outputType);
-          if (!outputType.equals(type)) {
-            written.get(type).add(prefix);
-            written.get(type).add(s);
-          }
-          else {
-            appendToLastListItem(written.get(type), prefix + s);
-          }
+          written.get(type).add(prefix);
+          written.get(type).add(s);
         }
       }).get();
     }
@@ -223,6 +201,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   public void testFlushing() throws Exception {
     final Semaphore written = new Semaphore(0);
     final Semaphore read = new Semaphore(0);
+    final Map<Key<?>, Integer> numOfProcessCalls = new HashMap<>();
 
     final AtomicBoolean isFinished = new AtomicBoolean();
     List<Future<?>> futures = new ArrayList<>();
@@ -233,6 +212,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
         while (!isFinished.get()) {
           mySplitter.process(StringUtil.repeat("A", 100), each);
           i++;
+          numOfProcessCalls.put(each, i);
           if (i % 10 == 0) {
             written.release();
             try {
@@ -257,7 +237,9 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
           for (Key each : ALL_TYPES) {
             List<String> out = myOutput.get(each).toList();
             if (!out.isEmpty()) {
-              assertSize(1, out);
+              Integer size = numOfProcessCalls.get(each);
+              assert size != null : "No side for " + each;
+              assertSize(size, out);
               out.clear();
               hadOutput = true;
             }

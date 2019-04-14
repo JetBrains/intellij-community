@@ -8,8 +8,7 @@ import org.junit.Assert
 
 
 class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
-  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest" ) }
-  private val testProxy by lazy { SMTestProxy.SMRootTestProxy() }
+  private val converter: OutputToGeneralTestEventsConverter by lazy { OutputToGeneralTestEventsConverter("MyTest") }
 
   private var flushBufferSize = 0
 
@@ -51,6 +50,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
 
   private fun buildTestTree(idBased: Boolean) {
+    val testProxy = SMTestProxy.SMRootTestProxy()
     converter.processor = if (idBased) {
       GeneralIdBasedToSMTRunnerEventsConvertor(LightPlatformTestCase.ourProject, testProxy, "root")
     }
@@ -95,7 +95,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
     message(ServiceMessageBuilder.testStarted(testFailName))
     message(ServiceMessageBuilder.testFailed(testFailName), "message", "failMessage")
-    message(ServiceMessageBuilder.testFinished(testSuccessName))
+    message(ServiceMessageBuilder.testFinished(testFailName))
 
     message(ServiceMessageBuilder.testStarted(testSuccessName))
     message(ServiceMessageBuilder.testFinished(testSuccessName))
@@ -105,7 +105,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
 
   private fun finish() {
-    testProxy.setFinished() //Called from coverter after process finished in real code
+    message(ServiceMessageBuilder("testingFinished"))
     converter.finishTesting()
   }
 
