@@ -7,14 +7,14 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author knisht
  */
-class InferMethodArgumentsIntentionTest extends GrIntentionTestCase {
+class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
 
-  InferMethodArgumentsIntentionTest() {
+  InferMethodParametersTypesIntentionTest() {
     super("Infer method arguments")
   }
 
 
-  final String basePath = TestUtils.testDataPath + 'refactoring/inferMethodArguments'
+  final String basePath = TestUtils.testDataPath + 'refactoring/inferMethodParametersTypes'
 
   void testStringInference() {
     doTest(true)

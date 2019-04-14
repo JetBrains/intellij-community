@@ -1,12 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.intentions.style
+package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
-import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceVariableGraph
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import java.util.HashSet
+import kotlin.collections.Collection
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.Set
+import kotlin.collections.forEach
+import kotlin.collections.map
+import kotlin.collections.set
 
 
 /**
@@ -55,4 +64,32 @@ fun createInferenceVariableGraph(inferenceVars: Collection<InferenceVariable>,
     }
   }
   return InferenceVariableGraph(InferenceVariablesOrder.initNodes(nodes.values).map { it.value }, session)
+}
+
+
+fun getInferenceVariable(session: GroovyInferenceSession, variableType: PsiType): InferenceVariable {
+  return session.getInferenceVariable(session.substituteWithInferenceVariables(variableType))
+}
+
+fun getConstantInferenceVariables(constantTypeParameters: Array<PsiTypeParameter>,
+                                  session: GroovyInferenceSession): Set<InferenceVariable> {
+  val constantInferenceVariables = HashSet<InferenceVariable>()
+  for (param in constantTypeParameters) {
+    val constantInferenceVariable = getInferenceVariable(session, param.type())
+    constantInferenceVariable.instantiation = param.type()
+    constantInferenceVariables.add(constantInferenceVariable)
+  }
+  return constantInferenceVariables
+}
+
+fun collectRepresentativeSubstitutor(graph: InferenceVariableGraph): PsiSubstitutor {
+  var representativeSubstitutor = PsiSubstitutor.EMPTY
+  graph.nodes.keys.forEach {
+    representativeSubstitutor = representativeSubstitutor.put(it, graph.getRepresentative(it)?.type());
+    val upperType = graph.getParent(it)?.type()
+    if (upperType != null) {
+      representativeSubstitutor = representativeSubstitutor.put(it, upperType)
+    }
+  }
+  return representativeSubstitutor
 }
