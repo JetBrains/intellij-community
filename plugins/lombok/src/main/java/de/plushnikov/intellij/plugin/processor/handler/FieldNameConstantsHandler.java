@@ -1,16 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -80,13 +70,12 @@ public class FieldNameConstantsHandler {
   }
 
   private static PsiField createEnumConstant(@NotNull PsiField field, @NotNull PsiClass containingClass, PsiClassType classType) {
-    final LombokLightFieldBuilder enumConstantBuilder = new LombokEnumConstantBuilder(containingClass.getManager(), field.getName(), classType)
+    return new LombokEnumConstantBuilder(containingClass.getManager(), field.getName(), classType)
       .withContainingClass(containingClass)
       .withModifier(PsiModifier.PUBLIC)
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL)
       .withNavigationElement(field);
-    return enumConstantBuilder;
   }
 
   @NotNull

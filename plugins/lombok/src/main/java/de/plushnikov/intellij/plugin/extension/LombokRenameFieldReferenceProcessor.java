@@ -26,12 +26,9 @@ import java.util.Map;
 
 public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor {
 
-  public LombokRenameFieldReferenceProcessor() {
-  }
-
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
+    if (element instanceof PsiField && !(element instanceof LombokLightFieldBuilder)) {
       final PsiClass containingClass = ((PsiField) element).getContainingClass();
       if (null != containingClass) {
         return Arrays.stream(containingClass.getMethods()).anyMatch(LombokLightMethodBuilder.class::isInstance) ||
@@ -63,7 +60,7 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
         allRenames.put(psiMethod, LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean));
       }
 
-      if(!accessorsInfo.isFluent()) {
+      if (!accessorsInfo.isFluent()) {
         final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
         final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
         for (PsiMethod psiMethod : psiWitherMethods) {
