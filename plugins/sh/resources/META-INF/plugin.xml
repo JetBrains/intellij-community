@@ -27,7 +27,7 @@
 
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashKeywordCompletionContributor"/>
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashFilePathCompletionContributor"/>
-    <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashCompletionContributor"/>
+    <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashCommandCompletionContributor"/>
     <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
     <lang.documentationProvider language="Bash" implementationClass="com.intellij.bash.BashDocumentationProvider"/>
     <runLineMarkerContributor language="Bash" implementationClass="com.intellij.bash.run.BashRunLineMarkerContributor"/>

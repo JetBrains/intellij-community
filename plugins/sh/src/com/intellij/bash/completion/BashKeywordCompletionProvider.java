@@ -50,8 +50,7 @@ public class BashKeywordCompletionProvider extends CompletionProvider<Completion
       if (template != null) {
         editor.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
         templateManager.startTemplate(editor, template);
-      }
-      else {
+      } else {
         EditorModificationUtil.insertStringAtCaret(editor, " ");
       }
     };

@@ -27,15 +27,15 @@ import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class BashCompletionContributor extends CompletionContributor implements DumbAware {
+public class BashCommandCompletionContributor extends CompletionContributor implements DumbAware {
   private static final int BUILTIN_PRIORITY = -10;
 
-  public BashCompletionContributor() {
+  public BashCommandCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(StandardPatterns.instanceOf(BashFile.class)), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
 
-        Collection<String> kws = ContainerUtil.newSmartList();
+//        Collection<String> kws = ContainerUtil.newSmartList();
         PsiElement original = parameters.getOriginalPosition();
         if (original == null || !original.getText().contains("/")) {
           result.addAllElements(ContainerUtil.map(BUILTIN,
@@ -44,50 +44,50 @@ public class BashCompletionContributor extends CompletionContributor implements 
                   .withIcon(PlatformIcons.FUNCTION_ICON)
                   .withInsertHandler(AddSpaceInsertHandler.INSTANCE), BUILTIN_PRIORITY)));
 
-          kws = suggestKeywords(parameters.getPosition());
-          for (String keywords : kws) {
-            result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
-          }
+//          kws = suggestKeywords(parameters.getPosition());
+//          for (String keywords : kws) {
+//            result.addElement(LookupElementBuilder.create(keywords).bold().withInsertHandler(AddSpaceInsertHandler.INSTANCE));
+//          }
         }
 
-        kws.addAll(BUILTIN);
+//        kws.addAll(BUILTIN);
 
-        String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
-        if (prefix.isEmpty() && parameters.isAutoPopup()) {
-          return;
-        }
+//        String prefix = CompletionUtil.findJavaIdentifierPrefix(parameters);
+//        if (prefix.isEmpty() && parameters.isAutoPopup()) {
+//          return;
+//        }
 
-        CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
-        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, ContainerUtil.newTroveSet(kws));
+//        CompletionResultSet resultSetWithPrefix = result.withPrefixMatcher(prefix);
+//        WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, ContainerUtil.newTroveSet(kws));
       }
     });
   }
 
-  private static Collection<String> suggestKeywords(PsiElement position) {
-    TextRange posRange = position.getTextRange();
-    BashFile posFile = (BashFile) position.getContainingFile();
-    BashCommandsList parent = PsiTreeUtil.getTopmostParentOfType(position, BashCommandsList.class);
-    TextRange range = new TextRange(parent == null ? 0 : parent.getTextRange().getStartOffset(), posRange.getStartOffset());
-    String text = range.isEmpty() ? CompletionInitializationContext.DUMMY_IDENTIFIER : range.substring(posFile.getText());
-
-    PsiFile file = PsiFileFactory.getInstance(posFile.getProject()).createFileFromText("a.sh", BashLanguage.INSTANCE, text, true, false);
-    int completionOffset = posRange.getStartOffset() - range.getStartOffset();
-    GeneratedParserUtilBase.CompletionState state = new GeneratedParserUtilBase.CompletionState(completionOffset) {
-      @Override
-      public String convertItem(Object o) {
-        if (o instanceof IElementType[] && ((IElementType[]) o).length > 0) return kw2str(((IElementType[]) o)[0]);
-        return o instanceof IElementType ? kw2str(((IElementType) o)) : null;
-      }
-
-      @Nullable
-      private String kw2str(IElementType o) {
-        return BashTokenTypes.HUMAN_READABLE_KEYWORDS.contains(o) ? o.toString() : null;
-      }
-    };
-    file.putUserData(GeneratedParserUtilBase.COMPLETION_STATE_KEY, state);
-    TreeUtil.ensureParsed(file.getNode());
-    return state.items;
-  }
+//  private static Collection<String> suggestKeywords(PsiElement position) {
+//    TextRange posRange = position.getTextRange();
+//    BashFile posFile = (BashFile) position.getContainingFile();
+//    BashCommandsList parent = PsiTreeUtil.getTopmostParentOfType(position, BashCommandsList.class);
+//    TextRange range = new TextRange(parent == null ? 0 : parent.getTextRange().getStartOffset(), posRange.getStartOffset());
+//    String text = range.isEmpty() ? CompletionInitializationContext.DUMMY_IDENTIFIER : range.substring(posFile.getText());
+//
+//    PsiFile file = PsiFileFactory.getInstance(posFile.getProject()).createFileFromText("a.sh", BashLanguage.INSTANCE, text, true, false);
+//    int completionOffset = posRange.getStartOffset() - range.getStartOffset();
+//    GeneratedParserUtilBase.CompletionState state = new GeneratedParserUtilBase.CompletionState(completionOffset) {
+//      @Override
+//      public String convertItem(Object o) {
+//        if (o instanceof IElementType[] && ((IElementType[]) o).length > 0) return kw2str(((IElementType[]) o)[0]);
+//        return o instanceof IElementType ? kw2str(((IElementType) o)) : null;
+//      }
+//
+//      @Nullable
+//      private String kw2str(IElementType o) {
+//        return BashTokenTypes.HUMAN_READABLE_KEYWORDS.contains(o) ? o.toString() : null;
+//      }
+//    };
+//    file.putUserData(GeneratedParserUtilBase.COMPLETION_STATE_KEY, state);
+//    TreeUtil.ensureParsed(file.getNode());
+//    return state.items;
+//  }
 
   private static final List<String> BUILTIN = ContainerUtil.newSmartList(
       "alias", "bg", "bind", "break", "builtin", "caller", "cd", "command",
