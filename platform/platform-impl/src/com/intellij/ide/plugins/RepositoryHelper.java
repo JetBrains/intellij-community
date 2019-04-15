@@ -40,7 +40,7 @@ import java.util.*;
 public class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
-  private static final String TAG_EXT = ".etag";
+  @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
 
   /**
    * Returns a list of configured plugin hosts.
@@ -211,8 +211,7 @@ public class RepositoryHelper {
   }
 
   private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException {
-    try (InputStreamReader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)),
-                                                          StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), StandardCharsets.UTF_8)) {
       return parsePluginList(reader);
     }
   }

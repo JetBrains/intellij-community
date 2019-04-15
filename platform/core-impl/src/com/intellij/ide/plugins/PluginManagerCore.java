@@ -719,7 +719,7 @@ public class PluginManagerCore {
         SafeJdomFactory factory = context.getXmlFactory();
         Interner<String> interner = factory == null ? null : factory.stringInterner();
         descriptor.readExternal(JDOMUtil.load(zipFile.getInputStream(entry), factory), jarURL, pathResolver, interner);
-        context.myLastZipFileContainingDescriptor = file;
+        context.lastZipWithDescriptor = file;
         return descriptor;
       }
     }
@@ -754,30 +754,32 @@ public class PluginManagerCore {
 
   private static class LoadingContext implements AutoCloseable {
     private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
-    private File myLastZipFileContainingDescriptor;
-
-    @Nullable
-    private final LoadDescriptorsContext myParentContext;
-
+    final @Nullable LoadDescriptorsContext parentContext;
     final boolean isBundled;
     final boolean isEssential;
+    File lastZipWithDescriptor;
 
     /**
      * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
      */
     LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential) {
-      myParentContext = parentContext;
+      this.parentContext = parentContext;
       this.isBundled = isBundled;
       this.isEssential = isEssential;
     }
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    private ZipFile open(File file) throws IOException {
+    ZipFile open(File file) throws IOException {
       ZipFile zipFile = myOpenedFiles.get(file);
       if (zipFile == null) {
         myOpenedFiles.put(file, zipFile = new ZipFile(file));
       }
       return zipFile;
+    }
+
+    @Nullable
+    SafeJdomFactory getXmlFactory() {
+      return parentContext != null ? parentContext.getXmlFactory() : null;
     }
 
     @Override
@@ -787,29 +789,18 @@ public class PluginManagerCore {
         catch (IOException ignore) { }
       }
     }
-
-    @Nullable
-    public SafeJdomFactory getXmlFactory() {
-      if (myParentContext == null) {
-        return null;
-      }
-      return myParentContext.getXmlFactory();
-    }
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file,
-                                                         @NotNull String pathName,
-                                                         @NotNull LoadingContext context) {
+  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String pathName, @NotNull LoadingContext context) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     boolean isDirectory = file.isDirectory();
     if (isDirectory) {
       descriptor = loadDescriptorFromDir(file, pathName, null, context);
+
       if (descriptor == null) {
-        File libDir = new File(file, "lib");
-        // don't check libDir.isDirectory() because no need - better to reduce fs calls
-        File[] files = libDir.listFiles();
+        File[] files = new File(file, "lib").listFiles();
         if (files == null || files.length == 0) {
           return null;
         }
@@ -868,8 +859,8 @@ public class PluginManagerCore {
 
     resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
       IdeaPluginDescriptorImpl optionalDescriptor = null;
-      if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
-        optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optPathName, context);
+      if (context.lastZipWithDescriptor != null) { // try last file that had the descriptor that worked
+        optionalDescriptor = loadDescriptor(context.lastZipWithDescriptor, optPathName, context);
       }
       if (optionalDescriptor == null) {
         optionalDescriptor = loadDescriptor(file, optPathName, context);
@@ -880,11 +871,12 @@ public class PluginManagerCore {
         // Note that this code is meant for IDE development / testing purposes
         URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
         if (resource != null) {
-          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, context.isBundled, false, context.myParentContext);
+          optionalDescriptor = loadDescriptorFromResource(resource, optPathName, context.isBundled, false, context.parentContext);
         }
       }
       return optionalDescriptor;
     });
+
     return descriptor;
   }
 
@@ -1501,12 +1493,12 @@ public class PluginManagerCore {
   }
 
   public static void fixDescriptors(@NotNull IdeaPluginDescriptorImpl[] pluginDescriptors,
-                                     @NotNull ClassLoader parentLoader,
-                                     @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                     @NotNull Map<String, String> disabledPluginNames,
-                                     @NotNull List<? super String> brokenPluginsList,
-                                     @NotNull List<IdeaPluginDescriptorImpl> result,
-                                     @NotNull List<? super String> errors) {
+                                    @NotNull ClassLoader parentLoader,
+                                    @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                    @NotNull Map<String, String> disabledPluginNames,
+                                    @NotNull List<? super String> brokenPluginsList,
+                                    @NotNull List<IdeaPluginDescriptorImpl> result,
+                                    @NotNull List<? super String> errors) {
     checkCanLoadPlugins(pluginDescriptors, parentLoader, disabledPluginNames, brokenPluginsList, result);
 
     filterBadPlugins(result, disabledPluginNames, errors);
