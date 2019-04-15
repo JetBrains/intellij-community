@@ -1,9 +1,11 @@
 package com.intellij.bash.lexer;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BashFileLexerTest extends LexerTestCase {
   @Override
@@ -41,14 +43,51 @@ public class BashFileLexerTest extends LexerTestCase {
     super.doFileTest(fileExt);
     String text = loadTestDataFile("." + fileExt);
     checkCorrectRestart(text);
+    collectZeroStateStatistics(text);
+  }
+
+  private void collectZeroStateStatistics(String text) {
+    Lexer lexer = createLexer();
+    lexer.start(text);
+
+    List<Integer> segments = new ArrayList<>();
+    boolean rowWithZeroState = false;
+    boolean segmentStart = false;
+    int segmentSize = 0;
+    while (lexer.getTokenType() != null) {
+
+      if (lexer.getState() == 0) {
+        rowWithZeroState = true;
+        if (segmentStart) {
+          segments.add(segmentSize);
+          segmentSize = 0;
+          segmentStart = false;
+        }
+      }
+
+      if (lexer.getTokenType().toString().equals("\\n")) {
+        if (!rowWithZeroState) {
+          segmentSize++;
+          segmentStart = true;
+        }
+        rowWithZeroState = false;
+      }
+      lexer.advance();
+    }
+    if (segmentStart)
+      segments.add(segmentSize);
+    double averageSize = segments.stream().mapToInt(Integer::intValue).average().orElse(0);
+    double maxSize = segments.stream().mapToInt(Integer::intValue).max().orElse(0);
+
+    if (segments.size() > 0) {
+      System.out.println("Average segment size in test " + getName() + ": " + averageSize);
+      System.out.println("Segments count: " + segments.size());
+      System.out.println("Max rows in segment: " + maxSize);
+      System.out.println();
+    }
   }
 
   public void testShouldBeFixed() {
-    try {
       doFileTest("sh");
-    }
-    catch (AssertionError e) {
-      assertEquals(FileComparisonFailure.class, e.getClass());
-    }
   }
 }

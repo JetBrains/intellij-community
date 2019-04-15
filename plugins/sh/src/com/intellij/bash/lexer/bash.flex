@@ -238,7 +238,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
   "&"                           { popState(); yypushback(1);}
   {LineTerminator}              { popState(); return LINEFEED; }
   {WhiteSpace}+                 { popState(); return WHITESPACE; }
-  {HereString}*                 { return WORD; }
+  {HereString}+                 { return WORD; }
 }
 
 <HERE_DOC_START_MARKER> {
@@ -265,7 +265,7 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 }
 
 <HERE_DOC_BODY> {
-    {InputCharacter}*             { return HEREDOC_LINE; }
+    {InputCharacter}+             { return HEREDOC_LINE; }
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE; }
 }
 

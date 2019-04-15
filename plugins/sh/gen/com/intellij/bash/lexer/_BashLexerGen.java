@@ -189,33 +189,33 @@ public class _BashLexerGen implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\17\0\2\1\4\0\1\2\1\0\1\3\2\4\1\3"+
-    "\1\5\1\6\1\7\1\10\1\11\2\1\1\12\1\13"+
-    "\4\12\1\14\1\15\1\16\1\17\1\1\1\20\1\21"+
-    "\1\22\1\23\3\1\1\24\1\25\3\1\1\26\4\1"+
-    "\1\27\1\30\1\6\1\3\1\7\1\31\1\3\2\1"+
-    "\1\12\1\32\4\12\1\16\1\33\1\17\1\34\1\23"+
-    "\1\35\1\36\1\37\1\24\1\25\1\40\1\41\1\42"+
-    "\2\43\1\44\1\45\1\1\1\17\1\22\7\1\1\46"+
-    "\1\47\1\11\1\50\1\3\1\5\2\3\2\1\2\51"+
-    "\1\1\4\52\1\1\2\52\1\1\1\53\1\3\1\53"+
-    "\2\3\1\54\2\55\2\56\2\57\1\2\2\60\3\3"+
-    "\1\61\2\5\1\0\1\11\1\0\1\62\1\1\2\12"+
-    "\2\63\1\64\1\65\1\66\1\67\1\1\1\70\5\71"+
-    "\1\72\1\73\1\74\1\75\1\76\1\77\6\1\1\100"+
-    "\1\101\1\102\1\103\1\104\1\105\2\1\1\106\1\107"+
-    "\1\110\4\1\1\111\1\112\1\113\1\1\1\114\3\0"+
-    "\2\12\1\67\1\0\1\115\1\116\1\117\1\120\1\121"+
-    "\1\122\1\76\1\123\1\124\1\125\1\126\1\127\1\130"+
-    "\1\131\1\132\1\1\1\133\2\134\1\135\6\1\1\136"+
-    "\6\0\1\1\1\5\2\1\1\0\3\1\14\0\2\137"+
-    "\1\0\1\5\1\1\1\140\1\141\1\142\2\71\1\143"+
-    "\1\144\6\1\1\145\1\146\3\1\1\147\3\1\2\113"+
-    "\1\142\1\150\1\151\1\152\1\0\6\1\1\5\3\50"+
-    "\1\0\2\51\2\1\2\53\2\56\1\153\1\154\1\155"+
-    "\1\156\1\157\1\160\1\161\1\146\1\1\1\162\1\163"+
-    "\4\1\1\5\2\1\1\164\1\5\2\1\1\0\2\1"+
-    "\1\165\1\166\2\1\1\146\1\167\3\1\1\170";
+    "\27\0\1\1\2\2\1\1\1\3\1\4\1\5\1\6"+
+    "\1\7\2\10\1\11\1\12\4\11\1\13\1\14\1\15"+
+    "\1\16\1\10\1\17\1\20\1\21\1\22\3\10\1\23"+
+    "\1\24\3\10\1\25\4\10\1\26\1\27\1\4\1\1"+
+    "\1\5\1\30\1\1\2\10\1\11\1\31\4\11\1\15"+
+    "\1\32\1\16\1\33\1\22\1\34\1\35\1\36\1\23"+
+    "\1\24\1\37\1\40\1\41\2\42\1\43\1\44\1\10"+
+    "\1\16\1\21\7\10\1\45\1\46\1\7\1\47\1\1"+
+    "\1\3\2\1\2\10\2\50\1\10\4\51\1\10\2\51"+
+    "\1\10\1\52\1\1\1\52\2\1\1\53\2\54\2\55"+
+    "\2\56\1\57\2\60\3\1\1\61\2\3\1\0\1\7"+
+    "\1\0\1\62\1\10\2\11\2\63\1\64\1\65\1\66"+
+    "\1\67\1\10\1\70\5\71\1\72\1\73\1\74\1\75"+
+    "\1\76\1\77\6\10\1\100\1\101\1\102\1\103\1\104"+
+    "\1\105\2\10\1\106\1\107\1\110\4\10\1\111\1\112"+
+    "\1\113\1\10\1\114\3\0\2\11\1\67\1\0\1\115"+
+    "\1\116\1\117\1\120\1\121\1\122\1\76\1\123\1\124"+
+    "\1\125\1\126\1\127\1\130\1\131\1\132\1\10\1\133"+
+    "\2\134\1\135\6\10\1\136\6\0\1\10\1\3\2\10"+
+    "\1\0\3\10\14\0\2\137\1\0\1\3\1\10\1\140"+
+    "\1\141\1\142\2\71\1\143\1\144\6\10\1\145\1\146"+
+    "\3\10\1\147\3\10\2\113\1\142\1\150\1\151\1\152"+
+    "\1\0\6\10\1\3\3\47\1\0\2\50\2\10\2\52"+
+    "\2\55\1\153\1\154\1\155\1\156\1\157\1\160\1\161"+
+    "\1\146\1\10\1\162\1\163\4\10\1\3\2\10\1\164"+
+    "\1\3\2\10\1\0\2\10\1\165\1\166\2\10\1\146"+
+    "\1\167\3\10\1\170";
 
   private static int [] zzUnpackAction() {
     int [] result = new int[346];
@@ -837,19 +837,19 @@ public class _BashLexerGen implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\17\0\2\1\4\0\1\1\1\0\2\11\4\1\2\11"+
-    "\12\1\1\11\1\1\1\11\1\1\3\11\23\1\1\11"+
-    "\4\1\1\11\17\1\3\11\1\1\2\11\13\1\1\11"+
-    "\15\1\1\11\13\1\1\11\3\1\1\11\2\1\1\11"+
-    "\4\1\1\11\2\1\1\0\1\11\1\0\1\11\3\1"+
-    "\1\11\2\1\2\11\2\1\1\11\1\1\1\11\3\1"+
-    "\1\11\1\1\4\11\6\1\2\11\1\1\2\11\3\1"+
-    "\1\11\6\1\2\11\2\1\1\11\3\0\3\1\1\0"+
-    "\6\11\1\1\5\11\1\1\2\11\1\1\2\11\10\1"+
-    "\1\11\6\0\4\1\1\0\3\1\14\0\1\11\1\1"+
-    "\1\0\2\1\2\11\3\1\1\11\7\1\1\11\10\1"+
-    "\1\11\2\1\2\11\1\1\1\0\7\1\1\11\2\1"+
-    "\1\0\5\1\1\11\2\1\1\11\25\1\1\0\14\1";
+    "\27\0\2\11\4\1\2\11\12\1\1\11\1\1\1\11"+
+    "\1\1\3\11\23\1\1\11\4\1\1\11\17\1\3\11"+
+    "\1\1\2\11\13\1\1\11\15\1\1\11\13\1\1\11"+
+    "\3\1\1\11\2\1\1\11\4\1\1\11\2\1\1\0"+
+    "\1\11\1\0\1\11\3\1\1\11\2\1\2\11\2\1"+
+    "\1\11\1\1\1\11\3\1\1\11\1\1\4\11\6\1"+
+    "\2\11\1\1\2\11\3\1\1\11\6\1\2\11\2\1"+
+    "\1\11\3\0\3\1\1\0\6\11\1\1\5\11\1\1"+
+    "\2\11\1\1\2\11\10\1\1\11\6\0\4\1\1\0"+
+    "\3\1\14\0\1\11\1\1\1\0\2\1\2\11\3\1"+
+    "\1\11\7\1\1\11\10\1\1\11\2\1\2\11\1\1"+
+    "\1\0\7\1\1\11\2\1\1\0\5\1\1\11\2\1"+
+    "\1\11\25\1\1\0\14\1";
 
   private static int [] zzUnpackAttribute() {
     int [] result = new int[346];
@@ -1237,221 +1237,216 @@ public class _BashLexerGen implements FlexLexer {
       else {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1: 
-            { return WORD;
+            { return BAD_CHARACTER;
             } 
             // fall through
           case 121: break;
           case 2: 
-            { return HEREDOC_LINE;
+            { return LINEFEED;
             } 
             // fall through
           case 122: break;
           case 3: 
-            { return BAD_CHARACTER;
+            { return WHITESPACE;
             } 
             // fall through
           case 123: break;
           case 4: 
-            { return LINEFEED;
+            { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT;
             } 
             // fall through
           case 124: break;
           case 5: 
-            { return WHITESPACE;
+            { return BANG;
             } 
             // fall through
           case 125: break;
           case 6: 
-            { if (yystate() == STRING_EXPRESSION) { yypushback(yylength() - 1); return WORD; } return COMMENT;
+            { pushState(STRING_EXPRESSION); return QUOTE;
             } 
             // fall through
           case 126: break;
           case 7: 
-            { return BANG;
+            { return RAW_STRING;
             } 
             // fall through
           case 127: break;
           case 8: 
-            { pushState(STRING_EXPRESSION); return QUOTE;
+            { return WORD;
             } 
             // fall through
           case 128: break;
           case 9: 
-            { return RAW_STRING;
+            { return INT;
             } 
             // fall through
           case 129: break;
           case 10: 
-            { return INT;
+            { return DOLLAR;
             } 
             // fall through
           case 130: break;
           case 11: 
-            { return DOLLAR;
+            { pushParentheses(PARENTHESES); return LEFT_PAREN;
             } 
             // fall through
           case 131: break;
           case 12: 
-            { pushParentheses(PARENTHESES); return LEFT_PAREN;
-            } 
-            // fall through
-          case 132: break;
-          case 13: 
             { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) popState(); else pushState(BACKQUOTE_COMMAND_SUBSTITUTION);
                                   return BACKQUOTE;
             } 
             // fall through
+          case 132: break;
+          case 13: 
+            { return AMP;
+            } 
+            // fall through
           case 133: break;
           case 14: 
-            { return AMP;
+            { return ASSIGN;
             } 
             // fall through
           case 134: break;
           case 15: 
-            { return ASSIGN;
+            { return LEFT_CURLY;
             } 
             // fall through
           case 135: break;
           case 16: 
-            { return LEFT_CURLY;
+            { return RIGHT_CURLY;
             } 
             // fall through
           case 136: break;
           case 17: 
-            { return RIGHT_CURLY;
+            { return SEMI;
             } 
             // fall through
           case 137: break;
           case 18: 
-            { return SEMI;
+            { return GT;
             } 
             // fall through
           case 138: break;
           case 19: 
-            { return GT;
+            { return LT;
             } 
             // fall through
           case 139: break;
           case 20: 
-            { return LT;
+            { return PIPE;
             } 
             // fall through
           case 140: break;
           case 21: 
-            { return PIPE;
-            } 
-            // fall through
-          case 141: break;
-          case 22: 
             { if (shouldCloseSingleParen()) popParentheses();
                                     if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); return RIGHT_PAREN;
             } 
             // fall through
-          case 142: break;
-          case 23: 
+          case 141: break;
+          case 22: 
             { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE;
             } 
             // fall through
-          case 143: break;
-          case 24: 
+          case 142: break;
+          case 23: 
             { switch (yystate()) {
                                       case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
                                       case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE;
                                       default: return RIGHT_SQUARE; }
             } 
             // fall through
+          case 143: break;
+          case 24: 
+            { return COMMA;
+            } 
+            // fall through
           case 144: break;
           case 25: 
-            { return COMMA;
+            { return QMARK;
             } 
             // fall through
           case 145: break;
           case 26: 
-            { return QMARK;
+            { return MINUS;
             } 
             // fall through
           case 146: break;
           case 27: 
-            { return MINUS;
+            { return PLUS;
             } 
             // fall through
           case 147: break;
           case 28: 
-            { return PLUS;
+            { return MULT;
             } 
             // fall through
           case 148: break;
           case 29: 
-            { return MULT;
+            { return DIV;
             } 
             // fall through
           case 149: break;
           case 30: 
-            { return DIV;
+            { return MOD;
             } 
             // fall through
           case 150: break;
           case 31: 
-            { return MOD;
+            { return XOR;
             } 
             // fall through
           case 151: break;
           case 32: 
-            { return XOR;
+            { return BITWISE_NEGATION;
             } 
             // fall through
           case 152: break;
           case 33: 
-            { return BITWISE_NEGATION;
+            { return COLON;
             } 
             // fall through
           case 153: break;
           case 34: 
-            { return COLON;
+            { popState(); return LINEFEED;
             } 
             // fall through
           case 154: break;
           case 35: 
-            { popState(); return LINEFEED;
+            { return QUOTE;
             } 
             // fall through
           case 155: break;
           case 36: 
-            { return QUOTE;
+            { popState(); return SEMI;
             } 
             // fall through
           case 156: break;
           case 37: 
-            { popState(); return SEMI;
+            { popState(); return RIGHT_PAREN;
             } 
             // fall through
           case 157: break;
           case 38: 
-            { popState(); return RIGHT_PAREN;
+            { popState(); return QUOTE;
             } 
             // fall through
           case 158: break;
           case 39: 
-            { popState(); return QUOTE;
+            { popState(); return WORD;
             } 
             // fall through
           case 159: break;
           case 40: 
-            { popState(); return WORD;
+            { popState(); return WHITESPACE;
             } 
             // fall through
           case 160: break;
           case 41: 
-            { popState(); return WHITESPACE;
+            { popState(); yypushback(1);
             } 
             // fall through
           case 161: break;
           case 42: 
-            { popState(); yypushback(1);
-            } 
-            // fall through
-          case 162: break;
-          case 43: 
             { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
                                       heredocMarker = yytext().subSequence(1, yylength()-1).toString();
                                     else heredocMarker = yytext().toString();
@@ -1460,26 +1455,31 @@ public class _BashLexerGen implements FlexLexer {
                                     return HEREDOC_MARKER_START;
             } 
             // fall through
-          case 163: break;
-          case 44: 
+          case 162: break;
+          case 43: 
             { if (yytext().toString().equals(heredocMarker))
                                   { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
                                     else { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
             } 
             // fall through
+          case 163: break;
+          case 44: 
+            { yypushback(yylength()); yybegin(HERE_DOC_BODY);
+            } 
+            // fall through
           case 164: break;
           case 45: 
-            { yypushback(yylength()); yybegin(HERE_DOC_BODY);
+            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE;
             } 
             // fall through
           case 165: break;
           case 46: 
-            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE;
+            { yybegin(HERE_DOC_END_MARKER); return LINEFEED;
             } 
             // fall through
           case 166: break;
           case 47: 
-            { yybegin(HERE_DOC_END_MARKER); return LINEFEED;
+            { return HEREDOC_LINE;
             } 
             // fall through
           case 167: break;

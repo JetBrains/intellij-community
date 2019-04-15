@@ -1,14 +1,6 @@
 package com.intellij.bash.parser;
 
-import com.intellij.lang.*;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ParsingTestCase;
-
-import java.io.File;
-import java.io.IOException;
 
 public class BashParserTest extends ParsingTestCase {
   public BashParserTest() {
