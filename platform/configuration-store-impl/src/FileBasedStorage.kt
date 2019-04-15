@@ -97,25 +97,26 @@ open class FileBasedStorage(file: Path,
 
       val isUseVfs = storage.isUseVfsForWrite
       val virtualFile = if (isUseVfs) storage.virtualFile else null
-      if (dataWriter == null) {
-        if (isUseVfs && virtualFile == null) {
-          LOG.warn("Cannot find virtual file $virtualFile")
-        }
+      when {
+        dataWriter == null -> {
+          if (isUseVfs && virtualFile == null) {
+            LOG.warn("Cannot find virtual file $virtualFile")
+          }
 
-        deleteFile(storage.file, this, virtualFile)
-        storage.cachedVirtualFile = null
-      }
-      else if (isUseVfs) {
-        storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
-      }
-      else {
-        val file = storage.file
-        LOG.debugOrInfoIfTestMode { "Save $file" }
-        try {
-          dataWriter.writeTo(file, lineSeparator.separatorString)
+          deleteFile(storage.file, this, virtualFile)
+          storage.cachedVirtualFile = null
         }
-        catch (e: Throwable) {
-          throw RuntimeException("Cannot write ${file}", e)
+        isUseVfs -> {
+          storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
+        }
+        else -> {
+          val file = storage.file
+          LOG.debugOrInfoIfTestMode { "Save $file" }
+          try {
+            dataWriter.writeTo(file, lineSeparator.separatorString)
+          }
+          catch (e: Throwable) {
+          throw RuntimeException("Cannot write ${file}", e)}
         }
       }
     }
