@@ -69,6 +69,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
     if (o == null || getClass() != o.getClass()) return false;
     MessageEventImpl event = (MessageEventImpl)o;
     return Objects.equals(getMessage(), event.getMessage()) &&
+           Objects.equals(getDescription(), event.getDescription()) &&
            Objects.equals(myGroup, event.myGroup);
   }
 
