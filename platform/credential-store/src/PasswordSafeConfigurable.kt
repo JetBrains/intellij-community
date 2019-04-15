@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -18,6 +18,8 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
@@ -28,21 +30,26 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Paths
+import javax.swing.JCheckBox
 import javax.swing.JPanel
+import javax.swing.JRadioButton
 
 internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                                                                          "Passwords",
                                                                                                                                                          "reference.ide.settings.password.safe") {
   override fun getSettings() = settings
 
-  override fun createUi() = PasswordSafeConfigurableUi()
+  override fun createUi() = PasswordSafeConfigurableUi(settings)
 }
 
-internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
+internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
+  private lateinit var myPanel: DialogPanel
+  private lateinit var usePgpKey: JCheckBox
+  private lateinit var pgpKeyCombo: ComboBox<PgpKey>
+  private lateinit var keepassRadioButton: JRadioButton
   private var keePassDbFile: TextFieldWithBrowseButton? = null
 
-  private var isUsePgp = BooleanPropertyWithComboBoxUiManager(CollectionComboBoxModel<PgpKey>())
-  private val providerTypeModel = ChoicePropertyUiManager(ProviderType.KEYCHAIN)
+  private val pgpListModel = CollectionComboBoxModel<PgpKey>()
 
   private val pgp by lazy { Pgp() }
 
@@ -51,42 +58,42 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val secureRandom = lazy { createSecureRandom() }
 
   override fun reset(settings: PasswordSafeSettings) {
-    providerTypeModel.selected = settings.providerType
+    val secretKeys = pgp.listKeys()
+    pgpListModel.replaceAll(secretKeys)
+    usePgpKey.text = usePgpKeyText()
+
+    myPanel.reset()
 
     @Suppress("IfThenToElvis")
     keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
-
-    val secretKeys = pgp.listKeys()
-    isUsePgp.listModel.replaceAll(secretKeys)
-
-    val currentKeyId = settings.state.pgpKeyId
-    isUsePgp.selected = (if (currentKeyId == null) null else secretKeys.firstOrNull { it.keyId == currentKeyId }) ?: secretKeys.firstOrNull()
-    isUsePgp.value = !secretKeys.isEmpty() && currentKeyId != null
-    isUsePgp.isEnabled = providerTypeModel.selected == ProviderType.KEEPASS && !secretKeys.isEmpty()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
+    if (myPanel.isModified()) return true
+
     if (keePassDbFile == null) {
       return false
     }
-    return getNewProviderType() != settings.providerType || isKeepassFileLocationChanged(settings) || isPgpKeyChanged(settings)
+    return isKeepassFileLocationChanged(settings)
   }
 
-  private fun isPgpKeyChanged(settings: PasswordSafeSettings) = settings.state.pgpKeyId != getNewPgpKey()?.keyId
-
   private fun isKeepassFileLocationChanged(settings: PasswordSafeSettings): Boolean {
-    return getNewProviderType() == ProviderType.KEEPASS && getNewDbFileAsString() != settings.keepassDb
+    return keepassRadioButton.isSelected && getNewDbFileAsString() != settings.keepassDb
   }
 
   override fun apply(settings: PasswordSafeSettings) {
-    val providerType = getNewProviderType()
+    val pgpKeyChanged = getNewPgpKey()?.keyId != mySettings.state.pgpKeyId
+    val oldProviderType = mySettings.providerType
+
+    myPanel.apply()
+    val providerType = mySettings.providerType
 
     // close if any, it is more reliable just close current store and later it will be recreated lazily with a new settings
     (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
 
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     @Suppress("CascadeIf")
-    if (settings.providerType != providerType) {
+    if (oldProviderType != providerType) {
       @Suppress("NON_EXHAUSTIVE_WHEN")
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
@@ -120,7 +127,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     else if (isKeepassFileLocationChanged(settings)) {
       createAndSaveKeePassDatabaseWithNewOptions(settings)
     }
-    else if (providerType == ProviderType.KEEPASS && isPgpKeyChanged(settings)) {
+    else if (providerType == ProviderType.KEEPASS && pgpKeyChanged) {
       try {
         // not our business in this case, if there is no db file, do not require not null KeePassFileManager
         createKeePassFileManager()?.saveMasterKeyToApplyNewEncryptionSpec()
@@ -141,7 +148,6 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     settings.providerType = providerType
-    settings.state.pgpKeyId = getNewPgpKey()?.keyId
   }
 
   // existing in-memory KeePass database is not used, the same as if switched to KEYCHAIN
@@ -177,10 +183,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private fun getNewDbFileAsString() = keePassDbFile!!.text.trim().nullize()
 
   override fun getComponent(): JPanel {
-    return panel {
+    myPanel = panel {
       row { label("Save passwords:") }
 
-      buttonGroup(providerTypeModel) {
+      buttonGroup(mySettings::providerType) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
             radioButton("In native Keychain", ProviderType.KEYCHAIN)
@@ -188,7 +194,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         row {
-          radioButton("In KeePass", ProviderType.KEEPASS)
+          keepassRadioButton = radioButton("In KeePass", ProviderType.KEEPASS).component
           row("Database:") {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
@@ -210,11 +216,21 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           }
           row {
             cell {
-              val prefix = "Protect master password using PGP key"
-              checkBox(if (isUsePgp.listModel.isEmpty) "$prefix (No keys configured)" else "$prefix:", propertyUiManager = isUsePgp)
-              comboBox(isUsePgp, growPolicy = GrowPolicy.MEDIUM_TEXT) { value, _, _ ->
-                setText("${value.userId} (${value.keyId})")
-              }
+              usePgpKey = checkBox(
+                usePgpKeyText(),
+                { !pgpListModel.isEmpty && mySettings.state.pgpKeyId != null },
+                { if (!it) mySettings.state.pgpKeyId = null }
+              ).component
+
+              pgpKeyCombo = comboBox<PgpKey>(
+                pgpListModel,
+                { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
+                { mySettings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
+                growPolicy = GrowPolicy.MEDIUM_TEXT,
+                renderer = listCellRenderer { value, _, _ -> append("${value.userId} (${value.keyId})") }
+              )
+                .enableIf(usePgpKey.selected)
+                .component
             }
           }
         }
@@ -223,6 +239,18 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
       }
     }
+    return myPanel
+  }
+
+  private fun usePgpKeyText(): String {
+    val prefix = "Protect master password using PGP key"
+    return if (pgpListModel.isEmpty) "$prefix (No keys configured)" else "$prefix:"
+  }
+
+  private fun getSelectedPgpKey(): PgpKey? {
+    val currentKeyId = mySettings.state.pgpKeyId ?: return null
+    return (pgpListModel.items.firstOrNull { it.keyId == currentKeyId })
+           ?: pgpListModel.items.firstOrNull()
   }
 
   private fun createKeePassFileManager(): KeePassFileManager? {
@@ -230,16 +258,13 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun getEncryptionSpec(): EncryptionSpec {
-    val pgpKey = getNewPgpKey()
-    return when (pgpKey) {
+    return when (val pgpKey = getNewPgpKey()) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey.keyId)
     }
   }
 
-  private fun getNewPgpKey() = isUsePgp.selected
-
-  private fun getNewProviderType() = providerTypeModel.selected
+  private fun getNewPgpKey() = pgpKeyCombo.selectedItem as? PgpKey
 
   private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
     override fun actionPerformed(event: AnActionEvent) {

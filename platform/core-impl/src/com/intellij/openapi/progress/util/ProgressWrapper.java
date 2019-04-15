@@ -84,7 +84,9 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   public final void checkCanceled() {
     ProgressWrapper current = this;
     while (true) {
-      current.checkCanceledRaw();
+      if (current.isCanceledRaw()) {
+        current.checkCanceledRaw();
+      }
       ProgressIndicator original = current.getOriginalProgressIndicator();
       if (original instanceof ProgressWrapper) {
         current = (ProgressWrapper)original;

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -70,7 +69,9 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
       if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
         return true;
       }
-      if (!StringUtil.isCapitalized(psiClass.getName()) && !Registry.is("ide.completion.show.lower.case.classes")) {
+      String name = psiClass.getName();
+      if (name != null && name.length() > 0 && Character.isLowerCase(name.charAt(0)) &&
+          !Registry.is("ide.completion.show.lower.case.classes")) {
         return true;
       }
     }

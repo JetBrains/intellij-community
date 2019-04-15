@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class TabHeaderComponent extends JComponent {
 
   public TabHeaderComponent(@NotNull DefaultActionGroup actions, @NotNull TabHeaderListener listener) {
     myListener = listener;
-    add(myToolbarComponent = createToolbar(actions));
+    add(myToolbarComponent = createToolbar("Manage Repositories, Configure Proxy or Install Plugin from Disk", actions));
     setBackground(JBUI.CurrentTheme.ToolWindow.headerBackground());
     setOpaque(true);
 
@@ -97,16 +98,14 @@ public class TabHeaderComponent extends JComponent {
   }
 
   @NotNull
-  private static JComponent createToolbar(@NotNull DefaultActionGroup actions) {
+  public static JComponent createToolbar(@Nullable String tooltip, @NotNull DefaultActionGroup actions) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(null,
-                                               "Manage Repositories, Configure Proxy or Install Plugin from Disk",
-                                               AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(null, tooltip, AllIcons.General.GearPlain) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().

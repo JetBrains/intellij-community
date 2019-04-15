@@ -100,7 +100,7 @@ public abstract class IdeFrameDecorator implements Disposable {
       Rectangle bounds = myFrame.getBounds();
       int extendedState = myFrame.getExtendedState();
       if (state && extendedState == Frame.NORMAL) {
-        myFrame.getRootPane().putClientProperty("normalBounds", bounds);
+        myFrame.getRootPane().putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) return ActionCallback.REJECTED;
@@ -115,7 +115,7 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.setBounds(defaultBounds);
         }
         else {
-          Object o = myFrame.getRootPane().getClientProperty("normalBounds");
+          Object o = myFrame.getRootPane().getClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS);
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
           }
@@ -193,6 +193,6 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecorationActive() {
-    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && ApplicationManager.getApplication().isInternal());
+    return Registry.is("ide.win.frame.decoration") || (Registry.is("ide.win.frame.decoration.internal") && Boolean.getBoolean("idea.is.internal"));
   }
 }

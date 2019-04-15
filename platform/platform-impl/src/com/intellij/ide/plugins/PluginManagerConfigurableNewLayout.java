@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,6 +70,9 @@ public class PluginManagerConfigurableNewLayout
   private LinkListener<IdeaPluginDescriptor> myNameListener;
   private LinkListener<String> mySearchListener;
 
+  private final LinkLabel<Object> myUpdateAll = new LinkLabel<>("Update All", null);
+  private final JLabel myUpdateCounter = new PluginManagerConfigurableTreeRenderer.CountComponent();
+
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
     public List<IdeaPluginDescriptor> getAllRepoPlugins() {
@@ -113,7 +117,15 @@ public class PluginManagerConfigurableNewLayout
     });
 
     myTabHeaderComponent.addTab("Marketplace");
-    myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed"));
+    myTabHeaderComponent.addTab(myInstalledTabName = new PluginManagerConfigurableNew.CountTabName(myTabHeaderComponent, "Installed") {
+      @Override
+      public void setCount(int count) {
+        super.setCount(count);
+        myUpdateAll.setVisible(count > 0);
+        myUpdateCounter.setText(String.valueOf(count));
+        myUpdateCounter.setVisible(count > 0);
+      }
+    });
 
     myPluginUpdatesService =
       PluginUpdatesService.connectConfigurable(countValue -> myInstalledTabName.setCount(countValue == null ? 0 : countValue));
@@ -196,6 +208,9 @@ public class PluginManagerConfigurableNewLayout
         });
       }
     });
+    actions.addSeparator();
+    actions.add(new ChangePluginStateAction(false));
+    actions.add(new ChangePluginStateAction(true));
 
     return actions;
   }
@@ -224,7 +239,7 @@ public class PluginManagerConfigurableNewLayout
 
   private static int getStoredSelectionTab() {
     int value = PropertiesComponent.getInstance().getInt(PluginManagerConfigurableNew.SELECTION_TAB_KEY, MARKETPLACE_TAB);
-    return value < MARKETPLACE_TAB || value > INSTALLED_TAB ? MARKETPLACE_TAB : INSTALLED_TAB;
+    return value < MARKETPLACE_TAB || value > INSTALLED_TAB ? MARKETPLACE_TAB : value;
   }
 
   private static void storeSelectionTab(int value) {
@@ -522,6 +537,18 @@ public class PluginManagerConfigurableNewLayout
         }
 
         if (!downloaded.descriptors.isEmpty()) {
+          myUpdateAll.setListener(new LinkListener<Object>() {
+            @Override
+            public void linkSelected(LinkLabel aSource, Object aLinkData) {
+              for (CellPluginComponent plugin : downloaded.ui.plugins) {
+                ((NewListPluginComponent)plugin).updatePlugin();
+              }
+            }
+          }, null);
+          downloaded.addRightAction(myUpdateAll);
+
+          downloaded.addRightAction(myUpdateCounter);
+
           downloaded.sortByName();
           downloaded.titleWithCount(downloadedEnabled);
           myInstalledPanel.addGroup(downloaded);
@@ -659,6 +686,43 @@ public class PluginManagerConfigurableNewLayout
         return myInstalledSearchPanel;
       }
     };
+  }
+
+  private class ChangePluginStateAction extends AnAction {
+    private final boolean myEnable;
+
+    private ChangePluginStateAction(boolean enable) {
+      super(enable ? "Enable All Downloaded Plugins" : "Disable All Downloaded Plugins");
+      myEnable = enable;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      IdeaPluginDescriptor[] descriptors;
+      PluginsGroup group = myPluginModel.getDownloadedGroup();
+
+      if (group == null) {
+        ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+        List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
+
+        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+          if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString()) &&
+              !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
+            descriptorList.add(descriptor);
+          }
+        }
+
+        descriptors = descriptorList.toArray(new IdeaPluginDescriptor[0]);
+      }
+      else {
+        descriptors = group.ui.plugins.stream().filter(component -> myPluginModel.isEnabled(component.myPlugin) != myEnable)
+          .map(component -> component.myPlugin).toArray(IdeaPluginDescriptor[]::new);
+      }
+
+      if (descriptors.length > 0) {
+        myPluginModel.changeEnableDisable(descriptors, myEnable);
+      }
+    }
   }
 
   @NotNull

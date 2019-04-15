@@ -2,12 +2,17 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -27,6 +32,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
 
   private final String myHref;
   private final String myXpointer;
+  private volatile CachedValue<DomElement> myCachedValue;
 
   public XIncludeStub(ElementStub parent, @Nullable String href, @Nullable String xpointer) {
     super(parent);
@@ -47,43 +53,54 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   public void resolve(DomInvocationHandler parent, List<DomElement> included, XmlName xmlName) {
+
+    XmlFile file = parent.getFile();
+    if (myCachedValue == null) {
+      myCachedValue = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
+        DomElement result = computeValue(parent);
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      });
+    }
+
+    DomElement rootElement = myCachedValue.getValue();
+    if (rootElement != null) {
+      rootElement.acceptChildren(element -> {
+        if (element.getXmlElementName().equals(xmlName.getLocalName())) {
+          included.add(element);
+        }
+      });
+    }
+  }
+
+  @Nullable
+  private DomElement computeValue(DomInvocationHandler parent) {
     if (StringUtil.isEmpty(myHref) || StringUtil.isEmpty(myXpointer)) {
-      return;
+      return null;
     }
     Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(myXpointer);
     if (!matcher.matches()) {
-      return;
+      return null;
     }
     String group = matcher.group(1);
     matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(group);
     if (!matcher.matches()) {
-      return;
+      return null;
     }
     String tagName = matcher.group(1);
-
     XmlFile file = parent.getFile();
     PsiFileImpl dummy = (PsiFileImpl)PsiFileFactory.getInstance(file.getProject()).createFileFromText(PlainTextLanguage.INSTANCE, myHref);
     dummy.setOriginalFile(file);
-    PsiFileSystemItem resolve = new FileReferenceSet(dummy).resolve();
-    if (!(resolve instanceof XmlFile)) {
-      return;
-    }
-    DomFileElementImpl<DomElement> element = parent.getManager().getFileElement((XmlFile)resolve);
-    if (element == null) {
-      return;
-    }
-    DomElement rootElement = element.getRootElement();
-    if (!tagName.equals(rootElement.getXmlElementName())) {
-      return;
-    }
-    rootElement.acceptChildren(new DomElementVisitor() {
-      @Override
-      public void visitDomElement(DomElement element) {
-        if (element.getXmlElementName().equals(xmlName.getLocalName())) {
-          included.add(element);
+    PsiFileSystemItem fileSystemItem = new FileReferenceSet(dummy).resolve();
+    if (fileSystemItem instanceof XmlFile) {
+      DomFileElementImpl<DomElement> element = parent.getManager().getFileElement((XmlFile)fileSystemItem);
+      if (element != null) {
+        DomElement result = element.getRootElement();
+        if (result != null && tagName.equals(result.getXmlElementName())) {
+          return result;
         }
       }
-    });
+    }
+    return null;
   }
 
   @Override

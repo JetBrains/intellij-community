@@ -91,7 +91,20 @@
     </colors>
 
     <attributes>
-
+      <option name="DEBUGGER_SMART_STEP_INTO_TARGET">
+        <value>
+          <option name="BACKGROUND" value="E2D3F0" />
+          <option name="FOREGROUND" value="000" />
+        </value>
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_SELECTION">
+        <value>
+          <option name="BACKGROUND" value="E4C0F0" />
+          <option name="FOREGROUND" value="000" />
+          <option name="EFFECT_COLOR" value="CC00CC"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
           <option name="FOREGROUND" value="868686" />
@@ -1479,6 +1492,18 @@
       </option>
       <option name="Class">
         <value />
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_TARGET">
+        <value>
+          <option name="BACKGROUND" value="56425E" />
+        </value>
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_SELECTION">
+        <value>
+          <option name="BACKGROUND" value="824991" />
+          <option name="EFFECT_COLOR" value="C76DC7"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
       </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>

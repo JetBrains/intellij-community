@@ -76,7 +76,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
-  private static final boolean WINDOWS_ALT_GRAPH_JAVA11 = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -164,7 +164,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (WINDOWS_ALT_GRAPH_JAVA11 && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
@@ -410,7 +410,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if (WINDOWS_ALT_GRAPH_JAVA11 && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
+    if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e)) {
       myFirstKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
       if (myFirstKeyStroke == null) return false;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);

@@ -121,12 +121,12 @@
               "firefox": {
                 "version_added": true,
                 "version_removed": "58",
-                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region — <code>coords</code> and <code>shape</code> attribute support removed."
+                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region - <code>coords</code> and <code>shape</code> attribute support removed."
               },
               "firefox_android": {
                 "version_added": true,
                 "version_removed": "58",
-                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region — <code>coords</code> and <code>shape</code> attribute support removed."
+                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region - <code>coords</code> and <code>shape</code> attribute support removed."
               },
               "ie": {
                 "version_added": false
@@ -161,10 +161,12 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": "14"
+                "version_added": "14",
+                "notes": "Starting in Chrome 65, cross-origin downloads are not supported on the <code>&lt;a&gt;</code> element."
               },
               "chrome_android": {
-                "version_added": null
+                "version_added": "18",
+                "notes": "Starting in Chrome 65, cross-origin downloads are not supported on the <code>&lt;a&gt;</code> element."
               },
               "edge": [
                 {
@@ -207,7 +209,8 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true,
+                "notes": "Starting in WebView 65, cross-origin downloads are not supported on the <code>&lt;a&gt;</code> element."
               }
             },
             "status": {
@@ -510,7 +513,7 @@
                 "version_added": "38"
               },
               "opera_android": {
-                "version_added": "38"
+                "version_added": "41"
               },
               "safari": {
                 "version_added": "11.1"
@@ -650,12 +653,12 @@
               "firefox": {
                 "version_added": true,
                 "version_removed": "58",
-                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region — <code>coords</code> and <code>shape</code> attribute support removed."
+                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region - <code>coords</code> and <code>shape</code> attribute support removed."
               },
               "firefox_android": {
                 "version_added": true,
                 "version_removed": "58",
-                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region — <code>coords</code> and <code>shape</code> attribute support removed."
+                "notes": "You can no longer nest an <code>&lt;a&gt;</code> element inside a <code>&lt;map&gt;</code> element to create a hotspot region - <code>coords</code> and <code>shape</code> attribute support removed."
               },
               "ie": {
                 "version_added": false

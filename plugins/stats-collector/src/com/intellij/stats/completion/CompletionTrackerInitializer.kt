@@ -3,6 +3,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.Disposable
@@ -12,7 +13,6 @@ import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.reporting.isSendAllowed
 import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
@@ -54,7 +54,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldInitialize() = StatisticsUploadAssistant.isSendAllowed() || isUnitTestMode()
 
-  private fun shouldTrackSession() = isSendAllowed() || isUnitTestMode()
+  private fun shouldTrackSession() = CompletionStatsCollectorSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 

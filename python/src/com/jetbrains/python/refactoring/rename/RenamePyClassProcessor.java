@@ -3,7 +3,7 @@ package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -47,13 +47,15 @@ public class RenamePyClassProcessor extends RenamePyElementProcessor {
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull final PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
     if (element instanceof PyClass) {
       final PyFunction initMethod = ((PyClass)element).findMethodByName(PyNames.INIT, true, null);
       if (initMethod != null) {
-        final List<PsiReference> allRefs = Collections.synchronizedList(new ArrayList<PsiReference>());
-        allRefs.addAll(super.findReferences(element));
-        ReferencesSearch.search(initMethod, GlobalSearchScope.projectScope(element.getProject())).forEach(psiReference -> {
+        final List<PsiReference> allRefs = Collections.synchronizedList(new ArrayList<>());
+        allRefs.addAll(super.findReferences(element, searchScope, searchInCommentsAndStrings));
+        ReferencesSearch.search(initMethod, searchScope).forEach(psiReference -> {
           if (psiReference.getCanonicalText().equals(((PyClass)element).getName())) {
             allRefs.add(psiReference);
           }
@@ -62,6 +64,6 @@ public class RenamePyClassProcessor extends RenamePyElementProcessor {
         return allRefs;
       }
     }
-    return super.findReferences(element);
+    return super.findReferences(element, searchScope, searchInCommentsAndStrings);
   }
 }

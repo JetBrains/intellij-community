@@ -129,16 +129,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (holder.extension.isIconBeforeText()) {
         int offset = holder.extension.getAfterIconOffset();
         holder.bounds.x = bounds.x;
-        bounds.width -= holder.bounds.width + gap;
-        bounds.x += holder.bounds.width + gap + offset;
 
-        margin.left += holder.bounds.width + gap + offset;
+        int extensionWidth = holder.bounds.width + gap + offset;
+        bounds.x += extensionWidth;
+        bounds.width -= extensionWidth;
+        margin.left += extensionWidth;
       }
       else {
-        bounds.width -= holder.bounds.width + gap;
-        holder.bounds.x = bounds.x + bounds.width + gap;
+        holder.bounds.x = bounds.x + bounds.width - holder.bounds.width;
 
-        margin.right += holder.bounds.width + gap;
+        int extensionWidth = holder.bounds.width + gap;
+        bounds.width -= extensionWidth;
+        margin.right += extensionWidth;
       }
       int top = (bounds.height - holder.bounds.height) / 2;
       if (top > gap) {

@@ -523,7 +523,7 @@
                   "version_added": null
                 },
                 "ie": {
-                  "version_added": null
+                  "version_added": false
                 },
                 "opera": {
                   "version_added": null
@@ -580,7 +580,7 @@
                 "version_added": "38"
               },
               "opera_android": {
-                "version_added": "38"
+                "version_added": "41"
               },
               "safari": {
                 "version_added": "11.1"
@@ -830,7 +830,7 @@
                   "version_added": "53"
                 },
                 "opera_android": {
-                  "version_added": "53"
+                  "version_added": "47"
                 },
                 "safari": {
                   "version_added": null
@@ -882,7 +882,7 @@
                   "version_added": "36"
                 },
                 "opera_android": {
-                  "version_added": "32"
+                  "version_added": "36"
                 },
                 "safari": {
                   "version_added": "10.1"
@@ -1024,12 +1024,12 @@
                 "firefox": {
                   "version_added": "56",
                   "version_removed": "57",
-                  "notes": "Disabled due to various web compatibility issues (e.g. <a href='https://bugzil.la/1405761'>bug 1405761</a>). An improved version that works for non-cacheable resources is expected to land soon."
+                  "notes": "Disabled due to various web compatibility issues (e.g. <a href='https://bugzil.la/1405761'>bug 1405761</a>)."
                 },
                 "firefox_android": {
                   "version_added": "56",
                   "version_removed": "57",
-                  "notes": "Disabled due to various web compatibility issues (e.g. <a href='https://bugzil.la/1405761'>bug 1405761</a>). An improved version that works for non-cacheable resources is expected to land soon."
+                  "notes": "Disabled due to various web compatibility issues (e.g. <a href='https://bugzil.la/1405761'>bug 1405761</a>)."
                 },
                 "ie": {
                   "version_added": null

@@ -52,7 +52,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   private int myInitialColumns = -1;
   private int myInitialRows = -1;
 
-  private boolean myWindowsAnsiColorEnabled = false;
+  private boolean myWindowsAnsiColorEnabled = true;
 
   public PtyCommandLine() { }
 

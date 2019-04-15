@@ -49,10 +49,11 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     val defaultDiffSettings = DiffSettings.getDefaultSettings(DiffPlaces.DEFAULT)
     addBoolIfDiffers(usages, diffSettings, defaultDiffSettings, { it.isGoToNextFileOnNextDifference }, "iterate.next.file")
 
-    val externalSettings = ExternalDiffSettings.getInstance()
-    if (externalSettings.isDiffEnabled) usages.add(UsageDescriptor("external.diff.enabled"))
-    if (externalSettings.isDiffEnabled && externalSettings.isDiffDefault) usages.add(UsageDescriptor("external.diff.default"))
-    if (externalSettings.isMergeEnabled) usages.add(UsageDescriptor("external.merge.enabled"))
+    val externalSettings = ExternalDiffSettings.instance
+    val defaultExternalSettings = ExternalDiffSettings()
+    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled }, "external.diff.enabled")
+    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isDiffEnabled && it.isDiffDefault }, "external.diff.default")
+    addBoolIfDiffers(usages, externalSettings, defaultExternalSettings, { it.isMergeEnabled }, "external.merge.enabled")
 
     return usages
   }

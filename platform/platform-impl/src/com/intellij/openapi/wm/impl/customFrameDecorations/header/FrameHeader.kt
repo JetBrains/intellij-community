@@ -100,16 +100,16 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
         val buttonsRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
 
+        buttonsRect.x -= HIT_TEST_RESIZE_GAP
+
         val state = frame.extendedState
         iconRect.width = (iconRect.width * 1.5).toInt()
 
         if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
-
-            if (buttonsRect != null) {
-                buttonsRect.y += HIT_TEST_RESIZE_GAP
-                buttonsRect.x += HIT_TEST_RESIZE_GAP
-                buttonsRect.width -= HIT_TEST_RESIZE_GAP
-            }
+            buttonsRect.y += HIT_TEST_RESIZE_GAP
+            buttonsRect.height -= HIT_TEST_RESIZE_GAP
+        } else {
+            buttonsRect.width += HIT_TEST_RESIZE_GAP
         }
 
         hitTestSpots.add(iconRect)

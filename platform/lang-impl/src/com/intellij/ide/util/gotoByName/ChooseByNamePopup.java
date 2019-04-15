@@ -43,8 +43,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
   public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
-  private Component myOldFocusOwner = null;
-  private boolean myShowListForEmptyPattern = false;
+  private Component myOldFocusOwner;
+  private boolean myShowListForEmptyPattern;
   private final boolean myMayRequestCurrentWindow;
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
@@ -455,7 +455,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myRepaintQueue.queue(new Update(this) {
       @Override
       public void run() {
-        ChooseByNamePopup.this.repaintListImmediate();
+        repaintListImmediate();
       }
     });
   }

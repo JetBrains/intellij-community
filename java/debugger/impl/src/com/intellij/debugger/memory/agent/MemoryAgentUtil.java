@@ -6,6 +6,7 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.debugger.memory.ui.SizedReferenceInfo;
@@ -150,6 +151,10 @@ public class MemoryAgentUtil {
 
   public static void setupAgent(@NotNull DebugProcessImpl debugProcess) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return;
+    if (DebuggerUtilsImpl.isRemote(debugProcess)) {
+      // we do not support remote debugging with memory agent yet since some operations are too expensive
+      return;
+    }
     debugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
       private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 

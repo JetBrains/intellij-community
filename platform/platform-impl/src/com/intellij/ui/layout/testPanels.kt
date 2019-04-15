@@ -294,7 +294,7 @@ fun checkBoxFollowedBySpinner(): JPanel {
     row {
       val c = checkBox("Create", testOptions::enableLargeIndexing).actsAsLabel()
       spinner(testOptions::largeIndexFilesCount, 100, 1_000_000, 1_000)
-        .enableIfSelected(c)
+        .enableIf(c.selected)
       label("files to start background indexing")
     }
 

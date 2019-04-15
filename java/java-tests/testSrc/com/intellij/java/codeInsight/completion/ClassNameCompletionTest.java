@@ -291,6 +291,11 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNestedAnonymousTab() { doJavaTest('\t');}
 
+  public void testClassStartsWithUnderscore() {
+    myFixture.addClass("package foo; public class _SomeClass {}");
+    doJavaTest('\n');
+  }
+
   private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");

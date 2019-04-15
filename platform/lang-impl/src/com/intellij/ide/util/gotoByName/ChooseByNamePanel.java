@@ -26,7 +26,7 @@ import java.awt.*;
 
 public class ChooseByNamePanel extends ChooseByNameBase implements Disposable {
   private JPanel myPanel;
-  private boolean myCheckBoxVisible = false;
+  private final boolean myCheckBoxVisible;
 
   public ChooseByNamePanel(Project project, ChooseByNameModel model, String initialText, boolean isCheckboxVisible, final PsiElement context){
     super(project, model, initialText, context);

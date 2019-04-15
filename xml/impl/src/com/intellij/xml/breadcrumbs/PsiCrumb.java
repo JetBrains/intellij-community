@@ -37,6 +37,11 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
     return tooltip;
   }
 
+  @Override
+  public int getAnchorOffset() {
+    PsiElement element = anchor.retrieve();
+    return element != null ? element.getTextOffset() : -1;
+  }
 
   @Override
   public TextRange getHighlightRange() {
@@ -46,10 +51,10 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
 
   @Override
   public void navigate(@NotNull Editor editor, boolean withSelection) {
-    PsiElement element = anchor.retrieve();
-    if (element == null) return;
-
-    moveEditorCaretTo(editor, element.getTextOffset());
+    int offset = getAnchorOffset();
+    if (offset != -1) {
+      moveEditorCaretTo(editor, offset);
+    }
 
     if (withSelection) {
       final TextRange range = getHighlightRange();

@@ -90,7 +90,7 @@ class MLSorter : CompletionFinalSorter() {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || !parameters.language().isJava()) return false
     val settings = CompletionStatsCollectorSettings.getInstance()
-    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && settings.isDataSendAllowed) {
+    if (application.isEAP && webServiceStatus.isExperimentOnCurrentIDE() && settings.isCompletionLogsSendAllowed) {
       return EmulatedExperiment.shouldRank(webServiceStatus.experimentVersion())
     }
 

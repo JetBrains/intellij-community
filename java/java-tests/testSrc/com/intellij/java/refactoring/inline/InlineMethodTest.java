@@ -234,9 +234,12 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testNotAStatement() {
-    doTestConflict("Inlined result would contain parse errors");
+    doTest();
   }
 
+  public void testNotAStatement2() {
+    doTest();
+  }
 
   public void testInSuperCall() {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");

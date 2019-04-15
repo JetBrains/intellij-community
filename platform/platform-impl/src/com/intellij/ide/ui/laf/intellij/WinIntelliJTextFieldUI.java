@@ -129,7 +129,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 6);
   }
 
   @Override
