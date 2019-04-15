@@ -3,14 +3,13 @@ package com.intellij.diff.tools.external
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.*
-import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 
 @State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)])
 class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffSettings> {
   override fun getState(): ExternalDiffSettings = this
   override fun loadState(state: ExternalDiffSettings) {
-    XmlSerializerUtil.copyBean(state, this)
+    copyFrom(state)
   }
 
   @get:OptionTag("DIFF_ENABLED")
@@ -42,6 +41,6 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
   companion object {
     @JvmStatic
     val instance: ExternalDiffSettings
-      get() = ServiceManager.getService(ExternalDiffSettings::class.java)
+      get() = service()
   }
 }
