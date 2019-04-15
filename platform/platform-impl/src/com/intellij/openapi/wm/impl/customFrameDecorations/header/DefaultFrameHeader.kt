@@ -40,7 +40,11 @@ class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame){
     iconRect.width = (iconRect.width * 1.5).toInt()
 
     hitTestSpots.add(iconRect)
-    hitTestSpots.add(RelativeRectangle(buttonPanes.getView()).getRectangleOn(this))
+
+    val buttonRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
+    buttonRect.x -= HIT_TEST_RESIZE_GAP
+
+    hitTestSpots.add(buttonRect)
 
 
     return hitTestSpots
