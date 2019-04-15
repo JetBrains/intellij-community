@@ -6,17 +6,34 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter
 import java.awt.Font
 import java.awt.Graphics2D
+import kotlin.IllegalArgumentException
 
 /**
  * Adds effects to the underlying text
  */
 class EffectInlayPresentation(
   val presentation: InlayPresentation,
-  val font: Font,
-  val lineHeight: Int,
-  val ascent: Int,
-  val descent: Int
+  var font: Font,
+  var lineHeight: Int,
+  var ascent: Int,
+  var descent: Int
 ) : InlayPresentation by presentation {
+  override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
+    if (newPresentation !is EffectInlayPresentation) throw IllegalArgumentException()
+    if (ascent == newPresentation.ascent
+        && descent == newPresentation.descent
+        && lineHeight == newPresentation.lineHeight
+        && font == newPresentation.font
+    ) {
+      return presentation.updateIfNecessary(newPresentation.presentation)
+    }
+    this.ascent = newPresentation.ascent
+    this.descent = newPresentation.descent
+    this.lineHeight = newPresentation.lineHeight
+    this.font = newPresentation.font
+    return true
+  }
+
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     presentation.paint(g, attributes)
     val effectColor = attributes.effectColor

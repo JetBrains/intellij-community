@@ -34,6 +34,11 @@ open class DynamicPresentation(delegate: InlayPresentation) : BasePresentation()
   override val height: Int
     get() = delegate.height
 
+  override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
+    if (newPresentation !is DynamicPresentation) throw IllegalArgumentException()
+    return delegate.updateIfNecessary(newPresentation.delegate)
+  }
+
   override fun paint(g: Graphics2D, attributes: TextAttributes) = delegate.paint(g, attributes)
 
   override fun mouseClicked(e: MouseEvent, editorPoint: Point) = delegate.mouseClicked(e, editorPoint)

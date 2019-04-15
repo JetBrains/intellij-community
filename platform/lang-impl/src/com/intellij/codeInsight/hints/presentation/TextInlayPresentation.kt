@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -12,12 +13,27 @@ import java.awt.RenderingHints
  * Draws text.
  */
 class TextInlayPresentation(
-  override val width: Int,
-  override val height: Int,
-  val text: String,
-  private val yBaseline: Int,
-  val fontProvider: (EditorFontType) -> Font
+  override var width: Int,
+  override var height: Int,
+  var text: String,
+  private var yBaseline: Int,
+  val fontProvider: (EditorFontType) -> Font // TODO this will always be different, but font should be considered in update!
 ) : BasePresentation() {
+  override fun updateIfNecessary(newPresentation: InlayPresentation): Boolean {
+    if (newPresentation !is TextInlayPresentation) throw IllegalArgumentException()
+    if (width == newPresentation.width
+        && height == newPresentation.height
+        && text == newPresentation.text
+        && yBaseline == newPresentation.yBaseline
+    ) return false
+    width = newPresentation.width
+    height = newPresentation.height
+    text = newPresentation.text
+    yBaseline = newPresentation.yBaseline
+    fireContentChanged()
+    return true
+  }
+
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     val savedHint = g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))

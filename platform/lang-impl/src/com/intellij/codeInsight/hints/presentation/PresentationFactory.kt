@@ -40,7 +40,7 @@ class PresentationFactory(val editor: EditorImpl) {
     ) { it.with(editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)) }
   }
 
-  fun icon(icon: Icon) : IconPresentation = IconPresentation(icon, editor)
+  fun icon(icon: Icon) : IconPresentation = IconPresentation(icon, editor.component)
 
   fun roundedText(text: String): InlayPresentation {
     return rounding(8, 8, text(text))

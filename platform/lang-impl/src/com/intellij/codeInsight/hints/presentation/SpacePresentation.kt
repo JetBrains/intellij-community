@@ -2,11 +2,24 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import java.awt.Dimension
 import java.awt.Graphics2D
 
-class SpacePresentation(override val width: Int, override val height: Int) : BasePresentation() {
+data class SpacePresentation(override var width: Int, override var height: Int) : BasePresentation() {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
   }
 
   override fun toString(): String = " "
+
+  override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
+    if (newPresentation !is SpacePresentation) throw IllegalArgumentException()
+    if (this == newPresentation) return false
+
+    val previous = Dimension(width, height)
+    width = newPresentation.width
+    height = newPresentation.height
+    val current = Dimension(width, height)
+    fireSizeChanged(previous, current)
+    return true
+  }
 }

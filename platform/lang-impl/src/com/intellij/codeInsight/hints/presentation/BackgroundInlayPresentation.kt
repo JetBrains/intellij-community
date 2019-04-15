@@ -10,8 +10,9 @@ import java.awt.Graphics2D
  */
 class BackgroundInlayPresentation(
   val presentation: InlayPresentation,
-  val color: Color? = null
+  var color: Color? = null
 ) : InlayPresentation by presentation {
+  // TODO updateIfNecessary
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     val backgroundColor = color ?: attributes.backgroundColor
     val oldColor = g.color

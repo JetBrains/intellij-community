@@ -35,6 +35,14 @@ interface InlayPresentation : InputHandler {
   fun removeListener(listener: PresentationListener)
 
   /**
+   * This method is called, when pass collects new presentation at element, where old one exists.
+   * After successful update some event should be fired
+   * @param newPresentation presentation that was recently collected. It is guaranteed to be always exactly the same type as this instance.
+   * @return true, if updated successfully
+   */
+  fun updateIfNecessary(newPresentation: InlayPresentation): Boolean
+
+  /**
    * For testings purposes
    */
   override fun toString(): String

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -11,7 +12,26 @@ import java.awt.event.MouseEvent
 /**
  * Allows to chain presentations into sequence. All presentations are aligned to upper border.
  */
-class SequencePresentation(private val presentations: List<InlayPresentation>) : BasePresentation() {
+class SequencePresentation(private var presentations: List<InlayPresentation>) : BasePresentation() {
+  override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
+    if (newPresentation !is SequencePresentation) throw IllegalArgumentException()
+
+    if (newPresentation.presentations.size != presentations.size) {
+      presentations = newPresentation.presentations
+      fireContentChanged()
+    }
+
+    val newPresentations = newPresentation.presentations
+    for ((index, presentation) in presentations.withIndex()) {
+      val new = newPresentations[index]
+      if (presentation.updateIfNecessary(new)) {
+        fireContentChanged()
+        return true
+      }
+    }
+    return false
+  }
+
   init {
     assert(presentations.isNotEmpty())
     for (presentation in presentations) {

@@ -2,11 +2,13 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.config.SettingsWrapper
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
+import java.awt.Rectangle
 
 class ProviderWithSettings<T : Any>(
   val provider: InlayHintsProvider<T>,
@@ -60,4 +62,8 @@ class CollectorWithSettings<T : Any>(
   fun applyToEditor(file: PsiFile, editor: Editor, wrapper: InlayModelWrapper) {
     collector.apply(file, editor, wrapper, settings)
   }
+}
+
+fun InlayPresentation.fireContentChanged() {
+  fireContentChanged(Rectangle(width, height))
 }
