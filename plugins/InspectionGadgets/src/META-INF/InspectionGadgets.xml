@@ -1928,6 +1928,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionContainsUrl" bundle="com.siyeh.InspectionGadgetsBundle" key="collection.contains.url.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionContainsUrlInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="FunctionalExpressionsIdentity" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="functional.expression.identity" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.performance.FunctionalExpressionsIdentityInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CollectionWithoutInitialCapacity" shortName="CollectionsMustHaveInitialCapacity"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="collections.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
