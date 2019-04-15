@@ -328,7 +328,7 @@ Function OnDirectoryPageLeave
   StrCmp $9 "not empty" abort skip_abort
 abort:
   ${LogText} "ERROR: installation dir is not empty: $INSTDIR"
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$INSTDIR is not empty.$\n$(empty_or_upgrade_folder)"
   Abort
 skip_abort:
 FunctionEnd
