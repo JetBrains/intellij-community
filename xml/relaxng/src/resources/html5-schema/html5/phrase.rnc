@@ -6,24 +6,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 ## Contextual Hyperlink: <a>
 
-	a.elem.phrasing =
-		element a { a.inner.phrasing & a.attrs }
-	a.elem.flow =
-		element a { a.inner.flow & a.attrs }
-	a.attrs =
-		(	common.attrs.basic
-		&	common.attrs.i18n
-		&	common.attrs.present
-		&	common.attrs.other
-		&	a.attrs.name?
-		&	shared-hyperlink.attrs.download?
-		&	shared-hyperlink.attrs.href?
-		&	shared-hyperlink.attrs.target?
-		&	shared-hyperlink.attrs.rel?
-		&	shared-hyperlink.attrs.hreflang?
-		&	shared-hyperlink.attrs.type?
-		&	shared-hyperlink.attrs.ping?
-		&	referrerpolicy?
+	a.elem.phrasing = a.href.elem.phrasing | a.nohref.elem.phrasing
+	a.elem.flow = a.href.elem.flow | a.nohref.elem.flow
+	a.href.elem.phrasing =
+		element a { a.inner.phrasing & a.href.attrs }
+	a.href.elem.flow =
+		element a { a.inner.flow & a.href.attrs }
+	a.nohref.elem.phrasing =
+		element a { a.inner.phrasing & a.nohref.attrs }
+	a.nohref.elem.flow =
+		element a { a.inner.flow & a.nohref.attrs }
+	a.href.attrs =
+		( a.attrs
+		& shared-hyperlink.attrs.href
 		&	(	common.attrs.aria.implicit.link
 			|	common.attrs.aria.role.button
 			|	common.attrs.aria.role.checkbox
@@ -41,6 +36,28 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.doc-glossref
 			|	common.attrs.aria.role.doc-noteref
 			)?
+		)
+	a.nohref.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	a.attrs.name?
+		&	common.attrs.aria?
+		)
+	a.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	a.attrs.name?
+		&	shared-hyperlink.attrs.download?
+		&	shared-hyperlink.attrs.target?
+		&	shared-hyperlink.attrs.rel?
+		&	shared-hyperlink.attrs.hreflang?
+		&	shared-hyperlink.attrs.type?
+		&	shared-hyperlink.attrs.ping?
+		&	referrerpolicy?
 		)
 		a.attrs.name =
 		  attribute name {
