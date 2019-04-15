@@ -93,3 +93,8 @@ abstract class Row : Cell() {
 enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
 }
+
+fun Row.enableIf(predicate: ComponentPredicate) {
+  enabled = predicate()
+  predicate.addListener { enabled = it }
+}

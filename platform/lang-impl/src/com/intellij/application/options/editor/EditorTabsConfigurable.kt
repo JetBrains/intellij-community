@@ -20,42 +20,14 @@ class EditorTabsConfigurable : EditorOptionsProvider {
     private const val NONE = "None"
 
     private val EDITOR_TABS_RANGE = UINumericRange(10, 1, Math.max(10, Registry.intValue("ide.max.editor.tabs", 100)))
+    val tabPlacements = arrayOf(SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, UISettings.TABS_NONE)
   }
 
-  private val myEditorTabPlacement: JComboBox<Int> = ComboBox(
-    arrayOf(SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, UISettings.TABS_NONE)
-  )
-  private val myScrollTabLayoutInEditorCheckBox = JCheckBox(message("checkbox.editor.tabs.in.single.row"))
-  private val myHideTabsCheckbox = JCheckBox(message("checkbox.editor.scroll.if.need"))
-  private lateinit var myCloseButtonPlacementRow: Row
+  private lateinit var myEditorTabPlacement: JComboBox<Int>
+  private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
   private val panel = doCreateComponent()
 
-  init {
-    myEditorTabPlacement.renderer = MyTabsPlacementComboBoxRenderer()
-    myEditorTabPlacement.addItemListener { revalidateSingleRowCheckbox() }
-
-    revalidateSingleRowCheckbox()
-    myScrollTabLayoutInEditorCheckBox.addChangeListener { myHideTabsCheckbox.isEnabled = myScrollTabLayoutInEditorCheckBox.isSelected }
-  }
-
-  private fun revalidateSingleRowCheckbox() {
-    val i = (myEditorTabPlacement.selectedItem as Int).toInt()
-
-    val none = i == UISettings.TABS_NONE
-    myHideTabsCheckbox.isEnabled = !none && myScrollTabLayoutInEditorCheckBox.isSelected
-    myScrollTabLayoutInEditorCheckBox.isEnabled = !none
-    myCloseButtonPlacementRow.enabled = !none
-
-    if (SwingConstants.TOP == i) {
-      myScrollTabLayoutInEditorCheckBox.isEnabled = true
-    }
-    else {
-      myScrollTabLayoutInEditorCheckBox.isSelected = true
-      myScrollTabLayoutInEditorCheckBox.isEnabled = false
-    }
-  }
-
-  override fun getDisplayName() = "Editor Tabs (New)"
+  override fun getDisplayName() = "Editor Tabs"
 
   override fun getHelpTopic() = "reference.settingsdialog.IDE.editor.tabs"
 
@@ -71,13 +43,17 @@ class EditorTabsConfigurable : EditorOptionsProvider {
         row {
           cell {
             Label(message("combobox.editor.tab.placement"))()
-            myEditorTabPlacement()
+            myEditorTabPlacement = comboBox(DefaultComboBoxModel<Int>(tabPlacements), uiSettings::editorTabPlacement,
+                     renderer = MyTabsPlacementComboBoxRenderer()).component
           }
         }
         row {
-          myScrollTabLayoutInEditorCheckBox()
+          myScrollTabLayoutInEditorCheckBox = checkBox(message("checkbox.editor.tabs.in.single.row"), uiSettings::scrollTabLayoutInEditor)
+            .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
           row {
-            myHideTabsCheckbox()
+            checkBox(message("checkbox.editor.scroll.if.need"), uiSettings::hideTabsIfNeed)
+              .enableIf(myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE } and
+                          myScrollTabLayoutInEditorCheckBox.selected)
           }
         }
         row {
@@ -90,7 +66,7 @@ class EditorTabsConfigurable : EditorOptionsProvider {
         row { checkBox(message("checkbox.show.directory.for.non.unique.files"), uiSettings::showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(message("checkbox.mark.modified.tabs.with.asterisk"), uiSettings::markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(message("checkbox.show.tabs.tooltips"), uiSettings::showTabsTooltips).enableIfTabsVisible() }
-        myCloseButtonPlacementRow = row {
+        row {
           cell {
             Label(message("tabs.close.button.placement"))()
             comboBox(
@@ -104,7 +80,7 @@ class EditorTabsConfigurable : EditorOptionsProvider {
               }
             )
           }
-        }
+        }.enableIf((myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE }))
       }
       titledRow(message("group.tab.closing.policy")) {
         row {
@@ -140,18 +116,11 @@ class EditorTabsConfigurable : EditorOptionsProvider {
   }
 
   private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
-    enableIf(myEditorTabPlacement.hasSelection { it != UISettings.TABS_NONE })
+    enableIf(myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE })
   }
 
   override fun reset() {
     panel.reset()
-
-    val uiSettings = UISettings.instance.state
-
-    myScrollTabLayoutInEditorCheckBox.isSelected = uiSettings.scrollTabLayoutInEditor
-    myHideTabsCheckbox.isEnabled = myScrollTabLayoutInEditorCheckBox.isSelected
-    myHideTabsCheckbox.isSelected = uiSettings.hideTabsIfNeed
-    myEditorTabPlacement.selectedItem = uiSettings.editorTabPlacement
   }
 
   private fun getCloseButtonPlacement(uiSettings: UISettingsState): String {
@@ -166,20 +135,9 @@ class EditorTabsConfigurable : EditorOptionsProvider {
   }
 
   override fun apply() {
-    var uiSettingsChanged = panel.isModified()
+    val uiSettingsChanged = panel.isModified()
     panel.apply()
     val settingsManager = UISettings.instance
-    val uiSettings = settingsManager.state
-
-    if (isModified(myScrollTabLayoutInEditorCheckBox, uiSettings.scrollTabLayoutInEditor)) uiSettingsChanged = true
-    uiSettings.scrollTabLayoutInEditor = myScrollTabLayoutInEditorCheckBox.isSelected
-
-    if (isModified(myHideTabsCheckbox, uiSettings.hideTabsIfNeed)) uiSettingsChanged = true
-    uiSettings.hideTabsIfNeed = myHideTabsCheckbox.isSelected
-
-    val tabPlacement = (myEditorTabPlacement.selectedItem as Int).toInt()
-    if (uiSettings.editorTabPlacement != tabPlacement) uiSettingsChanged = true
-    uiSettings.editorTabPlacement = tabPlacement
 
     if (uiSettingsChanged) {
       settingsManager.fireUISettingsChanged()
@@ -187,16 +145,7 @@ class EditorTabsConfigurable : EditorOptionsProvider {
   }
 
   override fun isModified(): Boolean {
-    if (panel.isModified()) return true
-
-    val uiSettings = UISettings.instance.state
-    val tabPlacement = (myEditorTabPlacement.selectedItem as Int).toInt()
-    var  isModified = tabPlacement != uiSettings.editorTabPlacement
-
-    isModified = isModified or (myScrollTabLayoutInEditorCheckBox.isSelected != uiSettings.scrollTabLayoutInEditor)
-    isModified = isModified or (myHideTabsCheckbox.isSelected != uiSettings.hideTabsIfNeed)
-
-    return isModified
+    return panel.isModified()
   }
 
   private class MyTabsPlacementComboBoxRenderer internal constructor() : ListCellRendererWrapper<Int>() {

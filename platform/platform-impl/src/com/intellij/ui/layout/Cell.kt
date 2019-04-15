@@ -172,20 +172,8 @@ abstract class Cell {
     return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, getter, setter)
   }
 
-  fun <T> comboBox(
-    model: ComboBoxModel<T>,
-    getter: () -> T?,
-    setter: (T?) -> Unit,
-    growPolicy: GrowPolicy? = null,
-    renderer: ColoredListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit
-  ): CellBuilder<ComboBox<T>> {
-    return comboBox(model, getter, setter, growPolicy, object : ColoredListCellRenderer<T?>() {
-      override fun customizeCellRenderer(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        if (value != null) {
-          renderer(this, value, index, selected)
-        }
-      }
-    })
+  fun <T> comboBox(model: ComboBoxModel<T>, prop: KMutableProperty0<T>, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
+    return comboBox(model, prop.getter, { prop.set(it!!) }, growPolicy, renderer)
   }
 
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
@@ -279,4 +267,14 @@ abstract class Cell {
     comment: String? = null
   ): CellBuilder<T>
 
+}
+
+fun <T> listCellRenderer(renderer: ColoredListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): ColoredListCellRenderer<T?> {
+  return object : ColoredListCellRenderer<T?>() {
+    override fun customizeCellRenderer(list: JList<out T?>, value: T?, index: Int, selected: Boolean, hasFocus: Boolean) {
+      if (value != null) {
+        renderer(this, value, index, selected)
+      }
+    }
+  }
 }

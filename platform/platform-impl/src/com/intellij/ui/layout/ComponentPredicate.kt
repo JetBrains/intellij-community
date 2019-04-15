@@ -13,16 +13,36 @@ val AbstractButton.selected: ComponentPredicate
       override fun invoke(): Boolean = isSelected
 
       override fun addListener(listener: (Boolean) -> Unit) {
-        addChangeListener { listener(isSelected()) }
+        addChangeListener { listener(isSelected) }
       }
     }
 
-fun <T> JComboBox<T>.hasSelection(predicate: (T?) -> Boolean): ComponentPredicate {
-  return object : ComponentPredicate() {
-    override fun invoke(): Boolean = predicate(selectedItem as T?)
+fun <T> JComboBox<T>.selectedValueMatches(predicate: (T?) -> Boolean): ComponentPredicate {
+  return ComboBoxPredicate(this, predicate)
+}
 
-    override fun addListener(listener: (Boolean) -> Unit) {
-      addActionListener { listener(predicate(selectedItem as T?)) }
+class ComboBoxPredicate<T>(private val comboBox: JComboBox<T>, private val predicate: (T?) -> Boolean) : ComponentPredicate() {
+  override fun invoke(): Boolean = predicate(comboBox.selectedItem as T?)
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    comboBox.addActionListener {
+      listener(predicate(comboBox.selectedItem as T?))
     }
+  }
+}
+
+fun <T> JComboBox<T>.selectedValueIs(value: T): ComponentPredicate = selectedValueMatches { it == value }
+
+infix fun ComponentPredicate.and(other: ComponentPredicate): ComponentPredicate {
+  return AndPredicate(this, other)
+}
+
+private class AndPredicate(private val lhs: ComponentPredicate, private val rhs: ComponentPredicate) : ComponentPredicate() {
+  override fun invoke(): Boolean = lhs.invoke() && rhs.invoke()
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    val andListener: (Boolean) -> Unit = { listener(lhs.invoke() && rhs.invoke()) }
+    lhs.addListener(andListener)
+    rhs.addListener(andListener)
   }
 }
