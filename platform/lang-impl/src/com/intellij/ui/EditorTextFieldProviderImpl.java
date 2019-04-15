@@ -66,11 +66,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       for (EditorCustomization customization : myCustomizations) {
         customization.customize(editor);
       }
-    }
-
-    @Override
-    protected boolean isOneLineMode() {
-      return false;
+      updateBorder(editor);
     }
   }
 }
