@@ -75,7 +75,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="org.apache.maven:maven-compat:3.0.5" type="repository">
+      <library name="org.apache.maven:maven-compat:3.6.0" type="repository">
         <properties maven-id="org.apache.maven:maven-compat:3.6.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-compat/3.6.0/maven-compat-3.6.0.jar!/" />
