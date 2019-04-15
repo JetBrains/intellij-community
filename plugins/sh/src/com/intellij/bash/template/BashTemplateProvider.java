@@ -13,6 +13,6 @@ public class BashTemplateProvider implements DefaultLiveTemplatesProvider {
   @Nullable
   @Override
   public String[] getHiddenLiveTemplateFiles() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return new String[]{"liveTemplates/BashHidden"};
   }
 }

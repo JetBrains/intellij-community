@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="Bash">
+<templateSet group="BashTemplate">
   <template name="bash" value="#!/usr/bin/env bash&#10;" description="Shebang line" toReformat="true"
             toShortenFQNames="false">
     <context>
@@ -21,90 +21,10 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template name="if" value="if [[ $CONDITION$ ]]; then&#10;    $END$$SELECTION$&#10;fi" description="If statement"
-            toReformat="true"
-            toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="select" value="select $VARIABLE_1$ in $VARIABLE_2$; do&#10;    $END$$SELECTION$&#10;done" description="Select expression"
-            toReformat="true"
-            toShortenFQNames="false">
-    <variable name="VARIABLE_1" expression="" defaultValue="" alwaysStopAt="true"/>
-    <variable name="VARIABLE_2" expression="" defaultValue="" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="elif"
-            value="if [[ $CONDITION_1$ ]]; then&#10;    $END$$SELECTION$&#10;elif [[ $CONDITION_2$ ]]; then&#10;    $EXPRESSION_2$&#10;else&#10;    $EXPRESSION_3$&#10;fi"
-            description="Elif expression"
-            toReformat="true"
-            toShortenFQNames="false">
-    <variable name="CONDITION_1" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <variable name="CONDITION_2" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <variable name="EXPRESSION_2" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>
-    <variable name="EXPRESSION_3" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="case" value="case $VALUE$ in&#10;$PATTERN$)&#10;  $END$$SELECTION$&#10;  ;;&#10;esac"
-            description="Case statement"
-            toReformat="false" toShortenFQNames="false">
-    <variable name="VALUE" expression="" defaultValue="&quot;$x&quot;" alwaysStopAt="true"/>
-    <variable name="PATTERN" expression="" defaultValue="&quot;pattern&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="for"
-            value="for (( $INDEX$ = $INIT_VALUE$; $INDEX$ &lt; $LIMIT$; $INDEX$++ )); do&#10;    $END$$SELECTION$&#10;done"
-            description="For loop by index" toReformat="true" toShortenFQNames="false">
-    <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
-    <variable name="INIT_VALUE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
-    <variable name="LIMIT" expression="" defaultValue="" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
   <template name="fori" value="for $INDEX$ in $LOOP_ITEMS$ ; do&#10;    $END$$SELECTION$&#10;done"
             description="For loop in list" toReformat="true" toShortenFQNames="false">
     <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
     <variable name="LOOP_ITEMS" expression="" defaultValue="&quot;item1 item2 item3&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="while" value="while [[ $CONDITION$ ]]; do&#10;    $END$$SELECTION$&#10;done"
-            description="While loop by condition" toReformat="true"
-            toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="until" value="until [[ $CONDITION$ ]]; do&#10;    $END$$SELECTION$&#10;done"
-            description="Until loop by condition" toReformat="true"
-            toShortenFQNames="false">
-    <variable name="CONDITION" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
-  <template name="fun" value="function $FUNCNAME$() {&#10;    $END$$SELECTION$&#10;}" description="Define a function"
-            toReformat="true" toShortenFQNames="false">
-    <variable name="FUNCNAME" expression="" defaultValue="&quot;foo&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>

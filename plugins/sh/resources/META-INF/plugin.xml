@@ -25,6 +25,7 @@
 
     <psi.referenceContributor implementation="com.intellij.bash.BashUrlReferenceContributor"/>
 
+    <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashKeywordCompletionContributor"/>
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashFilePathCompletionContributor"/>
     <completion.contributor language="Bash" implementationClass="com.intellij.bash.completion.BashCompletionContributor"/>
     <lang.braceMatcher language="Bash" implementationClass="com.intellij.bash.BashBraceMatcher"/>
