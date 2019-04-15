@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
@@ -24,6 +23,7 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -46,6 +46,8 @@ open class FileBasedStorage(file: Path,
   var file = file
     private set
 
+  protected open val configuration: FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
+
   init {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isUnitTestMode && file.toString().startsWith('$')) {
@@ -54,7 +56,9 @@ open class FileBasedStorage(file: Path,
   }
 
   protected open val isUseXmlProlog = false
-  override val isUseVfsForWrite = true
+
+  final override val isUseVfsForWrite: Boolean
+    get() = configuration.isUseVfsForWrite
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -93,7 +97,7 @@ open class FileBasedStorage(file: Path,
         storage.lineSeparator = lineSeparator
       }
 
-      val isUseVfs = storage.isUseVfsForWrite
+      val isUseVfs = storage.configuration.isUseVfsForWrite
       val virtualFile = if (isUseVfs) storage.virtualFile else null
       when {
         dataWriter == null -> {
@@ -128,7 +132,7 @@ open class FileBasedStorage(file: Path,
     get() {
       var result = cachedVirtualFile
       if (result == null) {
-        result = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
+        result = configuration.resolveVirtualFile(file.systemIndependentPath)
         // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
         result?.charset = Charsets.UTF_8
         cachedVirtualFile = result
@@ -136,7 +140,7 @@ open class FileBasedStorage(file: Path,
       return cachedVirtualFile
     }
 
-  protected inline fun <T> runAndHandleExceptions(task: () -> T): T? {
+  private inline fun <T> runAndHandleExceptions(task: () -> T): T? {
     try {
       return task()
     }
@@ -160,7 +164,14 @@ open class FileBasedStorage(file: Path,
 
   override fun loadLocalData(): Element? {
     isBlockSavingTheContent = false
-    return runAndHandleExceptions { loadLocalDataUsingIo() }
+    return runAndHandleExceptions {
+      if (configuration.isUseVfsForRead) {
+        loadUsingVfs()
+      }
+      else {
+        loadLocalDataUsingIo()
+      }
+    }
   }
 
   private fun loadLocalDataUsingIo(): Element? {
@@ -194,7 +205,31 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  protected fun processReadException(e: Exception?) {
+  private fun loadUsingVfs(): Element? {
+    val virtualFile = virtualFile
+    if (virtualFile == null || !virtualFile.exists()) {
+      // only on first load
+      handleVirtualFileNotFound()
+      return null
+    }
+
+    if (virtualFile.length == 0L) {
+      processReadException(null)
+    }
+    else {
+      runAndHandleExceptions {
+        val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
+        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+        return JDOMUtil.load(charBuffer)
+      }
+    }
+    return null
+  }
+
+  protected open fun handleVirtualFileNotFound() {
+  }
+
+  private fun processReadException(e: Exception?) {
     val contentTruncated = e == null
 
     isBlockSavingTheContent = !contentTruncated &&
