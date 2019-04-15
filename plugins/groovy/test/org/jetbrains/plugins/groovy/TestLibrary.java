@@ -3,9 +3,14 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import org.jetbrains.annotations.NotNull;
 
 public interface TestLibrary {
+
+  default void addTo(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, model -> addTo(module, model));
+  }
 
   void addTo(@NotNull Module module, @NotNull ModifiableRootModel model);
 

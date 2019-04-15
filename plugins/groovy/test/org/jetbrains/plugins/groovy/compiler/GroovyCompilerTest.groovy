@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -18,9 +17,6 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -1051,34 +1047,6 @@ class Bar {}'''
 
     protected List<String> chunkRebuildMessage(String builder) {
       return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
-    }
-
-  }
-
-  static class EclipseTest extends GroovyCompilerTest {
-    @Override
-    protected void setUp() {
-      super.setUp()
-
-      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
-
-      def jarPath = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Groovy-Eclipse-Batch")[0]
-
-      GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
-    }
-
-    @Override
-    void runTest() {
-      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_10)) {
-        println "Groovy-Eclipse doesn't support Java 10+ yet"
-        return
-      }
-
-      super.runTest()
-    }
-
-    protected List<String> chunkRebuildMessage(String builder) {
-      return []
     }
   }
 }
