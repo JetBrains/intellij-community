@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -36,18 +37,23 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
                                                              Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
-    return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
+    if (Registry.is("injections.java.fragment.editor.new")) {
+      return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
+    }
+    else {
+      return new OldJavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
+    }
   }
 }
 
-class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
+class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
   @NotNull
   private final RangeMarker myAltFullRange;
 
-  JavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
-                                 Document newDocument,
-                                 PsiFile injectedFile) {
+  OldJavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
+                                    Document newDocument,
+                                    PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
 
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
