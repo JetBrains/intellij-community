@@ -15,10 +15,10 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class RepositoryHelperTest {
-  @Rule
-  public TempDirectory tempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test(expected = IOException.class)
   public void testEmpty() throws IOException {
@@ -125,6 +125,16 @@ public class RepositoryHelperTest {
       "  <plugin id=\"org.jetbrains.kotlin\" url=\"kotlin-plugin-0.9.999.zip\" version=\"0.9.999\" />\n" +
       "</plugins>\n");
     assertEquals(1, list.size());
+  }
+
+  @Test
+  public void testEqualityById() throws IOException {
+    IdeaPluginDescriptor node1 = loadPlugins("<plugins>\n<plugin id=\"ID\" url=\"plugin.zip\"><name>A</name></plugin>\n</plugins>").get(0);
+    FileUtil.delete(new File(tempDir.getRoot(), "repo.xml"));
+    IdeaPluginDescriptor node2 = loadPlugins("<plugins>\n<plugin id=\"ID\" url=\"plugin.zip\"><name>B</name></plugin>\n</plugins>").get(0);
+    assertEquals(node1, node2);
+    assertEquals(node1.hashCode(), node2.hashCode());
+    assertNotEquals(node1.getName(), node2.getName());
   }
 
   private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {

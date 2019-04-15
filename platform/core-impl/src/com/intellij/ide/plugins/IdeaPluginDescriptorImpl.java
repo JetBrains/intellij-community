@@ -827,12 +827,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof IdeaPluginDescriptorImpl && Objects.equals(myName, ((IdeaPluginDescriptorImpl)o).myName);
+    return this == o || o instanceof IdeaPluginDescriptorImpl && myId == ((IdeaPluginDescriptorImpl)o).myId;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myName);
+    return myId.hashCode();
   }
 
   @Override

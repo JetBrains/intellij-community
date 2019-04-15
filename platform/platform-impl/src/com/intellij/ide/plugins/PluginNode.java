@@ -412,12 +412,12 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof PluginNode && name.equals(((PluginNode)o).getName());
+    return this == o || o instanceof PluginNode && id == ((PluginNode)o).id;
   }
 
   @Override
   public int hashCode() {
-    return name.hashCode();
+    return id.hashCode();
   }
 
   @Override
