@@ -40,6 +40,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
     myComboBox = comboBox;
+    myProxyList.setModel(comboBox.getModel());
   }
 
   @Override
@@ -95,7 +96,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
         myComboBox.firePopupMenuWillBecomeInvisible();
         myPopup = null;
         myProxyList.setCellRenderer(new DefaultListCellRenderer());
-        myProxyList.setModel(new DefaultListModel<>());
+        myProxyList.setModel(myComboBox.getModel());
       }
     });
     //noinspection unchecked
