@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.injection.Injectable
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
@@ -36,10 +37,10 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
-      val injectedFile = injectAndOpenInFragmentEditor("JSON")
-      TestCase.assertEquals("{\"bca\": \n1}", injectedFile.text)
+      val fragmentFile = injectAndOpenInFragmentEditor("JSON")
+      TestCase.assertEquals("{\"bca\": \n1}", fragmentFile.text)
 
-      injectedFile.edit { insertString(text.indexOf(":"), "\n") }
+      fragmentFile.edit { insertString(text.indexOf(":"), "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -68,10 +69,10 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
-      val injectedFile = injectAndOpenInFragmentEditor("HTML")
-      TestCase.assertEquals("<html>line\nanotherline\nfinalLine</html>", injectedFile.text)
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html>line\nanotherline\nfinalLine</html>", fragmentFile.text)
 
-      injectedFile.edit {
+      fragmentFile.edit {
         findAndDelete("ne\nanot")
       }
       checkResult("""
@@ -101,10 +102,10 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
-      val injectedFile = injectAndOpenInFragmentEditor("JSON")
-      TestCase.assertEquals("{\"a\": 1}", injectedFile.text)
+      val fragmentFile = injectAndOpenInFragmentEditor("JSON")
+      TestCase.assertEquals("{\"a\": 1}", fragmentFile.text)
 
-      injectedFile.edit { insertString(text.indexOf("a"), "bc") }
+      fragmentFile.edit { insertString(text.indexOf("a"), "bc") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -115,7 +116,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
-      injectedFile.edit { insertString(text.indexOf("1"), "\n") }
+      fragmentFile.edit { insertString(text.indexOf("1"), "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -127,7 +128,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent(), true)
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
-      injectedFile.edit { insertString(text.indexOf(":"), "\n") }
+      fragmentFile.edit { insertString(text.indexOf(":"), "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -140,8 +141,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent(), true)
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
-      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
-      injectedFile.edit { deleteString(0, textLength) }
+      TestCase.assertEquals("{\"bca\"\n: \n1}", fragmentFile.text)
+      fragmentFile.edit { deleteString(0, textLength) }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -172,9 +173,9 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent())
 
       val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
-      val injectedFile = quickEditHandler.newFile
-      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
-      injectedFile.edit { deleteString(0, textLength) }
+      val fragmentFile = quickEditHandler.newFile
+      TestCase.assertEquals("{\"bca\"\n: \n1}", fragmentFile.text)
+      fragmentFile.edit { deleteString(0, textLength) }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -184,8 +185,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent(), true)
-      TestCase.assertEquals("", injectedFile.text)
-      injectedFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
+      TestCase.assertEquals("", fragmentFile.text)
+      fragmentFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -197,8 +198,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent(), true)
-      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
-      injectedFile.edit { deleteString(0, textLength) }
+      TestCase.assertEquals("{\"bca\"\n: \n1}", fragmentFile.text)
+      fragmentFile.edit { deleteString(0, textLength) }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -208,8 +209,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent(), true)
-      TestCase.assertEquals("", injectedFile.text)
-      injectedFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
+      TestCase.assertEquals("", fragmentFile.text)
+      fragmentFile.edit { insertString(0, "{\"bca\"\n: \n1}") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -221,8 +222,8 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent(), true)
-      TestCase.assertEquals("{\"bca\"\n: \n1}", injectedFile.text)
-      injectedFile.edit { deleteString(0, textLength) }
+      TestCase.assertEquals("{\"bca\"\n: \n1}", fragmentFile.text)
+      fragmentFile.edit { deleteString(0, textLength) }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -232,6 +233,100 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent(), true)
+    }
+
+  }
+
+
+  fun `test complex insert-commit-broken-reformat`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON")
+              String a = "{\n" +
+                  "  \"field1\": 1,\n" +
+                  "  \"innerMap1" +
+                  "\": {\n" +
+                  "    " +
+                  "\"field2\": 1,\n" +
+                  "  " +
+                  "  \"field3\": 3<caret>\n" +
+                  "  " +
+                  "}\n" +
+                  "}";
+            }
+          }
+      """.trimIndent())
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val fragmentFile = quickEditHandler.newFile
+      TestCase.assertEquals("{\n" +
+                            "  \"field1\": 1,\n" +
+                            "  \"innerMap1\": {\n" +
+                            "    \"field2\": 1,\n" +
+                            "    \"field3\": 3\n" +
+                            "  }\n" +
+                            "}",
+                            fragmentFile.text)
+      fragmentFile.edit("insert json") {
+        val pos = text.indexAfter("\"field3\": 3")
+        replaceString(pos - 1, pos, "\"brokenInnerMap\": {\n" +
+                                    "    \"broken1\": 1,\n" +
+                                    "    \"broken2\": 2,\n" +
+                                    "    \"broken3\": 3\n" +
+                                    "  }")
+      }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+      fragmentFile.edit("reformat") {
+        CodeStyleManager.getInstance(psiManager).reformatRange(
+          fragmentFile, 0, fragmentFile.textLength, false)
+      }
+
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON")
+              String a = "{\n" +
+                  "  \"field1\": 1,\n" +
+                  "  \"innerMap1" +
+                  "\": {\n" +
+                  "    " +
+                  "\"field2\": 1,\n" +
+                  "  " +
+                      "  \"field3\": \"brokenInnerMap\"\n" +
+                      "    : {\n" +
+                      "  \"broken1\": 1,\n" +
+                      "  \"broken2\": 2,\n" +
+                      "  \"broken3\": 3\n" +
+                      "}\n" +
+                      "}\n" +
+                      "}";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("""
+          {
+            "field1": 1,
+            "innerMap1": {
+              "field2": 1,
+              "field3": "brokenInnerMap"
+              : {
+            "broken1": 1,
+            "broken2": 2,
+            "broken3": 3
+          }
+          }
+          }
+      """.trimIndent(), fragmentFile.text)
+
     }
 
   }
@@ -249,10 +344,10 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
-      val injectedFile = injectAndOpenInFragmentEditor("HTML")
-      TestCase.assertEquals("<html>line\n\nfinalLine</html>", injectedFile.text)
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html>line\n\nfinalLine</html>", fragmentFile.text)
 
-      injectedFile.edit {
+      fragmentFile.edit {
         findAndDelete("\n")
       }
       checkResult("""
@@ -265,7 +360,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             }
           }
       """.trimIndent())
-      injectedFile.edit {
+      fragmentFile.edit {
         findAndDelete("\n")
       }
       checkResult("""
@@ -295,10 +390,10 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent())
 
-      val injectedFile = injectAndOpenInFragmentEditor("HTML")
-      TestCase.assertEquals("<html><head>someText1</head><body>missingValue</body></html>", injectedFile.text)
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html><head>someText1</head><body>missingValue</body></html>", fragmentFile.text)
 
-      injectedFile.edit { insertString(text.indexOf("<body>"), "someInner") }
+      fragmentFile.edit { insertString(text.indexOf("<body>"), "someInner") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -310,7 +405,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
           }
       """.trimIndent(), true)
 
-      injectedFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
+      fragmentFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -369,13 +464,13 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       myFixture.editor.caretModel.moveToOffset(file.text.indexAfter("-1"))
 
       val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
-      val injectedFile = quickEditHandler.newFile
+      val fragmentFile = quickEditHandler.newFile
       injectionTestFixture.assertInjectedLangAtCaret("JSON")
 
-      openFileInEditor(injectedFile.virtualFile)
+      openFileInEditor(fragmentFile.virtualFile)
 
       fun fillFields(num: Int) {
-        var shift = injectedFile.text.indexAfter("-1,\n")
+        var shift = fragmentFile.text.indexAfter("-1,\n")
         repeat(num) {
           quickEditHandler.newFile.edit("add field$it") {
             val s = "  \"field$it\": $it,\n"

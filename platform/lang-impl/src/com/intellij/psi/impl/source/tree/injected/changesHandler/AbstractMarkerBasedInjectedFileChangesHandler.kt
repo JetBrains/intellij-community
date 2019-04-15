@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.Trinity
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
@@ -24,9 +25,8 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
 
   protected abstract val markers: MutableList<Marker>
 
-  protected fun localRangeMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker = myNewDocument.createRangeMarker(
-    shred.range.startOffset + shred.prefix.length,
-    shred.range.endOffset - shred.suffix.length)
+  protected fun localRangeMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker =
+    myNewDocument.createRangeMarker(shred.innerRange)
 
   protected fun rebuildLocalMarkersFromShreds() {
     val shreds = InjectedLanguageUtil.getShreds(myInjectedFile)
@@ -109,3 +109,10 @@ inline val Marker.local: RangeMarker get() = this.second
 inline val Marker.localRange: TextRange get() = this.second.range
 
 inline val Segment.range: TextRange get() = TextRange.create(this)
+
+inline val PsiLanguageInjectionHost.Shred.innerRange: TextRange
+  get() = TextRange.create(this.range.startOffset + this.prefix.length,
+                           this.range.endOffset - this.suffix.length)
+
+private val PsiLanguageInjectionHost.contentRange
+  get() = ElementManipulators.getManipulator(this).getRangeInElement(this).shiftRight(textRange.startOffset)

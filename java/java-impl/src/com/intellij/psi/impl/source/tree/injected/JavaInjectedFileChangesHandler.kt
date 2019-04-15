@@ -104,11 +104,18 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     println("searching for injections at ${logHostMarker(contextRange)}")
     val injectedPsiFiles = run {
-      injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, contextRange)
+      /*injectedLanguageManager.getCachedInjectedDocumentsInRange(origPsiFile, contextRange)
         .mapNotNull(psiDocumentManager::getPsiFile)
         .takeIf { it.isNotEmpty() }
-      ?: injectedLanguageManager.findInjectedElementAt(origPsiFile, contextRange.startOffset + 1)?.let {
-        listOf(it.containingFile)
+      ?:*/
+
+      //      injectedLanguageManager.findInjectedElementAt(origPsiFile, contextRange.startOffset + 1)?.let {
+      //        listOf(it.containingFile)
+      //      }
+      getInjectionHostsAtRange(origPsiFile, contextRange).firstOrNull().also {
+        println("findElementOfClassAtRange = $it")
+      }?.let { host ->
+        injectedLanguageManager.getInjectedPsiFiles(host)?.mapNotNull { it.first as? PsiFile }
       }
       ?: emptyList()
     }
@@ -120,22 +127,36 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       println("injected file updated")
       myInjectedFile = newInjectedFile
     }
-
+    markers.forEach { it.origin.dispose(); it.local.dispose() }
     markers.clear()
-    val markersFromShreds = getMarkersFromShreds(InjectedLanguageUtil.getShreds(myInjectedFile))
-    println("markersFromShreds = $markersFromShreds")
+    println("injectedFile: '${myInjectedFile.text}'")
+    println("rebuilding makers myNewDocument= '${myNewDocument.text}'")
+    val shreds = InjectedLanguageUtil.getShreds(myInjectedFile)
+    println("shreds = \n   ${shreds.joinToString("\n   ") { myNewDocument.logMarker(it.innerRange) }}")
+    val markersFromShreds = getMarkersFromShreds(shreds)
+    println("markersFromShreds = \n   ${markersFromShreds.joinToString("\n\n   ") { marker ->
+      "oring=${myOrigDocument.logMarker(marker.origin.range)}\n   " +
+      "local=${myNewDocument.logMarker(marker.local.range)}"
+    }}")
     markers.addAll(markersFromShreds)
   }
 
-  private fun logHostMarker(rangeInHost: TextRange?) =
-    "$rangeInHost -> '${rangeInHost?.let {
-      try {
-        myOrigDocument.getText(it)
-      }
-      catch (e: IndexOutOfBoundsException) {
-        e.toString()
-      }
-    }}'"
+  private fun getInjectionHostsAtRange(origPsiFile: PsiFile, contextRange: TextRange): Sequence<PsiLanguageInjectionHost> =
+    origPsiFile.findElementAt(contextRange.startOffset)?.withNextSiblings.orEmpty()
+      .takeWhile { it.textRange.startOffset < contextRange.endOffset }
+      .flatMap { sequenceOf(it, it.parent) }
+      .filterIsInstance<PsiLanguageInjectionHost>()
+
+  private fun logHostMarker(rangeInHost: TextRange?) = myOrigDocument.logMarker(rangeInHost)
+
+  private fun Document.logMarker(rangeInHost: TextRange?): String = "$rangeInHost -> '${rangeInHost?.let {
+    try {
+      getText(it)
+    }
+    catch (e: IndexOutOfBoundsException) {
+      e.toString()
+    }
+  }}'"
 
   private fun promoteLinesEnds(mapping: List<Pair<Marker, String>>): Iterable<Pair<Marker, String>> {
     val result = ArrayList<Pair<Marker, String>>(mapping.size);
@@ -216,9 +237,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     return null
   }
 
-  private val PsiLanguageInjectionHost.contentRange
-    get() = ElementManipulators.getManipulator(this).getRangeInElement(this).shiftRight(textRange.startOffset)
-
 }
 
 private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
@@ -228,6 +246,9 @@ private fun intermediateElement(psi: PsiElement) =
 
 private val PsiElement.nextSiblings: Sequence<PsiElement>
   get() = generateSequence(this.nextSibling) { it.nextSibling }
+
+private val PsiElement.withNextSiblings: Sequence<PsiElement>
+  get() = generateSequence(this) { it.nextSibling }
 
 private val PsiElement.prevSiblings: Sequence<PsiElement>
   get() = generateSequence(this.prevSibling) { it.prevSibling }
