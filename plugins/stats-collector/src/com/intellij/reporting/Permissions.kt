@@ -16,10 +16,11 @@
 package com.intellij.reporting
 
 import com.intellij.completion.settings.CompletionStatsCollectorSettings
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 
 fun isSendAllowed(): Boolean {
-  return CompletionStatsCollectorSettings.getInstance().isDataSendAllowed
+  return CompletionStatsCollectorSettings.getInstance().isCompletionLogsSendAllowed && StatisticsUploadAssistant.isSendAllowed()
 }
 
 fun isUnitTestMode(): Boolean {
