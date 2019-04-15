@@ -18,38 +18,33 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
   private val testSuccessName = "test_dummy_2"
 
   fun testIdBased() {
-    flushBufferSize = 0
-    buildTestTree(idBased = true)
+    buildTestTree(idBased = true, flushBufferSize = 0)
   }
 
   fun testIdBasedFlushEachChar() {
-    flushBufferSize = 1
-    buildTestTree(idBased = true)
+    buildTestTree(idBased = true, flushBufferSize = 1)
   }
 
   fun testIdBasedFlushEachFourChars() {
-    flushBufferSize = 4
-    buildTestTree(idBased = true)
+    buildTestTree(idBased = true, flushBufferSize = 4)
   }
 
 
   fun testGeneric() {
-    flushBufferSize = 0
-    buildTestTree(idBased = false)
+    buildTestTree(idBased = false, flushBufferSize = 0)
   }
 
   fun testGenericFlushEachChar() {
-    flushBufferSize = 1
-    buildTestTree(idBased = false)
+    buildTestTree(idBased = false, flushBufferSize = 1)
   }
 
   fun testGenericFlushEachFourChars() {
-    flushBufferSize = 4
-    buildTestTree(idBased = false)
+    buildTestTree(idBased = false, flushBufferSize = 4)
   }
 
 
-  private fun buildTestTree(idBased: Boolean) {
+  private fun buildTestTree(idBased: Boolean, flushBufferSize: Int) {
+    this.flushBufferSize = flushBufferSize
     val testProxy = SMTestProxy.SMRootTestProxy()
     converter.processor = if (idBased) {
       GeneralIdBasedToSMTRunnerEventsConvertor(LightPlatformTestCase.ourProject, testProxy, "root")
@@ -58,6 +53,7 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
       GeneralToSMTRunnerEventsConvertor(LightPlatformTestCase.getProject(), testProxy, "root")
     }
 
+    converter.setTestingStartedHandler {  }
     start()
     if (idBased) {
       idBasedTree()
@@ -106,12 +102,12 @@ class StdoutToSMTreeTest : BaseSMTRunnerTestCase() {
 
   private fun finish() {
     message(ServiceMessageBuilder("testingFinished"))
-    converter.finishTesting()
   }
 
   private fun start() {
-    converter.processor.onStartTesting()
     message(ServiceMessageBuilder("enteredTheMatrix"))
+    // OutputToGeneralTestEventsConverter.MyServiceMessageVisitor.visitServiceMessage ignores the first testingStarted event
+    message(ServiceMessageBuilder("testingStarted"))
     message(ServiceMessageBuilder("testingStarted"))
   }
 
