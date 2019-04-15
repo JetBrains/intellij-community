@@ -10,11 +10,9 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.Trinity
-import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import kotlin.math.max
 import kotlin.math.min
 
@@ -27,30 +25,6 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
 
   protected fun localRangeMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker =
     myNewDocument.createRangeMarker(shred.innerRange)
-
-  protected fun rebuildLocalMarkersFromShreds() {
-    val shreds = InjectedLanguageUtil.getShreds(myInjectedFile)
-    if (markers.size != shreds.size) failAndReport("markers and shreds doesn't match")
-    val newMarkers = ArrayList<Marker>(markers.size)
-    for ((marker, shred) in markers.zip(shreds)) {
-
-      val shredRange = with(shred) { host?.let { rangeInsideHost.shiftRight(it.textRange.startOffset) } }
-
-      if (shredRange != marker.origin.range) {
-        failAndReport("shred and marker doesn't match $shredRange != ${marker.origin.range}")
-      }
-
-      val newLocalMarker = localRangeMarkerFromShred(shred).apply {
-        isGreedyToLeft = marker.local.isGreedyToLeft
-        isGreedyToRight = marker.local.isGreedyToRight
-      }
-
-      marker.local.dispose()
-      newMarkers.add(Marker(marker.origin, newLocalMarker, marker.third))
-    }
-    markers.clear()
-    markers.addAll(newMarkers)
-  }
 
   protected fun failAndReport(message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
     throw RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +
@@ -70,7 +44,7 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
     failAndReport("can't get substring ($start, $cursor) of '${this}'[$length]", exception = e)
   }
 
-  fun mapMarkersToText(affectedMarkers: List<Marker>, affectedRange: TextRange, limit: Int): List<Pair<Marker, String>> {
+  fun distributeTextToMarkers(affectedMarkers: List<Marker>, affectedRange: TextRange, limit: Int): List<Pair<Marker, String>> {
     var cursor = 0
     return affectedMarkers.indices.map { i ->
       val marker = affectedMarkers[i]
@@ -93,7 +67,7 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
 
 }
 
-fun affectedLength(marker: Marker?, affectedRange: TextRange): Int =
+private fun affectedLength(marker: Marker?, affectedRange: TextRange): Int =
   marker?.localRange?.let { affectedRange.intersection(it)?.length } ?: -1
 
 typealias Marker = Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>
@@ -113,6 +87,3 @@ inline val Segment.range: TextRange get() = TextRange.create(this)
 inline val PsiLanguageInjectionHost.Shred.innerRange: TextRange
   get() = TextRange.create(this.range.startOffset + this.prefix.length,
                            this.range.endOffset - this.suffix.length)
-
-private val PsiLanguageInjectionHost.contentRange
-  get() = ElementManipulators.getManipulator(this).getRangeInElement(this).shiftRight(textRange.startOffset)

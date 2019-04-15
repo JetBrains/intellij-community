@@ -23,7 +23,6 @@ import kotlin.math.max
 internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
 
-
   private val myOrigCreationStamp = myOrigDocument.modificationStamp // store creation stamp for UNDO tracking
 
   init {
@@ -43,9 +42,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
   override fun commitToOriginal(e: DocumentEvent) {
-    //    myInjectedFile.let { if (!it.isValid) throw PsiInvalidElementAccessException(it) }
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
-    val origPsiFile = psiDocumentManager.getPsiFile(myOrigDocument)!!
+    val origPsiFile = psiDocumentManager.getPsiFile(myOrigDocument) ?: failAndReport("no psiFile $myOrigDocument", e)
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     println("e = $e")
     println("affectedRange = $affectedRange")
@@ -54,9 +52,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     var workingRange: TextRange? = null
     val markersToRemove = SmartList<Marker>()
-    for ((affectedMarker, markerText) in mapMarkersToText(affectedMarkers, affectedRange, e.offset + e.newLength)
+    for ((affectedMarker, markerText) in distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength)
       .let(this::promoteLinesEnds)) {
-
       val rangeInHost = affectedMarker.origin.range
       println("range = ${logHostMarker(rangeInHost)}")
       println("markerText = '$markerText'")
@@ -179,12 +176,11 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     return ContainerUtil.reverse(result)
   }
 
-  private fun markersWholeRange(affectedMarkers: List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>>): TextRange? {
-    return affectedMarkers.asSequence()
+  private fun markersWholeRange(affectedMarkers: List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>>): TextRange? =
+    affectedMarkers.asSequence()
       .filter { it.host?.isValid ?: false }
       .mapNotNull { it.hostSegment?.range }
       .takeIf { it.any() }?.reduce(TextRange::union)
-  }
 
   private fun getFollowingElements(host: PsiLanguageInjectionHost): List<PsiElement>? {
     val result = SmartList<PsiElement>()
@@ -200,19 +196,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
   private fun removeHostsFromConcatenation(hostsToRemove: List<Marker>): TextRange? {
-    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
-    println("hostsToRemove = $hostsToRemove")
     for (marker in hostsToRemove.reversed()) {
-      val host = marker.host
-      if (host == null) {
-        println("no host at ${logHostMarker(marker.hostSegment?.range)}")
-        continue
-      }
-
-      val relatedElements =
-        getFollowingElements(host) ?: host.prevSiblings.takeWhile(::intermediateElement).toList()
-
-      println("removing ${relatedElements.map { it to it.textRange }}")
+      val host = marker.host ?: continue
+      val relatedElements = getFollowingElements(host) ?: host.prevSiblings.takeWhile(::intermediateElement).toList()
       if (relatedElements.isNotEmpty()) {
         host.delete()
         marker.origin.dispose()
@@ -220,16 +206,13 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
           if (related.isValid) {
             related.delete()
           }
-          else {
-            println("invalid psi element = $related")
-          }
         }
       }
     }
 
+    val psiPolyadicExpression = hostsToRemove.asSequence().mapNotNull { it.host?.parent as? PsiPolyadicExpression }.distinct().singleOrNull()
     if (psiPolyadicExpression != null) {
       psiPolyadicExpression.operands.singleOrNull()?.let { onlyRemaining ->
-        println("replacing last $onlyRemaining")
         return psiPolyadicExpression.replace(onlyRemaining).textRange
       }
     }
