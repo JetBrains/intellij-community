@@ -73,7 +73,9 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
 
       if (menuRect != null /*&& !myIdeMenu.isSelected*/) {
-        menuRect.y += Math.round((menuRect.height / 3).toFloat())
+        val topGap = Math.round((menuRect.height / 3).toFloat())
+        menuRect.y += topGap
+        menuRect.height -=topGap
       }
     }
 
