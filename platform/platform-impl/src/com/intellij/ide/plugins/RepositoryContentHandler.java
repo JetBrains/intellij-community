@@ -43,12 +43,12 @@ class RepositoryContentHandler extends DefaultHandler {
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
-  private List<IdeaPluginDescriptor> plugins;
+  private List<PluginNode> plugins;
   private Stack<String> categories;
   private String categoryName;
 
   @NotNull
-  List<IdeaPluginDescriptor> getPluginsList() {
+  List<PluginNode> getPluginsList() {
     return plugins != null ? plugins : Collections.emptyList();
   }
 
@@ -137,7 +137,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(currentValueString);
     }
     else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
-      if (currentPlugin != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+      if (currentPlugin != null) {
         plugins.add(currentPlugin);
       }
       currentPlugin = null;
