@@ -3,10 +3,7 @@ package git4idea.conflicts
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
@@ -15,7 +12,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS
 import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
@@ -50,6 +47,7 @@ import javax.swing.tree.TreeNode
 class GitConflictsView(private val project: Project) : Disposable {
   private val mergeHandler: GitMergeHandler = GitMergeHandler(project)
 
+  private val panel: SimpleToolWindowPanel
   private val table: MergeConflictsTreeTable
   private val tableModel: ListTreeTableModelOnColumns
 
@@ -58,7 +56,6 @@ class GitConflictsView(private val project: Project) : Disposable {
 
   private val updateQueue: MergingUpdateQueue
   private val groupingSupport: ChangesGroupingSupport = ChangesGroupingSupport(project, this, false)
-  private val panel: SimpleToolWindowPanel
 
   init {
     tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), arrayOf(PathColumn(), YoursColumn(), TheirsColumn()))
@@ -96,7 +93,7 @@ class GitConflictsView(private val project: Project) : Disposable {
 
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        showMergeWindow()
+        showMergeWindowForSelection()
         return true
       }
     }.installOn(table)
@@ -144,11 +141,13 @@ class GitConflictsView(private val project: Project) : Disposable {
   private fun rebuildTree() {
     val builder = MyTreeModelBuilder(project, groupingSupport.grouping)
     builder.addConflicts(conflicts)
-    tableModel.setRoot(builder.build().root as TreeNode)
+    val newRoot = builder.build().root
+
+    tableModel.setRoot(newRoot as TreeNode)
     TreeUtil.expandAll(table.tree)
   }
 
-  private fun showMergeWindow() {
+  private fun showMergeWindowForSelection() {
     val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toList()
     if (conflicts.isEmpty()) return
 
@@ -162,7 +161,7 @@ class GitConflictsView(private val project: Project) : Disposable {
     }
   }
 
-  private fun acceptSide(takeTheirs: Boolean) {
+  private fun acceptConflictSideForSelection(takeTheirs: Boolean) {
     val conflicts = getSelectedConflicts()
     if (conflicts.isEmpty()) return
 
@@ -170,7 +169,6 @@ class GitConflictsView(private val project: Project) : Disposable {
 
     runBackgroundableTask(StringUtil.pluralize("Resolving Conflict", conflicts.size), project, true) {
       mergeHandler.acceptOneVersion(conflicts, reversed, takeTheirs)
-      VcsDirtyScopeManager.getInstance(project).filePathsDirty(conflicts.map { it.filePath }, null)
     }
   }
 
@@ -206,7 +204,7 @@ class GitConflictsView(private val project: Project) : Disposable {
 
   private inner class ResolveAction : DumbAwareAction("Resolve", null, AllIcons.Vcs.Merge) {
     override fun actionPerformed(e: AnActionEvent) {
-      showMergeWindow()
+      showMergeWindowForSelection()
     }
   }
 
@@ -214,7 +212,7 @@ class GitConflictsView(private val project: Project) : Disposable {
     DumbAwareAction(if (takeTheirs) "Accept Theirs" else "Accept Yours", null,
                     if (takeTheirs) AllIcons.Vcs.Arrow_left else AllIcons.Vcs.Arrow_right) {
     override fun actionPerformed(e: AnActionEvent) {
-      acceptSide(takeTheirs)
+      acceptConflictSideForSelection(takeTheirs)
     }
   }
 
@@ -222,6 +220,9 @@ class GitConflictsView(private val project: Project) : Disposable {
     override fun getData(dataId: String): Any? {
       if (ChangesGroupingSupport.KEY.`is`(dataId)) {
         return groupingSupport
+      }
+      else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
+        return ChangesUtil.getNavigatableArray(project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile }.stream())
       }
       return null
     }

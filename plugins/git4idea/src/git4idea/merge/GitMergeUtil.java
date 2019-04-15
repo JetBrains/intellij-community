@@ -487,13 +487,8 @@ public class GitMergeUtil {
       if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
     }
 
-    try {
-      GitFileUtils.addPathsForce(project, root, toAdd);
-      GitFileUtils.deletePaths(project, root, toDelete);
-    }
-    catch (VcsException e) {
-      LOG.error(String.format("Unexpected exception during the git operation: modified - %s deleted - %s)", toAdd, toDelete), e);
-    }
+    GitFileUtils.addPathsForce(project, root, toAdd);
+    GitFileUtils.deletePaths(project, root, toDelete);
   }
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {

@@ -21,6 +21,7 @@ import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.BinaryMergeRequest;
 import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -102,13 +103,11 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    MergeCallback callback = MergeCallback.getCallback(this);
-
     try {
       final byte[] applyContent;
       switch (result) {
         case CANCEL:
-          applyContent = callback.shouldRestoreOriginalContentOnCancel() ? myOriginalContent : null;
+          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
           break;
         case LEFT:
           applyContent = ThreeSide.LEFT.select(myByteContents);
@@ -137,7 +136,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
         });
       }
 
-      callback.applyResult(result);
+      MergeCallback.getCallback(this).applyResult(result);
     }
     finally {
       onAssigned(false);

@@ -97,7 +97,7 @@ public class GitMergeProvider implements MergeProvider2 {
     VcsRunnable runnable = new VcsRunnable() {
       @Override
       public void run() throws VcsException {
-        mergeDataRef.set(GitMergeUtil.loadMergeData(myProject, root, path, myReverseRoots.contains(root)));
+        mergeDataRef.set(loadMergeData(myProject, root, path, myReverseRoots.contains(root)));
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
@@ -276,7 +276,7 @@ public class GitMergeProvider implements MergeProvider2 {
                                           : resolution == Resolution.AcceptedTheirs;
         ConflictSide conflictSide = acceptYours ? ConflictSide.OURS : ConflictSide.THEIRS;
 
-        GitMergeUtil.acceptOneVersion(myProject, root, conflicts, conflictSide);
+        acceptOneVersion(myProject, root, conflicts, conflictSide);
       }
     }
 

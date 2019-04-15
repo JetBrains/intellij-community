@@ -32,7 +32,6 @@ import javax.swing.JFrame
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
-  @JvmStatic
   @CalledInAwt
   fun showMergeWindow(project: Project, file: VirtualFile?, resolverComputer: () -> GitMergeHandler.Resolver) {
     if (focusActiveMergeWindow(file)) return
@@ -44,7 +43,6 @@ object MergeConflictResolveUtil {
 
     val producer = MyProducer(project, title, resolverComputer)
 
-    // TODO: support non-modal external tools (notification?)
     DiffManagerEx.getInstance().showMergeBuiltin(project, producer, hints)
   }
 
@@ -66,7 +64,6 @@ object MergeConflictResolveUtil {
         }
         MergeUtil.putRevisionInfos(request, mergeData)
         MergeCallback.register(request, MyMergeCallback(resolver))
-
         return request
       }
       catch (e: Throwable) {
@@ -98,21 +95,6 @@ object MergeConflictResolveUtil {
     return true
   }
 
-  class NotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-    private val KEY = Key.create<EditorNotificationPanel>("MergeConflictResolveUtil.NotificationProvider")
-
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-      val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
-      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
-      panel.setText("Merge conflicts resolve in progress.")
-      panel.createActionLabel("Focus Window") { UIUtil.toFront(wrapper.window) }
-      panel.createActionLabel("Cancel Resolve") { wrapper.close() }
-      return panel
-    }
-  }
-
   private class MyMergeCallback(private val resolver: GitMergeHandler.Resolver) : MergeCallback() {
     override fun applyResult(result: MergeResult) {
       val project = resolver.project
@@ -125,8 +107,7 @@ object MergeConflictResolveUtil {
 
       if (result != MergeResult.CANCEL) {
         runBackgroundableTask("Finishing Conflict Resolve", project, false) {
-          resolver.onConflictResolved()
-          VcsDirtyScopeManager.getInstance(project).filesDirty(listOf(file), emptyList())
+          resolver.onConflictResolved(result)
         }
       }
     }
@@ -137,6 +118,22 @@ object MergeConflictResolveUtil {
 
     override fun addListener(listener: Listener, disposable: Disposable) {
       resolver.addListener(listener, disposable)
+    }
+  }
+
+
+  class NotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
+    private val KEY = Key.create<EditorNotificationPanel>("MergeConflictResolveUtil.NotificationProvider")
+
+    override fun getKey(): Key<EditorNotificationPanel> = KEY
+
+    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+      val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
+      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      panel.setText("Merge conflicts resolve in progress.")
+      panel.createActionLabel("Focus Window") { UIUtil.toFront(wrapper.window) }
+      panel.createActionLabel("Cancel Resolve") { wrapper.close() }
+      return panel
     }
   }
 }

@@ -161,6 +161,14 @@ public class MergeUtil {
     return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
   }
 
+  public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {
+    MergeCallback callback = MergeCallback.getCallback(request);
+    if (callback.checkIsValid()) return true;
+    return Messages.showYesNoDialog("Merge conflict is outdated. Restore file content prior to conflict resolve start?",
+                                    DiffBundle.message("cancel.visual.merge.dialog.title"), "Restore", "Do nothing",
+                                    Messages.getQuestionIcon()) == Messages.YES;
+  }
+
   public static void putRevisionInfos(@NotNull MergeRequest request, @NotNull MergeData data) {
     if (request instanceof ThreesideMergeRequest) {
       List<? extends DiffContent> contents = ((ThreesideMergeRequest)request).getContents();

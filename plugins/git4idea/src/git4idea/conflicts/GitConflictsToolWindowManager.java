@@ -5,8 +5,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.content.Content;
@@ -14,6 +12,8 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import git4idea.repo.GitConflictsHolder;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +31,16 @@ public class GitConflictsToolWindowManager implements ProjectComponent {
 
   public GitConflictsToolWindowManager(@NotNull Project project,
                                        @NotNull ChangesViewContentI contentManager,
-                                       @NotNull ChangeListManager changeListManager,
                                        @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
     myContentManager = contentManager;
     myRepositoryManager = repositoryManager;
 
-    myQueue = new MergingUpdateQueue("GitConflictsToolWindowManager", 300, true, null);
+    myQueue = new MergingUpdateQueue("GitConflictsToolWindowManager", 300, true, null, myProject);
 
-    changeListManager.addChangeListListener(new ChangeListListener() {
+    project.getMessageBus().connect().subscribe(GitConflictsHolder.CONFLICTS_CHANGE, new GitConflictsHolder.ConflictsListener() {
       @Override
-      public void changeListUpdateDone() {
+      public void conflictsChanged(@NotNull GitRepository repository) {
         myQueue.queue(Update.create("update", () -> updateToolWindow()));
       }
     });

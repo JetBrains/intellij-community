@@ -18,6 +18,7 @@ package com.intellij.diff.requests;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
@@ -84,13 +85,11 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    MergeCallback callback = MergeCallback.getCallback(this);
-
     try {
       final CharSequence applyContent;
       switch (result) {
         case CANCEL:
-          applyContent = callback.shouldRestoreOriginalContentOnCancel() ? myOriginalContent : null;
+          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
           break;
         case LEFT:
           CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
@@ -111,7 +110,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
         DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
       }
 
-      callback.applyResult(result);
+      MergeCallback.getCallback(this).applyResult(result);
     }
     finally {
       onAssigned(false);

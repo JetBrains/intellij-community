@@ -30,6 +30,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diff.DiffBundle;
@@ -420,7 +421,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           LOG.error(e);
           callback = () -> myMergeContext.finishMerge(MergeResult.CANCEL);
         }
-        ApplicationManager.getApplication().invokeLater(callback);
+        ApplicationManager.getApplication().invokeLater(callback, ModalityState.stateForComponent(myPanel));
       });
     }
 

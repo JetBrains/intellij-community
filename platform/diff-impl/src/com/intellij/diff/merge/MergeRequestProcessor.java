@@ -91,7 +91,9 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel).addToRight(myToolbarStatusPanel).addToBottom(myNotificationPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarPanel)
+      .addToRight(myToolbarStatusPanel)
+      .addToBottom(myNotificationPanel);
 
     myMainPanel.add(topPanel, BorderLayout.NORTH);
     myMainPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -275,21 +277,21 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   private void installCallbackListener(@NotNull MergeRequest request) {
     MergeCallback callback = MergeCallback.getCallback(request);
-    boolean isValid = callback.checkIsValid();
-    if (!isValid) {
+    callback.addListener(new MergeCallback.Listener() {
+      @Override
+      public void fireConflictInvalid() {
+        showInvalidRequestNotification();
+      }
+    }, this);
+
+    if (!callback.checkIsValid()) {
       showInvalidRequestNotification();
-    }
-    else {
-      callback.addListener(new MergeCallback.Listener() {
-        @Override
-        public void fireConflictInvalid() {
-          showInvalidRequestNotification();
-        }
-      }, this);
     }
   }
 
   private void showInvalidRequestNotification() {
+    if (!myNotificationPanel.isNull()) return;
+
     EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
     notification.setText("Conflict is not valid and no longer can be resolved.");
     notification.createActionLabel("Abort Resolve", () -> {

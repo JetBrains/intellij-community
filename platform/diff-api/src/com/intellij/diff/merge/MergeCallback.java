@@ -2,8 +2,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 public class MergeCallback {
-  public static final Key<MergeCallback> KEY = Key.create("com.intellij.diff.merge.MergeCallback");
-  public static final MergeCallback EMPTY = new MergeCallback();
+  private static final Logger LOG = getInstance(MergeCallback.class);
+
+  private static final Key<MergeCallback> KEY = Key.create("com.intellij.diff.merge.MergeCallback");
+  private static final MergeCallback EMPTY = new MergeCallback();
 
   public void applyResult(@NotNull MergeResult result) {
   }
@@ -25,16 +28,10 @@ public class MergeCallback {
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
   }
 
-  public boolean shouldRestoreOriginalContentOnCancel() {
-    if (checkIsValid()) return true;
-    return Messages.showYesNoDialog("Merge conflict is outdated. Restore file content prior to conflict resolve start?",
-                                    DiffBundle.message("cancel.visual.merge.dialog.title"), "Restore", "Do nothing",
-                                    Messages.getQuestionIcon()) == Messages.YES;
-  }
-
 
   @NotNull
   public static <T extends MergeRequest> T register(@NotNull T request, @Nullable MergeCallback callback) {
+    LOG.assertTrue(request.getUserData(KEY) == null);
     if (callback != null) request.putUserData(KEY, callback);
     return request;
   }

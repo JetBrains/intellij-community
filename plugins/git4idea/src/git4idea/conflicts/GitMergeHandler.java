@@ -2,12 +2,15 @@
 package git4idea.conflicts;
 
 import com.intellij.diff.merge.MergeCallback;
+import com.intellij.diff.merge.MergeResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class GitMergeHandler {
@@ -51,7 +55,7 @@ public class GitMergeHandler {
     VirtualFile root = conflict.getRoot();
     FilePath path = conflict.getFilePath();
 
-    VirtualFile file = path.getVirtualFile();
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
     if (file == null) throw new VcsException("Can't find file for " + path);
 
     MergeData mergeData = GitMergeUtil.loadMergeData(myProject, root, path, isReversed);
@@ -68,15 +72,19 @@ public class GitMergeHandler {
   public void acceptOneVersion(@NotNull Collection<GitConflict> conflicts,
                                @NotNull Collection<VirtualFile> reversedRoots,
                                boolean takeTheirs) throws VcsException {
-    MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(conflicts);
+    try {
+      MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(conflicts);
 
-    for (VirtualFile root : byRoot.keySet()) {
-      Collection<GitConflict> rootConflicts = byRoot.get(root);
-      boolean isReversed = reversedRoots.contains(root);
-      ConflictSide side = isReversed == takeTheirs ? ConflictSide.OURS
-                                                   : ConflictSide.THEIRS;
+      for (VirtualFile root : byRoot.keySet()) {
+        Collection<GitConflict> rootConflicts = byRoot.get(root);
+        boolean isReversed = reversedRoots.contains(root);
+        ConflictSide side = isReversed == takeTheirs ? ConflictSide.OURS : ConflictSide.THEIRS;
 
-      GitMergeUtil.acceptOneVersion(myProject, root, rootConflicts, side);
+        GitMergeUtil.acceptOneVersion(myProject, root, rootConflicts, side);
+      }
+    }
+    finally {
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ContainerUtil.map(conflicts, GitConflict::getFilePath), null);
     }
   }
 
@@ -98,7 +106,7 @@ public class GitMergeHandler {
     @NotNull private final String myWindowTitle;
     @NotNull private final List<String> myContentTitles;
 
-    private boolean myIsValid = true;
+    private volatile boolean myIsValid = true;
 
     private Resolver(@NotNull Project project,
                      @NotNull GitConflict conflict,
@@ -129,16 +137,18 @@ public class GitMergeHandler {
       return myMergeData;
     }
 
-    public void onConflictResolved() {
-      FilePath path = myConflict.getFilePath();
-
-      VirtualFile root = myConflict.getRoot();
-      try {
-        GitFileUtils.addPathsForce(myProject, root, singletonList(path));
+    public void onConflictResolved(@NotNull MergeResult result) {
+      if (result == MergeResult.RESOLVED) {
+        FilePath path = myConflict.getFilePath();
+        VirtualFile root = myConflict.getRoot();
+        try {
+          GitFileUtils.addPathsForce(myProject, root, singletonList(path));
+        }
+        catch (VcsException e) {
+          LOG.error(String.format("Unexpected exception during the git operation: file - %s)", path), e);
+        }
       }
-      catch (VcsException e) {
-        LOG.error(String.format("Unexpected exception during the git operation: file - %s)", path), e);
-      }
+      VcsDirtyScopeManager.getInstance(myProject).filesDirty(singletonList(myFile), emptyList());
     }
 
     @NotNull
