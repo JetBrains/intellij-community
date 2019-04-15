@@ -12,7 +12,10 @@ import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.commons.cli.ParseException;
-import org.apache.maven.*;
+import org.apache.maven.AbstractMavenLifecycleParticipant;
+import org.apache.maven.DefaultMaven;
+import org.apache.maven.Maven;
+import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -38,9 +41,11 @@ import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
-import org.apache.maven.profiles.activation.*;
+import org.apache.maven.profiles.activation.JdkPrefixProfileActivator;
+import org.apache.maven.profiles.activation.OperatingSystemProfileActivator;
+import org.apache.maven.profiles.activation.ProfileActivator;
+import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.*;
-import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -48,7 +53,6 @@ import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
-import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
@@ -56,7 +60,6 @@ import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
@@ -80,8 +83,8 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.*;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -257,6 +260,12 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
+  @NotNull
+  @Override
+  protected PlexusContainer getContainer() {
+    return myContainer;
+  }
+
   private static Settings buildSettings(SettingsBuilder builder,
                                         MavenServerSettings settings,
                                         Properties systemProperties,
@@ -286,15 +295,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     return result;
-  }
-
-  private static void warn(String message, Throwable e) {
-    try {
-      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
   }
 
   private static MavenExecutionResult handleException(Throwable e) {
@@ -611,50 +611,6 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
-  @Override
-  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
-    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    SessionScope sessionScope = getComponent(SessionScope.class);
-    sessionScope.enter();
-
-    try {
-      RepositorySystemSession repositorySession = maven.newRepositorySession(request);
-
-      request.getProjectBuildingRequest().setRepositorySession(repositorySession);
-
-      MavenSession mavenSession = new MavenSession(myContainer, repositorySession, request, new DefaultMavenExecutionResult());
-
-      sessionScope.seed(MavenSession.class, mavenSession);
-
-      LegacySupport legacySupport = getComponent(LegacySupport.class);
-
-      MavenSession oldSession = legacySupport.getSession();
-
-      legacySupport.setSession(mavenSession);
-
-
-      // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
-      try {
-        for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.<MavenProject>emptyList())) {
-          listener.afterSessionStart(mavenSession);
-        }
-      }
-      catch (MavenExecutionException e) {
-        throw new RuntimeException(e);
-      }
-
-      try {
-        runnable.run();
-      }
-      finally {
-        legacySupport.setSession(oldSession);
-      }
-    }
-    finally {
-      sessionScope.exit();
-    }
-  }
-
   @NotNull
   public Collection<MavenExecutionResult> doResolveProject(@NotNull final Collection<File> files,
                                                            @NotNull final List<String> activeProfiles,
@@ -736,7 +692,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               }));
               for (Dependency dependency : dependencies) {
                 final Artifact artifact = winnerDependencyMap.get(dependency);
-                if(artifact != null) {
+                if (artifact != null) {
                   artifacts.add(artifact);
                   resolveAsModule(artifact);
                 }
@@ -1022,7 +978,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                         @NotNull Collection<MavenProjectProblem> problems,
                         @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
     for (Throwable each : exceptions) {
-      if(each == null) continue;
+      if (each == null) continue;
 
       Maven3ServerGlobals.getLogger().info(each);
 
@@ -1370,11 +1326,11 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((CustomMaven3ArtifactFactory)artifactFactory).reset();
       }
       final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if(artifactResolver instanceof CustomMaven3ArtifactResolver) {
+      if (artifactResolver instanceof CustomMaven3ArtifactResolver) {
         ((CustomMaven3ArtifactResolver)artifactResolver).reset();
       }
       final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
-      if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+      if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
         ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
       }
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
