@@ -70,7 +70,7 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
-  private static final boolean MAC_ALT_GRAPH_JAVA11 = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -370,7 +370,7 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
       e = metaEvent;
     }
-    if (MAC_ALT_GRAPH_JAVA11 && e instanceof InputEvent) {
+    if (JAVA11_ON_MAC && e instanceof InputEvent) {
       // disable AltGr on Mac because this key is not supported by macOS
       if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
       IdeKeyEventDispatcher.removeAltGraph((InputEvent)e);
