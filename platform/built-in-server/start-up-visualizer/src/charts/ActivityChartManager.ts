@@ -45,7 +45,7 @@ export class ActivityChartManager extends XYChartManager {
     nameAxisLabel.selectable = true
     nameAxisLabel.fontSize = 12
     // quite useful to have tooltips also on axis labels (user report: they're easy to target with mouse)
-    nameAxisLabel.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}"
+    nameAxisLabel.tooltipText = this.getTooltipText()
 
     // https://github.com/amcharts/amcharts4/issues/997
     nameAxisLabel.rotation = -45
@@ -84,10 +84,14 @@ export class ActivityChartManager extends XYChartManager {
     series.dataFields.categoryX = "shortName"
     series.dataFields.valueY = "duration"
     series.columns.template.configField = "chartConfig"
-    series.columns.template.tooltipText = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+    series.columns.template.tooltipText = this.getTooltipText()
   }
 
-  // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
+  protected getTooltipText() {
+    return "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+  }
+
+// https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
   render(data: DataManager): void {
     const concatenatedData: Array<ClassItem> = []
     let colorIndex = 0
@@ -119,12 +123,7 @@ export class ActivityChartManager extends XYChartManager {
       applicableSources.add(sourceName)
 
       for (const item of items) {
-        concatenatedData.push({
-          ...item,
-          shortName: getShortName(item),
-          chartConfig,
-          sourceName,
-        })
+        concatenatedData.push(this.transformDataItem(item, chartConfig, sourceName, items))
       }
     }
 
@@ -145,6 +144,15 @@ export class ActivityChartManager extends XYChartManager {
     concatenatedData.sort((a, b) => a.start - b.start)
     this.computeRangeMarkers(data, concatenatedData)
     this.chart.data = concatenatedData
+  }
+
+  protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
+    return {
+      ...item,
+      shortName: getShortName(item),
+      chartConfig,
+      sourceName,
+    }
   }
 
   private sourceNameToLegendName(sourceName: string, itemCount: number): string {
@@ -199,31 +207,20 @@ function getShortName(item: Item): string {
   return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
-export class ComponentChartManager extends ActivityChartManager {
-  constructor(container: HTMLElement, sourceNames: Array<string>) {
-    super(container, sourceNames)
-  }
-
-  // doesn't make sense for components - cannot be outside of ready, and app initialized is clear
-  // because color for app/project bars is different
-  protected computeRangeMarkers(_data: DataManager) {
-  }
-}
-
 interface LegendItem {
   readonly name: string
   readonly sourceName: string
   readonly fill: am4core.Color
 }
 
-interface ClassItem extends Item {
+export interface ClassItem extends Item {
   readonly shortName: string
   readonly chartConfig: ClassItemChartConfig
 
   readonly sourceName: string
 }
 
-interface ClassItemChartConfig {
+export interface ClassItemChartConfig {
   readonly fill: am4core.Color
   readonly stroke: am4core.Color
 }

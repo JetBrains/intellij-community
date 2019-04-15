@@ -15,7 +15,7 @@ public enum ParallelActivity {
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),
   ;
 
-  private static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
+  public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final String jsonName;
 
@@ -31,6 +31,11 @@ public enum ParallelActivity {
   @NotNull
   public Activity start(@NotNull String name) {
     return ActivityImpl.createParallelActivity(this, name);
+  }
+
+  @NotNull
+  public Activity start(@NotNull String name, @NotNull StartUpMeasurer.Level level) {
+    return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this);
   }
 
   public long record(long start, @NotNull Class<?> clazz) {

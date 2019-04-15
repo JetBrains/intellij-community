@@ -155,17 +155,19 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 }
 
 private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonWriter) {
+  val ownDurations = ObjectLongHashMap<ActivityImpl>()
+
   // sorted to get predictable JSON
   for (name in activities.keys.sorted()) {
-    val list = activities.getValue(name)
+    ownDurations.clear()
 
-    val ownDurations = ObjectLongHashMap<ActivityImpl>()
-    if (SystemProperties.getBooleanProperty("idea.perf.stats.component.own.time", false) && name.endsWith("Component")) {
-      list.sortWith(Comparator(::compareTime))
+    val list = activities.getValue(name)
+    StartUpPerformanceReporter.sortItems(list)
+
+    if (name.endsWith("Component")) {
       computeOwnTime(list, ownDurations)
     }
 
-    StartUpPerformanceReporter.sortItems(list)
     writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations)
   }
 }
@@ -201,7 +203,11 @@ private fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: Object
   }
 
   val actualTotalDurationForAll = list.last().end - list.first().start
-  LOG.assertTrue(computedDurationForAll == actualTotalDurationForAll, "computed: $computedDurationForAll, actual: ${actualTotalDurationForAll}")
+  val diff = actualTotalDurationForAll - computedDurationForAll
+  val diffInMs = TimeUnit.NANOSECONDS.toMillis(diff)
+  if (diff < 0 || diffInMs > 3) {
+    LOG.warn("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
+  }
 }
 
 private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {
@@ -259,15 +265,19 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
     return
   }
 
-  // actually here not all components, but only slow (>10ms - as it was before)
   writer.name(fieldName)
   writer.beginArray()
 
   for (item in activities) {
+    val computedOwnDuration = ownDurations.get(item)
+    val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
+    if (duration <= ParallelActivity.MEASURE_THRESHOLD) {
+      continue
+    }
+
     writer.beginObject()
     writer.name("name").value(item.name)
-    val computedOwnDuration = ownDurations.get(item)
-    writeItemTimeInfo(item, if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration, offset, writer)
+    writeItemTimeInfo(item, duration, offset, writer)
     writer.endObject()
   }
 
@@ -321,16 +331,16 @@ private fun writeUnknown(writer: JsonWriter, start: Long, end: Long, offset: Lon
   return duration
 }
 
-  private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
-    return when {
-      o1.start > o2.start -> 1
-      o1.start < o2.start -> -1
-      else -> {
-        when {
-          o1.end > o2.end -> -1
-          o1.end < o2.end -> 1
-          else -> 0
-        }
+private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
+  return when {
+    o1.start > o2.start -> 1
+    o1.start < o2.start -> -1
+    else -> {
+      when {
+        o1.end > o2.end -> -1
+        o1.end < o2.end -> 1
+        else -> 0
       }
     }
   }
+}
