@@ -332,7 +332,7 @@ public class CachedIntentions {
   private static int getPriorityWeight(PriorityAction.Priority priority) {
     switch (priority) {
       case TOP:
-        return 666;
+        return 20;
       case HIGH:
         return 3;
       case LOW:

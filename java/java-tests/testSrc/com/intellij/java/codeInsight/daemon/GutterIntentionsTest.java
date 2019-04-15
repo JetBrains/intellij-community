@@ -62,4 +62,13 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
     Set<String> names = descriptors.stream().map(descriptor -> descriptor.getDisplayName()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());
   }
+
+  public void testFixesOnTop() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo extends Bo<caret>o {\n" +
+                                                     "  public static void main(String[] args) {}" +
+                                                     "}");
+    myFixture.doHighlighting();
+    CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
+    assertThat(intentions.getAllActions().get(0).getText()).startsWith("Create class ");
+  }
 }
