@@ -33,11 +33,16 @@ public class GitConflict {
 
   @NotNull
   public Status getStatus(@NotNull ConflictSide side) {
+    return getStatus(side, false);
+  }
+
+  @NotNull
+  public Status getStatus(@NotNull ConflictSide side, boolean isReversed) {
     if (side == ConflictSide.OURS) {
-      return myOurStatus;
+      return !isReversed ? myOurStatus : myTheirStatus;
     }
     else {
-      return myTheirStatus;
+      return !isReversed ? myTheirStatus : myOurStatus;
     }
   }
 
@@ -48,6 +53,8 @@ public class GitConflict {
 
   /**
    * Conflict side in Git terms (--ours or --theirs), ignoring IDE-level visible sides reversal.
+   *
+   * @see git4idea.merge.GitMergeUtil#isReverseRoot(GitRepository)
    */
   public enum ConflictSide {
     OURS, THEIRS
