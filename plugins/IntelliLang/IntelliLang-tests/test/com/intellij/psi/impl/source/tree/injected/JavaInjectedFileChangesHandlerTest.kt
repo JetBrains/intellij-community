@@ -331,6 +331,97 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+
+  fun `test delete-commit-delete`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON")
+              String a = "{\n" +
+                  "  \"field1\": 1,\n" +
+                  "  \"container\"<caret>: {\n" +
+                  "    \"innerField\": 2\n" +
+                  "  }\n" +
+                  "}";
+            }
+          }
+      """.trimIndent())
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val fragmentFile = quickEditHandler.newFile
+      TestCase.assertEquals("""
+          {
+            "field1": 1,
+            "container": {
+              "innerField": 2
+            }
+          }
+      """.trimIndent(), fragmentFile.text)
+      fragmentFile.edit("delete json") {
+        findAndDelete("  \"container\": {\n    \"innerField\": 2\n  }")
+      }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+      fragmentFile.edit("delete again") {
+        val pos = text.indexAfter("1,\n")
+        deleteString(pos - 1, pos)
+      }
+
+      //      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      //
+      //      fragmentFile.edit("reformat") {
+      //        CodeStyleManager.getInstance(psiManager).reformatRange(
+      //          fragmentFile, 0, fragmentFile.textLength, false)
+      //      }
+
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo() {
+              @Language("JSON")
+              String a = "{\n" +
+                  "  \"field1\": 1,\n" +
+                  "  \"innerMap1" +
+                  "\": {\n" +
+                  "    " +
+                  "\"field2\": 1,\n" +
+                  "  " +
+                      "  \"field3\": \"brokenInnerMap\"\n" +
+                      "    : {\n" +
+                      "  \"broken1\": 1,\n" +
+                      "  \"broken2\": 2,\n" +
+                      "  \"broken3\": 3\n" +
+                      "}\n" +
+                      "}\n" +
+                      "}";
+            }
+          }
+      """.trimIndent(), true)
+      TestCase.assertEquals("""
+          {
+            "field1": 1,
+            "innerMap1": {
+              "field2": 1,
+              "field3": "brokenInnerMap"
+              : {
+            "broken1": 1,
+            "broken2": 2,
+            "broken3": 3
+          }
+          }
+          }
+      """.trimIndent(), fragmentFile.text)
+
+    }
+
+  }
+
   fun `test delete empty line`() {
     with(myFixture) {
 
@@ -401,6 +492,50 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             void foo(String bodyText) {
               String headText = "someText1";
               @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>" + bodyText + "</body></html>";
+            }
+          }
+      """.trimIndent(), true)
+
+      fragmentFile.edit { insertString(text.indexOf("<body>") + "<body>".length, "\n") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo(String bodyText) {
+              String headText = "someText1";
+              @Language("HTML") String concatenation = "<html><head>" + headText + "</head>someInner<body>\n" + bodyText + "</body></html>";
+            }
+          }
+      """.trimIndent())
+
+    }
+
+  }
+
+
+  fun `test edit guarded blocks ending`() {
+    with(myFixture) {
+
+      myFixture.configureByText("classA.java", """
+          class A {
+            void foo(String bodyText) {
+              String end = ""</body></html>"";
+              String concatenation = "<html><head></head><caret><body>" + end;
+            }
+          }
+      """.trimIndent())
+
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html><head></head><body>missingValue", fragmentFile.text)
+
+      fragmentFile.edit { insertString(text.indexAfter("missingValue"), "\n") }
+      checkResult("""
+          import org.intellij.lang.annotations.Language;
+
+          class A {
+            void foo(String bodyText) {
+              String end = ""</body></html>"";
+              @Language("HTML") String concatenation = "<html><head></head><body>" + end;
             }
           }
       """.trimIndent(), true)

@@ -31,11 +31,26 @@ abstract class AbstractMarkerBasedInjectedFileChangesHandler(editor: Editor,
                                           " myInjectedFile.isValid = ${myInjectedFile.isValid}, isValid = $isValid",
                                           *listOfNotNull(
                                             Attachment("hosts", markers.joinToString("\n\n") { it.host?.text ?: "<null>" }),
-                                            Attachment("markers", markers.joinToString("\n") { it.toString() }),
+                                            Attachment("markers", markers.logMarkersRanges()),
                                             Attachment("injected document", this.myNewDocument.text),
                                             exception?.let { Attachment("exception", it) }
                                           ).toTypedArray()
     )
+
+  protected fun MutableList<Marker>.logMarkersRanges(): String = joinToString("\n") { mm ->
+    "local:${myNewDocument.logMarker(mm.localRange)} orig:${logHostMarker(mm.origin.range)}"
+  }
+
+  protected fun logHostMarker(rangeInHost: TextRange?) = myOrigDocument.logMarker(rangeInHost)
+
+  protected fun Document.logMarker(rangeInHost: TextRange?): String = "$rangeInHost -> '${rangeInHost?.let {
+    try {
+      getText(it)
+    }
+    catch (e: IndexOutOfBoundsException) {
+      e.toString()
+    }
+  }}'"
 
   protected fun String.substringVerbose(start: Int, cursor: Int): String = try {
     substring(start, cursor)

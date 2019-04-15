@@ -12,10 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CommonInjectedFileChangesHandler extends AbstractMarkerBasedInjectedFileChangesHandler {
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> myMarkers =
@@ -28,6 +25,7 @@ public class CommonInjectedFileChangesHandler extends AbstractMarkerBasedInjecte
     super(editor, newDocument, injectedFile);
 
     myMarkers.addAll(getMarkersFromShreds(shreds));
+    System.out.println("initial markers = " + logMarkersRanges(myMarkers));
   }
 
   @NotNull
@@ -41,8 +39,8 @@ public class CommonInjectedFileChangesHandler extends AbstractMarkerBasedInjecte
       final RangeMarker rangeMarker = localRangeMarkerFromShred(shred);
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
-      if (host == null) continue;
-      //Objects.requireNonNull(host, "host should not be null");
+      //if (host == null) continue;
+      Objects.requireNonNull(host, "host should not be null");
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>> markers =

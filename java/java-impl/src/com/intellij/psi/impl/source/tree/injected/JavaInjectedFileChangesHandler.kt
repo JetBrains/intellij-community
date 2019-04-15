@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.Trinity
 import com.intellij.psi.*
@@ -23,17 +24,13 @@ import kotlin.math.max
 internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
 
-  private val myOrigCreationStamp = myOrigDocument.modificationStamp // store creation stamp for UNDO tracking
-
   init {
     // Undo breaks local markers completely, so rebuilding them in that case
     myOrigDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
           PsiDocumentManagerBase.addRunOnCommit(myOrigDocument) {
-            if (myOrigCreationStamp <= myOrigDocument.modificationStamp) {
-              rebuildMarkers(markersWholeRange(markers) ?: failAndReport("cant get marker range"))
-            }
+            rebuildMarkers(markersWholeRange(markers) ?: failAndReport("cant get marker range"))
           }
         }
       }
@@ -78,10 +75,13 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     psiDocumentManager.commitDocument(myOrigDocument)
     println("workingRange = ${logHostMarker(workingRange)}")
-
+    println("markersToRemove = ${markersToRemove.logMarkersRanges()}")
+    println("origPsiFile-before = '${origPsiFile.text}'")
     if (markersToRemove.isNotEmpty()) {
       workingRange = removeHostsFromConcatenation(markersToRemove) ?: workingRange
     }
+
+    println("origPsiFile-after = '${origPsiFile.text}'")
 
     println("range to reformat = ${logHostMarker(workingRange)}")
 
@@ -144,16 +144,9 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       .flatMap { sequenceOf(it, it.parent) }
       .filterIsInstance<PsiLanguageInjectionHost>()
 
-  private fun logHostMarker(rangeInHost: TextRange?) = myOrigDocument.logMarker(rangeInHost)
 
-  private fun Document.logMarker(rangeInHost: TextRange?): String = "$rangeInHost -> '${rangeInHost?.let {
-    try {
-      getText(it)
-    }
-    catch (e: IndexOutOfBoundsException) {
-      e.toString()
-    }
-  }}'"
+  private val guardedBlocks get() = (myNewDocument as DocumentEx).guardedBlocks
+
 
   private fun promoteLinesEnds(mapping: List<Pair<Marker, String>>): Iterable<Pair<Marker, String>> {
     val result = ArrayList<Pair<Marker, String>>(mapping.size);
