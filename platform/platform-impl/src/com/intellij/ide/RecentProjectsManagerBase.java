@@ -342,8 +342,9 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     Set<String> names = new THashSet<>();
     Set<String> duplicates = new THashSet<>();
     for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
-      if (!names.add(getProjectName(path))) {
-        duplicates.add(path);
+      String name = getProjectName(path);
+      if (!names.add(name)) {
+        duplicates.add(name);
       }
     }
     return duplicates;
@@ -439,7 +440,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       displayName = myState.names.get(path);
     }
     if (StringUtil.isEmptyOrSpaces(displayName)) {
-      displayName = duplicates.contains(path) ? path : projectName;
+      displayName = duplicates.contains(projectName) ? path : projectName;
     }
 
     // It's better don't to remove non-existent projects. Sometimes projects stored
