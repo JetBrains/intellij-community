@@ -434,7 +434,7 @@ public class UITheme {
 
         if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
           if (file.startsWith("check")) return checkBoxes;
-          if (file.startsWith("radio")) return radioButtons;
+          if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
           return null;
         }
       }
