@@ -156,12 +156,16 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
       // 3) only one annotation with short name 'Override' exists: it's 'java.lang.Override'
       private void checkMissingOverrideInOverriders(@NotNull PsiMethod method,
                                                     @NotNull InspectionResult result) {
+        if (!PsiUtil.canBeOverridden(method)) return;
+
         Project project = method.getProject();
         LanguageLevel minimal = Objects.requireNonNull(method.getContainingClass()).isInterface() ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
 
         GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
         if (scope == null) return;
-        Predicate<PsiMethod> preFilter = m -> !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
+        int paramCount = method.getParameterList().getParametersCount();
+        Predicate<PsiMethod> preFilter = m -> m.getParameterList().getParametersCount() == paramCount &&
+                                              !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
         Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, scope, preFilter);
         if (overridingMethods == null) return;
         result.hierarchyAnnotated = ThreeState.fromBoolean(!overridingMethods.findAny().isPresent());
