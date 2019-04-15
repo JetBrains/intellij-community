@@ -86,7 +86,18 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            vectorProduct(types, types),
-           [],
+           [
+             'List<BigDecimal> -> boolean[]', 'List<BigDecimal> -> double[]', 'List<BigDecimal> -> String[]', 'List<BigDecimal> -> Object[]',
+             'List<BigInteger> -> boolean[]', 'List<BigInteger> -> String[]', 'List<BigInteger> -> Object[]', 'List<Integer> -> boolean[]',
+             'List<Integer> -> int[]', 'List<Integer> -> double[]', 'List<Integer> -> String[]', 'List<Integer> -> Integer[]', 'List<Integer> -> Object[]',
+             'List<String> -> boolean[]', 'List<String> -> String[]', 'List<String> -> Object[]',
+             'List<Object> -> boolean[]', 'List<Object> -> String[]', 'List<Object> -> Object[]',
+             'List<Thread> -> boolean[]', 'List<Thread> -> String[]', 'List<Thread> -> Object[]', 'List<Thread> -> Thread[]',
+             'Set<String> -> boolean[]', 'Set<String> -> String[]', 'Set<String> -> Object[]',
+             'Set<Integer> -> boolean[]', 'Set<Integer> -> int[]', 'Set<Integer> -> double[]', 'Set<Integer> -> String[]', 'Set<Integer> -> Integer[]', 'Set<Integer> -> Object[]',
+             'Set<Object> -> boolean[]', 'Set<Object> -> String[]', 'Set<Object> -> Object[]',
+             'Set<Thread> -> boolean[]', 'Set<Thread> -> String[]', 'Set<Thread> -> Object[]', 'Set<Thread> -> Thread[]'
+           ],
            ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte',
             'boolean[] -> int[]', 'boolean[] -> double[]', 'boolean[] -> String[]',
             'int[] -> boolean[]', 'int[] -> String[]',
@@ -162,15 +173,14 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            vectorProduct(values, types),
            ['[] -> BigInteger', '[1] -> BigInteger'],
-           ['[] -> int', '[] -> double', '[] -> short', '[] -> byte', '[] -> int',
-            '[1.1] -> boolean[]', '[1.1] -> String[]',
-            '[1] -> int', '[1] -> double', '[1] -> int', '[1] -> boolean[]', '[1] -> String[]',
-            '[0L] -> double', '[0L] -> boolean[]', '[0L] -> String[]',
-            '[1.2f] -> double', '[1.2f] -> boolean[]', '[1.2f] -> String[]',
-            '["str"] -> int', '["str"] -> double', '["str"] -> boolean[]', '["str"] -> short', '["str"] -> byte',
-            '[new Object()] -> boolean[]', '[new Object()] -> String[]',
-            '[new Thread()] -> boolean[]', '[new Thread()] -> String[]',
-            'new ArrayList<>() -> boolean[]', 'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> String[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Object[]', 'new ArrayList<>() -> Thread[]']
+           [
+             '[] -> int', '[] -> double', '[] -> short', '[] -> byte',
+             '[1] -> int', '[1] -> double', '[1] -> int',
+             '[0L] -> double',
+             '[1.2f] -> double',
+             '["str"] -> int', '["str"] -> double', '["str"] -> short', '["str"] -> byte',
+             'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Thread[]'
+           ]
   }
 
   void testWrongConstructorResolve() {
@@ -188,19 +198,19 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     return vector1.collectMany { arg1 -> vector2.collect { arg2 -> [arg1, arg2] } }
   }
 
-  void doTest(String body, List<List<String>> arguments, List<String> wrongTrueByIdea, List<String> wrongFalseByIdea) {
+  void doTest(String body, List<List<String>> arguments, List<String> wrongFalseByIdea, List<String> wrongTrueByIdea) {
     List<String> falseDiff = []
     List<String> trueDiff = []
 
-    Set<String> trueIssues = wrongTrueByIdea as Set<String>
     Set<String> falseIssues = wrongFalseByIdea as Set<String>
+    Set<String> trueIssues = wrongTrueByIdea as Set<String>
 
     Set<Integer> shellErrors = shellTest(body, arguments)
     Set<Integer> ideaErrors = ideaTest(body, arguments)
 
     arguments.eachWithIndex { List<String> args, int index ->
-      def ideaTest = !ideaErrors.contains(index)
-      def shellTest = !shellErrors.contains(index)
+      def ideaTest = ideaErrors.contains(index)
+      def shellTest = shellErrors.contains(index)
       if (ideaTest != shellTest) {
         def activeIssues = ideaTest ? trueIssues : falseIssues
         def activeDiff = ideaTest ? trueDiff : falseDiff
@@ -211,8 +221,8 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
       }
     }
 
-    assert falseDiff.isEmpty(), "Idea false, groovy true : " + falseDiff.collect { "'$it'" }
-    assert trueDiff.isEmpty(), "Idea true, groovy false : " + trueDiff.collect { "'$it'" }
+    assert falseDiff.isEmpty(), "Idea no error, groovy error : " + falseDiff.collect { "'$it'" }
+    assert trueDiff.isEmpty(), "Idea error, groovy no error : " + trueDiff.collect { "'$it'" }
     assert falseIssues.isEmpty(), falseIssues.collect { "'$it'" }
     assert trueIssues.isEmpty(), trueIssues.collect { "'$it'" }
   }
@@ -227,7 +237,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     def offsetLen = CS.readLines().size()
     def lineCount = body.readLines().size() - 1
 
-    def res = new HashSet()
+    def res = new HashSet<Integer>()
     myFixture.with {
       configureByText('_.groovy', text)
       enableInspections(customInspections)
@@ -241,7 +251,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
   }
 
   static Set<Integer> shellTest(String body, List<List<String>> arguments) {
-    def res = new HashSet()
+    def res = new HashSet<Integer>()
     def shell = new GroovyShell()
     arguments.eachWithIndex { List<String> args, int index ->
       def text = CS + String.format(body, args[0], args[1], index)
