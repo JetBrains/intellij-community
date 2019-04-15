@@ -5,7 +5,7 @@ import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.openapi.application.ApplicationBundle.message
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ListCellRendererWrapper
@@ -13,7 +13,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import javax.swing.*
 
-class EditorTabsConfigurable : EditorOptionsProvider {
+class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
   companion object {
     private const val LEFT = "Left"
     private const val RIGHT = "Right"
@@ -25,17 +25,8 @@ class EditorTabsConfigurable : EditorOptionsProvider {
 
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
-  private val panel = doCreateComponent()
 
-  override fun getDisplayName() = "Editor Tabs"
-
-  override fun getHelpTopic() = "reference.settingsdialog.IDE.editor.tabs"
-
-  override fun createComponent(): JComponent {
-    return panel
-  }
-
-  private fun doCreateComponent(): DialogPanel {
+  override fun createPanel(): DialogPanel {
     val uiSettings = UISettings.instance.state
 
     return panel {
@@ -119,10 +110,6 @@ class EditorTabsConfigurable : EditorOptionsProvider {
     enableIf(myEditorTabPlacement.selectedValueMatches { it != UISettings.TABS_NONE })
   }
 
-  override fun reset() {
-    panel.reset()
-  }
-
   private fun getCloseButtonPlacement(uiSettings: UISettingsState): String {
     val placement: String
     if (!uiSettings.showCloseButton) {
@@ -135,17 +122,12 @@ class EditorTabsConfigurable : EditorOptionsProvider {
   }
 
   override fun apply() {
-    val uiSettingsChanged = panel.isModified()
-    panel.apply()
-    val settingsManager = UISettings.instance
+    val uiSettingsChanged = isModified
+    super.apply()
 
     if (uiSettingsChanged) {
-      settingsManager.fireUISettingsChanged()
+      UISettings.instance.fireUISettingsChanged()
     }
-  }
-
-  override fun isModified(): Boolean {
-    return panel.isModified()
   }
 
   private class MyTabsPlacementComboBoxRenderer internal constructor() : ListCellRendererWrapper<Int>() {
