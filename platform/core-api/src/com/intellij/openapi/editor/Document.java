@@ -222,7 +222,8 @@ public interface Document extends UserDataHolder {
   }
 
   /**
-   * Removes a listener for receiving notifications about changes in the document content.
+   * Removes a listener for receiving notifications about changes in the document content, previously added via {@link #addDocumentListener(DocumentListener)}.
+   * Don't call this method for listeners added via {@link #addDocumentListener(DocumentListener, Disposable)}, as that might cause memory leaks.
    *
    * @param listener the listener instance.
    */
