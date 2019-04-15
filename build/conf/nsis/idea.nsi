@@ -1234,8 +1234,8 @@ shortcuts:
   ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
-  StrCmp $R2 1 "" add_to_path
 shortcut_for_exe_64:
+  StrCmp $R2 1 "" add_to_path
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
   ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
