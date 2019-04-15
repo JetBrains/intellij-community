@@ -28,41 +28,44 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     import groovy.transform.CompileStatic
   '''
 
-  List<String> types = ['boolean', 'int', 'double', 'String', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
-                        'List<BigDecimal>', 'List<BigInteger>', 'List<Integer>', 'List<String>', 'List<Object>', 'List<Thread>', 'boolean[]',
-                        'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]', 'short', 'byte', 'Set', 'Set<String>',
-                        'Set<Integer>', 'Set<Object>', 'Set<Thread>']
+  private static final List<String> types = [
+    'boolean', 'int', 'double', 'String', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
+    'List<BigDecimal>', 'List<BigInteger>', 'List<Integer>', 'List<String>', 'List<Object>', 'List<Thread>', 'boolean[]',
+    'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]', 'short', 'byte', 'Set', 'Set<String>',
+    'Set<Integer>', 'Set<Object>', 'Set<Thread>'
+  ]
 
+  private static final List<String> booleanValues = ['true', 'false', '(Boolean)true', 'false as Boolean']
+  private static final List<String> byteValues = ['(byte) 0', '-1 as Byte', '(byte)(+2)', '126', '-127']
+  private static final List<String> shortValues = ['(short) 0', '-1 as Short', '(Short)(+2)', '-32768', '32767']
+  private static final List<String> intValues = ['0', '-1', '+1', '(Integer)(+2)', '1i', '-1I', '+1 as int', '+32768', '2E3', '-2E4', '0b101101101101', '0246', '0xffff', '-0x77', '1234_5678']
+  private static final List<String> longValues = ['0l', '-1L', '+2L', '(Long)(+2)', '+1 as long', '1234_5678_9012_3456L', '0b101101101101L', '0246L', '0xffffL', '-0x77L', '0x7fff_ffff_ffff_ffffL', 'new Long("123")']
+  private static final List<String> bigIntegerValues = ['BigInteger.valueOf(1)', '-1 as BigInteger', '+2G', '-0G', '034G', '1234_5678_9012_3456G', '0b101101101101G', '0246G', '0xffffG', '-0x77G']
+  private static final List<String> floatValues = ['1.1f', '-1.1f', '+0.002f', '-0F', '034F', '5_132.12F', '0b101101101101f', '0246F', '0xffffF', '1 as Float', '(float) 1.1']
+  private static final List<String> doubleValues = ['1.1d', '-1.1d', '+0.002d', '-0D', '034D', '12_345_132.12D', '0b101101101101d', '0246d', '0xffffD', '1 as Double', '(double) 1.1']
+  private static final List<String> bigDecimalValues = ['1.1', '-1.2', '+0.002', '-0.0', '034.0G', '12_345_132.12g', '1 as BigDecimal', '(BigDecimal) 1.1']
+  private static final List<String> objectValues = ['new Object()', 'new Thread()', '"str"', 'null']
+  private static final List<String> listValues = ['[]', '[1]', '[0L]', '[1.1]', '[1.2f]', '["str"]', 'new ArrayList<>()', '[new Object()]', '[new Thread()]']
+  private static final List<String> voidValues = ['print("")', '(Void)null']
+  private static final List<String> values = booleanValues +
+                                             byteValues +
+                                             shortValues +
+                                             intValues +
+                                             longValues +
+                                             bigIntegerValues +
+                                             floatValues +
+                                             doubleValues +
+                                             bigDecimalValues +
+                                             objectValues +
+                                             listValues +
+                                             voidValues
 
-  List<String> booleanValues = ['true', 'false', '(Boolean)true', 'false as Boolean']
-  List<String> byteValues = ['(byte) 0', '-1 as Byte', '(byte)(+2)', '126', '-127']
-  List<String> shortValues = ['(short) 0', '-1 as Short', '(Short)(+2)', '-32768', '32767']
-  List<String> intValues = ['0', '-1', '+1', '(Integer)(+2)', '1i', '-1I', '+1 as int', '+32768', '2E3', '-2E4', '0b101101101101', '0246', '0xffff', '-0x77', '1234_5678']
-  List<String> longValues = ['0l', '-1L', '+2L', '(Long)(+2)', '+1 as long', '1234_5678_9012_3456L', '0b101101101101L', '0246L', '0xffffL', '-0x77L', '0x7fff_ffff_ffff_ffffL', 'new Long("123")']
-  List<String> bigIntegerValues = ['BigInteger.valueOf(1)', '-1 as BigInteger', '+2G', '-0G', '034G', '1234_5678_9012_3456G', '0b101101101101G', '0246G', '0xffffG', '-0x77G']
+  private static final List<List<String>> typesXTypes = vectorProduct(types, types)
+  private static final List<List<String>> valuesXTypes = vectorProduct(values, types)
 
-  List<String> floatValues = ['1.1f', '-1.1f', '+0.002f', '-0F', '034F', '5_132.12F', '0b101101101101f', '0246F', '0xffffF', '1 as Float', '(float) 1.1']
-  List<String> doubleValues = ['1.1d', '-1.1d', '+0.002d', '-0D', '034D', '12_345_132.12D', '0b101101101101d', '0246d', '0xffffD', '1 as Double', '(double) 1.1']
-
-  List<String> bigDecimalValues = ['1.1', '-1.2', '+0.002', '-0.0', '034.0G', '12_345_132.12g', '1 as BigDecimal', '(BigDecimal) 1.1']
-
-  List<String> objectValues = ['new Object()', 'new Thread()', '"str"', 'null']
-  List<String> listValues = ['[]', '[1]', '[0L]', '[1.1]', '[1.2f]', '["str"]', 'new ArrayList<>()', '[new Object()]', '[new Thread()]']
-
-  List<String> voidValues = ['print("")', '(Void)null']
-
-  List<String> values = booleanValues +
-                        byteValues +
-                        shortValues +
-                        intValues +
-                        longValues +
-                        bigIntegerValues +
-                        floatValues +
-                        doubleValues +
-                        bigDecimalValues +
-                        objectValues +
-                        listValues +
-                        voidValues
+  private static List<List<String>> vectorProduct(List<String> vector1, List<String> vector2) {
+    return vector1.collectMany { arg1 -> vector2.collect { arg2 -> [arg1, arg2] } }
+  }
 
   @Override
   @NotNull
@@ -85,7 +88,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
           %2$s local = param
         }
         ''',
-           vectorProduct(types, types),
+           typesXTypes,
            [
              'List<BigDecimal> -> boolean[]', 'List<BigDecimal> -> double[]', 'List<BigDecimal> -> String[]', 'List<BigDecimal> -> Object[]',
              'List<BigInteger> -> boolean[]', 'List<BigInteger> -> String[]', 'List<BigInteger> -> Object[]', 'List<Integer> -> boolean[]',
@@ -117,7 +120,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
           return param
         }
         ''',
-           vectorProduct(types, types),
+           typesXTypes,
            [],
            ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte',
             'boolean[] -> int[]', 'boolean[] -> double[]', 'boolean[] -> String[]',
@@ -140,7 +143,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
           bar%3$s(param)
         }
         ''',
-           vectorProduct(types, types),
+           typesXTypes,
            ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]'],
            ['Integer[] -> int[]', 'Integer[] -> double[]', 'int[] -> double[]', 'int[] -> Integer[]']
   }
@@ -152,7 +155,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
           return %1$s
         }
         ''',
-           vectorProduct(values, types),
+           valuesXTypes,
            [],
            ['true -> int', 'true -> double', 'true -> short', 'true -> byte', 'false -> int', 'false -> double', 'false -> short',
             'false -> byte', '(Void)null -> int', '(Void)null -> double', '(Void)null -> BigDecimal', '(Void)null -> BigInteger',
@@ -171,7 +174,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
           %2$s param = %1$s
         }
         ''',
-           vectorProduct(values, types),
+           valuesXTypes,
            ['[] -> BigInteger', '[1] -> BigInteger'],
            [
              '[] -> int', '[] -> double', '[] -> short', '[] -> byte',
@@ -194,11 +197,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
 '''
   }
 
-  static List<List<String>> vectorProduct(List<String> vector1, List<String> vector2) {
-    return vector1.collectMany { arg1 -> vector2.collect { arg2 -> [arg1, arg2] } }
-  }
-
-  void doTest(String body, List<List<String>> arguments, List<String> wrongFalseByIdea, List<String> wrongTrueByIdea) {
+  private void doTest(String body, List<List<String>> arguments, List<String> wrongFalseByIdea, List<String> wrongTrueByIdea) {
     List<String> falseDiff = []
     List<String> trueDiff = []
 
@@ -227,7 +226,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     assert trueIssues.isEmpty(), trueIssues.collect { "'$it'" }
   }
 
-  Set<Integer> ideaTest(String body, List<List<String>> arguments) {
+  private Set<Integer> ideaTest(String body, List<List<String>> arguments) {
     def text = CS
 
     arguments.eachWithIndex { List<String> args, int index ->
@@ -250,7 +249,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
     }
   }
 
-  static Set<Integer> shellTest(String body, List<List<String>> arguments) {
+  private static Set<Integer> shellTest(String body, List<List<String>> arguments) {
     def res = new HashSet<Integer>()
     def shell = new GroovyShell()
     arguments.eachWithIndex { List<String> args, int index ->
