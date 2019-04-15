@@ -55,6 +55,8 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
       println("range = ${logHostMarker(rangeInHost)}")
       println("markerText = '$markerText'")
 
+      myEditor.caretModel.moveToOffset(rangeInHost.startOffset)
+
       val newText = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
         preProcessor.preprocessOnPaste(myProject, origPsiFile, myEditor, newText, null)
       }

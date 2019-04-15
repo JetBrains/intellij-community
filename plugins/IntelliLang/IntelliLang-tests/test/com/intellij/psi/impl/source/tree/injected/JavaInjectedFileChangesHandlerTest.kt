@@ -372,13 +372,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
         deleteString(pos - 1, pos)
       }
 
-      //      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      //
-      //      fragmentFile.edit("reformat") {
-      //        CodeStyleManager.getInstance(psiManager).reformatRange(
-      //          fragmentFile, 0, fragmentFile.textLength, false)
-      //      }
-
       checkResult("""
           import org.intellij.lang.annotations.Language;
 
@@ -386,19 +379,7 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
             void foo() {
               @Language("JSON")
               String a = "{\n" +
-                  "  \"field1\": 1,\n" +
-                  "  \"innerMap1" +
-                  "\": {\n" +
-                  "    " +
-                  "\"field2\": 1,\n" +
-                  "  " +
-                      "  \"field3\": \"brokenInnerMap\"\n" +
-                      "    : {\n" +
-                      "  \"broken1\": 1,\n" +
-                      "  \"broken2\": 2,\n" +
-                      "  \"broken3\": 3\n" +
-                      "}\n" +
-                      "}\n" +
+                      "  \"field1\": 1,\n" +
                       "}";
             }
           }
@@ -406,15 +387,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       TestCase.assertEquals("""
           {
             "field1": 1,
-            "innerMap1": {
-              "field2": 1,
-              "field3": "brokenInnerMap"
-              : {
-            "broken1": 1,
-            "broken2": 2,
-            "broken3": 3
-          }
-          }
           }
       """.trimIndent(), fragmentFile.text)
 
