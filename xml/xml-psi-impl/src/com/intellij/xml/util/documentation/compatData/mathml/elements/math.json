@@ -42,7 +42,7 @@
               "notes": "Only supported in XHTML documents."
             },
             "opera_android": {
-              "version_added": "9.5",
+              "version_added": "10.1",
               "version_removed": "14",
               "partial_implementation": true,
               "notes": "Only supported in XHTML documents."
