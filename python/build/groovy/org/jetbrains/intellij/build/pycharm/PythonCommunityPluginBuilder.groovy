@@ -27,6 +27,7 @@ import static org.jetbrains.intellij.build.python.PythonCommunityPluginModules.P
 /**
  * @author vlan
  */
+@SuppressWarnings("unused")
 class PythonCommunityPluginBuilder {
   private final String home
 
