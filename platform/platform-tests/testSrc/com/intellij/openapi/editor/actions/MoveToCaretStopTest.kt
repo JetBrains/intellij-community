@@ -1,15 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions
 
-import com.intellij.codeInsight.EditorInfo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Action.DELETE
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Action.MOVE
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.BACKWARD
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.FORWARD
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
@@ -185,6 +186,7 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
     `do test Delete to Word Start`()
   }
 
+  // TODO for some reason this test performs 4-5 time slower than its twin "Delete to Word End" test
   private fun `do test Delete to Word Start`() {
     doTest(DELETE, BACKWARD, """┃doTest┃(┃"║test║"┃, ┃Direction┃.┃FORWARD┃)""")
     doTest(DELETE, BACKWARD, """
@@ -222,42 +224,38 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
     val (str, caretOffsets: List<CaretOffset>) = stringWithCaretStops.extractCaretOffsets()
 
     myFixture.configureByText("a.java", str)
+    val editor = myFixture.editor.apply {
+      putUserData(EditorImpl.DISABLE_CARET_POSITION_KEEPING, true)
+    }
+    val document = editor.document.apply {
+      putUserData(UndoConstants.DONT_RECORD_UNDO, true)
+    }
 
     str.offsets(direction).forEach { i ->
       val expectedCaretOffset = caretOffsets.nextTo(i, direction)
 
-      val editorInfo = EditorInfo(str.withCaretMarkerAt(i))
-      editorInfo.applyToEditor(myFixture.editor)
+      editor.caretModel.moveToOffset(i)
 
       try {
         myFixture.performEditorAction(ideAction(action, direction))
-        val expectedCaretMarker = when(action) {
-          MOVE -> str.withCaretMarkerAt(expectedCaretOffset.offset)
+
+        val expectedWithReadableCarets = when (action) {
+          MOVE -> str.withCaretMarkerAt(i, expectedCaretOffset.offset)
           DELETE -> str.withCaretMarkerBetween(i, expectedCaretOffset.offset)
         }
-
-        myFixture.checkResult(expectedCaretMarker)
-      }
-      catch (e: AssertionError) {
-        try {
-          val expectedWithReadableCarets = when(action) {
-            MOVE -> str.withCaretMarkerAt(i, expectedCaretOffset.offset, isReadableCaret = true)
-            DELETE -> str.withCaretMarkerBetween(i, expectedCaretOffset.offset, isReadableCaret = true)
-          }
-
-          assertEquals(e.message,
-                       expectedWithReadableCarets,
-                       myFixture.file.text.withCaretMarkerAt(i, myFixture.caretOffset, isReadableCaret = true))
+        val actualWithReadableCarets = when (action) {
+          MOVE -> document.text.withCaretMarkerAt(i, myFixture.caretOffset)
+          DELETE -> document.text.withCaretMarkerAt(myFixture.caretOffset)
         }
-        catch (t: Throwable) {
-          t.addSuppressed(e)
-          throw t
-        }
+        assertEquals(expectedWithReadableCarets, actualWithReadableCarets)
       }
       finally {
         if (action == DELETE) {
           WriteCommandAction.runWriteCommandAction(project) {
-            myFixture.editor.document.setText(editorInfo.newFileText)
+            // for some reason moving the caret forward makes "Delete to Word Start" tests run 2-3 times faster
+            val caretOffset = (myFixture.caretOffset + 1).coerceIn(0, document.textLength)
+            editor.caretModel.moveToOffset(caretOffset)
+            document.setText(str)
           }
         }
       }
@@ -275,7 +273,6 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
   companion object {
     private const val READABLE_CARET = '┃' // use it verbatim for better readability
     private const val SKIP_INNARDS_CARET = '║' // delete word consumes "quoted" words
-    private const val FIXTURE_CARET = "<caret>"
 
     private fun isTestCaret(ch: Char) =
       ch == READABLE_CARET || ch == SKIP_INNARDS_CARET
@@ -325,15 +322,15 @@ my_list┃ =┃ [┃"┃one┃"┃,┃ "┃two┃"┃,┃ "┃three┃"┃,┃
         BACKWARD -> length downTo 1
       }
 
-    private fun String.withCaretMarkerAt(firstOffset: Int, secondOffset: Int = firstOffset, isReadableCaret: Boolean = false): String =
+    private fun String.withCaretMarkerAt(firstOffset: Int, secondOffset: Int = firstOffset): String =
       if (firstOffset == secondOffset)
-        withCaretMarkerBetween(firstOffset, secondOffset, isReadableCaret)
+        withCaretMarkerBetween(firstOffset, secondOffset)
       else
-        withCaretMarkerBetween(maxOf(firstOffset, secondOffset), isReadableCaret = isReadableCaret)
-          .withCaretMarkerBetween(minOf(firstOffset, secondOffset), isReadableCaret = isReadableCaret)
+        withCaretMarkerBetween(maxOf(firstOffset, secondOffset))
+          .withCaretMarkerBetween(minOf(firstOffset, secondOffset))
 
-    private fun String.withCaretMarkerBetween(firstOffset: Int, secondOffset: Int = firstOffset, isReadableCaret: Boolean = false): String =
-      substring(0, minOf(firstOffset, secondOffset)) + (if (isReadableCaret) READABLE_CARET.toString() else FIXTURE_CARET) +
+    private fun String.withCaretMarkerBetween(firstOffset: Int, secondOffset: Int = firstOffset): String =
+      substring(0, minOf(firstOffset, secondOffset)) + READABLE_CARET +
       substring(maxOf(firstOffset, secondOffset))
   }
 }
