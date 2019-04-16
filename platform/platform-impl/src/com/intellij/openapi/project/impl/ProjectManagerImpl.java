@@ -726,6 +726,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
+    if (project.isDefault()) return; // nothing happens with default project
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = ((UserDataHolderEx)project)
@@ -736,6 +737,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void removeProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
+    if (project.isDefault()) return;  // nothing happens with default project
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     LOG.assertTrue(listeners != null);
     boolean removed = listeners.remove(listener);
