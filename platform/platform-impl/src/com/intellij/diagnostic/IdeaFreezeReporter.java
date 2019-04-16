@@ -51,15 +51,4 @@ public class IdeaFreezeReporter {
       }
     });
   }
-
-  static class Freeze extends Throwable {
-    Freeze(List<StackTraceElement> stacktraceCommonPart) {
-      setStackTrace(stacktraceCommonPart.toArray(new StackTraceElement[0]));
-    }
-
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
-    }
-  }
 }
