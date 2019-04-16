@@ -576,8 +576,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected Rectangle rectangleForCurrentValue() {
-    Rectangle rect = super.rectangleForCurrentValue();
+    Rectangle rect = new Rectangle(comboBox.getSize());
+    Insets i = getInsets();
+
+    JBInsets.removeFrom(rect, i);
+    rect.width -= arrowButton != null ? (arrowButton.getWidth() - i.left) : rect.height;
     JBInsets.removeFrom(rect, padding);
+
     rect.width += comboBox.isEditable() ? 0 : padding.right;
     return rect;
   }

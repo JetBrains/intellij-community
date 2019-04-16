@@ -335,6 +335,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
+    public void mouseExited(MouseEvent e) {
+      if (!icons.isEmpty()) {
+        handleMouse(e, false);
+      }
+    }
+
+    @Override
     public void mouseClicked(MouseEvent e) {
       if (!icons.isEmpty()) {
         handleMouse(e, true);
