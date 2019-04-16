@@ -17,24 +17,25 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.sdk.*
-import com.sun.glass.ui.Application
+import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.associateWithModule
+import com.jetbrains.python.sdk.detectCondaEnvs
+import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
+import java.awt.event.ItemEvent
+import java.io.File
 import javax.swing.Icon
-import javax.swing.SwingUtilities
-import javax.swing.SwingWorker
 
 /**
  * @author vlan
@@ -46,12 +47,29 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Anaconda
   private val sdkComboBox = PySdkPathChoosingComboBox(listOf(), null)
+  private val condaPathField = TextFieldWithBrowseButton().apply {
+    val path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH ?: PyCondaPackageService.getSystemCondaExecutable()
+    if (path != null) {
+      text = path
+    }
+    addBrowseFolderListener("Select Path to Conda Executable", null, project,
+                            FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
+  }
+
   private val makeSharedField = JBCheckBox("Make available to all projects")
 
   init {
+    sdkComboBox.childComponent.addItemListener {
+      if (it.stateChange == ItemEvent.SELECTED) {
+        val respectiveCondaExecutable = PyCondaPackageService.getCondaExecutable(sdkComboBox.selectedSdk?.homePath)
+        condaPathField.text = respectiveCondaExecutable.orEmpty()
+      }
+    }
+    
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Interpreter:", sdkComboBox)
+      .addLabeledComponent("Conda executable:", condaPathField)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -68,10 +86,23 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     })
   }
 
-  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox))
+  override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox), validateAnacondaPath())
+
+  private fun validateAnacondaPath(): ValidationInfo? {
+    val text = condaPathField.text
+    val file = File(text)
+    val message = when {
+      StringUtil.isEmptyOrSpaces(text) -> "Conda executable path is empty"
+      !file.exists() -> "Conda executable not found"
+      !file.isFile || !file.canExecute() -> "Conda executable path is not an executable file"
+      else -> return null
+    }
+    return ValidationInfo(message)
+  }
 
   override fun getOrCreateSdk(): Sdk? {
     val sdk = sdkComboBox.selectedSdk
+    PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPathField.text
     return when (sdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
         if (!makeSharedField.isSelected) {
