@@ -18,6 +18,7 @@ public class ChildInfo {
   public final String symLinkTarget;
   @Nullable // null means children are unknown
   public final ChildInfo[] children;
+  public static final int UNKNOWN_ID_YET = -1;
 
   public ChildInfo(int id, @NotNull String name, FileAttributes attributes, @Nullable ChildInfo[] children, String symLinkTarget) {
     this.id = id;
@@ -25,10 +26,14 @@ public class ChildInfo {
     this.attributes = attributes;
     this.children = children;
     this.symLinkTarget = symLinkTarget;
+    if (id <= 0 && id != UNKNOWN_ID_YET) throw new IllegalArgumentException("expected id > 0, got: "+id);
   }
 
   @Override
   public String toString() {
-    return name +" ("+attributes+")" +(children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
+    return name +" id: " + id
+           + " ("+attributes+")"
+           + (children == null ? "" :
+              "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }

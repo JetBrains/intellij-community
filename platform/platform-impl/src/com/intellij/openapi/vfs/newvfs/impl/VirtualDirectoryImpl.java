@@ -477,6 +477,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
+        assert info.id > 0 : info;
         FileAttributes attributes = info.attributes;
         String name = info.name;
         boolean isEmptyDirectory = info.children != null && info.children.length == 0;
@@ -501,6 +502,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
+        assert info.id > 0 : info;
         FileAttributes attributes = info.attributes;
         String name = info.name;
         boolean isEmptyDirectory = info.children != null && info.children.length == 0;

@@ -298,7 +298,7 @@ public class RefreshWorker {
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new ChildInfo(-1, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   private static class RefreshCancelledException extends RuntimeException { }

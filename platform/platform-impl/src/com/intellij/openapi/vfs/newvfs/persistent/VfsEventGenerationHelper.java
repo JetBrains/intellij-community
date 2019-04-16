@@ -78,7 +78,7 @@ class VfsEventGenerationHelper {
   private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded) {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfo(-1, "", null, null, null);
+    ChildInfo fakeRoot = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, "", null, null, null);
     stack.push(ContainerUtil.newSmartList(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
       @Override
@@ -104,10 +104,11 @@ class VfsEventGenerationHelper {
           // under windows the isDirectory attribute for symlink is incorrect - reread it again
           isSymLink = true;
           attrs = Files.readAttributes(file, BasicFileAttributes.class);
+
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
         String symLinkTarget = attributes.isSymLink() ? file.toRealPath().toString() : null;
-        ChildInfo info = new ChildInfo(-1, name, attributes, null, symLinkTarget);
+        ChildInfo info = new ChildInfo(ChildInfo.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }
