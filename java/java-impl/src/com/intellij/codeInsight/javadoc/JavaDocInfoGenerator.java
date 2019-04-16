@@ -73,6 +73,7 @@ public class JavaDocInfoGenerator {
   private static final String LINK_TAG = "link";
   private static final String LITERAL_TAG = "literal";
   private static final String CODE_TAG = "code";
+  private static final String SYSTEM_PROPERTY_TAG = "systemProperty";
   private static final String LINKPLAIN_TAG = "linkplain";
   private static final String INHERIT_DOC_TAG = "inheritDoc";
   private static final String DOC_ROOT_TAG = "docRoot";
@@ -1223,7 +1224,7 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(LITERAL_TAG)) {
           generateLiteralValue(buffer, tag);
         }
-        else if (tagName.equals(CODE_TAG)) {
+        else if (tagName.equals(CODE_TAG) || tagName.equals(SYSTEM_PROPERTY_TAG)) {
           generateCodeValue(tag, buffer);
         }
         else if (tagName.equals(LINKPLAIN_TAG)) {
