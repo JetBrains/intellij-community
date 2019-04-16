@@ -256,6 +256,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   protected void installKeyboardActions() {
     super.installKeyboardActions();
     TreeAction.installTo(tree.getActionMap());
+    TreeAction.installTo(tree.getInputMap(JComponent.WHEN_FOCUSED));
   }
 
   @Override

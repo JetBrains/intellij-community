@@ -721,6 +721,8 @@ public final class TreeUtil {
 
   @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
+    TreeUI ui = tree.getUI();
+    if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -733,8 +735,6 @@ public final class TreeUtil {
         movePageDown(tree);
       }
     });
-    TreeUI ui = tree.getUI();
-    if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
     tree.getActionMap().put("selectPrevious", new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
