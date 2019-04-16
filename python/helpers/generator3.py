@@ -169,15 +169,15 @@ def list_binaries(paths):
 
 
 def is_source_file(path):
-    good_extension = (
+    has_good_extension = (
             # Want to see that files despite of their encoding.
             path.endswith('.py')
             or path.endswith('-nspkg.pth')
             or path.endswith('.html')
     )
-    if good_extension:
+    if has_good_extension:
         return True
-    bad_extension = (
+    has_bad_extension = (
             # plotlywidget/static/index.js.map is 8.7 MiB.
             # Many map files from notebook are near 2 MiB.
             path.endswith('.js.map')
@@ -196,7 +196,7 @@ def is_source_file(path):
             or path.endswith('.so')
             or path.endswith('.dll')
     )
-    if bad_extension:
+    if has_bad_extension:
         return False
     try:
         with open(path, 'rb') as candidate_stream:
