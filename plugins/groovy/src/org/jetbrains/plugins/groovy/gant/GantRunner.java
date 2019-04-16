@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.CantRunException;
@@ -50,6 +50,7 @@ public class GantRunner extends GroovyScriptRunner {
     }
   }
 
+  @Nullable
   private static String getGantConfPath(final String gantHome) {
     String confPath = FileUtil.toSystemDependentName(gantHome + "/conf/gant-starter.conf");
     if (new File(confPath).exists()) {
@@ -70,13 +71,14 @@ public class GantRunner extends GroovyScriptRunner {
     setGroovyHome(params, gantHome);
 
     final String confPath = getGantConfPath(gantHome);
-    params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+    if (confPath != null) {
+      params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+      params.getProgramParametersList().add("--conf");
+      params.getProgramParametersList().add(confPath);
+    }
 
     params.getVMParametersList().addParametersString(configuration.getVMParameters());
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
-
-    params.getProgramParametersList().add("--conf");
-    params.getProgramParametersList().add(confPath);
 
     if (gantHome.contains("grails")) {
       params.getClassPath().addAllFiles(GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib", ".*\\.jar"));
