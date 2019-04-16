@@ -96,10 +96,10 @@ public class Utils {
     final CodeStyleSettings settings = CodeStyle.getSettings(project);
     final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.getIndentOptions();
     StringBuilder result = new StringBuilder();
-    addIndentOptions(result, "*", commonIndentOptions, getEncoding(project) +
-      getLineEndings(project) +
-      getTrailingSpaces() +
-      getEndOfFile());
+    addIndentOptions(result, "*", commonIndentOptions, getEncodingLine(project) +
+                                                       getLineEndings(project) +
+                                                       getTrailingSpacesLine() +
+                                                       getEndOfFileLine());
     for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (!FileTypeIndex.containsFileOfType(fileType, GlobalSearchScope.allScope(project))) continue;
 
@@ -130,16 +130,22 @@ public class Utils {
   }
 
   @NotNull
-  public static String getEndOfFile() {
+  private static String getEndOfFileLine() {
     return StandardEditorConfigProperties.INSERT_FINAL_NEWLINE + "=" + EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF() + "\n";
   }
 
   @NotNull
-  public static String getTrailingSpaces() {
+  private static String getTrailingSpacesLine() {
+    final Boolean trimTrailingSpaces = getTrimTrailingSpaces();
+    return trimTrailingSpaces != null ? StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=" + trimTrailingSpaces : "";
+  }
+
+  @Nullable
+  public static Boolean getTrimTrailingSpaces() {
     final String spaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=false\n";
-    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE + "=true\n";
-    return "";
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(spaces)) return false;
+    if (EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(spaces)) return true;
+    return null;
   }
 
   @NotNull
@@ -161,14 +167,20 @@ public class Utils {
   }
 
   @NotNull
+  public static String getEncodingLine(@NotNull Project project) {
+    String encoding = getEncoding(project);
+    return encoding != null ? EncodingManager.charsetKey + "=" + encoding : "";
+  }
+
+  @Nullable
   public static String getEncoding(@NotNull Project project) {
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     for (Map.Entry<String, Charset> entry : EncodingManager.encodingMap.entrySet()) {
       if (entry.getValue() == charset) {
-        return EncodingManager.charsetKey + "=" + entry.getKey() + "\n";
+        return entry.getKey();
       }
     }
-    return "";
+    return null;
   }
 
   @NotNull

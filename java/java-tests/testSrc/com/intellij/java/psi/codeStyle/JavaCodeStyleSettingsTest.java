@@ -97,17 +97,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    compareWithExpected(outputStream.toString(), j2eeProviderExists() ? "j2ee.json" : "json");
-  }
-
-  private static boolean j2eeProviderExists() {
-    List<CodeStyleSettingsProvider> providers = CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList();
-    for (CodeStyleSettingsProvider provider : providers) {
-      if (provider.getClass().getName().equals("com.intellij.javaee.JavaeeCodeStyleSettingsProvider")) {
-        return true;
-      }
-    }
-    return false;
+    compareWithExpected(outputStream.toString(), "json");
   }
 
   public void testSetProperties() {

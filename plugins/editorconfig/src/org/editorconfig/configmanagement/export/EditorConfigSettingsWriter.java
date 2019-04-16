@@ -3,12 +3,15 @@ package org.editorconfig.configmanagement.export;
 
 import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.editorconfig.Utils;
+import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
+import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap;
@@ -20,12 +23,21 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigSettingsWriter extends OutputStreamWriter {
-  private final           CodeStyleSettings        mySettings;
-  private final @Nullable Project                  myProject;
+  private final           CodeStyleSettings              mySettings;
+  private final @Nullable Project                        myProject;
+  private final           Map<String, String>            myGeneralOptions = new HashMap<>();
+
+  private final static Comparator<OutPair> PAIR_COMPARATOR = (pair1, pair2) -> {
+    EditorConfigPropertyKind pKind1 = getPropertyKind(pair1.getKey());
+    EditorConfigPropertyKind pKind2 = getPropertyKind(pair2.getKey());
+    if (!pKind1.equals(pKind2)) return Comparing.compare(pKind2, pKind1); // in reversed order
+    return Comparing.compare(pair1.getKey(), pair2.getKey());
+  };
 
   // region Filters
   private Set<Language>                       myLanguages;
@@ -36,6 +48,30 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     super(out, StandardCharsets.UTF_8);
     mySettings = settings;
     myProject = project;
+    fillGeneralOptions();
+  }
+
+  private void fillGeneralOptions() {
+    for (OutPair pair : getKeyValuePairs(new GeneralCodeStylePropertyMapper(mySettings))) {
+      myGeneralOptions.put(pair.getKey(), pair.getVal());
+    }
+    myGeneralOptions.put("ij_continuation_indent_size", String.valueOf(mySettings.OTHER_INDENT_OPTIONS.CONTINUATION_INDENT_SIZE));
+    if (myProject != null) {
+      String encoding = Utils.getEncoding(myProject);
+      if (encoding != null) {
+        myGeneralOptions.put(EncodingManager.charsetKey, encoding);
+      }
+    }
+    String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
+    if (lineSeparator != null) {
+      myGeneralOptions.put(LineEndingsManager.lineEndingsKey, lineSeparator);
+    }
+    myGeneralOptions.put(StandardEditorConfigProperties.INSERT_FINAL_NEWLINE,
+                         String.valueOf(EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF()));
+    Boolean trimSpaces = Utils.getTrimTrailingSpaces();
+    if (trimSpaces != null) {
+      myGeneralOptions.put(StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE, String.valueOf(trimSpaces));
+    }
   }
 
   public EditorConfigSettingsWriter forLanguages(Language... languages) {
@@ -52,40 +88,34 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
 
   public void writeSettings() throws IOException {
     final List<AbstractCodeStylePropertyMapper> mappers = new ArrayList<>();
-    writeGeneralSection(new GeneralCodeStylePropertyMapper(mySettings));
+    writeGeneralSection();
     CodeStylePropertiesUtil.collectMappers(mySettings, mapper -> mappers.add(mapper));
     for (AbstractCodeStylePropertyMapper mapper : mappers) {
-      writeLangSection(mapper);
+      if (mapper instanceof LanguageCodeStylePropertyMapper) {
+        writeLangSection((LanguageCodeStylePropertyMapper)mapper);
+      }
     }
   }
 
-  private void writeGeneralSection(@NotNull GeneralCodeStylePropertyMapper mapper) throws IOException {
+  private void writeGeneralSection() throws IOException {
     write("[*]\n");
-    if (myPropertyKinds.contains(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)) {
-      if (myProject != null) {
-        write(Utils.getEncoding(myProject));
-      }
-      String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
-      if (lineSeparator != null) {
-        write(LineEndingsManager.lineEndingsKey + " = " + lineSeparator + "\n");
-      }
-      write(Utils.getEndOfFile());
-      write(Utils.getTrailingSpaces());
-    }
-    writeProperties(getKeyValuePairs(mapper));
+    List<OutPair> pairs = myGeneralOptions.keySet().stream()
+      .map(key -> new OutPair(key, myGeneralOptions.get(key)))
+      .filter(pair -> isNameAllowed(pair.getKey()))
+      .sorted(PAIR_COMPARATOR).collect(Collectors.toList());
+   writeProperties(pairs);
   }
 
-  private void writeLangSection(@NotNull AbstractCodeStylePropertyMapper mapper) throws IOException {
-    if (mapper instanceof LanguageCodeStylePropertyMapper) {
-      Language language = ((LanguageCodeStylePropertyMapper)mapper).getLanguage();
-      if (myLanguages == null || myLanguages.contains(language)) {
-        FileType fileType = language.getAssociatedFileType();
-        if (fileType != null) {
-          List<OutPair> optionValueList = getKeyValuePairs(mapper);
-          if (!optionValueList.isEmpty()) {
-            write("\n[" + Utils.buildPattern(fileType) + "]\n");
-            writeProperties(optionValueList);
-          }
+  private void writeLangSection(@NotNull LanguageCodeStylePropertyMapper mapper) throws IOException {
+    Language language = mapper.getLanguage();
+    if (myLanguages == null || myLanguages.contains(language)) {
+      FileType fileType = language.getAssociatedFileType();
+      if (fileType != null) {
+        List<OutPair> optionValueList = getKeyValuePairs(mapper);
+        if (!optionValueList.isEmpty()) {
+          write("\n[" + Utils.buildPattern(fileType) + "]\n");
+          Collections.sort(optionValueList, PAIR_COMPARATOR);
+          writeProperties(optionValueList);
         }
       }
     }
@@ -93,27 +123,38 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
 
   private List<OutPair> getKeyValuePairs(@NotNull AbstractCodeStylePropertyMapper mapper) {
     List<OutPair> optionValueList = new ArrayList<>();
-    for (String property : orderOptions(mapper.enumProperties())) {
+    for (String property : mapper.enumProperties()) {
       CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
-      EditorConfigPropertyKind propertyKind = IntellijPropertyKindMap.getPropertyKind(property);
-      boolean isIntelliJProperty = !propertyKind.equals(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD);
-      if (
-        isIntelliJProperty && myPropertyKinds.contains(EditorConfigPropertyKind.LANGUAGE) ||
-        !isIntelliJProperty && myPropertyKinds.contains(EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD)
-      ) {
-        String name = getEditorConfigName(mapper, property);
-        if (name != null) {
-          String value = accessor.getAsString();
-          if (value != null && !value.trim().isEmpty() && isAllowed(value)) {
-            optionValueList.add(new OutPair(name, value));
-          }
+      String name = getEditorConfigName(mapper, property);
+      if (isNameAllowed(name)) {
+        String value = accessor.getAsString();
+        if (isValueAllowed(value) && (!(mapper instanceof LanguageCodeStylePropertyMapper && matchesGeneral(name, value)))) {
+          optionValueList.add(new OutPair(name, value));
         }
       }
     }
     return optionValueList;
   }
 
-  private static boolean isAllowed(@NotNull String value) {
+  private boolean matchesGeneral(@NotNull String name, @NotNull String value) {
+    String generalValue = myGeneralOptions.get(name);
+    return generalValue != null && generalValue.equals(value);
+  }
+
+  private boolean isNameAllowed(@Nullable String ecName) {
+    if (ecName != null) {
+      return myPropertyKinds.contains(getPropertyKind(ecName));
+    }
+    return false;
+  }
+
+  private static EditorConfigPropertyKind getPropertyKind(@NotNull String ecName) {
+    String ijName = EditorConfigIntellijNameUtil.toIntellijName(ecName);
+    return IntellijPropertyKindMap.getPropertyKind(ijName);
+  }
+
+  private static boolean isValueAllowed(@Nullable String value) {
+    if (value == null || value.trim().isEmpty()) return false;
     // TODO<rv> REMOVE THE HACK
     //  EditorConfig implementation doesn't allow dots. We need to skip such values till the parser issue is fixed.
     return !value.contains(".");
@@ -123,16 +164,6 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     for (OutPair pair : outPairs) {
       write(pair.getKey() + " = " + pair.getVal() + "\n");
     }
-  }
-
-  private static List<String> orderOptions(@NotNull List<String> propertyList) {
-    Collections.sort(propertyList, (name1, name2) -> {
-      EditorConfigPropertyKind pKind1 = IntellijPropertyKindMap.getPropertyKind(name1);
-      EditorConfigPropertyKind pKind2 = IntellijPropertyKindMap.getPropertyKind(name2);
-      if (!pKind1.equals(pKind2)) return Comparing.compare(pKind2, pKind1); // in reversed order
-      return Comparing.compare(name1, name2);
-    });
-    return propertyList;
   }
 
   @Nullable
