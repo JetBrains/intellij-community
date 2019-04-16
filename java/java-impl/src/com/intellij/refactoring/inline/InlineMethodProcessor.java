@@ -813,7 +813,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     addSynchronization(ref, block, originalStatements, thisVar);
 
-    PsiLocalVariable resultVar = transformer.transformBody(myMethodCopy, ref, returnType);
+    PsiLocalVariable resultVar = transformer.transformBody(myMethodCopy, returnType);
 
     return new BlockData(block, thisVar, parmVars, resultVar);
   }

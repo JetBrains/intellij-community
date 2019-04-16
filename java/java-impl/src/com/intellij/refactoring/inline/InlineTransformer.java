@@ -24,11 +24,26 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class InlineTransformer {
+  /**
+   * @param method method to check
+   * @return true if given method could be inlined by this transformer (for some call sites)
+   */
   public abstract boolean isMethodAccepted(PsiMethod method);
 
+  /**
+   * @param reference call site to check
+   * @return true if inlining is possible at given call site
+   */
   public abstract boolean isReferenceAccepted(PsiReference reference);
 
-  public abstract PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType);
+  /**
+   * Transforms method body in the way so it can be inserted into the call site. May declare result variable if necessary.  
+   * 
+   * @param methodCopy non-physical copy of the method to be inlined (may be changed by this call)
+   * @param returnType substituted method return type
+   * @return result variable or null if unnecessary
+   */
+  public abstract PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType);
 
   static class NormalTransformer extends InlineTransformer {
     @Override
@@ -42,7 +57,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
       if (returnType == null || PsiType.VOID.equals(returnType)) return null;
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       Project project = methodCopy.getProject();
@@ -77,7 +92,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
       return null;
     }
   }
@@ -101,7 +116,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
       extractReturnValues(methodCopy, true);
       return null;
     }
@@ -120,7 +135,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
       extractReturnValues(methodCopy, false);
       return null;
     }
@@ -161,7 +176,7 @@ public abstract class InlineTransformer {
     }
 
     @Override
-    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiType returnType) {
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));
       FinishMarker marker = FinishMarker.defineFinishMarker(block, returnType, returns);
@@ -170,7 +185,7 @@ public abstract class InlineTransformer {
     }
   }
 
-  static List<InlineTransformer> getTransformers() {
+  private static List<InlineTransformer> getTransformers() {
     return ContainerUtil.immutableList(
       new TailCallTransformer(),
       new SimpleTailCallTransformer(),
@@ -180,6 +195,13 @@ public abstract class InlineTransformer {
     );
   }
 
+  /**
+   * Returns the most suitable transformer for given method and given call site
+   * 
+   * @param method method to inline (must have body)
+   * @param reference call site where inlining should be performed
+   * @return a transformer. Should always succeed as fallback transformer which accepts any method is available
+   */
   @NotNull
   static InlineTransformer getSuitableTransformer(PsiMethod method, PsiReference reference) {
     for (InlineTransformer transformer : getTransformers()) {
