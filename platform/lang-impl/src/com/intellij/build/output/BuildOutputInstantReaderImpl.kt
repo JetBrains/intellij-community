@@ -15,7 +15,7 @@ import java.util.*
 /**
  * @author Vladislav.Soroka
  */
-class BuildOutputInstantReaderImpl(private val buildId: Any,
+open class BuildOutputInstantReaderImpl(private val buildId: Any,
                                    buildProgressListener: BuildProgressListener,
                                    parsers: List<BuildOutputParser>) : BuildOutputInstantReader, Closeable, Appendable {
   private val job: Job
