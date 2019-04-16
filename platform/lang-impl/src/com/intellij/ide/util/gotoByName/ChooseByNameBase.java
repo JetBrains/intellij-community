@@ -925,7 +925,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  void scheduleCalcElements(String text,
+  public void scheduleCalcElements(String text,
                             boolean checkboxState,
                             ModalityState modalityState,
                             SelectionPolicy policy,
