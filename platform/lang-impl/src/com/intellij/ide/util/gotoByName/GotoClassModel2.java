@@ -29,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +153,6 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
 
   @Override
   public boolean sameNamesForProjectAndLibraries() {
-    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return false;
   }
 }

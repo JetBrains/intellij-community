@@ -56,7 +56,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   }
 
   public boolean sameNamesForProjectAndLibraries() {
-    return !ChooseByNameBase.ourLoadNamesEachTime;
+    return false;
   }
 
   private final ConcurrentMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = ContainerUtil.newConcurrentMap();

@@ -65,7 +65,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
@@ -87,6 +86,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
+
   @Nullable
   protected final Project myProject;
   protected final ChooseByNameModel myModel;
@@ -140,7 +140,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
   private final boolean myInitIsDone;
-  static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myAlwaysHasMore;
   private Point myFocusPoint;
   @Nullable SelectionSnapshot currentChosenInfo;
@@ -198,6 +197,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitIsDone = true;
   }
 
+  @Nullable
   @Override
   public Project getProject() {
     return myProject;
@@ -781,11 +781,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   @NotNull
   public String[] getNames(boolean checkboxState) {
-    if (ourLoadNamesEachTime) {
-      setNamesSync(checkboxState, null);
-      return ensureNamesLoaded(checkboxState);
-    }
-    return getNamesSync(checkboxState);
+    setNamesSync(checkboxState, null);
+    return ensureNamesLoaded(checkboxState);
   }
 
   private String[] getNamesSync(boolean checkboxState) {
@@ -1393,11 +1390,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private boolean fillWithScopeExpansion(@NotNull Set<Object> elements, @NotNull String pattern) {
-      if (!ourLoadNamesEachTime) ensureNamesLoaded(myCheckboxState);
       addElementsByPattern(pattern, elements, myProgress, myCheckboxState);
 
       if (elements.isEmpty() && !myCheckboxState) {
-        if (!ourLoadNamesEachTime) ensureNamesLoaded(true);
         addElementsByPattern(pattern, elements, myProgress, true);
         return true;
       }
