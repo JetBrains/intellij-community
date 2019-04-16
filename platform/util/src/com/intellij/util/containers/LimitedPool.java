@@ -5,6 +5,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * <b>Note:</b> the class is not thread-safe; use {@link Sync synchronized version} for concurrent access.
+ *
  * @author max
  */
 public class LimitedPool<T> {
@@ -50,6 +52,23 @@ public class LimitedPool<T> {
     if (myStorage.length <= myIndex) {
       int newCapacity = Math.min(myCapacity, myStorage.length * 3 / 2);
       myStorage = ArrayUtil.realloc(myStorage, newCapacity, ArrayUtil.OBJECT_ARRAY_FACTORY);
+    }
+  }
+
+  public static final class Sync<T> extends LimitedPool<T> {
+    public Sync(int capacity, @NotNull ObjectFactory<T> factory) {
+      super(capacity, factory);
+    }
+
+    @NotNull
+    @Override
+    public synchronized T alloc() {
+      return super.alloc();
+    }
+
+    @Override
+    public synchronized void recycle(@NotNull T t) {
+      super.recycle(t);
     }
   }
 }
