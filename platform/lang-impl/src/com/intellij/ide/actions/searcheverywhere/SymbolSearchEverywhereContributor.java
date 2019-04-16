@@ -55,16 +55,16 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return new GotoSymbolModel2(project);
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Language> {
+  public static class Factory implements SearchEverywhereContributorFactory<Object, Language> {
     @NotNull
     @Override
-    public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
+    public SearchEverywhereContributor<Object, Language> createContributor(@NotNull AnActionEvent initEvent) {
       return new SymbolSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
+    public SearchEverywhereContributorFilter<Language> createFilter(@NotNull AnActionEvent initEvent) {
       Project project = initEvent.getProject();
       if (project == null) {
         return null;
