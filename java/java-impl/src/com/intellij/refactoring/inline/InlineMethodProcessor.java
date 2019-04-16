@@ -806,7 +806,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
     InlineTransformer transformer = InlineTransformer.getSuitableTransformer(myMethod, ref);
-    assert transformer != null;
 
     PsiLocalVariable[] parmVars = declareParameters(block, argumentList, callSubstitutor);
 

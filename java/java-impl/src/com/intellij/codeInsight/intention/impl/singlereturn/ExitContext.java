@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ class ExitContext {
     myReturnType = returnType;
     myReturnVariable =
       new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName("result", "res").byType(returnType).generate(true);
-    if (marker.myDefaultValue != null && marker.myDefaultValue.isPhysical()) {
+    if (marker.myDefaultValue != null && PsiTreeUtil.isAncestor(block, marker.myDefaultValue, true)) {
       myReturnVariableDefaultValue = (PsiExpression)marker.myDefaultValue.copy();
     } else {
       myReturnVariableDefaultValue = marker.myDefaultValue;
@@ -96,7 +97,7 @@ class ExitContext {
     }
   }
 
-  void declareVariables() {
+  PsiLocalVariable declareVariables() {
     if (myFinishedVariable != null) {
       PsiJavaToken start = requireNonNull(myBlock.getLBrace());
       PsiExpression initializer = myFactory.createExpressionFromText("false", null);
@@ -123,7 +124,9 @@ class ExitContext {
       }
       PsiJavaToken end = requireNonNull(myBlock.getRBrace());
       myBlock.addBefore(myFactory.createStatementFromText("return " + myReturnVariable + ";", myBlock), end);
+      return var;
     }
+    return null;
   }
 
   public boolean isFinishCondition(PsiStatement statement) {

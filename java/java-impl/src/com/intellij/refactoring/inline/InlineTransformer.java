@@ -2,6 +2,9 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.intention.impl.singlereturn.ConvertToSingleReturnAction;
+import com.intellij.codeInsight.intention.impl.singlereturn.FinishMarker;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -14,7 +17,9 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.StatementExtractor;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -76,6 +81,32 @@ public abstract class InlineTransformer {
       return null;
     }
   }
+
+  static class LoopContinueTransformer extends InlineTransformer {
+    @Override
+    public boolean isMethodAccepted(PsiMethod method) {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(method)) {
+        if (PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class, true, PsiMethod.class) != null) {
+          // We cannot use "continue" without introducing a label if any of returns is inside nested loop.
+          // Introducing a label is ugly, so let's move to the next transformer 
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean isReferenceAccepted(PsiReference reference) {
+      return InlineUtil.getTailCallType(reference) == InlineUtil.TailCallType.Continue;
+    }
+
+    @Override
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+      extractReturnValues(methodCopy, true);
+      return null;
+    }
+  }
+  
   
   static class SimpleTailCallTransformer extends InlineTransformer {
     @Override
@@ -90,10 +121,16 @@ public abstract class InlineTransformer {
 
     @Override
     public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
-      PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(methodCopy);
-      for (PsiReturnStatement returnStatement : returnStatements) {
-        final PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null) continue;
+      extractReturnValues(methodCopy, false);
+      return null;
+    }
+  }
+
+  private static void extractReturnValues(PsiMethod methodCopy, boolean replaceWithContinue) {
+    PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(methodCopy);
+    for (PsiReturnStatement returnStatement : returnStatements) {
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      if (returnValue != null) {
         List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
         CommentTracker ct = new CommentTracker();
         sideEffects.forEach(ct::markUnchanged);
@@ -106,7 +143,30 @@ public abstract class InlineTransformer {
         }
         ct.insertCommentsBefore(returnStatement);
       }
-      return null;
+      if (replaceWithContinue) {
+        new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
+      }
+    }
+  }
+
+  private static class ConvertToSingleReturnTransformer extends InlineTransformer {
+    @Override
+    public boolean isMethodAccepted(PsiMethod method) {
+      return true;
+    }
+
+    @Override
+    public boolean isReferenceAccepted(PsiReference reference) {
+      return true;
+    }
+
+    @Override
+    public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReference reference, PsiType returnType) {
+      PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
+      List<PsiReturnStatement> returns = Arrays.asList(PsiUtil.findReturnStatements(block));
+      FinishMarker marker = FinishMarker.defineFinishMarker(block, returnType, returns);
+      return ConvertToSingleReturnAction.convertReturns(methodCopy.getProject(), block, returnType, marker, returns.size(),
+                                                        new EmptyProgressIndicator());
     }
   }
 
@@ -114,16 +174,19 @@ public abstract class InlineTransformer {
     return ContainerUtil.immutableList(
       new TailCallTransformer(),
       new SimpleTailCallTransformer(),
-      new NormalTransformer()
+      new NormalTransformer(),
+      new LoopContinueTransformer(),
+      new ConvertToSingleReturnTransformer()
     );
   }
-  
+
+  @NotNull
   static InlineTransformer getSuitableTransformer(PsiMethod method, PsiReference reference) {
     for (InlineTransformer transformer : getTransformers()) {
       if (transformer.isMethodAccepted(method) && transformer.isReferenceAccepted(reference)) {
         return transformer;
       }
     }
-    return null;
+    throw new InternalError("Transformer is unavailable");
   }
 }

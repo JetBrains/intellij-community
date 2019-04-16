@@ -27,7 +27,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Represents a way to indicate whether method execution is already finished
  */
-class FinishMarker {
+public class FinishMarker {
   /**
    * Type of finish marker
    */
@@ -48,7 +48,7 @@ class FinishMarker {
    * @param returns list of all method returns
    * @return a FinishMarker which is suitable for given method
    */
-  static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, List<PsiReturnStatement> returns) {
+  public static FinishMarker defineFinishMarker(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, List<PsiReturnStatement> returns) {
     boolean mayNeedMarker = mayNeedMarker(returns, block);
     return defineFinishMarker(block, returns, returnType, mayNeedMarker, JavaPsiFacade.getElementFactory(block.getProject()));
   }
