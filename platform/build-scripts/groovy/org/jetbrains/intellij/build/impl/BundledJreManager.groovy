@@ -52,7 +52,6 @@ class BundledJreManager {
     return version
   }
 
-  @CompileDynamic
   String extractSecondJre(String osName, String secondJreBuild) {
     String targetDir = "$baseDirectoryForJre/secondJre.${osName}_${JvmArchitecture.x64}"
     if (new File(targetDir).exists()) {
@@ -73,20 +72,7 @@ class BundledJreManager {
       String destination = "$targetDir/jre64"
       def destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
-
-      if (SystemInfo.isWindows) {
-        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
-      }
-      else {
-        //'tar' command is used instead of Ant task to ensure that executable flags will be preserved
-        buildContext.ant.mkdir(dir: destination)
-        buildContext.ant.exec(executable: "tar", dir: archive.parent) {
-          arg(value: "-xf")
-          arg(value: archive.name)
-          arg(value: "--directory")
-          arg(value: destination)
-        }
-      }
+      untar(archive, destination)
     }
     return targetDir
   }
@@ -125,8 +111,6 @@ class BundledJreManager {
     return "jre-for-${buildContext.buildNumber}.tar.gz"
   }
 
-
-  @CompileDynamic
   private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
     String targetDir = arch == JvmArchitecture.x64 ?
@@ -147,29 +131,41 @@ class BundledJreManager {
         destination = "$targetDir/jre32"
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
-      if (SystemInfo.isWindows) {
-        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
-          if (!buildContext.isBundledJreModular()) {
-            cutdirsmapper(dirs: 1)
-          }
-        }
-      }
-      else {
-        //'tar' command is used instead of Ant task to ensure that executable flags will be preserved
-        buildContext.ant.mkdir(dir: destination)
-        buildContext.ant.exec(executable: "tar", dir: archive.parent) {
-          arg(value: "-xf")
-          arg(value: archive.name)
-          if (!buildContext.isBundledJreModular()) {
-            arg(value: "--strip")
-            arg(value: "1")
-          }
-          arg(value: "--directory")
-          arg(value: destination)
+      untar(archive, destination)
+    }
+    return targetDir
+  }
+
+  /**
+   * @param archive linux or windows JRE archive
+   */
+  @CompileDynamic
+  private def untar(File archive, String destination) {
+    // jbr8 with `jre` top level directory
+    def unpackTopLevelDir = !buildContext.isBundledJreModular() ||
+                            // or jbr11+ with `jbr` top level directory
+                            buildContext.options.bundledJreRenamedToJbr
+    if (SystemInfo.isWindows) {
+      buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
+        if (unpackTopLevelDir) {
+          cutdirsmapper(dirs: 1)
         }
       }
     }
-    return targetDir
+    else {
+      // 'tar' command is used instead of Ant task to ensure that executable flags will be preserved
+      buildContext.ant.mkdir(dir: destination)
+      buildContext.ant.exec(executable: "tar", dir: archive.parent) {
+        arg(value: "-xf")
+        arg(value: archive.name)
+        if (unpackTopLevelDir) {
+          arg(value: "--strip")
+          arg(value: "1")
+        }
+        arg(value: "--directory")
+        arg(value: destination)
+      }
+    }
   }
 
   private File dependenciesDir() {

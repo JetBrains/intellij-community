@@ -63,18 +63,23 @@ def createJbreTasks(String defaultBuild, int version, String targetOs, String pr
   }
 }
 
+@SuppressWarnings("GrMethodMayBeStatic")
+def jreUrl() {
+  // base url of TeamCity build to download JRE from
+  System.getProperty('intellij.jre.teamcity.build.url') ?: 'https://cache-redirector.jetbrains.com/intellij-jbr'
+}
+
 def createDownloadJbreTask(String artifactName, String build, boolean doRepackage) {
   def outputDir = "$project.buildDir/jbre"
   def suffix = doRepackage ? '_origin' : ''
   def outputFile = "$outputDir/${artifactName}${suffix}.tar.gz"
   task("download${artifactName.capitalize()}") {
-    def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
     inputs.property('build', build)
     outputs.file(outputFile)
     doLast {
       logger.info("Downloading $artifactName to $outputFile")
       download {
-        src "$jdkRepo/${artifactName}.tar.gz"
+        src "${jreUrl()}/${artifactName}.tar.gz"
         dest outputFile
         tempAndMove true
         timeout TimeUnit.MINUTES.toMillis(30).toInteger()
