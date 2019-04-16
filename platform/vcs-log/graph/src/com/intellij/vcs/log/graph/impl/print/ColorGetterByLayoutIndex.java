@@ -60,17 +60,20 @@ public class ColorGetterByLayoutIndex<CommitId> {
     int upLayoutIndex = getLayoutIndex(upNodeIndex);
     int downLayoutIndex = getLayoutIndex(downNodeIndex);
 
-    int headNodeId = getHeadNodeId(upNodeIndex);
-    CommitId headCommitId = myPermanentGraphInfo.getPermanentCommitsInfo().getCommitId(headNodeId);
-    if (upLayoutIndex != downLayoutIndex) {
-      return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
+    if (upLayoutIndex >= downLayoutIndex) {
+      return getNodeColor(getHeadNodeId(upNodeIndex), upLayoutIndex);
     }
 
-    if (upLayoutIndex == myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(headNodeId)) {
+    return getNodeColor(getHeadNodeId(downNodeIndex), downLayoutIndex);
+  }
+
+  protected int getNodeColor(int headNodeId, int nodeLayoutIndex) {
+    CommitId headCommitId = myPermanentGraphInfo.getPermanentCommitsInfo().getCommitId(headNodeId);
+    if (nodeLayoutIndex == myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(headNodeId)) {
       return myColorManager.getColorOfBranch(headCommitId);
     }
     else {
-      return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
+      return myColorManager.getColorOfFragment(headCommitId, nodeLayoutIndex);
     }
   }
 
