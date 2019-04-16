@@ -17,6 +17,10 @@ class BashCompletionUtil {
         psiElement(BashTypes.ELSE_CLAUSE)));
   }
 
+  static PsiElementPattern.Capture<PsiElement> insideThenOrElse() {
+    return psiElement().inside(psiElement().andOr(psiElement(BashTypes.THEN_CLAUSE), psiElement(BashTypes.ELSE_CLAUSE)));
+  }
+
   static PsiElementPattern.Capture<PsiElement> insideUntilDeclaration() {
     return psiElement().inside(psiElement(BashTypes.CONDITIONAL_COMMAND).inside(psiElement(BashTypes.UNTIL_COMMAND)));
   }

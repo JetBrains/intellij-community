@@ -32,6 +32,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEmpty(myFixture.completeBasic());
   }
 
+  public void testNoEilfCompletion() {
+    myFixture.configureByText("a.sh", "for (( i = 0; i < ; i++ )); do\n    elif<caret>\ndone");
+    assertEmpty(myFixture.completeBasic());
+  }
+
   public void testForCompletion() {
     myFixture.configureByText("a.sh", "for<caret>");
     myFixture.completeBasic();
