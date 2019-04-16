@@ -20,10 +20,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
@@ -139,7 +138,8 @@ public class TypeInferenceHelper {
   @Nullable
   private static InferenceCache createInferenceCache(@NotNull GrControlFlowOwner scope) {
     TObjectIntHashMap<VariableDescriptor> varIndexes = getVarIndexes(scope);
-    List<DefinitionMap> defUse = getDefUseMaps(scope.getControlFlow(), varIndexes);
+    Instruction[] flow = scope.getControlFlow();
+    List<DefinitionMap> defUse = getDefUseMaps(flow, varIndexes);
     if (defUse == null) {
       return null;
     }
