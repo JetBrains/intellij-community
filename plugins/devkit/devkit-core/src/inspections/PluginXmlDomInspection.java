@@ -300,6 +300,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
     }
+    else {
+      final String url = vendor.getUrl().getStringValue();
+      if (url != null && StringUtil.endsWith(url, "jetbrains.com")) {
+        holder.createProblem(vendor.getUrl(),
+                             DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.url", url),
+                             new RemoveDomElementQuickFix(vendor.getUrl())).highlightWholeElement();
+      }
+    }
+
+    if (DomUtil.hasXml(vendor.getEmail())) {
+      holder.createProblem(vendor.getEmail(),
+                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.email"),
+                           new RemoveDomElementQuickFix(vendor.getEmail())).highlightWholeElement();
+    }
   }
 
   private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {

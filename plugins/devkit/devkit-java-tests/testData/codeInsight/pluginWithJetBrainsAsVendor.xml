@@ -1,5 +1,7 @@
 <idea-plugin>
   <id>test</id>
   <version>1.0</version>
-  <vendor>JetBrains</vendor>
+  <vendor <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify 'http://www.jetbrains.com' as url">url="http://www.jetbrains.com"</error>
+    <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify email">email="some@one.com"</error>
+    >JetBrains</vendor>
 </idea-plugin>
