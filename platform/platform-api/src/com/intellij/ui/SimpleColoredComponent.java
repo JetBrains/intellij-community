@@ -404,7 +404,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Font font = getBaseFont();
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
+    int textHeight = Math.max(getMinHeight(), metrics.getHeight()); //avoid too narrow rows
 
     Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
@@ -418,6 +418,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     return height;
+  }
+
+  protected int getMinHeight() {
+    return JBUI.scale(16);
   }
 
   private Rectangle computePaintArea() {
