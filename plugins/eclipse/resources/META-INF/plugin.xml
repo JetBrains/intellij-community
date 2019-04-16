@@ -15,7 +15,7 @@
       ]]>
     </description>
 
-  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>

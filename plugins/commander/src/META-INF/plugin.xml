@@ -2,7 +2,7 @@
   <id>com.intellij.commander</id>
   <name>Commander</name>
   <description>Provides a two-panel view for navigating and working with the project structure</description>
-  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
   <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
-  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.java</depends>
 
