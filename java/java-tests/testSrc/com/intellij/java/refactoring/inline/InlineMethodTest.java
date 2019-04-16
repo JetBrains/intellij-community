@@ -240,6 +240,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testNotAStatement2() {
     doTest();
   }
+  
+  public void testNotAStatement3() {
+    doTest();
+  }
+  
+  public void testNotAStatement4() {
+    doTest();
+  }
 
   public void testInSuperCall() {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
@@ -200,9 +201,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (!myInlineThisOnly) {
       final PsiMethod[] superMethods = myMethod.findSuperMethods();
       for (PsiMethod method : superMethods) {
-        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ? RefactoringBundle
-          .message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) : RefactoringBundle
-          .message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName());
+        String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
+        final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ? 
+                               RefactoringBundle.message("inlined.method.implements.method.from.0", className) : 
+                               RefactoringBundle.message("inlined.method.overrides.method.from.0", className);
         conflicts.putValue(method, message);
       }
 
@@ -321,7 +323,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   /**
    * Given a set of referencedElements, returns a map from containers (in a sense of ConflictsUtil.getContainer)
-   * to subsets of referencedElemens that are not accessible from that container
+   * to subsets of referencedElements that are not accessible from that container
    *
    * @param referencedElements
    * @param usages
@@ -893,36 +895,26 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (PsiReturnStatement returnStatement : returnStatements) {
         final PsiExpression returnValue = returnStatement.getReturnValue();
         if (returnValue == null) continue;
-        PsiStatement statement;
         if (tailCallType == InlineUtil.TailCallType.Simple) {
-          if (returnStatement.getNextSibling() == myMethodCopy.getBody().getLastBodyElement() &&
-             RemoveUnusedVariableUtil.checkSideEffects(returnValue, null, new ArrayList<>())) {
-            PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
-            exprStatement.getExpression().replace(returnValue);
-            PsiElement returnParent = returnStatement.getParent();
-            exprStatement = (PsiExpressionStatement)returnParent.addBefore(exprStatement, returnStatement);
-            if (!PsiUtil.isStatement(exprStatement)) {
-              PsiExpression expression = exprStatement.getExpression();
-              List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
-              CommentTracker ct = new CommentTracker();
-              sideEffects.forEach(ct::markUnchanged);
-              for (PsiStatement sideEffect : StatementExtractor.generateStatements(sideEffects, expression)) {
-                returnParent.addBefore(sideEffect, exprStatement);
-              }
-              ct.deleteAndRestoreComments(exprStatement);
-            }
-            statement = myFactory.createStatementFromText("return;", null);
-          } else {
-            statement = (PsiStatement)returnStatement.copy();
+          List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
+          CommentTracker ct = new CommentTracker();
+          sideEffects.forEach(ct::markUnchanged);
+          PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
+          ct.delete(returnValue);
+          if (statements.length > 0) {
+            PsiStatement lastAdded = BlockUtils.addBefore(returnStatement, statements);
+            // Could be wrapped into {}, so returnStatement might be non-physical anymore
+            returnStatement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiReturnStatement.class));
           }
+          ct.insertCommentsBefore(returnStatement);
         }
         else {
-          statement = myFactory.createStatementFromText(resultName + "=0;", null);
+          PsiStatement statement = myFactory.createStatementFromText(resultName + "=0;", null);
           statement = (PsiStatement)myCodeStyleManager.reformat(statement);
           PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)statement).getExpression();
           assignment.getRExpression().replace(returnValue);
+          returnStatement.replace(statement);
         }
-        returnStatement.replace(statement);
       }
     }
 
@@ -978,7 +970,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               do {
                 parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
                 if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
-                  LOG.assertTrue(parentClass != null);
                   final String childClassName = parentClass.getName();
                   qualifier = myFactory.createExpressionFromText(childClassName != null ? childClassName + ".this" : "this", null);
                   break;
@@ -1129,7 +1120,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         //TODO: other cases
         return false;
         */
-        return true; //TODO: "suspicous" places to review by user!
+        return true; //TODO: "suspicious" places to review by user!
       }
       else {
         if (isAccessedForWriting) {
@@ -1169,7 +1160,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           return false;
         }
       }
-      return true; //TODO: "suspicous" places to review by user!
+      return true; //TODO: "suspicious" places to review by user!
     }
     else if (initializer instanceof PsiLiteralExpression) {
       return true;
@@ -1615,8 +1606,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     for (PsiReturnStatement aReturn : returns) {
       int offset = controlFlow.getEndOffset(aReturn);
-      while (true) {
-        if (offset == instructions.size()) break;
+      while (offset != instructions.size()) {
         Instruction instruction = instructions.get(offset);
         if (instruction instanceof GoToInstruction) {
           offset = ((GoToInstruction)instruction).offset;
@@ -1626,7 +1616,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
         else if (instruction instanceof ConditionalThrowToInstruction) {
           // In case of "conditional throw to", control flow will not be altered
-          // If exception handler is in method, we will inline it to ivokation site
+          // If exception handler is in method, we will inline it to invocation site
           // If exception handler is at invocation site, execution will continue to get there
           offset++;
         }
