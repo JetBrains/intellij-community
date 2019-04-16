@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -148,6 +149,7 @@ public class DomImplUtil {
     }
 
     return ContainerUtil.findAll(tags, childTag -> {
+      ProgressManager.checkCanceled();
       try {
         return isNameSuitable(name, childTag.getLocalName(), childTag.getName(), childTag.getNamespace(), file);
       }
