@@ -10,20 +10,20 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class LimitedPool<T> {
+  @FunctionalInterface
   public interface ObjectFactory<T> {
     @NotNull T create();
     default void cleanup(@NotNull T t) { }
   }
 
-  private final int myCapacity;
+  private final int myMaxCapacity;
   private final ObjectFactory<T> myFactory;
-  private Object[] myStorage;
+  private Object[] myStorage = ArrayUtil.EMPTY_OBJECT_ARRAY;
   private int myIndex;
 
-  public LimitedPool(int capacity, @NotNull ObjectFactory<T> factory) {
-    myCapacity = capacity;
+  public LimitedPool(int maxCapacity, @NotNull ObjectFactory<T> factory) {
+    myMaxCapacity = maxCapacity;
     myFactory = factory;
-    myStorage = new Object[10];
   }
 
   @NotNull
@@ -40,7 +40,7 @@ public class LimitedPool<T> {
 
   public void recycle(@NotNull T t) {
     myFactory.cleanup(t);
-    if (myIndex >= myCapacity) {
+    if (myIndex >= myMaxCapacity) {
       return;
     }
 
@@ -50,14 +50,14 @@ public class LimitedPool<T> {
 
   private void ensureCapacity() {
     if (myStorage.length <= myIndex) {
-      int newCapacity = Math.min(myCapacity, myStorage.length * 3 / 2);
+      int newCapacity = Math.min(myMaxCapacity, Math.max(10, myStorage.length * 3 / 2));
       myStorage = ArrayUtil.realloc(myStorage, newCapacity, ArrayUtil.OBJECT_ARRAY_FACTORY);
     }
   }
 
   public static final class Sync<T> extends LimitedPool<T> {
-    public Sync(int capacity, @NotNull ObjectFactory<T> factory) {
-      super(capacity, factory);
+    public Sync(int maxCapacity, @NotNull ObjectFactory<T> factory) {
+      super(maxCapacity, factory);
     }
 
     @NotNull
