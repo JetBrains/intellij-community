@@ -24,13 +24,17 @@ class NewParameterHintsInlayProvider<T: Any>(val provider: NewParameterHintsProv
         sink.addInlay(offset, info.presentation) // TODO use other info here!!!
       }
     }
-    return object : FactoryInlayHintsCollector<ParameterHintsSettings<T>>(editor, key) {
+    val collector = provider.getCollector(file, settings.providerSettings, editor)
+    return object : InlayHintsCollector<ParameterHintsSettings<T>> {
+      override val key: SettingsKey<ParameterHintsSettings<T>>
+        get() = this@NewParameterHintsInlayProvider.key
+
       override fun collect(element: PsiElement,
                            editor: Editor,
                            settings: ParameterHintsSettings<T>,
                            isEnabled: Boolean,
                            sink: InlayHintsSink) {
-        provider.getParameterHints(element, settings.providerSettings, factory, parameterHintsSink)
+        collector.getParameterHints(element, settings.providerSettings, parameterHintsSink)
       }
     }
   }

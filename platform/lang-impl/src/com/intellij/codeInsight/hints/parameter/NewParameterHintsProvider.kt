@@ -9,14 +9,13 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 
-interface NewParameterHintsProvider<T> {
-  /**
-   * Hints for params to be shown, hints offsets should be located within elements text range
-   */
-  fun getParameterHints(element: PsiElement, settings: T, factory: PresentationFactory, sink: ParameterHintsSink)
+interface NewParameterHintsProvider<T: Any> {
+  fun getCollector(element: PsiElement, settings: T, editor: Editor) : ParameterHintsCollector<T>
 
   /**
    * Some unique key, that will be used for settings persistance
@@ -49,6 +48,17 @@ interface NewParameterHintsProvider<T> {
         .map { lang ->  lang to EP.forLanguage(lang) }
     }
   }
+}
+
+interface ParameterHintsCollector<T: Any> {
+  /**
+   * Hints for params to be shown, hints offsets should be located within elements text range
+   */
+  fun getParameterHints(element: PsiElement, settings: T, sink: ParameterHintsSink)
+}
+
+abstract class FactoryHintsCollector<T : Any>(editor: Editor) : ParameterHintsCollector<T> {
+  val factory = PresentationFactory(editor as EditorImpl)
 }
 
 interface ParameterHintsSink {

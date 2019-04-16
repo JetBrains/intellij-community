@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.parameter.*
-import com.intellij.codeInsight.hints.presentation.IconPresentation
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformIcons
@@ -13,13 +10,15 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
-  override fun getParameterHints(element: PsiElement, settings: NoSettings, factory: PresentationFactory, sink: ParameterHintsSink) {
-    if (element.text == "Hello" && element.children.isEmpty()) {
-       // TODO remove
-      val presentation = factory.icon(PlatformIcons.CHECK_ICON)
-//      val presentation = factory.text("asdsad")
-      val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
-      sink.addHint(info)
+  override fun getCollector(element: PsiElement, settings: NoSettings, editor: Editor): ParameterHintsCollector<NoSettings> {
+    return object: FactoryHintsCollector<NoSettings>(editor) {
+      override fun getParameterHints(element: PsiElement, settings: NoSettings, sink: ParameterHintsSink) {
+        if (element.text == "Hello" && element.children.isEmpty()) {
+          val presentation = factory.icon(PlatformIcons.CHECK_ICON)
+          val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
+          sink.addHint(info)
+        }
+      }
     }
   }
 
