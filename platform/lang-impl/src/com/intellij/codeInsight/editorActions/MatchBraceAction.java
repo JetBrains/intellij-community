@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Moves caret to the the matching brace:
- * - If caret is on the closing brace - moves to the matching opening
- * - If caret is on the opening brace - moves to the matching closing brace
+ * - If caret is on the closing brace - moves in the beginning of the matching opening brace
+ * - If caret is on the opening brace - moves to the end of the matching closing brace
  * - Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position
  */
 public class MatchBraceAction extends EditorAction {
@@ -83,43 +83,47 @@ public class MatchBraceAction extends EditorAction {
       final Caret caret = editor.getCaretModel().getCurrentCaret();
       final EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
       final CharSequence text = editor.getDocument().getCharsSequence();
-
       int offset = caret.getOffset();
-      FileType fileType = getFileType(file, offset);
-      HighlighterIterator iterator = highlighter.createIterator(offset);
 
-      if (iterator.atEnd()) {
-        // end of file, caret should be in the beginning of the brace
-        offset--;
+      final HighlighterIterator iterator = highlighter.createIterator(offset);
+      final FileType fileType = iterator.atEnd() ? null : getFileType(file, iterator.getStart());
+      final HighlighterIterator preOffsetIterator = offset > 0 ? highlighter.createIterator(offset - 1) : null;
+      final FileType preOffsetFileType = preOffsetIterator != null ? getFileType(file, preOffsetIterator.getStart()) : null;
+
+      boolean isAfterLeftBrace = preOffsetIterator != null &&
+                                 BraceMatchingUtil.isLBraceToken(preOffsetIterator, text, preOffsetFileType);
+      boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null &&
+                                  BraceMatchingUtil.isRBraceToken(preOffsetIterator, text, preOffsetFileType);
+      boolean isBeforeLeftBrace = fileType != null && BraceMatchingUtil.isLBraceToken(iterator, text, fileType);
+      boolean isBeforeRightBrace = !isBeforeLeftBrace && fileType != null && BraceMatchingUtil.isRBraceToken(iterator, text, fileType);
+
+      if (isAfterRightBrace && BraceMatchingUtil.matchBrace(text, preOffsetFileType, preOffsetIterator, false)) {
+        return preOffsetIterator.getStart();
       }
-      else if (offset > 0 &&
-               !BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
-               !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
-        // we probably standing after a brace, let's look behind one char
-        offset--;
-
-        HighlighterIterator i = highlighter.createIterator(offset);
-        if (!BraceMatchingUtil.isRBraceToken(i, text, getFileType(file, i.getStart())) &&
-            !BraceMatchingUtil.isLBraceToken(i, text, getFileType(file, i.getStart()))) {
-          // we still not at brace
-          offset++;
-        }
+      else if (isBeforeLeftBrace && BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
+        return iterator.getEnd();
       }
-
-      if (offset < 0) return -1;
-
-      iterator = highlighter.createIterator(offset);
-      fileType = getFileType(file, iterator.getStart());
-
-      boolean isLeftBrace = BraceMatchingUtil.isLBraceToken(iterator, text, fileType);
-      if (isLeftBrace || BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
-        // we are at brace
-        if (BraceMatchingUtil.matchBrace(text, fileType, iterator, isLeftBrace)) {
-          return iterator.getStart();
-        }
-        return -1;
+      else if (isAfterLeftBrace && BraceMatchingUtil.matchBrace(text, preOffsetFileType, preOffsetIterator, true)) {
+        return preOffsetIterator.getEnd();
       }
+      else if (isBeforeRightBrace && BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
+        return iterator.getStart();
+      }
+      return fileType == null ? -1 : tryFindPreviousUnclosedOpeningBraceOffset(text, iterator, fileType);
+    }
 
+    /**
+     * Retries {@code iterator} and counting closing and opening braces (in dumb way, no need to be same type or whatever). Stops if
+     * encounters first opening brace which was not closed before.
+     *
+     * @param text     we are iterating through
+     * @param iterator in starting position
+     * @param fileType for detecting braces for
+     * @return start offset of the opening brace or -1 if non were found.
+     */
+    private static int tryFindPreviousUnclosedOpeningBraceOffset(@NotNull CharSequence text,
+                                                                 @NotNull HighlighterIterator iterator,
+                                                                 @NotNull FileType fileType) {
       int unopenedBraces = 0;
       while (true) {
         if (BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
