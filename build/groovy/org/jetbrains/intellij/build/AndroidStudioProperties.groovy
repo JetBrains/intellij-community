@@ -247,8 +247,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     def root = "$buildContext.paths.communityHome/../.."
 
-    if (buildContext.options.bundleGradleAndOfflineRepo) {
-      bundleGradleAndOfflineRepo(buildContext, root, targetDirectory)
+    if (buildContext.options.includeUiTests) {
+      bundleDependenciesForUiTests(buildContext, root, targetDirectory)
     }
 
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
@@ -332,29 +332,19 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   @CompileDynamic
-  protected void bundleGradleAndOfflineRepo(BuildContext buildContext, String root, String targetDirectory) {
+  private static void bundleDependenciesForUiTests(BuildContext buildContext, String root, String targetDirectory) {
     def gradleVersion = getGradleVersionToBundle(buildContext)
-
-    buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
-      buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+    buildContext.messages.block("Bundle dependencies for UI tests including zipped Gradle $gradleVersion") {
       // when creating gradle wrappers for UI test projects, we need a zipped copy of gradle to point to
-      if (buildContext.options.includeUiTests) {
-        buildContext.ant.copy(todir: "$targetDirectory/gradle/gradle-$gradleVersion") {
-          fileset(file: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip")
-        }
-        buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository/com/android/databinding") {
-          fileset(dir: "$root/out/repo/com/android/databinding")
-        }
-        buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/android/test_deps.zip", dest: "$targetDirectory/gradle/m2repository")
-        buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/uitest-framework/uitest_deps.zip", dest: "$targetDirectory/gradle/m2repository")
+      buildContext.ant.copy(todir: "$targetDirectory/gradle/gradle-$gradleVersion") {
+        fileset(file: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip")
       }
-
-      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
-        fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
-          exclude(name: "BUILD")
-        }
-        fileset(dir: "$root/out/studio/repo")
+      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository/com/android/databinding") {
+        fileset(dir: "$root/out/repo/com/android/databinding")
       }
+      buildContext.ant.unzip(src: "$root/bazel-bin/tools/adt/idea/android/test_deps.zip", dest: "$targetDirectory/gradle/m2repository")
+      buildContext.ant.
+        unzip(src: "$root/bazel-bin/tools/adt/idea/uitest-framework/uitest_deps.zip", dest: "$targetDirectory/gradle/m2repository")
     }
   }
 
