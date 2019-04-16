@@ -389,6 +389,8 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", version: "4.1.34", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", version: "4.1.34", license: "Apache 2.0",
+                       url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
 
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0", url: "http://objenesis.org/",
