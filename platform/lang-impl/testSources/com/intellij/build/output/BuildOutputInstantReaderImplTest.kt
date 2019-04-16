@@ -71,6 +71,10 @@ ${trashOut.prependIndent("        ")}
         [info] info1
         info2
         info3
+${""/* checks that duplicate messages are not sent */}
+        [info] info1
+        info2
+        info3
 
 ${trashOut.prependIndent("        ")}
         [warning] warn1
