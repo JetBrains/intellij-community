@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,15 +73,15 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
   private static final String DISABLE_PLUGIN_URL = "#disable";
-
-  private static List<Developer> ourDevelopersList = Collections.emptyList();
+  private static final String EA_PLUGIN_ID = "com.intellij.sisyphus";
 
   private final MessagePool myMessagePool;
   private final Project myProject;
-  private final boolean myInternalMode;
+  private final boolean myAssigneeVisible;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex, myLastIndex = -1;
+  private Long myDevelopersTimestamp;
 
   private JLabel myCountLabel;
   private JTextComponent myInfoLabel;
@@ -101,14 +100,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
-    myInternalMode = ApplicationManager.getApplication().isInternal();
+    myAssigneeVisible = ApplicationManager.getApplication().isInternal() || PluginManager.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID));
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       loadDevelopersList();
     }
 
@@ -123,27 +122,42 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void loadDevelopersList() {
-    if (!ourDevelopersList.isEmpty()) {
-      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(ourDevelopersList));
+    ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
+    Developers developers = configurable.getDeveloper();
+    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+      setDevelopers(developers);
     }
     else {
       new Task.Backgroundable(null, "Loading Developers List", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            List<Developer> developers = ITNProxy.fetchDevelopers(indicator);
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            ourDevelopersList = developers;
+            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
             UIUtil.invokeLaterIfNeeded(() -> {
+              configurable.setDeveloper(updatedDevelopers);
               if (isShowing()) {
-                myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers));
+                setDevelopers(updatedDevelopers);
               }
             });
           }
-          catch (UnknownHostException e) { LOG.debug(e); }
+          catch (UnknownHostException e) {
+            LOG.debug(e);
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (isShowing()) {
+                setDevelopers(developers);
+              }
+            });
+          }
           catch (IOException e) { LOG.warn(e); }
         }
       }.queue();
+    }
+  }
+
+  private void setDevelopers(@Nullable Developers developers) {
+    if (developers != null) {
+      myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
+      myDevelopersTimestamp = developers.getTimestamp();
     }
   }
 
@@ -255,7 +269,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
       myAssigneeCombo.setRenderer(new ListCellRendererWrapper<Developer>() {
         @Override
@@ -312,7 +326,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new BorderLayout());
-    if (myInternalMode) accountRow.add(myAssigneePanel, BorderLayout.WEST);
+    if (myAssigneeVisible) accountRow.add(myAssigneePanel, BorderLayout.WEST);
     accountRow.add(myCredentialsLabel, BorderLayout.EAST);
     myNoticePanel = new JPanel(new GridBagLayout());
     myNoticePanel.add(new JBLabel(UIUtil.getBalloonWarningIcon()), new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTH, NONE, JBUI.insets(7, 0, 0, 5), 0, 0));
@@ -341,7 +355,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @Override
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<>();
-    if (myInternalMode && myProject != null && !myProject.isDefault()) {
+    if (myAssigneeVisible && myProject != null && !myProject.isDefault()) {
       AnAction action = ActionManager.getInstance().getAction("Unscramble");
       if (action != null) {
         actions.add(new AnalyzeAction(action));
@@ -411,7 +425,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     updateLabels(cluster);
     updateDetails(cluster);
-    if (myInternalMode) {
+    if (myAssigneeVisible) {
       updateAssigneePanel(cluster);
     }
     updateCredentialsPanel(submitter);
@@ -541,13 +555,28 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myAssigneeCombo.setSelectedIndex(-1);
       }
       else {
-        Condition<Developer> lookup = d -> Objects.equals(assignee, d.getId());
-        myAssigneeCombo.setSelectedIndex(ContainerUtil.indexOf(ourDevelopersList, lookup));
+        int assigneeIndex = getAssigneeIndex(assignee);
+        if (assigneeIndex != -1) {
+          myAssigneeCombo.setSelectedIndex(assigneeIndex);
+        }
+        else {
+          cluster.first.setAssigneeId(null);
+        }
       }
     }
     else {
       myAssigneePanel.setVisible(false);
     }
+  }
+
+  private int getAssigneeIndex(Integer assigneeId) {
+    for (int index = 0; index < myAssigneeCombo.getItemCount(); index++) {
+      if (Objects.equals(assigneeId, myAssigneeCombo.getItemAt(index).getId())) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 
   private void updateCredentialsPanel(ErrorReportSubmitter submitter) {
@@ -571,6 +600,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter == null) return false;
     AbstractMessage message = cluster.first;
 
+    message.setAssigneeVisible(myAssigneeVisible);
+    message.setDevelopersTimestamp(myDevelopersTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();
