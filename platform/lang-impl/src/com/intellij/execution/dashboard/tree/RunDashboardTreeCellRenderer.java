@@ -73,6 +73,8 @@ public class RunDashboardTreeCellRenderer extends JPanel implements TreeCellRend
     links.first.setSelected(selected);
     links.first.render(myNodeRender);
 
+    if (links.second == null) return false;
+
     myLabel.setText(null);
     if (selected || node.equals(UIUtil.getClientProperty(tree, RunDashboardHyperlinkComponent.AIMED_OBJECT))) {
       myLabel.setIcon(links.second);
