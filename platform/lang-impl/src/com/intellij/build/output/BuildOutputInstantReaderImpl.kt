@@ -23,7 +23,7 @@ class BuildOutputInstantReaderImpl(private val buildId: Any,
   private val receivedLinesBuffer = LinkedList<String>()
   private var currentIndex = -1
 
-  private var lineBuilder: StringBuilder? = null
+  private val lineProcessor: LineProcessor
 
   init {
     val thisReader = this
@@ -48,6 +48,19 @@ class BuildOutputInstantReaderImpl(private val buildId: Any,
         }
       }
     }
+
+    lineProcessor = object : LineProcessor() {
+      override fun process(line: String) {
+        if (job.isCompleted) {
+          LOG.warn("Build output reader closed")
+          return
+        }
+        if (!job.isActive) {
+          job.start()
+        }
+        runBlocking { channel.send(line) }
+      }
+    }
   }
 
   override fun getBuildId(): Any {
@@ -55,57 +68,26 @@ class BuildOutputInstantReaderImpl(private val buildId: Any,
   }
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
-    for (i in 0 until csq.length) {
-      append(csq[i])
-    }
+    lineProcessor.append(csq)
     return this
   }
 
   override fun append(csq: CharSequence, start: Int, end: Int): BuildOutputInstantReaderImpl {
-    append(csq.subSequence(start, end))
+    lineProcessor.append(csq, start, end)
     return this
   }
 
   override fun append(c: Char): BuildOutputInstantReaderImpl {
-    if (lineBuilder == null) {
-      lineBuilder = StringBuilder()
-    }
-    if (c == '\n') {
-      runBlocking {
-        doFlush()
-      }
-    }
-    else {
-      lineBuilder!!.append(c)
-    }
+    lineProcessor.append(c)
     return this
   }
 
   override fun close() {
     runBlocking {
-      doFlush()
+      lineProcessor.close()
       channel.close()
       job.cancelAndJoin()
     }
-  }
-
-  private suspend fun doFlush() {
-    if (lineBuilder == null) {
-      return
-    }
-    if (job.isCompleted) {
-      LOG.warn("Build output reader closed")
-      lineBuilder!!.setLength(0)
-      return
-    }
-
-    val line = lineBuilder!!.toString()
-    lineBuilder!!.setLength(0)
-
-    if (!job.isActive) {
-      job.start()
-    }
-    channel.send(line)
   }
 
   override fun readLine(): String? {
