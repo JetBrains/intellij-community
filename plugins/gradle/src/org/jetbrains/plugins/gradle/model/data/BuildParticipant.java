@@ -51,6 +51,7 @@ public class BuildParticipant implements Serializable {
 
   public BuildParticipant copy() {
     BuildParticipant result = new BuildParticipant();
+    result.myRootProjectName = myRootProjectName;
     result.myRootPath = myRootPath;
     result.myProjects = new HashSet<>(myProjects);
     return result;
