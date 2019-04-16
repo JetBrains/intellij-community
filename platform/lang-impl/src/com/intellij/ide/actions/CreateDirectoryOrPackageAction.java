@@ -43,7 +43,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       title = IdeBundle.message("title.new.directory");
     }
 
-    Messages.showInputDialog(project, message, title, Messages.getQuestionIcon(), validator.getInitialText(), validator);
+    Messages.showInputDialog(project, message, title, null, validator.getInitialText(), validator);
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {
