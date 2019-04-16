@@ -268,6 +268,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testMethodReferenceInsideMethodCall() {
     doTest();
   }
+  
+  public void testVolatilePassed() {
+    doTest();
+  }
 
   private void doTestConflict(final String conflict) {
     try {

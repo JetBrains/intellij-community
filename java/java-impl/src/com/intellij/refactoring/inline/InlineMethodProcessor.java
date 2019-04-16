@@ -1091,6 +1091,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
       if (refVar instanceof PsiField) {
         if (isAccessedForWriting) return false;
+        if (refVar.hasModifierProperty(PsiModifier.VOLATILE)) return accessCount <= 1;
         /*
         PsiField field = (PsiField)refVar;
         if (isFieldNonModifiable(field)){
