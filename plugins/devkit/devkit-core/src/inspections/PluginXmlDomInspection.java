@@ -280,6 +280,15 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
     if (!PsiUtil.isIdeaProject(module.getProject())) return;
 
+    if (DomUtil.hasXml(ideaPlugin.getUrl())) {
+      String url = ideaPlugin.getUrl().getStringValue();
+      if ("https://www.jetbrains.com/idea".equals(url)) {
+        holder.createProblem(ideaPlugin.getUrl(),
+                             DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.generic.plugin.url"),
+                             new RemoveDomElementQuickFix(ideaPlugin.getUrl())).highlightWholeElement();
+      }
+    }
+
     if (!hasRealPluginId(ideaPlugin)) return;
 
     String id = ideaPlugin.getId().getStringValue();
