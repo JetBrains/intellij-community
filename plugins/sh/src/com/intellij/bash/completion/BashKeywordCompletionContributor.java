@@ -12,7 +12,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class BashKeywordCompletionContributor extends CompletionContributor implements DumbAware {
 
   public BashKeywordCompletionContributor() {
-    extend(CompletionType.BASIC, elementPattern(), new BashKeywordCompletionProvider("if", "select", "case", "for", "while", "until", "function"));
+    extend(CompletionType.BASIC, elementPattern(), new BashKeywordCompletionProvider("if", "elif", "select", "case", "for", "while", "until", "function"));
   }
 
   private static PsiElementPattern.Capture<PsiElement> elementPattern() {

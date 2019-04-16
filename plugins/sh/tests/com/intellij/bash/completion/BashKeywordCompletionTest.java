@@ -9,11 +9,26 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();
     myFixture.type(Lookup.NORMAL_SELECT_CHAR);
-    myFixture.checkResult("if [[ condition ]]; then\n    <caret>\nfi");
+    myFixture.checkResult("if [ condition ]; then\n    <caret>\nfi");
   }
 
   public void testNoCompletionInIfCondition() {
-    myFixture.configureByText("a.sh", "if [[ if<caret> ]]; then\n    \nfi");
+    myFixture.configureByText("a.sh", "if [ if<caret> ]; then\n    \nfi");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "if [  ]; <caret>then\n    \nfi");
+    assertEmpty(myFixture.completeBasic());
+  }
+
+  public void testElifCompletion() {
+    myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif<caret>\nfi");
+    myFixture.completeBasic();
+    myFixture.checkResult("if [ condition ]; then\n    \nelif [ condition ]; then\n    <caret>\nfi");
+  }
+
+  public void testNoCompletionInElifCondition() {
+    myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif [ if<caret> ]; then\n    \nfi");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif [  ]; <caret>then\n    \nfi");
     assertEmpty(myFixture.completeBasic());
   }
 
@@ -31,22 +46,22 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testWhileCompletion() {
     myFixture.configureByText("a.sh", "while<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("while [[ condition ]]; do\n    <caret>\ndone");
+    myFixture.checkResult("while [ condition ]; do\n    <caret>\ndone");
   }
 
   public void testNoCompletionInWhileCondition() {
-    myFixture.configureByText("a.sh", "while [[ <caret> ]]; do\n    \ndone");
+    myFixture.configureByText("a.sh", "while [ <caret> ]; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
   }
 
   public void testUntilCompletion() {
     myFixture.configureByText("a.sh", "until<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("until [[ condition ]]; do\n    <caret>\ndone");
+    myFixture.checkResult("until [ condition ]; do\n    <caret>\ndone");
   }
 
   public void testNoCompletionInUntilCondition() {
-    myFixture.configureByText("a.sh", "until [[ <caret> ]]; do\n    \ndone");
+    myFixture.configureByText("a.sh", "until [ <caret> ]; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
   }
 

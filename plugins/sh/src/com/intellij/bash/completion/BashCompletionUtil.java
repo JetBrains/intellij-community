@@ -13,7 +13,8 @@ class BashCompletionUtil {
   }
 
   static PsiElementPattern.Capture<PsiElement> insideIfDeclaration() {
-    return psiElement().inside(psiElement(BashTypes.CONDITIONAL_COMMAND).inside(psiElement(BashTypes.IF_COMMAND)));
+    return psiElement().inside(false, psiElement(BashTypes.IF_COMMAND), psiElement().andOr(psiElement(BashTypes.THEN_CLAUSE),
+        psiElement(BashTypes.ELSE_CLAUSE)));
   }
 
   static PsiElementPattern.Capture<PsiElement> insideUntilDeclaration() {
@@ -29,7 +30,8 @@ class BashCompletionUtil {
   }
 
   static PsiElementPattern.Capture<PsiElement> insideSelectDeclaration() {
-    return psiElement().inside(false, psiElement(BashTypes.SELECT_COMMAND), psiElement().andOr(psiElement(BashTypes.BLOCK), psiElement(BashTypes.DO_BLOCK)));
+    return psiElement().inside(false, psiElement(BashTypes.SELECT_COMMAND), psiElement().andOr(psiElement(BashTypes.BLOCK),
+        psiElement(BashTypes.DO_BLOCK)));
   }
 
   static PsiElementPattern.Capture<PsiElement> insideCaseDeclaration() {
