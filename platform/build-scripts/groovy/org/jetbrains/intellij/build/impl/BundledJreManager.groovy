@@ -186,7 +186,7 @@ class BundledJreManager {
    *  `build/dependencies/setupJbre.gradle`
    *  `build/dependencies/setupJdk.gradle`
   */
-  static def jreArchiveSuffix(String jreBuild, String version, JvmArchitecture arch, String osName) {
+  static String jreArchiveSuffix(String jreBuild, String version, JvmArchitecture arch, String osName) {
     String update, build
     def split = jreBuild.split('b')
     if (split.length > 2) {
@@ -267,11 +267,11 @@ class BundledJreManager {
     }
   }
 
-  def jreSuffix() {
+  String jreSuffix() {
     buildContext.isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
   }
 
-  def is32bitArchSupported() {
+  boolean is32bitArchSupported() {
     !buildContext.isBundledJreModular()
   }
 }
