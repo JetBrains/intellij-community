@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
@@ -73,7 +74,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   protected void tearDown() {
     myThreadRunner.finish();
 
-    EdtTestUtil.runInEdtAndWait((() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       myQueue.clear();
       myQueue = null;
 
@@ -83,7 +84,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
       catch (Exception e) {
         throw new RuntimeException(e);
       }
-    }));
+    });
   }
 
   @Override
@@ -135,7 +136,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
 
     Semaphore semaphore = new Semaphore(1 - RUNS);
 
-    int[] succeeded = new int[]{0};
+    int[] succeeded = {0};
     final Task.Backgroundable task = new Task.Backgroundable(getProject(), "Test Task", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -144,13 +145,13 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
       }
     };
 
-    myThreadRunner.run(THREADS, (i) -> {
+    myThreadRunner.run(THREADS, __ -> {
       for (int j = 0; j < RUNS_PER_THREAD; j++) {
         myQueue.run(task);
       }
     });
 
-    semaphore.tryAcquire(RUNS, 1000, TimeUnit.MILLISECONDS);
+    semaphore.tryAcquire(RUNS, 1, TimeUnit.SECONDS);
     assertEquals(RUNS, succeeded[0]);
   }
 
@@ -172,7 +173,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   public void testSeveralSuccessfulTasksStartedFromDifferentThreads() throws InterruptedException {
     final TestTask[] tasks = createSeveralTasks();
 
-    myThreadRunner.run(tasks.length, (i) -> myQueue.run(tasks[i]));
+    myThreadRunner.run(tasks.length, i -> myQueue.run(tasks[i]));
 
     waitForTasks(tasks);
     assertTaskState(tasks, TaskState.SUCCEEDED);
@@ -184,11 +185,10 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
    */
   public void testSeveralDifferentlyEndingTasksStartedFromDifferentThreads() throws InterruptedException {
     final TestTask[] successful = new TestTask[6];
-    final TestTask[] cancelled = new TestTask[6];
-    final TestTask[] exceptioned = new TestTask[6];
     for (int i = 0; i < 6; i++) {
       successful[i] = new TestTask();
     }
+    final TestTask[] cancelled = new TestTask[6];
     for (int i = 0; i < 6; i++) {
       cancelled[i] = new TestTask() {
         @Override
@@ -198,6 +198,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
         }
       };
     }
+    final TestTask[] exceptioned = new TestTask[6];
     for (int i = 0; i < 6; i++) {
       exceptioned[i] = new TestTask() {
         @Override
@@ -208,7 +209,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
       };
     }
 
-    myThreadRunner.run(3, (i) -> {
+    myThreadRunner.run(3, i -> {
       myQueue.run(successful[i]);
       myQueue.run(successful[i + 3]);
       myQueue.run(cancelled[i]);
@@ -231,7 +232,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     final int RUNS_PER_THREAD = 10;
     final int RUNS = THREADS * RUNS_PER_THREAD;
 
-    final boolean[] bool = new boolean[]{false};
+    final boolean[] bool = {false};
     final Semaphore semaphore = new Semaphore(1 - RUNS);
 
     final Task.Backgroundable task = new Task.Backgroundable(getProject(), "Test", false) {
@@ -247,7 +248,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     };
 
     final AtomicInteger cntThreads = new AtomicInteger(THREADS);
-    myThreadRunner.run(THREADS, (i) -> {
+    myThreadRunner.run(THREADS, i -> {
       for (int j = 0; j < RUNS_PER_THREAD; j++) {
         sleepX(7);
         myQueue.run(task);
@@ -255,7 +256,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
       cntThreads.decrementAndGet();
     });
 
-    semaphore.tryAcquire(RUNS, 5000, TimeUnit.MILLISECONDS);
+    semaphore.tryAcquire(RUNS, 5, TimeUnit.SECONDS);
 
     Assert.assertTrue(myQueue.isEmpty());
     Assert.assertEquals(0, cntThreads.get());
@@ -282,7 +283,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
 
   private static void waitForTasks(TestTask... tasks) throws InterruptedException {
     for (TestTask task : tasks) {
-      task.waitFor(1000);
+      task.waitFor(1_000);
     }
   }
 
@@ -311,9 +312,11 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     }
 
     protected void execute(ProgressIndicator indicator) {
-      for (int i = 0; i < 10000; i++) {
-        Math.sin(i);
+      double r = 0;
+      for (int i = 0; i < 10_000; i++) {
+        r += Math.sin(i);
       }
+      assert r != 0;
     }
 
     @NotNull

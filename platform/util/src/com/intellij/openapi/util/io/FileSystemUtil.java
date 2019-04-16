@@ -33,10 +33,11 @@ import static com.intellij.util.BitUtil.isSet;
 /**
  * @version 11.1
  */
+@SuppressWarnings("NegativelyNamedBooleanVariable")
 public class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   static final String FORCE_USE_FALLBACK_KEY = "idea.io.use.fallback";
-  static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+  private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -209,7 +210,6 @@ public class FileSystemUtil {
       return false;
     }
   }
-
 
   private static class Nio2MediatorImpl extends Mediator {
     private final Method myGetPath;
@@ -402,7 +402,7 @@ public class FileSystemUtil {
 
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
-    @SuppressWarnings({"OctalInteger"})
+    @SuppressWarnings("OctalInteger")
     private static class LibC {
       static final int S_MASK = 0177777;
       static final int S_IFMT = 0170000;
