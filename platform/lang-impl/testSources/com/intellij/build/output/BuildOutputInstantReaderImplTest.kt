@@ -5,7 +5,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEvent.Kind.*
 import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.build.output.BuildOutputInstantReaderImpl.getMaxLinesBufferSize
+import com.intellij.build.output.BuildOutputInstantReaderImpl.Companion.getMaxLinesBufferSize
 import com.intellij.openapi.util.text.StringUtil
 import org.junit.Assert
 import org.junit.Test
