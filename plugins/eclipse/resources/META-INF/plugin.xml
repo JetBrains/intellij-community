@@ -1,9 +1,9 @@
 <idea-plugin>
-  <name>Eclipse Integration</name>
+  <name>Eclipse Interoperability</name>
   <id>org.jetbrains.idea.eclipse</id>
   <description>
       <![CDATA[
-        This plugin enables integration with Eclipse and provides the following features:
+        Enables interoperability with Eclipse and provides the following features:
         <ul>
         <li>Open Eclipse project in IntelliJ IDEA</li>
         <li>Import Eclipse project into IntelliJ IDEA</li>

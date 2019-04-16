@@ -1,10 +1,10 @@
 <idea-plugin>
   <id>org.jetbrains.idea.maven</id>
 
-  <name>Maven Integration</name>
+  <name>Maven</name>
   <description>
     <![CDATA[
-      This plugin provides <a href="http://maven.apache.org/">Maven</a> support.
+      Provides <a href="http://maven.apache.org/">Maven</a> support.
       The following features are available:
         <ul>
         <li>Maven Projects tool window.</li>

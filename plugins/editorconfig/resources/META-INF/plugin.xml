@@ -5,7 +5,7 @@
   <vendor url="http://editorconfig.org">Kirill Glazyrin and Kevin Bell, JetBrains</vendor>
 
   <description><![CDATA[
-      A JetBrains IDE plugin supporting the EditorConfig standard and EditorConfig language
+      Supports storing code formatting settings inside EditorConfig files, as well as editing EditorConfig files.
       ]]></description>
 
   <depends>com.intellij.modules.lang</depends>

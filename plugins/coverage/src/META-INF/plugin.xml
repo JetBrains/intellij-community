@@ -7,7 +7,7 @@
 
   <description>
       <![CDATA[
-     This plugin supports gathering coverage information and presenting it right in
+     Supports gathering coverage information and presenting it right in
      the editor and in the Project view.
         The following features are available:
         <ul>

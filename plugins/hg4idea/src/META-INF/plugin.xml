@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>hg4idea</id>
-  <name>Mercurial Integration</name>
+  <name>Mercurial</name>
   <description>
     <![CDATA[
       Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.

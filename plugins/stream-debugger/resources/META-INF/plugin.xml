@@ -6,6 +6,7 @@
   <depends>com.intellij.modules.java</depends>
 
   <description><![CDATA[
+      <p>Visualizes chains of operations on Java streams.</p>
       <p>In some ways, Stream API is better than traditional loop approach: it takes full advantage of modern multi-core architectures,
       and lets you process data in a declarative way. What's also good is that this approach helps to avoid the state issues, and the
       code written in it looks more elegant. But, there's a certain downside to it: the code sometimes is sure hard to read, understand,

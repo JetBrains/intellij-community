@@ -1,9 +1,9 @@
 <idea-plugin>
   <id>com.intellij.properties</id>
-  <name>Properties Support</name>
+  <name>Properties</name>
   <depends>com.intellij.modules.xml</depends>
   <description>
-    This plugin enables smart editing of properties files.
+    Enables smart editing of .properties files.
   </description>
   <vendor>JetBrains</vendor>
 

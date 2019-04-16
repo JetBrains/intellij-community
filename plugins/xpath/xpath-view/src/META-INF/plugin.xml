@@ -4,25 +4,19 @@
 
   <!-- Plugin name -->
   <id>XPathView</id>
-  <name>XPathView + XSLT Support</name>
+  <name>XPathView + XSLT</name>
 
   <!-- Description -->
   <description><![CDATA[
-    The XPath part of the plugin provides a possibility to evaluate XPath expressions against any XML document
+    Provides a possibility to evaluate XPath expressions against any XML document
     opened in IDEA. It can also generate and show an XPath expression that matches the current node.
     <p>
-    The XSLT part adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
+    Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.</p>
   ]]>
   </description>
 
   <vendor>JetBrains</vendor>
-
-  <change-notes>
-    <![CDATA[
-      * Basic XPath 2.0 / XSLT 2.0 Support<br>
-  ]]>
-  </change-notes>
 
   <depends>com.intellij.modules.xml</depends>
   

@@ -2,7 +2,7 @@
   <name>Terminal</name>
   <id>org.jetbrains.plugins.terminal</id>
   <vendor>JetBrains</vendor>
-  <description>Embedded Terminal</description>
+  <description>Provides a toolwindow with an embedded terminal.</description>
   <depends>com.intellij.modules.platform</depends>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>

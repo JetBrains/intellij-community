@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <name>Git Integration</name>
+  <name>Git</name>
   <id>Git4Idea</id>
   <description>
       <![CDATA[

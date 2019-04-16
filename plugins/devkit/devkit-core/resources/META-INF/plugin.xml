@@ -4,7 +4,7 @@
   <id>DevKit</id>
 
   <description>
-    IntelliJ Platform plugin development kit.
+    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
   </description>
 
   <category>inspection</category>
