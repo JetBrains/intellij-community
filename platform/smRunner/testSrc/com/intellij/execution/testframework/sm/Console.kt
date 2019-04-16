@@ -22,13 +22,7 @@ internal class Console {
       output.add(ConsoleRecord.TCMessage(tcMessage))
       return
     }
-//    val lastRecord = output.lastOrNull()
-//    if (lastRecord is ConsoleRecord.TextMessage && lastRecord.type == type) {
-//      //Append to last record
-//      output[output.size - 1] = ConsoleRecord.TextMessage(lastRecord.text + text, type)
-//      return
-//    }
-    output.add(ConsoleRecord.TextMessage(text, type))
+   output.add(ConsoleRecord.TextMessage(text, type))
   }
 
   fun toList() = output.map(ConsoleRecord::text)
@@ -39,7 +33,7 @@ internal class Console {
 
 private fun asTcMessage(text: String): String? {
   try {
-    return ServiceMessage.parse(text.trim())?.asString()
+    return if (ServiceMessage.parse(text.trim()) != null) text else null
   }
   catch (_: ParseException) {
     return null

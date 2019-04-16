@@ -91,8 +91,8 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
       }
       mySplitter.flush();
       final List<String> actual = myOutput.get(ProcessOutputTypes.STDOUT).toList();
-      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[end]"));
-      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[start bar='1']"));
+      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[end]\n"));
+      Assert.assertThat(actual, IsCollectionContaining.hasItem("##teamcity[start bar='1']\n"));
       myOutput.clear();
     }
   }
@@ -107,10 +107,10 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     mySplitter.process("##teamcity[name6]\nInfo##teamcity[name7]\n", ProcessOutputTypes.STDOUT);
     final String[] stdout = myOutput.get(ProcessOutputTypes.STDOUT).toArray();
     Assert.assertArrayEquals(new String[]{
-      "\n", "Starting...\n", "##teamcity[name1]", "Done 1\n", "\n", "##teamcity[name2]", "Done 2",
-      "##teamcity[name3]", "Test print", "##teamcity[message key='spam']",
-      "##teamcity[name5]",
-      "##teamcity[name6]", "Info", "##teamcity[name7]"
+      "\n", "Starting...\n", "##teamcity[name1]\n", "Done 1\n", "\n", "##teamcity[name2]\n", "Done 2",
+      "##teamcity[name3]\n", "Test print", "##teamcity[message key='spam']\n",
+      "##teamcity[name5]\n",
+      "##teamcity[name6]\n", "Info", "##teamcity[name7]\n"
     }, stdout);
     for (String prefix : new String[]{"...", "", "... ", "##", " ##", "##team##teamcity[foo]\n"}) {
       final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString();
@@ -132,10 +132,10 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
 
   public void testEmittingServiceMessagesPromptly() {
     mySplitter.process("Foo ##teamcity[name1]\n##team", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]"),
+    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
     mySplitter.process("city[name2]\n", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]", "##teamcity[name2]"),
+    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
   }
 
