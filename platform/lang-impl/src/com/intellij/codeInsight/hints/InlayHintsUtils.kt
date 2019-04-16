@@ -30,8 +30,10 @@ class ProviderWithSettings<T : Any>(
   }
 
   fun getCollectorWrapperFor(file: PsiFile, editor: Editor, language: Language): CollectorWithSettings<T>? {
-    val collector = provider.getCollectorFor(file, editor, settings) ?: return null
-    return CollectorWithSettings(collector, settings, provider.key, language)
+    val key = provider.key
+    val sink = InlayHintsSinkImpl(key)
+    val collector = provider.getCollectorFor(file, editor, settings, sink) ?: return null
+    return CollectorWithSettings(collector, settings, key, language, sink)
   }
 }
 
@@ -57,10 +59,9 @@ class CollectorWithSettings<T : Any>(
   val collector: InlayHintsCollector<T>,
   val settings: T,
   val key: SettingsKey<T>,
-  val language: Language
+  val language: Language,
+  val sink: InlayHintsSinkImpl<T>
 ) {
-  val sink =  InlayHintsSinkImpl(key)
-
   fun collectHints(element: PsiElement, isEnabled: Boolean, editor: Editor) {
     collector.collect(element, editor, settings, isEnabled, sink)
   }

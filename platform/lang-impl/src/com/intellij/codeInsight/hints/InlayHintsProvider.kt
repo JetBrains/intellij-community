@@ -20,7 +20,7 @@ interface InlayHintsProvider<T : Any> {
    * If this method is called, provider is enabled for this file
    * Warning! Your collector should not use any settings besides [settings]
    */
-  fun getCollectorFor(file: PsiFile, editor: Editor, settings: T): InlayHintsCollector<T>?
+  fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector<T>?
 
   /**
    * Settings must be plain java object, fields of this settings will be copied via serialization.
@@ -49,6 +49,9 @@ interface InlayHintsProvider<T : Any> {
    * Creates configurable, that immediately applies changes from UI to [settings]
    */
   fun createConfigurable(settings: T): ImmediateConfigurable
+
+  val isVisibleInSettings: Boolean
+    get() = true
 }
 
 /**

@@ -20,7 +20,7 @@ class ProxyInlayParameterHintsProvider(
   private val options = parameterHintsProvider.supportedOptions
 
 
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings): InlayHintsCollector<NoSettings>? {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector<NoSettings>? {
     if (editor.isOneLineMode) return null
     val currentStamp = ParameterHintsPassFactory.getCurrentModificationStamp(file)
     val savedStamp = editor.getUserData<Long>(ParameterHintsPassFactory.PSI_MODIFICATION_STAMP)

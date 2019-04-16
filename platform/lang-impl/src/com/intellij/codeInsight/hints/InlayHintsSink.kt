@@ -32,14 +32,14 @@ class InlayHintsSinkImpl<T>(val key: SettingsKey<T>) : InlayHintsSink {
   }
 
   fun applyToEditor(element: PsiElement, editor: Editor, existingInlays: List<Inlay<EditorCustomElementRenderer>>) {
-    val startOffset = element.textRange.startOffset + 1
-    val endOffset = element.textRange.endOffset - 1
+
     val inlayModel = editor.inlayModel
     val isBulkChange = existingInlays.size + hints.size() > BulkChangeThreshold
     DocumentUtil.executeInBulk(editor.document, isBulkChange) {
       updateOrDeleteExistingHints(existingInlays)
       createNewHints(inlayModel)
     }
+    hints.clear()
   }
 
   private fun createNewHints(inlayModel: InlayModel) {

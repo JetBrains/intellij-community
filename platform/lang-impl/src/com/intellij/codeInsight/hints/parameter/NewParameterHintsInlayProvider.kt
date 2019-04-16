@@ -3,18 +3,48 @@ package com.intellij.codeInsight.hints.parameter
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 class NewParameterHintsInlayProvider<T: Any>(val provider: NewParameterHintsProvider<T>) : InlayHintsProvider<ParameterHintsSettings<T>> {
   override val name: String
     get() = "Parameter hints"
 
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: ParameterHintsSettings<T>): InlayHintsCollector<ParameterHintsSettings<T>>? {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: ParameterHintsSettings<T>, sink: InlayHintsSink): InlayHintsCollector<ParameterHintsSettings<T>>? {
     if (DiffUtil.isDiffEditor(editor)) return null
-    return null
-//    return NewParameterHintsCollector(key, provider, settings, editor, file, false)
+    val filter = ParameterBlackListFilter(settings.blackList)
+    val parameterHintsSink = object : ParameterHintsSink {
+      override fun addHint(info: ParameterHintInfo) {
+        val offset = info.offset
+        if (!canShowHintsAtOffset(offset, editor.document, file)) return
+        val blackListInfo = info.blackListInfo
+        if (blackListInfo != null && !filter.shouldShowHint(blackListInfo)) return
+        sink.addInlay(offset, info.presentation) // TODO use other info here!!!
+      }
+    }
+    return object : FactoryInlayHintsCollector<ParameterHintsSettings<T>>(editor, key) {
+      override fun collect(element: PsiElement,
+                           editor: Editor,
+                           settings: ParameterHintsSettings<T>,
+                           isEnabled: Boolean,
+                           sink: InlayHintsSink) {
+        provider.getParameterHints(element, settings.providerSettings, factory, parameterHintsSink)
+      }
+    }
+  }
+
+  /**
+   * Adding hints on the borders of root element (at startOffset or endOffset)
+   * is allowed only in the case when root element is a document
+   *
+   * @return true if a given offset can be used for hint rendering
+   */
+  private fun canShowHintsAtOffset(offset: Int, document: Document, rootElement: PsiElement): Boolean {
+    val rootRange = rootElement.textRange
+    if (!rootRange.containsOffset(offset)) return false
+    return if (offset > rootRange.startOffset && offset < rootRange.endOffset) true else document.textLength == rootRange.length
   }
 
   override fun createSettings(): ParameterHintsSettings<T> {

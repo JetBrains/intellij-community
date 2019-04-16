@@ -17,6 +17,7 @@ class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
     if (element.text == "Hello" && element.children.isEmpty()) {
        // TODO remove
       val presentation = factory.icon(PlatformIcons.CHECK_ICON)
+//      val presentation = factory.text("asdsad")
       val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
       sink.addHint(info)
     }

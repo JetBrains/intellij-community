@@ -2,16 +2,13 @@
 package com.intellij.codeInsight.hints.parameter
 
 import com.intellij.codeInsight.hints.HintsProviderInfo
-import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.ProviderWithSettings
-import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
 class NewParameterHintsProviderFactory : InlayHintsProviderFactory {
   override fun getProvidersInfo(project: Project): List<HintsProviderInfo<out Any>> {
-    val providers = NewParameterHintsProvider.all().map { HintsProviderInfo(it.second.withSettings(), it.first) }
-    return providers
+    return NewParameterHintsProvider.all().map { HintsProviderInfo(it.second.withSettings(), it.first) }
   }
 }
 

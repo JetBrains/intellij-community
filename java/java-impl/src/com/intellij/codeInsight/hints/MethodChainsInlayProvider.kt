@@ -14,7 +14,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings) =
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
     object: FactoryInlayHintsCollector<Settings>(editor, ourKey) {
       override fun collect(element: PsiElement, editor: Editor, settings: Settings, isEnabled: Boolean, sink: InlayHintsSink) {
         if (file.project.service<DumbService>().isDumb) return
