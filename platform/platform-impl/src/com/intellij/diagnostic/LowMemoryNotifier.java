@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +25,8 @@ public class LowMemoryNotifier implements Disposable {
   private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
-  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
+  // Android Studio uses a new dialog for low-memory notification
+  private final LowMemoryWatcher myWatcher = PlatformUtils.isAndroidStudio() ? null : LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
   private final AtomicBoolean myNotificationShown = new AtomicBoolean();
   private volatile long myPreviousLoggedUIResponse = 0;
 
@@ -69,6 +71,9 @@ public class LowMemoryNotifier implements Disposable {
 
   @Override
   public void dispose() {
-    myWatcher.stop();
+    // Android Studio sets myWatcher to null as it uses a different low-memory watcher.
+    if (myWatcher != null) {
+      myWatcher.stop();
+    }
   }
 }
