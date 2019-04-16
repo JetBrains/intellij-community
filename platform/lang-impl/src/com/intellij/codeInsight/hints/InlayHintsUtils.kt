@@ -7,7 +7,11 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.Inlay
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import java.awt.Dimension
 import java.awt.Rectangle
 
 class ProviderWithSettings<T : Any>(
@@ -55,15 +59,19 @@ class CollectorWithSettings<T : Any>(
   val key: SettingsKey<T>,
   val language: Language
 ) {
-  fun collectHints(file: PsiFile, isEnabled: Boolean, editor: Editor) {
-    collector.collect(file, editor, settings, isEnabled)
+  val sink =  InlayHintsSinkImpl(key)
+
+  fun collectHints(element: PsiElement, isEnabled: Boolean, editor: Editor) {
+    collector.collect(element, editor, settings, isEnabled, sink)
   }
 
-  fun applyToEditor(file: PsiFile, editor: Editor, wrapper: InlayModelWrapper) {
-    collector.apply(file, editor, wrapper, settings)
+  fun applyToEditor(element: PsiElement, editor: Editor, existingInlays: List<Inlay<EditorCustomElementRenderer>>) {
+    sink.applyToEditor(element, editor, existingInlays)
   }
 }
 
 fun InlayPresentation.fireContentChanged() {
   fireContentChanged(Rectangle(width, height))
 }
+
+fun InlayPresentation.dimension() = Dimension(width, height)

@@ -100,11 +100,12 @@ internal class SingleLanguageInlayHintsSettingsPanel(
   }
 
   private fun collectAndDrawHints(editor: Editor, file: PsiFile) {
-    val wrapper = InlayModelWrapper(editor.inlayModel)
     val settingsWrapper = settingsWrappers.find { it.providerWithSettings.provider === selectedProvider.provider }!!
       val collector = settingsWrapper.providerWithSettings.getCollectorWrapperFor(file, editor, settingsWrapper.language) ?: return
       collector.collectHints(file, true, editor) // Always render hints in settings preview
-      collector.applyToEditor(file, editor, wrapper)
+    val model = editor.inlayModel
+    val existingInlays = model.getInlineElementsInRange(file.textOffset, file.textRange.endOffset)
+    collector.applyToEditor(file, editor, existingInlays)
   }
 
   private fun updateEditor(text: String?) {

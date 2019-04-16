@@ -8,7 +8,7 @@ import java.awt.geom.RoundRectangle2D
 /**
  * Makes corners round. Should be used with [InlayPresentation]
  */
-class RoundPresentation(val presentation: InlayPresentation, val arcWidth: Int, val arcHeight: Int) : InlayPresentation by presentation {
+class RoundPresentation(presentation: InlayPresentation, val arcWidth: Int, val arcHeight: Int) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     val savedClip = g.clip
     g.clip = RoundRectangle2D.Double(0.0, 0.0, width.toDouble(), height.toDouble(), arcWidth.toDouble(), arcHeight.toDouble())

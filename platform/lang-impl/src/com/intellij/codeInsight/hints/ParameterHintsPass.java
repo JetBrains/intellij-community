@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 
-public class ParameterHintsPass implements InlayHintsCollector<NoSettings> {
+// TODO fix inheritance!
+public class ParameterHintsPass  {
   private final TIntObjectHashMap<List<HintData>> myHints = new TIntObjectHashMap<>();
   private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
   private final SyntaxTraverser<PsiElement> myTraverser;
@@ -59,12 +60,12 @@ public class ParameterHintsPass implements InlayHintsCollector<NoSettings> {
   }
 
   @NotNull
-  @Override
+  //@Override
   public SettingsKey<NoSettings> getKey() {
     return myKey;
   }
 
-  @Override
+  //@Override
   public void collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull NoSettings settings, boolean isEnabled) {
     myHints.clear();
     Language language = element.getLanguage();
@@ -121,7 +122,7 @@ public class ParameterHintsPass implements InlayHintsCollector<NoSettings> {
     return widthAdjustment;
   }
 
-  @Override
+  //@Override
   public void apply(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayModelWrapper model, @NotNull NoSettings settings) {
     CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(editor);
     ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();

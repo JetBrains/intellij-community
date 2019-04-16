@@ -26,7 +26,9 @@ class ProxyInlayParameterHintsProvider(
     val savedStamp = editor.getUserData<Long>(ParameterHintsPassFactory.PSI_MODIFICATION_STAMP)
     if (savedStamp != null && savedStamp == currentStamp) return null
     val language = file.language
-    return ParameterHintsPass(file, MethodInfoBlacklistFilter.forLanguage(language), false, ourKey)
+    // TODO return correct!
+    return null
+//    return ParameterHintsPass(file, MethodInfoBlacklistFilter.forLanguage(language), false, ourKey)
   }
 
   override val key: SettingsKey<NoSettings> = ourKey

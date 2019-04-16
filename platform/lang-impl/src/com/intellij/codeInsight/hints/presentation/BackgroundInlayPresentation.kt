@@ -9,9 +9,9 @@ import java.awt.Graphics2D
  * Adds background color.
  */
 class BackgroundInlayPresentation(
-  val presentation: InlayPresentation,
+  presentation: InlayPresentation,
   var color: Color? = null
-) : InlayPresentation by presentation {
+) : StaticDelegatePresentation(presentation) {
   // TODO updateIfNecessary
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
     val backgroundColor = color ?: attributes.backgroundColor

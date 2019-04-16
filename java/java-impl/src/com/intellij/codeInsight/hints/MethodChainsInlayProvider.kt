@@ -14,46 +14,39 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: MethodChainsInlayProvider.Settings)
-    = object: FactoryInlayHintsCollector<Settings>(editor, ourKey) {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings) =
+    object: FactoryInlayHintsCollector<Settings>(editor, ourKey) {
+      override fun collect(element: PsiElement, editor: Editor, settings: Settings, isEnabled: Boolean, sink: InlayHintsSink) {
+        if (file.project.service<DumbService>().isDumb) return
+          val call = element as? PsiMethodCallExpression ?: return
+          if (!isFirstCall(call, editor)) return
+          val next = call.nextSibling
+          if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
+          val chain = collectChain(call)
+            .filter {
+              val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return@filter false
+              nextSibling.textContains('\n')
+            }
+          if (chain.isEmpty()) return
+          val types = chain.mapNotNull { it.type }
+          if (types.size != chain.size) return // some type unknown
 
-    override fun collectHints(
-      element: PsiElement,
-      sink: InlayHintsSink<PresentationRenderer>,
-      settings: MethodChainsInlayProvider.Settings,
-      factory: PresentationFactory
-    ) {
-      if (file.project.service<DumbService>().isDumb) return
-      val call = element as? PsiMethodCallExpression ?: return
-      if (!isFirstCall(call, editor)) return
-
-      val next = call.nextSibling
-      if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
-      val chain = collectChain(call)
-        .filter {
-          val nextSibling = it.nextSibling as? PsiWhiteSpace ?: return@filter false
-          nextSibling.textContains('\n')
-        }
-      if (chain.isEmpty()) return
-      val types = chain.mapNotNull { it.type }
-      if (types.size != chain.size) return // some type unknown
-
-      val uniqueTypes = mutableSetOf<PsiType>()
-      for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
-        uniqueTypes.add(types[i])
-      }
-      if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
-      for ((index, currentCall) in chain.withIndex()) {
-        val presentation = factory.roundedText(types[index].presentableText)
-        val project = file.project
-        val finalPresentation = MenuOnClickPresentation(presentation, project) {
-          val provider = this@MethodChainsInlayProvider
-          listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
-        }
-        sink.addInlay(currentCall, finalPresentation, isBeforeElement = false)
+          val uniqueTypes = mutableSetOf<PsiType>()
+          for (i in (0 until types.size - 1)) { // Except last to avoid builder.build() which has obvious type
+            uniqueTypes.add(types[i])
+          }
+          if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
+          for ((index, currentCall) in chain.withIndex()) {
+            val presentation = factory.roundedText(types[index].presentableText)
+            val project = file.project
+            val finalPresentation = MenuOnClickPresentation(presentation, project) {
+              val provider = this@MethodChainsInlayProvider
+              listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
+            }
+            sink.addInlay(currentCall.textRange.endOffset, finalPresentation)
+          }
       }
     }
-  }
 
   override val key: SettingsKey<Settings>
     get() = ourKey
@@ -134,7 +127,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
   }
 
   companion object {
-    val ourKey: SettingsKey<MethodChainsInlayProvider.Settings> = SettingsKey("chain.hints")
+    val ourKey: SettingsKey<Settings> = SettingsKey("chain.hints")
   }
 
   data class Settings(var uniqueTypeCount: Int = 2)

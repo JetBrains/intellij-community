@@ -11,12 +11,13 @@ import java.awt.event.MouseEvent
  * All mouse events (even those, that are outside of inner rectangle) are still passed to underlying presentation.
  */
 class InsetPresentation(
-  val presentation: InlayPresentation,
+  presentation: InlayPresentation,
   val left: Int,
   val right: Int,
   val top: Int,
   val down: Int
-) : InlayPresentation by presentation {
+) : StaticDelegatePresentation(presentation) {
+  // TODO
   override val width: Int
     get() = presentation.width + left + right
   override val height: Int

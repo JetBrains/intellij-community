@@ -13,10 +13,10 @@ import javax.swing.SwingUtilities
  * It is expected to be top level presentation, which have all the context to fill context menu
  */
 class MenuOnClickPresentation(
-  val presentation: InlayPresentation,
+  presentation: InlayPresentation,
   val project: Project,
   val actionsSupplier: () -> List<AnAction>
-) : InlayPresentation by presentation {
+) : StaticDelegatePresentation(presentation) {
   override fun mouseClicked(e: MouseEvent, editorPoint: Point) {
     super.mouseClicked(e, editorPoint)
     if (SwingUtilities.isRightMouseButton(e)) {

@@ -13,7 +13,8 @@ class NewParameterHintsInlayProvider<T: Any>(val provider: NewParameterHintsProv
 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: ParameterHintsSettings<T>): InlayHintsCollector<ParameterHintsSettings<T>>? {
     if (DiffUtil.isDiffEditor(editor)) return null
-    return NewParameterHintsCollector(key, provider, settings, editor, file, false)
+    return null
+//    return NewParameterHintsCollector(key, provider, settings, editor, file, false)
   }
 
   override fun createSettings(): ParameterHintsSettings<T> {

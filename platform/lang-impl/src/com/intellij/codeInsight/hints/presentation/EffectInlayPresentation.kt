@@ -12,12 +12,12 @@ import kotlin.IllegalArgumentException
  * Adds effects to the underlying text
  */
 class EffectInlayPresentation(
-  val presentation: InlayPresentation,
+  presentation: InlayPresentation,
   var font: Font,
   var lineHeight: Int,
   var ascent: Int,
   var descent: Int
-) : InlayPresentation by presentation {
+) : StaticDelegatePresentation(presentation) {
   override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
     if (newPresentation !is EffectInlayPresentation) throw IllegalArgumentException()
     if (ascent == newPresentation.ascent

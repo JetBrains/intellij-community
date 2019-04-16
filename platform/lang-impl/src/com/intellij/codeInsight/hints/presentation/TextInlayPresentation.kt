@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import com.intellij.codeInsight.hints.dimension
 import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -26,11 +27,13 @@ class TextInlayPresentation(
         && text == newPresentation.text
         && yBaseline == newPresentation.yBaseline
     ) return false
+    val previousDimension = dimension()
     width = newPresentation.width
     height = newPresentation.height
     text = newPresentation.text
     yBaseline = newPresentation.yBaseline
     fireContentChanged()
+    fireSizeChanged(previousDimension, dimension())
     return true
   }
 
