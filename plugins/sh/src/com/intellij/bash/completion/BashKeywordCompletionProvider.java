@@ -1,23 +1,19 @@
 package com.intellij.bash.completion;
 
-import com.intellij.bash.template.BashContextType;
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class BashKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
 
@@ -41,7 +37,6 @@ public class BashKeywordCompletionProvider extends CompletionProvider<Completion
     return LookupElementBuilder.create(keyword).withBoldness(true).withInsertHandler(insertHandler);
   }
 
-  @Nullable
   private InsertHandler<LookupElement> createTemplateBasedInsertHandler(@NotNull String templateId) {
     return (context, item) -> {
       TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(context.getProject());

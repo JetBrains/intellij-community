@@ -22,7 +22,7 @@ import static java.util.stream.Collectors.toList;
 public class BashLiveTemplateTest extends BashBaseFixtureTestCase {
 
   private Set<String> BASH_LIVE_TEMPLATES = ContainerUtil.newHashSet(
-      "bash", "sh", "zsh", "select", "if", "elif", "case", "for", "fori", "while", "until", "fun"
+      "bash", "sh", "zsh", "fori"
   );
 
   @Override
@@ -42,39 +42,7 @@ public class BashLiveTemplateTest extends BashBaseFixtureTestCase {
     doTest();
   }
 
-  public void testSelectExpression() {
-    doTest();
-  }
-
-  public void testIfExpression() {
-    doTest();
-  }
-
-  public void testElifExpression() {
-    doTest();
-  }
-
-  public void testCaseExpression() {
-    doTest();
-  }
-
-  public void testForExpression() {
-    doTest();
-  }
-
   public void testForiExpression() {
-    doTest();
-  }
-
-  public void testWhileExpression() {
-    doTest();
-  }
-
-  public void testUntilExpression() {
-    doTest();
-  }
-
-  public void testFunTemplate() {
     doTest();
   }
 
@@ -103,5 +71,4 @@ public class BashLiveTemplateTest extends BashBaseFixtureTestCase {
     myFixture.getEditor().getSelectionModel().removeSelection();
     myFixture.checkResultByFile(getAfterTestName());
   }
-
 }

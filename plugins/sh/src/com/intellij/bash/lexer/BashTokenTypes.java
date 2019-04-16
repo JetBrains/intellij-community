@@ -21,9 +21,11 @@ public interface BashTokenTypes extends BashTypes {
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
 
+  TokenSet HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES = TokenSet.create(
+      DO, DONE, ELIF, ELSE, ESAC, FI, IN, THEN, TIME
+  );
 
   //conditional expressions
-
   TokenSet HUMAN_READABLE_KEYWORDS = TokenSet.create(
       CASE, DO, DONE,
       ELIF, ELSE, ESAC, FI, FOR, FUNCTION,

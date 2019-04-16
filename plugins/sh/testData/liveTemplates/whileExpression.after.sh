@@ -1,3 +1,0 @@
-while [[ condition ]]; do
-    
-done

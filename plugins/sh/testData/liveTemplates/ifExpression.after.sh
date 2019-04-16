@@ -1,3 +1,0 @@
-if [[ condition ]]; then
-    
-fi

@@ -9,20 +9,20 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="bash_elif" name="bash_elif"
-            value="if [[ $CONDITION_1$ ]]; then&#10;    $END$$SELECTION$&#10;elif [[ $CONDITION_2$ ]]; then&#10;    $EXPRESSION_2$&#10;else&#10;    $EXPRESSION_3$&#10;fi"
-            description="Elif expression"
-            toReformat="true"
-            toShortenFQNames="true">
-    <variable name="CONDITION_1" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <variable name="CONDITION_2" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>
-    <variable name="EXPRESSION_2" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>
-    <variable name="EXPRESSION_3" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>
-    <context>
-      <option name="BASH" value="true"/>
-      <option name="OTHER" value="false"/>
-    </context>
-  </template>
+  <!--<template id="bash_elif" name="bash_elif"-->
+            <!--value="if [[ $CONDITION_1$ ]]; then&#10;    $END$$SELECTION$&#10;elif [[ $CONDITION_2$ ]]; then&#10;    $EXPRESSION_2$&#10;else&#10;    $EXPRESSION_3$&#10;fi"-->
+            <!--description="Elif expression"-->
+            <!--toReformat="true"-->
+            <!--toShortenFQNames="true">-->
+    <!--<variable name="CONDITION_1" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>-->
+    <!--<variable name="CONDITION_2" expression="" defaultValue="&quot;condition&quot;" alwaysStopAt="true"/>-->
+    <!--<variable name="EXPRESSION_2" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>-->
+    <!--<variable name="EXPRESSION_3" expression="" defaultValue="&quot;echo&quot;" alwaysStopAt="true"/>-->
+    <!--<context>-->
+      <!--<option name="BASH" value="true"/>-->
+      <!--<option name="OTHER" value="false"/>-->
+    <!--</context>-->
+  <!--</template>-->
   <template id="bash_select" name="bash_select" value="select $VARIABLE_1$ in $VARIABLE_2$; do&#10;    $END$$SELECTION$&#10;done" description="Select expression"
             toReformat="true"
             toShortenFQNames="true">

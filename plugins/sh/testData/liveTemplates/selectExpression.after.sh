@@ -1,3 +1,0 @@
-select  in ; do
-    
-done
