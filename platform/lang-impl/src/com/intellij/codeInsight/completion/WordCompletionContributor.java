@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -41,7 +41,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-
   @Override
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && isWordCompletionDefinitelyEnabled(context.getFile())) {
@@ -68,18 +67,18 @@ public class WordCompletionContributor extends CompletionContributor implements 
         realExcludes.add(words[0]);
       }
     }
-    
+
     int startOffset = parameters.getOffset();
     final PsiElement position = parameters.getPosition();
     final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters));
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
-    for (final String word : getAllWords(position, startOffset)) {
+    consumeAllWords(position, startOffset, word -> {
       if (!realExcludes.contains(word)) {
         final LookupElement item = LookupElementBuilder.create(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
-    }
+    });
 
     addValuesFromOtherStringLiterals(result, parameters, realExcludes, position);
   }
@@ -169,18 +168,17 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  private static Set<String> getAllWords(PsiElement context, int offset) {
-    final Set<String> words = new LinkedHashSet<>();
-    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) {
-      return words;
-    }
+  private static void consumeAllWords(PsiElement context, int offset, Consumer<String> consumer) {
+    if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
 
-    final CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
-    IdTableBuilding.scanWords((chars1, charsArray, start, end) -> {
+    Set<String> words = new HashSet<>();
+    CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
+    IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
       if (start > offset || offset > end) {
-        words.add(chars1.subSequence(start, end).toString());
+        CharSequence sequence = charSeq.subSequence(start, end);
+        String str = sequence.toString();
+        if (words.add(str)) consumer.accept(str);
       }
     }, chars, 0, chars.length());
-    return words;
   }
 }
