@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -453,6 +454,13 @@ public class FileSystemUtil {
     private final int myUid;
     private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
+    private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, new LimitedPool.ObjectFactory<Memory>() {
+      @NotNull
+      @Override
+      public Memory create() {
+        return new Memory(256);
+      }
+    });
 
     private JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
@@ -478,29 +486,34 @@ public class FileSystemUtil {
 
     @Override
     protected FileAttributes getAttributes(@NotNull String path) {
-      Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
-      if (res != 0) return null;
+      Memory buffer = myMemoryPool.alloc();
+      try {
+        int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
+        if (res != 0) return null;
 
-      int mode = getModeFlags(buffer) & LibC.S_MASK;
-      boolean isSymlink = (mode & LibC.S_IFMT) == LibC.S_IFLNK;
-      if (isSymlink) {
-        if (!loadFileStatus(path, buffer)) {
-          return FileAttributes.BROKEN_SYMLINK;
+        int mode = getModeFlags(buffer) & LibC.S_MASK;
+        boolean isSymlink = (mode & LibC.S_IFMT) == LibC.S_IFLNK;
+        if (isSymlink) {
+          if (!loadFileStatus(path, buffer)) {
+            return FileAttributes.BROKEN_SYMLINK;
+          }
+          mode = getModeFlags(buffer) & LibC.S_MASK;
         }
-        mode = getModeFlags(buffer) & LibC.S_MASK;
+
+        boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
+        boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
+        long size = buffer.getLong(myOffsets[OFF_SIZE]);
+        long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
+        long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
+        long mTime = mTime1 * 1000 + mTime2 / 1000000;
+
+        boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
+
+        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
       }
-
-      boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
-      boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
-      long size = buffer.getLong(myOffsets[OFF_SIZE]);
-      long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
-      long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
-      long mTime = mTime1 * 1000 + mTime2 / 1000000;
-
-      boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
-
-      return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
+      finally {
+        myMemoryPool.recycle(buffer);
+      }
     }
 
     @Override
