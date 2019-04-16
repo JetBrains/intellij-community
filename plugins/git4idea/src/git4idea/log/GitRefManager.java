@@ -377,9 +377,9 @@ public class GitRefManager implements VcsLogRefManager {
   private static class GitBranchLayoutComparator extends GitRefComparator {
     private static final RefType[] ORDERED_TYPES = {
       RefType.ORIGIN_MASTER,
+      RefType.REMOTE_BRANCH,
       RefType.MASTER,
       RefType.LOCAL_BRANCH,
-      RefType.REMOTE_BRANCH,
       RefType.TAG,
       RefType.HEAD,
       RefType.OTHER
