@@ -1169,11 +1169,11 @@
 
     <group id="ServiceViewTreeToolbar"/>
     <group id="ServiceViewNodeToolbar">
-      <group class="com.intellij.execution.services.ServiceView$ItemToolbarActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup"/>
       <separator/>
     </group>
     <group id="ServiceViewNodePopup">
-      <group class="com.intellij.execution.services.ServiceView$ItemPopupActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
     </group>
 

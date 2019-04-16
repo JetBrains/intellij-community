@@ -52,7 +52,8 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow) {
-    myServiceView = new ServiceView(myProject, myState.viewState);
+    ServiceViewUi ui = new ServiceViewUi(myState.viewState);
+    myServiceView = new ServiceView(myProject, ui, myState.viewState);
 
     Content toolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myServiceView, null, false);
     toolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
@@ -76,7 +77,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           result.setError("");
         }
         else {
-          view.selectNode(node);
+          view.selectItem(node);
           result.setResult(null);
         }
       };
@@ -143,10 +144,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   public void loadState(@NotNull State state) {
     myState = state;
     myState.viewState.treeState = TreeState.createFrom(myState.viewState.treeStateElement);
-  }
-
-  static ServiceView getServiceView(@NotNull Project project) {
-    return ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).myServiceView;
   }
 
   static class State {
