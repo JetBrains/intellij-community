@@ -1121,6 +1121,33 @@ while (condition) {
 ''', 'java.lang.String'
   }
 
+  void 'test assignment to iterated variable'() {
+    doTest '''\
+interface I {}
+class A implements I {}
+class B implements I {
+  Iterator<A> iterator() {}
+}
+def b = new B()
+for (a in b) {
+  b = a
+}
+<caret>b
+''', '[I,groovy.lang.GroovyObject]'
+  }
+
+  void 'test no soe with write to iterated variable in cycle'() {
+    allowNestedContext(3, testRootDisposable)
+    doTest '''\
+while (u) {
+  for (a in b) {
+    b = a
+  }
+}
+<caret>b
+''', null
+  }
+
   void 'test String variable assigned with GString inside closure @CS'() {
     doTest '''\
 @groovy.transform.CompileStatic

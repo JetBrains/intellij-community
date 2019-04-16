@@ -9,10 +9,12 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import gnu.trove.TObjectIntHashMap
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
@@ -60,10 +62,14 @@ private fun findDependencyScope(element: PsiElement): PsiElement? {
 }
 
 private fun findReadsInside(scope: PsiElement, instructionsByElement: InstructionsByElement): ReadInstructions {
+  if (scope is GrForInClause) {
+    val expression = scope.iteratedExpression ?: return emptyList()
+    return findReadsInside(expression, instructionsByElement)
+  }
   val result = ArrayList<ReadWriteVariableInstruction>()
   scope.accept(object : PsiRecursiveElementWalkingVisitor() {
     override fun visitElement(element: PsiElement) {
-      if (element is GrReferenceExpression && !element.isQualified) {
+      if (element is GrReferenceExpression && !element.isQualified || element is GrParameter && element.parent is GrForInClause) {
         val instructions = instructionsByElement(element)
         for (instruction in instructions) {
           if (instruction !is ReadWriteVariableInstruction || instruction.isWrite) continue
