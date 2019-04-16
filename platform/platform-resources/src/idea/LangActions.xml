@@ -1167,7 +1167,10 @@
               use-shortcut-of="$Delete"/>
     </group>
 
-    <group id="ServiceViewTreeToolbar"/>
+    <group id="ServiceViewTreeToolbar">
+      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+    </group>
     <group id="ServiceViewNodeToolbar">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup"/>
       <separator/>
