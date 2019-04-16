@@ -361,8 +361,8 @@ public class GitRefManager implements VcsLogRefManager {
     private static final RefType[] ORDERED_TYPES = {
       RefType.HEAD,
       RefType.MASTER,
-      RefType.LOCAL_BRANCH,
       RefType.ORIGIN_MASTER,
+      RefType.LOCAL_BRANCH,
       RefType.REMOTE_BRANCH,
       RefType.TAG,
       RefType.OTHER
