@@ -3,7 +3,9 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.parameter.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.ui.layout.*
 import com.intellij.util.PlatformIcons
 import javax.swing.JComponent
@@ -15,7 +17,11 @@ class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
       override fun getParameterHints(element: PsiElement, settings: NoSettings, sink: ParameterHintsSink) {
         if (element.text == "Hello" && element.children.isEmpty()) {
           val presentation = factory.icon(PlatformIcons.CHECK_ICON)
-          val info = ParameterHintInfo(presentation, element.textOffset, false, false, null, null)
+          val onClick = factory.onClick(presentation) { _, _ ->
+            val element1 = element.parentOfType<PsiClass>() ?: return@onClick
+            factory.navigateTo(element1)
+          }
+          val info = ParameterHintInfo(onClick, element.textOffset, false, false, null, null)
           sink.addHint(info)
         }
       }

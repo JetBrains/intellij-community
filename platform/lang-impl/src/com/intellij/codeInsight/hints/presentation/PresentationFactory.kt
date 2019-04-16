@@ -7,9 +7,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.psi.PsiElement
+import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Font
+import java.awt.Point
 import java.awt.RenderingHints
+import java.awt.event.MouseEvent
 import java.awt.font.FontRenderContext
 import javax.swing.Icon
 import javax.swing.UIManager
@@ -44,6 +48,18 @@ class PresentationFactory(val editor: EditorImpl) {
 
   fun roundedText(text: String): InlayPresentation {
     return rounding(8, 8, text(text))
+  }
+
+  fun onHover(presentation: InlayPresentation, onHover: (MouseEvent?) -> Unit) : InlayPresentation {
+    return OnHoverPresentation(presentation, onHover)
+  }
+
+  fun onClick(presentation: InlayPresentation, onClick: (MouseEvent, Point) -> Unit) : InlayPresentation {
+    return OnClickPresentation(presentation, onClick)
+  }
+
+  fun navigateTo(element: PsiElement) {
+    PsiNavigateUtil.navigate(element)
   }
 
   private fun getFont(): Font {
