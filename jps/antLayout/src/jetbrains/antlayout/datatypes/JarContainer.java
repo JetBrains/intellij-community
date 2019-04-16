@@ -56,6 +56,10 @@ public class JarContainer extends ZipContainer {
     ((Jar) task).setFilesetmanifest(config);
   }
 
+  public void setWhenmanifestonly(Zip.WhenEmpty we) {
+    ((Jar)task).setWhenmanifestonly(we);
+  }
+
   public void addConfiguredManifest(Manifest newManifest) throws ManifestException {
     ((Jar) task).addConfiguredManifest(newManifest);
   }
