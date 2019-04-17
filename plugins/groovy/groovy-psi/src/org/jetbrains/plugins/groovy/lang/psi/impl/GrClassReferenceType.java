@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 /**
  * @author ven
  */
-public class GrClassReferenceType extends PsiClassType {
+public final class GrClassReferenceType extends PsiClassType {
 
   private final GrReferenceElement myReferenceElement;
 
@@ -156,5 +156,22 @@ public class GrClassReferenceType extends PsiClassType {
 
   public GrReferenceElement getReference() {
     return myReferenceElement;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj instanceof GrClassReferenceType) {
+      if (myReferenceElement.equals(((GrClassReferenceType)obj).myReferenceElement)) {
+        return true;
+      }
+    }
+    return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    String name = myReferenceElement.getReferenceName();
+    return name == null ? 0 : name.hashCode();
   }
 }
