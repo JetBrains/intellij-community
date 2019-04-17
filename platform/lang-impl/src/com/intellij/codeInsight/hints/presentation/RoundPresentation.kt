@@ -6,7 +6,7 @@ import java.awt.Graphics2D
 import java.awt.geom.RoundRectangle2D
 
 /**
- * Makes corners round. Should be used with [InlayPresentation]
+ * Makes corners round. Should be used with [InsetPresentation]
  */
 class RoundPresentation(presentation: InlayPresentation, val arcWidth: Int, val arcHeight: Int) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {

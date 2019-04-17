@@ -55,6 +55,7 @@ class PresentationFactory(val editor: EditorImpl) {
 
   fun hyperlink(base: InlayPresentation): InlayPresentation {
     val dynamic = DynamicPresentation(base)
+    // TODO only with ctrl
     return onHover(dynamic) { event ->
       if (event != null) {
         dynamic.delegate = AttributesTransformerPresentation(base) {
@@ -76,8 +77,23 @@ class PresentationFactory(val editor: EditorImpl) {
     return OnClickPresentation(base, onClick)
   }
 
-  fun navigateTo(element: PsiElement) {
-    PsiNavigateUtil.navigate(element)
+
+  // TODO
+  fun navigateSingle(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation {
+    return onClick(hyperlink(base)) { _, _ ->
+      val target = resolve()
+      if (target == null) {
+        PsiNavigateUtil.navigate(target)
+      }
+    }
+  }
+
+  fun seq(vararg presentations: InlayPresentation) : InlayPresentation {
+    return when (presentations.size) {
+      0 -> SpacePresentation(0, 0)
+      1 -> presentations.first()
+      else -> SequencePresentation(presentations.toList())
+    }
   }
 
   private fun getFont(): Font {
