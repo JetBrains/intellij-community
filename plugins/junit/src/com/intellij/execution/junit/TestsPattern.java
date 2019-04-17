@@ -5,7 +5,6 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -20,14 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
-import com.intellij.rt.execution.junit.JUnitStarter;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -60,22 +54,6 @@ public class TestsPattern extends TestPackage {
   @Override
   protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
     searchTests(module, classFilter, classes, false);
-  }
-
-  @Override
-  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
-                                                    Function<? super T, String> nameFunction,
-                                                    String packageName,
-                                                    boolean createTempFile,
-                                                    JavaParameters javaParameters,
-                                                    String filters) throws CantRunException {
-    if (getRunner().equals(JUnitStarter.JUNIT5_PARAMETER)) {
-      super.addClassesListToJavaParameters(elements, nameFunction, packageName, createTempFile, javaParameters, filters);
-    } else {
-      Set<String> foundClasses = ContainerUtil.map2Set(elements, nameFunction);
-      Collection<String> filteredPatterns = ContainerUtil.filter(getConfiguration().getPersistentData().getPatterns(), p -> foundClasses.stream().anyMatch(c -> p.startsWith(c)));
-      super.addClassesListToJavaParameters(filteredPatterns, Functions.id(), packageName, createTempFile, javaParameters, "");
-    }
   }
 
   private void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes, boolean junit5) {
