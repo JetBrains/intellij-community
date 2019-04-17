@@ -118,6 +118,12 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("f'''foo\"\n'''", doTestTyping("f'''foo\n'''", 7, '"'));
   }
 
+  // PY-35461
+  public void testFStringAutomaticClosingQuotesRemoval() {
+    doTestBackspace("f'<caret>'", "f");
+    doTestBackspace("f'''<caret>'''", "f");
+  }
+
   public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
     assertEquals("f'''\"\"\"@'''", doTestTyping("f'''\"\"@'''", 6, "\""));
   }
@@ -190,6 +196,12 @@ public class PyEditingTest extends PyTestCase {
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(pos);
     pressButton(IdeActions.ACTION_EDITOR_BACKSPACE);
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
+  }
+
+  private void doTestBackspace(final String before, final String after) {
+    myFixture.configureByText(PythonFileType.INSTANCE, before);
+    pressButton(IdeActions.ACTION_EDITOR_BACKSPACE);
+    myFixture.checkResult(after);
   }
 
   public void testUncommentWithSpace() {   // PY-980
