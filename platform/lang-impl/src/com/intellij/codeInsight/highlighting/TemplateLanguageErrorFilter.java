@@ -18,10 +18,21 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -30,26 +41,26 @@ import java.util.*;
  */
 public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   @NotNull
-  private final TokenSet myTemplateExpressionStartTokens;
+  private final TokenSet myTemplateExpressionEdgeTokens;
   @NotNull
   private final Class myTemplateFileViewProviderClass;
 
   private final Set<Language> knownLanguageSet;
 
-  private static final Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
+  private static final Key<FileViewProvider> TOP_LEVEL_VIEW_PROVIDER = Key.create("TOP_LEVEL_VIEW_PROVIDER");
 
   // this redundant ctr is here because ExtensionComponentAdapter.getComponentInstance() is not aware of varargs
   protected TemplateLanguageErrorFilter(
-    @NotNull final TokenSet templateExpressionStartTokens,
+    @NotNull final TokenSet templateExpressionEdgeTokens,
     @NotNull final Class templateFileViewProviderClass)
   {
-    this(templateExpressionStartTokens, templateFileViewProviderClass, ArrayUtil.EMPTY_STRING_ARRAY);
+    this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionStartTokens,
+  protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionEdgeTokens,
                                         @NotNull final Class templateFileViewProviderClass,
                                         @NotNull final String... knownSubLanguageNames) {
-    myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
+    myTemplateExpressionEdgeTokens = TokenSet.create(templateExpressionEdgeTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 
     List<String> knownSubLanguageList = new ArrayList<>(Arrays.asList(knownSubLanguageNames));
@@ -68,43 +79,87 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     if (isKnownSubLanguage(element.getParent().getLanguage())) {
       //
-      // Immediately discard filters with non-matching template class if already known
+      // Immediately discard filters with non-matching template view provider if already known
       //
-      Class templateClass = element.getUserData(TEMPLATE_VIEW_PROVIDER_CLASS_KEY);
-      if (templateClass != null && (templateClass != myTemplateFileViewProviderClass)) return true;
+      FileViewProvider viewProvider = element.getUserData(TOP_LEVEL_VIEW_PROVIDER);
+      if (viewProvider == null) {
+        viewProvider = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element).getViewProvider();
+        element.putUserData(TOP_LEVEL_VIEW_PROVIDER, viewProvider);
+      }
+      if (!isTemplateViewProvider(viewProvider)) return true;
 
       PsiFile psiFile = element.getContainingFile();
-      int offset = element.getTextOffset();
-      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
+      TextRange range = element.getTextRange();
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       if (injectedLanguageManager.isInjectedFragment(psiFile)) {
-        PsiElement host = injectedLanguageManager.getInjectionHost(element);
+        PsiElement host = injectedLanguageManager.getInjectionHost(psiFile);
         if (host != null) {
           psiFile = host.getContainingFile();
-          offset = injectedLanguageManager.injectedToHost(element, offset);
+          range = injectedLanguageManager.injectedToHost(psiFile, range);
         }
       }
-      final FileViewProvider viewProvider = psiFile.getViewProvider();
-      element.putUserData(TEMPLATE_VIEW_PROVIDER_CLASS_KEY, viewProvider.getClass());
-      if (!(viewProvider.getClass() == myTemplateFileViewProviderClass)) {
-        return true;
+
+      //
+      // An error can occur after template element or before it. Check both.
+      //
+      if (isNearTemplateExpressions(psiFile, range.getStartOffset(), range.getEndOffset()) ||
+          hasErrorElementsBeforeAndUp(element) ||
+          PsiTreeUtil.findChildOfType(element, OuterLanguageElement.class) != null) {
+        return false;
       }
-      //
-      // An error can occur at template element or before it. Check both.
-      //
-      if (shouldIgnoreErrorAt(viewProvider, offset) || shouldIgnoreErrorAt(viewProvider, offset + 1)) return false;
     }
     return true;
   }
 
-  protected boolean shouldIgnoreErrorAt(@NotNull FileViewProvider viewProvider, int offset) {
-    PsiElement element = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
-    if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
-    if (element != null && myTemplateExpressionStartTokens.contains(element.getNode().getElementType())) {
+  protected boolean isTemplateViewProvider(FileViewProvider viewProvider) {
+    return viewProvider.getClass() == myTemplateFileViewProviderClass;
+  }
+
+  private static boolean hasErrorElementsBeforeAndUp(@NotNull PsiElement element) {
+    JBIterable<PsiErrorElement> previousErrors = JBIterable
+      .generate(element, e -> ObjectUtils.coalesce(e.getPrevSibling(), e.getParent()))
+      .skip(1)
+      .filter(PsiErrorElement.class);
+    return previousErrors.isNotEmpty();
+  }
+
+  protected final boolean isNearTemplateExpressions(@NotNull PsiFile file, int start, int end) {
+    FileViewProvider viewProvider = file.getViewProvider();
+    if (!isTemplateViewProvider(viewProvider) || file.getLanguage() == viewProvider.getBaseLanguage()) return false;
+
+    CharSequence fileText = viewProvider.getContents();
+    PsiElement beforeWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftBackward(fileText, start - 1, " \t\n"));
+    PsiElement afterWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftForward(fileText, end, " \t\n"));
+    if (isTemplateEdge(afterWs) || isTemplateEdge(beforeWs)) {
       return true;
+    }
+
+    return hasTemplateInside(start, end, viewProvider);
+  }
+
+  private boolean hasTemplateInside(int start, int end, FileViewProvider viewProvider) {
+    PsiElement data = findBaseLanguageElement(viewProvider, start);
+    if (data != null) {
+      int dataEnd = data.getTextRange().getEndOffset();
+      if (dataEnd < end && isTemplateEdge(findBaseLanguageElement(viewProvider, dataEnd))) {
+        return true;
+      }
     }
     return false;
   }
 
+  @Nullable
+  private static PsiElement findBaseLanguageElement(FileViewProvider viewProvider, int offset) {
+    return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
+  }
+
+  private boolean isTemplateEdge(PsiElement e) {
+    return myTemplateExpressionEdgeTokens.contains(PsiUtilCore.getElementType(e));
+  }
+
+  /**
+   * @return whether errors in PSI with the given language should be considered for suppression
+   */
   protected boolean isKnownSubLanguage(@NotNull final Language language) {
     for (Language knownLanguage : knownLanguageSet) {
       if (language.is(knownLanguage) || knownLanguage.getDialects().contains(language)) {
