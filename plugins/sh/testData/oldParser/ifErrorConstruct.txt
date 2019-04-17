@@ -31,7 +31,7 @@ BASH_FILE
               PsiWhiteSpace(' ')
               PsiElement(;)(';')
               PsiWhiteSpace(' ')
-              PsiErrorElement:'\n' expected, got 'done'
+              PsiErrorElement:<block pipeline command> or '\n' expected, got 'done'
                 PsiElement(done)('done')
             PsiWhiteSpace(' ')
             PsiElement(})('}')

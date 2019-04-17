@@ -190,14 +190,6 @@ command ::= shell_command redirection_list?
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
 
-//private command_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*'
-//| '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-'
-//| '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>' | '>&' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']'
-//| ']]' | '^' | '^=' | '`' | 'in' | '{' | '|' | '|&' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT
-//| EXPR_CONDITIONAL_RIGHT | FILEDESCRIPTOR | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_TAG | RAW_STRING | case
-//| do | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content //todo:: String
-//| string_end | then | time | trap | until | var | while | word)
-
 shell_command ::=   for_command
                   | case_command
                   | while_command
@@ -212,12 +204,22 @@ private any_block ::= block | do_block
 do_block ::= do  do_block_compound_list done {pin(".*")=1 extends=block}
 block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
 
-block_compound_list ::= (nl pipeline_command_list|pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=block_compound_list_recover
+block_compound_list ::= (nl block_pipeline_command_list|block_pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=block_compound_list_recover
           elementType=compound_list}
-do_block_compound_list ::= (nl pipeline_command_list|pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=do_block_compound_list_recover
-                    elementType=compound_list}
 private block_compound_list_recover ::= !('{' | '\n' | '}')
-private do_block_compound_list_recover ::= !(do | '\n' |done)
+
+do_block_compound_list ::= (nl block_pipeline_command_list|block_pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=do_block_compound_list_recover
+                    elementType=compound_list}
+private do_block_compound_list_recover ::= !(do | '\n' | done)
+
+private block_pipeline_command_list ::= block_pipeline_command (pipeline_command_list_separator block_pipeline_command)* {pin=1}
+block_pipeline_command ::=  '!'? pipeline
+                    | timespec '!'? pipeline
+                    | '!' timespec pipeline
+                    | trap_command
+                    | let_command { elementType = pipeline_command recoverWhile = block_pipeline_recover}
+private block_pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
+|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
 
 while_command ::= while do_block_compound_list  do_block
 until_command ::= until do_block_compound_list  do_block
@@ -284,7 +286,7 @@ pipeline_command ::=  '!'? pipeline
                     | let_command {recoverWhile=pipeline_recover}
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
-|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT)
+|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do)
 
 let_command ::= let expression
 

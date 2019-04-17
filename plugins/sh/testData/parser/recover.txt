@@ -269,7 +269,7 @@ BASH_FILE
             COMPOUND_LIST
               PsiElement(\n)('\n')
               PsiElement(\n)('\n')
-              PsiErrorElement:'&', ';' or '\n' expected, got '}'
+              PsiErrorElement:<block pipeline command> or '\n' expected, got '}'
                 <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')
