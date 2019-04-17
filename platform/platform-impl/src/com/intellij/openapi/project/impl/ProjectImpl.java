@@ -403,7 +403,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
-           " " + getName();
+           " " + myName;
   }
 
   @Nullable
