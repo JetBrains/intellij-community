@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 public class BashDocumentationProvider extends AbstractDocumentationProvider {
@@ -78,11 +80,13 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
 
     return myManCache.computeIfAbsent(commandName, s -> {
       try {
-        GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
-        ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
-        return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
+        return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
+          ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
+          return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
+        }).get(TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
       }
-      catch (ExecutionException e) {
+      catch (Exception e) {
         LOG.warn(e);
         return null;
       }
