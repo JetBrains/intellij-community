@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,17 +9,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 /**
  * @author ven
  */
 public class GrClassReferenceType extends PsiClassType {
+
   private final GrReferenceElement myReferenceElement;
 
   public GrClassReferenceType(GrReferenceElement referenceElement) {
     super(LanguageLevel.JDK_1_5);
     myReferenceElement = referenceElement;
   }
+
   public GrClassReferenceType(GrReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
     super(languageLevel);
     myReferenceElement = referenceElement;
@@ -37,6 +40,12 @@ public class GrClassReferenceType extends PsiClassType {
     final PsiClass resolved = resolve();
     if (resolved != null) return resolved.getName();
     return myReferenceElement.getReferenceName();
+  }
+
+  @Override
+  public int getParameterCount() {
+    GrTypeArgumentList typeArgumentList = myReferenceElement.getTypeArgumentList();
+    return typeArgumentList == null ? 0 : typeArgumentList.getTypeArgumentCount();
   }
 
   @Override
@@ -142,7 +151,7 @@ public class GrClassReferenceType extends PsiClassType {
   @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
-    return new GrClassReferenceType(myReferenceElement,languageLevel);
+    return new GrClassReferenceType(myReferenceElement, languageLevel);
   }
 
   public GrReferenceElement getReference() {
