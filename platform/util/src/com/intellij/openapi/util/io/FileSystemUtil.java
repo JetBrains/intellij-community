@@ -454,13 +454,7 @@ public class FileSystemUtil {
     private final int myUid;
     private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
-    private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, new LimitedPool.ObjectFactory<Memory>() {
-      @NotNull
-      @Override
-      public Memory create() {
-        return new Memory(256);
-      }
-    });
+    private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     private JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
