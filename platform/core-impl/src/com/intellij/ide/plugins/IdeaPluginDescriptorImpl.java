@@ -24,7 +24,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -582,11 +581,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myUrl = val;
   }
 
-  @Override
-  public String toString() {
-    return "PluginDescriptor[name='" + myName + "', classpath='" + myPath + "']";
-  }
-
   public boolean isDeleted() {
     return myDeleted;
   }
@@ -597,20 +591,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setLoader(ClassLoader loader) {
     myLoader = loader;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
-
-    final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-    return Objects.equals(myName, pluginDescriptor.myName);
-  }
-
-  @Override
-  public int hashCode() {
-    return myName != null ? myName.hashCode() : 0;
   }
 
   @Override
@@ -760,5 +740,20 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @NotNull
   public List<String> getModules() {
     return ContainerUtil.notNullize(myModules);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof IdeaPluginDescriptorImpl && myId == ((IdeaPluginDescriptorImpl)o).myId;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(myId);
+  }
+
+  @Override
+  public String toString() {
+    return "PluginDescriptor(name=" + myName + ", classpath=" + myPath + ")";
   }
 }
