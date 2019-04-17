@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.util.registry.Registry;
@@ -8,12 +10,23 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IdeaFreezeReporter {
+  private static final int FREEZE_THRESHOLD = 15; // seconds
+
   public IdeaFreezeReporter() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isEAP() ||
+        app.isUnitTestMode() ||
+        PluginManagerCore.isRunningFromSources() ||
+        ManagementFactory.getRuntimeMXBean().getInputArguments().stream().anyMatch(s -> s.contains("-agentlib:jdwp"))) {
+      return;
+    }
+
+    app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       final List<ThreadDump> myCurrentDumps = new ArrayList<>();
       List<StackTraceElement> myStacktraceCommonPart = null;
 
@@ -34,6 +47,7 @@ public class IdeaFreezeReporter {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
         if (Registry.is("performance.watcher.freeze.report") &&
+            lengthInSeconds > FREEZE_THRESHOLD &&
             !ContainerUtil.isEmpty(myCurrentDumps) &&
             !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
           int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
