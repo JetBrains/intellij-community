@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -35,6 +35,7 @@ class UpdateChannel internal constructor(node: Element) {
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
   val licensing: String = node.getAttributeValue("licensing", LICENSING_RELEASE)
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
+  val url: String? = node.getAttributeValue("url")
   val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
 
   override fun toString(): String = id
