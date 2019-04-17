@@ -252,10 +252,6 @@ class CommunityRepositoryModules {
       withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
     },
-    plugin("intellij.griffon") {
-      withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
-      withModule("intellij.griffon.rt", "griffon-rt.jar")
-    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
