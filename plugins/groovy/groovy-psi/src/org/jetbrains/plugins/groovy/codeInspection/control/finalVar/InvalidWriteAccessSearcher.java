@@ -70,15 +70,16 @@ public class InvalidWriteAccessSearcher {
         e.add(((ReadWriteVariableInstruction)instruction).getDescriptor());
       }
     }
+  }
+
+  private static class MySemilattice implements Semilattice<MyData> {
 
     @NotNull
     @Override
     public MyData initial() {
       return new MyData();
     }
-  }
 
-  private static class MySemilattice implements Semilattice<MyData> {
     @NotNull
     @Override
     public MyData join(@NotNull List<? extends MyData> ins) {

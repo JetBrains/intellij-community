@@ -19,12 +19,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
 public class DFAEngine<E> {
 
   private final Instruction[] myFlow;
-  private final DfaInstance<E> myDfa;
+  private final DfaInstance<? super E> myDfa;
   private final Semilattice<E> mySemilattice;
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -67,7 +67,7 @@ public class DFAEngine<E> {
   @Nullable
   private List<E> performDFA(boolean timeout) {
     final int n = myFlow.length;
-    final List<E> info = new ArrayList<>(Collections.nCopies(n, myDfa.initial()));
+    final List<E> info = new ArrayList<>(Collections.nCopies(n, mySemilattice.initial()));
     final CallEnvironment env = new MyCallEnvironment(n);
 
     final WorkList workList = new WorkList(n, getFlowOrder());

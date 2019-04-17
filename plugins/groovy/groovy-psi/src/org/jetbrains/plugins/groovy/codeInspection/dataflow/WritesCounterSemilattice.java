@@ -25,6 +25,12 @@ public class WritesCounterSemilattice<T> implements Semilattice<TObjectIntHashMa
 
   @NotNull
   @Override
+  public TObjectIntHashMap<T> initial() {
+    return new TObjectIntHashMap<>();
+  }
+
+  @NotNull
+  @Override
   public TObjectIntHashMap<T> join(@NotNull List<? extends TObjectIntHashMap<T>> ins) {
     final TObjectIntHashMap<T> result = new TObjectIntHashMap<>();
     for (TObjectIntHashMap<T> i : ins) {

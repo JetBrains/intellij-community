@@ -25,6 +25,12 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     myManager = manager;
   }
 
+  @Override
+  @NotNull
+  public TypeDfaState initial() {
+    return new TypeDfaState();
+  }
+
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {

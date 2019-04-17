@@ -47,7 +47,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -771,6 +774,13 @@ public class ControlFlowUtils {
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+
+      @NotNull
+      @Override
+      public BitSet initial() {
+        return new BitSet(flow.length);
+      }
+
       @NotNull
       @Override
       public BitSet join(@NotNull List<? extends BitSet> ins) {
@@ -802,12 +812,6 @@ public class ControlFlowUtils {
 
         bitSet.clear();
         bitSet.set(instruction.num());
-      }
-
-      @NotNull
-      @Override
-      public BitSet initial() {
-        return new BitSet(flow.length);
       }
     };
 

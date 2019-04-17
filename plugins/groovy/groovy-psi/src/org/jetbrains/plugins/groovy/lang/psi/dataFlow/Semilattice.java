@@ -8,6 +8,9 @@ import java.util.List;
 public interface Semilattice<E> {
 
   @NotNull
+  E initial();
+
+  @NotNull
   E join(@NotNull List<? extends E> ins);
 
   default boolean eq(@NotNull E e1, @NotNull E e2) {
