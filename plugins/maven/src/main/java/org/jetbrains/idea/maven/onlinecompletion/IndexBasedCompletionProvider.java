@@ -80,8 +80,8 @@ public class IndexBasedCompletionProvider implements DependencyCompletionProvide
   private static Query createSearchQuery(@NotNull String str) throws ParseException {
     String[] patterns = str.split("\\.");
     StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < patterns.length; i++) {
-      builder.append("c:").append(patterns[i]).append(" OR ");
+    for (String pattern : patterns) {
+      builder.append("c:").append(pattern).append(" OR ");
     }
 
     builder.append("fc:").append(str);

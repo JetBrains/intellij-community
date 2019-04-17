@@ -18,7 +18,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import static org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters.Flags.ALL_VERSIONS;
 
@@ -97,8 +100,8 @@ public class MavenCentralOnlineSearch implements DependencyCompletionProvider {
   private static String createSearchQuery(@NotNull String str) {
     String[] patterns = str.split("\\.");
     StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < patterns.length; i++) {
-      builder.append("c:").append("\"").append(patterns[i]).append("\"").append(" OR ");
+    for (String pattern : patterns) {
+      builder.append("c:").append("\"").append(pattern).append("\"").append(" OR ");
     }
 
     builder.append("fc:").append(str);
