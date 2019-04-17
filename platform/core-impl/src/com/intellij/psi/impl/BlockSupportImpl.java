@@ -165,7 +165,9 @@ public class BlockSupportImpl extends BlockSupport {
                 LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
               }
 
-              return Couple.of(node, chameleon);
+              if (reparseable.isValidReparse(node, chameleon)) {
+                return Couple.of(node, chameleon);
+              }
             }
           }
         }

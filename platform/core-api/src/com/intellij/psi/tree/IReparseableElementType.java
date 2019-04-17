@@ -89,4 +89,8 @@ public class IReparseableElementType extends ILazyParseableElementType {
                             @NotNull Project project) {
     return isParsable(buffer, fileLanguage, project);
   }
+
+  public boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
+    return true;
+  }
 }
