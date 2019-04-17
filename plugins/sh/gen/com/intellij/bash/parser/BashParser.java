@@ -560,7 +560,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines
+  // (nl pipeline_command_list | pipeline_command_list) end_of_list newlines
   public static boolean block_compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list")) return false;
     boolean r, p;
@@ -597,7 +597,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !('{' | '\n' | '}'| do | done)
+  // !('{' | '\n' | '}' | do | done)
   static boolean block_compound_list_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list_recover")) return false;
     boolean r;
@@ -607,7 +607,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '{' | '\n' | '}'| do | done
+  // '{' | '\n' | '}' | do | done
   private static boolean block_compound_list_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list_recover_0")) return false;
     boolean r;
@@ -757,7 +757,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shell_command (heredoc | redirection_list)?
+  // shell_command [heredoc | redirection_list]
   //           | include_command
   //           | simple_command
   public static boolean command(PsiBuilder b, int l) {
@@ -771,7 +771,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // shell_command (heredoc | redirection_list)?
+  // shell_command [heredoc | redirection_list]
   private static boolean command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_0")) return false;
     boolean r;
@@ -782,7 +782,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (heredoc | redirection_list)?
+  // [heredoc | redirection_list]
   private static boolean command_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_0_1")) return false;
     command_0_1_0(b, l + 1);
@@ -1125,8 +1125,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '[[' condition* (']]'|']'<<differentBracketsWarning>>)
-  //                         |'[' condition* (']'|']]' <<differentBracketsWarning>>)
+  // '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
+  //                        | '['  condition* ( ']'|']]' <<differentBracketsWarning>>)
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
@@ -1138,7 +1138,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '[[' condition* (']]'|']'<<differentBracketsWarning>>)
+  // '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
   private static boolean conditional_command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0")) return false;
     boolean r, p;
@@ -1162,7 +1162,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // ']]'|']'<<differentBracketsWarning>>
+  // ']]'|']'  <<differentBracketsWarning>>
   private static boolean conditional_command_0_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0_2")) return false;
     boolean r;
@@ -1173,7 +1173,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ']'<<differentBracketsWarning>>
+  // ']'  <<differentBracketsWarning>>
   private static boolean conditional_command_0_2_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0_2_1")) return false;
     boolean r, p;
@@ -1185,7 +1185,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '[' condition* (']'|']]' <<differentBracketsWarning>>)
+  // '['  condition* ( ']'|']]' <<differentBracketsWarning>>)
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     boolean r, p;
@@ -1398,7 +1398,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?] newlines
+  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
   //             HEREDOC_CONTENT*
   //             (HEREDOC_MARKER_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
@@ -1415,14 +1415,14 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?]
+  // [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?]
   private static boolean heredoc_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2")) return false;
     heredoc_2_0(b, l + 1);
     return true;
   }
 
-  // commands_list heredoc_pipeline_separator?| heredoc_pipeline_separator commands_list?
+  // commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?
   private static boolean heredoc_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
     boolean r;
@@ -2122,8 +2122,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
-  // |'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
+  // !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
+  //                                '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
   static boolean pipeline_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover")) return false;
     boolean r;
@@ -2133,8 +2133,8 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
-  // |'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}'
+  // case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'|
+  //                                '\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}'
   private static boolean pipeline_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover_0")) return false;
     boolean r;
@@ -2748,7 +2748,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // until block_compound_list  do_block
+  // until block_compound_list do_block
   public static boolean until_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "until_command")) return false;
     if (!nextTokenIs(b, UNTIL)) return false;
@@ -2798,7 +2798,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // while block_compound_list  do_block
+  // while block_compound_list do_block
   public static boolean while_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_command")) return false;
     if (!nextTokenIs(b, WHILE)) return false;
