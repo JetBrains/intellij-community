@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.ui.layout.*
-import com.intellij.util.PlatformIcons
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -16,7 +15,7 @@ class NewJavaParameterHintsProvider : NewParameterHintsProvider<NoSettings> {
     return object: FactoryHintsCollector<NoSettings>(editor) {
       override fun getParameterHints(element: PsiElement, settings: NoSettings, sink: ParameterHintsSink) {
         if (element.text == "Hello" && element.children.isEmpty()) {
-          val presentation = factory.icon(PlatformIcons.CHECK_ICON)
+          val presentation = factory.hyperlink(factory.text("Hello world!"))
           val onClick = factory.onClick(presentation) { _, _ ->
             val element1 = element.parentOfType<PsiClass>() ?: return@onClick
             factory.navigateTo(element1)

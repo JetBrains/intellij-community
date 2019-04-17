@@ -4,6 +4,8 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -26,22 +28,23 @@ class PresentationFactory(val editor: EditorImpl) {
     val ascent = editor.ascent
     val descent = editor.descent
     val height = ascent - descent
-    return AttributesTransformerPresentation(
-      BackgroundInlayPresentation(
-        InsetPresentation(
-          EffectInlayPresentation(
-            TextInlayPresentation(width, height, text, height) {
-              plainFont
-            },
-            plainFont, editor.lineHeight, ascent, descent
-          ),
-          left = 7,
-          right = 7,
-          top = 2,
-          down = 2
-        )
+    val presentation = BackgroundInlayPresentation(
+      InsetPresentation(
+        EffectInlayPresentation(
+          TextInlayPresentation(width, height, text, height) {
+            plainFont
+          },
+          plainFont, editor.lineHeight, ascent, descent
+        ),
+        left = 7,
+        right = 7,
+        top = 2,
+        down = 2
       )
-    ) { it.with(editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)) }
+    )
+    return AttributesTransformerPresentation(
+      presentation
+    ) { it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)) }
   }
 
   fun icon(icon: Icon) : IconPresentation = IconPresentation(icon, editor.component)
@@ -50,12 +53,27 @@ class PresentationFactory(val editor: EditorImpl) {
     return rounding(8, 8, text(text))
   }
 
-  fun onHover(presentation: InlayPresentation, onHover: (MouseEvent?) -> Unit) : InlayPresentation {
-    return OnHoverPresentation(presentation, onHover)
+  fun hyperlink(base: InlayPresentation): InlayPresentation {
+    val dynamic = DynamicPresentation(base)
+    return OnHoverPresentation(dynamic) { event ->
+      if (event != null) {
+        dynamic.delegate = AttributesTransformerPresentation(base) {
+          it.with(attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR))
+        }
+      } else {
+        dynamic.delegate = base
+      }
+    }
   }
 
-  fun onClick(presentation: InlayPresentation, onClick: (MouseEvent, Point) -> Unit) : InlayPresentation {
-    return OnClickPresentation(presentation, onClick)
+  private fun attributesOf(key: TextAttributesKey?) = editor.colorsScheme.getAttributes(key) ?: TextAttributes()
+
+  fun onHover(base: InlayPresentation, onHover: (MouseEvent?) -> Unit) : InlayPresentation {
+    return OnHoverPresentation(base, onHover)
+  }
+
+  fun onClick(base: InlayPresentation, onClick: (MouseEvent, Point) -> Unit) : InlayPresentation {
+    return OnClickPresentation(base, onClick)
   }
 
   fun navigateTo(element: PsiElement) {
@@ -92,5 +110,22 @@ private fun TextAttributes.with(other: TextAttributes): TextAttributes {
   other.fontType.let { result.fontType = it }
   other.effectType?.let { result.effectType = it }
   other.effectColor?.let { result.effectColor = it }
+  return result
+}
+
+private fun TextAttributes.withDefault(other: TextAttributes): TextAttributes {
+  val result = this.clone()
+  if (result.foregroundColor == null) {
+    result.foregroundColor = other.foregroundColor
+  }
+  if (result.backgroundColor == null) {
+    result.backgroundColor = other.backgroundColor
+  }
+  if (result.effectType == null) {
+    result.effectType = other.effectType
+  }
+  if (result.effectColor == null) {
+    result.effectColor = other.effectColor
+  }
   return result
 }

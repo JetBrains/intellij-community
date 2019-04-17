@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import com.intellij.codeInsight.hints.dimension
+import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -12,20 +14,25 @@ import java.awt.event.MouseEvent
  * Presentation, that delegates to [delegate], which can be dynamically changed.
  */
 open class DynamicPresentation(delegate: InlayPresentation) : BasePresentation() {
-  private var listener: Listener
+  private var listener: DelegateListener
   init {
-    listener = Listener()
+    listener = DelegateListener()
     delegate.addListener(listener)
   }
 
   var delegate: InlayPresentation = delegate
     set(value) {
       if (value != field) {
+        val previousDim = value.dimension()
+        val currentDim = field.dimension()
         field.removeListener(listener)
         field = value
-        listener = Listener()
+        listener = DelegateListener()
         value.addListener(listener)
-        fireContentChanged(Rectangle(0, 0, width, height))
+        fireContentChanged()
+        if (previousDim != currentDim) {
+          fireSizeChanged(previousDim, currentDim)
+        }
       }
     }
 
@@ -36,6 +43,11 @@ open class DynamicPresentation(delegate: InlayPresentation) : BasePresentation()
 
   override fun updateIfNecessary(newPresentation: InlayPresentation) : Boolean {
     if (newPresentation !is DynamicPresentation) throw IllegalArgumentException()
+    if (delegate.javaClass != newPresentation.delegate) {
+      // TODO actually handle situation?
+      // TODO keep key inside?
+      return true
+    }
     return delegate.updateIfNecessary(newPresentation.delegate)
   }
 
@@ -49,7 +61,7 @@ open class DynamicPresentation(delegate: InlayPresentation) : BasePresentation()
 
   override fun toString(): String = "delegate => $delegate"
 
-  private inner class Listener : PresentationListener {
+  private inner class DelegateListener : PresentationListener {
     override fun contentChanged(area: Rectangle) = fireContentChanged(area)
 
     override fun sizeChanged(previous: Dimension, current: Dimension) = fireSizeChanged(previous, current)

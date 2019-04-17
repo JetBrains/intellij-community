@@ -4,6 +4,10 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics2D
 
+/**
+ * Applies attributes to text in the presentation.
+ * Requires to know underlying presentation - attributes of innermost AttributesTransformerPresentation applied.
+ */
 class AttributesTransformerPresentation(
   presentation: InlayPresentation,
   val transformer: (TextAttributes) -> TextAttributes
