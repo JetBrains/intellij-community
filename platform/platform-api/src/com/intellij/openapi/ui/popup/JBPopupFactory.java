@@ -39,7 +39,7 @@ public abstract class JBPopupFactory {
   public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list);
 
   @NotNull
-  public PopupChooserBuilder createPopupChooserBuilder(@NotNull JTable table) {
+  public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JTable table) {
     return new PopupChooserBuilder(table);
   }
 
@@ -374,4 +374,5 @@ public abstract class JBPopupFactory {
   protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list);
   protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree);
   protected abstract PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table);
+
 }

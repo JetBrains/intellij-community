@@ -73,7 +73,7 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         selectedMessage = it
         it?.let { preview(project, commitMessage, it, previewCommandGroup) }
       }
-      .setItemChosenCallback { chosenMessage = it }
+      .setItemChosenCallback({ it: String -> chosenMessage = it } as Runnable)
       .setRenderer(object : ColoredListCellRenderer<String>() {
         override fun customizeCellRenderer(list: JList<out String>, value: String, index: Int, selected: Boolean, hasFocus: Boolean) {
           append(first(convertLineSeparators(value, RETURN_SYMBOL), rightMargin, false))

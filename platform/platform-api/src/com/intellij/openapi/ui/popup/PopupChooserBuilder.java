@@ -181,6 +181,13 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
+  public IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable callback) {
+    myItemChosenRunnable = callback;
+    return this;
+  }
+
+  @NotNull
+  @Override
   public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback) {
     myChooserComponent.setItemsChosenCallback(callback);
     return this;
@@ -249,6 +256,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  @Override
   public PopupChooserBuilder<T> setCommandButton(@NotNull ActiveComponent commandButton) {
     myCommandButton = commandButton;
     return this;
@@ -584,4 +592,5 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public ListComponentUpdater getBackgroundUpdater() {
     return myChooserComponent.getBackgroundUpdater();
   }
+
 }

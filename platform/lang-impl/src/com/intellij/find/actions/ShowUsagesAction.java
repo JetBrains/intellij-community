@@ -29,9 +29,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -244,8 +244,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     boolean isPreviewMode = Boolean.TRUE == PreviewManager.SERVICE.preview(handler.getProject(), UsagesPreviewPanelProvider.ID, Pair.create(usageView, table), false);
     Runnable itemChosenCallback = table.prepareTable(editor, popupPosition, handler, maxUsages, options, isPreviewMode, this);
 
-    @Nullable final JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
-                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
+    @Nullable final JBPopup popup = isPreviewMode || ApplicationManager.getApplication().isOnAir()
+                                    ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
+                                                              maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
     if (popup != null) {
       Disposer.register(popup, usageView);
 
@@ -359,6 +360,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
            }
          }
        }, project.getDisposed()));
+
     if (popup != null) {
       Disposer.register(popup, indicator::cancel);
     }
@@ -465,7 +467,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final AsyncProcessIcon processIcon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    PopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
     final String title = presentation.getTabText();
     if (title != null) {
       String result = getFullTitle(usages, title, false, visibleNodes.size() - 1, true);
@@ -475,7 +477,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     builder.setMovable(true).setResizable(true);
     builder.setMovable(true).setResizable(true);
-    builder.setItemChoosenCallback(itemChoseCallback);
+    builder.setItemChosenCallback(itemChoseCallback);
     final JBPopup[] popup = new JBPopup[1];
 
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
@@ -789,7 +791,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
     ScrollingUtil.ensureIndexIsVisible(table, newSelection, 0);
 
-    if (popup != null) {
+    if (popup != null && !ApplicationManager.getApplication().isOnAir()) {
       setSizeAndDimensions(table, popup, popupPosition, data);
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.ActiveComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -23,6 +24,9 @@ public interface IPopupChooserBuilder<T> {
 
   @NotNull
   IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Consumer<T> callback);
+
+  @NotNull
+  IPopupChooserBuilder<T> setItemChosenCallback(@NotNull Runnable callback);
 
   @NotNull
   IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback);
@@ -46,6 +50,8 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setUseDimensionServiceForXYLocation(boolean use);
 
   IPopupChooserBuilder<T> setCancelCallback(Computable<Boolean> callback);
+
+  IPopupChooserBuilder<T> setCommandButton(@NotNull ActiveComponent commandButton);
 
   IPopupChooserBuilder<T> setAlpha(float alpha);
 
