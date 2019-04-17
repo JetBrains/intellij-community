@@ -279,7 +279,7 @@ public class JDOMUtil {
   /**
    * Internal use only.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @NotNull
   public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)), factory);
@@ -309,7 +309,7 @@ public class JDOMUtil {
   /**
    * Internal use only.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @NotNull
   public static Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8), factory);
