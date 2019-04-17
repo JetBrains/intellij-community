@@ -65,7 +65,7 @@ BASH_FILE
                       PsiElement(word)('c')
               PsiElement(;)(';')
       PsiWhiteSpace(' ')
-      PsiErrorElement:<redirection>, fi, '|' or '|&' expected, got 'elif'
+      PsiErrorElement:<redirection>, HEREDOC_MARKER_TAG, fi, '|' or '|&' expected, got 'elif'
         PsiElement(elif)('elif')
   PsiWhiteSpace(' ')
   COMMANDS_LIST

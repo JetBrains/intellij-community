@@ -114,6 +114,15 @@ cat <<- 'DONE' |
 echo
 DONE
 
+cat >> WORKSPACE <<'EOF' || fail "Couldn't cat"
+android_sdk_repository(
+    name = "androidsdk",
+    path = "/fake/path",
+    api_level = 23,
+    build_tools_version="23.0.0"
+)
+EOF
+
 dist/build/shellcheck/shellcheck << 'EOF' || die "execution failed"
 #!/bin/sh
 echo "Hello World"

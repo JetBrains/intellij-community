@@ -579,6 +579,48 @@ BASH_FILE
         SIMPLE_COMMAND
           GENERIC_COMMAND_DIRECTIVE
             LITERAL
+              PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(>>)('>>')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('WORKSPACE')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<')
+              PsiElement(HEREDOC_MARKER_START)(''EOF'')
+              PsiWhiteSpace(' ')
+              PsiElement(||)('||')
+              PsiWhiteSpace(' ')
+              COMMANDS_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('fail')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(")('"')
+                        PsiElement(word)('Couldn')
+                        PsiElement(word)(''')
+                        PsiElement(word)('t')
+                        PsiWhiteSpace(' ')
+                        PsiElement(word)('cat')
+                        PsiElement(")('"')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('android_sdk_repository(\n    name = "androidsdk",\n    path = "/fake/path",\n    api_level = 23,\n    build_tools_version="23.0.0"\n)\n')
+              PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
               PsiElement(word)('dist/build/shellcheck/shellcheck')
           PsiWhiteSpace(' ')
           SIMPLE_COMMAND_ELEMENT

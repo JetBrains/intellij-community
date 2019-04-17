@@ -69,7 +69,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<compound list> expected, got ';'
+            PsiErrorElement:<block compound list> expected, got ';'
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')

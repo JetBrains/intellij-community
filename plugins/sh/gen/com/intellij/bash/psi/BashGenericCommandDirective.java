@@ -14,9 +14,6 @@ public interface BashGenericCommandDirective extends BashSimpleCommand {
   BashBashExpansion getBashExpansion();
 
   @Nullable
-  BashHeredoc getHeredoc();
-
-  @Nullable
   BashLiteral getLiteral();
 
   @Nullable

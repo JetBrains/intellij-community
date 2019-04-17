@@ -11,6 +11,9 @@ public interface BashCommand extends BashCompositeElement {
   BashCommand getCommand();
 
   @Nullable
+  BashHeredoc getHeredoc();
+
+  @Nullable
   BashRedirectionList getRedirectionList();
 
 }

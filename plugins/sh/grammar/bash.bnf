@@ -183,7 +183,7 @@ simple_command ::= generic_command_directive (simple_command_element | <<keyword
 }
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
 
-command ::= shell_command redirection_list?
+command ::= shell_command (heredoc | redirection_list)?
           | include_command
           | simple_command
 
@@ -201,11 +201,14 @@ shell_command ::=   for_command
                   | function_definition
 
 private any_block ::= block | do_block
-do_block ::= do  compound_list done {pin(".*")=1 extends=block}
-block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
+do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}
+block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
 
-while_command ::= while compound_list  do_block
-until_command ::= until compound_list  do_block
+while_command ::= while block_compound_list  do_block
+until_command ::= until block_compound_list  do_block
+
+block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 elementType=compound_list recoverWhile = block_compound_list_recover}
+private block_compound_list_recover ::= !('{' | '\n' | '}'| do | done)
 
 select_command ::= select w select_expression newlines any_block
 private select_expression ::=  in_clause | list_terminator?
@@ -238,6 +241,9 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
+compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
+private compound_list_recover ::= !(elif | else | then | fi)
+
 case_command ::= case w+ in case_clause_list esac
 private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
 case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
@@ -247,8 +253,6 @@ pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
 private case_pattern_recover ::= !(')'|';;'|esac)
 private case_clause_recover ::= !(esac)
 
-compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
-private compound_list_recover ::= !(elif | else | then | fi |'{' | '\n' | '}'| do | done)
 list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'

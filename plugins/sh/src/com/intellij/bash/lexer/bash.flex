@@ -145,7 +145,8 @@ HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 
 <STRING_EXPRESSION> {
     {Quote}                       { popState(); return QUOTE; }
-    {RawString}                   { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
+    {RawString}                   |
+    {UnclosedRawString}           { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
                                     else return RAW_STRING; }
 }
 

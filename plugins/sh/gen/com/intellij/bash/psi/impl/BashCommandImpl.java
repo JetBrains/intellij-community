@@ -33,6 +33,12 @@ public class BashCommandImpl extends BashCompositeElementImpl implements BashCom
 
   @Override
   @Nullable
+  public BashHeredoc getHeredoc() {
+    return findChildByClass(BashHeredoc.class);
+  }
+
+  @Override
+  @Nullable
   public BashRedirectionList getRedirectionList() {
     return findChildByClass(BashRedirectionList.class);
   }

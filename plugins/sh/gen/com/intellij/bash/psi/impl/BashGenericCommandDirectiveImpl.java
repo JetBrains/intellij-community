@@ -39,12 +39,6 @@ public class BashGenericCommandDirectiveImpl extends BashSimpleCommandImpl imple
 
   @Override
   @Nullable
-  public BashHeredoc getHeredoc() {
-    return findChildByClass(BashHeredoc.class);
-  }
-
-  @Override
-  @Nullable
   public BashLiteral getLiteral() {
     return findChildByClass(BashLiteral.class);
   }

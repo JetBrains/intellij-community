@@ -196,23 +196,23 @@ public class _BashLexerGen implements FlexLexer {
     "\1\5\1\30\1\1\2\10\1\11\1\31\4\11\1\15"+
     "\1\32\1\16\1\33\1\22\1\34\1\35\1\36\1\23"+
     "\1\24\1\37\1\40\1\41\2\42\1\43\1\44\1\10"+
-    "\1\16\1\21\7\10\1\45\1\46\1\7\1\47\1\1"+
-    "\1\3\2\1\2\10\2\50\1\10\4\51\1\10\2\51"+
-    "\1\10\1\52\1\1\1\52\2\1\1\53\2\54\2\55"+
-    "\2\56\1\57\2\60\3\1\1\61\2\3\1\0\1\7"+
-    "\1\0\1\62\1\10\2\11\2\63\1\64\1\65\1\66"+
-    "\1\67\1\10\1\70\5\71\1\72\1\73\1\74\1\75"+
-    "\1\76\1\77\6\10\1\100\1\101\1\102\1\103\1\104"+
-    "\1\105\2\10\1\106\1\107\1\110\4\10\1\111\1\112"+
-    "\1\113\1\10\1\114\3\0\2\11\1\67\1\0\1\115"+
-    "\1\116\1\117\1\120\1\121\1\122\1\76\1\123\1\124"+
-    "\1\125\1\126\1\127\1\130\1\131\1\132\1\10\1\133"+
-    "\2\134\1\135\6\10\1\136\6\0\1\10\1\3\2\10"+
+    "\1\16\1\21\7\10\1\45\1\46\1\47\1\50\1\1"+
+    "\1\3\2\1\2\10\2\51\1\10\4\52\1\10\2\52"+
+    "\1\10\1\53\1\1\1\53\2\1\1\54\2\55\2\56"+
+    "\2\57\1\60\2\61\3\1\1\62\2\3\1\0\1\7"+
+    "\1\0\1\63\1\10\2\11\2\64\1\65\1\66\1\67"+
+    "\1\70\1\10\1\71\5\72\1\73\1\74\1\75\1\76"+
+    "\1\77\1\100\6\10\1\101\1\102\1\103\1\104\1\105"+
+    "\1\106\2\10\1\107\1\110\1\111\4\10\1\112\1\113"+
+    "\1\114\1\10\1\115\3\0\2\11\1\70\1\0\1\116"+
+    "\1\117\1\120\1\121\1\122\1\123\1\77\1\124\1\125"+
+    "\1\126\1\127\1\130\1\131\1\132\1\133\1\10\1\134"+
+    "\2\135\1\136\6\10\1\47\6\0\1\10\1\3\2\10"+
     "\1\0\3\10\14\0\2\137\1\0\1\3\1\10\1\140"+
-    "\1\141\1\142\2\71\1\143\1\144\6\10\1\145\1\146"+
-    "\3\10\1\147\3\10\2\113\1\142\1\150\1\151\1\152"+
-    "\1\0\6\10\1\3\3\47\1\0\2\50\2\10\2\52"+
-    "\2\55\1\153\1\154\1\155\1\156\1\157\1\160\1\161"+
+    "\1\141\1\142\2\72\1\143\1\144\6\10\1\145\1\146"+
+    "\3\10\1\147\3\10\2\114\1\142\1\150\1\151\1\152"+
+    "\1\0\6\10\1\3\3\50\1\0\2\51\2\10\2\53"+
+    "\2\56\1\153\1\154\1\155\1\156\1\157\1\160\1\161"+
     "\1\146\1\10\1\162\1\163\4\10\1\3\2\10\1\164"+
     "\1\3\2\10\1\0\2\10\1\165\1\166\2\10\1\146"+
     "\1\167\3\10\1\170";
@@ -1432,21 +1432,27 @@ public class _BashLexerGen implements FlexLexer {
             // fall through
           case 158: break;
           case 39: 
-            { popState(); return WORD;
+            { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
+                                    else return RAW_STRING;
             } 
             // fall through
           case 159: break;
           case 40: 
-            { popState(); return WHITESPACE;
+            { popState(); return WORD;
             } 
             // fall through
           case 160: break;
           case 41: 
-            { popState(); yypushback(1);
+            { popState(); return WHITESPACE;
             } 
             // fall through
           case 161: break;
           case 42: 
+            { popState(); yypushback(1);
+            } 
+            // fall through
+          case 162: break;
+          case 43: 
             { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
                                       heredocMarker = yytext().subSequence(1, yylength()-1).toString();
                                     else heredocMarker = yytext().toString();
@@ -1455,278 +1461,272 @@ public class _BashLexerGen implements FlexLexer {
                                     return HEREDOC_MARKER_START;
             } 
             // fall through
-          case 162: break;
-          case 43: 
+          case 163: break;
+          case 44: 
             { if (yytext().toString().equals(heredocMarker))
                                   { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
                                     else { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
             } 
             // fall through
-          case 163: break;
-          case 44: 
-            { yypushback(yylength()); yybegin(HERE_DOC_BODY);
-            } 
-            // fall through
           case 164: break;
           case 45: 
-            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE;
+            { yypushback(yylength()); yybegin(HERE_DOC_BODY);
             } 
             // fall through
           case 165: break;
           case 46: 
-            { yybegin(HERE_DOC_END_MARKER); return LINEFEED;
+            { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_LINE;
             } 
             // fall through
           case 166: break;
           case 47: 
-            { return HEREDOC_LINE;
+            { yybegin(HERE_DOC_END_MARKER); return LINEFEED;
             } 
             // fall through
           case 167: break;
           case 48: 
-            { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE;
+            { return HEREDOC_LINE;
             } 
             // fall through
           case 168: break;
           case 49: 
-            { popState(); return RIGHT_CURLY;
+            { yybegin(HERE_DOC_END_MARKER); return HEREDOC_LINE;
             } 
             // fall through
           case 169: break;
           case 50: 
+            { popState(); return RIGHT_CURLY;
+            } 
+            // fall through
+          case 170: break;
+          case 51: 
             // lookahead expression with fixed lookahead length
             zzMarkedPos = Character.offsetByCodePoints
                 (zzBufferL/*, zzStartRead, zzEndRead - zzStartRead*/, zzMarkedPos, -1);
             { return WORD;
             } 
             // fall through
-          case 170: break;
-          case 51: 
-            { return VAR;
-            } 
-            // fall through
           case 171: break;
           case 52: 
-            { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR;
+            { return VAR;
             } 
             // fall through
           case 172: break;
           case 53: 
-            { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;
+            { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR;
             } 
             // fall through
           case 173: break;
           case 54: 
-            { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT;
+            { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;
             } 
             // fall through
           case 174: break;
           case 55: 
-            { return OCTAL;
+            { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT;
             } 
             // fall through
           case 175: break;
           case 56: 
+            { return OCTAL;
+            } 
+            // fall through
+          case 176: break;
+          case 57: 
             { if (yystate() == STRING_EXPRESSION && !isArithmeticExpansion) { pushParentheses(PARENTHESES);
                                            yypushback(1); isArithmeticExpansion = false; return LEFT_PAREN;}
                                     else { pushState(ARITHMETIC_EXPRESSION); pushParentheses(DOUBLE_PARENTHESES);
                                            isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
             } 
             // fall through
-          case 176: break;
-          case 57: 
-            { return FILEDESCRIPTOR;
-            } 
-            // fall through
           case 177: break;
           case 58: 
-            { return AND_AND;
+            { return FILEDESCRIPTOR;
             } 
             // fall through
           case 178: break;
           case 59: 
-            { return REDIRECT_AMP_GREATER;
+            { return AND_AND;
             } 
             // fall through
           case 179: break;
           case 60: 
-            { return PLUS_ASSIGN;
+            { return REDIRECT_AMP_GREATER;
             } 
             // fall through
           case 180: break;
           case 61: 
-            { return REDIRECT_GREATER_AMP;
+            { return PLUS_ASSIGN;
             } 
             // fall through
           case 181: break;
           case 62: 
-            { return SHIFT_RIGHT;
+            { return REDIRECT_GREATER_AMP;
             } 
             // fall through
           case 182: break;
           case 63: 
-            { return REDIRECT_GREATER_BAR;
+            { return SHIFT_RIGHT;
             } 
             // fall through
           case 183: break;
           case 64: 
-            { return REDIRECT_LESS_AMP;
+            { return REDIRECT_GREATER_BAR;
             } 
             // fall through
           case 184: break;
           case 65: 
-            { return REDIRECT_LESS_GREATER;
+            { return REDIRECT_LESS_AMP;
             } 
             // fall through
           case 185: break;
           case 66: 
+            { return REDIRECT_LESS_GREATER;
+            } 
+            // fall through
+          case 186: break;
+          case 67: 
             { if (yystate() != HERE_DOC_PIPELINE && yystate() != STRING_EXPRESSION)
                                     { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT;
             } 
             // fall through
-          case 186: break;
-          case 67: 
-            { return PIPE_AMP;
-            } 
-            // fall through
           case 187: break;
           case 68: 
-            { return OR_OR;
+            { return PIPE_AMP;
             } 
             // fall through
           case 188: break;
           case 69: 
-            { pushState(IF_CONDITION); return IF;
+            { return OR_OR;
             } 
             // fall through
           case 189: break;
           case 70: 
+            { pushState(IF_CONDITION); return IF;
+            } 
+            // fall through
+          case 190: break;
+          case 71: 
             { if (shouldCloseDoubleParen()) { popState(); popParentheses(); return RIGHT_DOUBLE_PAREN; }
                                     else if (shouldCloseSingleParen()) {
                                       if (yystate() == PARENTHESES_COMMAND_SUBSTITUTION) popState(); yypushback(1); popParentheses(); return RIGHT_PAREN;
                                     } else return RIGHT_DOUBLE_PAREN;
             } 
             // fall through
-          case 190: break;
-          case 71: 
-            { return DO;
-            } 
-            // fall through
           case 191: break;
           case 72: 
-            { if (yystate() == IF_CONDITION) popState(); return FI;
+            { return DO;
             } 
             // fall through
           case 192: break;
           case 73: 
-            { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET;
+            { if (yystate() == IF_CONDITION) popState(); return FI;
             } 
             // fall through
           case 193: break;
           case 74: 
-            { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET;
+            { if (yystate() != STRING_EXPRESSION) pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET;
             } 
             // fall through
           case 194: break;
           case 75: 
-            { if (getTokenStart() == 0) return SHEBANG; else return COMMENT;
+            { if (yystate() == CONDITIONAL_EXPRESSION) popState(); return RIGHT_DOUBLE_BRACKET;
             } 
             // fall through
           case 195: break;
           case 76: 
-            { return NE;
+            { if (getTokenStart() == 0) return SHEBANG; else return COMMENT;
             } 
             // fall through
           case 196: break;
           case 77: 
-            { return BIT_AND_ASSIGN;
+            { return NE;
             } 
             // fall through
           case 197: break;
           case 78: 
-            { return MINUS_MINUS;
+            { return BIT_AND_ASSIGN;
             } 
             // fall through
           case 198: break;
           case 79: 
-            { return MINUS_ASSIGN;
+            { return MINUS_MINUS;
             } 
             // fall through
           case 199: break;
           case 80: 
-            { return EQ;
+            { return MINUS_ASSIGN;
             } 
             // fall through
           case 200: break;
           case 81: 
-            { return PLUS_PLUS;
+            { return EQ;
             } 
             // fall through
           case 201: break;
           case 82: 
-            { return GE;
+            { return PLUS_PLUS;
             } 
             // fall through
           case 202: break;
           case 83: 
-            { return MULT_ASSIGN;
+            { return GE;
             } 
             // fall through
           case 203: break;
           case 84: 
-            { return EXPONENT;
+            { return MULT_ASSIGN;
             } 
             // fall through
           case 204: break;
           case 85: 
-            { return DIV_ASSIGN;
+            { return EXPONENT;
             } 
             // fall through
           case 205: break;
           case 86: 
-            { return MOD_ASSIGN;
+            { return DIV_ASSIGN;
             } 
             // fall through
           case 206: break;
           case 87: 
-            { return LE;
+            { return MOD_ASSIGN;
             } 
             // fall through
           case 207: break;
           case 88: 
-            { return SHIFT_LEFT;
+            { return LE;
             } 
             // fall through
           case 208: break;
           case 89: 
-            { return BIT_OR_ASSIGN;
+            { return SHIFT_LEFT;
             } 
             // fall through
           case 209: break;
           case 90: 
-            { return BIT_XOR_ASSIGN;
+            { return BIT_OR_ASSIGN;
             } 
             // fall through
           case 210: break;
           case 91: 
-            { pushState(REGULAR_EXPRESSION); return REGEXP;
+            { return BIT_XOR_ASSIGN;
             } 
             // fall through
           case 211: break;
           case 92: 
-            { pushState(CASE_PATTERN);    return CASE_END;
+            { pushState(REGULAR_EXPRESSION); return REGEXP;
             } 
             // fall through
           case 212: break;
           case 93: 
-            { if (yystate() == CASE_CONDITION) {pushState(CASE_PATTERN); return IN; } else return WORD;
+            { pushState(CASE_PATTERN);    return CASE_END;
             } 
             // fall through
           case 213: break;
           case 94: 
-            { if (StringUtil.indexOf(yytext(), '"') > 0) { yypushback(yylength() - 1); return WORD; }
-                                    else return RAW_STRING;
+            { if (yystate() == CASE_CONDITION) {pushState(CASE_PATTERN); return IN; } else return WORD;
             } 
             // fall through
           case 214: break;
