@@ -78,7 +78,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");
-            new GitConflictResolver(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
           }
         }
       }

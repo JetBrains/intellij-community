@@ -637,7 +637,7 @@ public class GitRebaseProcess {
                            @NotNull Git git,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
-      super(project, git, singleton(repository.getRoot()), params);
+      super(project, singleton(repository.getRoot()), params);
       myCalledFromNotification = calledFromNotification;
     }
 
