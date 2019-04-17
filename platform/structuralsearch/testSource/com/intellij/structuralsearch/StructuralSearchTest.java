@@ -2384,13 +2384,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}" +
                     "interface ABC {" +
                     "  void m();" +
+                    "}" +
+                    "interface KLM {" +
+                    "}" +
+                    "interface I {" +
+                    "  void m();" +
                     "}";
 
     String pattern1 = "interface '_Class {  default '_ReturnType 'MethodName+('_ParameterType '_Parameter*);}";
     assertEquals("should find default method", 1, findMatchesCount(source, pattern1));
 
     String pattern2 = "interface 'Class {  default '_ReturnType '_MethodName{0,0}('_ParameterType '_Parameter*);}";
-    assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
+    assertEquals("should find interface without default methods", 3, findMatchesCount(source, pattern2));
 
     String pattern3 = "default '_ReturnType 'MethodName('_ParameterType '_Parameter*);";
     assertEquals("find naked default method", 1, findMatchesCount(source, pattern3));
@@ -2423,6 +2428,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find Runnable method references", 4, findMatchesCount(source, pattern5));
   }
 
+  public void testNoException() {
+    String s = "class X {" +
+               "  void x(String[] tt, String[] ss, String s) {}" +
+               "}";
+    assertEquals("don't throw exception during matching", 0,
+                 findMatchesCount(s, "void '_Method('_ParameterType '_Parameter*, '_LastType[] '_lastParameter);"));
+  }
+
   public void testNoUnexpectedException() {
     String source = "";
 
@@ -2444,7 +2457,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, pattern3);
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
-
   }
 
   public void testInvalidPatternWarnings() {
