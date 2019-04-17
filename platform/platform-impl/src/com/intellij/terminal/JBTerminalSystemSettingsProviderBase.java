@@ -290,6 +290,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       throw new IllegalStateException();
     }
 
+    @NotNull
     @Override
     public Font getFont(EditorFontType key) {
       if (myFontsMap != null) {

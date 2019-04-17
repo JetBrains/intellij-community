@@ -344,9 +344,7 @@ public class CompressedAppendableFile {
 
   @NotNull
   private static short[] reallocShortTable(short[] table) {
-    short[] newTable = new short[Math.max(table.length * 8 / 5, table.length + 1)];
-    System.arraycopy(table, 0, newTable, 0, table.length);
-    return newTable;
+    return ArrayUtil.realloc(table, Math.max(table.length * 8 / 5, table.length + 1));
   }
 
   protected int compress(DataOutputStream compressedDataOut, byte[] buffer) throws IOException {

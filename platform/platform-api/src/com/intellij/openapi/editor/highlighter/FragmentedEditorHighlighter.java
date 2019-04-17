@@ -33,18 +33,18 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final int myAdditionalOffset;
   private final boolean myMergeByTextAttributes;
 
-  public FragmentedEditorHighlighter(EditorHighlighter highlighter, TextRange range) {
+  public FragmentedEditorHighlighter(@NotNull EditorHighlighter highlighter, TextRange range) {
     this(highlighter.createIterator(range.getStartOffset()), Collections.singletonList(range));
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<? extends TextRange> ranges) {
+  private FragmentedEditorHighlighter(@NotNull HighlighterIterator sourceIterator, List<? extends TextRange> ranges) {
     this(sourceIterator, ranges, 0, false);
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator,
-                                     List<? extends TextRange> ranges,
-                                     final int additionalOffset,
-                                     boolean mergeByTextAttributes) {
+  private FragmentedEditorHighlighter(@NotNull HighlighterIterator sourceIterator,
+                                      List<? extends TextRange> ranges,
+                                      final int additionalOffset,
+                                      boolean mergeByTextAttributes) {
     myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
     myPieces = new ArrayList<>();
@@ -124,7 +124,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     private final Document myDocument;
     private int myIdx;
 
-    private ProxyIterator(Document document, int idx) {
+    private ProxyIterator(@NotNull Document document, int idx) {
       myDocument = document;
       myIdx = idx;
     }
@@ -168,6 +168,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       return myIdx < 0 || myIdx >= myPieces.size();
     }
 
+    @NotNull
     @Override
     public Document getDocument() {
       return myDocument;

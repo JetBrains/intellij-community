@@ -63,6 +63,17 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static short[] realloc(@NotNull short[] array, final int newSize) {
+    if (newSize == 0) {
+      return EMPTY_SHORT_ARRAY;
+    }
+
+    final int oldSize = array.length;
+    return oldSize == newSize ? array : Arrays.copyOf(array, newSize);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static long[] realloc(@NotNull long[] array, int newSize) {
     if (newSize == 0) {
       return EMPTY_LONG_ARRAY;

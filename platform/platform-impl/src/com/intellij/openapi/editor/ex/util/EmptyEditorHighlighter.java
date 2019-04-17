@@ -91,6 +91,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         return index != 0;
       }
 
+      @NotNull
       @Override
       public Document getDocument() {
         return myEditor.getDocument();
