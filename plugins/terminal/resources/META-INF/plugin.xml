@@ -22,12 +22,12 @@
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction" text="Move to Editor">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToolwindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabLeftAction"
+    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"
             text="Move Left">
       <keyboard-shortcut first-keystroke="control shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToolwindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabRightAction"
+    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"
             text="Move Right">
       <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
