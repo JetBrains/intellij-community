@@ -1,4 +1,5 @@
 <idea-plugin>
+    <id>TestNG-J</id>
     <name>TestNG</name>
     <description><![CDATA[
     Supports <a href="https://testng.org/doc/">TestNG</a>, a Java unit testing framework
