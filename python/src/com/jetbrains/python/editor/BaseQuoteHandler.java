@@ -58,7 +58,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   }
 
   private boolean isOpeningTripleQuote(HighlighterIterator iterator, int offset) {
-    final String text = iterator.getDocument().getText();
+    final CharSequence text = iterator.getDocument().getCharsSequence();
     char theQuote = text.charAt(offset);
 
     final IElementType tokenType = iterator.getTokenType();
@@ -128,7 +128,7 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     Document document = iterator.getDocument();
-    String text = document.getText();
+    CharSequence text = document.getCharsSequence();
     char theQuote = text.charAt(offset - 1);
     // Both isOpeningTripleQuote() and isOpeningQuote() expect iterator to be on the token
     // of the passed offset, not one character to the right. 
