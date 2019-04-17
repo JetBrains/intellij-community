@@ -2,7 +2,7 @@ package com.intellij.bash;
 
 import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.bash.psi.BashGenericCommandDirective;
-import com.intellij.execution.ExecutionException;
+import com.intellij.bash.psi.BashLiteral;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
@@ -53,7 +53,8 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
   private boolean wordWithDocumentation(@Nullable PsiElement o) {
     return o instanceof LeafPsiElement
         && ((LeafPsiElement) o).getElementType() == BashTypes.WORD
-        && (o.getParent() instanceof BashGenericCommandDirective);
+        && (o.getParent() instanceof BashLiteral)
+        && (o.getParent().getParent() instanceof BashGenericCommandDirective);
   }
 
   @Nullable
