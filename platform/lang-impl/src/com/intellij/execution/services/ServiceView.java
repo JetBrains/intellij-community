@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +22,7 @@ import java.awt.*;
 import java.util.List;
 
 class ServiceView extends JPanel implements Disposable {
+  private final Project myProject;
   private final ServiceViewState myState;
   private final ServiceViewTree myTree;
   private final ServiceViewUi myUi;
@@ -29,6 +31,7 @@ class ServiceView extends JPanel implements Disposable {
 
   ServiceView(@NotNull Project project, @NotNull ServiceViewUi ui, @NotNull ServiceViewState state) {
     super(new BorderLayout());
+    myProject = project;
     myState = state;
     myUi = ui;
 
@@ -96,6 +99,10 @@ class ServiceView extends JPanel implements Disposable {
 
     if (newDescriptor != null) {
       newDescriptor.onNodeSelected();
+    }
+    if (newDescriptor instanceof Navigatable) {
+      Navigatable navigatable = (Navigatable)newDescriptor;
+      if (ServiceViewManagerImpl.isAutoScrollToSourceEnabled(myProject) && navigatable.canNavigate()) navigatable.navigate(false);
     }
 
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
