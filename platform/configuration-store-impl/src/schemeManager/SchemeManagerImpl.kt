@@ -32,6 +32,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -201,12 +202,17 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       if (!isLoadOnlyFromProvider) {
         ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
           for (file in directoryStream) {
-            if (file.isDirectory()) {
-              continue
-            }
-
             catchAndLog({ file.toString() }) {
-              schemeLoader.loadScheme(file.fileName.toString(), null, Files.readAllBytes(file))
+              val bytes = try {
+                Files.readAllBytes(file)
+              }
+              catch (e: FileSystemException) {
+                when {
+                  file.isDirectory() -> return@catchAndLog
+                  else -> throw e
+                }
+              }
+              schemeLoader.loadScheme(file.fileName.toString(), null, bytes)
             }
           }
         }

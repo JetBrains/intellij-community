@@ -207,8 +207,9 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("1.xml")).doesNotExist()
   }
 
-  @Test fun setSchemes() {
-    val dir = tempDirManager.newPath()
+  @Test
+  fun setSchemes() {
+    val dir = fsRule.fs.getPath("/test")
     val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
@@ -251,6 +252,16 @@ internal class SchemeManagerTest {
     schemeManager.reload()
 
     assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
+  }
+
+  @Test
+  fun `ignore dir named as file`() {
+    val dir = fsRule.fs.getPath("/test").createDirectories()
+    dir.resolve("foo.xml").createDirectories()
+
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).isEmpty()
   }
 
   @Test
