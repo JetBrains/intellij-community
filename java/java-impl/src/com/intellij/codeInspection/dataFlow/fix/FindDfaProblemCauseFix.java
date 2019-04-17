@@ -10,6 +10,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -19,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -62,22 +65,28 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(this::findCause));
+  }
+
+  private void findCause() {
     PsiExpression element = myAnchor.getElement();
     if (element == null) return;
+    PsiFile file = element.getContainingFile();
+    List<TrackingRunner.CauseItem> items =
+      TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
+    
+    ApplicationManager.getApplication().invokeLater(() -> ReadAction.run(() -> displayProblemCause(file, items)));
+  }
+
+  private static void displayProblemCause(PsiFile file, List<TrackingRunner.CauseItem> items) {
+    if (!file.isValid()) return;
+    Project project = file.getProject();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     Document document = editor.getDocument();
-    PsiFile file = element.getContainingFile();
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
     if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return;
-    List<TrackingRunner.CauseItem> items =
-      TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
     TrackingRunner.CauseItem root = ContainerUtil.getOnlyItem(items);
-    if (root == null) {
-      HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-      hintManager.showErrorHint(editor, "Unable to find the cause");
-      return;
-    }
     class CauseWithDepth {
       final int myDepth;
       final TrackingRunner.CauseItem myCauseItem;
@@ -92,8 +101,12 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
         return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document);
       }
     }
-    List<CauseWithDepth> causes =
-      EntryStream.ofTree(root, (depth, c) -> c.children()).skip(1).mapKeyValue((d, i) -> new CauseWithDepth(d, i)).toList();
+    List<CauseWithDepth> causes;
+    if (root == null) {
+      causes = Collections.emptyList();
+    } else {
+      causes = EntryStream.ofTree(root, (depth, c) -> c.children()).skip(1).mapKeyValue((d, i) -> new CauseWithDepth(d, i)).toList();
+    }
     if (causes.isEmpty()) {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
       hintManager.showErrorHint(editor, "Unable to find the cause");
@@ -117,9 +130,9 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
         if (h == null) return;
         h.dropHighlight();
         if (cause == null) return;
-        PsiElement target = cause.myCauseItem.getTarget();
-        if (target == null || !target.isValid()) return;
-        TextRange range = target.getTextRange();
+        Segment target = cause.myCauseItem.getTargetSegment();
+        if (target == null) return;
+        TextRange range = TextRange.create(target);
         h.highlight(Pair.create(range, Collections.singletonList(range)));
       })
       .addListener(new JBPopupAdapter() {

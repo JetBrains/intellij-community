@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
@@ -91,7 +92,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
   public static class CauseItem {
     final @NotNull List<CauseItem> myChildren;
     final @NotNull DfaProblemType myProblem;
-    final @Nullable PsiElement myTarget;
+    final @Nullable SmartPsiElementPointer<PsiElement> myTarget;
 
     CauseItem(@NotNull String problem, @Nullable PsiElement target) {
       this(new CustomDfaProblemType(problem), target);
@@ -100,7 +101,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     CauseItem(@NotNull DfaProblemType problem, @Nullable PsiElement target) {
       myChildren = new ArrayList<>();
       myProblem = problem;
-      myTarget = target;
+      myTarget = target == null ? null : SmartPointerManager.createPointer(target);
     }
 
     CauseItem(@NotNull String problem, @NotNull MemoryStateChange change) {
@@ -135,7 +136,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
 
     private String dump(Document doc, int indent) {
-      return StringUtil.repeat("  ", indent) + render(doc) + (myTarget == null ? "" : " (" + myTarget.getText() + ")") + "\n" +
+      PsiElement target = getTarget();
+      return StringUtil.repeat("  ", indent) + render(doc) + (target == null ? "" : " (" + target.getText() + ")") + "\n" +
              StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1)).joining();
     }
 
@@ -145,14 +147,19 @@ public class TrackingRunner extends StandardDataFlowRunner {
 
     @Nullable
     public PsiElement getTarget() {
-      return myTarget;
+      return myTarget != null ? myTarget.getElement() : null;
+    }
+    
+    public Segment getTargetSegment() {
+      return myTarget == null ? null : myTarget.getRange();
     }
 
     public String render(Document doc) {
-      if (myTarget != null) {
+      Segment range = getTargetSegment();
+      if (range != null) {
         String cause = myProblem.toString();
         if (cause.endsWith("#ref")) {
-          int offset = myTarget.getTextRange().getStartOffset();
+          int offset = range.getStartOffset();
           int number = doc.getLineNumber(offset);
           return cause.replaceFirst("#ref$", "line #" + (number + 1));
         }
