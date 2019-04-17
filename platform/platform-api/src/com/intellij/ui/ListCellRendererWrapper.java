@@ -89,37 +89,37 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
    * @param selected True if the specified cell was selected.
    * @param hasFocus True if the specified cell has the focus.
    */
-  public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
+  public abstract void customize(JList list, T value, int index, boolean selected, boolean hasFocus);
 
   public final void setSeparator() {
     mySeparator = true;
   }
 
-  public final void setIcon(@Nullable final Icon icon) {
+  public final void setIcon(@Nullable Icon icon) {
     myIcon = icon;
   }
 
-  public final void setText(@Nullable final String text) {
+  public final void setText(@Nullable String text) {
     myText = text;
   }
 
-  public final void setToolTipText(@Nullable final String toolTipText) {
+  public final void setToolTipText(@Nullable String toolTipText) {
     myToolTipText = toolTipText;
   }
 
-  public final void setForeground(@Nullable final Color foreground) {
+  public final void setForeground(@Nullable Color foreground) {
     myForeground = foreground;
   }
 
-  public final void setBackground(@Nullable final Color background) {
+  public final void setBackground(@Nullable Color background) {
     myBackground = background;
   }
 
-  public final void setFont(@Nullable final Font font) {
+  public final void setFont(@Nullable Font font) {
     myFont = font;
   }
 
-  public final void setClientProperty(@NotNull final Object key, @Nullable final Object value) {
+  public final void setClientProperty(@NotNull Object key, @Nullable Object value) {
     myProperties = myProperties.prepend(pair(key, value));
   }
 }
