@@ -30,12 +30,11 @@ BASH_FILE
                         <empty list>
               PsiWhiteSpace(' ')
               PsiElement(;)(';')
-            PsiErrorElement:'\n' or '}' expected, got 'done'
-              <empty list>
-      PsiWhiteSpace(' ')
-      PsiElement(done)('done')
-      PsiWhiteSpace(' ')
-      PsiElement(})('}')
+              PsiWhiteSpace(' ')
+              PsiErrorElement:'\n' expected, got 'done'
+                PsiElement(done)('done')
+            PsiWhiteSpace(' ')
+            PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

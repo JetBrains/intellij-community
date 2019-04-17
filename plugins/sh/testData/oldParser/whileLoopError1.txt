@@ -17,31 +17,28 @@ BASH_FILE
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiWhiteSpace(' ')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+            PsiWhiteSpace(' ')
+            PsiErrorElement:<do block compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         WHILE_COMMAND
           PsiElement(while)('while')
-          PsiErrorElement:<compound list> expected, got ';'
-            <empty list>
-    PsiWhiteSpace(' ')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'do'
-      PsiElement(do)('do')
-    PsiWhiteSpace(' ')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+          PsiWhiteSpace(' ')
+          PsiErrorElement:<do block compound list> expected, got ';'
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            PsiErrorElement:<do block compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

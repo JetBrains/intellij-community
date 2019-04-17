@@ -69,12 +69,10 @@ BASH_FILE
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+            PsiErrorElement:<do block compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

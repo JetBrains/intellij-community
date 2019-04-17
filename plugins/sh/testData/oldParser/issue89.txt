@@ -9,8 +9,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           BLOCK
             PsiElement({)('{')
-            COMPOUND_LIST
-              PsiElement(\n)('\n')
-              PsiErrorElement:'&', ';' or '\n' expected, got '}'
-                <empty list>
+            PsiElement(\n)('\n')
+            PsiErrorElement:'}' unexpected
+              <empty list>
             PsiElement(})('}')

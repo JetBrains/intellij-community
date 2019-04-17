@@ -208,8 +208,19 @@ shell_command ::=   for_command
                   | block
                   | function_definition
 
-while_command ::= while compound_list do_block
-until_command ::= until compound_list do_block
+private any_block ::= block | do_block
+do_block ::= do  do_block_compound_list done {pin(".*")=1 extends=block}
+block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
+
+block_compound_list ::= nl? pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile=block_compound_list_recover
+          elementType=compound_list}
+do_block_compound_list ::= nl? pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile=do_block_compound_list_recover
+                    elementType=compound_list}
+private block_compound_list_recover ::= !('{' | '\n' | '}')
+private do_block_compound_list_recover ::= !(do | '\n' |done)
+
+while_command ::= while do_block_compound_list  do_block
+until_command ::= until do_block_compound_list  do_block
 
 select_command ::= select w (';'? newlines any_block | newlines in_clause any_block)
 
@@ -224,10 +235,6 @@ private in_clause ::= "in" word_list list_terminator newlines
 
 list_terminator ::= '\n' | ';' {recoverWhile = list_terminator_recover}
 private list_terminator_recover ::= !(do | '{' | '\n')
-
-private any_block ::= block | do_block
-do_block ::= do  compound_list done {pin(".*")=1 extends=block}
-block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
 
 function_definition ::=           word argument_list  newlines block
                        | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}

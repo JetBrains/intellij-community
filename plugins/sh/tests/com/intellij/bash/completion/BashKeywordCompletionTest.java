@@ -63,6 +63,10 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoCompletionInWhileCondition() {
     myFixture.configureByText("a.sh", "while [ <caret> ]; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "while [  ]whi<caret>; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "while [  ]; wh<caret> do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
   }
 
   public void testUntilCompletion() {
@@ -73,6 +77,10 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testNoCompletionInUntilCondition() {
     myFixture.configureByText("a.sh", "until [ <caret> ]; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "until [  ]un<caret>; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "until [  ]; un<caret> do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
   }
 

@@ -6,16 +6,15 @@ BASH_FILE
       PIPELINE
         UNTIL_COMMAND
           PsiElement(until)('until')
-          PsiErrorElement:<compound list> expected, got ';'
-            <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'do'
-      PsiElement(do)('do')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+          PsiErrorElement:<do block compound list> expected, got ';'
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiErrorElement:<do block compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -33,35 +32,31 @@ BASH_FILE
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+            PsiErrorElement:<do block compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
       PIPELINE
         UNTIL_COMMAND
           PsiElement(until)('until')
-          PsiErrorElement:<compound list> expected, got ';'
-            <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'do'
-      PsiElement(do)('do')
-  PsiWhiteSpace(' ')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('a')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'done'
-      PsiElement(done)('done')
+          PsiErrorElement:<do block compound list> expected, got ';'
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          DO_BLOCK
+            PsiElement(do)('do')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('a')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(done)('done')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

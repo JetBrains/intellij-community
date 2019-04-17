@@ -501,7 +501,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' compound_list '}'
+  // '{' block_compound_list '}'
   public static boolean block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
@@ -509,10 +509,55 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, BLOCK, null);
     r = consumeToken(b, LEFT_CURLY);
     p = r; // pin = 1
-    r = r && report_error_(b, compound_list(b, l + 1));
+    r = r && report_error_(b, block_compound_list(b, l + 1));
     r = p && consumeToken(b, RIGHT_CURLY) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // nl? pipeline_command_list end_of_list  newlines
+  public static boolean block_compound_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<block compound list>");
+    r = block_compound_list_0(b, l + 1);
+    r = r && pipeline_command_list(b, l + 1);
+    p = r; // pin = 2
+    r = r && report_error_(b, end_of_list(b, l + 1));
+    r = p && newlines(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, block_compound_list_recover_parser_);
+    return r || p;
+  }
+
+  // nl?
+  private static boolean block_compound_list_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list_0")) return false;
+    nl(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // !('{' | '\n' | '}')
+  static boolean block_compound_list_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !block_compound_list_recover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '{' | '\n' | '}'
+  private static boolean block_compound_list_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_compound_list_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, LINEFEED);
+    if (!r) r = consumeToken(b, RIGHT_CURLY);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1070,7 +1115,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // do  compound_list done
+  // do  do_block_compound_list done
   public static boolean do_block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "do_block")) return false;
     if (!nextTokenIs(b, DO)) return false;
@@ -1078,10 +1123,55 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, DO_BLOCK, null);
     r = consumeToken(b, DO);
     p = r; // pin = 1
-    r = r && report_error_(b, compound_list(b, l + 1));
+    r = r && report_error_(b, do_block_compound_list(b, l + 1));
     r = p && consumeToken(b, DONE) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // nl? pipeline_command_list end_of_list  newlines
+  public static boolean do_block_compound_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "do_block_compound_list")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, COMPOUND_LIST, "<do block compound list>");
+    r = do_block_compound_list_0(b, l + 1);
+    r = r && pipeline_command_list(b, l + 1);
+    p = r; // pin = 2
+    r = r && report_error_(b, end_of_list(b, l + 1));
+    r = p && newlines(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, do_block_compound_list_recover_parser_);
+    return r || p;
+  }
+
+  // nl?
+  private static boolean do_block_compound_list_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "do_block_compound_list_0")) return false;
+    nl(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // !(do | '\n' |done)
+  static boolean do_block_compound_list_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "do_block_compound_list_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !do_block_compound_list_recover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // do | '\n' |done
+  private static boolean do_block_compound_list_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "do_block_compound_list_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DO);
+    if (!r) r = consumeToken(b, LINEFEED);
+    if (!r) r = consumeToken(b, DONE);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2618,7 +2708,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // until compound_list do_block
+  // until do_block_compound_list  do_block
   public static boolean until_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "until_command")) return false;
     if (!nextTokenIs(b, UNTIL)) return false;
@@ -2626,7 +2716,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, UNTIL_COMMAND, null);
     r = consumeToken(b, UNTIL);
     p = r; // pin = 1
-    r = r && report_error_(b, compound_list(b, l + 1));
+    r = r && report_error_(b, do_block_compound_list(b, l + 1));
     r = p && do_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -2668,7 +2758,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // while compound_list do_block
+  // while do_block_compound_list  do_block
   public static boolean while_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "while_command")) return false;
     if (!nextTokenIs(b, WHILE)) return false;
@@ -2676,7 +2766,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, WHILE_COMMAND, null);
     r = consumeToken(b, WHILE);
     p = r; // pin = 1
-    r = r && report_error_(b, compound_list(b, l + 1));
+    r = r && report_error_(b, do_block_compound_list(b, l + 1));
     r = p && do_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
@@ -3179,9 +3269,19 @@ public class BashParser implements PsiParser, LightPsiParser {
       return assignment_command_2_0_1_0(b, l + 1);
     }
   };
+  static final Parser block_compound_list_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return block_compound_list_recover(b, l + 1);
+    }
+  };
   static final Parser command_substitution_command_2_1_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_substitution_command_2_1(b, l + 1);
+    }
+  };
+  static final Parser do_block_compound_list_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return do_block_compound_list_recover(b, l + 1);
     }
   };
   static final Parser list_terminator_recover_parser_ = new Parser() {
