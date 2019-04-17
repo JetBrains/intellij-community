@@ -1,6 +1,6 @@
 /*
 Value is always true (s.length > 0)
-  Left operand range is {1..Integer.MAX_VALUE} (s.length)
+  Left operand is >= 1 (s.length)
     Range is known from line #8 (s[0])
  */
 class Test {

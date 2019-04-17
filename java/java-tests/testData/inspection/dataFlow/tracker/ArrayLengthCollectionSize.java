@@ -1,8 +1,8 @@
 /*
 Value is always false (s.length == list.size())
-  Left operand range is {1..Integer.MAX_VALUE} (s.length)
+  Left operand is >= 1 (s.length)
     Range is known from line #12 (s[0])
-  Right operand range is {0} (list.size())
+  Right operand is 0 (list.size())
     Range is known from line #13 (list.isEmpty())
  */
 import java.util.List;

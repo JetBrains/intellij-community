@@ -353,8 +353,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
       LongRangeSet fromRelation = rightRange.second.fromRelation(relationType.getNegated());
       if (fromRelation != null && !fromRelation.intersects(leftRange.second)) {
         return new CauseItem[]{
-          findRangeCause(leftChange, leftRange.first, leftRange.second, "Left operand range is %s"),
-          findRangeCause(rightChange, rightRange.first, rightRange.second, "Right operand range is %s")};
+          findRangeCause(leftChange, leftRange.first, leftRange.second, "Left operand is %s"),
+          findRangeCause(rightChange, rightRange.first, rightRange.second, "Right operand is %s")};
       }
     }
     return new CauseItem[0];
@@ -529,13 +529,14 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
           LongRangeSet result = leftSet.second.binOpFromToken(binOp.getOperationTokenType(), rightSet.second, isLong);
           if (range.equals(result)) {
-            CauseItem cause = new CauseItem("Range of '" + binOp.getOperationSign().getText() + "' result is " + range, factUse);
+            CauseItem cause = new CauseItem("Result of '" + binOp.getOperationSign().getText() + 
+                                            "' is " + range.getPresentationText(expression.getType()), factUse);
             CauseItem leftCause = null, rightCause = null;
             if (!leftSet.second.equals(fromType)) {
-              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "Left operand range is %s");
+              leftCause = findRangeCause(leftPush, leftSet.first, leftSet.second, "Left operand is %s");
             }
             if (!rightSet.second.equals(fromType)) {
-              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "Right operand range is %s");
+              rightCause = findRangeCause(rightPush, rightSet.first, rightSet.second, "Right operand is %s");
             }
             cause.addChildren(leftCause, rightCause);
             return cause;
@@ -543,7 +544,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
         }
       }
     }
-    CauseItem item = new CauseItem(String.format(template, range.toString()), factUse);
+    String rangeText = range.getPresentationText(expression != null ? expression.getType() : null);
+    CauseItem item = new CauseItem(String.format(template, rangeText), factUse);
     if (factDef != null) {
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
