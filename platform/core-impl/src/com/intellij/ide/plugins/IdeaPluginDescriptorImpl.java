@@ -113,10 +113,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
-  /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
-  @Deprecated
-  public void setPath(@SuppressWarnings("unused") File path) { }
-
   public void readExternal(@NotNull Element element,
                            @NotNull URL url,
                            @NotNull JDOMXIncluder.PathResolver pathResolver,
