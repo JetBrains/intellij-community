@@ -52,6 +52,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabLeftAction;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
@@ -64,7 +66,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -204,6 +205,8 @@ public class TerminalView {
     }
 
     JBTerminalWidget finalTerminalWidget = terminalWidget;
+    MoveTerminalToolwindowTabLeftAction moveTabLeftAction = new MoveTerminalToolwindowTabLeftAction();
+    MoveTerminalToolwindowTabRightAction moveTabRightAction = new MoveTerminalToolwindowTabRightAction();
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
       public void onNewSession() {
@@ -252,39 +255,22 @@ public class TerminalView {
 
       @Override
       public void moveTabRight() {
-        moveSelectedContent(true);
+        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent());
       }
 
       @Override
       public void moveTabLeft() {
-        moveSelectedContent(false);
+        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent());
       }
 
       @Override
       public boolean canMoveTabRight() {
-        ContentManager manager = toolWindow.getContentManager();
-        Content selectedContent = manager.getSelectedContent();
-        return selectedContent != null && manager.getIndexOfContent(selectedContent) < manager.getContentCount() - 1;
+        return moveTabRightAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
       }
 
       @Override
       public boolean canMoveTabLeft() {
-        ContentManager manager = toolWindow.getContentManager();
-        Content selectedContent = manager.getSelectedContent();
-        return selectedContent != null && manager.getIndexOfContent(selectedContent) > 0;
-      }
-
-      private void moveSelectedContent(boolean right) {
-        ContentManager manager = toolWindow.getContentManager();
-        Content selectedContent = manager.getSelectedContent();
-        if (selectedContent != null) {
-          int selectedInd = manager.getIndexOfContent(selectedContent);
-          int anotherInd = right ? selectedInd + 1 : selectedInd - 1;
-          if (selectedInd >= 0 && anotherInd >= 0 && anotherInd < manager.getContentCount()) {
-            Content another = Objects.requireNonNull(manager.getContent(anotherInd));
-            manager.removeContent(another, false, false, false).doWhenDone(() -> manager.addContent(another, selectedInd));
-          }
-        }
+        return moveTabLeftAction.isAvailable(toolWindow.getContentManager().getSelectedContent());
       }
     });
 

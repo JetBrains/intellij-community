@@ -33,7 +33,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.emulator.ColorPalette;
-import com.jediterm.terminal.ui.UIUtil;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
@@ -146,15 +143,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   public KeyStroke[] getMoveTabRightKeyStrokes() {
-    return new KeyStroke[]{UIUtil.isMac
-                           ? KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)
-                           : KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)};
+    return getKeyStrokesByActionId("Terminal.MoveToolwindowTabRight");
   }
 
   public KeyStroke[] getMoveTabLeftKeyStrokes() {
-    return new KeyStroke[]{UIUtil.isMac
-                           ? KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.META_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)
-                           : KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)};
+    return getKeyStrokesByActionId("Terminal.MoveToolwindowTabLeft");
   }
 
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
