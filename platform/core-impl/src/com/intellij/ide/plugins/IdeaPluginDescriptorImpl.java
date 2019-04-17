@@ -827,7 +827,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public int hashCode() {
-    return myId.hashCode();
+    return Objects.hashCode(myId);
   }
 
   @Override
