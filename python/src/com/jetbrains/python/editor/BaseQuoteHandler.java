@@ -63,22 +63,15 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
 
     final IElementType tokenType = iterator.getTokenType();
     // if we're next to two same quotes, auto-close triple quote
-    if (myLiteralTokenSet.contains(tokenType)) {
+    if (myLiteralTokenSet.contains(tokenType) && !(tokenType == PyTokenTypes.FSTRING_TEXT || 
+                                                   tokenType == PyTokenTypes.FSTRING_END)) {
       if (
         offset >= 2 &&
         text.charAt(offset - 1) == theQuote &&
         text.charAt(offset - 2) == theQuote &&
         (offset < 3 || text.charAt(offset - 3) != theQuote)
         ) {
-        final int tokenStart = iterator.getStart();
-        // offset + 1 is the current offset of the iterator
-        if (offset + 1 == tokenStart && tokenType == PyTokenTypes.FSTRING_TEXT) {
-          iterator.retreat();
-          final boolean afterFStringStart = iterator.getTokenType() == PyTokenTypes.FSTRING_START;
-          iterator.advance();
-          return afterFStringStart;
-        }
-        return getLiteralStartOffset(text, tokenStart) == offset - 2;
+        return getLiteralStartOffset(text, iterator.getStart()) == offset - 2;
       }
     }
     return false;
@@ -137,12 +130,26 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
     Document document = iterator.getDocument();
     String text = document.getText();
     char theQuote = text.charAt(offset - 1);
-    if (isOpeningTripleQuote(iterator, offset - 1)) {
-      return StringUtil.repeat(String.valueOf(theQuote), 3);
+    // Both isOpeningTripleQuote() and isOpeningQuote() expect iterator to be on the token
+    // of the passed offset, not one character to the right. 
+    boolean retreated = false;
+    if (iterator.getStart() == offset) {
+      retreated = true;
+      iterator.retreat();
     }
-    else if (super.isOpeningQuote(iterator, offset - 1)) {
-      return String.valueOf(theQuote);
+    try {
+      if (isOpeningTripleQuote(iterator, offset - 1)) {
+        return StringUtil.repeat(String.valueOf(theQuote), 3);
+      }
+      else if (super.isOpeningQuote(iterator, offset - 1)) {
+        return String.valueOf(theQuote);
+      }
+      return null;
     }
-    return null;
+    finally {
+      if (retreated) {
+        iterator.advance();
+      }
+    }
   }
 }
