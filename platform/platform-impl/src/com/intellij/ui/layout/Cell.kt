@@ -63,7 +63,7 @@ interface CellBuilder<T : JComponent> {
   }
 }
 
-interface CheckboxCellBuilder {
+internal interface CheckboxCellBuilder {
   fun actsAsLabel()
 }
 
