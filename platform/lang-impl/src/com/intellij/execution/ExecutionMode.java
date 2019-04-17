@@ -71,7 +71,6 @@ public class ExecutionMode {
   public void onTimeout(@NotNull ProcessHandler processHandler,
                         @NotNull String commandLineString,
                         @NotNull List<String> outputCollected) {
-
   }
 
   /**
