@@ -16,14 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
  */
 public final class GrClassReferenceType extends PsiClassType {
 
-  private final GrReferenceElement myReferenceElement;
+  private final @NotNull GrReferenceElement myReferenceElement;
 
-  public GrClassReferenceType(GrReferenceElement referenceElement) {
-    super(LanguageLevel.JDK_1_5);
-    myReferenceElement = referenceElement;
+  public GrClassReferenceType(@NotNull GrReferenceElement referenceElement) {
+    this(referenceElement, LanguageLevel.JDK_1_5);
   }
 
-  public GrClassReferenceType(GrReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
+  public GrClassReferenceType(@NotNull GrReferenceElement referenceElement, @NotNull LanguageLevel languageLevel) {
     super(languageLevel);
     myReferenceElement = referenceElement;
   }
@@ -117,7 +116,8 @@ public final class GrClassReferenceType extends PsiClassType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return PsiNameHelper.getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
+    return PsiNameHelper
+      .getPresentableText(myReferenceElement.getReferenceName(), PsiAnnotation.EMPTY_ARRAY, myReferenceElement.getTypeArguments());
   }
 
   @Override
