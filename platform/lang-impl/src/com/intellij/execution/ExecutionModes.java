@@ -15,22 +15,24 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Roman.Chernyatchik, oleg
  */
 public class ExecutionModes {
   private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
-  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = (mode, presentableCmdLine) -> {
-    final String msg = "Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine;
-    LOG.error(msg);
-  };
+  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = (mode, presentableCmdLine) ->
+    LOG.error("Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine);
 
   /**
    * Process will be run in back ground mode
@@ -78,6 +80,11 @@ public class ExecutionModes {
       this(cancelable, title2, timeout, DEFAULT_TIMEOUT_CALLBACK);
     }
 
+    /**
+     * @deprecated use a constructor without a callback. Instead of callback, override {@link #onTimeout(ProcessHandler, String, List)}
+     */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+    @Deprecated
     public SameThreadMode(final boolean cancelable,
                           @Nullable final String title2,
                           final int timeout,
@@ -115,6 +122,16 @@ public class ExecutionModes {
       return myTimeout;
     }
 
+    @Override
+    public void onTimeout(@NotNull ProcessHandler processHandler,
+                          @NotNull String commandLineString,
+                          @NotNull List<String> outputCollected) {
+      super.onTimeout(processHandler, commandLineString, outputCollected);
+      String output = outputCollected.isEmpty() ? "No output" : StringUtil.join(outputCollected, "\n");
+      LOG.error("Timeout (" + getTimeout() + " sec) on executing: " + commandLineString + "; output collected: " + output);
+    }
+
+    @Deprecated
     @NotNull
     @Override
     public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
