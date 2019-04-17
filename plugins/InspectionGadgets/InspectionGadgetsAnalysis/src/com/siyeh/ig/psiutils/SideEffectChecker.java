@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -255,6 +256,11 @@ public class SideEffectChecker {
   public static boolean mayHaveExceptionalSideEffect(PsiMethod method) {
     String name = method.getName();
     if (name.startsWith("assert") || name.startsWith("check") || name.startsWith("require")) return true;
+    PsiClass aClass = method.getContainingClass();
+    if (InheritanceUtil.isInheritor(aClass, "org.assertj.core.api.Assert")) {
+      // See com.intellij.codeInsight.DefaultInferredAnnotationProvider#getHardcodedContractAnnotation
+      return true;
+    }
     return JavaMethodContractUtil.getMethodCallContracts(method, null).stream()
                                  .filter(mc -> mc.getConditions().stream().noneMatch(ContractValue::isBoundCheckingCondition))
                                  .anyMatch(mc -> mc.getReturnValue().isFail());
