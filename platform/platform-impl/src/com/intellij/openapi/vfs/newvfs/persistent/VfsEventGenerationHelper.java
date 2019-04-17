@@ -2,8 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -58,7 +57,7 @@ class VfsEventGenerationHelper {
     ChildInfo[] children;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
       Path root = Paths.get(parent.getPath(), childName);
-      Path[] excluded = ContainerUtil.mapNotNull(((ProjectManagerImpl)ProjectManager.getInstance()).getAllExcludedUrls(),
+      Path[] excluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
                                          url -> {
                                            Path path = Paths.get(VirtualFileManager.extractPath(url));
                                            return path.startsWith(root) ? path : null;

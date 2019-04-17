@@ -890,6 +890,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
+  @Override
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
