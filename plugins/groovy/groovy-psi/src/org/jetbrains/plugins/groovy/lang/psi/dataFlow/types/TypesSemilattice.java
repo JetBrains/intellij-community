@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -109,13 +108,8 @@ class TypeDfaState {
     return result == null ? DFAType.create(null) : result.copy();
   }
 
-  Map<VariableDescriptor, PsiType> getBindings() {
-    HashMap<VariableDescriptor, PsiType> map = ContainerUtil.newHashMap();
-    for (Map.Entry<VariableDescriptor, DFAType> entry : myVarTypes.entrySet()) {
-      DFAType value = entry.getValue();
-      map.put(entry.getKey(), value == null ? null : value.getResultType());
-    }
-    return map;
+  Map<VariableDescriptor, DFAType> getBindings() {
+    return new HashMap<>(myVarTypes);
   }
 
   void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
