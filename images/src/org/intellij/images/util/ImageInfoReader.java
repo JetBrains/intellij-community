@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * @author spleaner
@@ -53,13 +54,13 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getSimpleInfo(@NotNull byte[] data,
+  private static Info getSimpleInfo(@NotNull byte[] data,
                                    @Nullable String inputName) {
     return read(new ByteArrayInputStream(data), inputName);
   }
 
   @Nullable
-  public static Info getSvgInfo(@NotNull byte[] data) {
+  private static Info getSvgInfo(@NotNull byte[] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -78,7 +79,7 @@ public class ImageInfoReader {
   private static Info getSvgSize(byte[] data) {
     try {
       Dimension2D size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
-      return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32);
+      return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {
       return null;
@@ -100,7 +101,7 @@ public class ImageInfoReader {
         int h = reader.getHeight(0);
         Iterator<ImageTypeSpecifier> it2 = reader.getImageTypes(0);
         int bpp = it2 != null && it2.hasNext() ? it2.next().getColorModel().getPixelSize() : -1;
-        return new Info(w, h, bpp);
+        return new Info(w, h, bpp, false);
       }
     }
     catch (Throwable e) {
@@ -109,37 +110,30 @@ public class ImageInfoReader {
     return null;
   }
 
-  public static class Info {
-    public int width;
-    public int height;
-    public int bpp;
+  public static class Info extends ImageInfo {
+    private final boolean myIsSvg;
 
-    public Info(int width, int height, int bpp) {
-      this.width = width;
-      this.height = height;
-      this.bpp = bpp;
+    public Info(int width, int height, int bpp, boolean isSvg) {
+      super(width, height, bpp);
+      myIsSvg = isSvg;
+    }
+
+    public boolean isSvg() {
+      return myIsSvg;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Info)) return false;
-
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
       Info info = (Info)o;
-
-      if (width != info.width) return false;
-      if (height != info.height) return false;
-      if (bpp != info.bpp) return false;
-
-      return true;
+      return myIsSvg == info.myIsSvg;
     }
 
     @Override
     public int hashCode() {
-      int result = width;
-      result = 31 * result + height;
-      result = 31 * result + bpp;
-      return result;
+      return Objects.hash(super.hashCode(), myIsSvg);
     }
   }
 
