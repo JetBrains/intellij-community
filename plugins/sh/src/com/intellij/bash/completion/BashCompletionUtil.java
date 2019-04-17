@@ -9,7 +9,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 class BashCompletionUtil {
 
   static PsiElementPattern.Capture<PsiElement> insideForClause() {
-    return psiElement().inside(psiElement(BashTypes.FOR_CLAUSE));
+    return psiElement().inside(false, psiElement(BashTypes.FOR_COMMAND), psiElement().andOr(psiElement(BashTypes.BLOCK),
+        psiElement(BashTypes.DO_BLOCK)));
   }
 
   static PsiElementPattern.Capture<PsiElement> insideIfDeclaration() {

@@ -86,8 +86,8 @@ BASH_FILE
               PsiElement(++)('++')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -186,8 +186,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -220,8 +220,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -251,8 +251,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST
@@ -276,8 +276,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(\n)('\n')
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
           BLOCK
             PsiElement({)('{')
             COMPOUND_LIST
@@ -325,9 +325,9 @@ BASH_FILE
               PsiElement(++)('++')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          PsiWhiteSpace(' ')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
@@ -700,9 +700,9 @@ BASH_FILE
               PsiElement(++)('++')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          LIST_TERMINATOR
+            LIST_TERMINATOR
+              PsiElement(\n)('\n')
             PsiElement(\n)('\n')
-          PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
             COMPOUND_LIST

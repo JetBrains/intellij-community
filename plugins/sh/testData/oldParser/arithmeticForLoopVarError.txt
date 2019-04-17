@@ -51,9 +51,9 @@ BASH_FILE
                     PsiElement(int)('2')
             PsiWhiteSpace(' ')
             PsiElement()))('))')
-          PsiWhiteSpace(' ')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')

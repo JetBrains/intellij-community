@@ -13,9 +13,6 @@ public interface BashForCommand extends BashCommand {
   @Nullable
   BashForClause getForClause();
 
-  @Nullable
-  BashListTerminator getListTerminator();
-
   @NotNull
   PsiElement getFor();
 

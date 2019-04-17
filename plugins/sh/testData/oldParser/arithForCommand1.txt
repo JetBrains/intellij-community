@@ -10,8 +10,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiElement(;)(';')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
@@ -44,8 +44,8 @@ BASH_FILE
             PsiElement(;)(';')
             PsiElement(;)(';')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
@@ -85,8 +85,8 @@ BASH_FILE
                   PsiElement(int)('10')
             PsiElement(;)(';')
             PsiElement()))('))')
-          LIST_TERMINATOR
-            PsiElement(;)(';')
+            LIST_TERMINATOR
+              PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')

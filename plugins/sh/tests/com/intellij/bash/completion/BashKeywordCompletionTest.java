@@ -46,6 +46,12 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoCompletionInForCondition() {
     myFixture.configureByText("a.sh", "for (( i = 0; i < <caret>; i++ )); do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "for (( i = 0; i < 5; i++ fo<caret> )); do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "for (( i = 0; i < 5; i++ )) fo<caret> ; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "for (( i = 0; i < 5; i++ )); fo<caret> do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
   }
 
   public void testWhileCompletion() {

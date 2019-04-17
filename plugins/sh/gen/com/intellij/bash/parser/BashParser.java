@@ -254,7 +254,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '((' expression? ';' newlines expression? ';' newlines expression? '))'
+  // '((' arithmetic_for_expression '))' list_terminator? newlines
   static boolean arithmetic_for_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arithmetic_for_clause")) return false;
     if (!nextTokenIs(b, LEFT_DOUBLE_PAREN)) return false;
@@ -262,37 +262,68 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LEFT_DOUBLE_PAREN);
     p = r; // pin = 1
-    r = r && report_error_(b, arithmetic_for_clause_1(b, l + 1));
-    r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, newlines(b, l + 1)) && r;
-    r = p && report_error_(b, arithmetic_for_clause_4(b, l + 1)) && r;
-    r = p && report_error_(b, consumeToken(b, SEMI)) && r;
-    r = p && report_error_(b, newlines(b, l + 1)) && r;
-    r = p && report_error_(b, arithmetic_for_clause_7(b, l + 1)) && r;
-    r = p && consumeToken(b, RIGHT_DOUBLE_PAREN) && r;
+    r = r && report_error_(b, arithmetic_for_expression(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, RIGHT_DOUBLE_PAREN)) && r;
+    r = p && report_error_(b, arithmetic_for_clause_3(b, l + 1)) && r;
+    r = p && newlines(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
+  // list_terminator?
+  private static boolean arithmetic_for_clause_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_clause_3")) return false;
+    list_terminator(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // expression? ';' newlines expression? ';' newlines expression?
+  static boolean arithmetic_for_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = arithmetic_for_expression_0(b, l + 1);
+    r = r && consumeToken(b, SEMI);
+    r = r && newlines(b, l + 1);
+    r = r && arithmetic_for_expression_3(b, l + 1);
+    r = r && consumeToken(b, SEMI);
+    r = r && newlines(b, l + 1);
+    r = r && arithmetic_for_expression_6(b, l + 1);
+    exit_section_(b, l, m, r, false, arithmetic_for_expression_recover_parser_);
+    return r;
+  }
+
   // expression?
-  private static boolean arithmetic_for_clause_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_1")) return false;
+  private static boolean arithmetic_for_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression_0")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   // expression?
-  private static boolean arithmetic_for_clause_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_4")) return false;
+  private static boolean arithmetic_for_expression_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression_3")) return false;
     expression(b, l + 1, -1);
     return true;
   }
 
   // expression?
-  private static boolean arithmetic_for_clause_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arithmetic_for_clause_7")) return false;
+  private static boolean arithmetic_for_expression_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression_6")) return false;
     expression(b, l + 1, -1);
     return true;
+  }
+
+  /* ********************************************************** */
+  // !('))')
+  static boolean arithmetic_for_expression_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_for_expression_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, RIGHT_DOUBLE_PAREN);
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1129,7 +1160,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // for for_clause for_tail
+  // for for_clause any_block
   public static boolean for_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_command")) return false;
     if (!nextTokenIs(b, FOR)) return false;
@@ -1138,39 +1169,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, FOR);
     p = r; // pin = 1
     r = r && report_error_(b, for_clause(b, l + 1));
-    r = p && for_tail(b, l + 1) && r;
+    r = p && any_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  /* ********************************************************** */
-  // [list_terminator newlines] any_block
-  static boolean for_tail(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_tail")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = for_tail_0(b, l + 1);
-    r = r && any_block(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // [list_terminator newlines]
-  private static boolean for_tail_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_tail_0")) return false;
-    for_tail_0_0(b, l + 1);
-    return true;
-  }
-
-  // list_terminator newlines
-  private static boolean for_tail_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_tail_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = list_terminator(b, l + 1);
-    r = r && newlines(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -1583,12 +1584,34 @@ public class BashParser implements PsiParser, LightPsiParser {
   // '\n' | ';'
   public static boolean list_terminator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list_terminator")) return false;
-    if (!nextTokenIs(b, "<list terminator>", LINEFEED, SEMI)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LIST_TERMINATOR, "<list terminator>");
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, SEMI);
+    exit_section_(b, l, m, r, false, list_terminator_recover_parser_);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // !(do | '{' | '\n')
+  static boolean list_terminator_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "list_terminator_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !list_terminator_recover_0(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // do | '{' | '\n'
+  private static boolean list_terminator_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "list_terminator_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DO);
+    if (!r) r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, LINEFEED);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -3146,6 +3169,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
+  static final Parser arithmetic_for_expression_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return arithmetic_for_expression_recover(b, l + 1);
+    }
+  };
   static final Parser assignment_command_2_0_1_0_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return assignment_command_2_0_1_0(b, l + 1);
@@ -3154,6 +3182,11 @@ public class BashParser implements PsiParser, LightPsiParser {
   static final Parser command_substitution_command_2_1_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_substitution_command_2_1(b, l + 1);
+    }
+  };
+  static final Parser list_terminator_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return list_terminator_recover(b, l + 1);
     }
   };
   static final Parser literal_parser_ = new Parser() {
