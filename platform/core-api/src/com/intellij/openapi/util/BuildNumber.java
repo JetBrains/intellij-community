@@ -263,6 +263,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   /**
    * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
    */
+  @ApiStatus.Internal
   public static BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
   }

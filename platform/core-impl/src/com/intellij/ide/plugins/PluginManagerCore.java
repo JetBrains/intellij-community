@@ -42,10 +42,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -385,6 +382,7 @@ public class PluginManagerCore {
   /**
    * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
+  @ApiStatus.Internal
   @NotNull
   public static PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause,
                                                       @NotNull Class pluginClass) {

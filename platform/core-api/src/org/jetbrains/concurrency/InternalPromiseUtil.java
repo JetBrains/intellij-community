@@ -4,6 +4,7 @@ package org.jetbrains.concurrency;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Only internal usage.
  */
+@ApiStatus.Internal
 public class InternalPromiseUtil {
   public static final RuntimeException OBSOLETE_ERROR = new MessageError("Obsolete", false);
 

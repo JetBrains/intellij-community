@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUIScale.Scale;
 import com.intellij.util.ui.JBUIScale.ScaleType;
 import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -102,9 +103,7 @@ public class JBUI {
     SYSTEM_SCALE_FACTOR.set(sysScale);
   }
 
-  /**
-   * For internal usage.
-   */
+  @ApiStatus.Internal
   public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<Float>() {
     @Nullable
     @Override
