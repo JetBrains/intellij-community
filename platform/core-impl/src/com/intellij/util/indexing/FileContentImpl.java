@@ -270,4 +270,8 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     }
     return psi;
   }
+
+  public boolean isPhysicalContent() {
+    return myPhysicalContent;
+  }
 }
