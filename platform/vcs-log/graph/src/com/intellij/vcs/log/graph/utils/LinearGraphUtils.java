@@ -19,7 +19,7 @@ import java.util.Set;
 
 public class LinearGraphUtils {
   public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER =
-    new LinearGraphController.LinearGraphAnswer(Cursor.getDefaultCursor(), null);
+    new LinearGraphController.LinearGraphAnswer(null, null);
 
   public static boolean intEqual(@Nullable Integer value, int number) {
     return value != null && value == number;

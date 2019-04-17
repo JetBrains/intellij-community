@@ -45,7 +45,7 @@ public class HoverHyperlinkLabel extends JLabel {
       @Override
       public void mouseExited(MouseEvent e) {
         HoverHyperlinkLabel.super.setText(myOriginalText);
-        setCursor(Cursor.getDefaultCursor());
+        setCursor(null);
       }
     });
 
