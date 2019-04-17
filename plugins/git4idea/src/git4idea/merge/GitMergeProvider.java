@@ -2,6 +2,7 @@
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -121,7 +122,8 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   @NotNull
   public MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
-    return new MyMergeSession(files);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> new MyMergeSession(files), "Loading Unmerged Files", true, myProject);
   }
 
   @Override
