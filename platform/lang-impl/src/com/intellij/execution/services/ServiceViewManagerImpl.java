@@ -41,7 +41,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   public ServiceViewManagerImpl(@NotNull Project project) {
     myProject = project;
-    myProject.getMessageBus().connect(myProject).subscribe(ServiceViewContributor.TOPIC, this::updateToolWindow);
+    myProject.getMessageBus().connect(myProject).subscribe(ServiceViewEventListener.TOPIC, this::updateToolWindow);
   }
 
   boolean hasServices() {
@@ -92,7 +92,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return result;
   }
 
-  private void updateToolWindow(ServiceViewContributor.ServiceEvent event) {
+  private void updateToolWindow(ServiceViewEventListener.ServiceEvent event) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 

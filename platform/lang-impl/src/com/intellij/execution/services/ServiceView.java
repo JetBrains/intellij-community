@@ -37,7 +37,7 @@ class ServiceView extends JPanel implements Disposable {
     ui.setMasterPanel(myTree, ServiceViewActionProvider.getInstance());
     add(myUi.getComponent(), BorderLayout.CENTER);
 
-    project.getMessageBus().connect(this).subscribe(ServiceViewContributor.TOPIC, treeModel::refresh);
+    project.getMessageBus().connect(this).subscribe(ServiceViewEventListener.TOPIC, treeModel::refresh);
     myTree.addTreeSelectionListener(e -> onSelectionChanged());
 
     treeModel.refreshAll();

@@ -64,7 +64,7 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
     return myRoot;
   }
 
-  void refresh(ServiceViewContributor.ServiceEvent e) {
+  void refresh(ServiceViewEventListener.ServiceEvent e) {
     refreshAll();
   }
 
