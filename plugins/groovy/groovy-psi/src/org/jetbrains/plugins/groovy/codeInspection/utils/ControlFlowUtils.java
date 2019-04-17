@@ -780,11 +780,6 @@ public class ControlFlowUtils {
         }
         return result;
       }
-
-      @Override
-      public boolean eq(@NotNull BitSet e1, @NotNull BitSet e2) {
-        return e1.equals(e2);
-      }
     };
 
     DfaInstance<BitSet> dfa = new DfaInstance<BitSet>() {
