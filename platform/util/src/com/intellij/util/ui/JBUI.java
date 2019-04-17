@@ -691,6 +691,12 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("DefaultTabs.uncoloredTabSelectedColor",
+                                  DefaultTabs.background());
+      }
+
+      @NotNull
       public static Color hoverColor() {
         return JBColor.namedColor("DefaultTabs.hoverColor",
                                   new JBColor(0xD9D9D9,
@@ -719,6 +725,12 @@ public class JBUI {
       @NotNull
       public static Color inactiveUnderlineColor() {
         return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color uncoloredTabSelectedColor() {
+        return JBColor.namedColor("EditorTabs.uncoloredTabSelectedColor",
+                                  DefaultTabs.uncoloredTabSelectedColor());
       }
 
       @NotNull

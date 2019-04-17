@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.newImpl
 
 import com.intellij.ui.tabs.JBTabsBackgroundAndBorder
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.util.ui.JBUI
 import java.awt.*
 
 class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBorder(tabs) {
@@ -19,21 +20,21 @@ class JBEditorTabsBackgroundAndBorder(tabs: JBTabsImpl) : JBTabsBackgroundAndBor
     paintBackground(g, Rectangle(x, y, width, height))
 
     val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
-    tabs.getTabPainter().paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
+    tabs.tabPainter.paintBorderLine(g, thickness, Point(x, startY), Point(x + width, startY))
 
     when(tabs.position) {
       JBTabsPosition.top -> {
         for (eachRow in 1..tabs.lastLayoutPass.rowCount) {
           val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
-          tabs.getTabPainter().paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
+          tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
       }
       JBTabsPosition.bottom -> {
-        tabs.getTabPainter().paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
+        tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
       }
       JBTabsPosition.right -> {
         val lx = firstLabel.x
-        tabs.getTabPainter().paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
+        tabs.tabPainter.paintBorderLine(g, thickness, Point(lx, y), Point(lx, y + height))
       }
     }
   }
