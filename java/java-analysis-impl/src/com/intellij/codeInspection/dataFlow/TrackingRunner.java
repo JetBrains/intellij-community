@@ -136,7 +136,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
 
     private String dump(Document doc, int indent) {
-      PsiElement target = getTarget();
+      PsiElement target = myTarget != null ? myTarget.getElement() : null;
       return StringUtil.repeat("  ", indent) + render(doc) + (target == null ? "" : " (" + target.getText() + ")") + "\n" +
              StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1)).joining();
     }
@@ -146,8 +146,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
     }
 
     @Nullable
-    public PsiElement getTarget() {
-      return myTarget != null ? myTarget.getElement() : null;
+    public PsiFile getFile() {
+      return myTarget != null ? myTarget.getContainingFile() : null;
     }
     
     public Segment getTargetSegment() {

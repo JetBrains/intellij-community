@@ -24,7 +24,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
@@ -147,10 +150,9 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
   }
 
   private static void navigate(Editor editor, PsiFile file, TrackingRunner.CauseItem item) {
-    PsiElement target = item.getTarget();
-    if (target == null) return;
-    TextRange range = target.getTextRange();
-    PsiFile targetFile = target.getContainingFile();
+    Segment range = item.getTargetSegment();
+    if (range == null) return;
+    PsiFile targetFile = item.getFile();
     assert targetFile == file;
     PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
       .navigate(true);
