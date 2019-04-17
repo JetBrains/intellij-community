@@ -46,10 +46,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      val roamingType: RoamingType = RoamingType.DEFAULT,
                                                      val presentableName: String? = null,
                                                      private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                     private val fileChangeSubscriber: ((schemeManager: SchemeManagerImpl<*, *>) -> Unit)? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(
-  processor), SafeWriteRequestor {
+                                                     private val fileChangeSubscriber: FileChangeSubscriber? = null,
+                                                     private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
   private val isUseVfs: Boolean
-    get() = fileChangeSubscriber != null
+    get() = fileChangeSubscriber != null || virtualFileResolver != null
 
   internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
@@ -199,14 +199,30 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       if (!isLoadOnlyFromProvider) {
-        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
-          for (file in directoryStream) {
-            if (file.isDirectory()) {
-              continue
+        if (virtualFileResolver == null) {
+          ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
+            for (file in directoryStream) {
+              catchAndLog({ file.toString() }) {
+                val bytes = try {
+                  Files.readAllBytes(file)
+                }
+                catch (e: FileSystemException) {
+                  when {
+                    file.isDirectory() -> return@catchAndLog
+                    else -> throw e
+                  }
+                }
+                schemeLoader.loadScheme(file.fileName.toString(), null, bytes)
+              }
             }
-
-            catchAndLog({ file.toString() }) {
-              schemeLoader.loadScheme(file.fileName.toString(), null, Files.readAllBytes(file))
+          }
+        }
+        else {
+          for (file in virtualDirectory?.children ?: VirtualFile.EMPTY_ARRAY) {
+            catchAndLog({ file.path }) {
+              if (canRead(file.nameSequence)) {
+                schemeLoader.loadScheme(file.name, null, file.contentsToByteArray())
+              }
             }
           }
         }
@@ -534,7 +550,11 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     get() {
       var result = cachedVirtualDirectory
       if (result == null) {
-        result = LocalFileSystem.getInstance().findFileByPath(ioDirectory.systemIndependentPath)
+        val path = ioDirectory.systemIndependentPath
+        result = when (virtualFileResolver) {
+          null -> LocalFileSystem.getInstance().findFileByPath(path)
+          else -> virtualFileResolver.resolveVirtualFile(path)
+        }
         cachedVirtualDirectory = result
       }
       return result
