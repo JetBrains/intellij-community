@@ -112,6 +112,10 @@ class SequencePresentation(private var presentations: List<InlayPresentation>) :
    */
   override fun mouseMoved(e: MouseEvent) {
     handleMouse(e) {
+      if (it != presentationUnderCursor) {
+        presentationUnderCursor?.mouseExited()
+        presentationUnderCursor = it
+      }
       it.mouseMoved(e)
     }
   }
