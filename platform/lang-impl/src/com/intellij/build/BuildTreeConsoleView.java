@@ -40,6 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -445,17 +446,23 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       for (SimpleNode node : children) {
         ExecutionNode child = (ExecutionNode)node;
         String name = child.getName();
-        if (name != null && name.startsWith("Run")) {
+        if ("Run build".equalsIgnoreCase(name) && children.length > 1) {
           child.setAutoExpandNode(false);
           continue;
         }
 
-        if (child.getResult() instanceof MessageEventResult) {
-          MessageEvent.Kind kind = ((MessageEventResult)child.getResult()).getKind();
+        EventResult result = child.getResult();
+        if (result instanceof MessageEventResult) {
+          MessageEvent.Kind kind = ((MessageEventResult)result).getKind();
           if (kind == MessageEvent.Kind.ERROR) {
             next = child;
             break;
           }
+        }
+
+        if (result instanceof FailureResult) {
+          next = child;
+          break;
         }
       }
       current = next;
