@@ -4,6 +4,8 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 
@@ -18,8 +20,10 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
   @Property(externalName = "keep_whitespaces")
   public boolean HTML_KEEP_WHITESPACES;
   @Property(externalName = "attribute_wrap")
+  @WrapConstant
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   @Property(externalName = "text_wrap")
+  @WrapConstant
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
 
   @Property(externalName = "keep_line_breaks")

@@ -21,6 +21,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
@@ -812,11 +816,17 @@ public class CommonCodeStyleSettings {
 
   //----------------- WRAPPING ---------------------------
 
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.FIELD)
+  public @interface WrapConstant {
+  }
+
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
   public static final int WRAP_ALWAYS = 0x02;
   public static final int WRAP_ON_EVERY_ITEM = 0x04;
 
+  @WrapConstant
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
   public boolean PREFER_PARAMETERS_WRAP = false;
   @Property(externalName = "call_parameters_new_line_after_left_paren")
@@ -824,24 +834,31 @@ public class CommonCodeStyleSettings {
   @Property(externalName = "call_parameters_right_paren_on_new_line")
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int METHOD_PARAMETERS_WRAP = DO_NOT_WRAP;
   @Property(externalName = "method_parameters_new_line_after_left_paren")
   public boolean METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "method_parameters_right_paren_on_new_line")
   public boolean METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int RESOURCE_LIST_WRAP = DO_NOT_WRAP;
   @Property(externalName = "resource_list_new_line_after_left_paren")
   public boolean RESOURCE_LIST_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "resource_list_right_paren_on_new_line")
   public boolean RESOURCE_LIST_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int EXTENDS_LIST_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_LIST_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int EXTENDS_KEYWORD_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int THROWS_KEYWORD_WRAP = DO_NOT_WRAP;
 
+  @WrapConstant
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
   public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
@@ -850,12 +867,15 @@ public class CommonCodeStyleSettings {
   @Property(externalName = "parentheses_expression_right_paren_on_new_line")
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
 
+  @WrapConstant
   public int BINARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int TERNARY_OPERATION_WRAP = DO_NOT_WRAP;
   public boolean TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public boolean MODIFIER_LIST_WRAP = false;
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
@@ -864,18 +884,21 @@ public class CommonCodeStyleSettings {
   public boolean KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false;
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 
+  @WrapConstant
   public int FOR_STATEMENT_WRAP = DO_NOT_WRAP;
   @Property(externalName = "for_statement_new_line_after_left_paren")
   public boolean FOR_STATEMENT_LPAREN_ON_NEXT_LINE = false;
   @Property(externalName = "for_statement_right_paren_on_new_line")
   public boolean FOR_STATEMENT_RPAREN_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ARRAY_INITIALIZER_WRAP = DO_NOT_WRAP;
   @Property(externalName = "array_initializer_new_line_after_left_brace")
   public boolean ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = false;
   @Property(externalName = "array_initializer_right_brace_on_new_line")
   public boolean ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = false;
 
+  @WrapConstant
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
@@ -884,6 +907,7 @@ public class CommonCodeStyleSettings {
 
   public boolean WRAP_COMMENTS = false;
 
+  @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
@@ -906,10 +930,15 @@ public class CommonCodeStyleSettings {
 
   //-------------- Annotation formatting settings-------------------------------------------
 
+  @WrapConstant
   public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;
+  @WrapConstant
   public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;
+  @WrapConstant
   public int VARIABLE_ANNOTATION_WRAP = DO_NOT_WRAP;
 
   @Property(externalName = "space_before_annotation_parameter_list")
@@ -920,6 +949,7 @@ public class CommonCodeStyleSettings {
 
 
   //-------------------------Enums----------------------------------------------------------
+  @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
 
   //-------------------------Force rearrange settings---------------------------------------

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,8 @@ class FieldAccessorFactory {
     String name = fieldType.getName();
     if (fieldType.isPrimitive()) {
       if ("int".equals(name)) {
-        if (fieldName.endsWith("_WRAP")) {
+        WrapConstant wrapAnnotation = myField.getAnnotation(WrapConstant.class);
+        if (wrapAnnotation != null) {
           return ValueType.WRAP;
         }
         else if (fieldName.endsWith("BRACE_STYLE")) {
