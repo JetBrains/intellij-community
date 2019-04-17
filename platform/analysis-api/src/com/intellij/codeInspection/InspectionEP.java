@@ -6,6 +6,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,13 +26,18 @@ import java.util.ResourceBundle;
  */
 public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
 
-  /** @see GlobalInspectionTool */
+  /**
+   * @see GlobalInspectionTool
+   */
   public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
 
   /**
-   * Short name is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
+   * Usually generated automatically from FQN.
+   * Must be unique among all inspections.
+   * <p>
+   * Short name is used in two cases: {@code \inspectionDescriptions\<short_name>.html} resource may contain short inspection
    * description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
-   * inspection or export to HTML function. Should be unique among all inspections.
+   * inspection or export to HTML function.
    */
   @Attribute("shortName")
   public String shortName;
@@ -56,25 +62,55 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
   }
 
+  /**
+   * Message key for {@link #displayName}.
+   *
+   * @see #bundle
+   */
   @Attribute("key")
   public String key;
 
+  /**
+   * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
+   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   *
+   * @see #key
+   */
   @Attribute("bundle")
   public String bundle;
 
+  /**
+   * Non-localized display name. Use {@link #key} for I18N.
+   */
   @Attribute("displayName")
   public String displayName;
 
+  /**
+   * Message key for {@link #groupDisplayName}.
+   *
+   * @see #groupBundle
+   */
   @Attribute("groupKey")
   public String groupKey;
 
+  /**
+   * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
+   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   *
+   * @see #groupKey
+   */
   @Attribute("groupBundle")
   public String groupBundle;
 
+  /**
+   * Non-localized group display name. Use {@link #groupKey} for I18N.
+   */
   @Attribute("groupName")
   public String groupDisplayName;
 
-  /** Comma-delimited list of parent groups (excluding groupName)*/
+  /**
+   * Comma-delimited list of parent groups (excluding groupName), e.g. {@code "Java,Java language level migration aids"}.
+   */
   @Attribute("groupPath")
   public String groupPath;
 
@@ -91,17 +127,24 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("enabledByDefault")
   public boolean enabledByDefault;
 
+  /**
+   * Whether this inspection should be applied to dialects of specified language.
+   *
+   * @see Language#getDialects()
+   */
   @Attribute("applyToDialects")
   public boolean applyToDialects = true;
 
   /**
-   * If true, the inspection can run as part of the code cleanup action.
+   * If {@code true}, the inspection can run as part of the code cleanup action.
    */
   @Attribute("cleanupTool")
   public boolean cleanupTool;
 
   /**
-   * Highlighting level for this inspection tool that is used in default settings.
+   * Highlighting level for this inspection tool that is used in default settings, e.g. {@code "INFO", "ERROR"}.
+   *
+   * @see HighlightDisplayLevel
    */
   @Attribute("level")
   public String level;
@@ -111,18 +154,23 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
-      LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; and short name: " + shortName, getPluginId()));
+      LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
+                                    "and short name: " + shortName, getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
   }
 
+  /**
+   * Whether inspection's description should use {@link InspectionProfileEntry#getStaticDescription()}.
+   */
   @Attribute("hasStaticDescription")
   public boolean hasStaticDescription;
 
   @Nullable
   private String getLocalizedString(@Nullable String bundleName, String key) {
-    final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
+    final String baseName = bundleName != null ? bundleName :
+                            bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
@@ -162,11 +210,14 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     return getGroupDisplayName();
   }
 
+  /**
+   * @see com.intellij.codeInspection.ui.InspectionToolPresentation
+   */
   @Attribute("presentation")
   public String presentation;
 
   /**
-   * Do not show internal inspections if internal mode is off
+   * Do not show internal inspections if IDE internal mode is off.
    */
   @Attribute("isInternal")
   public boolean isInternal;
