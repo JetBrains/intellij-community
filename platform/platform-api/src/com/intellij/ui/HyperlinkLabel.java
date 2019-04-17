@@ -116,7 +116,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMouseHover = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-      setCursor(Cursor.getDefaultCursor());
+      setCursor(null);
       myMouseHover = false;
       myMousePressed = false;
       repaint();
@@ -137,7 +137,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       boolean onLink = isOnLink(e.getX());
       boolean needRepaint = myMouseHover != onLink;
       myMouseHover = onLink;
-      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
 
       if (needRepaint) {
         repaint();

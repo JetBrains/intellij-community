@@ -1140,7 +1140,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
-      "getTooltipText", "getToolTipText",
+      "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
       "isValid", "isDisplayable", "isLightweight"
