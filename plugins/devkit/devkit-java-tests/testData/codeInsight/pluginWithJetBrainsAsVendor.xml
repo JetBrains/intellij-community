@@ -1,7 +1,7 @@
 <idea-plugin
   <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify generic plugin url">url="https://www.jetbrains.com/idea"</error>>
   <id>test</id>
-  <version>1.0</version>
+  <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify version"><version>1.0</version></error>
   <vendor <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify 'http://www.jetbrains.com' as url">url="http://www.jetbrains.com"</error>
     <error descr="Plugin developed as a part of IntelliJ IDEA project shouldn't specify email">email="some@one.com"</error>
     >JetBrains</vendor>

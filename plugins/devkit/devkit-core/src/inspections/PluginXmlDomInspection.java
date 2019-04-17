@@ -323,6 +323,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                            DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.email"),
                            new RemoveDomElementQuickFix(vendor.getEmail())).highlightWholeElement();
     }
+
+    if (DomUtil.hasXml(ideaPlugin.getChangeNotes())) {
+      holder.createProblem(ideaPlugin.getChangeNotes(),
+                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.change.notes"),
+                           new RemoveDomElementQuickFix(ideaPlugin.getChangeNotes())).highlightWholeElement();
+    }
+    if (DomUtil.hasXml(ideaPlugin.getVersion())) {
+      holder.createProblem(ideaPlugin.getVersion(),
+                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.version"),
+                           new RemoveDomElementQuickFix(ideaPlugin.getVersion())).highlightWholeElement();
+    }
   }
 
   private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
