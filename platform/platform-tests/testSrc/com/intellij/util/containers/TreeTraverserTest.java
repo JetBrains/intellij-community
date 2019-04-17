@@ -735,8 +735,10 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList());
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), uniqueMod5.toList()); // same results again
 
-    JBIterable<Integer> uniqueMod7 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
-    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 4), uniqueMod7.toList());
+    JBIterable<Integer> uniqueMod57 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 5).unique((Integer o) -> o % 7)).fun(1);
+    JBIterable<Integer> uniqueMod75 = numTraverser(TreeTraversal.PRE_ORDER_DFS.unique((Integer o) -> o % 7).unique((Integer o) -> o % 5)).fun(1);
+    assertEquals(Arrays.asList(1, 2, 5, 3, 4), uniqueMod57.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3), uniqueMod75.toList());
 
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique()).fun(1).toList());
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(), numTraverser2(TreeTraversal.PLAIN_BFS.unique().unique()).fun(1).toList());
