@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ui.UIUtil
@@ -28,23 +30,31 @@ class PresentationFactory(val editor: EditorImpl) {
     val ascent = editor.ascent
     val descent = editor.descent
     val height = ascent - descent
-    val presentation = BackgroundInlayPresentation(
+    val textWithoutBox = EffectInlayPresentation(
+      TextInlayPresentation(width, height, text, height) {
+        plainFont
+      },
+      plainFont, editor.lineHeight, ascent, descent
+    )
+    return AttributesTransformerPresentation(textWithoutBox) {
+      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT))
+    }
+  }
+
+  fun roundWithBackground(base: InlayPresentation): InlayPresentation {
+    return BackgroundInlayPresentation(
       InsetPresentation(
-        EffectInlayPresentation(
-          TextInlayPresentation(width, height, text, height) {
-            plainFont
-          },
-          plainFont, editor.lineHeight, ascent, descent
-        ),
+        base,
         left = 7,
         right = 7,
         top = 2,
         down = 2
       )
     )
-    return AttributesTransformerPresentation(
-      presentation
-    ) { it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)) }
+  }
+
+  fun singleText(text: String) : InlayPresentation {
+    return roundWithBackground(text(text))
   }
 
   fun icon(icon: Icon) : IconPresentation = IconPresentation(icon, editor.component)
@@ -78,12 +88,14 @@ class PresentationFactory(val editor: EditorImpl) {
   }
 
 
-  // TODO
+  // TODO ctrl + cmd handling (+ middle click)
   fun navigateSingle(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation {
     return onClick(hyperlink(base)) { _, _ ->
       val target = resolve()
-      if (target == null) {
-        PsiNavigateUtil.navigate(target)
+      if(target != null) {
+        if (target is Navigatable) {
+            CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
+        }
       }
     }
   }

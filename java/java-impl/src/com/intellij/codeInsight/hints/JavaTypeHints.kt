@@ -21,7 +21,9 @@ class JavaTypeHintsVisitor(val factory: PresentationFactory) : PsiTypeVisitor<In
   }
 
   override fun visitClassType(classType: PsiClassType): InlayPresentation {
-    val className = factory.navigateSingle(factory.text(classType.className)) { classType.resolve() }
+    val className = factory.navigateSingle(factory.text(classType.className)) {
+      classType.resolve()
+    }
     if (classType.parameterCount == 0) return className
     val presentations = mutableListOf(className)
     presentations.add(factory.text("<"))
@@ -34,6 +36,14 @@ class JavaTypeHintsVisitor(val factory: PresentationFactory) : PsiTypeVisitor<In
 
   override fun visitType(type: PsiType): InlayPresentation? {
     return factory.text(type.presentableText)
+  }
+
+  companion object {
+    @JvmStatic
+    fun presentation(type: PsiType, factory: PresentationFactory) : InlayPresentation {
+      val base = type.accept(JavaTypeHintsVisitor(factory))
+      return factory.roundWithBackground(base)
+    }
   }
 
   //  override fun visitCapturedWildcardType(capturedWildcardType: PsiCapturedWildcardType): InlayPresentation {

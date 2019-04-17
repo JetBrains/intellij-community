@@ -38,7 +38,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
           if (uniqueTypes.size < settings.uniqueTypeCount) return // to hide hints for builders, where type is obvious
           for ((index, currentCall) in chain.withIndex()) {
             val type = types[index]
-            val presentation = type.accept(JavaTypeHintsVisitor(factory))!!
+            val presentation = JavaTypeHintsVisitor.presentation(type, factory)
 //            val presentation = factory.roundedText(types[index].presentableText)
 //            val project = file.project
 //            val finalPresentation = MenuOnClickPresentation(presentation, project) {
