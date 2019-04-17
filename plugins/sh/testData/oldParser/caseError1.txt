@@ -9,12 +9,10 @@ BASH_FILE
           PsiWhiteSpace(' ')
           PsiElement(in)('in')
           PsiWhiteSpace(' ')
-          CASE_CLAUSE
-            PATTERN
-              PsiElement(word)(';')
-              PsiElement(word)(';')
-            PsiErrorElement:'!', $, ')', <number>, <string>, '`', file descriptor, var, word, '{' or '|' expected, got 'esac'
-              <empty list>
+          PsiElement(word)(';')
+          PsiElement(word)(';')
+          PsiErrorElement:')' expected, got 'esac'
+            <empty list>
           PsiWhiteSpace(' ')
           PsiElement(esac)('esac')
   PsiElement(\n)('\n')

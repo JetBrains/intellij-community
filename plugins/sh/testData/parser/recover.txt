@@ -341,6 +341,103 @@ BASH_FILE
             PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$x')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('dvsdv')
+          PsiWhiteSpace(' ')
+          PsiElement(in)('in')
+          PsiWhiteSpace(' ')
+          CASE_CLAUSE
+            PATTERN
+              PsiElement(word)('fss')
+              PsiErrorElement:'!', $, <number>, <string>, '`', file descriptor, var, word, '{' or '|' expected
+                PsiElement(\n)('\n')
+              PsiElement(word)('pattern')
+            PsiElement())(')')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('  ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('text')
+                      PsiElement(")('"')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(;;)(';;')
+          PsiElement(\n)('\n')
+          PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CASE_COMMAND
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$x')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('dvsdv')
+          PsiWhiteSpace(' ')
+          PsiElement(in)('in')
+          PsiWhiteSpace(' ')
+          CASE_CLAUSE
+            PATTERN
+              PsiElement(word)('fss')
+              PsiErrorElement:'!', $, <number>, <string>, '`', file descriptor, var, word, '{' or '|' expected
+                PsiElement(\n)('\n')
+              PsiElement(DUMMY_BLOCK)
+                PsiElement(word)('pattern')
+                PsiElement(\n)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(word)('echo')
+                PsiWhiteSpace(' ')
+                PsiElement(")('"')
+                PsiElement(word)('text')
+                PsiElement(")('"')
+                PsiElement(\n)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(word)(';')
+                PsiElement(word)(';')
+                PsiElement(\n)('\n')
+              PsiElement(word)('pattern')
+            PsiElement())(')')
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiWhiteSpace('  ')
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(")('"')
+                      PsiElement(word)('text')
+                      PsiElement(")('"')
+              PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          PsiElement(;;)(';;')
+          PsiElement(\n)('\n')
+          PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND

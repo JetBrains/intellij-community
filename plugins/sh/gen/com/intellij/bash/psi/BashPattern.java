@@ -28,4 +28,7 @@ public interface BashPattern extends BashCompositeElement {
   @NotNull
   List<BashVariable> getVariableList();
 
+  @Nullable
+  PsiElement getLeftParen();
+
 }

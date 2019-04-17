@@ -38,15 +38,9 @@ public class BashCaseClauseImpl extends BashCompositeElementImpl implements Bash
   }
 
   @Override
-  @Nullable
-  public PsiElement getLeftParen() {
-    return findChildByType(LEFT_PAREN);
-  }
-
-  @Override
-  @Nullable
+  @NotNull
   public PsiElement getRightParen() {
-    return findChildByType(RIGHT_PAREN);
+    return findNotNullChildByType(RIGHT_PAREN);
   }
 
 }

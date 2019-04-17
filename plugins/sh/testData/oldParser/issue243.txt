@@ -74,8 +74,8 @@ BASH_FILE
                               PsiElement(in)('in')
                               PsiWhiteSpace(' ')
                               CASE_CLAUSE
-                                PsiElement(()('(')
                                 PATTERN
+                                  PsiElement(()('(')
                                   VARIABLE
                                     PsiElement(var)('$foo')
                                 PsiElement())(')')
@@ -83,8 +83,8 @@ BASH_FILE
                               PsiElement(;;)(';;')
                               PsiWhiteSpace(' ')
                               CASE_CLAUSE
-                                PsiElement(()('(')
                                 PATTERN
+                                  PsiElement(()('(')
                                   PsiElement(word)('*')
                                 PsiElement())(')')
                                 PsiWhiteSpace(' ')

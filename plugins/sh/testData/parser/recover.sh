@@ -32,6 +32,22 @@ select a a in 1,2,4,5 {
     echo $a
 }
 
+case $x dvsdv in fss
+pattern)
+  echo "text"
+  ;;
+esac
+
+
+case $x dvsdv in fss
+pattern
+  echo "text"
+  ;;
+pattern)
+  echo "text"
+  ;;
+esac
+
 
 > dddasd
 

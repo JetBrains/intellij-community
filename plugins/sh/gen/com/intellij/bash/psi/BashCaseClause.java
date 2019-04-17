@@ -13,10 +13,7 @@ public interface BashCaseClause extends BashCompositeElement {
   @NotNull
   BashPattern getPattern();
 
-  @Nullable
-  PsiElement getLeftParen();
-
-  @Nullable
+  @NotNull
   PsiElement getRightParen();
 
 }

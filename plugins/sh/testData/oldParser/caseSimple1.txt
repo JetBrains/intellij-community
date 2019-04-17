@@ -39,8 +39,8 @@ BASH_FILE
           PsiElement(in)('in')
           PsiWhiteSpace(' ')
           CASE_CLAUSE
-            PsiElement(()('(')
             PATTERN
+              PsiElement(()('(')
               PsiElement(word)('a')
             PsiElement())(')')
             PsiWhiteSpace(' ')
@@ -71,8 +71,8 @@ BASH_FILE
           CASE_CLAUSE
             PsiElement(\n)('\n')
             PsiWhiteSpace(' ')
-            PsiElement(()('(')
             PATTERN
+              PsiElement(()('(')
               PsiElement(word)('a')
             PsiElement())(')')
             PsiWhiteSpace(' ')
@@ -124,8 +124,8 @@ BASH_FILE
           CASE_CLAUSE
             PsiElement(\n)('\n')
             PsiWhiteSpace(' ')
-            PsiElement(()('(')
             PATTERN
+              PsiElement(()('(')
               PsiElement(word)('a')
             PsiElement())(')')
             COMPOUND_LIST

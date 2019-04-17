@@ -256,10 +256,12 @@ else_clause ::= else compound_list
 then_clause ::= then compound_list
 
 case_command ::= case w+ in case_clause_list esac
-private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1}
-case_clause ::= newlines '('? pattern ')' (compound_case_list|newlines) {pin=3}
+private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
+case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
 
-pattern ::= w+ ('|' w+)* {pin('.*')=1}
+pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
+private case_pattern_recover ::= !(')'|';;'|esac)
+private case_clause_recover ::= !(esac)
 
 compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 }
