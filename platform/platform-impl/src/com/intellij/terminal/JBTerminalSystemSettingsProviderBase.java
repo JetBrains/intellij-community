@@ -143,11 +143,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   public KeyStroke[] getMoveTabRightKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolwindowTabRight");
+    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabRight");
   }
 
   public KeyStroke[] getMoveTabLeftKeyStrokes() {
-    return getKeyStrokesByActionId("Terminal.MoveToolwindowTabLeft");
+    return getKeyStrokesByActionId("Terminal.MoveToolWindowTabLeft");
   }
 
   protected static int consoleFontSize(MyColorSchemeDelegate colorScheme) {
