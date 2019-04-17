@@ -12,6 +12,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("if [ condition ]; then\n    <caret>\nfi");
   }
 
+  public void testCompletionInsideIf() {
+    myFixture.configureByText("a.sh", "if [ condition ]; then\n    <caret>\nfi");
+    assertTrue(myFixture.completeBasic().length > 0);
+  }
+
   public void testNoCompletionInIfCondition() {
     myFixture.configureByText("a.sh", "if [ if<caret> ]; then\n    \nfi");
     assertEmpty(myFixture.completeBasic());
@@ -23,6 +28,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif<caret>\nfi");
     myFixture.completeBasic();
     myFixture.checkResult("if [ condition ]; then\n    \nelif [ condition ]; then\n    <caret>\nfi");
+  }
+
+  public void testCompletionInsideElif() {
+    myFixture.configureByText("a.sh", "if [ condition ]; then\n    \nelif [ condition ]; then\n    <caret>\nfi");
+    assertTrue(myFixture.completeBasic().length > 0);
   }
 
   public void testNoCompletionInElifCondition() {
@@ -43,6 +53,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("for (( i = 0; i < ; i++ )); do\n    <caret>\ndone");
   }
 
+  public void testCompletionInsideFor() {
+    myFixture.configureByText("a.sh", "for (( i = 0; i < 5; i++ )); do\n    <caret>\ndone");
+    assertTrue(myFixture.completeBasic().length > 0);
+  }
+
   public void testNoCompletionInForCondition() {
     myFixture.configureByText("a.sh", "for (( i = 0; i < <caret>; i++ )); do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
@@ -60,6 +75,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("while [ condition ]; do\n    <caret>\ndone");
   }
 
+  public void testCompletionInsideWhile() {
+    myFixture.configureByText("a.sh", "while [ condition ]; do\n    <caret>\ndone");
+    assertTrue(myFixture.completeBasic().length > 0);
+  }
+
   public void testNoCompletionInWhileCondition() {
     myFixture.configureByText("a.sh", "while [ <caret> ]; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
@@ -73,6 +93,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "until<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("until [ condition ]; do\n    <caret>\ndone");
+  }
+
+  public void testCompletionInsideUntil() {
+    myFixture.configureByText("a.sh", "until [ condition ]; do\n    <caret>\ndone");
+    assertTrue(myFixture.completeBasic().length > 0);
   }
 
   public void testNoCompletionInUntilCondition() {
@@ -90,6 +115,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("select  in ; do\n    <caret>\ndone");
   }
 
+  public void testCompletionInsideSelect() {
+    myFixture.configureByText("a.sh", "select  in ; do\n    <caret>\ndone");
+    assertTrue(myFixture.completeBasic().length > 0);
+  }
+
   public void testNoCompletionInSelectDeclaration() {
     myFixture.configureByText("a.sh", "select <caret> in ; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
@@ -99,6 +129,11 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.sh", "case<caret>");
     myFixture.completeBasic();
     myFixture.checkResult("case $x in\npattern)\n  <caret>\n  ;;\nesac");
+  }
+
+  public void testCompletionInsideCase() {
+    myFixture.configureByText("a.sh", "case $x in\npattern)\n  <caret>\n  ;;\nesac");
+    assertTrue(myFixture.completeBasic().length > 0);
   }
 
   public void testNoCompletionInCaseDeclaration() {
@@ -112,8 +147,17 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("function foo() {\n    <caret>\n}");
   }
 
+  public void testCompletionInsideFunction() {
+    myFixture.configureByText("a.sh", "function foo() {\n    <caret>\n}");
+    assertTrue(myFixture.completeBasic().length > 0);
+  }
+
   public void testNoCompletionInFunctionDefinition() {
     myFixture.configureByText("a.sh", "function <caret>() {\n    \n}");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "function foo( f<caret> ) {\n    \n}");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "function foo() f<caret>{\n    \n}");
     assertEmpty(myFixture.completeBasic());
   }
 }

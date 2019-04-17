@@ -20,7 +20,6 @@ public class BashParserTest extends ParsingTestCase {
   public void testCase()          { doTest(true); }
   public void testEcho()          { doTest(true); }
   public void testFor()           { doTest(true); }
-  public void testForRecover()    { doTest(true); }
   public void testSelect()        { doTest(true); }
   public void testExpr()          { doTest(true); }
   public void testHeredoc()       { doTest(true); }

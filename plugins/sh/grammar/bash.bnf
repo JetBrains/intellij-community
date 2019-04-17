@@ -212,9 +212,9 @@ private any_block ::= block | do_block
 do_block ::= do  do_block_compound_list done {pin(".*")=1 extends=block}
 block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
 
-block_compound_list ::= nl? pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile=block_compound_list_recover
+block_compound_list ::= (nl pipeline_command_list|pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=block_compound_list_recover
           elementType=compound_list}
-do_block_compound_list ::= nl? pipeline_command_list end_of_list  newlines {pin(".*")=2 recoverWhile=do_block_compound_list_recover
+do_block_compound_list ::= (nl pipeline_command_list|pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=do_block_compound_list_recover
                     elementType=compound_list}
 private block_compound_list_recover ::= !('{' | '\n' | '}')
 private do_block_compound_list_recover ::= !(do | '\n' |done)
@@ -238,7 +238,8 @@ private list_terminator_recover ::= !(do | '{' | '\n')
 
 function_definition ::=           word argument_list  newlines block
                        | function word argument_list? newlines block {pin(".*")="function|argument_list" extends=command}
-private argument_list ::= '(' ')'
+private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
+private argument_list_recover ::= !('\n'| '{')
 
 subshell_command ::= '(' list ')'
 

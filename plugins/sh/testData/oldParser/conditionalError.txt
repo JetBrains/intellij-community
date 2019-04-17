@@ -58,7 +58,7 @@ BASH_FILE
           LITERAL
             PsiElement(word)('fi')
       PsiWhiteSpace(' ')
-      PsiErrorElement:'(', <assignment command>, <simple command element>, '|' or '|&' expected, got ']'
+      PsiErrorElement:<assignment command>, <simple command element>, '|' or '|&' expected, got ']'
         PsiElement(])(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST

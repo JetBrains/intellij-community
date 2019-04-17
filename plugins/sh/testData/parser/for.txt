@@ -255,9 +255,10 @@ BASH_FILE
               PsiElement(\n)('\n')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiElement(\n)('\n')
-            PsiErrorElement:'done' unexpected
-              <empty list>
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiErrorElement:'&', ';' or '\n' expected, got 'done'
+                <empty list>
             PsiElement(done)('done')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -279,9 +280,10 @@ BASH_FILE
               PsiElement(\n)('\n')
           BLOCK
             PsiElement({)('{')
-            PsiElement(\n)('\n')
-            PsiErrorElement:'}' unexpected
-              <empty list>
+            COMPOUND_LIST
+              PsiElement(\n)('\n')
+              PsiErrorElement:'&', ';' or '\n' expected, got '}'
+                <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
