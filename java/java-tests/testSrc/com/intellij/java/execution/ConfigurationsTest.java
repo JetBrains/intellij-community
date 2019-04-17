@@ -216,7 +216,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     lines.remove(0);
     Assertion.compareUnordered(
       //category, filters, classNames...
-      new Object[]{"", "", psiClass.getQualifiedName(),
+      new Object[]{"", "", "", psiClass.getQualifiedName(),
         "test1.DerivedTest", RT_INNER_TEST_NAME,
         "test1.nested.TestA",
         "test1.nested.TestWithJunit4",
@@ -239,7 +239,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     lines.remove(0);
     Assertion.compareUnordered(
       //category, filters, classNames...
-      new Object[]{"", "pattern.TestA,test1"},
+      new Object[]{"", "", "pattern.TestA,test1"},
       lines);
   }
 
