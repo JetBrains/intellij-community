@@ -331,8 +331,11 @@
     <xs:attribute type="xs:string" name="size12">
       <xs:annotation>
         <xs:documentation>
-          Path to a 12x12 png file with the product icon.
+          Path to a 12x12 png file with the product icon which will be used for 'Project View' tool window.
+          <strong>Deprecated:</strong> it's not recommended to use product-specific icon for Project View. Omit this attribute and the standard
+          'directory' icon (toolwindows/toolWindowProject.svg) will be used.
         </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="size16">
