@@ -19,7 +19,7 @@ BASH_FILE
                   LITERAL
                     PsiElement(word)('b')
             PsiElement(;)(';')
-          PsiErrorElement:'\n' or then expected, got 'fi'
+          PsiErrorElement:then expected, got 'fi'
             <empty list>
           PsiWhiteSpace(' ')
           PsiElement(fi)('fi')

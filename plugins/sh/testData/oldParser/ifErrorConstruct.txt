@@ -26,25 +26,16 @@ BASH_FILE
                     PsiWhiteSpace(' ')
                     THEN_CLAUSE
                       PsiElement(then)('then')
+                      PsiWhiteSpace(' ')
                       PsiErrorElement:<compound list> expected, got ';'
-                        <empty list>
-              PsiWhiteSpace(' ')
-              PsiElement(;)(';')
-              PsiWhiteSpace(' ')
-              PsiErrorElement:<block pipeline command> or '\n' expected, got 'done'
-                PsiElement(done)('done')
-            PsiWhiteSpace(' ')
-            PsiElement(})('}')
+                        PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  PsiElement(done)('done')
+  PsiWhiteSpace(' ')
+  PsiElement(})('}')
   PsiElement(\n)('\n')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('echo')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(")('"')
-            PsiElement(word)('abc')
-            PsiElement(")('"')
+  PsiElement(word)('echo')
+  PsiWhiteSpace(' ')
+  PsiElement(")('"')
+  PsiElement(word)('abc')
+  PsiElement(")('"')

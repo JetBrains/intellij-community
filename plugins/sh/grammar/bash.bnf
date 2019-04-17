@@ -201,28 +201,11 @@ shell_command ::=   for_command
                   | function_definition
 
 private any_block ::= block | do_block
-do_block ::= do  do_block_compound_list done {pin(".*")=1 extends=block}
-block    ::= '{' block_compound_list '}'  {pin(".*")=1 extends=command}
+do_block ::= do  compound_list done {pin(".*")=1 extends=block}
+block    ::= '{' compound_list '}'  {pin(".*")=1 extends=command}
 
-block_compound_list ::= (nl block_pipeline_command_list|block_pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=block_compound_list_recover
-          elementType=compound_list}
-private block_compound_list_recover ::= !('{' | '\n' | '}')
-
-do_block_compound_list ::= (nl block_pipeline_command_list|block_pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile=do_block_compound_list_recover
-                    elementType=compound_list}
-private do_block_compound_list_recover ::= !(do | '\n' | done)
-
-private block_pipeline_command_list ::= block_pipeline_command (pipeline_command_list_separator block_pipeline_command)* {pin=1}
-block_pipeline_command ::=  '!'? pipeline
-                    | timespec '!'? pipeline
-                    | '!' timespec pipeline
-                    | trap_command
-                    | let_command { elementType = pipeline_command recoverWhile = block_pipeline_recover}
-private block_pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
-|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
-
-while_command ::= while do_block_compound_list  do_block
-until_command ::= until do_block_compound_list  do_block
+while_command ::= while compound_list  do_block
+until_command ::= until compound_list  do_block
 
 select_command ::= select w select_expression newlines any_block
 private select_expression ::=  in_clause | list_terminator?
@@ -258,13 +241,14 @@ then_clause ::= then compound_list
 case_command ::= case w+ in case_clause_list esac
 private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin(".*")=1 recoverWhile = case_clause_recover}
 case_clause ::= newlines pattern ')' (compound_case_list|newlines) {pin=3}
+compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 
 pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
 private case_pattern_recover ::= !(')'|';;'|esac)
 private case_clause_recover ::= !(esac)
 
-compound_case_list ::= (nl pipeline_command_list?| pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
-compound_list      ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 }
+compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1 recoverWhile = compound_list_recover}
+private compound_list_recover ::= !(elif | else | then | fi |'{' | '\n' | '}'| do | done)
 list               ::= (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
 private nl ::= '\n'+
 private end_of_list ::= '\n' | ';' | '&'
@@ -288,7 +272,7 @@ pipeline_command ::=  '!'? pipeline
                     | let_command {recoverWhile=pipeline_recover}
 
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'`'
-|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do)
+|'\n'|'(('|time | trap | var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | do | done | '}')
 
 let_command ::= let expression
 

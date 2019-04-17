@@ -6,12 +6,12 @@ BASH_FILE
       PIPELINE
         WHILE_COMMAND
           PsiElement(while)('while')
-          PsiErrorElement:<do block compound list> expected, got ';'
+          PsiErrorElement:<compound list> expected, got ';'
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<do block compound list> expected, got ';'
+            PsiErrorElement:<compound list> expected, got ';'
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')
@@ -32,7 +32,7 @@ BASH_FILE
           PsiWhiteSpace(' ')
           DO_BLOCK
             PsiElement(do)('do')
-            PsiErrorElement:<do block compound list> expected, got ';'
+            PsiErrorElement:<compound list> expected, got ';'
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             PsiElement(done)('done')
@@ -70,7 +70,7 @@ BASH_FILE
       PIPELINE
         WHILE_COMMAND
           PsiElement(while)('while')
-          PsiErrorElement:<do block compound list> expected, got ';'
+          PsiErrorElement:<compound list> expected, got ';'
             PsiElement(;)(';')
           PsiWhiteSpace(' ')
           DO_BLOCK

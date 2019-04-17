@@ -257,7 +257,7 @@ BASH_FILE
             PsiElement(do)('do')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiErrorElement:<block pipeline command> or '\n' expected, got 'done'
+              PsiErrorElement:<pipeline command> or '\n' expected, got 'done'
                 <empty list>
             PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -282,7 +282,7 @@ BASH_FILE
             PsiElement({)('{')
             COMPOUND_LIST
               PsiElement(\n)('\n')
-              PsiErrorElement:<block pipeline command> or '\n' expected, got '}'
+              PsiErrorElement:<pipeline command> or '\n' expected, got '}'
                 <empty list>
             PsiElement(})('}')
   PsiElement(\n)('\n')

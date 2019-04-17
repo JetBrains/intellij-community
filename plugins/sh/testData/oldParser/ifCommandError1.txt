@@ -52,22 +52,21 @@ BASH_FILE
                         PsiElement(word)('e')
                 PsiWhiteSpace(' ')
                 PsiElement(&)('&')
-          PsiErrorElement:<pipeline command>, '\n', elif, else or fi expected, got ';'
-            <empty list>
-    PsiElement(;)(';')
-    PsiErrorElement:<pipeline command> expected, got 'else'
-      PsiElement(else)('else')
-  PsiWhiteSpace(' ')
-  COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        GENERIC_COMMAND_DIRECTIVE
-          LITERAL
-            PsiElement(word)('c')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'elif'
-      PsiElement(elif)('elif')
+                PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+                  PsiElement(;)(';')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('c')
+              PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:<redirection>, fi, '|' or '|&' expected, got 'elif'
+        PsiElement(elif)('elif')
   PsiWhiteSpace(' ')
   COMMANDS_LIST
     PIPELINE_COMMAND

@@ -7,15 +7,14 @@ BASH_FILE
         IF_COMMAND
           PsiElement(if)('if')
           PsiErrorElement:<compound list> expected, got ';'
-            <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'then'
-      PsiElement(then)('then')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+            PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -34,11 +33,9 @@ BASH_FILE
           THEN_CLAUSE
             PsiElement(then)('then')
             PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -68,11 +65,9 @@ BASH_FILE
           ELSE_CLAUSE
             PsiElement(else)('else')
             PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -139,15 +134,14 @@ BASH_FILE
           THEN_CLAUSE
             PsiElement(then)('then')
             PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'else'
-      PsiElement(else)('else')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -166,23 +160,24 @@ BASH_FILE
           THEN_CLAUSE
             PsiElement(then)('then')
             PsiErrorElement:<compound list> expected, got ';'
-              <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'elif'
-      PsiElement(elif)('elif')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'then'
-      PsiElement(then)('then')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'else'
-      PsiElement(else)('else')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELIF_CLAUSE
+            PsiElement(elif)('elif')
+            PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
+              PsiErrorElement:<compound list> expected, got ';'
+                PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
@@ -201,21 +196,24 @@ BASH_FILE
           THEN_CLAUSE
             PsiElement(then)('then')
             PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELIF_CLAUSE
+            PsiElement(elif)('elif')
+            PsiErrorElement:'then' unexpected
               <empty list>
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'elif'
-      PsiElement(elif)('elif')
-    PsiWhiteSpace(' ')
-    PsiElement(then)('then')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'else'
-      PsiElement(else)('else')
-    PsiElement(;)(';')
-    PsiWhiteSpace(' ')
-    PsiErrorElement:<pipeline command> expected, got 'fi'
-      PsiElement(fi)('fi')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
+              PsiErrorElement:<compound list> expected, got ';'
+                PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          ELSE_CLAUSE
+            PsiElement(else)('else')
+            PsiErrorElement:<compound list> expected, got ';'
+              PsiElement(;)(';')
+          PsiWhiteSpace(' ')
+          PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     PIPELINE_COMMAND
