@@ -61,7 +61,7 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     Object singleValue = values.iterator().next();
     List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(
       true, false, expression, new TrackingRunner.ValueDfaProblemType(singleValue));
-    String dump = StreamEx.of(items).map(TrackingRunner.CauseItem::dump).joining("\n----\n");
+    String dump = StreamEx.of(items).map(item -> item.dump(getEditor().getDocument())).joining("\n----\n");
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
     if (firstComment == null) {
       fail("Comment not found");

@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -129,13 +130,13 @@ public class TrackingRunner extends StandardDataFlowRunner {
       return Objects.hash(myChildren, myProblem, myTarget);
     }
 
-    public String dump() {
-      return dump(0);
+    public String dump(Document doc) {
+      return dump(doc, 0);
     }
 
-    private String dump(int indent) {
-      return StringUtil.repeat("  ", indent) + toString() + (myTarget == null ? "" : " (" + myTarget.getText() + ")") + "\n" +
-             StreamEx.of(myChildren).map(child -> child.dump(indent + 1)).joining();
+    private String dump(Document doc, int indent) {
+      return StringUtil.repeat("  ", indent) + render(doc) + (myTarget == null ? "" : " (" + myTarget.getText() + ")") + "\n" +
+             StreamEx.of(myChildren).map(child -> child.dump(doc, indent + 1)).joining();
     }
 
     public Stream<CauseItem> children() {
@@ -147,9 +148,21 @@ public class TrackingRunner extends StandardDataFlowRunner {
       return myTarget;
     }
 
+    public String render(Document doc) {
+      if (myTarget != null) {
+        String cause = myProblem.toString();
+        if (cause.endsWith("#ref")) {
+          int offset = myTarget.getTextRange().getStartOffset();
+          int number = doc.getLineNumber(offset);
+          return cause.replaceFirst("#ref$", "line #" + (number + 1));
+        }
+      }
+      return toString();
+    }
+
     @Override
     public String toString() {
-      return myProblem.toString();
+      return myProblem.toString().replaceFirst("#ref$", "here");
     }
   }
 
@@ -395,7 +408,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
           }
         }
       }
-      return new CauseItem(new CustomDfaProblemType(condition + " is known from here"), expression);
+      return new CauseItem(new CustomDfaProblemType(condition + " is known from #ref"), expression);
     }
     return null;
   }
@@ -406,7 +419,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
         return new CauseItem(
-          new CustomDfaProblemType(expression.getText() + " is known to be '"+nullability.getPresentationName()+"' from here"), 
+          new CustomDfaProblemType(expression.getText() + " is known to be '" + nullability.getPresentationName() + "' from #ref"),
           defExpression);
       }
     }
@@ -534,7 +547,7 @@ public class TrackingRunner extends StandardDataFlowRunner {
     if (factDef != null) {
       PsiExpression defExpression = factDef.getExpression();
       if (defExpression != null) {
-        item.addChildren(new CauseItem("Range is known from here", defExpression));
+        item.addChildren(new CauseItem("Range is known from #ref", defExpression));
       }
     }
     return item;

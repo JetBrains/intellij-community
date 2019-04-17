@@ -89,7 +89,7 @@ public class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction 
 
       @Override
       public String toString() {
-        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem;
+        return StringUtil.repeat("  ", myDepth - 1) + myCauseItem.render(document);
       }
     }
     List<CauseWithDepth> causes =
