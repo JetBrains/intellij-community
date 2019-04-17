@@ -30,7 +30,7 @@ public class TreeControlPainterTest {
     Control odd = new TestControl(11, 11);
     testRendererOffset(painter, odd, false, 18, 36, 54, 72, 90, 108);
     testRendererOffset(painter, odd, true, 18, 36, 54, 72, 90, 108);
-    testControlOffset(painter, odd, 1, 19, 37, 55, 73, 91);
+    testControlOffset(painter, odd, 2, 20, 38, 56, 74, 92);
   }
 
   @Test
@@ -46,7 +46,7 @@ public class TreeControlPainterTest {
     Control odd = new TestControl(11, 11);
     testRendererOffset(painter, odd, false, 18, 36, 54, 72, 90, 108);
     testRendererOffset(painter, odd, true, 0, 18, 36, 54, 72, 90);
-    testControlOffset(painter, odd, 1, 19, 37, 55, 73, 91);
+    testControlOffset(painter, odd, 2, 20, 38, 56, 74, 92);
   }
 
   @Test
@@ -60,9 +60,9 @@ public class TreeControlPainterTest {
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 17, 23, 29, 35, 41);
-    testRendererOffset(painter, odd, true, 11, 17, 23, 29, 35, 41);
-    testControlOffset(painter, odd, 0, 6, 12, 18, 24, 30);
+    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, true, 11, 16, 21, 26, 31, 36);
+    testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }
 
   @Test
@@ -76,9 +76,9 @@ public class TreeControlPainterTest {
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 17, 23, 29, 35, 41);
-    testRendererOffset(painter, odd, true, 0, 6, 12, 18, 24, 30);
-    testControlOffset(painter, odd, 0, 6, 12, 18, 24, 30);
+    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, true, 0, 5, 10, 15, 20, 25);
+    testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }
 
   @Test

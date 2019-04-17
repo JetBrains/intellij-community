@@ -33,8 +33,7 @@ final class ClassicPainter implements Control.Painter {
     if (depth < 0) return -1; // do not paint row
     if (depth == 0) return 0;
     int controlWidth = control.getWidth();
-    int min = controlWidth - controlWidth / 2;
-    int left = getLeftIndent(min);
+    int left = getLeftIndent(controlWidth / 2);
     int right = getRightIndent();
     int offset = getLeafIndent(leaf);
     if (offset < 0) offset = Math.max(controlWidth, left + right);
@@ -45,9 +44,8 @@ final class ClassicPainter implements Control.Painter {
   public int getControlOffset(@NotNull Control control, int depth, boolean leaf) {
     if (depth <= 0 || leaf) return -1; // do not paint control
     int controlWidth = control.getWidth();
-    int min = controlWidth - controlWidth / 2;
-    int left = getLeftIndent(min);
-    int offset = left - min;
+    int left = getLeftIndent(controlWidth / 2);
+    int offset = left - controlWidth / 2;
     return depth > 1 ? (depth - 1) * (left + getRightIndent()) + offset : offset;
   }
 
@@ -58,10 +56,9 @@ final class ClassicPainter implements Control.Painter {
     boolean paintLines = getPaintLines();
     if (!paintLines && leaf) return; // nothing to paint
     int controlWidth = control.getWidth();
-    int min = controlWidth - controlWidth / 2;
-    int left = getLeftIndent(min);
+    int left = getLeftIndent(controlWidth / 2);
     int indent = left + getRightIndent();
-    x += left - min;
+    x += left - controlWidth / 2;
     int controlX = !leaf && depth > 1 ? (depth - 1) * indent + x : x;
     if (paintLines && (depth != 1 || (!leaf && expanded))) {
       g.setColor(LINE_COLOR);
