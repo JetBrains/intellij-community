@@ -28,6 +28,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.util.PsiTreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -168,11 +169,10 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  private static void consumeAllWords(PsiElement context, int offset, Consumer<String> consumer) {
+  private static void consumeAllWords(@NotNull PsiElement context, int offset, @NotNull Consumer<? super String> consumer) {
     if (StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
-
-    Set<String> words = new HashSet<>();
     CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
+    Set<CharSequence> words = new THashSet<>(chars.length()/8);
     IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
       if (start > offset || offset > end) {
         CharSequence sequence = charSeq.subSequence(start, end);
