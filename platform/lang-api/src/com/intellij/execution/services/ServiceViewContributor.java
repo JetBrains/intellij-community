@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -23,20 +20,6 @@ public interface ServiceViewContributor<T> {
 
   @NotNull
   ServiceViewDescriptor getServiceDescriptor(@NotNull T service);
-
-  @Nullable
-  default ViewDescriptorRenderer getViewDescriptorRenderer() {
-    return null;
-  }
-
-  interface ViewDescriptorRenderer {
-    @Nullable
-    Component getRendererComponent(JComponent parent,
-                                   Object value,
-                                   ServiceViewDescriptor viewDescriptor,
-                                   boolean selected,
-                                   boolean hasFocus);
-  }
 
   interface ServiceListener {
     void handle(@NotNull ServiceEvent event);

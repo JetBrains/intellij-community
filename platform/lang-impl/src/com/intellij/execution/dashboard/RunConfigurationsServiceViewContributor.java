@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
-import com.intellij.execution.dashboard.tree.RunDashboardTreeCellRenderer;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewGroupingContributor;
@@ -28,13 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.execution.dashboard.RunDashboardContent.RUN_DASHBOARD_CONTENT_TOOLBAR;
 import static com.intellij.execution.dashboard.RunDashboardContent.RUN_DASHBOARD_TREE_TOOLBAR;
+import static com.intellij.execution.dashboard.RunDashboardCustomizer.NODE_LINKS;
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP;
 
@@ -65,7 +65,7 @@ public class RunConfigurationsServiceViewContributor
     return contributor.getViewDescriptor();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public RunDashboardGroup groupBy(@NotNull RunConfigurationContributor contributor) {
     return TYPE_GROUPING_RULE.getGroup(contributor.asService());
@@ -102,23 +102,6 @@ public class RunConfigurationsServiceViewContributor
       @Override
       public DataProvider getDataProvider() {
         return null;
-      }
-    };
-  }
-
-  @Nullable
-  @Override
-  public ViewDescriptorRenderer getViewDescriptorRenderer() {
-    return new ViewDescriptorRenderer() {
-      final RunDashboardTreeCellRenderer renderer = new RunDashboardTreeCellRenderer();
-      @NotNull
-      @Override
-      public Component getRendererComponent(JComponent parent,
-                                            Object value,
-                                            ServiceViewDescriptor viewDescriptor,
-                                            boolean selected,
-                                            boolean hasFocus) {
-        return renderer.getTreeCellRendererComponent((JTree)parent, value, selected, true, true, 0, hasFocus);
       }
     };
   }
@@ -234,6 +217,13 @@ public class RunConfigurationsServiceViewContributor
         }
       }
       return false;
+    }
+
+    @Nullable
+    @Override
+    public Object getPresentationTag(Object fragment) {
+      Map<Object, Object> links = node.getUserData(NODE_LINKS);
+      return links == null ? null : links.get(fragment);
     }
   }
 

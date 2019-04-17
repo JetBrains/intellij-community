@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.DoubleClickListener;
@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
@@ -55,12 +56,37 @@ class ServiceViewTree extends Tree {
     }.installOn(this);
   }
 
-  private static class ServiceViewTreeCellRenderer extends NodeRenderer {
+  private static class ServiceViewTreeCellRenderer extends ServiceViewTreeCellRendererBase {
+    private ServiceViewDescriptor myDescriptor;
+
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      myDescriptor = value instanceof ServiceViewItem ? ((ServiceViewItem)value).getViewDescriptor() : null;
+      super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+
     @Nullable
     @Override
     protected ItemPresentation getPresentation(Object node) {
       // Ensure that value != myTreeModel.getRoot() && !(value instanceof LoadingNode)
-      return node instanceof ServiceViewItem ? ((ServiceViewItem)node).getViewDescriptor().getPresentation() : null;
+      if (!(node instanceof ServiceViewItem)) return null;
+
+      ItemPresentation presentation = ((ServiceViewItem)node).getViewDescriptor().getPresentation();
+      return presentation instanceof PresentationData ? presentation : new PresentationData(presentation.getPresentableText(),
+                                                                                            presentation.getLocationString(),
+                                                                                            presentation.getIcon(false),
+                                                                                            null);
+    }
+
+    @Override
+    protected Object getTag(String fragment) {
+      return myDescriptor == null ? null : myDescriptor.getPresentationTag(fragment);
     }
   }
 }

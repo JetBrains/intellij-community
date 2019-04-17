@@ -45,4 +45,9 @@ public interface ServiceViewDescriptor {
   default boolean handleDoubleClick(@NotNull MouseEvent event) {
     return false;
   }
+
+  @Nullable
+  default Object getPresentationTag(Object fragment) {
+    return null;
+  }
 }
