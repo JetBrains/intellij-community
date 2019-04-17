@@ -48,8 +48,7 @@ class PresentationMouseHandler(val editorFactory: EditorFactory,
         val editor = e.editor
         val event = e.mouseEvent
         // TODO here also may be handling of ESC key
-        val visualPosition = editor.xyToVisualPosition(event.point)
-        val inlay = editor.inlayModel.getInlineElementAt(visualPosition)
+        val inlay = editor.inlayModel.getElementAt(event.point)
         val presentation = (inlay?.renderer as? PresentationRenderer)?.presentation
         if (activePresentation != presentation) {
           activePresentation?.mouseExited()

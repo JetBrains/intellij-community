@@ -55,7 +55,7 @@ class PresentationFactory(val editor: EditorImpl) {
 
   fun hyperlink(base: InlayPresentation): InlayPresentation {
     val dynamic = DynamicPresentation(base)
-    return OnHoverPresentation(dynamic) { event ->
+    return onHover(dynamic) { event ->
       if (event != null) {
         dynamic.delegate = AttributesTransformerPresentation(base) {
           it.with(attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR))

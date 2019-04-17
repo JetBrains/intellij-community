@@ -33,6 +33,7 @@ class TextInlayPresentation(
     text = newPresentation.text
     yBaseline = newPresentation.yBaseline
     fireContentChanged()
+    // TODO size check
     fireSizeChanged(previousDimension, dimension())
     return true
   }
