@@ -11,10 +11,6 @@
       "Machine Learning Assistant Code Completion" section.
     ]]></description>
 
-  <change-notes><![CDATA[
-    ]]>
-  </change-notes>
-
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
 

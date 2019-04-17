@@ -11,6 +11,7 @@
   <depends>XPathView</depends>
   <depends>com.intellij.modules.xml</depends>
 
+  <!--suppress PluginXmlValidity -->
   <change-notes>
     Xalan Support. To debug with Xalan instead of SAXON, a supported Xalan version (2.7.x) should be present in the
     classpath or "-Dxslt.transformer.type=xalan" should be added as VM argument for the run configuration. Debugging

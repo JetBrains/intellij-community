@@ -30,32 +30,6 @@
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
 
-  <change-notes><![CDATA[
-      2017.3 <br>
-        <ul>
-            <li> Add as a bundled plugin to the IDEA Community </li>
-            <li> Update UI </li>
-            <li> Bug-fixes and improvements </li>
-        </ul>
-      0.1.4 <br>
-        <ul>
-            <li> Support <a href="https://github.com/amaembo/streamex">StreamEx</a> library </li>
-            <li> Minor fixes and improvements </li>
-        </ul>
-      0.1.3 <br>
-        <ul>
-            <li> Remove usage of unsupported API </li>
-        </ul>
-      0.1.2 <br>
-        <ul>
-            <li> Add transitions for toArray/collect/find*/*Match terminal methods </li>
-            <li> Support stream with nulls </li>
-            <li> Fix bug when IDE hangs </li>
-            <li> Minor fixes and improvements </li>
-        </ul>
-    ]]>
-  </change-notes>
-
   <extensionPoints>
     <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
   </extensionPoints>
