@@ -17,6 +17,8 @@ package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,7 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -46,17 +49,13 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
+  public static Info getInfo(@NotNull byte[] data, @Nullable FileContent input) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
-    
-    return getSimpleInfo(data, inputName);
-  }
 
-  @Nullable
-  private static Info getSimpleInfo(@NotNull byte[] data,
-                                   @Nullable String inputName) {
-    return read(new ByteArrayInputStream(data), inputName);
+    boolean contentIsPhysical = input instanceof FileContentImpl && ((FileContentImpl)input).isPhysicalContent();
+    Object inputSource = contentIsPhysical ? new File(input.getFile().getPath()) : new ByteArrayInputStream(data);
+    return read(inputSource, input != null ? input.getFileName() : null);
   }
 
   @Nullable
