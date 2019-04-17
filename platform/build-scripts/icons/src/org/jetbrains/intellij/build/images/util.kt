@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SVGLoader
+import com.intellij.util.io.DigestUtil
 import java.awt.Dimension
 import java.awt.Image
 import java.io.File
@@ -13,7 +12,6 @@ import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
 import javax.imageio.ImageIO
 
 internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
@@ -66,8 +64,7 @@ internal fun loadImage(file: Path): Image? {
 }
 
 internal fun md5(file: Path): String {
-  val md5 = MessageDigest.getInstance("MD5")
-  val hash = md5.digest(Files.readAllBytes(file))
+  val hash = DigestUtil.md5().digest(Files.readAllBytes(file))
   return BigInteger(hash).abs().toString(16)
 }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +43,6 @@ import java.util.Set;
 public class ExtensionsRootType extends RootType {
   static final Logger LOG = Logger.getInstance(ExtensionsRootType.class);
 
-  private static final String HASH_ALGORITHM = "MD5";
   private static final String EXTENSIONS_PATH = "extensions";
   private static final String BACKUP_FILE_EXTENSION = "old";
 
@@ -248,21 +247,15 @@ public class ExtensionsRootType extends RootType {
     }, IOException.class);
   }
 
-  @Nullable
+  @NotNull
   private static String hash(@NotNull String s) {
-    try {
-      MessageDigest md5 = MessageDigest.getInstance(HASH_ALGORITHM);
-      StringBuilder sb = new StringBuilder();
-      byte[] digest = md5.digest(s.getBytes(StandardCharsets.UTF_8));
-      for (byte b : digest) {
-        sb.append(Integer.toHexString(b));
-      }
-      return sb.toString();
+    MessageDigest md5 = DigestUtil.md5();
+    StringBuilder sb = new StringBuilder();
+    byte[] digest = md5.digest(s.getBytes(StandardCharsets.UTF_8));
+    for (byte b : digest) {
+      sb.append(Integer.toHexString(b));
     }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error("Hash algorithm " + HASH_ALGORITHM + " is not supported", e);
-      return null;
-    }
+    return sb.toString();
   }
 
   private static void renameToBackupCopy(@NotNull File file) throws IOException {
