@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 public abstract class DialogWrapperPeer {
-  public static Object HAVE_INITIAL_SELECTION = new Object();
+  public static final Object HAVE_INITIAL_SELECTION = ObjectUtils.sentinel("DialogWrapperPeer.HAVE_INITIAL_SELECTION");
 
   public abstract void setUndecorated(boolean undecorated);
 
