@@ -1,6 +1,5 @@
 package com.intellij.bash;
 
-import com.intellij.bash.lexer.BashTokenTypes;
 import com.intellij.bash.psi.BashGenericCommandDirective;
 import com.intellij.bash.psi.BashLiteral;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -52,7 +51,7 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
     return wordWithDocumentation(o) ? wrapIntoHtml(fetchInfo(o.getText())) : null;
   }
 
-  private boolean wordWithDocumentation(@Nullable PsiElement o) {
+  private static boolean wordWithDocumentation(@Nullable PsiElement o) {
     return o instanceof LeafPsiElement
         && ((LeafPsiElement) o).getElementType() == BashTypes.WORD
         && (o.getParent() instanceof BashLiteral)
@@ -63,7 +62,7 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
     ASTNode node = contextElement == null ? null : contextElement.getNode();
-    if (node == null || (PsiImplUtil.isWhitespaceOrComment(node) || node.getElementType() == BashTokenTypes.LINEFEED)) {
+    if (node == null || (PsiImplUtil.isWhitespaceOrComment(node) || node.getElementType() == BashTypes.LINEFEED)) {
       int offset = editor.getCaretModel().getPrimaryCaret().getOffset();
       PsiElement at = offset > 0 ? file.findElementAt(offset - 1) : null;
       if (wordWithDocumentation(at)) return at;
