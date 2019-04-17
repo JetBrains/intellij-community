@@ -76,7 +76,9 @@ class ServiceView extends JPanel implements Disposable {
   }
 
   void selectItem(Object item) {
-    TreeUtil.select(myTree, new NodeSelectionVisitor(item), path -> {});
+    if (myLastSelection == null || !myLastSelection.getValue().equals(item)) {
+      TreeUtil.select(myTree, new NodeSelectionVisitor(item), path -> {});
+    }
   }
 
   private void onSelectionChanged() {
