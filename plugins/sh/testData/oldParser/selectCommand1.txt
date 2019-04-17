@@ -37,7 +37,8 @@ BASH_FILE
           PsiElement(select)('select')
           PsiWhiteSpace(' ')
           PsiElement(word)('a')
-          PsiElement(\n)('\n')
+          LIST_TERMINATOR
+            PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
           DO_BLOCK
             PsiElement(do)('do')

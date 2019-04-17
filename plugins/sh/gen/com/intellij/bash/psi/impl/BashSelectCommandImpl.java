@@ -74,12 +74,6 @@ public class BashSelectCommandImpl extends BashCommandImpl implements BashSelect
   }
 
   @Override
-  @Nullable
-  public PsiElement getSemi() {
-    return findChildByType(SEMI);
-  }
-
-  @Override
   @NotNull
   public PsiElement getSelect() {
     return findNotNullChildByType(SELECT);

@@ -31,9 +31,6 @@ public interface BashSelectCommand extends BashCommand {
   @NotNull
   List<BashVariable> getVariableList();
 
-  @Nullable
-  PsiElement getSemi();
-
   @NotNull
   PsiElement getSelect();
 

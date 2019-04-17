@@ -219,6 +219,29 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // !(do | '{' | '\n')
+  static boolean any_block_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "any_block_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !any_block_recover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // do | '{' | '\n'
+  private static boolean any_block_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "any_block_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DO);
+    if (!r) r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, LINEFEED);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // '(' ')'
   static boolean argument_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_list")) return false;
@@ -1729,30 +1752,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, LIST_TERMINATOR, "<list terminator>");
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, SEMI);
-    exit_section_(b, l, m, r, false, list_terminator_recover_parser_);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // !(do | '{' | '\n')
-  static boolean list_terminator_recover(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "list_terminator_recover")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !list_terminator_recover_0(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // do | '{' | '\n'
-  private static boolean list_terminator_recover_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "list_terminator_recover_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DO);
-    if (!r) r = consumeToken(b, LEFT_CURLY);
-    if (!r) r = consumeToken(b, LINEFEED);
-    exit_section_(b, m, null, r);
+    exit_section_(b, l, m, r, false, any_block_recover_parser_);
     return r;
   }
 
@@ -2362,7 +2362,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // select w (';'? newlines any_block | newlines in_clause any_block)
+  // select w select_expression newlines any_block
   public static boolean select_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "select_command")) return false;
     if (!nextTokenIs(b, SELECT)) return false;
@@ -2371,51 +2371,30 @@ public class BashParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, SELECT);
     p = r; // pin = 1
     r = r && report_error_(b, w(b, l + 1));
-    r = p && select_command_2(b, l + 1) && r;
+    r = p && report_error_(b, select_expression(b, l + 1)) && r;
+    r = p && report_error_(b, newlines(b, l + 1)) && r;
+    r = p && any_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // ';'? newlines any_block | newlines in_clause any_block
-  private static boolean select_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "select_command_2")) return false;
+  /* ********************************************************** */
+  // in_clause | list_terminator?
+  static boolean select_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "select_expression")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = select_command_2_0(b, l + 1);
-    if (!r) r = select_command_2_1(b, l + 1);
+    r = in_clause(b, l + 1);
+    if (!r) r = select_expression_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // ';'? newlines any_block
-  private static boolean select_command_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "select_command_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = select_command_2_0_0(b, l + 1);
-    r = r && newlines(b, l + 1);
-    r = r && any_block(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // ';'?
-  private static boolean select_command_2_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "select_command_2_0_0")) return false;
-    consumeToken(b, SEMI);
+  // list_terminator?
+  private static boolean select_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "select_expression_1")) return false;
+    list_terminator(b, l + 1);
     return true;
-  }
-
-  // newlines in_clause any_block
-  private static boolean select_command_2_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "select_command_2_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = newlines(b, l + 1);
-    r = r && in_clause(b, l + 1);
-    r = r && any_block(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -3310,6 +3289,11 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
+  static final Parser any_block_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return any_block_recover(b, l + 1);
+    }
+  };
   static final Parser argument_list_recover_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return argument_list_recover(b, l + 1);
@@ -3338,11 +3322,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   static final Parser do_block_compound_list_recover_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return do_block_compound_list_recover(b, l + 1);
-    }
-  };
-  static final Parser list_terminator_recover_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return list_terminator_recover(b, l + 1);
     }
   };
   static final Parser literal_parser_ = new Parser() {

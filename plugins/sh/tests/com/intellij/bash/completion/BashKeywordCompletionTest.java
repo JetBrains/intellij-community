@@ -123,6 +123,12 @@ public class BashKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testNoCompletionInSelectDeclaration() {
     myFixture.configureByText("a.sh", "select <caret> in ; do\n    \ndone");
     assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "select 3 4 in se<caret> ; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "select 3 sel<caret> ; do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
+    myFixture.configureByText("a.sh", "select 3  ; sel<caret>do\n    \ndone");
+    assertEmpty(myFixture.completeBasic());
   }
 
   public void testCaseCompletion() {

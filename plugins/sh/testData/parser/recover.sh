@@ -24,6 +24,14 @@ function foo( f ) ff {
 
 }
 
+select a a in 1,2,4,5; do
+    echo $a
+done
+
+select a a in 1,2,4,5 {
+    echo $a
+}
+
 
 > dddasd
 
