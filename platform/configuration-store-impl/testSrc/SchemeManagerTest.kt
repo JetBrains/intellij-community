@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
@@ -560,6 +561,32 @@ internal class SchemeManagerTest {
 
       assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
       assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+    }
+    finally {
+      Disposer.dispose(busDisposable)
+    }
+  }
+
+  @Test
+  fun `VFS - vf resolver`() {
+    val dir = tempDirManager.newPath(refreshVfs = true)
+    val busDisposable = Disposer.newDisposable()
+    try {
+      val requestedPaths = linkedSetOf<String>()
+      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
+        override fun resolveVirtualFile(path: String): VirtualFile? {
+          requestedPaths.add(PathUtil.getFileName(path))
+          return super.resolveVirtualFile(path)
+        }
+      })
+
+      val a = TestScheme("a", "a")
+      val b = TestScheme("b", "b")
+      schemeManager.setSchemes(listOf(a, b))
+      runInEdtAndWait { schemeManager.save() }
+
+      schemeManager.reload()
+      assertThat(requestedPaths).containsExactly("VFS - vf resolver")
     }
     finally {
       Disposer.dispose(busDisposable)
