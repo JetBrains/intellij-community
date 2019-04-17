@@ -23,9 +23,9 @@ class PresentationMouseHandler(val editorFactory: EditorFactory,
       if (!e.isConsumed) {
         val editor = e.editor
         val event = e.mouseEvent
-        val inlayPoint = event.point
-        val inlay = editor.inlayModel.getElementAt(inlayPoint) ?: return
-
+        val point = event.point
+        val inlay = editor.inlayModel.getElementAt(point) ?: return
+        val inlayPoint = editor.visualPositionToXY(inlay.visualPosition)
         val renderer = inlay.renderer
         if (renderer !is PresentationRenderer) return
 

@@ -27,7 +27,9 @@ class JavaTypeHintsVisitor(val factory: PresentationFactory) : PsiTypeVisitor<In
     if (classType.parameterCount == 0) return className
     val presentations = mutableListOf(className)
     presentations.add(factory.text("<"))
-    classType.parameters.mapTo(presentations) { visitType(it)!! }
+    classType.parameters.mapTo(presentations) {
+      it.accept(this)!!
+    }
     presentations.add(factory.text(">"))
     return SequencePresentation(presentations)
   }
