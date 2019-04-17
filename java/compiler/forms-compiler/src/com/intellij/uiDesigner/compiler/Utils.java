@@ -64,7 +64,7 @@ public final class Utils {
    * @param provider if null, no classes loaded and no properties read
    */
   public static LwRootContainer getRootContainer(final String formFileContent, final PropertiesProvider provider) throws Exception {
-    if (formFileContent.indexOf(FORM_NAMESPACE) == -1) {
+    if (!formFileContent.contains(FORM_NAMESPACE)) {
       throw new AlienFormFileException();
     }
 
@@ -108,7 +108,7 @@ public final class Utils {
   }
 
   public synchronized static String getBoundClassName(final String formFileContent) throws Exception {
-    if (formFileContent.indexOf(FORM_NAMESPACE) == -1) {
+    if (!formFileContent.contains(FORM_NAMESPACE)) {
       throw new AlienFormFileException();
     }
 
@@ -138,8 +138,8 @@ public final class Utils {
    * @return descriptive human readable error message or {@code null} if
    *         no errors were detected.
    */
-    public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor) {
-        if (loader == null) {
+  public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor) {
+    if (loader == null) {
       throw new IllegalArgumentException("loader cannot be null");
     }
     if (className == null) {
@@ -151,9 +151,9 @@ public final class Utils {
       return null;
     }
 
-        final Class aClass;
+    final Class<?> aClass;
     try {
-            aClass = Class.forName(className, false, loader);
+      aClass = Class.forName(className, false, loader);
     }
     catch (final ClassNotFoundException exc) {
       return "Class \"" + className + "\"not found";
@@ -169,22 +169,22 @@ public final class Utils {
     }
 
     if (validateConstructor) {
-            try {
-                final Constructor constructor = aClass.getConstructor();
-                if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
-        return "Class \"" + className + "\" does not have default public constructor";
+      try {
+        final Constructor<?> constructor = aClass.getConstructor();
+        if ((constructor.getModifiers() & Modifier.PUBLIC) == 0) {
+          return "Class \"" + className + "\" does not have default public constructor";
+        }
+      }
+      catch (final Exception exc) {
+        return "Class \"" + className + "\" does not have default constructor";
       }
     }
-            catch (final Exception exc) {
-                return "Class \"" + className + "\" does not have default constructor";
-            }
-        }
 
     // Check that JComponent is accessible via the loader
 
-        if (!JComponent.class.isAssignableFrom(aClass)) {
-        return "Class \"" + className + "\" is not an instance of javax.swing.JComponent";
-      }
+    if (!JComponent.class.isAssignableFrom(aClass)) {
+      return "Class \"" + className + "\" is not an instance of javax.swing.JComponent";
+    }
 
     return null;
   }
@@ -196,14 +196,14 @@ public final class Utils {
 
   public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader, final String targetForm)
     throws CodeGenerationException, RecursiveFormNestingException {
-    HashSet usedFormNames = new HashSet();
+    HashSet<String> usedFormNames = new HashSet<String>();
     if (targetForm != null) {
       usedFormNames.add(targetForm);
     }
     validateNestedFormLoop(usedFormNames, formName, nestedFormLoader);
   }
 
-  private static void validateNestedFormLoop(final Set usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
+  private static void validateNestedFormLoop(final Set<String> usedFormNames, final String formName, final NestedFormLoader nestedFormLoader)
     throws CodeGenerationException, RecursiveFormNestingException {
     if (usedFormNames.contains(formName)) {
       throw new RecursiveFormNestingException();
@@ -216,7 +216,7 @@ public final class Utils {
     catch (Exception e) {
       throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage(), e);
     }
-    final Set thisFormNestedForms = new HashSet();
+    final Set<String> thisFormNestedForms = new HashSet<String>();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
     final RecursiveFormNestingException[] recursiveNestingExceptions = new RecursiveFormNestingException[1];
     rootContainer.accept(new ComponentVisitor() {
@@ -292,7 +292,6 @@ public final class Utils {
 
   public static int getCustomCreateComponentCount(final IContainer container) {
     final int[] result = new int[1];
-    result[0] = 0;
     container.accept(new ComponentVisitor() {
       @Override
       public boolean visit(IComponent c) {
@@ -305,7 +304,7 @@ public final class Utils {
     return result[0];
   }
 
-  public static Class suggestReplacementClass(Class componentClass) {
+  public static Class suggestReplacementClass(Class<?> componentClass) {
     while (true) {
       componentClass = componentClass.getSuperclass();
       if (componentClass.equals(JComponent.class)) {

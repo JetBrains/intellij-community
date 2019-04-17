@@ -32,7 +32,7 @@ import java.util.Vector;
 public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private JPanel myContentPanel;
-  private JComboBox myCompiler;
+  private JComboBox<BackendCompiler> myCompiler;
   private JPanel myTargetOptionsPanel;
   private JBCheckBox myCbUseReleaseOption;
   private final CardLayout myCardLayout;
@@ -64,7 +64,7 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     for (int i = 0; i < configurables.size(); i++) {
       myContentPanel.add(configurables.get(i).createComponent(), compilers.get(i).getId());
     }
-    myCompiler.setModel(new DefaultComboBoxModel(new Vector(compilers)));
+    myCompiler.setModel(new DefaultComboBoxModel<>(new Vector<>(compilers)));
     myCompiler.setRenderer(new ListCellRendererWrapper<BackendCompiler>() {
       @Override
       public void customize(final JList list, final BackendCompiler value, final int index, final boolean selected, final boolean hasFocus) {

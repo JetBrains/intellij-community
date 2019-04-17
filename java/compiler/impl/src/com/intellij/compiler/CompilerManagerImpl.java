@@ -29,6 +29,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -162,8 +163,9 @@ public class CompilerManagerImpl extends CompilerManager {
   private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
-      if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
-        compilers.add((T)item);
+      T concreteCompiler = ObjectUtils.tryCast(item, compilerClass);
+      if (concreteCompiler != null && filter.acceptCompiler(concreteCompiler)) {
+        compilers.add(concreteCompiler);
       }
     }
     final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
@@ -442,11 +444,10 @@ public class CompilerManagerImpl extends CompilerManager {
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
     switch (kind) {
       case ERROR: return CompilerMessageCategory.ERROR;
-      case MANDATORY_WARNING: return CompilerMessageCategory.WARNING;
+      case MANDATORY_WARNING:
       case WARNING: return CompilerMessageCategory.WARNING;
-      case NOTE: return CompilerMessageCategory.INFORMATION;
-      default:
-        return CompilerMessageCategory.INFORMATION;
+      case NOTE:
+      default: return CompilerMessageCategory.INFORMATION;
     }
   }
 

@@ -132,7 +132,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     if (ContainerUtil.isEmpty(buildTasks)) return;
 
     CompilerManager compilerManager = CompilerManager.getInstance(project);
-    CompileScope scope = createScope(compilerManager, context, Collections.EMPTY_SET, false, false);
+    CompileScope scope = createScope(compilerManager, context, Collections.emptySet(), false, false);
     // this will effectively run all before- and after- compilation tasks registered within CompilerManager
     EmptyCompileScopeBuildTask task = (EmptyCompileScopeBuildTask)buildTasks.iterator().next();
     if (task.isIncrementalBuild()) {
