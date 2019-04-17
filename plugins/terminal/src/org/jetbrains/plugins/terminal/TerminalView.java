@@ -52,8 +52,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabLeftAction;
-import org.jetbrains.plugins.terminal.action.MoveTerminalToolwindowTabRightAction;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
+import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
@@ -205,8 +205,8 @@ public class TerminalView {
     }
 
     JBTerminalWidget finalTerminalWidget = terminalWidget;
-    MoveTerminalToolwindowTabLeftAction moveTabLeftAction = new MoveTerminalToolwindowTabLeftAction();
-    MoveTerminalToolwindowTabRightAction moveTabRightAction = new MoveTerminalToolwindowTabRightAction();
+    MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
+    MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
       public void onNewSession() {

@@ -283,9 +283,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(ideaPlugin.getUrl())) {
       String url = ideaPlugin.getUrl().getStringValue();
       if ("https://www.jetbrains.com/idea".equals(url)) {
-        holder.createProblem(ideaPlugin.getUrl(),
-                             DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.generic.plugin.url"),
-                             new RemoveDomElementQuickFix(ideaPlugin.getUrl())).highlightWholeElement();
+        highlightRemove(ideaPlugin.getUrl(),
+                        DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.generic.plugin.url"), holder);
       }
     }
 
@@ -312,27 +311,26 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     else {
       final String url = vendor.getUrl().getStringValue();
       if (url != null && StringUtil.endsWith(url, "jetbrains.com")) {
-        holder.createProblem(vendor.getUrl(),
-                             DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.url", url),
-                             new RemoveDomElementQuickFix(vendor.getUrl())).highlightWholeElement();
+        highlightRemove(vendor.getUrl(),
+                        DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.url", url), holder);
       }
     }
 
     if (DomUtil.hasXml(vendor.getEmail())) {
-      holder.createProblem(vendor.getEmail(),
-                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.email"),
-                           new RemoveDomElementQuickFix(vendor.getEmail())).highlightWholeElement();
+      highlightRemove(vendor.getEmail(),
+                      DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.vendor.no.email"), holder);
     }
-
     if (DomUtil.hasXml(ideaPlugin.getChangeNotes())) {
-      holder.createProblem(ideaPlugin.getChangeNotes(),
-                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.change.notes"),
-                           new RemoveDomElementQuickFix(ideaPlugin.getChangeNotes())).highlightWholeElement();
+      highlightRemove(ideaPlugin.getChangeNotes(),
+                      DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.change.notes"), holder);
     }
     if (DomUtil.hasXml(ideaPlugin.getVersion())) {
-      holder.createProblem(ideaPlugin.getVersion(),
-                           DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.version"),
-                           new RemoveDomElementQuickFix(ideaPlugin.getVersion())).highlightWholeElement();
+      highlightRemove(ideaPlugin.getVersion(),
+                      DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.version"), holder);
+    }
+    if (DomUtil.hasXml(ideaPlugin.getIdeaVersion())) {
+      highlightRemove(ideaPlugin.getIdeaVersion(),
+                      DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.idea.version"), holder);
     }
   }
 
@@ -562,19 +560,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          LocalQuickFix fix = new RemoveDomElementQuickFix(extension);
           if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
-            holder.createProblem(extension, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
-                                 null, fix).highlightWholeElement();
+            highlightRemove(extension,
+                            DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
+                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
           }
           else {
             Module module = plugin.getModule();
             boolean inPlatformCode = module != null && module.getName().startsWith("intellij.platform.");
             if (!inPlatformCode) {
-              holder.createProblem(extension, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   DevKitBundle.message("inspections.plugin.xml.third.party.plugins.must.not.use.itnReporter"),
-                                   null, fix).highlightWholeElement();
+              highlightRemove(extension,
+                              DevKitBundle.message("inspections.plugin.xml.third.party.plugins.must.not.use.itnReporter"),
+                              holder);
             }
           }
         }
@@ -587,11 +584,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        holder.createProblem(serviceInterface,
-                             ProblemHighlightType.WARNING,
-                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
-                             null,
-                             new RemoveDomElementQuickFix(serviceInterface)).highlightWholeElement();
+        highlightRemove(serviceInterface,
+                        DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                        ProblemHighlightType.WARNING, holder);
       }
     }
 
@@ -646,13 +641,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
     PsiClass interfaceClass = interfaceClassElement.getValue();
     if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue())) {
-      DomElementProblemDescriptor problem = holder.createProblem(
-        interfaceClassElement,
-        ProblemHighlightType.WARNING,
-        DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
-        null,
-        new RemoveDomElementQuickFix(interfaceClassElement));
-      problem.highlightWholeElement();
+      highlightRemove(interfaceClassElement,
+                      DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
+                      ProblemHighlightType.WARNING, holder);
     }
   }
 
@@ -790,6 +781,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         }
       }
     }
+  }
+
+  private static void highlightRemove(DomElement element, String message, DomElementAnnotationHolder holder) {
+    highlightRemove(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder);
+  }
+
+  private static void highlightRemove(DomElement element,
+                                      String message,
+                                      ProblemHighlightType highlightType,
+                                      DomElementAnnotationHolder holder) {
+    holder.createProblem(element, highlightType, message, null, new RemoveDomElementQuickFix(element)).highlightWholeElement();
   }
 
   private static void highlightAttributeNotUsedAnymore(GenericAttributeValue attributeValue,
