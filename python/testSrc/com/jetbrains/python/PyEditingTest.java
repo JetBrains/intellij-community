@@ -110,6 +110,14 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("f'''foo'''", doTestTyping("f'''foo''", 9, "'"));
   }
 
+  // PY-35434
+  public void testFStringQuoteInTextPartNotDuplicated() {
+    assertEquals("f'\"]'", doTestTyping("f']'", 2, '"'));
+    assertEquals("f'\" '", doTestTyping("f' '", 2, '"'));
+    assertEquals("f'''foo\" '''", doTestTyping("f'''foo '''", 7, '"'));
+    assertEquals("f'''foo\"\n'''", doTestTyping("f'''foo\n'''", 7, '"'));
+  }
+
   public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
     assertEquals("f'''\"\"\"@'''", doTestTyping("f'''\"\"@'''", 6, "\""));
   }
