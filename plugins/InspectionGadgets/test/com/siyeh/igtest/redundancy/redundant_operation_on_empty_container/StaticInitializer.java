@@ -10,7 +10,7 @@ class Magic {
   public static Magic M2 = new Magic();
   public static Magic M3 = new Magic();
   static {
-    for (Magic value : VALUES) { // RedundantOperationOnEmptyContainer on 'VALUES'
+    for (Magic value : VALUES) { // Was false-positive RedundantOperationOnEmptyContainer on 'VALUES'
       System.out.println(value);
     }
   }
