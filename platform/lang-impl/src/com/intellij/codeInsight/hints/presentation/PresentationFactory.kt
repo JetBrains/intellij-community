@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Font
 import java.awt.Point
@@ -23,7 +22,6 @@ import javax.swing.Icon
 import javax.swing.UIManager
 
 class PresentationFactory(val editor: EditorImpl) {
-
   fun text(text: String): InlayPresentation {
     val plainFont = getFont()
     val width = editor.contentComponent.getFontMetrics(plainFont).stringWidth(text)
@@ -36,21 +34,25 @@ class PresentationFactory(val editor: EditorImpl) {
       },
       plainFont, editor.lineHeight, ascent, descent
     )
-    return AttributesTransformerPresentation(textWithoutBox) {
-      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT))
-    }
+    return withInlayAttributes(textWithoutBox)
   }
 
   fun roundWithBackground(base: InlayPresentation): InlayPresentation {
-    return BackgroundInlayPresentation(
-      InsetPresentation(
-        base,
-        left = 7,
-        right = 7,
-        top = 2,
-        down = 2
-      )
-    )
+      return rounding(8, 8, withInlayAttributes(BackgroundInlayPresentation(
+        InsetPresentation(
+          base,
+          left = 7,
+          right = 7,
+          top = 2,
+          down = 2
+        )
+      )))
+  }
+
+  private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
+    return AttributesTransformerPresentation(base) {
+      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT))
+    }
   }
 
   fun singleText(text: String) : InlayPresentation {
@@ -69,7 +71,9 @@ class PresentationFactory(val editor: EditorImpl) {
     return onHover(dynamic) { event ->
       if (event != null) {
         dynamic.delegate = AttributesTransformerPresentation(base) {
-          it.with(attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR))
+          val attributes = attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR)
+          attributes.effectType = null // With underlined looks weird
+          it.with(attributes)
         }
       } else {
         dynamic.delegate = base
