@@ -5,9 +5,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -23,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -419,6 +419,15 @@ public class ExecutionHelper {
   private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
                                                             @NotNull ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
+    List<String> outputCollected = new ArrayList<>();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        if (StringUtil.isNotEmpty(event.getText())) {
+          outputCollected.add(outputType.toString() + ": " + event.getText());
+        }
+      }
+    });
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
@@ -426,7 +435,7 @@ public class ExecutionHelper {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
-            mode.getTimeoutCallback().consume(mode, presentableCmdline);
+            mode.onTimeout(processHandler, presentableCmdline, new ArrayList<>(outputCollected));
             processHandler.destroyProcess();
           }
         }
