@@ -64,7 +64,7 @@ import java.util.*;
  * @see com.intellij.execution.process.OSProcessHandler
  */
 public class GeneralCommandLine implements UserDataHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
+  private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -430,6 +430,9 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Building process with commands: " + ContainerUtil.map(escapedCommands, it -> "\"" + it + "\""));
+    }
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
