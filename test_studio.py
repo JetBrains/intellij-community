@@ -167,6 +167,13 @@ class StudioTests(unittest.TestCase):
     if aswb:
       self.assertEqual("-Dstudio.projectview=true" in studio_sh_contents, True)
 
+  def test_kotlin_plugin_not_duplicated(self):
+    # Motive: bundling the Kotlin plugin is handled specially in BaseIdeaProperties.groovy
+    mac_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
+    mac_zip = zipfile.ZipFile(mac_artifact)
+    kotlin_plugin_count = sum(name.endswith("kotlin-plugin.jar") for name in mac_zip.namelist())
+    self.assertEqual(kotlin_plugin_count, 1)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', required = True)
