@@ -24,6 +24,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.Set;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
+@ApiStatus.Internal
 public class GitLogUtil {
   private static final Logger LOG = Logger.getInstance(GitLogUtil.class);
   public static final String GRAFTED = "grafted";
