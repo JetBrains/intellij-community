@@ -18,7 +18,6 @@ public abstract class WritingAccessProvider {
    */
   @NotNull
   public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
-    //noinspection deprecation
     return requestWriting(files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
@@ -40,14 +39,12 @@ public abstract class WritingAccessProvider {
     return true;
   }
 
-  @NotNull
-  public static WritingAccessProvider[] getProvidersForProject(@Nullable Project project) {
-    return project == null || project.isDefault() ? new WritingAccessProvider[0] : EP_NAME.getExtensions(project);
-  }
-
   public static boolean isPotentiallyWritable(@NotNull VirtualFile file, @Nullable Project project) {
-    WritingAccessProvider[] providers = getProvidersForProject(project);
-    for (WritingAccessProvider provider : providers) {
+    if (project == null || project.isDefault()) {
+      return true;
+    }
+
+    for (WritingAccessProvider provider : EP_NAME.getIterable(project)) {
       if (!provider.isPotentiallyWritable(file)) {
         return false;
       }
