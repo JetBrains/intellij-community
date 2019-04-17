@@ -32,10 +32,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.EverythingGlobalScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -1024,7 +1021,7 @@ public class JavaDocInfoGenerator {
 
   private static void generateLinkToParentIfNeeded(StringBuilder buffer, PsiMember member) {
     PsiClass parentClass = member.getContainingClass();
-    if (parentClass != null) {
+    if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
         generateLink(buffer, qName, qName + generateTypeParameters(parentClass, true), member, false);
