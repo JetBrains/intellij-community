@@ -49,8 +49,8 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   @Override
-  protected void configureByFile(@NotNull String filePath) {
-    super.configureByFile(filePath);
+  protected void configureByFile(@NotNull String relativePath) {
+    super.configureByFile(relativePath);
 
     complete();
   }

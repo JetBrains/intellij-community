@@ -97,11 +97,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Configure test from data file. Data file is usual java, xml or whatever file that needs to be tested except it
    * has &lt;caret&gt; marker where caret should be placed when file is loaded in editor and &lt;selection&gt;&lt;/selection&gt;
    * denoting selection bounds.
-   * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
+   * @param relativePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    */
-  protected void configureByFile(@TestDataFile @NonNls @NotNull String filePath) {
+  protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
-      String fullPath = getTestDataPath() + filePath;
+      String fullPath = getTestDataPath() + relativePath;
       final File ioFile = new File(fullPath);
       checkCaseSensitiveFS(fullPath, ioFile);
       String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);

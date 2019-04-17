@@ -248,7 +248,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
     };
 
     final AtomicInteger cntThreads = new AtomicInteger(THREADS);
-    myThreadRunner.run(THREADS, i -> {
+    myThreadRunner.run(THREADS, __ -> {
       for (int j = 0; j < RUNS_PER_THREAD; j++) {
         sleepX(7);
         myQueue.run(task);
@@ -260,7 +260,6 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
 
     Assert.assertTrue(myQueue.isEmpty());
     Assert.assertEquals(0, cntThreads.get());
-    myThreadRunner.finish();
   }
 
   private static void assertSucceeded(TestTask task) {
@@ -283,7 +282,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
 
   private static void waitForTasks(TestTask... tasks) throws InterruptedException {
     for (TestTask task : tasks) {
-      task.waitFor(1_000);
+      task.waitFor(1, TimeUnit.SECONDS);
     }
   }
 
@@ -357,8 +356,8 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
       assertNotSame(TaskState.CREATED, myState.get());
     }
 
-    public void waitFor(int timeout) throws InterruptedException {
-      assertTrue(mySemaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS));
+    public void waitFor(int timeout, TimeUnit timeUnit) throws InterruptedException {
+      assertTrue(mySemaphore.tryAcquire(1, timeout, timeUnit));
       mySemaphore.release();
     }
 
