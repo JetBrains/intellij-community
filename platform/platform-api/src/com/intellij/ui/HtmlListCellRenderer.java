@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +13,8 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   public HtmlListCellRenderer() { }
 
-  public HtmlListCellRenderer(@SuppressWarnings("UnusedParameters") final ListCellRenderer listCellRenderer) { }
-
   @Override
-  public final void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus) {
+  public final void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
     myText = new StringBuilder();
     try {
       doCustomize(list, value, index, selected, hasFocus);
@@ -39,9 +23,7 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
         setText(null);
       }
       else {
-        myText.insert(0, "<html><body style=\"white-space:nowrap\">");
-        myText.append("</body></html>");
-        setText(myText.toString());
+        setText(myText.insert(0, "<html><body style=\"white-space:nowrap\">").append("</body></html>").toString());
       }
     }
     finally {
@@ -49,21 +31,21 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
     }
   }
 
-  protected abstract void doCustomize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
+  protected abstract void doCustomize(JList list, T value, int index, boolean selected, boolean hasFocus);
 
-  public void append(@NotNull final String fragment) {
+  public void append(@NotNull String fragment) {
     append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
+  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
     formatText(myText, fragment, attributes);
   }
 
-  public void appendLink(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, @NotNull final String url) {
+  public void appendLink(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, @NotNull String url) {
     formatLink(myText, fragment, attributes, url);
   }
 
-  public void append(@NotNull final SimpleColoredText text) {
+  public void append(@NotNull SimpleColoredText text) {
     int length = text.getTexts().size();
     for (int i = 0; i < length; i++) {
       String fragment = text.getTexts().get(i);
