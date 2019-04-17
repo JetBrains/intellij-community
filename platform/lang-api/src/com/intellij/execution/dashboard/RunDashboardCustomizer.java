@@ -19,18 +19,22 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Register this extension to customize Run Dashboard.
  */
 @ApiStatus.Experimental
 public abstract class RunDashboardCustomizer {
+  public static final Key<Map<Object, Object>> NODE_LINKS = new Key<>("RunDashboardNodeLink");
+
   public abstract boolean isApplicable(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor);
 
   public boolean updatePresentation(@NotNull PresentationData presentation, @NotNull RunDashboardRunConfigurationNode node) {

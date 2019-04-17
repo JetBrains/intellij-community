@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.execution.dashboard.tree.RunDashboardTreeMouseListener;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
@@ -38,7 +37,7 @@ class ServiceViewTree extends Tree {
 
     // listeners
     new TreeSpeedSearch(this, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
-    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(this);
+    ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(this);
     mouseListener.installOn(this);
 
     //RowsDnDSupport.install(myTree, myTreeModel);

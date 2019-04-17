@@ -1,32 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.dashboard.tree;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.services;
 
-import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Konstantin Aleev
- */
-public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListenerBase {
-  @NotNull private final Tree myTree;
+@ApiStatus.Internal
+public class ServiceViewTreeLinkMouseListener extends RepaintLinkMouseListenerBase<Object> {
+  private final Tree myTree;
 
-  public RunDashboardTreeMouseListener(@NotNull Tree tree) {
+  public ServiceViewTreeLinkMouseListener(@NotNull Tree tree) {
     myTree = tree;
-  }
-
-  @Override
-  protected Object getAimedObject(MouseEvent e) {
-    return TreeUtil.getLastUserObject(myTree.getPathForLocation(e.getX(), e.getY()));
   }
 
   @Override
@@ -43,7 +34,7 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
 
   @Nullable
   @Override
-  protected RunDashboardHyperlinkComponent getTagAt(@NotNull MouseEvent e) {
+  protected Object getTagAt(@NotNull MouseEvent e) {
     final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
     if (path == null) return null;
 
@@ -55,31 +46,7 @@ public class RunDashboardTreeMouseListener extends RunDashboardLinkMouseListener
     final int row = myTree.getRowForLocation(e.getX(), e.getY());
     boolean isLeaf = myTree.getModel().isLeaf(treeNode);
 
-    Object tag = null;
-
     Component component = myTree.getCellRenderer().getTreeCellRendererComponent(myTree, treeNode, true, false, isLeaf, row, true);
-    if (component instanceof ColoredTreeCellRenderer) {
-      tag = ((ColoredTreeCellRenderer)component).getFragmentTagAt(dx);
-    }
-    else {
-      component.setBounds(rectangle);
-      component.doLayout();
-
-      Point componentPoint = new Point(dx, 0);
-      Component child = component.getComponentAt(componentPoint);
-      if (child instanceof ColoredTreeCellRenderer) {
-        Point childPoint = SwingUtilities.convertPoint(component, componentPoint, child);
-        tag = ((ColoredTreeCellRenderer)child).getFragmentTagAt(childPoint.x);
-      }
-      else if (child instanceof JLabel) {
-        tag = ((JLabel)child).getIcon();
-      }
-    }
-
-    if (tag instanceof RunDashboardHyperlinkComponent) {
-      return (RunDashboardHyperlinkComponent)tag;
-    }
-    return null;
+    return component instanceof ColoredTreeCellRenderer ? ((ColoredTreeCellRenderer)component).getFragmentTagAt(dx) : null;
   }
 }
-
