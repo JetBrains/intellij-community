@@ -10,6 +10,12 @@
   <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.editor.actions.FastMouseScrollComponent</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
