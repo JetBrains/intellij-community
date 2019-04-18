@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.add
 import git4idea.test.addCommit
@@ -38,8 +39,11 @@ class GitSha1Test : GitSingleRepoTest() {
   fun `test sha for add`() {
     cd(projectPath)
     val newFile = "newFile.txt"
+    val path = Paths.get(projectPath, newFile)
     touch(newFile, "Hello World!")
     add(newFile)
+
+    VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtil.findFile(path, true))
     checkSha1ForSingleChange(BlobIndexUtil.NOT_COMMITTED_HASH, git("hash-object $newFile"))
   }
 
@@ -57,6 +61,8 @@ class GitSha1Test : GitSingleRepoTest() {
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
     val expectedBefore = git("hash-object $path")
     setFileText(virtualFile, "echo content\n with line separator")
+
+    VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtil.findFile(path, true))
     checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))
   }
 
