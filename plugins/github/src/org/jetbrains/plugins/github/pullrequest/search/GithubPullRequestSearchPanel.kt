@@ -23,10 +23,11 @@ import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
 internal class GithubPullRequestSearchPanel(project: Project,
-                                            private val autoPopupController: AutoPopupController,
+                                            autoPopupController: AutoPopupController,
                                             private val holder: GithubPullRequestSearchQueryHolder) : BorderLayoutPanel() {
 
-  private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
+  private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(autoPopupController),
+                                                             "", true, true, false, false) {
 
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
@@ -72,7 +73,9 @@ internal class GithubPullRequestSearchPanel(project: Project,
     background = UIUtil.getListBackground()
   }
 
-  private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {
+  private class SearchCompletionProvider(private val autoPopupController: AutoPopupController)
+    : TextFieldCompletionProviderDumbAware(true) {
+
     private val addColonInsertHandler = object : InsertHandler<LookupElement> {
       override fun handleInsert(context: InsertionContext, item: LookupElement) {
         if (context.completionChar == ':') return
