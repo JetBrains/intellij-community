@@ -416,7 +416,7 @@ public class EditorPainter implements TextDrawingCallback {
                                         : marker.getEndOffset());
     int visualLine = myView.logicalToVisualPosition(new LogicalPosition(line + (marker.getLineSeparatorPlacement() == 
                                                                                 SeparatorPlacement.TOP ? 0 : 1), 0), false).line;
-    int y = (visualLine == 0 ? -1 : myView.visualLineToY(visualLine - 1) + myView.getLineHeight() - 1) + yShift;
+    int y = (visualLine == 0 ? -1 : myView.visualLineToY(visualLine) - 1) + yShift;
     int startX = myCorrector.lineSeparatorStart(clip.x);
     int endX = myCorrector.lineSeparatorEnd(clip.x + clip.width);
     g.setColor(separatorColor);
