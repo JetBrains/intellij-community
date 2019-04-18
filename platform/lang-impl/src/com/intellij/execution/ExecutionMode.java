@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,11 +71,11 @@ public class ExecutionMode {
    */
   public void onTimeout(@NotNull ProcessHandler processHandler,
                         @NotNull String commandLineString,
-                        @NotNull List<String> outputCollected) {
+                        @NotNull ProcessOutput outputCollected) {
   }
 
   /**
-   * @deprecated override {@link #onTimeout(ProcessHandler, String, List)} instead
+   * @deprecated override {@link #onTimeout(ProcessHandler, String, ProcessOutput)}  instead
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @Deprecated
