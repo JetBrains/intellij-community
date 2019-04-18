@@ -171,6 +171,10 @@ public abstract class ActionPlaces {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
   }
 
+  public static boolean isMainMenuOrShortcut(@NotNull String place) {
+    return MAIN_MENU.equals(place) || KEYBOARD_SHORTCUT.equals(place);
+  }
+
   @NotNull
   public static String getActionGroupPopupPlace(@Nullable String actionId) {
     return actionId == null ? POPUP : POPUP_PREFIX + actionId;
