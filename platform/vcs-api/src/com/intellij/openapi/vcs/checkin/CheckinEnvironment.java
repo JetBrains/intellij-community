@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
@@ -41,7 +44,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   String getCheckinOperationName();
 
   @Nullable
-  List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment);
+  default List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), newHashSet());
+  }
 
   @Nullable
   List<VcsException> commit(@NotNull List<Change> changes,

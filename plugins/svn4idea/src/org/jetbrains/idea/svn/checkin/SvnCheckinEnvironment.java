@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -187,11 +186,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     return exception;
-  }
-
-  @Override
-  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   @Override

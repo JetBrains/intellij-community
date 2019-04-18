@@ -40,7 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
@@ -764,12 +763,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       exceptions.add(e);
       return false;
     }
-  }
-
-
-  @Override
-  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   private boolean mergeCommit(@NotNull Project project,
