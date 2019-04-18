@@ -9,6 +9,6 @@ public interface BuildViewSettingsProvider {
   boolean isExecutionViewHidden();
 
   default boolean isSideBySideView() {
-    return Registry.is("build.view.side-by-side", false);
+    return Registry.is("build.view.side-by-side", true);
   }
 }

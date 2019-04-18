@@ -331,26 +331,26 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   private SplitterWithSecondHideable createDetailsSplitter(@NotNull JPanel rootPane) {
-    SplitterWithSecondHideable.OnOffListener<Integer> listener = new SplitterWithSecondHideable.OnOffListener<Integer>() {
+    SplitterWithSecondHideable.OnOffListener listener = new SplitterWithSecondHideable.OnOffListener() {
       @Override
-      public void on(Integer integer) {
-        if (integer == 0) return;
+      public void on(int hideableHeight) {
+        if (hideableHeight == 0) return;
         myDiffDetails.refresh(false);
         mySplitter.skipNextLayout();
         myDetailsSplitter.getComponent().skipNextLayout();
         Dimension dialogSize = getSize();
-        setSize(dialogSize.width, dialogSize.height + integer);
+        setSize(dialogSize.width, dialogSize.height + hideableHeight);
         repaint();
       }
 
       @Override
-      public void off(Integer integer) {
-        if (integer == 0) return;
+      public void off(int hideableHeight) {
+        if (hideableHeight == 0) return;
         myDiffDetails.clear();
         mySplitter.skipNextLayout();
         myDetailsSplitter.getComponent().skipNextLayout();
         Dimension dialogSize = getSize();
-        setSize(dialogSize.width, dialogSize.height - integer);
+        setSize(dialogSize.width, dialogSize.height - hideableHeight);
         repaint();
       }
     };
@@ -439,6 +439,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
     if (showDetails) {
       myDetailsSplitter.initOn();
+      runWhenWindowOpened(getWindow(), () -> myDetailsSplitter.setInitialProportion());
     }
     changeDetails(false);
   }

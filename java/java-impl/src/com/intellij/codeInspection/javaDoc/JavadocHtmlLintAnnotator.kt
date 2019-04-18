@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -125,7 +125,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
-    parameters.mainClass = DocLint::class.qualifiedName
+    parameters.mainClass = DocLint::class.java.name
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 

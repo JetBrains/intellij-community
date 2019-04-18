@@ -57,20 +57,20 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testMayCache() {
-    def doo1 = myGuard.markStack()
+    def doo1 = RecursionManager.markStack()
     assert "doo-return" == prevent("doo") {
-      def foo1 = myGuard.markStack()
+      def foo1 = RecursionManager.markStack()
       assert "foo-return" == prevent("foo") {
-        def bar1 = myGuard.markStack()
+        def bar1 = RecursionManager.markStack()
         assert "bar-return" == prevent("bar") {
-          def foo2 = myGuard.markStack()
+          def foo2 = RecursionManager.markStack()
           assert null == prevent("foo") { "foo-return" }
           assert !foo2.mayCacheNow()
           return "bar-return"
         }
         assert !bar1.mayCacheNow()
         
-        def goo1 = myGuard.markStack()
+        def goo1 = RecursionManager.markStack()
         assert "goo-return" == prevent("goo") {
           return "goo-return"
         }
@@ -91,7 +91,7 @@ class RecursionManagerTest extends TestCase {
         assert null == prevent("foo") { "foo-return" }
         return "bar-return"
       }
-      def stamp = myGuard.markStack()
+      def stamp = RecursionManager.markStack()
       assert "bar-return" == prevent("bar") {
         fail()
       }
@@ -110,7 +110,7 @@ class RecursionManagerTest extends TestCase {
         }
         return "2-return"
       }
-      def stamp = myGuard.markStack()
+      def stamp = RecursionManager.markStack()
       assert "2-return" == prevent("2") { fail() }
       assert !stamp.mayCacheNow()
 
@@ -124,7 +124,7 @@ class RecursionManagerTest extends TestCase {
     assert "foo-return" == prevent("foo") {
       assert null == prevent("foo") { "foo-return" }
       assert "bar-return" == prevent("bar") { "bar-return" }
-      def stamp = myGuard.markStack()
+      def stamp = RecursionManager.markStack()
       assert "bar-return2" == prevent("bar") { "bar-return2" }
       assert stamp.mayCacheNow()
       return "foo-return"

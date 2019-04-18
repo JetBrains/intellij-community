@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -121,6 +122,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
+  @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
@@ -325,8 +327,6 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = rootSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(rootSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     IMPORT_LAYOUT_TABLE.copyFrom(rootSettings.IMPORT_LAYOUT_TABLE);
-    REPLACE_INSTANCEOF_AND_CAST = rootSettings.REPLACE_INSTANCEOF;
-    REPLACE_NULL_CHECK = rootSettings.REPLACE_NULL_CHECK;
     FIELD_NAME_PREFIX = rootSettings.FIELD_NAME_PREFIX;
     STATIC_FIELD_NAME_PREFIX = rootSettings.STATIC_FIELD_NAME_PREFIX;
     PARAMETER_NAME_PREFIX = rootSettings.PARAMETER_NAME_PREFIX;
@@ -347,28 +347,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     STATIC_FIELD_TYPE_TO_NAME.copyFrom(rootSettings.STATIC_FIELD_TYPE_TO_NAME);
 
     ENABLE_JAVADOC_FORMATTING = rootSettings.ENABLE_JAVADOC_FORMATTING;
-    JD_ALIGN_PARAM_COMMENTS = rootSettings.JD_ALIGN_PARAM_COMMENTS;
-    JD_ALIGN_EXCEPTION_COMMENTS = rootSettings.JD_ALIGN_EXCEPTION_COMMENTS;
-    JD_ADD_BLANK_AFTER_PARM_COMMENTS = rootSettings.JD_ADD_BLANK_AFTER_PARM_COMMENTS;
-    JD_ADD_BLANK_AFTER_RETURN = rootSettings.JD_ADD_BLANK_AFTER_RETURN;
-    JD_ADD_BLANK_AFTER_DESCRIPTION = rootSettings.JD_ADD_BLANK_AFTER_DESCRIPTION;
-    JD_P_AT_EMPTY_LINES = rootSettings.JD_P_AT_EMPTY_LINES;
-
-    JD_KEEP_INVALID_TAGS = rootSettings.JD_KEEP_INVALID_TAGS;
-    JD_KEEP_EMPTY_LINES = rootSettings.JD_KEEP_EMPTY_LINES;
-    JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = rootSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
-
-    JD_USE_THROWS_NOT_EXCEPTION = rootSettings.JD_USE_THROWS_NOT_EXCEPTION;
-    JD_KEEP_EMPTY_PARAMETER = rootSettings.JD_KEEP_EMPTY_PARAMETER;
-    JD_KEEP_EMPTY_EXCEPTION = rootSettings.JD_KEEP_EMPTY_EXCEPTION;
-    JD_KEEP_EMPTY_RETURN = rootSettings.JD_KEEP_EMPTY_RETURN;
-
 
     JD_LEADING_ASTERISKS_ARE_ENABLED = rootSettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-    JD_PRESERVE_LINE_FEEDS = rootSettings.JD_PRESERVE_LINE_FEEDS;
-    JD_PARAM_DESCRIPTION_ON_NEW_LINE = rootSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE;
-
-    JD_INDENT_ON_CONTINUATION = rootSettings.JD_INDENT_ON_CONTINUATION;
 
     if (rootSettings.WRAP_COMMENTS) {
       rootSettings.getCommonSettings(JavaLanguage.INSTANCE).WRAP_COMMENTS = rootSettings.WRAP_COMMENTS;

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
@@ -68,17 +69,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
-    final List<NamedScope> predefinedScopes = new ArrayList<>();
-    final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
-    for (CustomScopesProvider scopesProvider : scopesProviders) {
-      List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
-      if (ArrayUtil.contains(null, customScopes)) {
-        throw new IllegalStateException("Provider.getFilteredScopes() must not return null scopes, got: " + customScopes+"; provider: "+scopesProvider + " ("+scopesProvider.getClass()+")");
-      }
-
-      predefinedScopes.addAll(customScopes);
-    }
-    return predefinedScopes;
+    return CustomScopesAggregator.getAllCustomScopes(myProject);
   }
 
   @Override

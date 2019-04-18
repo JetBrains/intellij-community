@@ -41,16 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
-  @Override
-  @Nls
-  @NotNull
-  public final String getGroupDisplayName() {
-    return getRngGroupDisplayName();
-  }
-
-  public static String getRngGroupDisplayName() {
-    return "RELAX NG";
-  }
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {

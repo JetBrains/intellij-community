@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -43,7 +43,7 @@ public abstract class InspectionViewActionBase extends AnAction {
     if (event == null) {
       return null;
     }
-    InspectionResultsView view = InspectionResultsView.DATA_KEY.getData(event.getDataContext());
+    InspectionResultsView view = event.getData(InspectionResultsView.DATA_KEY);
     if (view == null) {
       Project project = event.getProject();
       if (project == null) return null;

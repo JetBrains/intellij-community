@@ -25,6 +25,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ import java.util.List;
 public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
-  public ProjectOrderEnumerator(@NotNull Project project, @NotNull OrderRootsCache rootsCache) {
+  public ProjectOrderEnumerator(@NotNull Project project, @Nullable OrderRootsCache rootsCache) {
     super(rootsCache);
     myProject = project;
   }

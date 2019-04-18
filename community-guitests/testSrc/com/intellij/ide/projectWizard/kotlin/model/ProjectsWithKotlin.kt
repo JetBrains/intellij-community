@@ -780,7 +780,6 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   }
   step("wait for initial gradle importing") {
     waitAMoment()
-    waitForGradleReimport(projectName)
   }
   saveAndCloseCurrentEditor()
   editSettingsGradle()
@@ -791,7 +790,6 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   waitAMoment()
   step("gradle reimport after editing gradle files") {
     gradleReimport()
-    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   }
   waitAMoment()
 
@@ -872,7 +870,6 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
   val projectName = testMethod.methodName
   step("wait for initial gradle importing") {
     waitAMoment()
-    waitForGradleReimport(projectName)
   }
   editSettingsGradle()
   editBuildGradle(
@@ -882,7 +879,6 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
   waitAMoment()
   step("gradle reimport after editing gradle files") {
     gradleReimport()
-    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   }
   waitAMoment()
 

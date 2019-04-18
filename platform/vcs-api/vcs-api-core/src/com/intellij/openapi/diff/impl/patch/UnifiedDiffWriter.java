@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.patch;
 
@@ -15,10 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
@@ -33,17 +30,16 @@ public class UnifiedDiffWriter {
 
   public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
                            @Nullable final CommitContext commitContext) throws IOException {
-    final PatchEP[] extensions = getPatchExtensions(project);
-    write(project, patches, writer, lineSeparator, extensions, commitContext);
+    write(project, patches, writer, lineSeparator, getPatchExtensions(project), commitContext);
   }
 
   @NotNull
-  public static PatchEP[] getPatchExtensions(@Nullable Project project) {
-    return project == null ? new PatchEP[0] : PatchEP.EP_NAME.getExtensions(project);
+  public static List<PatchEP> getPatchExtensions(@Nullable Project project) {
+    return project == null ? Collections.emptyList() : PatchEP.EP_NAME.getExtensions(project);
   }
 
   public static void write(@Nullable Project project, Collection<? extends FilePatch> patches, Writer writer, final String lineSeparator,
-                           final PatchEP[] extensions, final CommitContext commitContext) throws IOException {
+                           final List<PatchEP> extensions, final CommitContext commitContext) throws IOException {
     write(project, project == null ? null : project.getBasePath(), patches, writer, lineSeparator, extensions, commitContext);
   }
 
@@ -52,9 +48,9 @@ public class UnifiedDiffWriter {
                            Collection<? extends FilePatch> patches,
                            Writer writer,
                            final String lineSeparator,
-                           @NotNull final PatchEP[] extensions,
+                           @NotNull final List<PatchEP> extensions,
                            final CommitContext commitContext) throws IOException {
-    for(FilePatch filePatch: patches) {
+    for (FilePatch filePatch : patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch)filePatch;
       String path = ObjectUtils.assertNotNull(patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName());

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
@@ -33,24 +18,17 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class Windows {
-
   static class ToolWindowProvider {
 
     private final Signal mySignal;
 
-    private Consumer<String> dockedWindowHandler;
     private Consumer<String> pinnedWindowFocusLostHandler;
-    private Consumer<String> floatingWindowHandler;
-    private Consumer<String> windowedWindowHandler;
-    private Consumer<String> deactivationShortcutHandler;
-    private ActionManager myActionManager;
 
     private ToolWindowProvider(Signal signal) {
       mySignal = signal;
     }
 
     public ToolWindowProvider handleDocked(Consumer<String> dockedWindowHandler) {
-      this.dockedWindowHandler = dockedWindowHandler;
       return this;
     }
 
@@ -60,21 +38,18 @@ public class Windows {
     }
 
     public ToolWindowProvider handleFloating(Consumer<String> floatingWindowHandler) {
-      this.floatingWindowHandler = floatingWindowHandler;
       return this;
     }
 
     public ToolWindowProvider handleWindowed(Consumer<String> windowedWindowHandler) {
-      this.windowedWindowHandler = windowedWindowHandler;
       return this;
     }
 
-    public ToolWindowProvider withEscAction(ActionManager actionManager) {
-      myActionManager = actionManager;
+    public ToolWindowProvider withEscAction() {
       return this;
     }
 
-    public static boolean isInActiveToolWindow (Object component) {
+    public static boolean isInActiveToolWindow(Object component) {
       JComponent source = (component instanceof JComponent ? ((JComponent)component) : null);
 
       ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
@@ -91,7 +66,7 @@ public class Windows {
       return false;
     }
 
-    public static boolean isInToolWindow (Component component) {
+    public static boolean isInToolWindow(Component component) {
       Container c = component.getParent();
       while (c != null) {
         if (c instanceof ToolWindow) {
@@ -102,7 +77,7 @@ public class Windows {
       return false;
     }
 
-    public Shortcut[] findShortcuts (String actionId) {
+    public Shortcut[] findShortcuts(String actionId) {
       return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
     }
 
@@ -123,12 +98,16 @@ public class Windows {
 
               FocusEvent focusEvent = (FocusEvent)event;
 
-              if (isInActiveToolWindow(focusEvent.getSource()) && !isInActiveToolWindow(focusEvent.getOppositeComponent())) {
+              if (isInActiveToolWindow(focusEvent.getSource())
+                  && !isInActiveToolWindow(focusEvent.getOppositeComponent())
+                  && focusEvent.getOppositeComponent() != null) {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus
                 ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
-                if (!focusEvent.isTemporary() && activeToolWindow != null && (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
+                if (!focusEvent.isTemporary() &&
+                    activeToolWindow != null &&
+                    (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
                   pinnedWindowFocusLostHandler.accept(id);
                 }
               }
@@ -137,7 +116,8 @@ public class Windows {
         }
       };
 
-      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.FOCUS_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+      Toolkit.getDefaultToolkit()
+        .addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.FOCUS_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
 
       Disposable listenerDisposer = new Disposable() {
 
@@ -148,7 +128,6 @@ public class Windows {
       };
 
       Disposer.register(project, listenerDisposer);
-
     }
   }
 
@@ -177,7 +156,7 @@ public class Windows {
       this.isAppropriatePredicate = isAppropriatePredicate;
     }
 
-    public boolean appropriate (AWTEvent event) {
+    public boolean appropriate(AWTEvent event) {
       return isAppropriatePredicate.test(event);
     }
   }
@@ -192,7 +171,7 @@ public class Windows {
     }
   }
 
-  static ToolWindowFilter toolWindows () {
+  static ToolWindowFilter toolWindows() {
     // Might be we should store and create algorithms specific to toolwindows here
     return ToolWindowFilter.INSTANCE;
   }

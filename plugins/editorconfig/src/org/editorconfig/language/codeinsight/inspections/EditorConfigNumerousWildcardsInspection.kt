@@ -2,7 +2,6 @@
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
@@ -13,7 +12,7 @@ class EditorConfigNumerousWildcardsInspection : LocalInspectionTool() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (!containsIssue(header)) return
       val message = EditorConfigBundle["inspection.header.many.wildcards.message"]
-      holder.registerProblem(header, message, ProblemHighlightType.WEAK_WARNING)
+      holder.registerProblem(header, message)
     }
   }
 

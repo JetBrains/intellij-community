@@ -156,7 +156,7 @@ public class DfaValueFactory {
    * @return resulting condition: either {@link DfaRelationValue} or {@link DfaConstValue} (true or false) or {@link DfaUnknownValue}.
    */
   @NotNull
-  public DfaValue createCondition(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+  public DfaValue createCondition(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
     DfaConstValue value = tryEvaluate(dfaLeft, relationType, dfaRight);
     if (value != null) return value;
     DfaRelationValue relation = getRelationFactory().createRelation(dfaLeft, relationType, dfaRight);
@@ -166,6 +166,10 @@ public class DfaValueFactory {
 
   @Nullable
   private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    DfaConstValue sentinel = getConstFactory().getSentinel();
+    if ((dfaLeft == sentinel) != (dfaRight == sentinel)) {
+      return getBoolean(relationType == RelationType.NE);
+    }
     if (dfaRight instanceof DfaFactMapValue && dfaLeft == getConstFactory().getNull()) {
       return tryEvaluate(dfaRight, relationType, dfaLeft);
     }

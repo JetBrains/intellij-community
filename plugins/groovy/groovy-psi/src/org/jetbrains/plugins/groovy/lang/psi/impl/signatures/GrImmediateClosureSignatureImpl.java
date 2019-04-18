@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+
+import java.util.Arrays;
 
 /**
  * @author Maxim.Medvedev
@@ -96,8 +97,8 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrSignature) {
-      return Comparing.equal(myParameters, ((GrSignature)obj).getParameters()) &&
-             Comparing.equal(myIsVarargs, ((GrSignature)obj).isVarargs());
+      return Arrays.equals(myParameters, ((GrSignature)obj).getParameters()) &&
+             myIsVarargs == ((GrSignature)obj).isVarargs();
     }
     return super.equals(obj);
   }

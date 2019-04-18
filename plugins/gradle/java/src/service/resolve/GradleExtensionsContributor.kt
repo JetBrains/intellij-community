@@ -10,6 +10,7 @@ import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -48,7 +49,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     val extensionsData = getExtensionsFor(closure) ?: return null
-    for (extension in extensionsData.extensions) {
+    for (extension in extensionsData.extensions.values) {
       val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
       if (extensionClosure.accepts(closure)) {
         return DelegatesToInfo(TypesUtil.createType(extension.rootTypeFqn, closure), Closure.DELEGATE_FIRST)
@@ -108,10 +109,11 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       }
     }
 
-    for (extension in extensionsData.extensions) {
-      if (name == extension.name) {
-        if (!processExtensionMethodProperty(processor, state, place, extension)) return false
-      }
+    extensionsData.extensions[name]?.let {
+      if (!processExtensionMethodProperty(processor, state, place, it)) return false
+    }
+
+    for (extension in extensionsData.extensions.values) {
       if (!processExtension(processor, state, place, extension)) return false
       if (name == extension.name) break
     }
@@ -132,25 +134,23 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
         isTaskDeclaration = true
       }
 
-      for (gradleTask in extensionsData.tasks) {
-        if (shouldProcessMethods && name == gradleTask.name) {
-          val returnClass = groovyPsiManager.createTypeByFQClassName(
-            if (isTaskDeclaration) JAVA_LANG_STRING else gradleTask.typeFqn, resolveScope) ?: continue
-
-          val methodBuilder = GrLightMethodBuilder(place.manager, gradleTask.name).apply {
+      if (shouldProcessMethods) {
+        extensionsData.tasksMap[name]?.let {
+          val returnClass = groovyPsiManager.createTypeByFQClassName(if (isTaskDeclaration) JAVA_LANG_STRING else it.typeFqn, resolveScope)
+          val methodBuilder = GrLightMethodBuilder(place.manager, it.name).apply {
             containingClass = projectClass
             returnType = returnClass
             if (parent is GrMethodCallExpressionImpl && parent.argumentList.namedArguments.isNotEmpty()) {
               addOptionalParameter("args", JAVA_UTIL_MAP)
             }
             val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
-            closureParam.putUserData(DELEGATES_TO_KEY, gradleTask.typeFqn)
+            closureParam.putUserData(DELEGATES_TO_KEY, it.typeFqn)
             closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.OWNER_FIRST)
           }
           if (!processor.execute(methodBuilder, state)) return false
-          break
         }
-
+      }
+      for (gradleTask in extensionsData.tasksMap.values) {
         val taskClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, gradleTask.name))
         val psiElement = psiElement()
         if (psiElement.inside(taskClosure).accepts(place)) {
@@ -165,26 +165,6 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       }
 
       if (name != null && place is GrReferenceExpression && !place.isQualified) {
-        if (!shouldProcessMethods && shouldProcessProperties) {
-          for (gradleTask in extensionsData.tasks) {
-            if (name == gradleTask.name) {
-              val docRef = Ref.create<String>()
-              val variable = object : GrLightVariable(place.manager, name, gradleTask.typeFqn, place) {
-                override fun getNavigationElement(): PsiElement {
-                  val navigationElement = super.getNavigationElement()
-                  navigationElement.putUserData(DOCUMENTATION, docRef.get())
-                  return navigationElement
-                }
-              }
-              val doc = getDocumentation(gradleTask, variable)
-              docRef.set(doc)
-              place.putUserData(DOCUMENTATION, doc)
-              if (!processor.execute(variable, state)) return false
-              break
-            }
-          }
-        }
-
         val propExecutionResult = extensionsData.findProperty(name)?.let {
           if (!shouldProcessMethods && shouldProcessProperties) {
             val docRef = Ref.create<String>()
@@ -270,11 +250,14 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
       return buffer.toString()
     }
 
-    fun getDocumentation(gradleTask: GradleTask,
-                         lightVariable: GrLightVariable): String {
+    fun getDocumentation(gradleTask: GradleTask, lightVariable: GrLightVariable): String {
+      return getDocumentation(gradleTask, lightVariable.type, lightVariable)
+    }
+
+    fun getDocumentation(gradleTask: GradleTask, type: PsiType, context: PsiElement): String {
       val buffer = StringBuilder()
       buffer.append("<PRE>")
-      JavaDocInfoGenerator.generateType(buffer, lightVariable.type, lightVariable, true)
+      JavaDocInfoGenerator.generateType(buffer, type, context, true)
       buffer.append(" " + gradleTask.name)
       buffer.append("</PRE>")
       if (!gradleTask.description.isNullOrBlank()) {
@@ -326,6 +309,7 @@ fun processExtension(processor: PsiScopeProcessor,
                      extension: GradleExtension): Boolean {
   val classHint = processor.getHint(ElementClassHint.KEY)
   val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
+  val shouldProcessProperties = ResolveUtil.shouldProcessProperties(classHint)
   val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
   val placeText = place.text
   val psiElement = psiElement()
@@ -342,7 +326,7 @@ fun processExtension(processor: PsiScopeProcessor,
         if (!processor.execute(methodBuilder, state)) return false
       }
     }
-    if (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place)) {
+    if (shouldProcessProperties && (place.parent is GrReferenceExpression || psiElement.withTreeParent(extensionClosure).accepts(place))) {
       val variable = GrLightVariable(place.manager, placeText, objectTypeFqn, place)
       place.putUserData(RESOLVED_CODE, true)
       if (!processor.execute(variable, state)) return false

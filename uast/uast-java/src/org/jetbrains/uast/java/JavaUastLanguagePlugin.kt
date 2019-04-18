@@ -39,7 +39,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     is JavaUDeclarationsExpression -> false
     is UnknownJavaExpression -> (element.uastParent as? UExpression)?.let { isExpressionValueUsed(it) } ?: false
     else -> {
-      val statement = element.psi as? PsiStatement
+      val statement = element.sourcePsi as? PsiStatement
       statement != null && statement.parent !is PsiExpressionStatement
     }
   }
@@ -107,6 +107,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     return convertElement(element, null, requiredTypes)
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
     is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
@@ -119,6 +120,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
                                  givenParent: UElement?,
                                  requiredType: Array<out Class<out UElement>>): UElement? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UElement? {
         return ctor(element as P, givenParent)
       }
@@ -180,6 +182,7 @@ internal object JavaConverter {
                                  requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
 
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UElement? {
         return ctor(el as P, givenParent)
       }
@@ -226,6 +229,7 @@ internal object JavaConverter {
                                  givenParent: UElement?,
                                  requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
       }
@@ -291,6 +295,7 @@ internal object JavaConverter {
                                 givenParent: UElement?,
                                 requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
       }
@@ -299,10 +304,10 @@ internal object JavaConverter {
     return with(requiredType) {
       when (el) {
         is PsiDeclarationStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
+          convertDeclarations(el.declaredElements, givenParent ?: unwrapElements(el.parent).toUElement())
         }
         is PsiExpressionListStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
+          convertDeclarations(el.expressionList.expressions, givenParent ?: unwrapElements(el.parent).toUElement())
         }
         is PsiBlockStatement -> expr<UBlockExpression>(build(::JavaUBlockExpression))
         is PsiLabeledStatement -> expr<ULabeledExpression>(build(::JavaULabeledExpression))

@@ -23,7 +23,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,10 +202,9 @@ public class PluginInstaller {
     }
 
     Ref<IdeaPluginDescriptor> toDisable = Ref.create(null);
-    Optional<PluginReplacement> replacement = StreamEx.of(PluginReplacement.EP_NAME.getExtensions())
-      .findFirst(r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
-    if (replacement.isPresent()) {
-      PluginReplacement pluginReplacement = replacement.get();
+    PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
+      r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
+    if (pluginReplacement != null) {
       IdeaPluginDescriptor oldPlugin = PluginManager.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
       if (oldPlugin == null) {
         LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");

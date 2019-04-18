@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -48,7 +48,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
   @Volatile
   private var refreshSessionId = -1L
 
-  private val saveQueue = ArrayDeque<SaveAndSyncHandler.SaveTask>()
+  private val saveQueue = ArrayDeque<SaveTask>()
 
   private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
     val app = ApplicationManager.getApplication()
@@ -147,13 +147,13 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     })
   }
 
-  override fun scheduleSave(task: SaveAndSyncHandler.SaveTask, forceExecuteImmediately: Boolean) {
+  override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {
     if (addToSaveQueue(task) || forceExecuteImmediately) {
       saveAlarm.cancelAndRequest(forceRun = forceExecuteImmediately)
     }
   }
 
-  private fun addToSaveQueue(task: SaveAndSyncHandler.SaveTask): Boolean {
+  private fun addToSaveQueue(task: SaveTask): Boolean {
     synchronized(saveQueue) {
       if (task.onlyProject == null) {
         saveQueue.removeAll(task::isMoreGenericThan)
@@ -273,7 +273,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   override fun refreshOpenFiles() {
     val files = ArrayList<VirtualFile>()
-    for (project in ProjectManager.getInstance().openProjects) {
+    processOpenedProjects { project ->
       FileEditorManager.getInstance(project).selectedFiles.filterTo(files) { it is NewVirtualFile }
     }
 

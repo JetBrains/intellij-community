@@ -60,7 +60,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     }
     boolean allowInlineThisOnly = false;
     if (InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) {
-      if (reference != null && InlineUtil.getTailCallType(reference) != InlineUtil.TailCallType.None) {
+      if (reference != null) {
         allowInlineThisOnly = true;
       }
       else {

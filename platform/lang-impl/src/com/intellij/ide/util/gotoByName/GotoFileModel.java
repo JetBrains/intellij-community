@@ -24,7 +24,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +66,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
       if (types != null) {
         if (types.contains(file.getFileType())) return true;
         VirtualFile vFile = file.getVirtualFile();
-        if (vFile != null && types.contains(vFile.getFileType())) return true;
-        return false;
+        return vFile != null && types.contains(vFile.getFileType());
       }
       return true;
     }
@@ -97,11 +95,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   }
 
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return "";
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.files.found");
@@ -122,6 +122,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
     }
   }
 
+  @NotNull
   @Override
   public PsiElementListCellRenderer getListCellRenderer() {
     return new GotoFileCellRenderer(myMaxSize) {
@@ -138,12 +139,12 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
 
   @Override
   public boolean sameNamesForProjectAndLibraries() {
-    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return false;
   }
 
   @Override
   @Nullable
-  public String getFullName(final Object element) {
+  public String getFullName(@NotNull final Object element) {
     return element instanceof PsiFileSystemItem ? getFullName(((PsiFileSystemItem)element).getVirtualFile()) : getElementName(element);
   }
 
@@ -183,7 +184,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @NotNull
   @Override
   public String removeModelSpecificMarkup(@NotNull String pattern) {
-    if ((pattern.endsWith("/") || pattern.endsWith("\\"))) {
+    if (pattern.endsWith("/") || pattern.endsWith("\\")) {
       return pattern.substring(0, pattern.length() - 1);
     }
     return pattern;

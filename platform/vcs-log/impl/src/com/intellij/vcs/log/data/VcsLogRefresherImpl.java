@@ -84,7 +84,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, "permanent", dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
-    }, false, this) {
+    }, this) {
       @NotNull
       @Override
       protected SingleTask startNewBackgroundTask() {

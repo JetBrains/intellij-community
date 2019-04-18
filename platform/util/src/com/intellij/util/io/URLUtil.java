@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.regex.Matcher;
@@ -32,6 +29,8 @@ public class URLUtil {
   public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
   public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
+
+  public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
   private URLUtil() { }
 
@@ -206,7 +205,7 @@ public class URLUtil {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.getQuick(j);
           }
-          decoded.append(new String(bytesArray, CharsetToolkit.UTF8_CHARSET));
+          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
           continue;
         }
       }
@@ -247,9 +246,9 @@ public class URLUtil {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
                ? Base64.getDecoder().decode(content)
-               : content.getBytes(StandardCharsets.UTF_8);
+               : URLDecoder.decode(content, CharsetToolkit.UTF8).getBytes(StandardCharsets.UTF_8);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalArgumentException | UnsupportedEncodingException e) {
         return null;
       }
     }

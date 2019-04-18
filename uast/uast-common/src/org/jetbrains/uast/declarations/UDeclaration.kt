@@ -23,13 +23,13 @@ import org.jetbrains.uast.visitor.UastTypedVisitor
 /**
  * A [PsiElement] declaration wrapper.
  */
-interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated, UAnchorOwner {
+interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   /**
    * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
    */
   override val psi: PsiModifierListOwner
 
-  override fun getOriginalElement(): PsiElement? = psi.originalElement
+  override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   /**
    * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
@@ -37,7 +37,7 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated, UAnchorOwne
    *
    * It is useful for putting gutters and inspection reports.
    */
-  override val uastAnchor: UIdentifier?
+  val uastAnchor: UElement?
 
   /**
    * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
@@ -69,6 +69,7 @@ fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingEl
 fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
   val element = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
   return if (element != null && cls.isInstance(element)) {
+    @Suppress("UNCHECKED_CAST")
     element as T
   } else {
     null

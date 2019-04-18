@@ -1188,7 +1188,7 @@ public class UIUtil {
 
   @NotNull
   public static Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
+    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
   }
 
   /**
@@ -1368,12 +1368,12 @@ public class UIUtil {
     return UIManager.getBorder("Table.focusCellHighlightBorder");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final ClientPropertyHolder component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
+  @Deprecated
   public static void setLineStyleAngled(@NotNull final JTree component) {
-    component.putClientProperty("JTree.lineStyle", "Angled");
   }
 
   public static Color getTableFocusCellForeground() {
@@ -2886,10 +2886,15 @@ public class UIUtil {
       pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent e) {
-          Font font = getLabelFont();
           // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
           // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
-          pane.setFont(font);
+
+          // The default JEditorPane's font is the label font, seems there's no need to reset it here.
+          // If the default font is overridden, more so we should not reset it.
+          // However, if the new font is not UIResource - it won't be auto-scaled.
+          // [tav] dodo: remove the next two lines in case there're no regressions
+          //Font font = getLabelFont();
+          //pane.setFont(font);
 
           // let CSS font properties inherit from the pane's font
           pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
@@ -3222,7 +3227,8 @@ public class UIUtil {
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
   }
 
-  public static void initDefaultLaF() {
+  public static void initDefaultLaF()
+    throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
     blockATKWrapper();
 
     // separate activity to make clear that it is not our code takes time
@@ -3234,12 +3240,7 @@ public class UIUtil {
     configureHtmlKitStylesheet();
 
     activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
-    try {
-      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
-    }
-    catch (Exception e) {
-      getLogger().error("Cannot initialize default LaF", e);
-    }
+    UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
 
@@ -3254,7 +3255,7 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
   }
 
-  public static void initSystemFontData() {
+  public static void initSystemFontData(@NotNull Logger log) {
     if (ourSystemFontData != null) return;
 
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
@@ -3267,13 +3268,13 @@ public class UIUtil {
 
     boolean isScaleVerbose = SCALE_VERBOSE;
     if (isScaleVerbose) {
-      getLogger().info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
+      log.info(String.format("Label font: %s, %d", font.getFontName(), font.getSize()));
     }
 
     if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
       if (isScaleVerbose) {
-        getLogger().info(String.format("gnome.Xft/DPI: %s", value));
+        log.info(String.format("gnome.Xft/DPI: %s", value));
       }
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -3284,7 +3285,7 @@ public class UIUtil {
         float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (isScaleVerbose) {
-          getLogger().info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
+          log.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {
@@ -3292,7 +3293,7 @@ public class UIUtil {
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
         if (isScaleVerbose) {
-          getLogger().info(String.format("(Not-JB JRE) reset font size: %.2f", size));
+          log.info(String.format("(Not-JB JRE) reset font size: %.2f", size));
         }
       }
     }
@@ -3302,13 +3303,13 @@ public class UIUtil {
       if (winFont != null) {
         font = winFont; // comes scaled
         if (isScaleVerbose) {
-          getLogger().info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
+          log.info(String.format("Windows sys font: %s, %d", winFont.getFontName(), winFont.getSize()));
         }
       }
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
     if (isScaleVerbose) {
-      getLogger().info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
+      log.info(String.format("ourSystemFontData: %s, %d", ourSystemFontData.first, ourSystemFontData.second));
     }
   }
 
@@ -3491,6 +3492,7 @@ public class UIUtil {
    * @see SwingUtilities#getAncestorOfClass
    */
   @Nullable
+  @Contract(pure = true)
   public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
     while (component != null) {
       if (type.isInstance(component)) {
@@ -4118,6 +4120,16 @@ public class UIUtil {
     }
   }
 
+  public static void runWhenWindowOpened(@NotNull Window window, @NotNull Runnable runnable) {
+    window.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        e.getWindow().removeWindowListener(this);
+        runnable.run();
+      }
+    });
+  }
+
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
   public static String getDebugText(Component c) {
@@ -4604,6 +4616,12 @@ public class UIUtil {
     double alpha = SELECTED_ITEM_ALPHA.getFloat() / 100.0;
     //noinspection UseJBColor
     return isUnderDefaultMacTheme() && alpha >= 0 && alpha <= 1.0 ? ColorUtil.mix(Color.WHITE, color, alpha) : color;
+  }
+
+  @NotNull
+  public static Dimension updateListRowHeight(@NotNull Dimension size) {
+    size.height = Math.max(size.height, UIManager.getInt("List.rowHeight"));
+    return size;
   }
 
   @NotNull

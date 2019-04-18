@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -62,26 +63,26 @@ public class ReachingDefinitionsCollector {
       ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow[ref];
       final int[] defs = dfaResult.getDefinitions(ref);
       assert defs != null;
-      String name = rwInstruction.getVariableName();
-      if (!allDefsInFragment(defs, fragmentInstructions) || isDeclaredOutOf(rwInstruction.getElement(), name, flowOwner)) {
-        addVariable(name, imap, manager, getType(rwInstruction.getElement()));
+      VariableDescriptor descriptor = rwInstruction.getDescriptor();
+      if (!allDefsInFragment(defs, fragmentInstructions) || isLocallyDeclaredOutOf(rwInstruction.getElement(), descriptor, flowOwner)) {
+        addVariable(descriptor.getName(), imap, manager, getType(rwInstruction.getElement()));
       }
     }
 
     Set<Integer> outerBound = getFragmentOuterBound(fragmentInstructions, flow);
     for (final Integer ref : reachableFromFragmentReads) {
       ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)flow[ref];
-      String name = rwInstruction.getVariableName();
+      VariableDescriptor descriptor = rwInstruction.getDescriptor();
       final int[] defs = dfaResult.getDefinitions(ref);
       assert defs != null;
       if (anyDefInFragment(defs, fragmentInstructions)) {
         for (int insnNum : outerBound) {
-          addVariable(name, omap, manager, getVariableTypeAt(flowOwner, flow[insnNum], name));
+          addVariable(descriptor.getName(), omap, manager, getVariableTypeAt(flowOwner, flow[insnNum], descriptor));
         }
 
         if (!allProperDefsInFragment(defs, ref, fragmentInstructions, postorder)) {
           PsiType inputType = getType(rwInstruction.getElement());
-          addVariable(name, imap, manager, inputType);
+          addVariable(descriptor.getName(), imap, manager, inputType);
         }
       }
     }
@@ -101,11 +102,11 @@ public class ReachingDefinitionsCollector {
     };
   }
 
-  private static PsiType getVariableTypeAt(GrControlFlowOwner flowOwner, Instruction instruction, String name) {
+  private static PsiType getVariableTypeAt(GrControlFlowOwner flowOwner, Instruction instruction, VariableDescriptor descriptor) {
     PsiElement context = instruction.getElement();
-    PsiType outputType = TypeInferenceHelper.getInferredType(name, instruction, flowOwner);
+    PsiType outputType = TypeInferenceHelper.getInferredType(descriptor, instruction, flowOwner);
     if (outputType == null) {
-      GrVariable variable = resolveToLocalVariable(context, name);
+      GrVariable variable = resolveToLocalVariable(context, descriptor.getName());
       if (variable != null) {
         outputType = variable.getDeclaredType();
       }
@@ -121,18 +122,17 @@ public class ReachingDefinitionsCollector {
     return result != null ? result.getElement() : null;
   }
 
-  private static boolean isDeclaredOutOf(@Nullable PsiElement element,
-                                         @NotNull String name,
-                                         @NotNull GrControlFlowOwner flowOwner) {
-    if (element == null) return false;
-    GrVariable variable = resolveToLocalVariable(element, name);
+  private static boolean isLocallyDeclaredOutOf(@Nullable PsiElement element,
+                                                @NotNull VariableDescriptor descriptor,
+                                                @NotNull GrControlFlowOwner flowOwner) {
+    GrVariable variable = resolveToLocalVariable(element, descriptor.getName());
     if (variable == null) return false;
     return !PsiImplUtilKt.isDeclaredIn(variable, flowOwner);
   }
 
   @NotNull
   private static DefinitionMap inferDfaResult(@NotNull GrControlFlowOwner owner, @NotNull Instruction[] flow) {
-    TObjectIntHashMap<String> varIndexes = UtilKt.getVarIndexes(owner);
+    TObjectIntHashMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner);
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
@@ -433,14 +433,14 @@ public class ReachingDefinitionsCollector {
   @NotNull
   private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                            @NotNull Instruction[] flow,
-                                           @NotNull TObjectIntHashMap<String> varIndexes) {
+                                           @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
     DefinitionMap result = new DefinitionMap();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];
       if (insn instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction)insn;
         if (!rwInsn.isWrite()) {
-          int idx = varIndexes.get(rwInsn.getVariableName());
+          int idx = varIndexes.get(rwInsn.getDescriptor());
           result.copyFrom(dfaResult.get(i), idx, i);
         }
       }

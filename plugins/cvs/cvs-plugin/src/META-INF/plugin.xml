@@ -1,5 +1,5 @@
 <idea-plugin>
-  <name>CVS Integration</name>
+  <name>CVS</name>
   <id>CVS</id>
   <vendor>JetBrains</vendor>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
@@ -20,24 +20,21 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="cvs.roots.refresh.uses.vfs" defaultValue="true"
+                 description="Should CVS roots refresh after update use VFS"/>
+    <registryKey key="cvs.server.output.max.lines" defaultValue="1000"
+                 description="The maximum number of lines that are displayed per command in the CVS console"/>
     <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
                    serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
-                   serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
-                   serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.EmptyPool"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.EmptyPool"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.EmptyPool"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
     <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
     <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>

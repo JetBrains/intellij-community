@@ -7,6 +7,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -423,10 +426,30 @@ public class RecentProjectPanel extends JPanel {
           if (getCloseIconRect(index).contains(point)) {
             e.consume();
             final Object element = getModel().getElementAt(index);
+            if (element instanceof ProjectGroupActionGroup) {
+              final ProjectGroup group = ((ProjectGroupActionGroup)element).getGroup();
+              if(group.isTutorials()){
+                removeTutorialChildren(group);
+              }
+            }
             removeRecentProjectElement(element);
             ListUtil.removeSelectedItems(MyList.this);
           }
         }
+      }
+
+      private void removeTutorialChildren(ProjectGroup group) {
+        int currentIndex = MyList.this.getSelectedIndex();
+        List<String> projects = group.getProjects();
+        final int[] childIndices = new int[projects.size()];
+        for (int i = 0; i < projects.size(); i++) {
+          childIndices[i] = currentIndex + 1;
+          currentIndex++;
+        }
+        ListUtil.removeIndices(MyList.this, childIndices);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Notifications.Bus.notify(new Notification("Tutorials", "Tutorials have been removed from the recent list", "You can still find them in the Help menu", NotificationType.INFORMATION));
+        });
       }
     }
   }
@@ -496,22 +519,7 @@ public class RecentProjectPanel extends JPanel {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
         int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() - JBUI.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
-          int left = 1; int right = 1;
-          int center = fullText.length() / 2;
-          String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          while (fm.stringWidth(s) > maxWidth) {
-            if (left == right) {
-              left++;
-            } else {
-              right++;
-            }
-
-            if (center - left < 0 || center + right >= fullText.length()) {
-              return "";
-            }
-            s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
-          }
-          return s;
+          return truncateDescription(fullText, fm, maxWidth, isTutorial(action));
         }
       } catch (Exception e) {
         LOG.error("Path label font: " + pathLabel.getFont());
@@ -520,6 +528,52 @@ public class RecentProjectPanel extends JPanel {
       }
 
       return fullText;
+    }
+
+    private boolean isTutorial(ReopenProjectAction action) {
+      List<ProjectGroup> groups = RecentProjectsManager.getInstance().getGroups();
+      for (ProjectGroup group : groups) {
+        if (!group.isTutorials()) {
+          continue;
+        }
+
+        for (String project : group.getProjects()) {
+          if(project.contains(action.getProjectPath()))
+            return true;
+        }
+      }
+
+      return false;
+    }
+
+    @NotNull
+    private String truncateDescription(String fullText, FontMetrics fm, int maxWidth, boolean isTutorial) {
+      if (isTutorial) {
+        String tutorialTruncated = fullText;
+        while (fm.stringWidth(tutorialTruncated) > maxWidth) {
+          tutorialTruncated = tutorialTruncated.substring(0, tutorialTruncated.length() - 1);
+        }
+        return tutorialTruncated + "...";
+
+      }
+
+      int left = 1;
+      int right = 1;
+      int center = fullText.length() / 2;
+      String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      while (fm.stringWidth(s) > maxWidth) {
+        if (left == right) {
+          left++;
+        } else {
+          right++;
+        }
+
+        if (center - left < 0 || center + right >= fullText.length()) {
+          return "";
+        }
+        s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+      }
+      return s;
     }
 
     @Override
@@ -612,7 +666,11 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          pathIsValid = isFileAvailable(new File(path));
+          if (!isFileSystemPath(path))
+            pathIsValid = true;
+          else {
+            pathIsValid = isFileAvailable(new File(path));
+          }
         }
         catch (Exception e) {
           pathIsValid = false;
@@ -648,5 +706,10 @@ public class RecentProjectPanel extends JPanel {
     return IconUtil.toSize(icon,
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
+  }
+
+  //todo better code to guess if it is a real file system path or just a tutorial's description
+  public static boolean isFileSystemPath(String path) {
+    return path.indexOf('/') != -1 || path.indexOf('\\') != -1;
   }
 }

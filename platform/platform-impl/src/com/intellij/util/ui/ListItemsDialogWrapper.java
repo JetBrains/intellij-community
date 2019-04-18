@@ -23,7 +23,6 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +30,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -124,13 +124,13 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   }
 
   public static void installListItemsDialogForTextField(@NotNull TextFieldWithBrowseButton uiField,
-                                                        @NotNull Producer<? extends ListItemsDialogWrapper> createDialog) {
+                                                        @NotNull Supplier<? extends ListItemsDialogWrapper> createDialog) {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final ListItemsDialogWrapper tagListDialog = createDialog.produce();
+        final ListItemsDialogWrapper tagListDialog = createDialog.get();
         tagListDialog.setData(createListPresentation(uiField.getText()));
         if (tagListDialog.showAndGet()) {
           uiField.setText(createStringPresentation(tagListDialog.getData()));

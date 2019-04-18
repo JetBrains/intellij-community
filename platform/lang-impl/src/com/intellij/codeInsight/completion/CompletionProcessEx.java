@@ -46,7 +46,7 @@ interface CompletionProcessEx extends CompletionProcess {
 
   CompletionParameters getParameters();
 
-  void setParameters(CompletionParameters parameters);
+  void setParameters(@NotNull CompletionParameters parameters);
 
   void scheduleRestart();
 

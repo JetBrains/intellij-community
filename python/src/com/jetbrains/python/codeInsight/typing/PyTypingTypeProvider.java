@@ -651,22 +651,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = e.getValue();
       final PyClass superClass = e.getKey();
       final Map<PyType, PyType> superSubstitutions =
-        doPreventingRecursion(RECURSION_KEY, false, () -> getGenericSubstitutions(superClass, context));
+        doPreventingRecursion(superClass, false, () -> getGenericSubstitutions(superClass, context));
       if (superSubstitutions != null) {
         results.putAll(superSubstitutions);
       }
-      if (superClass != null) {
-        final Context ctx = new Context(context);
-        final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
-        final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
-        for (int i = 0; i < superGenerics.size(); i++) {
-          final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
-          final PyType superGeneric = superGenerics.get(i);
-          final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
-          final PyType actualType = typeRef != null ? typeRef.get() : null;
-          if (!superGeneric.equals(actualType)) {
-            results.put(superGeneric, actualType);
-          }
+      final Context ctx = new Context(context);
+      final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
+      final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
+      for (int i = 0; i < superGenerics.size(); i++) {
+        final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
+        final PyType superGeneric = superGenerics.get(i);
+        final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
+        final PyType actualType = typeRef != null ? typeRef.get() : null;
+        if (!superGeneric.equals(actualType)) {
+          results.put(superGeneric, actualType);
         }
       }
     }

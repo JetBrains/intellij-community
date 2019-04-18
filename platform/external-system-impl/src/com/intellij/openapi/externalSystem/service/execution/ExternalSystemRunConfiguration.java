@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -43,6 +44,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -59,9 +61,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -78,6 +80,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
@@ -203,7 +206,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (file != null) {
         Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
         if (module != null) {
-          scope = SearchScopeProvider.createSearchScope(ContainerUtil.ar(module));
+          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }
@@ -407,7 +410,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (progressListener != null && event instanceof ExternalSystemTaskExecutionEvent) {
+            if (progressListener == null) return;
+            if (event instanceof ExternalSystemBuildEvent) {
+              progressListener.onEvent(((ExternalSystemBuildEvent)event).getBuildEvent());
+            }
+            else if (event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               progressListener.onEvent(buildEvent);
             }
@@ -434,11 +441,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
-      AnAction[] actions = AnAction.EMPTY_ARRAY;
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
       if (executionConsole instanceof BuildView) {
-        actions = ((BuildView)executionConsole).getSwitchActions();
+        actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
+        actionGroup.add(new ShowExecutionErrorsOnlyAction((BuildView)executionConsole));
       }
-      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult =
+        new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
       executionResult.setRestartActions(restartActions);
       return executionResult;
     }

@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.getValueList;
+import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.toCommaSeparatedString;
+
 public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<String> {
   public CommaSeparatedValuesAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
@@ -15,14 +18,7 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
   @Nullable
   @Override
   protected String fromExternal(@NotNull List<String> extVal) {
-    StringBuilder valueBuilder = new StringBuilder();
-    for (String value : extVal) {
-      if (valueBuilder.length() > 0) {
-        valueBuilder.append(",");
-      }
-      valueBuilder.append(value);
-    }
-    return valueBuilder.toString();
+    return toCommaSeparatedString(extVal);
   }
 
   @NotNull
@@ -30,4 +26,11 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
   protected List<String> toExternal(@NotNull String value) {
     return getValueList(value);
   }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull List<String> value) {
+    return fromExternal(value);
+  }
+
 }

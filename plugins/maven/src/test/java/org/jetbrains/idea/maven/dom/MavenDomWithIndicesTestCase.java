@@ -46,4 +46,9 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
       super.tearDown();
     }
   }
+
+  protected boolean onlineCompletionFinished(){
+    //todo
+    return false;
+  }
 }

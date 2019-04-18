@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
@@ -13,7 +13,7 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private val GROUP = FeatureUsageGroup("settings", 2)
+private val GROUP = EventLogGroup("settings", 2)
 
 object FeatureUsageSettingsEvents {
   val printer = FeatureUsageSettingsEventPrinter(false)
@@ -101,7 +101,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
   }
 
   @Suppress("SameParameterValue")
-  protected open fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+  protected open fun logConfig(group: EventLogGroup, eventId: String, data: Map<String, Any>) {
     FeatureUsageLogger.logState(group, eventId, data)
   }
 

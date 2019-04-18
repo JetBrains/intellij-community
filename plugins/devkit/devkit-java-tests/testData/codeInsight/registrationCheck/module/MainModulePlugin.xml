@@ -14,7 +14,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
+    <myPlugin.lang.myExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
+    <myPlugin.lang.myOwnExtPoint language="MyLanguageID" implementationClass="MyLanguageExtension"/>
+
+    <myPlugin.filetype.myExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
+    <myPlugin.filetype.myOwnExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
+
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myOwnExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
     <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
   </extensions>
 
+  <actions>
+    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleAction' is defined">action</error> class="DependencyModuleAction"/>
+  </actions>
 </idea-plugin>

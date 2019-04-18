@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.impl.ModuleManagerImpl
@@ -115,7 +114,7 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
     processComponents(it.javaClass)
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ComponentManagerImpl) { aClass, _ ->
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject) { aClass, _ ->
     processComponents(aClass)
     true
   }

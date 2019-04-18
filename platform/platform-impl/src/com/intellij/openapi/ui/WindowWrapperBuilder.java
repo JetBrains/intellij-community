@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class WindowWrapperBuilder {
@@ -90,13 +89,7 @@ public class WindowWrapperBuilder {
 
   private static void installOnShowCallback(@Nullable Window window, @Nullable final Runnable onShowCallback) {
     if (window == null || onShowCallback == null) return;
-    window.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowOpened(WindowEvent e) {
-        onShowCallback.run();
-        e.getWindow().removeWindowListener(this);
-      }
-    });
+    UIUtil.runWhenWindowOpened(window, onShowCallback);
   }
 
   private static class DialogWindowWrapper implements WindowWrapper {

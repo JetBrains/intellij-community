@@ -174,9 +174,9 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent("recorder-id", "first-type"))
     events.add(newEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IU", "generated-device-id", false, events)
+    val request = requestByEvents("recorder-id","IU", "generated-device-id", false, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IU", "generated-device-id", false, false)
+    assertLogEventContentIsValid(json, "recorder-id", "IU", "generated-device-id", false, false)
   }
 
   @Test
@@ -191,9 +191,9 @@ class FeatureEventLogSerializationTest {
     records.add(LogEventRecord(first))
     records.add(LogEventRecord(second))
 
-    val request = LogEventRecordRequest("IU", "generated-device-id", records, false)
+    val request = LogEventRecordRequest("recorder-id","IU", "generated-device-id", records, false)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IU", "generated-device-id", false, false)
+    assertLogEventContentIsValid(json, "recorder-id", "IU", "generated-device-id", false, false)
   }
 
   @Test
@@ -202,9 +202,9 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent("recorder-id", "first-type"))
     events.add(newEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IC", "generated-device-id", false, events)
+    val request = requestByEvents("recorder-id","IC", "generated-device-id", false, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IC", "generated-device-id", false, false)
+    assertLogEventContentIsValid(json, "recorder-id", "IC", "generated-device-id", false, false)
   }
 
   @Test
@@ -213,9 +213,9 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent("recorder-id", "first-type"))
     events.add(newEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IU", "my-test-id", false, events)
+    val request = requestByEvents("recorder-id","IU", "my-test-id", false, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IU", "my-test-id", false, false)
+    assertLogEventContentIsValid(json, "recorder-id", "IU", "my-test-id", false, false)
   }
 
   @Test
@@ -224,9 +224,9 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent("recorder-id", "first-type"))
     events.add(newEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IU", "generated-device-id", true, events)
+    val request = requestByEvents("recorder-id","IU", "generated-device-id", true, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IU", "generated-device-id", true, false)
+    assertLogEventContentIsValid(json, "recorder-id", "IU", "generated-device-id", true, false)
   }
 
   @Test
@@ -235,9 +235,9 @@ class FeatureEventLogSerializationTest {
     events.add(newEvent("recorder-id", "first-type"))
     events.add(newEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("PY", "abcdefg", true, events)
+    val request = requestByEvents("recorder-id","PY", "abcdefg", true, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "PY", "abcdefg", true, false)
+    assertLogEventContentIsValid(json, "recorder-id", "PY", "abcdefg", true, false)
   }
 
   @Test
@@ -246,9 +246,9 @@ class FeatureEventLogSerializationTest {
     events.add(newStateEvent("recorder-id", "first-type"))
     events.add(newStateEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IU", "generated-device-id", false, events)
+    val request = requestByEvents("recorder-id", "IU", "generated-device-id", false, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IU", "generated-device-id", false, true)
+    assertLogEventContentIsValid(json, "recorder-id", "IU", "generated-device-id", false, true)
   }
 
   @Test
@@ -257,9 +257,9 @@ class FeatureEventLogSerializationTest {
     events.add(newStateEvent("recorder-id", "first-type"))
     events.add(newStateEvent("recorder-id-2", "second-type"))
 
-    val request = requestByEvents("IC", "abcdefg", true, events)
+    val request = requestByEvents("recorder-id", "IC", "abcdefg", true, events)
     val json = JsonParser().parse(LogEventSerializer.toString(request)).asJsonObject
-    assertLogEventContentIsValid(json, "IC", "abcdefg", true, true)
+    assertLogEventContentIsValid(json, "recorder-id", "IC", "abcdefg", true, true)
   }
 
   @Test
@@ -395,7 +395,7 @@ class FeatureEventLogSerializationTest {
       events.addAll(batch)
       records.add(LogEventRecord(batch))
     }
-    val expected = LogEventRecordRequest("IU", "user-id", records, false)
+    val expected = LogEventRecordRequest("recorder-id","IU", "user-id", records, false)
 
     val log = FileUtil.createTempFile("feature-event-log", ".log")
     try {
@@ -404,7 +404,7 @@ class FeatureEventLogSerializationTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "IU", "user-id", 600, LogEventTrueFilter, false)
+      val actual = LogEventRecordRequest.create(log, "recorder-id", "IU", "user-id", 600, LogEventTrueFilter, false)
       assertEquals(expected, actual)
     }
     finally {
@@ -437,7 +437,7 @@ class FeatureEventLogSerializationTest {
     }
   }
 
-  private fun assertLogEventContentIsValid(json: JsonObject, product: String, device: String, internal: Boolean, isState: Boolean) {
+  private fun assertLogEventContentIsValid(json: JsonObject, recorder: String, product: String, device: String, internal: Boolean, isState: Boolean) {
     assertTrue(json.get("device").isJsonPrimitive)
     assertTrue(isValid(json.get("device").asString))
     assertEquals(device, json.get("device").asString)
@@ -448,7 +448,7 @@ class FeatureEventLogSerializationTest {
 
     assertTrue(json.get("recorder").isJsonPrimitive)
     assertTrue(isValid(json.get("recorder").asString))
-    assertEquals("FUS", json.get("recorder").asString)
+    assertEquals(recorder, json.get("recorder").asString)
 
     assertEquals(internal, json.has("internal"))
     if (internal) {
@@ -514,9 +514,9 @@ class FeatureEventLogSerializationTest {
     return noTabsOrSpaces && str.matches("[\\p{ASCII}]*".toRegex())
   }
 
-  private fun requestByEvents(product: String, device: String, internal: Boolean, events: List<LogEvent>) : LogEventRecordRequest {
+  private fun requestByEvents(recorder: String, product: String, device: String, internal: Boolean, events: List<LogEvent>) : LogEventRecordRequest {
     val records = ArrayList<LogEventRecord>()
     records.add(LogEventRecord(events))
-    return LogEventRecordRequest(product, device, records, internal)
+    return LogEventRecordRequest(recorder, product, device, records, internal)
   }
 }

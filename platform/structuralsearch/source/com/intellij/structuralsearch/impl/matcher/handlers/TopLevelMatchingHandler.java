@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -48,11 +48,10 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
         matchContext.getPattern().getStrategy().continueMatching(matchedNode) &&
         matchContext.shouldRecursivelyMatch()
        ) {
-      matchContext.getMatcher().matchContext(
-        new SsrFilteringNodeIterator(
-          new SiblingNodeIterator(matchedNode.getFirstChild())
-        )
-      );
+      PsiElement child = matchedNode.getFirstChild();
+      if (child != null) {
+        matchContext.getMatcher().matchContext(new SsrFilteringNodeIterator(new SiblingNodeIterator(child)));
+      }
     }
     return matched;
   }

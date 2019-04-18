@@ -40,6 +40,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -241,8 +242,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     pw.flush();
   }
 
-  private void outputContains(String substring) {
+  protected void outputContains(String substring) {
     Assert.assertTrue(output().contains(substring));
+  }
+
+  protected void outputContains(String substring, int times) {
+    Assert.assertEquals(times, StringUtils.countMatches(output(), substring));
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {

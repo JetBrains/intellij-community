@@ -3,6 +3,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This extension point allows to run custom [command-line] application based on IDEA platform
@@ -14,7 +16,6 @@ import org.jetbrains.annotations.NonNls;
  * my.plugin.package.MyApplicationStarter class must implement {@link ApplicationStarter} interface.
  *
  * @author max
- * @see ApplicationStarterEx
  */
 public interface ApplicationStarter {
   ExtensionPointName<ApplicationStarter> EP_NAME = new ExtensionPointName<>("com.intellij.appStarter");
@@ -42,4 +43,35 @@ public interface ApplicationStarter {
    * @param args program arguments (including the selector)
    */
   void main(String[] args);
+
+  /**
+   * Applications that are incapable of working in a headless mode should override the method and return {@code false}.
+   */
+  default boolean isHeadless() {
+    return true;
+  }
+
+  /**
+   * Applications that are capable of processing command-line arguments within a running IDE instance
+   * should return {@code true} from this method and implement {@link #processExternalCommandLine}.
+   *
+   * @see #processExternalCommandLine
+   */
+  default boolean canProcessExternalCommandLine() {
+    return false;
+  }
+
+  /**
+   * If true, the command of this launcher can be processed when there is a modal dialog open.
+   * Such a starter may not directly change the PSI/VFS/project model of the opened projects or open new projects.
+   * Such activities should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   */
+  default boolean allowAnyModalityState() {
+    return false;
+  }
+
+  /** @see #canProcessExternalCommandLine */
+  default void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
+  }
 }

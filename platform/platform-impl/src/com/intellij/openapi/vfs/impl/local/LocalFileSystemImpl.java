@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -28,7 +28,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable {
+public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
   private static final String FS_ROOT = "/";
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -70,12 +70,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     private final Map<String, TreeNode> nodes = new THashMap<>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
-  public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {
-    myManagingFS = managingFS;
+  public LocalFileSystemImpl() {
+    myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
       JobScheduler.getScheduler().scheduleWithFixedDelay(
-        () -> { if (!app.isDisposed()) storeRefreshStatusToFiles(); },
+        () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
   }

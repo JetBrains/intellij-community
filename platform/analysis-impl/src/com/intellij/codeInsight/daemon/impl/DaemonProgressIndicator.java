@@ -35,17 +35,21 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private volatile Throwable myCancellationCause;
 
   @Override
-  public synchronized void stop() {
-    super.stop();
-    cancel();
+  public void stop() {
+    synchronized (getLock()) {
+      super.stop();
+      cancel();
+    }
   }
 
-  public synchronized void stopIfRunning() {
-    if (isRunning()) {
-      stop();
-    }
-    else {
-      cancel();
+  public void stopIfRunning() {
+    synchronized (getLock()) {
+      if (isRunning()) {
+        stop();
+      }
+      else {
+        cancel();
+      }
     }
   }
 

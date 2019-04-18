@@ -15,7 +15,7 @@ class FeatureUsageEventLoggerTest {
   @Test
   fun testSingleEvent() {
     testLogger(
-      { logger -> logger.log(FeatureUsageGroup("group.id", 2), "test-action", false) },
+      { logger -> logger.log(EventLogGroup("group.id", 2), "test-action", false) },
       newEvent("group.id", "test-action", groupVersion = "2")
     )
   }
@@ -24,8 +24,8 @@ class FeatureUsageEventLoggerTest {
   fun testTwoEvents() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2")
@@ -36,8 +36,8 @@ class FeatureUsageEventLoggerTest {
   fun testMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2)
     )
@@ -47,9 +47,9 @@ class FeatureUsageEventLoggerTest {
   fun testTwoMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "second-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2", count = 2),
       newEvent("group.id", "second-action", groupVersion = "2", count = 1)
@@ -60,9 +60,9 @@ class FeatureUsageEventLoggerTest {
   fun testNotMergedEvents() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "second-action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
+        logger.log(EventLogGroup("group.id", 2), "second-action", false)
+        logger.log(EventLogGroup("group.id", 2), "test-action", false)
       },
       newEvent("group.id", "test-action", groupVersion = "2"),
       newEvent("group.id", "second-action", groupVersion = "2"),
@@ -73,7 +73,7 @@ class FeatureUsageEventLoggerTest {
   @Test
   fun testStateEvent() {
     testLogger(
-      { logger -> logger.log(FeatureUsageGroup("group.id", 2), "state", true) },
+      { logger -> logger.log(EventLogGroup("group.id", 2), "state", true) },
       newStateEvent("group.id", "state", groupVersion = "2")
     )
   }
@@ -88,7 +88,7 @@ class FeatureUsageEventLoggerTest {
     expected.event.addData("type", "close")
     expected.event.addData("state", 1)
 
-    testLogger({ logger -> logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false) }, expected)
+    testLogger({ logger -> logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false) }, expected)
   }
 
   @Test
@@ -104,8 +104,8 @@ class FeatureUsageEventLoggerTest {
 
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false)
-        logger.log(FeatureUsageGroup("group.id", 2), "dialog-id", data, false)
+        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
+        logger.log(EventLogGroup("group.id", 2), "dialog-id", data, false)
       }, expected)
   }
 
@@ -121,7 +121,7 @@ class FeatureUsageEventLoggerTest {
     expected.event.addData("value", true)
     expected.event.addData("default", false)
 
-    testLogger({ logger -> logger.log(FeatureUsageGroup("settings", 3), "ui", data, true) }, expected)
+    testLogger({ logger -> logger.log(EventLogGroup("settings", 3), "ui", data, true) }, expected)
   }
 
   @Test
@@ -138,8 +138,8 @@ class FeatureUsageEventLoggerTest {
 
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("settings", 5), "ui", data, true)
-        logger.log(FeatureUsageGroup("settings", 5), "ui", data, true)
+        logger.log(EventLogGroup("settings", 5), "ui", data, true)
+        logger.log(EventLogGroup("settings", 5), "ui", data, true)
       },
       expected, expected
     )
@@ -149,9 +149,9 @@ class FeatureUsageEventLoggerTest {
   fun testDontMergeEventsWithDifferentGroupIds() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group", "test.action", groupVersion = "2"),
@@ -163,9 +163,9 @@ class FeatureUsageEventLoggerTest {
   fun testDontMergeEventsWithDifferentGroupVersions() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 3), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 3), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action", groupVersion = "3"),
@@ -177,9 +177,9 @@ class FeatureUsageEventLoggerTest {
   fun testDontMergeEventsWithDifferentActions() {
     testLogger(
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action.1", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action.1", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2"),
       newEvent("group.id", "test.action.1", groupVersion = "2"),
@@ -193,9 +193,9 @@ class FeatureUsageEventLoggerTest {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, recorderVersion = "99")
     )
@@ -207,9 +207,9 @@ class FeatureUsageEventLoggerTest {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, session = "test.session")
     )
@@ -221,9 +221,9 @@ class FeatureUsageEventLoggerTest {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, build = "123.456")
     )
@@ -235,9 +235,9 @@ class FeatureUsageEventLoggerTest {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, bucket = "215")
     )
@@ -249,9 +249,9 @@ class FeatureUsageEventLoggerTest {
     testLoggerInternal(
       custom,
       { logger ->
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
-        logger.log(FeatureUsageGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
+        logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
       newEvent("group.id", "test.action", groupVersion = "2", count = 3, session= "my-test.session", build = "123.00.1", bucket = "128", recorderVersion = "29")
     )
@@ -305,7 +305,7 @@ class TestFeatureUsageFileEventLogger(session: String,
                                       bucket: String,
                                       recorderVersion: String,
                                       writer: TestFeatureUsageEventWriter) :
-  FeatureUsageFileEventLogger(session, build, bucket, recorderVersion, writer) {
+  StatisticsFileEventLogger(session, build, bucket, recorderVersion, writer) {
   val testWriter = writer
 
   override fun dispose() {
@@ -314,7 +314,7 @@ class TestFeatureUsageFileEventLogger(session: String,
   }
 }
 
-class TestFeatureUsageEventWriter : FeatureUsageEventWriter {
+class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   val logged = ArrayList<String>()
 
   override fun log(message: String) {

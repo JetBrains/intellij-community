@@ -21,19 +21,24 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,6 +46,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -715,6 +721,8 @@ public final class TreeUtil {
 
   @SuppressWarnings("HardCodedStringLiteral")
   public static void installActions(@NotNull final JTree tree) {
+    TreeUI ui = tree.getUI();
+    if (ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI")) return;
     tree.getActionMap().put("scrollUpChangeSelection", new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -1060,6 +1068,65 @@ public final class TreeUtil {
     }
   }
 
+  public static int getNodeDepth(@NotNull JTree tree, @NotNull TreePath path) {
+    int depth = path.getPathCount();
+    if (!tree.isRootVisible()) depth--;
+    if (!tree.getShowsRootHandles()) depth--;
+    return depth;
+  }
+
+  private static final class LazyRowX {
+    static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "getRowX", int.class, int.class);
+  }
+
+  @Deprecated
+  public static int getNodeRowX(@NotNull JTree tree, int row) {
+    if (LazyRowX.METHOD == null) return -1; // system error
+    TreePath path = tree.getPathForRow(row);
+    if (path == null) return -1; // path does not exist
+    int depth = getNodeDepth(tree, path);
+    if (depth < 0) return -1; // root is not visible
+    try {
+      return (Integer)LazyRowX.METHOD.invoke(tree.getUI(), row, depth);
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return -1; // unexpected
+    }
+  }
+
+  private static final class LazyLocationInExpandControl {
+    static final Method METHOD = getDeclaredMethod(BasicTreeUI.class, "isLocationInExpandControl", TreePath.class, int.class, int.class);
+  }
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null) return false; // system error
+    return isLocationInExpandControl(tree, tree.getClosestPathForLocation(x, y), x, y);
+  }
+
+  @Deprecated
+  public static boolean isLocationInExpandControl(@NotNull JTree tree, @Nullable TreePath path, int x, int y) {
+    if (LazyLocationInExpandControl.METHOD == null || path == null) return false; // system error or undefined path
+    try {
+      return (Boolean)LazyLocationInExpandControl.METHOD.invoke(tree.getUI(), path, x, y);
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return false; // unexpected
+    }
+  }
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void invalidateCacheAndRepaint(@Nullable TreeUI ui) {
+    if (ui instanceof BasicTreeUI) {
+      BasicTreeUI basic = (BasicTreeUI)ui;
+      basic.setLeftChildIndent(basic.getLeftChildIndent());
+    }
+  }
+
   @NotNull
   public static RelativePoint getPointForSelection(@NotNull JTree aTree) {
     final int[] rows = aTree.getSelectionRows();
@@ -1387,7 +1454,7 @@ public final class TreeUtil {
   private static void internalSelectPath(@NotNull JTree tree, @NotNull TreePath path) {
     assert EventQueue.isDispatchThread();
     tree.setSelectionPath(path);
-    internalScroll(tree, path);
+    scrollToVisible(tree, path, true);
   }
 
   /**
@@ -1410,23 +1477,67 @@ public final class TreeUtil {
     if (paths.isEmpty()) return;
     tree.setSelectionPaths(paths.toArray(new TreePath[0]));
     for (TreePath path : paths) {
-      if (internalScroll(tree, path)) {
+      if (scrollToVisible(tree, path, true)) {
         break;
       }
     }
   }
 
-  private static boolean internalScroll(@NotNull JTree tree, @NotNull TreePath path) {
+  /**
+   * @param tree     a tree to scroll
+   * @param path     a visible tree path to scroll
+   * @param centered {@code true} to show the specified path
+   * @return {@code false} if a path is hidden (under a collapsed parent)
+   */
+  @Contract("_, null, _ -> false")
+  public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
     assert EventQueue.isDispatchThread();
-    int row = tree.getRowForPath(path);
-    if (row == -1) {
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) {
       LOG.debug("cannot scroll to: ", path);
       return false;
     }
-    else {
-      showRowCentred(tree, row);
+    Container parent = tree.getParent();
+    if (parent instanceof JViewport) {
+      int width = parent.getWidth();
+      if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
+        bounds.x = -tree.getX();
+        bounds.width = width;
+      }
+      else {
+        bounds.width = Math.min(bounds.width, width / 2);
+        bounds.x -= JBUI.scale(20); // TODO: calculate a control width
+        if (bounds.x < 0) {
+          bounds.width += bounds.x;
+          bounds.x = 0;
+        }
+      }
+      int height = parent.getHeight();
+      if (height > bounds.height && height < tree.getHeight()) {
+        if (centered || height < bounds.height * 5) {
+          bounds.y -= (height - bounds.height) / 2;
+          bounds.height = height;
+        }
+        else {
+          bounds.y -= bounds.height * 2;
+          bounds.height *= 5;
+        }
+        if (bounds.y < 0) {
+          bounds.height += bounds.y;
+          bounds.y = 0;
+        }
+        int y = bounds.y + bounds.height - tree.getHeight();
+        if (y > 0) bounds.height -= y;
+      }
     }
+    scrollToVisibleWithAccessibility(tree, bounds);
     return true;
+  }
+
+  private static void scrollToVisibleWithAccessibility(@NotNull JTree tree, @NotNull Rectangle bounds) {
+    tree.scrollRectToVisible(bounds);
+    AccessibleContext context = tree.getAccessibleContext();
+    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
   }
 
   /**

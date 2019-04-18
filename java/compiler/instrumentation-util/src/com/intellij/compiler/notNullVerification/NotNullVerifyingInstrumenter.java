@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,7 +74,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       return myClassName.equals(className) && alwaysNotNullMethods.contains(key(methodName, desc));
     }
   }
-  
+
   private static MethodData collectMethodData(ClassReader reader, final Set<String> notNullAnnotations) {
     final MethodData result = new MethodData();
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
@@ -88,8 +88,9 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       public MethodVisitor visitMethod(int access, final String name, final String desc, String signature, String[] exceptions) {
         final Map<Integer, String> names = new LinkedHashMap<Integer, String>();
         result.paramNames.put(MethodData.key(name, desc), names);
-        final Type[] args = Type.getArgumentTypes(desc);
-        final boolean shouldRegisterNotNull = isReferenceType(Type.getReturnType(desc)) && (access & (Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE)) != 0;
+        Type[] args = Type.getArgumentTypes(desc);
+        final boolean shouldRegisterNotNull = isReferenceType(Type.getReturnType(desc)) &&
+                                              (access & (Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE)) != 0;
 
         final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
         int slotIndex = isStatic(access) ? 0 : 1;
@@ -319,7 +320,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           super.visitMaxs(maxStack, maxLocals);
         }
         catch (Throwable e) {
-          //noinspection SpellCheckingInspection
           registerError(name, "visitMaxs", e);
         }
       }
@@ -340,27 +340,22 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
 
-  private void registerError(String methodName, @SuppressWarnings("SameParameterValue") String operationName, Throwable e) {
+  private void registerError(String methodName, @SuppressWarnings("SameParameterValue") String operationName, Throwable t) {
     if (myPostponedError == null) {
       // throw the first error that occurred
-      Throwable err = e.getCause();
-      if (err == null) {
-        err = e;
-      }
+      Throwable cause = t.getCause();
+      if (cause != null) t = cause;
 
-      StringBuilder message = new StringBuilder();
-      message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      String message = t.getMessage();
 
-      String errMessage = err.getMessage();
-      if (errMessage != null) {
-        message.append(errMessage);
-      }
+      StringWriter writer = new StringWriter();
+      t.printStackTrace(new PrintWriter(writer));
 
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      err.printStackTrace(new PrintStream(out));
-      message.append('\n').append(out.toString());
-
-      myPostponedError = new RuntimeException(message.toString(), err);
+      StringBuilder text = new StringBuilder();
+      text.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
+      if (message != null) text.append(message);
+      text.append('\n').append(writer.getBuffer());
+      myPostponedError = new RuntimeException(text.toString(), cause);
     }
     if (myIsModification) {
       processPostponedErrors();
@@ -468,7 +463,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         // a constructor call or a NotNull marked own method
         return false;
       }
-      if ((nextMethodCallOpcode == Opcodes.INVOKESTATIC || nextMethodCallOpcode == Opcodes.INVOKEVIRTUAL) && myMethodData.isAlwaysNotNull(owner, name, descriptor)) {
+      if ((nextMethodCallOpcode == Opcodes.INVOKESTATIC || nextMethodCallOpcode == Opcodes.INVOKEVIRTUAL) &&
+          myMethodData.isAlwaysNotNull(owner, name, descriptor)) {
         return false;
       }
       return true;
@@ -476,21 +472,15 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
     private boolean nextCanBeNullValue(int nextOpcode) {
       // if instruction guaranteed produces non-null stack value
-      if (nextOpcode == Opcodes.LDC || nextOpcode == NEW || nextOpcode == ANEWARRAY || nextOpcode == Opcodes.NEWARRAY || nextOpcode == Opcodes.MULTIANEWARRAY) {
+      if (nextOpcode == Opcodes.LDC || nextOpcode == NEW ||
+          nextOpcode == ANEWARRAY || nextOpcode == Opcodes.NEWARRAY || nextOpcode == Opcodes.MULTIANEWARRAY) {
         return false;
       }
       // for some instructions it is safe not to change previously calculated flag value
-      if (nextOpcode == Opcodes.DUP ||
-        nextOpcode == Opcodes.DUP_X1 ||
-        nextOpcode == Opcodes.DUP_X2 ||
-        nextOpcode == Opcodes.DUP2 ||
-        nextOpcode == Opcodes.DUP2_X1 ||
-        nextOpcode == Opcodes.DUP2_X2 ||
-        nextOpcode == Opcodes.JSR ||
-        nextOpcode == Opcodes.GOTO ||
-        nextOpcode == Opcodes.NOP ||
-        nextOpcode == Opcodes.RET ||
-        nextOpcode == Opcodes.CHECKCAST) {
+      if (nextOpcode == Opcodes.DUP || nextOpcode == Opcodes.DUP_X1 || nextOpcode == Opcodes.DUP_X2 ||
+          nextOpcode == Opcodes.DUP2 || nextOpcode == Opcodes.DUP2_X1 || nextOpcode == Opcodes.DUP2_X2 ||
+          nextOpcode == Opcodes.JSR || nextOpcode == Opcodes.GOTO || nextOpcode == Opcodes.NOP ||
+          nextOpcode == Opcodes.RET || nextOpcode == Opcodes.CHECKCAST) {
         return myCanBeNull;
       }
       // by default assume nullable

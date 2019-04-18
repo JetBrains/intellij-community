@@ -3014,6 +3014,171 @@
     <inspection_tool class="PlayPropertyInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PluginXmlValidity" enabled="true" level="ERROR" enabled_by_default="true">
       <scope name="android" level="ERROR" enabled="false" />
+      <option name="myRegistrationCheckIgnoreClassList">
+        <set>
+          <option value="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider" />
+          <option value="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" />
+        </set>
+      </option>
+      <option name="PLUGINS_MODULES">
+        <modules-set>
+          <module name="intellij.platform.analysis" />
+          <module name="intellij.platform.builtInServer" />
+          <module name="intellij.platform.core" />
+          <module name="intellij.platform.diff" />
+          <module name="intellij.platform.vcs.dvcs" />
+          <module name="intellij.platform.editor" />
+          <module name="intellij.platform.externalSystem" />
+          <module name="intellij.platform.indexing" />
+          <module name="intellij.platform.jps.model" />
+          <module name="intellij.platform.lang" />
+          <module name="intellij.platform.lvcs" />
+          <module name="intellij.platform.ide" />
+          <module name="intellij.platform.projectModel" />
+          <module name="intellij.platform.remoteServers.agent.rt" />
+          <module name="intellij.platform.remoteServers" />
+          <module name="intellij.platform.tasks" />
+          <module name="intellij.platform.usageView" />
+          <module name="intellij.platform.vcs.core" />
+          <module name="intellij.platform.vcs" />
+          <module name="intellij.platform.vcs.log" />
+          <module name="intellij.platform.vcs.log.graph" />
+          <module name="intellij.platform.debugger" />
+          <module name="intellij.xml.analysis" />
+          <module name="intellij.xml" />
+          <module name="intellij.xml.psi" />
+          <module name="intellij.xml.structureView" />
+          <module name="intellij.platform.analysis.impl" />
+          <module name="intellij.platform.builtInServer.impl" />
+          <module name="intellij.platform.core.impl" />
+          <module name="intellij.platform.credentialStore" />
+          <module name="intellij.platform.diff.impl" />
+          <module name="intellij.platform.vcs.dvcs.impl" />
+          <module name="intellij.platform.editor.ex" />
+          <module name="intellij.platform.images" />
+          <module name="intellij.platform.indexing.impl" />
+          <module name="intellij.json" />
+          <module name="intellij.platform.lang.impl" />
+          <module name="intellij.platform.lvcs.impl" />
+          <module name="intellij.platform.ide.impl" />
+          <module name="intellij.platform.projectModel.impl" />
+          <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
+          <module name="intellij.regexp" />
+          <module name="intellij.relaxng" />
+          <module name="intellij.platform.remoteServers.impl" />
+          <module name="intellij.platform.scriptDebugger.backend" />
+          <module name="intellij.platform.scriptDebugger.ui" />
+          <module name="intellij.platform.smRunner" />
+          <module name="intellij.spellchecker" />
+          <module name="intellij.platform.structureView.impl" />
+          <module name="intellij.platform.tasks.impl" />
+          <module name="intellij.platform.testRunner" />
+          <module name="intellij.platform.vcs.impl" />
+          <module name="intellij.platform.vcs.log.graph.impl" />
+          <module name="intellij.platform.vcs.log.impl" />
+          <module name="intellij.platform.debugger.impl" />
+          <module name="intellij.xml.analysis.impl" />
+          <module name="intellij.xml.psi.impl" />
+          <module name="intellij.xml.structureView.impl" />
+          <module name="intellij.xml.impl" />
+          <module name="intellij.platform.configurationStore.impl" />
+          <module name="intellij.xml.dom.impl" />
+          <module name="intellij.platform.webide.impl" />
+          <module name="intellij.platform.ssh" />
+          <module name="intellij.platform.ssh.attach" />
+          <module name="intellij.xml.dom" />
+          <module name="intellij.platform.webide" />
+          <module name="intellij.platform.util" />
+          <module name="intellij.platform.util.rt" />
+          <module name="intellij.platform.util.classLoader" />
+          <module name="intellij.platform.extensions" />
+          <module name="intellij.platform.bootstrap" />
+          <module name="intellij.java.guiForms.rt" />
+          <module name="intellij.platform.icons" />
+          <module name="intellij.platform.boot" />
+          <module name="intellij.platform.resources" />
+          <module name="intellij.platform.colorSchemes" />
+          <module name="intellij.platform.resources.en" />
+          <module name="intellij.platform.jps.model.serialization" />
+          <module name="intellij.platform.jps.model.impl" />
+          <module name="intellij.platform.coverage" />
+          <module name="intellij.platform.duplicates" />
+          <module name="intellij.platform.duplicates.analysis" />
+          <module name="intellij.platform.externalSystem.impl" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.idea.community.resources" />
+          <module name="intellij.java" />
+          <module name="intellij.java.aetherDependencyResolver" />
+          <module name="intellij.java.analysis" />
+          <module name="intellij.java.analysis.impl" />
+          <module name="intellij.java.compiler" />
+          <module name="intellij.java.compiler.antTasks" />
+          <module name="intellij.java.compiler.impl" />
+          <module name="intellij.java.compiler.instrumentationUtil" />
+          <module name="intellij.java.compiler.instrumentationUtil.java8" />
+          <module name="intellij.java.debugger" />
+          <module name="intellij.java.debugger.impl" />
+          <module name="intellij.java.debugger.memory.agent" />
+          <module name="intellij.java.duplicates" />
+          <module name="intellij.java.duplicates.analysis" />
+          <module name="intellij.java.duplicatesDetection" />
+          <module name="intellij.java.execution" />
+          <module name="intellij.java.execution.impl" />
+          <module name="intellij.java.guiForms.compiler" />
+          <module name="intellij.java.guiForms.rt" />
+          <module name="intellij.java.impl" />
+          <module name="intellij.java.indexing" />
+          <module name="intellij.java.indexing.impl" />
+          <module name="intellij.java.jam" />
+          <module name="intellij.java.jam.impl" />
+          <module name="intellij.java.jps.javacRefScanner8" />
+          <module name="intellij.java.jshell.protocol" />
+          <module name="intellij.java.manifest" />
+          <module name="intellij.java.psi" />
+          <module name="intellij.java.psi.impl" />
+          <module name="intellij.java.remoteServers" />
+          <module name="intellij.java.remoteServers.impl" />
+          <module name="intellij.java.resources" />
+          <module name="intellij.java.resources.en" />
+          <module name="intellij.java.rt" />
+          <module name="intellij.java.structuralSearch" />
+          <module name="intellij.java.structureView" />
+          <module name="intellij.java.testFramework" />
+          <module name="intellij.java.typeMigration" />
+          <module name="intellij.java.uast" />
+          <module name="intellij.java.ui" />
+          <module name="intellij.jsp" />
+          <module name="intellij.jsp.base" />
+          <module name="intellij.jsp.spi" />
+          <module name="intellij.jvm.analysis" />
+          <module name="intellij.jvm.analysis.impl" />
+          <module name="intellij.platform.jps.build" />
+          <module name="intellij.platform.jps.build.javac.rt" />
+          <module name="intellij.platform.jps.build.launcher" />
+          <module name="intellij.platform.uast" />
+          <module name="intellij.platform.uast.tests" />
+          <module name="intellij.uiDesigner" />
+          <module name="intellij.xml.dom" />
+          <module name="intellij.xml.dom.impl" />
+          <module name="intellij.platform.testFramework" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.android.core" />
+          <module name="intellij.android.adt.branding" />
+          <module name="intellij.android.common" />
+          <module name="intellij.android.apkanalyzer" />
+          <module name="intellij.android.designer" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.python.community" />
+          <module name="intellij.python.community.impl" />
+          <module name="intellij.pycharm.community" />
+          <module name="intellij.python.community.plugin" />
+          <module name="intellij.python.psi" />
+          <module name="intellij.python.pydev" />
+        </modules-set>
+      </option>
     </inspection_tool>
     <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessArithmeticExpression" enabled="true" level="WARNING" enabled_by_default="true">

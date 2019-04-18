@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
@@ -24,6 +25,13 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
    * {@link GutterIconRenderer#getPopupMenuActions()}, {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)})
    */
   public static final DataKey<Integer> LOGICAL_LINE_AT_CURSOR = DataKey.create("EditorGutter.LOGICAL_LINE_AT_CURSOR");
+
+  /**
+   * The key to retrieve a editor gutter icon center position of a latest actionable click inside the gutter.
+   * Available to gutter popup actions (see {@link #setGutterPopupGroup(ActionGroup)},
+   * {@link GutterIconRenderer#getPopupMenuActions()}, {@link TextAnnotationGutterProvider#getPopupActions(int, Editor)})
+   */
+  public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
 
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
@@ -70,7 +78,4 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public GutterMark getGutterRenderer(final Point p) {
     return null;
   }
-
-  @NotNull
-  public abstract List<TextAnnotationGutterProvider> getTextAnnotations();
 }

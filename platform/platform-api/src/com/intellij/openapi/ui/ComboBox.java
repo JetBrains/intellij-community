@@ -1,47 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 
 /**
- * Due to many bugs and "features" in {@code JComboBox} implementation we provide
+ * Due to many bugs and "features" in {@link JComboBox} implementation we provide
  * our own "patch". First of all it has correct preferred and minimum sizes that has sense
  * when combo box is editable. Also this implementation fixes some bugs with clicking
  * of default button. The SUN's combo box eats first "Enter" if the selected value from
  * the list and changed it. They say that combo box "commit" changes and only second
  * "Enter" clicks default button. This implementation clicks the default button
  * immediately. As the result of our patch combo box has internal wrapper for ComboBoxEditor.
- * It means that {@code getEditor} method always returns not the same value you set
- * by {@code setEditor} method. Moreover adding and removing of action listeners
+ * It means that {@link #getEditor()} method always returns not the same value you set
+ * by {@link #setEditor(ComboBoxEditor)} method. Moreover adding and removing of action listeners
  * isn't supported by the implementation of wrapper.
  *
  * @author Vladimir Kondratyev
@@ -117,7 +108,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     if (!isSwingPopup()) {
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
         final JBList<E> list = createJBList(getModel());
-        myJBPopup = JBPopupFactory.getInstance()
+        myJBPopup = Objects.requireNonNull(getPopupFactory())
           .createListPopupBuilder(list)
           .setItemChoosenCallback(() -> {
             final Object value = list.getSelectedValue();
@@ -145,10 +136,16 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       return;
     }
 
-    if (getModel().getSize() == 0 && visible) return;
-    if (visible &&
-        ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/ &&
-        JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
+    if (getModel().getSize() == 0 && visible) {
+      return;
+    }
+
+    if (visible) {
+      JBPopupFactory jbPopupFactory = getPopupFactory();
+      if (jbPopupFactory != null /* allow ComboBox on welcome wizard */ && jbPopupFactory.getChildFocusedPopup(this) != null) {
+        return;
+      }
+    }
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);
@@ -165,19 +162,34 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
   }
 
+  @Nullable
+  private static JBPopupFactory getPopupFactory() {
+    if (ApplicationManager.getApplication() == null) {
+      return null;
+    }
+    return JBPopupFactory.getInstance();
+  }
+
   protected JBList<E> createJBList(ComboBoxModel<E> model) {
     return new JBList<>(model);
   }
 
   @Override
   public void eventDispatched(AWTEvent event) {
-    if (event.getID() == WindowEvent.WINDOW_OPENED
-        && ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/) {
-      final WindowEvent we = (WindowEvent)event;
-      for (JBPopup each : JBPopupFactory.getInstance().getChildPopups(this)) {
-        if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
-          super.setPopupVisible(false);
-        }
+    if (event.getID() != WindowEvent.WINDOW_OPENED) {
+      return;
+    }
+
+    JBPopupFactory jbPopupFactory = getPopupFactory();
+    if (jbPopupFactory == null) {
+      // allow ComboBox on welcome wizard
+      return;
+    }
+
+    WindowEvent we = (WindowEvent)event;
+    for (JBPopup each : jbPopupFactory.getChildPopups(this)) {
+      if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+        super.setPopupVisible(false);
       }
     }
   }
@@ -273,6 +285,20 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     finally {
       myPaintingNow = false;
     }
+  }
+
+  @ApiStatus.Experimental
+  public void initBrowsableEditor(@NotNull Runnable browseAction, @Nullable Disposable parentDisposable) {
+    ComboBoxEditor editor = new BasicComboBoxEditor() {
+      @Override
+      protected JTextField createEditorComponent() {
+        JTextField editor = new ExtendableTextField().addBrowseExtension(browseAction, parentDisposable);
+        editor.setBorder(null);
+        return editor;
+      }
+    };
+    setEditor(editor);
+    setEditable(true);
   }
 
   private static final class MyEditor implements ComboBoxEditor {

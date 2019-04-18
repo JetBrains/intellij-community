@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -67,9 +66,8 @@ public class YAMLColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
   public Icon getIcon() {
-    return AllIcons.Nodes.DataTables;
+    return YAMLFileType.YML.getIcon();
   }
 
   @Override

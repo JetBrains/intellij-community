@@ -47,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
  *   <li>Cached arrays or lists should have the same number of elements, and they also should be equivalent and come in the same order.</li>
  *   <li>If the result object's class has a meaningful {@link #equals} method, it should hold.</li>
  * </ul>
+ * This is enforced at runtime by occasional checks in {@link com.intellij.util.IdempotenceChecker#checkEquivalence(Object, Object, Class)}.
+ * See that method's documentation for further information and advice, when a failure happens.<p></p>
  *
  * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
  * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
@@ -74,6 +76,8 @@ import org.jetbrains.annotations.NotNull;
  *   </pre>
  *   </ul>
  * </ul>
+ * This is enforced at runtime by occasional checks in {@link com.intellij.util.CachedValueStabilityChecker}.
+ * See that class's documentation for further information and advice, when a failure happens.<p></p>
  *
  * <b>Recursion prevention</b>: The same cached value provider can be re-entered recursively on the same thread,
  * if the computation is inherently cyclic. Note that this is likely to result in {@link StackOverflowError},

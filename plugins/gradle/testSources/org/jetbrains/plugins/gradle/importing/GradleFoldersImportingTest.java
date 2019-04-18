@@ -184,6 +184,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createDefaultDirs();
     createProjectSubFile("settings.gradle", "include('processor')");
     createProjectSubFile("processor/build.gradle", "apply plugin:'java'");
+    createProjectSubFile("build/generated/sources/annotationProcessor/java/main/Generated.java");
     importProject("" +
                   "apply plugin: 'java'\n" +
                   "dependencies {\n" +
@@ -360,7 +361,12 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("src/main/java/A.java");
     createProjectSubFile("src/test/resources/res.properties");
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'"
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "sourceSets.main.java.srcDirs file('src/generated/java')\n" +
+      "idea.module {\n" +
+      "  generatedSourceDirs += file('src/generated/java')\n" +
+      "}"
     );
 
     assertModules("project");
@@ -368,13 +374,19 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertSources("project", "src/main/java");
     assertResources("project");
     assertTestSources("project");
+    assertGeneratedSources("project");
     assertTestResources("project", "src/test/resources");
   }
 
   @Test
   public void testRootsAreAddedWhenAFolderCreated() throws Exception {
     createProjectSubFile("src/main/java/A.java");
-    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+    importProjectUsingSingeModulePerGradleProject(      "apply plugin: 'java'\n" +
+                                                        "apply plugin: 'idea'\n" +
+                                                        "sourceSets.main.java.srcDirs file('src/generated/java')\n" +
+                                                        "idea.module {\n" +
+                                                        "  generatedSourceDirs += file('src/generated/java')\n" +
+                                                        "}");
 
     assertModules("project");
     assertSources("project", "src/main/java");
@@ -385,6 +397,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("src/main/resources/res.txt");
     assertResources("project", "src/main/resources");
+
+    createProjectSubFile("src/generated/java/Generated.java");
+    assertGeneratedSources("project","src/generated/java");
   }
 
   @Test

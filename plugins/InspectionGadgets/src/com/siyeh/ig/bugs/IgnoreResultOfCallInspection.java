@@ -278,18 +278,17 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
       if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
-      if (!(call instanceof PsiCallExpression)) return false;
+      if (!(call instanceof PsiCallExpression) || JavaMethodContractUtil.getMethodCallContracts(method, null).isEmpty()) return false;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
       return result != null && result.cannotFailByContract((PsiCallExpression)call);
     }
 
     private boolean hasTrivialReturnValue(PsiMethod method) {
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
-      return !contracts.isEmpty() &&
-             contracts.stream()
-                      .map(MethodContract::getReturnValue)
-                      .allMatch(returnValue -> returnValue.equals(ContractReturnValue.returnThis()) ||
-                                               returnValue instanceof ContractReturnValue.ParameterReturnValue);
+      ContractReturnValue nonFailingReturnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      return nonFailingReturnValue != null &&
+             (nonFailingReturnValue.equals(ContractReturnValue.returnThis()) ||
+              nonFailingReturnValue instanceof ContractReturnValue.ParameterReturnValue);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {

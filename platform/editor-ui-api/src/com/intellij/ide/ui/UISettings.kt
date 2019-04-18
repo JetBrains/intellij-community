@@ -89,9 +89,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.reuseNotModifiedTabs = value
     }
 
-  val maxClipboardContents: Int
-    get() = state.maxClipboardContents
-
   var disableMnemonics: Boolean
     get() = state.disableMnemonics
     set(value) {
@@ -339,6 +336,15 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.consoleCommandHistoryLimit = value
     }
 
+  var showInplaceComments: Boolean
+    get() = state.showInplaceComments
+    set(value) {
+      state.showInplaceComments = value
+    }
+
+  val showInplaceCommentsInternal: Boolean
+    get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
   companion object {
     init {
       verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
@@ -564,10 +570,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
     if (state.alphaModeRatio < 0.0f || state.alphaModeRatio > 1.0f) {
       state.alphaModeRatio = 0.5f
-    }
-
-    if (state.maxClipboardContents <= 0) {
-      state.maxClipboardContents = 5
     }
 
     fireUISettingsChanged()

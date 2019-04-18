@@ -136,3 +136,5 @@ internal inline fun <T> muteStdErr(block: () -> T): T = protectStdErr {
   System.setErr(mutedStream)
   return block()
 }
+
+internal fun File.isAncestorOf(file: File): Boolean = this == file.parentFile || file.parentFile != null && isAncestorOf(file.parentFile)

@@ -10,17 +10,13 @@ public class HtmlTransferableData extends HtmlSyntaxInfoReader implements RawTex
   @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html; class=java.io.Reader; charset=UTF-8", "HTML text");
   public static final int PRIORITY = 200;
 
-  @NotNull
-  private final DataFlavor myDataFlavor;
-
   public HtmlTransferableData(@NotNull SyntaxInfo syntaxInfo, int tabSize) {
     super(syntaxInfo, tabSize);
-    myDataFlavor = FLAVOR;
   }
 
   @Override
   public DataFlavor getFlavor() {
-    return myDataFlavor;
+    return FLAVOR;
   }
 
   @Override

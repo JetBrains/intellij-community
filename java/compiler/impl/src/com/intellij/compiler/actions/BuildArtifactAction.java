@@ -67,7 +67,7 @@ public class BuildArtifactAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(project != null && !ArtifactUtil.getArtifactWithOutputPaths(project).isEmpty());
+    presentation.setEnabledAndVisible(project != null && !ArtifactUtil.getArtifactWithOutputPaths(project).isEmpty());
   }
 
   @Override

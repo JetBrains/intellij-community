@@ -16,24 +16,37 @@
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
-val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
+internal val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
+
+
+@Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
+class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
+
+  val languagePlugins: Collection<UastLanguagePlugin>
+    get() = UastFacade.languagePlugins
+
+  fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastFacade.findPlugin(element)
+
+  fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
+
+  fun getVariable(variable: PsiVariable): UVariable = convertWithParent<UVariable>(variable)!!
+
+  fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
+}
 
 /**
- * Manages the UAST to PSI conversion.
+ * The main entry point to uast-conversions.
+ *
+ * In the most cases you could use [toUElement] or [toUElementOfExpectedTypes] extension methods instead of using the `UastFacade` directly
  */
-class UastContext(val project: Project) : UastLanguagePlugin {
-  private companion object {
-    private val CONTEXT_LANGUAGE = object : Language("UastContextLanguage") {}
-  }
+object UastFacade : UastLanguagePlugin {
 
-  override val language: Language
-    get() = CONTEXT_LANGUAGE
+  override val language: Language = object : Language("UastContextLanguage") {}
 
   override val priority: Int
     get() = 0
@@ -44,12 +57,6 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastLanguagePlugin.byLanguage(element.language)
 
   override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
-
-  fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
-
-  fun getVariable(variable: PsiVariable): UVariable = convertWithParent<UVariable>(variable)!!
-
-  fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
 
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
     val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
@@ -94,7 +101,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   }
 
   private tailrec fun UElement.getLanguage(): Language {
-    psi?.language?.let { return it }
+    sourcePsi?.language?.let { return it }
     val containingElement = this.uastParent ?: throw IllegalStateException("At least UFile should have a language")
     return containingElement.getLanguage()
   }
@@ -106,28 +113,28 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     findPlugin(element)?.convertToAlternatives(element, requiredTypes) ?: emptySequence()
 }
 
+
 /**
- * Converts the element along with its parents to UAST.
+ * Converts the element to UAST.
  */
-fun PsiElement?.toUElement(): UElement? =
-  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
+fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementWithParent(this, null) }
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
  * to the given UAST element type.
  */
-fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? =
-  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
+@Suppress("UNCHECKED_CAST")
+fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
 
+@Suppress("UNCHECKED_CAST")
 fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out T>): T? =
   this?.let {
-    ServiceManager.getService(project, UastContext::class.java)
-      .convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
+    UastFacade.convertElementWithParent(this, if (clss.isNotEmpty()) clss else DEFAULT_TYPES_LIST) as T?
   }
 
 
 inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
-  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, T::class.java) as T? }
+  this?.let { UastFacade.convertElementWithParent(this, T::class.java) as T? }
 
 /**
  * Finds an UAST element of a given type at the given [offset] in the specified file. Returns null if there is no UAST

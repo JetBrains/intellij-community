@@ -199,7 +199,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     public String getPresentationText(@NotNull LongRangeSet fact, @Nullable PsiType type) {
       LongRangeSet fromType = LongRangeSet.fromType(type);
       if(fact.equals(fromType)) return "";
-      return fact.toString();
+      return fact.getPresentationText(type);
     }
   };
   /**

@@ -35,6 +35,36 @@
       <add-to-group group-id="FileMainSettingsGroup" anchor="last"/>
     </action>
 
+    <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
+            icon="AllIcons.General.ProjectStructure">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
+      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
+    </action>
+    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
+    <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
+    </action>
+    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
+      <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
+    </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests"
+            text="Show Affected Tests">
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
+    </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
+            text="Find Unused Test Data" internal="true"/>
+
+    <action id="JShell.Console"
+            class="com.intellij.execution.jshell.LaunchJShellConsoleAction"
+            text="JShell Console..." description="Launch JShell Console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
 
     <!-- View -->
     <reference ref="DelegateMethods">
@@ -42,6 +72,10 @@
     </reference>
 
     <!-- Analyze -->
+    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="AnalyzePlatformMenu"/>
+    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="InspectCodeInCodeMenuGroup"/>
+    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="InspectCodeActionInPopupMenus"/>
+
     <group id="AnalyzeActions">
     </group>
 
@@ -52,7 +86,7 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
-    <group id="BuildMenu" popup="true">
+    <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
       </action>
@@ -65,7 +99,7 @@
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+      <add-to-group group-id="BuildMenu"/>
     </group>
 
     <action id="DebugBuildProcess" class="com.intellij.compiler.actions.DebugBuildProcessToggleAction"/>
@@ -320,13 +354,6 @@
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
-    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
-
-    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
 
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
@@ -515,7 +542,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
-      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
+      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
@@ -625,7 +652,7 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
+    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </action>
 

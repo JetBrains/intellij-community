@@ -339,7 +339,7 @@ public class ProjectUtil {
     }
     final String userHome = SystemProperties.getUserHome();
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
-    if (PlatformUtils.isCLion()) {
+    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode()) {
       productName = ApplicationNamesInfo.getInstance().getProductName();
     }
     //noinspection HardCodedStringLiteral

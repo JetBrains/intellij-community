@@ -154,9 +154,6 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element);
 
   @NotNull
-  public abstract IntentionAction createGeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType type);
-
-  @NotNull
   public abstract IntentionAction createChangeToAppendFix(@NotNull IElementType sign,
                                                           @NotNull PsiType type,
                                                           @NotNull PsiAssignmentExpression assignment);

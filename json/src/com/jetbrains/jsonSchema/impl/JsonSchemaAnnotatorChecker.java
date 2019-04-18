@@ -276,7 +276,12 @@ class JsonSchemaAnnotatorChecker {
       if (propertyNamesSchema != null) {
         JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
         if (nameValueAdapter != null) {
-          checkByScheme(nameValueAdapter, propertyNamesSchema);
+          JsonSchemaAnnotatorChecker checker =
+            checkByMatchResult(myProject, nameValueAdapter, new JsonSchemaResolver(myProject, propertyNamesSchema).detailedResolve(),
+                               myOptions);
+          if (checker != null) {
+            this.myErrors.putAll(checker.myErrors);
+          }
         }
       }
 

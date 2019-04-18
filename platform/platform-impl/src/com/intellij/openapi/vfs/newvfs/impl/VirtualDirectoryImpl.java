@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -46,14 +45,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
 
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
-
-  private static final VirtualDirectoryImpl NULL_VIRTUAL_FILE =
-    new VirtualDirectoryImpl(-42, new VfsData.Segment(null), new VfsData.DirectoryData(), null, LocalFileSystem.getInstance()) {
-      @Override
-      public String toString() {
-        return "NULL";
-      }
-    };
 
   private final VfsData.DirectoryData myData;
   private final NewVirtualFileSystem myFs;
@@ -486,6 +477,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
+        assert info.id > 0 : info;
         FileAttributes attributes = info.attributes;
         String name = info.name;
         boolean isEmptyDirectory = info.children != null && info.children.length == 0;
@@ -510,6 +502,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
+        assert info.id > 0 : info;
         FileAttributes attributes = info.attributes;
         String name = info.name;
         boolean isEmptyDirectory = info.children != null && info.children.length == 0;

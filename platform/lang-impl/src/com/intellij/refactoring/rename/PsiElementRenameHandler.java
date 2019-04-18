@@ -3,7 +3,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -156,7 +155,6 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   static void showErrorMessage(Project project, @Nullable Editor editor, String message) {
-    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 

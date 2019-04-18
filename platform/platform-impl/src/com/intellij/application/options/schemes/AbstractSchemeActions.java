@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -329,7 +330,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
-        exportScheme(currentScheme, myExporterName);
+        Project project = e.getProject();
+        exportScheme(project, currentScheme, myExporterName);
       }
     }
   }
@@ -374,6 +376,14 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
 
   /**
+   * @deprecated Use {@link #exportScheme(Project, Scheme, String)} instead.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
+  }
+
+  /**
    * Export the scheme using the given exporter name.
    *
    * @param scheme The scheme to export.
@@ -381,7 +391,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    * @see SchemeExporter
    * @see SchemeExporterEP
    */
-  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
+  protected void exportScheme(@Nullable Project project, @NotNull T scheme, @NotNull String exporterName) {
     SchemeExporter<T> exporter = SchemeExporterEP.getExporter(exporterName, getSchemeType());
     if (exporter != null) {
       Object config = null;
@@ -397,7 +407,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(null, SchemeManager.getDisplayName(scheme) + "." + ext);
+      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(SchemeManager.getDisplayName(scheme)) + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
         String message;
@@ -411,7 +421,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
-                exporter.exportScheme(scheme, outputStream);
+                exporter.exportScheme(project, scheme, outputStream);
               }
             });
             message = ApplicationBundle

@@ -9,7 +9,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
@@ -27,7 +26,7 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
       model.getModuleExtension(JavaModuleExternalPaths.class)
-        .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getTestDataPath() + "/deprecation/" + getTestName(true) + "/extAnnotations"))});
+        .setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(getTestDataPath() + "/deprecation/" + getTestName(true) + "/extAnnotations")});
     }
 
     @Override

@@ -22,6 +22,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+
 public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescriptor implements XmlAttributeDescriptor {
   @Override
   public String validateValue(XmlElement context, String value) {
@@ -51,12 +53,12 @@ public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescript
   @Override
   protected PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
     String[] values = getEnumeratedValues();
-    if (values == null || values.length == 0) return getDeclaration();
-    return ArrayUtilRt.find(values, value) != -1 ? getDeclaration() : null;
+    if (values == null || values.length == 0) return getFirstItem(getDeclarations());
+    return ArrayUtilRt.find(values, value) != -1 ? getFirstItem(getDeclarations()) : null;
   }
 
   @Override
   protected PsiElement getDefaultValueDeclaration() {
-    return getDeclaration();
+    return getFirstItem(getDeclarations());
   }
 }

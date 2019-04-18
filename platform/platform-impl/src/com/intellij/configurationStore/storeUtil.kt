@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -18,7 +19,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
@@ -79,6 +80,10 @@ class StoreUtil private constructor() {
 
 @CalledInAny
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    (TransactionGuardImpl.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
+  }
+
   try {
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
@@ -157,10 +162,8 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
 
 @CalledInAny
 private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (!project.isDisposed) {
-      saveSettings(project, forceSavingAllSettings)
-    }
+  processOpenedProjects { project ->
+    saveSettings(project, forceSavingAllSettings)
   }
 }
 

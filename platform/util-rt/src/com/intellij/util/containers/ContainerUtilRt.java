@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.*;
 
 /**
- * Stripped-down version of {@code com.intellij.util.containers.ContainerUtil}.
+ * Stripped-down version of {@link com.intellij.util.containers.ContainerUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
 public class ContainerUtilRt {
@@ -112,7 +112,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
-    final LinkedList<T> list = newLinkedList();
+    final LinkedList<T> list = new LinkedList<T>();
     Collections.addAll(list, elements);
     return list;
   }
@@ -120,7 +120,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
-    return copy(ContainerUtilRt.<T>newLinkedList(), elements);
+    return copy(new LinkedList<T>(), elements);
   }
 
   @NotNull
@@ -206,7 +206,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
-    return newLinkedHashSet(Arrays.asList(elements));
+    return new LinkedHashSet<T>(Arrays.asList(elements));
   }
 
   @NotNull
@@ -216,7 +216,7 @@ public class ContainerUtilRt {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
       return new LinkedHashSet<T>(collection);
     }
-    return copy(ContainerUtilRt.<T>newLinkedHashSet(), elements);
+    return copy(new LinkedHashSet<T>(), elements);
   }
 
   @NotNull
@@ -228,7 +228,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
-    return copy(ContainerUtilRt.<T>newTreeSet(), elements);
+    return copy(new TreeSet<T>(), elements);
   }
 
   @NotNull

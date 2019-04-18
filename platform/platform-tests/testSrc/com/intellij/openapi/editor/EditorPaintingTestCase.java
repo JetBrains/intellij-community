@@ -45,7 +45,6 @@ import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
@@ -78,7 +77,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return getTestName(true) + ".png";
   }
 
-  protected static void setUniformEditorHighlighter(TextAttributes attributes) {
+  protected static void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
 
@@ -229,18 +228,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
       myBoldFont = boldFont;
     }
 
-    @Override
-    public void addRenderingHints(Map hints) {
-    }
-
-    @Override
-    public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue) {
-    }
-
-    @Override
-    public void setRenderingHints(Map hints) {
-    }
-
     @NotNull
     @Override
     public Graphics create() {
@@ -334,10 +321,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private static class UniformHighlighter implements EditorHighlighter {
+    @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;
 
-    private UniformHighlighter(TextAttributes attributes) {
+    private UniformHighlighter(@NotNull TextAttributes attributes) {
       myAttributes = attributes;
     }
 
@@ -394,6 +382,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         return myOffset == myDocument.getTextLength();
       }
 
+      @NotNull
       @Override
       public Document getDocument() {
         return myDocument;

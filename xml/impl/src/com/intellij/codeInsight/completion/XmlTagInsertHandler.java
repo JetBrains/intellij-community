@@ -59,6 +59,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    int startOffset = context.getStartOffset();
     Document document = InjectedLanguageUtil.getTopLevelEditor(editor).getDocument();
     Ref<PsiElement> currentElementRef = Ref.create();
     // Need to insert " " to prevent creating tags like <tagThis is my text
@@ -66,7 +67,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       final int offset = editor.getCaretModel().getOffset();
       editor.getDocument().insertString(offset, " ");
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      currentElementRef.set(context.getFile().findElementAt(context.getStartOffset()));
+      currentElementRef.set(context.getFile().findElementAt(startOffset));
       editor.getDocument().deleteString(offset, offset + 1);
     });
 

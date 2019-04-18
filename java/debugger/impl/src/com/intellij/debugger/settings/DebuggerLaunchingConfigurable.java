@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,7 +32,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
       myRbShmem.setEnabled(false);
     }
     else {
-      if (settings.DEBUGGER_TRANSPORT == DebuggerSettings.SHMEM_TRANSPORT) {
+      if (settings.getTransport() == DebuggerSettings.SHMEM_TRANSPORT) {
         myRbShmem.setSelected(true);
       }
       else {
@@ -53,12 +54,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
-    if (myRbShmem.isSelected()) {
-      settings.DEBUGGER_TRANSPORT = DebuggerSettings.SHMEM_TRANSPORT;
-    }
-    else {
-      settings.DEBUGGER_TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
-    }
+    settings.setTransport(myRbShmem.isSelected() ? DebuggerSettings.SHMEM_TRANSPORT : DebuggerSettings.SOCKET_TRANSPORT);
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
     settings.SHOW_ALTERNATIVE_SOURCE = myCbShowAlternativeSource.isSelected();
@@ -106,7 +102,9 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     panel.add(myCbDisableJIT);
     panel.add(myCbShowAlternativeSource);
     panel.add(myCbKillImmediately);
-    panel.add(myCbEnableMemoryAgent);
+    if (MemoryAgentUtil.isPlatformSupported()) {
+      panel.add(myCbEnableMemoryAgent);
+    }
     if (Registry.is("execution.java.always.debug")) {
       panel.add(myCbAlwaysDebug);
     }

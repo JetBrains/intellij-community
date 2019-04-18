@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +18,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModuleTypeId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
@@ -129,6 +129,9 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
       ProjectDataManagerImpl.getInstance().ensureTheDataIsReadyToUse(projectStructure);
       return externalProjectInfo.getExternalProjectPath().equals(projectStructure.getData().getLinkedExternalProjectPath());
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.warn(e);
     }
@@ -139,9 +142,6 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponentJavaA
   public synchronized void doSave() {
     if (!changed.compareAndSet(true, false)) {
       return;
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Should not be called on EDT");
     }
     try {
       doSave(myProject, myExternalRootProjects.values());

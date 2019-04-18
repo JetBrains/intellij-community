@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
+import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -30,12 +30,11 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
 import java.awt.event.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable,
-                                           ComponentWithFileColors {
+                                           ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -106,7 +105,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
-    if (!isCustomUI()) {
+    if (!isCustomUI() && !Registry.is("ide.tree.ui.experimental")) {
       if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
@@ -359,6 +358,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     config.restore();
   }
 
+  @Override
+  @Nullable
+  public Color getPathBackground(@NotNull TreePath path, int row) {
+    return isFileColorsEnabled() ? getFileColorForPath(path) : null;
+  }
+
   @Nullable
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
@@ -405,31 +410,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * in the area of row that is used to expand/collapse the node and
    * the node at {@code row} does not represent a leaf.
    */
+  @Deprecated
   protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
     if (path == null) return false;
     Rectangle bounds = getRowBounds(getRowForPath(path));
-    return isLocationInExpandControl(path, mouseX, bounds.y + bounds.height / 2);
-  }
-
-
-  private boolean isLocationInExpandControl(TreePath path, int x, int y) {
-    TreeUI ui = getUI();
-    if (!(ui instanceof BasicTreeUI)) return false;
-
-    try {
-      Class aClass = ui.getClass();
-      while (BasicTreeUI.class.isAssignableFrom(aClass) && !BasicTreeUI.class.equals(aClass)) {
-        aClass = aClass.getSuperclass();
-      }
-      Method method = ReflectionUtil.getDeclaredMethod(aClass, "isLocationInExpandControl", TreePath.class, int.class, int.class);
-      if (method != null) {
-        return (Boolean)method.invoke(ui, path, x, y);
-      }
-    }
-    catch (Throwable ignore) {
-    }
-
-    return false;
+    return TreeUtil.isLocationInExpandControl(this, path, mouseX, bounds.y + bounds.height / 2);
   }
 
   /**
@@ -691,7 +676,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       setPressed(event, false);
       if (event.getButton() == MouseEvent.BUTTON1 &&
           event.getClickCount() == 2 &&
-          isLocationInExpandControl(getClosestPathForLocation(event.getX(), event.getY()), event.getX())) {
+          TreeUtil.isLocationInExpandControl(Tree.this, event.getX(), event.getY())) {
         event.consume();
       }
     }
@@ -770,12 +755,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @Deprecated
   public final void setLineStyleAngled() {
-    UIUtil.setLineStyleAngled(this);
   }
 
   @NotNull
-  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
+  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<? super T> filter) {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return ArrayUtil.newArray(nodeType, 0);
 

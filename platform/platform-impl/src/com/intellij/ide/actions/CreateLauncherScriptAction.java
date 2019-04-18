@@ -51,7 +51,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   });
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !ExternalUpdateManager.isRoaming() && INTERPRETER_NAME.getValue() != null;
+    return SystemInfo.isUnix &&
+           (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
+           INTERPRETER_NAME.getValue() != null;
   }
 
   @Override
@@ -64,13 +66,17 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     if (!isAvailable()) return;
 
+    if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) {
+      String title = ApplicationBundle.message("launcher.script.title");
+      String message = ApplicationBundle.message("launcher.script.luke");
+      Messages.showInfoMessage(event.getProject(), message, title);
+      return;
+    }
+
     Project project = event.getProject();
 
     String title = ApplicationBundle.message("launcher.script.title");
-    String prompt =
-      "<html>You can create a launcher script to enable opening files and projects in " +
-      ApplicationNamesInfo.getInstance().getFullProductName() + " from the command line.<br>" +
-      "Please specify the name of the script and the path where it should be created:</html>";
+    String prompt = ApplicationBundle.message("launcher.script.prompt", ApplicationNamesInfo.getInstance().getFullProductName());
     String path = Messages.showInputDialog(project, prompt, title, null, defaultScriptPath(), null);
     if (path == null) {
       return;
@@ -91,7 +97,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     File target = new File(path);
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
-      if (Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon()) != Messages.OK) {
+      String ok = ApplicationBundle.message("launcher.script.overwrite.button");
+      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }

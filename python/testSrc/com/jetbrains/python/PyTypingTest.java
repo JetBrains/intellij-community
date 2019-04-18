@@ -1448,6 +1448,32 @@ public class PyTypingTest extends PyTestCase {
                              "expr: alias");
   }
 
+  public void testGenericSubstitutionInDeepHierarchy() {
+    doTest("int",
+           "from typing import Generic, TypeVar\n" +
+           "\n" +
+           "T1 = TypeVar('T1')\n" +
+           "T2 = TypeVar('T2')\n" +
+           "\n" +
+           "class Root(Generic[T1, T2]):\n" +
+           "    def m(self) -> T2:\n" +
+           "        pass\n" +
+           "\n" +
+           "class Base3(Root[T1, int]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Base2(Base3[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Base1(Base2[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "class Sub(Base1[T1]):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = Sub().m()\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

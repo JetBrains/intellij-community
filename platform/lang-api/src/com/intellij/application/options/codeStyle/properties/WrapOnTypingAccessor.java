@@ -35,4 +35,10 @@ public class WrapOnTypingAccessor extends CodeStyleFieldAccessor<Integer,Boolean
   protected boolean isEmpty(@NotNull Integer value) {
     return value < 0;
   }
+
+  @Nullable
+  @Override
+  protected String valueToString(@NotNull Boolean value) {
+    return String.valueOf(value);
+  }
 }

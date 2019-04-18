@@ -1986,6 +1986,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testUnqualifiedElement() {
+    configureByFiles(null, BASE_PATH + "UnqualifiedElement.xml", BASE_PATH + "UnqualifiedElement.xsd");
+    doDoTest(true, false);
+  }
+
   public void testEnumeratedBoolean() {
     configureByFiles(null, BASE_PATH + "EnumeratedBoolean.xml", BASE_PATH + "EnumeratedBoolean.xsd");
     doDoTest(true, false);
@@ -2097,6 +2102,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         getVirtualFile(BASE_PATH + "Redefine/sample.xml"),
         getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),
         getVirtualFile(BASE_PATH + "Redefine/base.xsd"),
+      },
+      true, false
+    );
+  }
+
+  public void testRedefineGroup() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "RedefineGroup/test.xml"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/originalschema.xsd"),
+        getVirtualFile(BASE_PATH + "RedefineGroup/redefinedschema.xsd"),
       },
       true, false
     );

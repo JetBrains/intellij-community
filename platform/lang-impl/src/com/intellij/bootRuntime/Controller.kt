@@ -10,6 +10,7 @@ import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.bootRuntime.command.UseDefault
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
@@ -77,9 +78,9 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
   }
 
   fun restart() {
-    SwingUtilities.invokeLater {
+    ApplicationManager.getApplication().invokeLater {
       SwingUtilities.getWindowAncestor(actionPanel).dispose()
-      ApplicationManagerEx.getApplicationEx().restart()
+      ApplicationManagerEx.getApplicationEx().restart(true)
     }
   }
 

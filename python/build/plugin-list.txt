@@ -2,7 +2,6 @@ intellij.configurationScript
 intellij.copyright
 intellij.editorconfig
 intellij.platform.langInjection
-intellij.platform.remoteServers.git
 intellij.properties
 intellij.python.copyright
 intellij.python.langInjection
@@ -10,11 +9,11 @@ intellij.python.reStructuredText
 intellij.python.terminal
 intellij.reStructuredText
 intellij.settingsRepository
+intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
 intellij.vcs.git
 intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn
-intellij.xml.langInjection
 intellij.yaml

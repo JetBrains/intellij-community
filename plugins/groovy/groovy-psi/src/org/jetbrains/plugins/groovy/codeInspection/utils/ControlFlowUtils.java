@@ -58,6 +58,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
+
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
@@ -722,8 +724,6 @@ public class ControlFlowUtils {
   }
 
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
-    String name = local.getName();
-
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
     final HashSet<Instruction> visited = new HashSet<>();
 
@@ -743,7 +743,7 @@ public class ControlFlowUtils {
 
       if (instruction instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
-        if (name.equals(rw.getVariableName())) {
+        if (createDescriptor(local).equals(rw.getDescriptor())) {
           if (rw.isWrite()) {
             result.add(rw);
             continue;
@@ -774,6 +774,13 @@ public class ControlFlowUtils {
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
+
+      @NotNull
+      @Override
+      public BitSet initial() {
+        return new BitSet(flow.length);
+      }
+
       @NotNull
       @Override
       public BitSet join(@NotNull List<? extends BitSet> ins) {
@@ -782,11 +789,6 @@ public class ControlFlowUtils {
           result.or(set);
         }
         return result;
-      }
-
-      @Override
-      public boolean eq(@NotNull BitSet e1, @NotNull BitSet e2) {
-        return e1.equals(e2);
       }
     };
 
@@ -804,18 +806,12 @@ public class ControlFlowUtils {
             return;
           }
         }
-        if (!((ReadWriteVariableInstruction)instruction).getVariableName().equals(var.getName())) {
+        if (!((ReadWriteVariableInstruction)instruction).getDescriptor().equals(createDescriptor(var))) {
           return;
         }
 
         bitSet.clear();
         bitSet.set(instruction.num());
-      }
-
-      @NotNull
-      @Override
-      public BitSet initial() {
-        return new BitSet(flow.length);
       }
     };
 

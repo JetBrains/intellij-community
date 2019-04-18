@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import io.netty.buffer.ByteBuf
@@ -8,10 +8,9 @@ import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CharsetDecoder
-import java.nio.charset.StandardCharsets
 
 fun ByteBuf.readIntoCharBuffer(byteCount: Int = readableBytes(), charBuffer: CharBuffer) {
-  val decoder = CharsetUtil.decoder(StandardCharsets.UTF_8)
+  val decoder = CharsetUtil.decoder(Charsets.UTF_8)
   if (nioBufferCount() == 1) {
     decodeString(decoder, internalNioBuffer(readerIndex(), byteCount), charBuffer)
   }

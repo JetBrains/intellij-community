@@ -10,17 +10,17 @@ import java.util.Map;
 import java.util.function.Function;
 
 interface SESearcher {
-  ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+  ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?, ?>, Integer> contributorsAndLimits,
                            @NotNull String pattern,
                            boolean useNonProjectItems,
-                           @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
+                           @NotNull Function<? super SearchEverywhereContributor<?, ?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
-  ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
+  ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?, ?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                                   @NotNull String pattern,
                                   boolean useNonProjectItems,
-                                  @NotNull SearchEverywhereContributor<?> contributorToExpand,
+                                  @NotNull SearchEverywhereContributor<?, ?> contributor,
                                   int newLimit,
-                                  @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
+                                  @NotNull Function<? super SearchEverywhereContributor<?, ?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
 
   /**
    * Search process listener interface
@@ -28,6 +28,6 @@ interface SESearcher {
   interface Listener {
     void elementsAdded(@NotNull List<SearchEverywhereFoundElementInfo> list);
     void elementsRemoved(@NotNull List<SearchEverywhereFoundElementInfo> list);
-    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
+    void searchFinished(@NotNull Map<SearchEverywhereContributor<?, ?>, Boolean> hasMoreContributors);
   }
 }

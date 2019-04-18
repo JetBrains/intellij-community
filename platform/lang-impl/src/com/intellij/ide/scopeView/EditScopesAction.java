@@ -19,7 +19,7 @@ public final class EditScopesAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getData(CommonDataKeys.PROJECT);
     ProjectView view = project == null ? null : ProjectView.getInstance(project);
     if (view != null) {
       ScopeChooserConfigurable configurable = new ScopeChooserConfigurable(project);
@@ -35,8 +35,7 @@ public final class EditScopesAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    super.update(event);
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getData(CommonDataKeys.PROJECT);
     ProjectView view = project == null ? null : ProjectView.getInstance(project);
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace())) {
       event.getPresentation().setEnabledAndVisible(view != null && view.getCurrentViewId().equals(ScopeViewPane.ID));

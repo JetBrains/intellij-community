@@ -92,6 +92,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process       the operation to execute.
    * @param progressTitle the title of the progress window.
@@ -107,6 +109,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process       the operation to execute.
    * @param progressTitle the title of the progress window.
@@ -123,6 +127,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
    *
    * @param process         the operation to execute.
    * @param progressTitle   the title of the progress window.

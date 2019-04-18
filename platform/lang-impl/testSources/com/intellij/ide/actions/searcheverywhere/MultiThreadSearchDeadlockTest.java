@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -17,7 +18,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * @author mikhail.sokolov
@@ -37,7 +37,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testDeadlocks() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
+    Map<SearchEverywhereContributor<Object, ?>, Integer> contributorsMap = new HashMap<>();
     contributorsMap.put(new ReadActionContributor<>("readAction1", 0, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 10);
     contributorsMap.put(new ReadActionContributor<>("readAction2", 100, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25")), 10);
     contributorsMap.put(new WriteActionContributor<>("writeAction1", 300, 50, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 10);
@@ -63,7 +63,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testWriteActionPriority() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
+    Map<SearchEverywhereContributor<Object, ?>, Integer> contributorsMap = new HashMap<>();
     ReadActionContributor<Object> action1 = new ReadActionContributor<>("readAction1", 100, 150, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16"));
     ReadActionContributor<Object> action2 = new ReadActionContributor<>("readAction2", 500, 100, Arrays.asList("ri21", "ri22", "ri23", "ri24"));
     contributorsMap.put(action1, 10);
@@ -97,7 +97,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   public void testCancelOnWaiting() {
-    Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
+    Map<SearchEverywhereContributor<Object, ?>, Integer> contributorsMap = new HashMap<>();
     contributorsMap.put(new ReadActionContributor<>("readAction1", 0, 0, Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16")), 5);
     contributorsMap.put(new WriteActionContributor<>("writeAction1", 500, 0, Arrays.asList("wi11", "wi12", "wi13", "wi14")), 5);
 
@@ -141,7 +141,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     }
 
     @Override
-    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?, ?>, Boolean> hasMoreContributors) {
       latch.countDown();
     }
 
@@ -154,7 +154,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
     }
   }
 
-  private static abstract class TestContributor<T> implements SearchEverywhereContributor<T> {
+  private static abstract class TestContributor<Filter> implements SearchEverywhereContributor<Object, Filter> {
     protected final String name;
     protected final long initDelay;
     protected final long eachItemDelay;
@@ -208,7 +208,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     @NotNull
     @Override
-    public ListCellRenderer getElementsRenderer(@NotNull JList list) {
+    public ListCellRenderer<? super Object> getElementsRenderer() {
       return new DefaultListCellRenderer();
     }
   }
@@ -226,7 +226,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
                               boolean everywhere,
                               @Nullable SearchEverywhereContributorFilter<T> filter,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Function<Object, Boolean> consumer) {
+                              @NotNull Processor<? super Object> consumer) {
       try {
         Thread.sleep(initDelay);
       }
@@ -239,7 +239,7 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
         try {
           for (Object item : items) {
             progressIndicator.checkCanceled();
-            consumer.apply(item);
+            consumer.process(item);
             Thread.sleep(eachItemDelay);
           }
         }
@@ -264,12 +264,12 @@ public class MultiThreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
                               boolean everywhere,
                               @Nullable SearchEverywhereContributorFilter<T> filter,
                               @NotNull ProgressIndicator progressIndicator,
-                              @NotNull Function<Object, Boolean> consumer) {
+                              @NotNull Processor<? super Object> consumer) {
       try {
         Thread.sleep(initDelay);
         for (Object item : items) {
           ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(() -> {}));
-          consumer.apply(item);
+          consumer.process(item);
           Thread.sleep(eachItemDelay);
         }
       }

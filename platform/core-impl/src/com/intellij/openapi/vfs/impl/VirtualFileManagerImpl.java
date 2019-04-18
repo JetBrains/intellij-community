@@ -41,6 +41,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
+  public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems) {
+    this(fileSystems, ApplicationManager.getApplication().getMessageBus());
+  }
+
   public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
     myPhysicalFileSystems = fileSystems;
 

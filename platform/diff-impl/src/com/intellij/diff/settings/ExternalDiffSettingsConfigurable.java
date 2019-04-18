@@ -49,7 +49,7 @@ public class ExternalDiffSettingsConfigurable implements SearchableConfigurable 
     if (mySettingsPane == null) {
       mySettingsPane = new ExternalDiffSettingsPanel();
     }
-    return mySettingsPane.getPanel();
+    return mySettingsPane.createComponent();
   }
 
   @Override

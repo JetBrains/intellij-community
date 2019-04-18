@@ -24,14 +24,12 @@ import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
-import org.jetbrains.ide.PooledThreadExecutor
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
-import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -308,35 +306,6 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence): Int = writeCharSequence(data, Charsets.UTF_8)
-
-@Suppress("FunctionName")
-fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
-//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-//    try {
-//      return KQueueEventLoopGroup(workerCount, threadFactory)
-//    }
-//    catch (e: Throwable) {
-//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
-//    }
-//  }
-
-  return NioEventLoopGroup(workerCount, threadFactory)
-}
-
-@Suppress("FunctionName")
-fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
-//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-//    try {
-//      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-//    }
-//    catch (e: Throwable) {
-//      // error instead of warn to easy spot it
-//      logger<BuiltInServer>().error("Cannot use native event loop group", e)
-//    }
-//  }
-
-  return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-}
 
 class ConnectToChannelResult {
   val channel: Channel?

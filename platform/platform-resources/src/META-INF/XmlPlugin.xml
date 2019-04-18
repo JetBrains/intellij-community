@@ -113,7 +113,6 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <psi.treeChangePreprocessor implementation="com.intellij.xml.XmlPsiTreeChangePreprocessor"/>
     <tipAndTrick file="TagNameCompletion.html"/>
 
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
@@ -166,9 +165,6 @@
                                  id="editor.preferences.webOptions"
                                  key="web.editor.configuration.title"
                                  bundle="messages.XmlBundle"/>
-    <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"
-                                  id="WebEditorAppearanceConfigurable"/>
-
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
 
     <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"

@@ -135,9 +135,9 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
       boolean negative = number.longValue() < 0;
       IElementType op = assignment.getOperationTokenType();
       if (conditionType == ConditionType.VarGreater) {
-        return op == JavaTokenType.PLUSEQ || (op == JavaTokenType.MINUSEQ && negative);
+        return (op == JavaTokenType.PLUSEQ && !negative) || (op == JavaTokenType.MINUSEQ && negative);
       } else {
-        return op == JavaTokenType.MINUSEQ || (op == JavaTokenType.PLUSEQ && negative);
+        return (op == JavaTokenType.MINUSEQ && !negative) || (op == JavaTokenType.PLUSEQ && negative);
       }
     }
     return false;

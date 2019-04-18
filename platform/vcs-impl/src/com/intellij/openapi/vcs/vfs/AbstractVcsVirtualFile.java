@@ -83,10 +83,13 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
   @Override
   public String getPresentableName() {
-    if (myRevision == null)
-      return myName;
-    else
-      return myName + " (" + myRevision + ")";
+    return getPresentableName(myName);
+  }
+
+  @NotNull
+  String getPresentableName(@NotNull String baseName) {
+    if (myRevision == null) return baseName;
+    return baseName + " (" + myRevision + ")";
   }
 
   @Override

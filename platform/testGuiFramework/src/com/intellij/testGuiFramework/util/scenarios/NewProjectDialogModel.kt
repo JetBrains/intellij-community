@@ -5,6 +5,7 @@ import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
@@ -41,12 +42,14 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.awt.Component
+import java.awt.IllegalComponentStateException
 import java.io.Serializable
 
-class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
+class NewProjectDialogModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
     { NewProjectDialogModel(it) }
   )
@@ -107,15 +110,15 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libWebApplication = "Web Application"
     const val itemKotlinMppDeprecated = "Kotlin (Multiplatform - Deprecated)"
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
-    const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
-    const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
-    const val itemKotlinMppMobileAndroidIos = "Kotlin (Mobile Android/iOS)"
-    const val itemKotlinMppMobileSharedLibrary = "Kotlin (Mobile Shared Library)"
+    const val itemKotlinMppLibrary = "Multiplatform Library | Gradle"
+    const val itemKotlinMppClientServer = "JS Client and JVM Server | Gradle"
+    const val itemKotlinMppMobileAndroidIos = "Mobile Android/iOS | Gradle"
+    const val itemKotlinMppMobileSharedLibrary = "Mobile Shared Library | Gradle"
     const val itemKotlinJvm = "Kotlin/JVM"
     const val itemKotlinJs = "Kotlin/JS"
-    const val itemKotlinNative = "Kotlin/Native"
-    const val itemGradleKotlinJvm = "Kotlin (Java)"
-    const val itemGradleKotlinJs = "Kotlin (JavaScript)"
+    const val itemKotlinNative = "Native | Gradle"
+    const val itemGradleKotlinJvm = "JVM | IDEA"
+    const val itemGradleKotlinJs = "JS | IDEA"
   }
 
   enum class Groups(private val title: String) {
@@ -197,7 +200,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  step("search New Project dialog") { testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true) }
+  step("search New Project dialog") { guiTestCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true) }
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 
@@ -244,7 +247,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         }
       }
       step("close New Project dialog with Finish") {
-        button(buttonFinish).click()
+        finish()
       }
       step("wait when downloading dialog disappears") {
         checkDownloadingDialog()
@@ -356,7 +359,7 @@ fun NewProjectDialogModel.createGradleProject(
         button(buttonNext).click()
         typeProjectNameAndLocation(projectPath)
         step("close New Project dialog with Finish") {
-          button(buttonFinish).click()
+          finish()
         }
       }
     }
@@ -422,7 +425,7 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String,
       typeProjectNameAndLocation(projectPath)
 
       step("close New Project dialog with Finish") {
-        button(buttonFinish).click()
+        finish()
       }
     }
   }
@@ -441,7 +444,7 @@ fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: St
       typeProjectNameAndLocation(projectPath)
 
       step("close New Project dialog with Finish") {
-        button(buttonFinish).click()
+        finish()
       }
     }
   }
@@ -467,7 +470,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
       step("close New Project dialog with Finish") {
-        button(buttonFinish).click()
+        finish()
       }
     }
   }
@@ -529,7 +532,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
       step("close New Project dialog with Finish") {
-        button(buttonFinish).click()
+        finish()
       }
       step("wait when downloading dialog disappears") {
         checkDownloadingDialog()
@@ -644,5 +647,39 @@ fun NewProjectDialogModel.checkDownloadingDialog() {
       }
     }
     dialog == null
+  }
+}
+
+fun NewProjectDialogModel.finish() {
+  clickButton(buttonFinish)
+}
+
+fun NewProjectDialogModel.cancel() {
+  clickButton(buttonCancel)
+}
+
+
+fun NewProjectDialogModel.next(isClickSuccessful: () -> Boolean) {
+  with(connectDialog()) {
+    button(buttonNext).clickUntil(isClickSuccessful = isClickSuccessful)
+  }
+}
+
+private fun NewProjectDialogModel.clickButton(name: String) {
+  with(guiTestCase) {
+    with(connectDialog()) {
+      try {
+        button(name).clickUntil {
+          exists {
+            dialog(
+              title = NewProjectDialogModel.Constants.newProjectTitle,
+              ignoreCaseTitle = true,
+              timeout = Timeouts.noTimeout
+            )
+          }.not()
+        }
+      }
+      catch (ignore: IllegalComponentStateException) {}
+    }
   }
 }

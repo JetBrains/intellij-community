@@ -295,7 +295,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (PyTokenTypes.STRING_NODES.contains(childType)) {
+      if (PyTokenTypes.STRING_NODES.contains(childType) || childType == PyElementTypes.FSTRING_NODE) {
         childAlignment = getAlignmentForChildren();
       }
     }

@@ -93,7 +93,10 @@ public abstract class IndexedContainer {
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (ListIndexedContainer.isSizeCall(call)) {
-        return new ListIndexedContainer(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()));
+        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+        if (qualifier != null) {
+          return new ListIndexedContainer(qualifier);
+        }
       }
     }
     return null;
@@ -148,7 +151,7 @@ public abstract class IndexedContainer {
     @Override
     public boolean isGetMethodReference(PsiMethodReferenceExpression methodReference) {
       if (!"get".equals(methodReference.getReferenceName())) return false;
-      if (!isQualifierEquivalent(ExpressionUtils.getQualifierOrThis(methodReference))) return false;
+      if (!isQualifierEquivalent(ExpressionUtils.getEffectiveQualifier(methodReference))) return false;
       PsiMethod method = ObjectUtils.tryCast(methodReference.resolve(), PsiMethod.class);
       return method != null && MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, null, "get", PsiType.INT);
     }
@@ -173,7 +176,7 @@ public abstract class IndexedContainer {
       PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
       if (call == null) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length == 1 && isGetCall(call) && isQualifierEquivalent(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()))) {
+      if (args.length == 1 && isGetCall(call) && isQualifierEquivalent(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()))) {
         return args[0];
       }
       return null;

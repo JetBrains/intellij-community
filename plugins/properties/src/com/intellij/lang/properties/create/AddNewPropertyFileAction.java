@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
@@ -40,7 +38,7 @@ public class AddNewPropertyFileAction extends AnAction {
 
   @Nullable
   private static ResourceBundle getResourceBundle(@NotNull AnActionEvent e) {
-    final Navigatable[] data = CommonDataKeys.NAVIGATABLE_ARRAY.getData(e.getDataContext());
+    final Navigatable[] data = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (data == null || data.length != 1) return null;
     if (!(data[0] instanceof ResourceBundleAwareNode)) return null;
     return ((ResourceBundleAwareNode)data[0]).getResourceBundle();

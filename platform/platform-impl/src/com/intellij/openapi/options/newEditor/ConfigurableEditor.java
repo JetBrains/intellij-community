@@ -154,6 +154,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   public JComponent getPreferredFocusedComponent() {
+    if (myConfigurable == null) return null; // settings editor is not configured yet
     JComponent preferred = myConfigurable.getPreferredFocusedComponent();
     return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(myConfigurable)) : preferred;
   }

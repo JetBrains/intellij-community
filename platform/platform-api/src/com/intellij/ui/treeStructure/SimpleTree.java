@@ -80,8 +80,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
         }
       }
     });
-
-    UIUtil.setLineStyleAngled(this);
     if (SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
@@ -248,7 +246,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   @Override
-  public final boolean isFileColorsEnabled() {
+  public boolean isFileColorsEnabled() {
     return false;
   }
 

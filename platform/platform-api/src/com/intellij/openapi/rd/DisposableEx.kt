@@ -35,9 +35,7 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
     return
   }
 
-  disposableLifetime.executeIfAlive {
-    action(disposableLifetime)
-  }
+  action(disposableLifetime)
 }
 
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {

@@ -16,9 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
-import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -372,7 +370,13 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
     @Override
     protected List<String> parseString(@NotNull String string) {
-      return ValueListPropertyAccessor.getValueList(string);
+      return CodeStylePropertiesUtil.getValueList(string);
+    }
+
+    @Nullable
+    @Override
+    protected String valueToString(@NotNull List<String> value) {
+      return CodeStylePropertiesUtil.toCommaSeparatedString(value);
     }
 
     @Override
@@ -550,9 +554,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
-    "    case 0:\n" +
-    "      doCase0();\n" +
-    "      break;\n" +
+    "    case 0: case 1:\ndoCase0(); break;\ncase 2: case 3: return;" +
     "    default:\n" +
     "      doDefault();\n" +
     "    }\n" +

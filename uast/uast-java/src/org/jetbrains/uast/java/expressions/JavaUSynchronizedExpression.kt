@@ -27,11 +27,11 @@ import org.jetbrains.uast.java.lz
 import org.jetbrains.uast.visitor.UastVisitor
 
 class JavaUSynchronizedExpression(
-  override val psi: PsiSynchronizedStatement,
+  override val sourcePsi: PsiSynchronizedStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions: List<UExpression> by lz { psi.body?.statements?.map { JavaConverter.convertOrEmpty(it, this) } ?: listOf() }
-  val lockExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.lockExpression, this) }
+  override val expressions: List<UExpression> by lz { sourcePsi.body?.statements?.map { JavaConverter.convertOrEmpty(it, this) } ?: listOf() }
+  val lockExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.lockExpression, this) }
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitBlockExpression(this)) return

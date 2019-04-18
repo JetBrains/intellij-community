@@ -379,12 +379,14 @@ public class DebuggerUIUtil {
 
   @Nullable
   public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
+    String res = null;
     if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-      return ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+      res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
     }
-    else {
-      return valueNode.getRawValue();
+    if (res == null) {
+      res = valueNode.getRawValue();
     }
+    return res;
   }
 
   /**

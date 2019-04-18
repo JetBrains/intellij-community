@@ -27,9 +27,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -471,7 +477,7 @@ public class FileManagerImpl implements FileManager {
     for (VirtualFile file : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
       FileViewProvider provider = findCachedViewProvider(file);
       if (provider != null) {
-        ContainerUtil.addIfNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
+        ContainerUtil.addAllNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsiFiles());
       }
     }
     return files;

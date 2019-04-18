@@ -6,7 +6,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -115,7 +115,7 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
-fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
+fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
   if (virtualFile != null) {
     return virtualFile
@@ -128,11 +128,16 @@ fun getOrCreateVirtualFile(file: Path, requestor: Any?): VirtualFile {
   val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
-  if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-    return parentVirtualFile.createChildData(requestor, file.fileName.toString())
+  return runAsWriteActionIfNeeded {
+    parentVirtualFile.createChildData(requestor, file.fileName.toString())
   }
-  else {
-    return runUndoTransparentWriteAction { parentVirtualFile.createChildData(requestor, file.fileName.toString()) }
+}
+
+// runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
+  return when {
+    ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
+    else -> runWriteAction(runnable)
   }
 }
 

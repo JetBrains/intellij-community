@@ -28,6 +28,8 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.maven.indices.MavenSearchIndex.Kind.REMOTE;
+
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final MavenProjectIndicesManager myManager;
 
@@ -88,11 +90,12 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   private void updateButtonsState() {
     boolean hasSelection = !myIndicesTable.getSelectionModel().isSelectionEmpty();
+    hasSelection = getSelectedIndices().stream().anyMatch(i -> i.getKind() == REMOTE);
     myUpdateButton.setEnabled(hasSelection);
   }
 
   public void updateIndexHint(int row) {
-    MavenIndex index = getIndexAt(row);
+    MavenSearchIndex index = getIndexAt(row);
     String message = index.getFailureMessage();
     if (message == null) {
       myIndicesTable.setToolTipText(null);
@@ -211,12 +214,13 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      MavenIndex i = getIndex(rowIndex);
+      MavenSearchIndex i = getIndex(rowIndex);
       switch (columnIndex) {
         case 0:
           return i.getRepositoryPathOrUrl();
         case 1:
-          if (i.getKind() == MavenIndex.Kind.LOCAL) return "Local";
+          if (i.getKind() == MavenSearchIndex.Kind.LOCAL) return "Local";
+          if (i.getKind() == MavenSearchIndex.Kind.ONLINE) return "Online";
           return "Remote";
         case 2:
           if (i.getFailureMessage() != null) {
@@ -224,6 +228,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
+          if (i.getKind() != REMOTE) return IndicesBundle.message("maven.index.updated.notapplicable");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
           return myManager.getUpdatingState(i);
@@ -245,7 +250,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      MavenIndex index = getIndexAt(row);
+      MavenSearchIndex index = getIndexAt(row);
       if (index.getFailureMessage() != null) {
         if (isSelected) {
           setForeground(JBColor.PINK);

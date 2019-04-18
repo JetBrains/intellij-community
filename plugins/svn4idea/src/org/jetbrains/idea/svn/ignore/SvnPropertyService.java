@@ -133,6 +133,7 @@ public class SvnPropertyService {
       for (final String fileName : data) {
         if (!ignorePatterns.contains(fileName)) {
           myFilesOk = false;
+          break;
         }
       }
     }

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -27,12 +28,40 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   private static final long ACCEPTED_CACHE_AGE_MS = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS);
   private static final long DONT_REQUIRE_UPDATE_AGE_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 
+  /**
+   * Use {@link EventLogExternalSettingsService#getFeatureUsageSettings()}
+   * or create new instance with custom recorder id.
+   */
+  @Deprecated
   public static EventLogExternalSettingsService getInstance() {
-    return new EventLogExternalSettingsService();
+    return getFeatureUsageSettings();
   }
 
+  @NotNull
+  public static EventLogExternalSettingsService getFeatureUsageSettings() {
+    return new EventLogExternalSettingsService("FUS");
+  }
+
+  @TestOnly
   protected EventLogExternalSettingsService() {
-    super(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl(), null);
+    super(null, null);
+  }
+
+  public EventLogExternalSettingsService(@NotNull String recorderId) {
+    super(getConfigUrl(recorderId, false), null);
+  }
+
+  public EventLogExternalSettingsService(@NotNull String recorderId, boolean isTest) {
+    super(getConfigUrl(recorderId, isTest), null);
+  }
+
+  @NotNull
+  private static String getConfigUrl(@NotNull String recorderId, boolean isTest) {
+    final String templateUrl = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+    if (isTest) {
+      return String.format(templateUrl, "test/" + recorderId);
+    }
+    return String.format(templateUrl, recorderId);
   }
 
   @NotNull

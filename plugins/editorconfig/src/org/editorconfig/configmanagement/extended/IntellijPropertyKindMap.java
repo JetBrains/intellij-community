@@ -22,7 +22,7 @@ public class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("max_line_length", EDITOR_CONFIG_STANDARD);
     PROPERTY_KIND_MAP.put("indent_size", EDITOR_CONFIG_STANDARD);
     PROPERTY_KIND_MAP.put("indent_style", EDITOR_CONFIG_STANDARD);
-    PROPERTY_KIND_MAP.put("insert_final_new_line", EDITOR_CONFIG_STANDARD);
+    PROPERTY_KIND_MAP.put("insert_final_newline", EDITOR_CONFIG_STANDARD);
     PROPERTY_KIND_MAP.put("end_of_line", EDITOR_CONFIG_STANDARD);
     PROPERTY_KIND_MAP.put("trim_trailing_whitespace", EDITOR_CONFIG_STANDARD);
     PROPERTY_KIND_MAP.put("tab_width", EDITOR_CONFIG_STANDARD);

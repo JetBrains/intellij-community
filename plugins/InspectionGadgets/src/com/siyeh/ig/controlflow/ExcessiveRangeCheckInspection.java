@@ -16,10 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +78,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
-      if (qualifier != null) {
+      if (qualifier != null && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
         if (STRING_IS_EMPTY.matches(expression)) {
           return new RangeConstraint(textRange, qualifier, SpecialField.STRING_LENGTH, LongRangeSet.point(0));
         }
@@ -172,7 +169,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       }
     }
 
-    @NotNull
+    @Nullable
     static RangeConstraint create(TextRange textRange, PsiExpression expr, LongRangeSet set) {
       SpecialField field = null;
       PsiReferenceExpression ref = expr instanceof PsiReferenceExpression ? (PsiReferenceExpression)expr :
@@ -185,6 +182,9 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
             expr = qualifier;
           }
         }
+      }
+      if (SideEffectChecker.mayHaveSideEffects(expr)) {
+        return null;
       }
       return new RangeConstraint(textRange, expr, field, set);
     }
@@ -220,22 +220,24 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       List<PsiExpression> operands = ContainerUtil.filter(allOperands, op -> range.contains(op.getTextRangeInParent()));
       if (operands.size() < 2) return;
       PsiExpression firstOperand = operands.get(0);
+      PsiExpression lastOperand = operands.get(operands.size() - 1);
       RangeConstraint constraint = extractConstraint(firstOperand);
       if (constraint == null) return;
       CommentTracker ct = new CommentTracker();
       ct.markUnchanged(constraint.myExpression);
-      if (operands.size() == allOperands.length) {
-        ct.replaceAndRestoreComments(expression, myReplacement);
+      PsiElement[] allChildren = expression.getChildren();
+      PsiElement lastInPrefix = firstOperand.getPrevSibling();
+      String fullReplacement = "";
+      if (lastInPrefix != null) {
+        fullReplacement += ct.rangeText(allChildren[0], lastInPrefix);
       }
-      else {
-        PsiElement firstToDelete = firstOperand.getNextSibling();
-        PsiElement lastToDelete = ContainerUtil.getLastItem(operands);
-        for(PsiElement e = firstToDelete; e != lastToDelete; e = e.getNextSibling()) {
-          ct.grabComments(e);
-        }
-        expression.deleteChildRange(firstToDelete, lastToDelete);
-        ct.replaceAndRestoreComments(firstOperand, myReplacement);
+      fullReplacement += myReplacement;
+      PsiElement firstInSuffix = lastOperand.getNextSibling();
+      if (firstInSuffix != null) {
+        PsiElement lastInSuffix = allChildren[allChildren.length - 1];
+        fullReplacement += ct.rangeText(firstInSuffix, lastInSuffix);
       }
+      ct.replaceAndRestoreComments(expression, fullReplacement);
     }
   }
 }

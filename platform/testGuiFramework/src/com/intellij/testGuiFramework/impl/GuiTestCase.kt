@@ -17,9 +17,11 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.testGuiFramework.util.*
+import com.intellij.ui.components.JBPanel
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.AbstractComponentFixture
+import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
@@ -31,6 +33,7 @@ import org.junit.Rule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
+import java.awt.Container
 import java.awt.Rectangle
 import java.io.File
 import java.io.IOException
@@ -141,6 +144,15 @@ open class GuiTestCase {
       if (!needToKeepDialog) dialog.waitTillGone()
     }
   }
+
+  fun templatesDialogPanel(title: String, func: ContainerFixtureImpl.() -> Unit) =
+    step("search for 'CreateWithTemplatesDialogPanel'") {
+      ContainerFixtureImpl(robot(), findComponentWithTimeout(null, JBPanel::class.java, Timeouts.seconds10) { component ->
+        component.javaClass.canonicalName == "com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel" &&
+        component.isShowing &&
+        robot().finder().findAll(component.parent) { it is JLabel && it.text.equals(title, true) }.size == 1
+      } as Container).apply(func)
+    }
 
   fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
     step("at dialog with text component") {
@@ -381,7 +393,7 @@ open class GuiTestCase {
    * @param screenshotName name of create screenshot, added after timestamp
    * if [screenshotName] is empty the screenshot is create with only timestamp as a name
    */
-  fun screenshot(screenshotName: String = ""){
+  fun screenshot(screenshotName: String = "") {
     ScreenshotTaker.takeScreenshotAndHierarchy(screenshotName)
   }
 

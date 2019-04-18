@@ -95,7 +95,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
@@ -110,12 +110,12 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiMember> classNames) {
     return true;
   }
 
   @Override
-  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
     return foundClasses.isEmpty()
            ? super.getFilters(foundClasses, packageName)
            : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");

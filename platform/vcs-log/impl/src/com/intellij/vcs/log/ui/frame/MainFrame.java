@@ -112,7 +112,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
+    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
@@ -257,7 +257,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         @NotNull
         @Override
         public DiffRequestProcessor createDiffRequestProcessor() {
-          VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, myChangesBrowser);
+          VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, true,
+                                                                    myChangesBrowser);
           preview.updatePreview(true);
           return preview;
         }

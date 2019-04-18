@@ -272,9 +272,19 @@ public class JavaSdkImpl extends JavaSdk {
     pathsChecked.add(path);
 
     if (root == null) { // build
-      String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
-      root = VirtualFileManager.getInstance().findFileByUrl(url);
-      pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
+      String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
+      LOG.assertTrue(javaPluginClassesRootPath != null);
+      File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
+      if (javaPluginClassesRoot.isFile()) {
+        String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
+        root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath  + "!/");
+        pathsChecked.add(annotationsJarPath);
+      }
+      if (root == null) {
+        String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
+        root = VirtualFileManager.getInstance().findFileByUrl(url);
+        pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
+      }
     }
 
     if (root == null) {

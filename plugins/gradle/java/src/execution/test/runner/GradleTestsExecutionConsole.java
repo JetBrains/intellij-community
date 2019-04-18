@@ -57,6 +57,6 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
 
   @Override
   public boolean isExecutionViewHidden() {
-    return Registry.is("build.view.side-by-side", false);
+    return Registry.is("build.view.side-by-side", true);
   }
 }

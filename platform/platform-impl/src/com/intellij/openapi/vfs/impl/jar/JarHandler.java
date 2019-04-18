@@ -26,11 +26,10 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
 import java.io.DataOutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +139,7 @@ public class JarHandler extends ZipHandler {
 
         try (DataOutputStream os = new DataOutputStream(new FileOutputStream(tempJarFile));
              FileInputStream is = new FileInputStream(originalFile)) {
-          sha1 = MessageDigest.getInstance("SHA1");
+          sha1 = DigestUtil.sha1();
           sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
           sha1.update((byte)0);
 
@@ -160,10 +159,6 @@ public class JarHandler extends ZipHandler {
         File target = mirrorFile != null ? mirrorFile : tempJarFile != null ? tempJarFile : new File(jarDir);
         reportIOErrorWithJars(originalFile, target, ex);
         return originalFile;
-      }
-      catch (NoSuchAlgorithmException ex) {
-        LOG.error(ex);
-        return originalFile; // should never happen for sha1
       }
 
       String mirrorName = getSnapshotName(originalFile.getName(), sha1.digest());

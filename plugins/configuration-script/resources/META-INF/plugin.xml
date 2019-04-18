@@ -1,9 +1,9 @@
 <idea-plugin>
-  <name>IntelliJ Configuration Script</name>
+  <name>Configuration Script</name>
   <id>com.intellij.configurationScript</id>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-  <p>IDE configuration using text files (YAML, JSON). Experimental.</p>
+  <p>Supports configuring the IDE using text files (YAML, JSON). Experimental.</p>
   ]]>
   </description>
 

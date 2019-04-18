@@ -7,7 +7,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
-import com.intellij.util.withPrevious
+import com.intellij.util.containers.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrSingleResultResolverProcessor

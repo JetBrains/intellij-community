@@ -89,7 +89,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     return PlainTextFileType.INSTANCE;
   }
 
-  protected boolean isShowInnerDifferences() {
+  private static boolean isShowInnerDifferences() {
     return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
   }
 
@@ -132,11 +132,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!myTracker.isValid()) return;
     final Disposable disposable = Disposer.newDisposable();
 
-    FileType fileType = getFileType();
     List<DiffFragment> wordDiff = computeWordDiff(range);
 
     installMasterEditorHighlighters(editor, range, wordDiff, disposable);
-    JComponent editorComponent = createEditorComponent(editor, range, fileType, wordDiff);
+    JComponent editorComponent = createEditorComponent(editor, range, wordDiff);
 
     ActionToolbar toolbar = buildToolbar(editor, range, mousePosition, disposable);
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
@@ -147,12 +146,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
     LightweightHint hint = new LightweightHint(popupPanel);
-    HintListener closeListener = new HintListener() {
-      @Override
-      public void hintHidden(@NotNull final EventObject event) {
-        Disposer.dispose(disposable);
-      }
-    };
+    HintListener closeListener = __ -> Disposer.dispose(disposable);
     hint.addHintListener(closeListener);
 
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -198,7 +192,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   private void installMasterEditorHighlighters(@NotNull Editor editor,
                                                @NotNull Range range,
-                                               @Nullable List<DiffFragment> wordDiff,
+                                               @Nullable List<? extends DiffFragment> wordDiff,
                                                @NotNull Disposable parentDisposable) {
     if (wordDiff == null) return;
     final List<RangeHighlighter> highlighters = new ArrayList<>();
@@ -218,8 +212,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   @Nullable
   private JComponent createEditorComponent(@NotNull Editor editor,
                                            @NotNull Range range,
-                                           @Nullable FileType fileType,
-                                           @Nullable List<DiffFragment> wordDiff) {
+                                           @Nullable List<? extends DiffFragment> wordDiff) {
     if (range.getType() == Range.INSERTED) return null;
 
     TextRange vcsTextRange = getVcsTextRange(range);
@@ -297,12 +290,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       DiffUtil.registerAction(action, editorComponent);
     }
 
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ActionUtil.getActions(editorComponent).removeAll(actions);
-      }
-    });
+    Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
   }
@@ -385,7 +373,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
     }
 
-    public int getEditorTextOffset() {
+    int getEditorTextOffset() {
       return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
     }
   }
@@ -452,7 +440,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       Range targetRange = myTracker.getNextRange(range.getLine1());
-      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(editor, targetRange);
+      if (targetRange != null) {
+        scrollAndShow(editor, targetRange);
+      }
     }
   }
 
@@ -469,7 +459,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       Range targetRange = myTracker.getPrevRange(range.getLine1());
-      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(editor, targetRange);
+      if (targetRange != null) {
+        scrollAndShow(editor, targetRange);
+      }
     }
   }
 
@@ -563,7 +555,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 
       Range newRange = myTracker.findRange(myRange);
-      if (newRange != null) LineStatusMarkerPopupRenderer.this.showHintAt(myEditor, newRange, myMousePosition);
+      if (newRange != null) {
+        showHintAt(myEditor, newRange, myMousePosition);
+      }
     }
   }
 }

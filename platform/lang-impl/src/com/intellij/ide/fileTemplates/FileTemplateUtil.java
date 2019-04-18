@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -367,15 +367,24 @@ public class FileTemplateUtil {
   }
 
   public static boolean canCreateFromTemplate(@NotNull PsiDirectory[] dirs, @NotNull FileTemplate template) {
-    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+    FileType fileType = getFileType(template);
     if (fileType.equals(FileTypes.UNKNOWN)) return false;
     CreateFromTemplateHandler handler = findHandler(template);
     return handler.canCreate(dirs);
   }
 
+  @NotNull
+  protected static FileType getFileType(@NotNull FileTemplate template) {
+    FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
+    if (fileType.equals(FileTypes.UNKNOWN)) {
+      return FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(FileUtilRt.getExtension(template.getExtension()));
+    }
+    return fileType;
+  }
+
   @Nullable
   public static Icon getIcon(@NotNull FileTemplate fileTemplate) {
-    return FileTypeManager.getInstance().getFileTypeByExtension(fileTemplate.getExtension()).getIcon();
+    return getFileType(fileTemplate).getIcon();
   }
 
   public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {

@@ -326,7 +326,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   private LocalChangeList addChangeList(String title) {
     final LocalChangeList list = myChangeListManager.addChangeList(title, "");
-    new TaskChangelistSupport(getProject(), myTaskManager).addControls(new JPanel(), null).consume(list);
+    new TaskChangelistSupport(getProject()).addControls(new JPanel(), null).consume(list);
     return list;
   }
 

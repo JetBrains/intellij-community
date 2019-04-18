@@ -57,4 +57,9 @@ public abstract class SmartStepTarget {
   public String getPresentation() {
     return StringUtil.notNullize(getLabel());
   }
+
+  @Override
+  public String toString() {
+    return getPresentation();
+  }
 }

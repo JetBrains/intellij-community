@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -94,7 +94,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private @Nullable String myHelpFileName = "ideahelp.jar";
   private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
   private String myFUStatisticsSettingsUrl;
   private String myEventLogSettingsUrl;
@@ -156,7 +155,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String HELP_ELEMENT_NAME = "help";
   private static final String ATTRIBUTE_HELP_FILE = "file";
   private static final String ATTRIBUTE_HELP_ROOT = "root";
-  private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
   private static final String ELEMENT_YOUTRACK = "youtrack";
@@ -873,11 +871,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
-    myPluginChooserPages = new ArrayList<>();
-    for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
-      myPluginChooserPages.add(new PluginChooserPageImpl(child));
-    }
-
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
     Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, element -> {
       String id = element.getTextTrim();
@@ -892,7 +885,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
     else {
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml";
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
@@ -972,11 +965,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<PluginChooserPage> getPluginChooserPages() {
-    return myPluginChooserPages;
-  }
-
-  @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
@@ -1004,34 +992,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     @Override
     public String getPatchesUrl() {
       return myPatchesUrl;
-    }
-  }
-
-  private static class PluginChooserPageImpl implements PluginChooserPage {
-    private final String myTitle;
-    private final String myCategory;
-    private final String myDependentPlugin;
-
-    private PluginChooserPageImpl(Element e) {
-      myTitle = e.getAttributeValue("title");
-      myCategory = e.getAttributeValue("category");
-      myDependentPlugin = e.getAttributeValue("depends");
-    }
-
-    @NotNull
-    @Override
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Override
-    public String getCategory() {
-      return myCategory;
-    }
-
-    @Override
-    public String getDependentPlugin() {
-      return myDependentPlugin;
     }
   }
 

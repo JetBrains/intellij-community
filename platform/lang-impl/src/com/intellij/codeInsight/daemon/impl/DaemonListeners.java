@@ -6,6 +6,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
@@ -599,7 +600,9 @@ public class DaemonListeners implements Disposable {
           return;
         }
         LogicalPosition logical = editor.visualToLogicalPosition(visual);
-        if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
+        if (e.getArea() == EditorMouseEventArea.EDITING_AREA &&
+            !UIUtil.isControlKeyDown(e.getMouseEvent()) &&
+            DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           if (editor.getInlayModel().getElementAt(e.getMouseEvent().getPoint()) != null) return;

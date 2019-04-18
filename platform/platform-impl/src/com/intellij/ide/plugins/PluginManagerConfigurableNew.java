@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
@@ -27,6 +27,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -54,7 +55,6 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -66,10 +66,11 @@ import java.util.concurrent.TimeUnit;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurableNew
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider,
+             PluginManagerConfigurableInfo {
   public static final String ID = "preferences.pluginManager";
 
-  private static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
+  public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
   private static final int TRENDING_TAB = 0;
   private static final int INSTALLED_TAB = 1;
   private static final int UPDATES_TAB = 2;
@@ -77,22 +78,21 @@ public class PluginManagerConfigurableNew
   private static final int INSTALLED_SEARCH_TAB = 4;
   private static final int UPDATES_SEARCH_TAB = 5;
 
-  private static final int ITEMS_PER_GROUP = 9;
+  public static final int ITEMS_PER_GROUP = 9;
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
-  @SuppressWarnings("UseJBColor")
   public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", new JBColor(UIUtil.getListBackground(), new Color(0x313335)));
 
-  private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
+  public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
 
-  private static final Color SEARCH_FIELD_BORDER_COLOR =
+  public static final Color SEARCH_FIELD_BORDER_COLOR =
     JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
 
-  private static final SimpleTextAttributes GRAY_ATTRIBUTES =
+  public static final SimpleTextAttributes GRAY_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.DisabledColor);
 
   private final TagBuilder myTagBuilder;
@@ -344,6 +344,9 @@ public class PluginManagerConfigurableNew
     };
 
     mySearchListener = (_0, query) -> {
+      if (myPluginsModel.detailPanel != null && myPluginsModel.detailPanel.backTabIndex == TRENDING_TAB) {
+        myTabHeaderComponent.setSelection(TRENDING_TAB);
+      }
       removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
       IdeFocusManager.getGlobalInstance()
@@ -544,6 +547,7 @@ public class PluginManagerConfigurableNew
     };
   }
 
+  @Override
   public void select(@NotNull IdeaPluginDescriptor... descriptors) {
     myIgnoreFocusFromBackButton = true;
 
@@ -573,7 +577,8 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  public MyPluginModel getPluginsModel() {
+  @Override
+  public MyPluginModel getPluginModel() {
     return myPluginsModel;
   }
 
@@ -685,7 +690,7 @@ public class PluginManagerConfigurableNew
       for (PluginId dependId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(dependId)) {
           IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
-          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted()) {
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
             dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
           }
           break;
@@ -733,7 +738,7 @@ public class PluginManagerConfigurableNew
       return true;
     }
 
-    List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginsModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {
@@ -786,9 +791,9 @@ public class PluginManagerConfigurableNew
           addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
           addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
         }
-        catch (UnknownHostException e) {
+        catch (IOException e) {
           PluginManagerMain.LOG
-            .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
+            .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
         }
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
@@ -864,6 +869,7 @@ public class PluginManagerConfigurableNew
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
         if (descriptor.isBundled()) {
+          if (descriptor.isImplementationDetail() && !Registry.is("plugins.show.implementation.details")) continue;
           bundled.descriptors.add(descriptor);
           if (descriptor.isEnabled()) {
             bundledEnabled++;
@@ -1110,34 +1116,29 @@ public class PluginManagerConfigurableNew
         Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
         try {
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
-              Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
-              Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+            Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadPluginRepositories();
+            Map<String, IdeaPluginDescriptor> allRepositoriesMap = p.first;
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
 
-              if (query.length() > 1) {
-                try {
-                  for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
-                    IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
-                    if (descriptor != null) {
-                      result.add(descriptor);
-                    }
-                  }
-                }
-                catch (IOException ignore) {
-                }
-              }
-
-              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
-                for (IdeaPluginDescriptor descriptor : descriptors) {
-                  if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+            if (query.length() > 1) {
+              try {
+                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                  IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
+                  if (descriptor != null) {
                     result.add(descriptor);
                   }
                 }
               }
+              catch (IOException ignore) {
+              }
             }
-            catch (IOException e) {
-              PluginManagerMain.LOG.info(e);
+
+            for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
+              for (IdeaPluginDescriptor descriptor : descriptors) {
+                if (StringUtil.containsIgnoreCase(descriptor.getName(), query)) {
+                  result.add(descriptor);
+                }
+              }
             }
           }).get(300, TimeUnit.MILLISECONDS);
         }
@@ -1374,7 +1375,7 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() throws IOException {
+  private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() {
     synchronized (myRepositoriesLock) {
       if (myAllRepositoriesMap != null) {
         return Pair.create(myAllRepositoriesMap, myCustomRepositoriesMap);
@@ -1384,7 +1385,6 @@ public class PluginManagerConfigurableNew
     List<IdeaPluginDescriptor> list = new ArrayList<>();
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
     Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
-    IOException exception = null;
 
     for (String host : RepositoryHelper.getPluginHosts()) {
       try {
@@ -1402,23 +1402,13 @@ public class PluginManagerConfigurableNew
       }
       catch (IOException e) {
         if (host == null) {
-          //noinspection InstanceofCatchParameter
-          if (e instanceof UnknownHostException) {
-            PluginManagerMain.LOG
-              .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
-          }
-          else {
-            exception = e;
-          }
+          PluginManagerMain.LOG
+            .info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
         }
         else {
           PluginManagerMain.LOG.info(host, e);
         }
       }
-    }
-
-    if (exception != null) {
-      throw exception;
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -1462,9 +1452,9 @@ public class PluginManagerConfigurableNew
     addGroup(groups, name, showAllQuery, descriptors -> loadPlugins(descriptors, allRepositoriesMap, query));
   }
 
-  private static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
-                                     @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
-                                     @NotNull String query) throws IOException {
+  public static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
+                                    @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
+                                    @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
@@ -1494,7 +1484,7 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
+  public static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
     List<String> ids = new ArrayList<>();
 
     HttpRequests.request(url).forceHttps(forceHttps).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
@@ -1523,7 +1513,7 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private static Url createSearchUrl(@NotNull String query, int count) {
+  public static Url createSearchUrl(@NotNull String query, int count) {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
                                "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
@@ -1531,7 +1521,7 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  private static Url createSearchSuggestUrl(@NotNull String query) {
+  public static Url createSearchSuggestUrl(@NotNull String query) {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" + URLUtil.encodeURIComponent(query) +
                                "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
@@ -1564,7 +1554,7 @@ public class PluginManagerConfigurableNew
   @NotNull
   public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
                                        @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<? super Boolean> enableAction) {
+                                       @NotNull Ref<String> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
@@ -1590,8 +1580,9 @@ public class PluginManagerConfigurableNew
         return plugin != null ? plugin.getName() : id.getIdString();
       }, ", ");
 
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", requiredPlugins.size(), deps);
-      enableAction.set(Boolean.TRUE);
+      int size = requiredPlugins.size();
+      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
     }
 
     return message;
@@ -1620,10 +1611,27 @@ public class PluginManagerConfigurableNew
 
   @Nullable
   public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
-    String downloads = ((PluginNode)plugin).getDownloads();
-    if (!StringUtil.isEmptyOrSpaces(downloads)) {
+    String downloads = null;
+    if (plugin instanceof PluginNode) {
+      downloads = ((PluginNode)plugin).getDownloads();
+    }
+    return getFormatLength(downloads);
+  }
+
+  @Nullable
+  public static synchronized String getSize(@NotNull IdeaPluginDescriptor plugin) {
+    String size = null;
+    if (plugin instanceof PluginNode) {
+      size = ((PluginNode)plugin).getSize();
+    }
+    return getFormatLength(size);
+  }
+
+  @Nullable
+  private static synchronized String getFormatLength(@Nullable String len) {
+    if (!StringUtil.isEmptyOrSpaces(len)) {
       try {
-        Long value = Long.valueOf(downloads);
+        Long value = Long.valueOf(len);
         if (value > 1000) {
           return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
         }
@@ -1638,13 +1646,19 @@ public class PluginManagerConfigurableNew
 
   @Nullable
   public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
-    long date = ((PluginNode)plugin).getDate();
+    long date = 0;
+    if (plugin instanceof PluginNode) {
+      date = ((PluginNode)plugin).getDate();
+    }
     return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
   }
 
   @Nullable
   public static String getRating(@NotNull IdeaPluginDescriptor plugin) {
-    String rating = ((PluginNode)plugin).getRating();
+    String rating = null;
+    if (plugin instanceof PluginNode) {
+      rating = ((PluginNode)plugin).getRating();
+    }
     if (rating != null) {
       try {
         if (Double.valueOf(rating) > 0) {
@@ -1654,11 +1668,10 @@ public class PluginManagerConfigurableNew
       catch (NumberFormatException ignore) {
       }
     }
-
     return null;
   }
 
-  private static class CountTabName implements Computable<String> {
+  public static class CountTabName implements Computable<String> {
     private final TabHeaderComponent myTabComponent;
     private final String myBaseName;
     private int myCount;
@@ -1681,7 +1694,7 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
+  public static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
     CopyProvider copyProvider = new CopyProvider() {
       @Override
       public void performCopy(@NotNull DataContext dataContext) {

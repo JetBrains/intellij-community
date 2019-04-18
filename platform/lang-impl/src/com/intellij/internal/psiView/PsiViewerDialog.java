@@ -220,7 +220,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @NotNull
   private JBTabs createTabPanel(@NotNull Project project) {
-    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, this);
+    JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, getDisposable());
     tabs.getPresentation().setAlphabeticalMode(false).setSupportsCompression(false);
     return tabs;
   }
@@ -431,7 +431,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   public static void initTree(JTree tree) {
-    UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.updateUI();

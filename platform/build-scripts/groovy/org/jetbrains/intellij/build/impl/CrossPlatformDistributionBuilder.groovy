@@ -67,10 +67,23 @@ class CrossPlatformDistributionBuilder {
       String jreSuffix = buildContext.bundledJreManager.jreSuffix()
       String targetPath = "$buildContext.paths.artifacts/${baseName}${zipNameSuffix}${jreSuffix}.zip"
 
+      List<String> extraExecutables = buildContext.linuxDistributionCustomizer.extraExecutables + buildContext.macDistributionCustomizer.extraExecutables
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
+          extraExecutables.each {
+            exclude(name: it)
+          }
         }
+
+        if (!extraExecutables.isEmpty()) {
+          zipfileset(dir: buildContext.paths.distAll, filemode: "775") {
+            extraExecutables.each {
+              include(name: it)
+            }
+          }
+        }
+
         fileset(dir: zipDir)
         fileset(file: "$buildContext.paths.artifacts/dependencies.txt")
 

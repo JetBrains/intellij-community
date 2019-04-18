@@ -207,7 +207,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   public Color getFileStatusColor(final FileStatus status) {
-    if (FileStatus.NOT_CHANGED.equals(status)) {
+    if (FileStatus.NOT_CHANGED.equals(status) && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
       if (vf != null && vf.isDirectory()) {
         return FileStatusManager.getInstance(myProject).getRecursiveStatus(vf).getColor();

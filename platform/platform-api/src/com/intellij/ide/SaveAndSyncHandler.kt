@@ -25,7 +25,7 @@ abstract class SaveAndSyncHandler {
     scheduleSave(SaveTask(onlyProject))
   }
 
-  data class SaveTask(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
+  data class SaveTask @JvmOverloads constructor(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
     fun isMoreGenericThan(other: SaveTask): Boolean {
       return onlyProject == null && other.onlyProject != null && saveDocuments == other.saveDocuments && forceSavingAllSettings == other.forceSavingAllSettings
     }

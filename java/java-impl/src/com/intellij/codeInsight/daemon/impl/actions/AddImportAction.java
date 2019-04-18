@@ -110,7 +110,7 @@ public class AddImportAction implements QuestionAction {
             });
           }
 
-          return getExcludesStep(selectedValue.getQualifiedName(), myProject);
+          return getExcludesStep(myProject, selectedValue.getQualifiedName());
         }
 
         @Override
@@ -134,15 +134,12 @@ public class AddImportAction implements QuestionAction {
       protected ListCellRenderer getListElementRenderer() {
         final PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
         final DefaultPsiElementCellRenderer psiRenderer = new DefaultPsiElementCellRenderer();
-        return new ListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            JPanel panel = new JPanel(new BorderLayout());
-            baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
-            panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
-            return panel;
-          }
+        return (list, value, index, isSelected, cellHasFocus) -> {
+          JPanel panel = new JPanel(new BorderLayout());
+          baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
+          panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
+          return panel;
         };
       }
     };
@@ -151,7 +148,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   @Nullable
-  public static PopupStep getExcludesStep(String qname, final Project project) {
+  public static PopupStep getExcludesStep(@NotNull Project project, @Nullable String qname) {
     if (qname == null) return PopupStep.FINAL_CHOICE;
 
     List<String> toExclude = getAllExcludableStrings(qname);
@@ -165,7 +162,7 @@ public class AddImportAction implements QuestionAction {
 
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-        if (finalChoice) {
+        if (finalChoice && selectedValue != null) {
           excludeFromImport(project, selectedValue);
         }
 
@@ -174,7 +171,7 @@ public class AddImportAction implements QuestionAction {
     };
   }
   
-  public static void excludeFromImport(final Project project, final String prefix) {
+  public static void excludeFromImport(@NotNull Project project, @NotNull String prefix) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
 
@@ -186,6 +183,7 @@ public class AddImportAction implements QuestionAction {
     });
   }
 
+  @NotNull
   public static List<String> getAllExcludableStrings(@NotNull String qname) {
     List<String> toExclude = new ArrayList<>();
     while (true) {
@@ -197,7 +195,7 @@ public class AddImportAction implements QuestionAction {
     return toExclude;
   }
 
-  private void addImport(final PsiReference ref, final PsiClass targetClass) {
+  private void addImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
         return;
@@ -205,12 +203,12 @@ public class AddImportAction implements QuestionAction {
 
       StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
       WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
-                                               () -> _addImport(ref, targetClass),
+                                               () -> doAddImport(ref, targetClass),
                                                ref.getElement().getContainingFile());
     });
   }
 
-  private void _addImport(PsiReference ref, PsiClass targetClass) {
+  private void doAddImport(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     try{
       bindReference(ref, targetClass);
       if (CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly) {
@@ -225,7 +223,7 @@ public class AddImportAction implements QuestionAction {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  protected void bindReference(PsiReference ref, PsiClass targetClass) {
+  protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
     ref.bindToElement(targetClass);
   }
 }

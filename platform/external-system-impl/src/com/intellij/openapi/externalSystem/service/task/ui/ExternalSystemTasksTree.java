@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -34,16 +33,16 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Denis Zhdanov
  */
-public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTaskExecutionInfo> {
+public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
@@ -100,7 +99,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
     getActionMap().put("Enter", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ExternalTaskExecutionInfo task = produce();
+        ExternalTaskExecutionInfo task = get();
         if (task == null) {
           return;
         }
@@ -175,7 +174,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
 
   @Nullable
   @Override
-  public ExternalTaskExecutionInfo produce() {
+  public ExternalTaskExecutionInfo get() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) {
       return null;

@@ -211,7 +211,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
-      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, filter, true);
+      final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(log, "FUS", filter, true);
       if (request == null) {
         throw new ParseEventLogWhitelistException("Failed parsing event log");
       }

@@ -95,7 +95,7 @@ public class JsonSchemaResolver {
   private static PsiElement resolvePosition(@NotNull JsonLikePsiWalker walker,
                                             @Nullable PsiElement element,
                                             @NotNull JsonPointerPosition position) {
-    PsiElement psiElement = element instanceof PsiFile ? walker.getRoot((PsiFile)element) : element;
+    PsiElement psiElement = element instanceof PsiFile ? ContainerUtil.getFirstItem(walker.getRoots((PsiFile)element)) : element;
     if (psiElement == null) return null;
     JsonValueAdapter value = walker.createValueAdapter(psiElement);
     while (position != null && !position.isEmpty()) {

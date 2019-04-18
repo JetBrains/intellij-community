@@ -59,15 +59,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NonNls private static final String FRAME_ELEMENT = "frame";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-  static {
-    try {
-      System.loadLibrary("jawt");
-    }
-    catch (Throwable t) {
-      LOG.info("jawt failed to load", t);
-    }
-  }
-
   private Boolean myAlphaModeSupported;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
@@ -444,8 +435,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     // set bounds even if maximized because on unmaximize we must restore previous frame bounds
     frame.setBounds(frameBounds);
 
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
     IdeMenuBar.installAppMenuIfNeeded(frame);
   }
@@ -489,11 +480,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         frame.setBounds(bounds);
       }
     }
-    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
     frame.setVisible(true);
+    frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.addWindowListener(myActivationListener);
     if (addComponentListener) {

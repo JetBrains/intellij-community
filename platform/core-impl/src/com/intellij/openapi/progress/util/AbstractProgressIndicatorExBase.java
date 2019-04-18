@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
   private final boolean myReusable;
   private volatile ProgressIndicatorEx[] myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
@@ -43,11 +41,11 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public void start() {
-    synchronized (this) {
+    synchronized (getLock()) {
       super.start();
       delegateRunningChange(ProgressIndicator::start);
+      myWasStarted = true;
     }
-    myWasStarted = true;
   }
 
 
@@ -67,7 +65,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public void finish(@NotNull final TaskInfo task) {
     WeakList<TaskInfo> finished = myFinished;
     if (finished == null) {
-      synchronized (this) {
+      synchronized (getLock()) {
         finished = myFinished;
         if (finished == null) {
           myFinished = finished = new WeakList<>();
@@ -126,17 +124,21 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public synchronized void pushState() {
-    super.pushState();
+  public void pushState() {
+    synchronized (getLock()) {
+      super.pushState();
 
-    delegateProgressChange(ProgressIndicator::pushState);
+      delegateProgressChange(ProgressIndicator::pushState);
+    }
   }
 
   @Override
-  public synchronized void popState() {
-    super.popState();
+  public void popState() {
+    synchronized (getLock()) {
+      super.popState();
 
-    delegateProgressChange(ProgressIndicator::popState);
+      delegateProgressChange(ProgressIndicator::popState);
+    }
   }
 
   @Override
@@ -153,15 +155,18 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   @Override
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-    delegate.initStateFrom(this);
-    synchronized (this) {
+    synchronized (getLock()) {
+      delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
       if (stateDelegates == null) {
         myStateDelegates = stateDelegates = new ProgressIndicatorEx[1];
         stateDelegates[0] = delegate;
       }
       else {
-        LOG.assertTrue(!ArrayUtil.contains(delegate, stateDelegates), "Already registered: " + delegate);
+        // hard throw is essential for avoiding deadlocks
+        if (ArrayUtil.contains(delegate, stateDelegates)) {
+          throw new IllegalArgumentException("Already registered: " + delegate);
+        }
         myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
       }
     }

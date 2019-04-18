@@ -2,6 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
@@ -26,4 +28,6 @@ interface StoreReloadManager {
   fun saveChangedProjectFile(file: VirtualFile, project: Project)
 
   suspend fun reloadChangedStorageFiles()
+
+  fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>)
 }

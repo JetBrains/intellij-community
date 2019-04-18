@@ -919,25 +919,25 @@ def foo() {
   void testClassExpressionsWithArguments() {
     doExprTest 'String[1]', 'java.lang.Object'
     doExprTest 'String[1][]', 'java.lang.Object'
-    doExprTest 'String[1][].class', 'java.lang.Class<java.lang.Object>'
-    doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
+    doExprTest 'String[1][].class', 'java.lang.Class<? extends java.lang.Object>'
+    doExprTest 'int[][1].class', 'java.lang.Class<? extends java.lang.Object>'
   }
 
   void testClassReference() {
-    doExprTest '[].class', "java.lang.Class<java.util.List>"
-    doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
-    doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doExprTest '[].class', "java.lang.Class<? extends java.util.List>"
+    doExprTest '1.class', 'java.lang.Class<? extends java.lang.Integer>'
+    doExprTest 'String.valueOf(1).class', 'java.lang.Class<? extends java.lang.String>'
     doExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
 
-    doCSExprTest '[].class', "java.lang.Class<java.util.List>"
-    doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
-    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+    doCSExprTest '[].class', "java.lang.Class<? extends java.util.List>"
+    doCSExprTest '1.class', 'java.lang.Class<? extends java.lang.Integer>'
+    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<? extends java.lang.String>'
     doCSExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
   }
 
   void testUnknownClass() {
     doExprTest 'a.class', null
-    doCSExprTest 'a.class', 'java.lang.Class'
+    doCSExprTest 'a.class', 'java.lang.Class<? extends java.lang.Object>'
 
     doExprTest 'a().class', null
     doCSExprTest 'a().class', 'java.lang.Class'
@@ -1121,6 +1121,33 @@ while (condition) {
 ''', 'java.lang.String'
   }
 
+  void 'test assignment to iterated variable'() {
+    doTest '''\
+interface I {}
+class A implements I {}
+class B implements I {
+  Iterator<A> iterator() {}
+}
+def b = new B()
+for (a in b) {
+  b = a
+}
+<caret>b
+''', '[I,groovy.lang.GroovyObject]'
+  }
+
+  void 'test no soe with write to iterated variable in cycle'() {
+    allowNestedContext(3, testRootDisposable)
+    doTest '''\
+while (u) {
+  for (a in b) {
+    b = a
+  }
+}
+<caret>b
+''', null
+  }
+
   void 'test String variable assigned with GString inside closure @CS'() {
     doTest '''\
 @groovy.transform.CompileStatic
@@ -1135,6 +1162,6 @@ def test() {
   }
 
   void 'test spread list of classes'() {
-    doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<?>>'
+    doExprTest "[String, Integer]*.'class'", 'java.util.ArrayList<java.lang.Class<? extends java.lang.Class>>'
   }
 }

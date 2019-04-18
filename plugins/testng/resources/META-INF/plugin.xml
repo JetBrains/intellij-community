@@ -1,6 +1,9 @@
 <idea-plugin>
-    <name>TestNG-J</name>
-    <description>TestNG Integration</description>
+    <id>TestNG-J</id>
+    <name>TestNG</name>
+    <description><![CDATA[
+    Supports <a href="https://testng.org/doc/">TestNG</a>, a Java unit testing framework
+    ]]></description>
     <vendor>Theory In Practice, JetBrains</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">

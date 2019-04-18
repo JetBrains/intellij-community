@@ -160,7 +160,7 @@ public class TaskUtil {
     if (!Comparing.equal(t1.getCreated(), t2.getCreated())) return false;
     if (!Comparing.equal(t1.getUpdated(), t2.getUpdated())) return false;
     if (!Comparing.equal(t1.getIssueUrl(), t2.getIssueUrl())) return false;
-    if (!Comparing.equal(t1.getComments(), t2.getComments())) return false;
+    if (!Arrays.equals(t1.getComments(), t2.getComments())) return false;
     if (!Comparing.equal(t1.getIcon(), t2.getIcon())) return false;
     if (!Comparing.equal(t1.getCustomIcon(), t2.getCustomIcon())) return false;
     return Comparing.equal(t1.getRepository(), t2.getRepository());

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -292,6 +293,10 @@ suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: Temporar
 
 suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
+}
+
+fun refreshProjectConfigDir(project: Project) {
+  LocalFileSystem.getInstance().findFileByPath(project.stateStore.projectConfigDir!!)!!.refresh(false, true)
 }
 
 suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {

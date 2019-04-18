@@ -16,10 +16,6 @@ import org.jetbrains.uast.*
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 
-@Deprecated("Interpolated strings (in Kotlin) are not single string literals, use `injectionHostUExpression()` to be language-abstract",
-            ReplaceWith("injectionHostUExpression()", "com.intellij.patterns.uast.injectionHostUExpression"))
-fun stringLiteralExpression(): ULiteralExpressionPattern = literalExpression().filter(ULiteralExpression::isStringLiteral)
-
 @JvmOverloads
 fun injectionHostUExpression(strict: Boolean = true): UExpressionPattern<UExpression, *> =
   uExpression().filterWithContext { _, processingContext ->
@@ -69,7 +65,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
       override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context)
     })
 
-  fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, processingContext -> filter(t) }
+  fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, _ -> filter(t) }
 
   fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 
@@ -86,8 +82,6 @@ private fun isCallExpressionParameter(argumentExpression: UExpression,
   return call.getArgumentForParameter(parameterIndex) == unwrapPolyadic(argumentExpression) && callPattern.accepts(call)
 }
 
-private val GUARD = RecursionManager.createGuard("isPropertyAssignCall")
-
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
   if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
@@ -99,7 +93,7 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
     is UReferenceExpression -> leftOperand
     else -> return false
   }
-  val references = GUARD.doPreventingRecursion(argument, false) {
+  val references = RecursionManager.doPreventingRecursion(argument, false) {
     uastReference.sourcePsi?.references // via `sourcePsi` because of KT-27385
   } ?: return false
   return references.any { methodPattern.accepts(it.resolve()) }

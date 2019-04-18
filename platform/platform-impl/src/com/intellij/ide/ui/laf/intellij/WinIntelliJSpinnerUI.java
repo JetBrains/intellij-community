@@ -34,20 +34,24 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     return new WinIntelliJSpinnerUI();
   }
 
-  @Override protected void installDefaults() {
+  @Override
+  protected void installDefaults() {
     super.installDefaults();
     spinner.setOpaque(false);
   }
 
-  @Override protected void installListeners() {
+  @Override
+  protected void installListeners() {
     super.installListeners();
 
     editorMouseListener = new MouseAdapter() {
-      @Override public void mouseEntered(MouseEvent e) {
+      @Override
+      public void mouseEntered(MouseEvent e) {
         setHover(Boolean.TRUE);
       }
 
-      @Override public void mouseExited(MouseEvent e) {
+      @Override
+      public void mouseExited(MouseEvent e) {
         setHover(Boolean.FALSE);
       }
 
@@ -62,7 +66,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     getEditorFocusOwner(spinner).addMouseListener(editorMouseListener);
   }
 
-  @Override protected void uninstallListeners() {
+  @Override
+  protected void uninstallListeners() {
     super.uninstallListeners();
     if (editorMouseListener != null) {
       spinner.removeMouseListener(editorMouseListener);
@@ -76,7 +81,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     }
   }
 
-  @Override public void paint(Graphics g, JComponent c) {
+  @Override
+  public void paint(Graphics g, JComponent c) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -98,17 +104,19 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
       }
 
       g2.fill(r);
-
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
 
-  @Override protected JButton createButton(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction, String name) {
+  @Override
+  protected JButton createButton(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction, String name) {
     JButton button = new BasicArrowButton(direction) {
       private final String iconName = "spinner" + (getDirection() == SwingConstants.NORTH ? "Up" : "Down") + "Triangle";
 
-      @Override public void paint(Graphics g) {
+      @Override
+      public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -119,13 +127,14 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
           // set clip
           Area clip = new Area(g2.getClip());
-          if (!bm.isRollover() && !bm.isPressed()){
+          if (!bm.isRollover() && !bm.isPressed()) {
             clip.subtract(new Area(new Rectangle2D.Double(0, 0, bw, getHeight())));
           }
 
           if (getDirection() == SwingConstants.NORTH && prevButton.getModel().isRollover()) {
             clip.subtract(new Area(new Rectangle(0, getHeight() - bw, getWidth() - bw, bw)));
-          } else if (getDirection() == SwingConstants.SOUTH && nextButton.getModel().isRollover()) {
+          }
+          else if (getDirection() == SwingConstants.SOUTH && nextButton.getModel().isRollover()) {
             clip.subtract(new Area(new Rectangle(0, 0, getWidth() - bw, bw)));
           }
           g2.setClip(clip);
@@ -136,12 +145,15 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           if (spinner.isEnabled()) {
             if (bm.isPressed()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBackgroundColor"));
-            } else if (bm.isRollover()) {
+            }
+            else if (bm.isRollover()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.focusedBackgroundColor"));
-            } else {
+            }
+            else {
               g2.setColor(UIManager.getColor("Button.background"));
             }
-          } else {
+          }
+          else {
             g2.setColor(UIManager.getColor("Button.background"));
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
           }
@@ -156,12 +168,15 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           if (spinner.isEnabled()) {
             if (bm.isPressed()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
-            } else if (bm.isRollover()) {
+            }
+            else if (bm.isRollover()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.focusedBorderColor"));
-            } else {
+            }
+            else {
               g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
             }
-          } else {
+          }
+          else {
             g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
           }
 
@@ -173,12 +188,14 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           border.append(innerRect, false);
 
           g2.fill(border);
-        } finally {
+        }
+        finally {
           g2.dispose();
         }
       }
 
-      @Override public Dimension getPreferredSize() {
+      @Override
+      public Dimension getPreferredSize() {
         Insets si = spinner.getInsets();
         return JBUI.size(BUTTON_WIDTH + si.right, (getDirection() == SwingConstants.NORTH) ? 13 : 12);
       }
@@ -190,7 +207,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     if (direction == SwingConstants.NORTH) {
       installNextButtonListeners(button);
       button.setBorder(Borders.empty(2, 1, 1, 2));
-    } else {
+    }
+    else {
       installPreviousButtonListeners(button);
       button.setBorder(Borders.empty(1, 1, 2, 2));
     }
@@ -234,14 +252,16 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     };
   }
 
-  @Override protected JComponent createEditor() {
+  @Override
+  protected JComponent createEditor() {
     JComponent editor = super.createEditor();
     editor.setBorder(Borders.empty(1, 0));
     editor.setOpaque(false);
     return editor;
   }
 
-  @Override protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
+  @Override
+  protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
     super.replaceEditor(oldEditor, newEditor);
     newEditor.setBorder(Borders.empty(1, 0));
     newEditor.setOpaque(false);

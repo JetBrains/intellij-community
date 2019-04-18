@@ -42,7 +42,7 @@ public class ControlFlowBuilderUtil {
   public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
     DFAEngine<ReadBeforeWriteState> engine = new DFAEngine<>(
       flow,
-      new ReadBeforeWriteInstance(buildNamesIndex(flow), onlyFirstRead),
+      new ReadBeforeWriteInstance(buildVariablesIndex(flow), onlyFirstRead),
       ReadBeforeWriteSemilattice.INSTANCE
     );
     List<ReadBeforeWriteState> dfaResult = engine.performDFAWithTimeout();
@@ -58,18 +58,18 @@ public class ControlFlowBuilderUtil {
     return result.toArray(ReadWriteVariableInstruction.EMPTY_ARRAY);
   }
 
-  private static TObjectIntHashMap<String> buildNamesIndex(Instruction[] flow) {
-    TObjectIntHashMap<String> namesIndex = new ObjectIntHashMap<>();
+  private static TObjectIntHashMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {
+    TObjectIntHashMap<VariableDescriptor> variablesIndex = new ObjectIntHashMap<>();
     int idx = 0;
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction) {
-        String name = ((ReadWriteVariableInstruction)instruction).getVariableName();
-        if (!namesIndex.contains(name)) {
-          namesIndex.put(name, idx++);
+        VariableDescriptor descriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
+        if (!variablesIndex.contains(descriptor)) {
+          variablesIndex.put(descriptor, idx++);
         }
       }
     }
-    return namesIndex;
+    return variablesIndex;
   }
 
   public static boolean isInstanceOfBinary(GrBinaryExpression binary) {

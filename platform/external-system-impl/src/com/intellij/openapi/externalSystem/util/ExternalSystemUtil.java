@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.BuildConsoleUtils;
@@ -470,7 +470,6 @@ public class ExternalSystemUtil {
             AnAction rerunImportAction = new AnAction() {
               @Override
               public void update(@NotNull AnActionEvent e) {
-                super.update(e);
                 Presentation p = e.getPresentation();
                 p.setEnabled(processHandler.isProcessTerminated());
               }
@@ -542,7 +541,12 @@ public class ExternalSystemUtil {
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (!isPreviewMode && event instanceof ExternalSystemTaskExecutionEvent) {
+            if (isPreviewMode) return;
+            if (event instanceof ExternalSystemBuildEvent) {
+              BuildEvent buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
+            }
+            else if (event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
@@ -790,7 +794,7 @@ public class ExternalSystemUtil {
     }
     else if (progressEvent instanceof ExternalSystemStatusEvent) {
       ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
-      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName,
+      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), progressEvent.getParentEventId(), eventTime, displayName,
                                               statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
     }
     else {
@@ -1139,7 +1143,7 @@ public class ExternalSystemUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 

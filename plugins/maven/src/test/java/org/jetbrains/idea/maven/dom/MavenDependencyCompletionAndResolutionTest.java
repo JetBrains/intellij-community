@@ -102,37 +102,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertEquals(Arrays.asList("4.0", "3.8.2", "3.8.1", "RELEASE", "LATEST"), variants);
-  }
-
-  public void testDoesNotCompleteVersionOnUnknownGroupOrArtifact() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>unknown</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>unknown</artifactId>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
+    assertEquals(Arrays.asList("4.0", "3.8.2", "3.8.1"), variants);
   }
 
   public void testDoNotCompleteVersionIfNoGroupIdAndArtifactId() {
@@ -230,7 +200,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m, "RELEASE", "LATEST", "1");
+    assertCompletionVariants(m, "1");
 
     createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>module2</artifactId>" +
@@ -363,7 +333,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProjectsWithErrors(myProjectPom, m);
 
-    assertCompletionVariants(myProjectPom, "m1");
+    assertCompletionVariantsInclude(myProjectPom, "m1");
 
     myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> m.delete(null));
@@ -593,9 +563,9 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <groupId><error>xxx</error></groupId>" +
-                     "    <artifactId><error>xxx</error></artifactId>" +
-                     "    <version><error>xxx</error></version>" +
+                     "    <groupId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></groupId>" +
+                     "    <artifactId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></artifactId>" +
+                     "    <version><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></version>" +
                      "    <scope>system</scope>" +
                      "  </dependency>" +
                      "</dependencies>");
@@ -1073,20 +1043,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProject();
     checkHighlighting(m, true, false, true);
-  }
-
-  public void testUpdateIndicesIntention() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><caret>xxx</groupId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertNotNull(getIntentionAtCaret("Update Maven Indices"));
   }
 
   public void testExclusionCompletion() {

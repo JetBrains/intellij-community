@@ -26,7 +26,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xml.impl.GenericDomValueReference;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +43,7 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -69,15 +73,15 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
+    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(context.getProject()).getSearchService();
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     MavenDomShortArtifactCoordinates coordinates = MavenArtifactCoordinatesHelper.getCoordinates(context);
 
-    return selectStrategy(context).getVariants(id, manager, coordinates);
+    return selectStrategy(context).getVariants(id, searchService, coordinates);
   }
 
-  protected abstract Set<String> doGetVariants(MavenId id, MavenProjectIndicesManager manager);
+  protected abstract Set<String> doGetVariants(MavenId id, DependencySearchService searchService);
 
   @Override
   public PsiElement resolve(String o, ConvertContext context) {
@@ -94,7 +98,14 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public LocalQuickFix[] getQuickFixes(ConvertContext context) {
-    return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
+    MavenId id = MavenArtifactCoordinatesHelper.getId(context);
+    MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
+    if (manager.hasOfflineIndexes()) {
+      return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
+    }
+    else {
+      return super.getQuickFixes(context);
+    }
   }
 
   @Override
@@ -191,8 +202,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doIsValid(id, manager, context) || resolveBySpecifiedPath() != null;
     }
 
-    public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
-      return doGetVariants(id, manager);
+    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
+      return doGetVariants(id, searchService);
     }
 
     public PsiFile resolve(MavenId id, ConvertContext context) {
@@ -318,21 +329,6 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     public PsiFile resolveBySpecifiedPath() {
       return myDependency.getSystemPath().getValue();
     }
-
-    @Override
-    public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
-      if (StringUtil.isEmpty(id.getGroupId())) {
-        Set<String> result = new THashSet<>();
-
-        for (String each : manager.getGroupIds()) {
-          id = new MavenId(each, id.getArtifactId(), id.getVersion());
-          result.addAll(super.getVariants(id, manager, coordinates));
-        }
-
-        return result;
-      }
-      return super.getVariants(id, manager, coordinates);
-    }
   }
 
   private class ExclusionStrategy extends ConverterStrategy {
@@ -372,25 +368,17 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
-    public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
+    public Set<String> getVariants(MavenId id, DependencySearchService searchService, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         Set<String> result = new THashSet<>();
 
-        for (String each : getGroupIdVariants(manager, coordinates)) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());
-          result.addAll(super.getVariants(id, manager, coordinates));
+          result.addAll(super.getVariants(id, searchService, coordinates));
         }
         return result;
       }
-      return super.getVariants(id, manager, coordinates);
-    }
-
-    private String[] getGroupIdVariants(MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
-      if (DomUtil.hasXml(coordinates.getGroupId())) {
-        Set<String> strings = manager.getGroupIds();
-        return ArrayUtil.toStringArray(strings);
-      }
-      return MavenArtifactUtil.DEFAULT_GROUPS;
+      return super.getVariants(id, searchService, coordinates);
     }
 
     @Override

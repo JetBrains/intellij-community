@@ -60,7 +60,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
     for (ReadWriteVariableInstruction read : reads) {
       PsiElement element = read.getElement();
       if (element instanceof GroovyPsiElement && !(element instanceof GrClosableBlock)) {
-        String name = read.getVariableName();
+        String name = read.getDescriptor().getName();
         GroovyPsiElement property = ResolveUtil.resolveProperty((GroovyPsiElement)element, name);
         if (property != null &&
             !(property instanceof PsiParameter) &&

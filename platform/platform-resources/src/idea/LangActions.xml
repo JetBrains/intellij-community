@@ -377,6 +377,9 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
 
+    <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
@@ -402,7 +405,7 @@
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
-      <separator/>
+      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
@@ -620,7 +623,7 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="EditorPopupMenu1.FindRefactor">
+    <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
@@ -1162,15 +1165,19 @@
       <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
               text="Ungroup Configurations" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
+      <separator/>
     </group>
 
-    <group id="ServiceViewTreeToolbar"/>
+    <group id="ServiceViewTreeToolbar">
+      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+    </group>
     <group id="ServiceViewNodeToolbar">
-      <group class="com.intellij.execution.services.ServiceView$ItemToolbarActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup"/>
       <separator/>
     </group>
     <group id="ServiceViewNodePopup">
-      <group class="com.intellij.execution.services.ServiceView$ItemPopupActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
     </group>
 
@@ -1259,6 +1266,10 @@
     </action>
     <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+
+    <action id="CompletionQualityStats" text="Completion Quality Statistics" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
     </action>
 
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"

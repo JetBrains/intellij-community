@@ -17,6 +17,6 @@ public class GitFileTypeFactory extends FileTypeFactory {
    */
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(PlainTextFileType.INSTANCE, new ExactFileNameMatcher(".gitignore"), new ExactFileNameMatcher(".gitmodules"));
+    consumer.consume(PlainTextFileType.INSTANCE, new ExactFileNameMatcher(".gitmodules"));
   }
 }

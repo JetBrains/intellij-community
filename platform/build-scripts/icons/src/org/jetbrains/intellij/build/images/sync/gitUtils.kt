@@ -6,7 +6,7 @@ import java.io.IOException
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
+internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
     val gitVersion = execute(null, it, "--version")
@@ -136,9 +136,8 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
 }
 
 internal fun commitAndPush(repo: File, branch: String, message: String): String {
-  execute(repo, GIT, "checkout", "-B", branch)
   execute(repo, GIT, "commit", "-m", message)
-  push(repo, "$branch:$branch")
+  push(repo, "+$branch:$branch")
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
 

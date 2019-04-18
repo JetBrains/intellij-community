@@ -492,17 +492,28 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   @Override
   public boolean requestWriting(@NotNull Document document, Project project) {
+    return requestWritingStatus(document, project).hasWriteAccess();
+  }
+
+  @NotNull
+  @Override
+  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
     final VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
-      boolean result = !file.getFileType().isBinary() && ReadonlyStatusHandler.ensureFilesWritable(project, file);
-      assert !result || document.isWritable();
-      return result;
+      if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
+      ReadonlyStatusHandler.OperationStatus writableStatus =
+        ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
+      if (writableStatus.hasReadonlyFiles()) {
+        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
+      }
+      assert document.isWritable();
+      return WriteAccessStatus.WRITABLE;
     }
     if (document.isWritable()) {
-      return true;
+      return WriteAccessStatus.WRITABLE;
     }
     document.fireReadOnlyModificationAttempt();
-    return false;
+    return WriteAccessStatus.NON_WRITABLE;
   }
 
   @Override

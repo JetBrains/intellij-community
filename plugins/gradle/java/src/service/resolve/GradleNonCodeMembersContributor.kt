@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
@@ -46,31 +45,23 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
     val containingFile = place.containingFile
     if (!containingFile.isGradleScript() || containingFile?.originalFile?.virtualFile == aClass.containingFile?.originalFile?.virtualFile) return
 
-    processDeclarations(aClass, processor, state, place)
-
     if (qualifierType.equalsToText(GRADLE_API_PROJECT)) {
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val extensionsData: GradleExtensionsData?
       val methodCall = place.children.singleOrNull()
       if (methodCall is GrMethodCallExpression) {
         val projectPath = methodCall.argumentList.expressionArguments.singleOrNull()?.reference?.canonicalText ?: return
-        if (projectPath == ":") {
-          val file = containingFile?.originalFile?.virtualFile ?: return
-          val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
-          val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, rootProjectPath) ?: return
-        }
-        else {
-          val module = ModuleManager.getInstance(place.project).findModuleByName(projectPath.trimStart(':')) ?: return
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(module) ?: return
-        }
+        val file = containingFile?.originalFile?.virtualFile ?: return
+        val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
+        val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
+        extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, projectPath) ?: return
       }
       else if (methodCall is GrReferenceExpression) {
         if (place.children[0].text == "rootProject") {
           val file = containingFile?.originalFile?.virtualFile ?: return
           val module = ProjectFileIndex.SERVICE.getInstance(place.project).getModuleForFile(file)
           val rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, rootProjectPath) ?: return
+          extensionsData = GradleExtensionsSettings.getInstance(place.project).getExtensionsFor(rootProjectPath, ":") ?: return
         }
         else return
       }
@@ -94,10 +85,14 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         processor.execute(variable, state)
       }
 
-      extensionsData.tasks.firstOrNull { it.name == propCandidate }?.let(processVariable)
+      extensionsData.tasksMap[propCandidate]?.let(processVariable)
       extensionsData.findProperty(propCandidate)?.let(processVariable)
     }
     else {
+      if (!shouldSkipDeclarationsAndSetters(aClass.qualifiedName)) {
+        processDeclarations(aClass, processor, state, place)
+      }
+      if (state[DELEGATED_TYPE] == true) return
       val propCandidate = place.references.singleOrNull()?.canonicalText ?: return
       val domainObjectType = (qualifierType.superTypes.firstOrNull { it is PsiClassType } as? PsiClassType)?.parameters?.singleOrNull()
                              ?: return
@@ -155,5 +150,10 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         if (!processor.execute(wrappedBase, state)) return
       }
     }
+  }
+
+  private fun shouldSkipDeclarationsAndSetters(qualifiedName: String?): Boolean {
+    return qualifiedName in GradleSetterAsMethodContributor.knownDecoratedClasses
+           || qualifiedName in GradleConventionsContributor.conventions
   }
 }

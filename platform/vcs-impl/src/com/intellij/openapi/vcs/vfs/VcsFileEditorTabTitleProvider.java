@@ -13,16 +13,14 @@ public class VcsFileEditorTabTitleProvider extends UniqueNameEditorTabTitleProvi
   @Override
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     if (file instanceof AbstractVcsVirtualFile) {
-      String name = super.getEditorTabTitle(project, file);
-      String suffix = ((AbstractVcsVirtualFile)file).myRevision == null ? "" : " (" + ((AbstractVcsVirtualFile)file).myRevision + ")";
-      if (name != null) {
-        return name + suffix;
-      } else {
-        if (UISettings.getInstance().getHideKnownExtensionInTabs() && !file.isDirectory()) {
-          final String nameWithoutExtension = file.getNameWithoutExtension();
-          name = nameWithoutExtension.isEmpty() ? file.getName() : nameWithoutExtension;
-          return name + suffix;
-        }
+      String baseName = super.getEditorTabTitle(project, file);
+      if (baseName == null && UISettings.getInstance().getHideKnownExtensionInTabs() && !file.isDirectory()) {
+        String nameWithoutExtension = file.getNameWithoutExtension();
+        baseName = nameWithoutExtension.isEmpty() ? file.getName() : nameWithoutExtension;
+      }
+
+      if (baseName != null) {
+        return ((AbstractVcsVirtualFile)file).getPresentableName(baseName);
       }
     }
     return null;

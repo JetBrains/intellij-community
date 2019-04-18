@@ -26,14 +26,15 @@ import java.awt.*;
  *
  * @see InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
  * @see InlayModel#addBlockElement(int, boolean, boolean, int, EditorCustomElementRenderer)
+ * @see InlayModel#addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
  */
 public interface EditorCustomElementRenderer {
   /**
    * Renderer implementation should override this to define width of custom element (in pixels). Returned value will define the result of
    * {@link Inlay#getWidthInPixels()} and the width of {@code targetRegion} parameter passed to renderer's
-   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For block elements the returned value has no other impact currently.
-   * For inline elements it, obviously, impacts the layout of surrounding text, and should always be a positive value.
+   * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For inline and after-line-end elements it should always be
+   * a positive value.
    */
   default int calcWidthInPixels(@NotNull Inlay inlay) {
     return calcWidthInPixels(inlay.getEditor());

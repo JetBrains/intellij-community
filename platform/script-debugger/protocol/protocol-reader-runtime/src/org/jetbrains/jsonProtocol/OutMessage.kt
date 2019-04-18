@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.writeUtf8
 import gnu.trove.TIntArrayList
@@ -138,7 +123,7 @@ open class OutMessage() {
         }
         catch (e: IllegalStateException) {
           if ("Nesting problem." == e.message) {
-            throw RuntimeException(item.buffer.toString(CharsetToolkit.UTF8_CHARSET) + "\nparent:\n" + buffer.toString(CharsetToolkit.UTF8_CHARSET), e)
+            throw RuntimeException(item.buffer.toString(Charsets.UTF_8) + "\nparent:\n" + buffer.toString(Charsets.UTF_8), e)
           }
           else {
             throw e

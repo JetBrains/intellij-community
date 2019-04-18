@@ -45,7 +45,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -120,7 +119,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
-  private final DataManager myDataManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
   private MyTimer myTimer;
   private int myRegisteredActionsCount;
@@ -132,16 +130,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
-    myDataManager = dataManager;
 
     registerPluginActions();
-    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
+    messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
-  static AnAction convertStub(ActionStub stub) {
+  static AnAction convertStub(@NotNull ActionStub stub) {
     Object obj;
     String className = stub.getClassName();
     try {
@@ -171,7 +168,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
-  private static void processAbbreviationNode(Element e, String id) {
+  private static void processAbbreviationNode(@NotNull Element e, @NotNull String id) {
     final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
     if (!StringUtil.isEmpty(abbr)) {
       final AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
@@ -245,19 +242,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     presentation.setIcon(lazyIcon);
   }
 
-  private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    final String value = element.getAttributeValue(DESCRIPTION);
+  private static String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
     if (bundle != null) {
       final String key = elementType + "." + id + ".description";
-      return CommonBundle.messageOrDefault(bundle, key, value == null ? "" : value);
+      return CommonBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
     } else {
-      return value;
+      return descriptionValue;
     }
   }
 
-  private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    final String value = element.getAttributeValue(TEXT_ATTR_NAME);
-    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, value == null ? "" : value);
+  private static String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
+    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
   private static boolean checkRelativeToAction(final String relativeToActionId,
@@ -440,7 +435,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myKeymapManager);
   }
 
   private void registerPluginActions() {
@@ -533,7 +528,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public JComponent createButtonToolbar(@NotNull final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
-    return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
+    return new ButtonToolbarImpl(actionPlace, messageActionGroup);
   }
 
   @Override
@@ -562,17 +557,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
     String projectType = element.getAttributeValue(PROJECT_TYPE);
 
+    String textValue = element.getAttributeValue(TEXT_ATTR_NAME);
+    String descriptionValue = element.getAttributeValue(DESCRIPTION);
+
     ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
       IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
-      String text = loadTextForElement(element, bundle, id, ACTION_ELEMENT_NAME);
+      String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
         reportActionError(pluginId, "'text' attribute is mandatory (action ID=" + id + ";" +
                                     (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")");
       }
       Presentation presentation = new Presentation();
       presentation.setText(text);
-      presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
+      presentation.setDescription(computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue));
       return presentation;
     });
 
@@ -610,13 +608,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
-      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
+      if (Boolean.parseBoolean(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
-          throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
+          LOG.error(element.getName() + " '" + id + "' doesn't override anything");
+          return;
         }
         AnAction prev = replaceAction(id, action, pluginId);
         if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
-          if (Boolean.valueOf(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
+          if (Boolean.parseBoolean(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
             ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
           }
         }
@@ -685,14 +684,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       Presentation presentation = group.getTemplatePresentation();
 
       // text
-      String text = loadTextForElement(element, bundle, id, GROUP_ELEMENT_NAME);
+      String text = computeActionText(bundle, id, GROUP_ELEMENT_NAME, element.getAttributeValue(TEXT_ATTR_NAME));
       // don't override value which was set in API with empty value from xml descriptor
       if (!StringUtil.isEmpty(text) || presentation.getText() == null) {
         presentation.setText(text);
       }
 
       // description
-      String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
+      String description = computeDescription(bundle, id, GROUP_ELEMENT_NAME, element.getAttributeValue(DESCRIPTION));
       // don't override value which was set in API with empty value from xml descriptor
       if (!StringUtil.isEmpty(description) || presentation.getDescription() == null) {
         presentation.setDescription(description);
@@ -1086,16 +1085,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  public void addActionPopup(final Object menu) {
-    boolean added = myPopups.add(menu);
-    if (added && menu instanceof ActionPopupMenu) {
+  public void addActionPopup(@NotNull Object menu) {
+    myPopups.add(menu);
+    if (menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
         listener.actionPopupMenuCreated((ActionPopupMenu)menu);
       }
     }
   }
 
-  void removeActionPopup(final Object menu) {
+  void removeActionPopup(@NotNull Object menu) {
     final boolean removed = myPopups.remove(menu);
     if (removed && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {

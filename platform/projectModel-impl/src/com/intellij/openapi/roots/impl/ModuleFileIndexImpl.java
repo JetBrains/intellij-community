@@ -43,9 +43,20 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    final Set<VirtualFile> contentRoots = ReadAction.compute(() -> {
-      if (myModule.isDisposed()) return Collections.emptySet();
+    Set<VirtualFile> contentRoots = getModuleRootsToIterate();
+    for (VirtualFile contentRoot : contentRoots) {
+      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
+
+  @NotNull
+  Set<VirtualFile> getModuleRootsToIterate() {
+    return ReadAction.compute(() -> {
+      if (myModule.isDisposed()) return Collections.emptySet();
       Set<VirtualFile> result = new LinkedHashSet<>();
       VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
       for (VirtualFile[] roots : allRoots) {
@@ -56,26 +67,18 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (parentInfo.isInProject(parent) && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+            if (myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
           }
           result.add(root);
         }
       }
-
       return result;
     });
-    for (VirtualFile contentRoot : contentRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject(fileOrDir) && myModule.equals(info.getModule());
+    return isInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
   }
 
   @Override
@@ -200,5 +203,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     public boolean isSynthetic() {
       throw new IncorrectOperationException();
     }
+  }
+
+  @Override
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+    return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
   }
 }

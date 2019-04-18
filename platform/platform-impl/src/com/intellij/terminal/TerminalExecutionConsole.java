@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,24 @@
  */
 package com.intellij.terminal;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -66,6 +71,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private volatile boolean myLastCR = false;
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
+  private boolean myEnableConsoleActions = true;
 
   private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
@@ -193,7 +199,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @param processHandler        ProcessHandler instance wrapping underlying PtyProcess
    * @param attachToProcessOutput true if process output should be printed in the console,
    *                              false if output printing is managed externally, e.g. by testing
-   *                              console {@code com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
+   *                              console {@link com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView}
    */
   protected final void attachToProcess(@NotNull ProcessHandler processHandler, boolean attachToProcessOutput) {
     if (!myAttachedToProcess.compareAndSet(false, true)) {
@@ -287,9 +293,16 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
+  public void enableConsoleActions(boolean enableConsoleActions) {
+    myEnableConsoleActions = enableConsoleActions;
+  }
+
   @NotNull
   @Override
   public AnAction[] createConsoleActions() {
+    if (myEnableConsoleActions) {
+      return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    }
     return AnAction.EMPTY_ARRAY;
   }
 
@@ -370,6 +383,42 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         return TerminalExecutionConsole.this;
       }
       return null;
+    }
+  }
+
+  private class ClearAction extends DumbAwareAction {
+    private ClearAction() {
+      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      clear();
+    }
+  }
+
+  private class ScrollToTheEndAction extends DumbAwareAction {
+    private ScrollToTheEndAction() {
+      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            AllIcons.RunConfigurations.Scroll_down);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      e.getPresentation().setEnabled(model.getValue() != 0);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
+      model.setValue(0);
     }
   }
 }

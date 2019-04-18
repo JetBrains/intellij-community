@@ -48,11 +48,8 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   private static final class BlockExtensions<T> implements Disposable {
-    private final ExtensionPointImpl<T> myEp;
-
     BlockExtensions(@NotNull ExtensionPoint<T> extensionPoint) {
-      myEp = (ExtensionPointImpl<T>)extensionPoint;
-      myEp.maskAll(Collections.emptyList(), this);
+      ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), this);
     }
 
     @Override

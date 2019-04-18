@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.highlighting
 
 import com.intellij.openapi.application.ReadAction
@@ -12,12 +12,15 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import groovy.transform.CompileStatic
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 
 import java.nio.file.Paths
 
+@CompileStatic
 abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
 
   @NotNull
@@ -62,11 +65,20 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   }
 
   void doTest(@NotNull String text, Closure test) {
+    doTest(text, getParentCalls(), test)
+  }
+
+  void doTest(@NotNull String text, @NotNull List<String> calls, Closure test) {
     List<String> testPatterns = [text]
-    getParentCalls().each { testPatterns.add("$it { $text }") }
+    calls.each { testPatterns.add("$it { $text }".toString()) }
     testPatterns.each {
       updateProjectFile(it)
-      ReadAction.run(test)
+      try {
+        ReadAction.run(test)
+      }
+      catch (AssertionError e) {
+        throw new AssertionError(it, e)
+      }
     }
   }
 
@@ -99,6 +111,10 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   @Override
   void tearDownFixtures() {
     fixture.tearDown()
+  }
+
+  protected final boolean isGradleAtLeast(@NotNull String version) {
+    GradleVersion.version(gradleVersion) >= GradleVersion.version(version)
   }
 }
 

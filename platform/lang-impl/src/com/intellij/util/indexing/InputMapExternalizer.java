@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.THashMap;
@@ -22,7 +23,9 @@ class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Valu
 
   InputMapExternalizer(IndexExtension<Key, Value, ?> extension) {
     myValueExternalizer = extension.getValueExternalizer();
-    mySnapshotIndexExternalizer = VfsAwareMapReduceIndex.createInputsIndexExternalizer(extension);
+    mySnapshotIndexExternalizer = extension instanceof CustomInputsIndexFileBasedIndexExtension
+                                  ? ((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer()
+                                  : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), ((IndexExtension<Key, ?, ?>)extension).getName());
   }
 
 

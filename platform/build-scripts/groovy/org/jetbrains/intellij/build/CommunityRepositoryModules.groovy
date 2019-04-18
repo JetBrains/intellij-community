@@ -105,8 +105,8 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
-      withOptionalModule("intellij.platform.remoteServers.git")
-      withOptionalModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
+      withModule("intellij.platform.remoteServers.git")
+      withModule("intellij.java.remoteServers.git", "remote-servers-git.jar")
     },
     plugin("intellij.vcs.cvs") {
       directoryName = "cvsIntegration"
@@ -119,9 +119,9 @@ class CommunityRepositoryModules {
       withModule("intellij.xslt.debugger.rt", "rt/xslt-rt.jar")
     },
     plugin("intellij.platform.langInjection") {
-      withOptionalModule("intellij.java.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.xml.langInjection", "IntelliLang.jar")
-      withOptionalModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
+      withModule("intellij.java.langInjection", "IntelliLang.jar")
+      withModule("intellij.xml.langInjection", "IntelliLang.jar")
+      withModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
@@ -129,7 +129,7 @@ class CommunityRepositoryModules {
       withModule("intellij.tasks")
       withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
-      withOptionalModule("intellij.tasks.java")
+      withModule("intellij.tasks.java")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
@@ -184,6 +184,8 @@ class CommunityRepositoryModules {
       withProjectLibrary("Gradle")
     },
     plugin("intellij.platform.testGuiFramework") {
+      //the plugin is for internal use for now so it shouldn't be published
+      defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
       mainJarName = "testGuiFramework"
       withModule("intellij.platform.testGuiFramework")
       withProjectLibrary("fest")
@@ -210,7 +212,6 @@ class CommunityRepositoryModules {
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
-      withModule("intellij.platform.coverage", mainJarName)
       withModule("intellij.java.coverage.rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
@@ -245,15 +246,12 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
+      bundlingRestrictions.includeInEapOnly = true
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
     },
-    plugin("intellij.griffon") {
-      withModule("intellij.griffon.jps", "griffon-jps-plugin.jar")
-      withModule("intellij.griffon.rt", "griffon-rt.jar")
-    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
@@ -292,20 +290,11 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.chunkio", "pixelprobe.jar")
-      withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
-      withModule("android.sdktools.binary-resources", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
-      withModule("android.sdktools.draw9patch", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
-      withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
       withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
@@ -341,6 +330,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.analytics-library:tracker")
       withProjectLibrary("com.android.tools:annotations")
       withProjectLibrary("com.android.tools.apkparser:apkanalyzer")
+      withProjectLibrary("com.android.tools.apkparser:binary-resources")
       withProjectLibrary("com.android.tools.layoutlib:layoutlib-api")
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
@@ -348,10 +338,12 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")
+      withProjectLibrary("com.android.tools:ninepatch")
       withProjectLibrary("com.android.tools.ddms:ddmlib")
       withProjectLibrary("com.android.tools.build:manifest-merger")
       withProjectLibrary("com.android.tools.build:builder-model")
       withProjectLibrary("com.android.tools.build:builder-test-api")
+      withProjectLibrary("com.android.tools.pixelprobe:pixelprobe")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)

@@ -34,10 +34,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -916,10 +913,9 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    int xShift = !settings.getHideTabsIfNeed() ? 4 : 0;
-    result.setIcon(baseIcon, i++, xShift, 0);
-    if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
-    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
+    result.setIcon(baseIcon, i++);
+    if (pinIcon != null) result.setIcon(pinIcon, i++);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth(), 0);
 
     return JBUI.scale(result);
   }

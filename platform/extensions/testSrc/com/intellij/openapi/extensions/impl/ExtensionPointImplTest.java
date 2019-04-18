@@ -14,13 +14,13 @@ import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * @author AKireyev
- */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class ExtensionPointImplTest {
   private Disposable disposable = Disposer.newDisposable();
 
@@ -155,23 +155,59 @@ public class ExtensionPointImplTest {
   }
 
   @Test
-  public void testCancelledRegistration() {
+  public void cancelledRegistration() {
     doTestInterruptedAdapterProcessing(() -> {
       throw new ProcessCanceledException();
-    }, ProcessCanceledException.class);
+    }, (extensionPoint, adapter) -> {
+      assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(ProcessCanceledException.class);
+
+      adapter.setFire(null);
+      List<String> extensions = extensionPoint.getExtensionList();
+      assertThat(extensionPoint.getExtensionList()).hasSize(3);
+
+      assertThat(extensions.get(0)).isEqualTo("second");
+      assertThat(extensions.get(1)).isIn("", "first");
+      assertThat(extensions.get(2)).isIn("", "first");
+      assertThat(extensions.get(2)).isNotEqualTo(extensions.get(1));
+    });
   }
 
   @Test
-  public void testNotApplicableRegistration() {
-    // ExtensionNotApplicableException doesn't interrupt adapter processing,
-    // so, doTestInterruptedAdapterProcessing here is not truly logical, but still eliminates code duplication
+  public void notApplicableRegistration() {
     doTestInterruptedAdapterProcessing(() -> {
       throw ExtensionNotApplicableException.INSTANCE;
-    }, null);
+    }, (extensionPoint, adapter) -> {
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+      adapter.setFire(null);
+      // even if now extension is applicable, adapters is not reprocessed and result is the same
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+    });
   }
 
-  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @Nullable Class<? extends Throwable> expectedErrorClass) {
-    ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+  @Test
+  public void iteratorAndNotApplicableRegistration() {
+    ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
+
+    extensionPoint.registerExtension("first", disposable);
+
+    MyShootingComponentAdapter adapter = stringAdapter();
+    extensionPoint.addExtensionAdapter(adapter);
+    adapter.setFire(() -> {
+      throw ExtensionNotApplicableException.INSTANCE;
+    });
+
+    extensionPoint.registerExtension("third", disposable);
+
+    Iterator<String> iterator = extensionPoint.iterator();
+    assertThat(iterator.hasNext()).isTrue();
+    assertThat(iterator.next()).isEqualTo("first");
+    assertThat(iterator.hasNext()).isTrue();
+    assertThat(iterator.next()).isEqualTo("third");
+    assertThat(iterator.hasNext()).isFalse();
+  }
+
+  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @NotNull BiConsumer<ExtensionPointImpl<String>, MyShootingComponentAdapter> test) {
+    ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
     MyShootingComponentAdapter adapter = stringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
@@ -179,28 +215,10 @@ public class ExtensionPointImplTest {
 
     // registers a wrapping adapter
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
-    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
+    extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(firework);
 
-    if (expectedErrorClass == null) {
-      assertThat(extensionPoint.getExtensionList()).hasSize(2);
-      adapter.setFire(null);
-      // even if now extension is applicable, adapters is not reprocessed and result is the same
-      assertThat(extensionPoint.getExtensionList()).hasSize(2);
-      return;
-    }
-    else {
-      assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(expectedErrorClass);
-    }
-
-    adapter.setFire(null);
-    List<String> extensions = extensionPoint.getExtensionList();
-    assertThat(extensionPoint.getExtensionList()).hasSize(3);
-
-    assertThat(extensions.get(0)).isEqualTo("second");
-    assertThat(extensions.get(1)).isIn("", "first");
-    assertThat(extensions.get(2)).isIn("", "first");
-    assertThat(extensions.get(2)).isNotEqualTo(extensions.get(1));
+    test.accept(extensionPoint, adapter);
   }
 
   @Test
@@ -263,13 +281,13 @@ public class ExtensionPointImplTest {
       super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
     }
 
-    public void setFire(@Nullable Runnable fire) {
+    public synchronized void setFire(@Nullable Runnable fire) {
       myFire = fire;
     }
 
     @NotNull
     @Override
-    public Object createInstance(@Nullable PicoContainer container) {
+    public synchronized Object createInstance(@Nullable PicoContainer container) {
       if (myFire != null) {
         myFire.run();
       }

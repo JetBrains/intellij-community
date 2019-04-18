@@ -14,20 +14,22 @@ class UserSettings : PersistentStateComponent<UserSettings.Companion.State> {
 
     data class State(var lastAction: UserAction = UserAction.COMMIT,
                      var step: Double = 0.0,
-                     var threshold: Double = 0.55,
-                     var isTurnedOn: Boolean = true,
-                     var isPluginEnabled: Boolean = true)
+                     var threshold: Double = 0.8,
+                     var isTurnedOn: Boolean = true)
 
     enum class UserAction {
       COMMIT,
       CANCEL
     }
+
+    private const val MIN_THRESHOLD = 0.8
+    private const val MAX_THRESHOLD = 1.0
   }
 
   private var currentState: UserSettings.Companion.State = State()
 
   var threshold: Double
-    get() = Math.round(currentState.threshold * THRESHOLD_PRECISION).toDouble() / THRESHOLD_PRECISION
+    get() = getSafeThreshold(Math.round(currentState.threshold * THRESHOLD_PRECISION).toDouble() / THRESHOLD_PRECISION)
     set(value) {
       safeUpdateThreshold(value)
     }
@@ -38,22 +40,16 @@ class UserSettings : PersistentStateComponent<UserSettings.Companion.State> {
       currentState.isTurnedOn = value
     }
 
-  var isPluginEnabled: Boolean
-    get() = currentState.isPluginEnabled
-    set(value) {
-      currentState.isPluginEnabled = value
-    }
-
   override fun loadState(state: State) {
     currentState = state
   }
 
   override fun getState() = currentState
 
+  private fun getSafeThreshold(value: Double) = min(MAX_THRESHOLD, max(MIN_THRESHOLD, value))
+
   private fun safeUpdateThreshold(newValue: Double) {
-    val minThreshold = 0.0
-    val maxThreshold = 1.0
-    currentState.threshold = min(maxThreshold, max(minThreshold, newValue))
+    currentState.threshold = getSafeThreshold(newValue)
   }
 
   fun updateState(type: UserAction) {

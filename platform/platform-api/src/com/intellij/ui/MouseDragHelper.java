@@ -50,6 +50,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
+  private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
 
   public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -72,11 +73,13 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     new UiNotifyConnector(myDragComponent, new Activatable() {
       @Override
       public void showNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(MouseDragHelper.this);
         attach();
       }
 
       @Override
       public void hideNotify() {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(MouseDragHelper.this);
         detach(true);
       }
     });
@@ -90,11 +93,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
-    myGlassPane.addMousePreprocessor(this, myParentDisposable);
-    myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
-    Disposer.register(myParentDisposable,
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this));
+    myGlassPaneListenersDisposable = Disposer.newDisposable("myGlassPaneListeners");
+    Disposer.register(myParentDisposable, myGlassPaneListenersDisposable);
+    myGlassPane.addMousePreprocessor(this, myGlassPaneListenersDisposable);
+    myGlassPane.addMouseMotionPreprocessor(this, myGlassPaneListenersDisposable);
   }
 
   public void stop() {
@@ -107,8 +109,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       return;
     }
     if (myGlassPane != null) {
-      myGlassPane.removeMousePreprocessor(this);
-      myGlassPane.removeMouseMotionPreprocessor(this);
+      Disposer.dispose(myGlassPaneListenersDisposable);
+      myGlassPaneListenersDisposable = Disposer.newDisposable();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }

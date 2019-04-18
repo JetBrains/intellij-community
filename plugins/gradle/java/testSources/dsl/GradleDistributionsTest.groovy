@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -11,7 +11,6 @@ import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DISTRIBUTION
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo
 
 @CompileStatic
 class GradleDistributionsTest extends GradleHighlightingBaseTest implements ResolveTest {
@@ -19,16 +18,27 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
   @Test
   void distributionsTest() {
     importProject("apply plugin: 'distribution'")
-    'distributions closure delegate'()
-    'distribution via unqualified property reference'()
-    'distribution via unqualified method call'()
-    'distribution closure delegate in unqualified method call'()
-    'distribution member via unqualified method call closure delegate'()
-    'distribution via qualified property reference'()
-    'distribution via qualified method call'()
-    'distribution closure delegate in qualified method call'()
-    'distribution member via qualified method call closure delegate'()
-    'distribution contents closure delegate'()
+    new RunAll().append {
+      'distributions closure delegate'()
+    } append {
+      'distribution via unqualified property reference'()
+    } append {
+      'distribution via unqualified method call'()
+    } append {
+      'distribution closure delegate in unqualified method call'()
+    } append {
+      'distribution member via unqualified method call closure delegate'()
+    } append {
+      'distribution via qualified property reference'()
+    } append {
+      'distribution via qualified method call'()
+    } append {
+      'distribution closure delegate in qualified method call'()
+    } append {
+      'distribution member via qualified method call closure delegate'()
+    } append {
+      'distribution contents closure delegate'()
+    } run()
   }
 
   @Override
@@ -37,11 +47,10 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
   }
 
   void 'distributions closure delegate'() {
+    def type = isGradleAtLeast("3.5") ? "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
+                                      : "org.gradle.api.distribution.internal.DefaultDistributionContainer"
     doTest('distributions { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText("org.gradle.api.distribution.internal.DefaultDistributionContainer")
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(type, 1)
     }
   }
 
@@ -63,10 +72,7 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
 
   void 'distribution closure delegate in unqualified method call'() {
     doTest('distributions { foo { <caret> } }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_DISTRIBUTION)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_DISTRIBUTION, 1)
     }
   }
 
@@ -97,10 +103,7 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
 
   void 'distribution closure delegate in qualified method call'() {
     doTest('distributions { foo }; distributions.foo { <caret> }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_DISTRIBUTION)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_DISTRIBUTION, 1)
     }
   }
 
@@ -115,10 +118,7 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Reso
 
   void 'distribution contents closure delegate'() {
     doTest('distributions { foo { contents { <caret> } } }') {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def delegatesToInfo = getDelegatesToInfo(closure)
-      assert delegatesToInfo.typeToDelegate.equalsToText(GRADLE_API_FILE_COPY_SPEC)
-      assert delegatesToInfo.strategy == 1
+      closureDelegateTest(GRADLE_API_FILE_COPY_SPEC, 1)
     }
   }
 }

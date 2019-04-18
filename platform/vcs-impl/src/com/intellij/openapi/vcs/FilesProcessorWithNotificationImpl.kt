@@ -159,5 +159,5 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun notAskedBefore() = !projectProperties.getBoolean(askedBeforeProperty, false)
 
-  private fun needDoForCurrentProject() = projectProperties.getBoolean(doForCurrentProjectProperty, false)
+  protected open fun needDoForCurrentProject() = projectProperties.getBoolean(doForCurrentProjectProperty, false)
 }

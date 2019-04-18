@@ -322,9 +322,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     @NonNls final InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
     @NonNls final InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow",new MySelectPreviousRowAction());
+    actionMap.put(TableActions.Up.ID, new MySelectPreviousRowAction());
 
-    actionMap.put("selectNextRow",new MySelectNextRowAction());
+    actionMap.put(TableActions.Down.ID, new MySelectNextRowAction());
 
     actionMap.put("startEditing",new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2,0),"startEditing");

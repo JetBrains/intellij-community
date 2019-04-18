@@ -122,6 +122,9 @@ class MethodRef {
         void foo(MethodRef m, T a);
     }
 
+    void boo(String s, int unrelated) {
+    }
+
     void boo(String s) {
     }
 

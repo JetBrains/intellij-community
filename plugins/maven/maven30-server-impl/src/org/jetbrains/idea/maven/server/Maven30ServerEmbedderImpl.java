@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
@@ -40,7 +39,10 @@ import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
-import org.apache.maven.profiles.activation.*;
+import org.apache.maven.profiles.activation.JdkPrefixProfileActivator;
+import org.apache.maven.profiles.activation.OperatingSystemProfileActivator;
+import org.apache.maven.profiles.activation.ProfileActivator;
+import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
@@ -68,7 +70,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea .maven.model.*;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.jetbrains.idea.maven.server.embedder.*;
 import org.sonatype.aether.RepositorySystemSession;
@@ -228,6 +230,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
+  @Override
+  @NotNull
+  protected PlexusContainer getContainer() {
+    return myContainer;
+  }
+
   private static Settings buildSettings(SettingsBuilder builder,
                                         MavenServerSettings settings,
                                         Properties systemProperties,
@@ -257,15 +265,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     return result;
-  }
-
-  private static void warn(String message, Throwable e) {
-    try {
-      Maven3ServerGlobals.getLogger().warn(new RuntimeException(message, e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
   }
 
   private static MavenExecutionResult handleException(Throwable e) {
@@ -929,7 +928,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                         @NotNull Collection<MavenProjectProblem> problems,
                         @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
     for (Throwable each : exceptions) {
-      if(each == null) continue;
+      if (each == null) continue;
 
       Maven3ServerGlobals.getLogger().info(each);
 
@@ -1185,11 +1184,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((CustomMaven3ArtifactFactory)artifactFactory).reset();
       }
       final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if(artifactResolver instanceof CustomMaven30ArtifactResolver) {
+      if (artifactResolver instanceof CustomMaven30ArtifactResolver) {
         ((CustomMaven30ArtifactResolver)artifactResolver).reset();
       }
       final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
-      if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+      if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
         ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
       }
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();

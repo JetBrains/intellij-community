@@ -61,7 +61,8 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
         outline.append(new Rectangle2D.Float(iconRect.x + scale(1), iconRect.y + scale(1), scale(11), scale(11)), false);
         g2.fill(outline);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

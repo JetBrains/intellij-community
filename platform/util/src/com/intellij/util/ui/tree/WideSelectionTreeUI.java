@@ -209,6 +209,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     map.put("selectParent", COLLAPSE_OR_SELECT_PREVIOUS);
   }
 
+  @Deprecated
   public void setForceDontPaintLines() {
     myForceDontPaintLines = true;
   }
@@ -273,7 +274,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   public static boolean isWideSelection(@NotNull JTree tree) {
     TreeUI ui = tree.getUI();
-    return ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection();
+    return ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ||
+           ui != null && ui.getClass().getName().equals("com.intellij.ui.tree.ui.DefaultTreeUI");
   }
 
   @Override

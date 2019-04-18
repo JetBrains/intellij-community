@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -68,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -393,6 +393,9 @@ public class GroovyCompletionUtil {
     }
     else if (element instanceof PsiMethod) {
       type = substitutor.substitute(((PsiMethod)element).getReturnType());
+    }
+    else if (element instanceof GroovyProperty) {
+      type = ((GroovyProperty)element).getPropertyType();
     }
     return type != null ? builder.withTypeText(type.getPresentableText()) : builder;
   }

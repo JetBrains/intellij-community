@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getPluginType;
+
 @State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
@@ -170,8 +172,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
-      FUCounterUsageLogger.getInstance().logEvent("productivity", descriptor.getId());
       descriptor.triggerUsed();
+
+      final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
+      final String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
+      FUCounterUsageLogger.getInstance().logEvent("productivity", id);
     }
   }
 

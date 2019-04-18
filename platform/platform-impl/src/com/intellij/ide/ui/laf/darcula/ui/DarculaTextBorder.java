@@ -42,9 +42,11 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
     if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       paintSearchArea((Graphics2D)g, r, (JTextComponent)c, false);
-    } else if (isTableCellEditor(c)) {
+    }
+    else if (isTableCellEditor(c)) {
       paintCellEditorBorder((Graphics2D)g, c, r, focused);
-    } else if (!(c.getParent() instanceof JComboBox)){
+    }
+    else if (!(c.getParent() instanceof JComboBox)) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -62,7 +64,8 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
         if (c.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
-        } else {
+        }
+        else {
           if (focused) {
             paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), true, Outline.focus);
           }
@@ -98,7 +101,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       float arc = COMPONENT_ARC.get();
       float lw = LW.getFloat();
       float bw = BW.getFloat();
-      Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw*2, r.height - bw*2, arc, arc);
+      Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
       if (fillBackground) {
         g2.setColor(c.getBackground());
         g2.fill(outerShape);
@@ -112,18 +115,19 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         path.append(outerShape, false);
 
         arc = arc > lw ? arc - lw : 0.0f;
-        path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc, arc), false);
+        path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
         g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled() && c.isEditable(), c.hasFocus()));
         g2.fill(path);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
 
   protected boolean isFocused(Component c) {
-    return c instanceof JScrollPane ? ((JScrollPane)c).getViewport().getView().hasFocus() :c.hasFocus();
+    return c instanceof JScrollPane ? ((JScrollPane)c).getViewport().getView().hasFocus() : c.hasFocus();
   }
 
   protected void clipForBorder(Component c, Graphics2D g2, int width, int height) {

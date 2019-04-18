@@ -27,12 +27,13 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
@@ -63,36 +64,47 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  * @author yole
  */
 public class AppUIUtil {
-  private static final Logger LOG = Logger.getInstance(AppUIUtil.class);
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
+  private static List<Image> ourIcons = null;
   private static boolean ourMacDocIconSet = false;
 
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance(AppUIUtil.class);
+  }
+
   public static void updateWindowIcon(@NotNull Window window) {
-    if (SystemInfo.isWindows &&
-        SystemProperties.getBooleanProperty("ide.native.launcher", false) &&
-        SystemProperties.getBooleanProperty("jbre.win.app.icon.supported", false)) // todo[tav] defined by JBRE, remove when OpenJDK supports it as well
-    {
-      return; // JDK will load icon from the exe resource
+    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
+    if (SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported")) {
+      return;  // JDK will load icon from the exe resource
     }
 
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    List<Image> images = new ArrayList<>(3);
+    List<Image> images = ourIcons;
+    if (images == null) {
+      ourIcons = images = new ArrayList<>(3);
 
-    if (SystemInfo.isUnix) {
-      Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
-      if (svgIcon != null) {
-        images.add(svgIcon);
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      String svgIconUrl = appInfo.getApplicationSvgIconUrl();
+      ScaleContext ctx = ScaleContext.create(window);
+
+      if (SystemInfo.isUnix) {
+        @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
+        ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 128, fallback));
       }
-    }
 
-    images.add(loadApplicationIcon(window, 32, appInfo.getIconUrl()));
-    images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+      @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
+      ContainerUtil.addIfNotNull(images, loadApplicationIcon(svgIconUrl, ctx, 32, fallback));
 
-    for (int i = 0; i < images.size(); i++) {
-      Image image = images.get(i);
-      if (image instanceof JBHiDPIScaledImage) {
-        images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+      if (SystemInfo.isWindows) {
+        ContainerUtil.addIfNotNull(images, ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
+      }
+
+      for (int i = 0; i < images.size(); i++) {
+        Image image = images.get(i);
+        if (image instanceof JBHiDPIScaledImage) {
+          images.set(i, ((JBHiDPIScaledImage)image).getDelegate());
+        }
       }
     }
 
@@ -108,25 +120,26 @@ public class AppUIUtil {
   }
 
   @Nullable
-  private static Image loadApplicationIcon(@NotNull Window window, int size, @Nullable String fallbackImageResourcePath) {
-    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
-    if (svgIconUrl != null) {
-      URL url = AppUIUtil.class.getResource(svgIconUrl);
-      try {
-        return
-          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), ScaleContext.create(window), size, size);
+  public static Icon loadHiDPIApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    Image image = loadApplicationIcon(ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl(), ctx, size, null);
+    return image != null ? new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx)) : null;
+  }
+
+  @Nullable
+  private static Image loadApplicationIcon(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+    if (svgPath != null) {
+      try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
+        return SVGLoader.load(null, stream, ctx, size, size);
       }
       catch (IOException e) {
-        LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
+        getLogger().info("Cannot load SVG application icon from " + svgPath, e);
       }
     }
-    else if (fallbackImageResourcePath != null) {
-      Image image = ImageLoader.loadFromResource(fallbackImageResourcePath);
-      if (image instanceof JBHiDPIScaledImage) {
-        return ((JBHiDPIScaledImage)image).getDelegate();
-      }
-      return image;
+
+    if (fallbackPath != null) {
+      return ImageLoader.loadFromResource(fallbackPath);
     }
+
     return null;
   }
 
@@ -144,10 +157,9 @@ public class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
-  public static void invokeOnEdt(Runnable runnable, @Nullable Condition expired) {
+  public static void invokeOnEdt(Runnable runnable, @Nullable Condition<?> expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      //noinspection unchecked
       if (expired == null || !expired.value(null)) {
         runnable.run();
       }
@@ -161,7 +173,7 @@ public class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
       return;
     }
 
@@ -218,7 +230,7 @@ public class AppUIUtil {
       if (fontDir == null) {
         URL url = AppUIUtil.class.getResource("/fonts/" + name);
         if (url == null) {
-          Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
+          getLogger().warn("Resource missing: " + name);
           return;
         }
 
@@ -232,7 +244,7 @@ public class AppUIUtil {
       GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
-      Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + name, t);
+      getLogger().warn("Cannot register font: " + name, t);
     }
   }
 
@@ -282,7 +294,7 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showUserAgreementAndConsentsIfNeeded() {
+  public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
@@ -292,14 +304,14 @@ public class AppUIUtil {
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
-      showConsentsAgreementIfNeed();
+      showConsentsAgreementIfNeed(log);
     }
   }
 
-  public static boolean showConsentsAgreementIfNeed() {
+  public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
     final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     AtomicBoolean result = new AtomicBoolean();
     if (consentsToShow.second) {
@@ -312,12 +324,13 @@ public class AppUIUtil {
       };
       if (SwingUtilities.isEventDispatchThread()) {
         runnable.run();
-      } else {
+      }
+      else {
         try {
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {
-          Logger.getInstance(AppUIUtil.class).warn(e);
+          log.warn(e);
         }
       }
     }

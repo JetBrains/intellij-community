@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +21,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 
 @Deprecated
-public class MavenProjectImportProvider extends ProjectImportProvider {
-  public MavenProjectImportProvider(@NotNull MavenProjectBuilder builder) {
-    super(builder);
+public final class MavenProjectImportProvider extends ProjectImportProvider {
+  @Override
+  protected ProjectImportBuilder doGetBuilder() {
+    return ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(MavenProjectBuilder.class);
   }
 
   @Override

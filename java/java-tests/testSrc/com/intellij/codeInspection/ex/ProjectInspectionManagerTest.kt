@@ -4,17 +4,19 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.io.delete
-import com.intellij.util.io.readText
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class ProjectInspectionManagerTest {
@@ -24,17 +26,23 @@ class ProjectInspectionManagerTest {
     val appRule = ApplicationRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
+  @Rule
+  @JvmField
+  val tempDirManager = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
+  val initInspectionRule = InitInspectionRule()
+
+  private fun doTest(task: suspend (Project) -> Unit) {
+    runBlocking {
+      loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.path }, task)
+    }
+  }
 
   @Test
-  fun component() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
+  fun component() {
+    doTest { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
 
       assertThat(projectInspectionProfileManager.state).isEmpty()
@@ -54,7 +62,7 @@ class ProjectInspectionManagerTest {
       </state>""".trimIndent()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
 
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
+      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, PROFILE_DIR)
       val file = inspectionDir.resolve("profiles_settings.xml")
       project.stateStore.save()
       assertThat(file).exists()
@@ -70,22 +78,21 @@ class ProjectInspectionManagerTest {
       // test load
       file.delete()
 
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
 
-  @Test fun `do not save default project profile`() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
+  @Test
+  fun `do not save default project profile`() {
+    doTest { project ->
+      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, PROFILE_DIR)
       val profileFile = inspectionDir.resolve("Project_Default.xml")
       assertThat(profileFile).doesNotExist()
 
@@ -103,10 +110,8 @@ class ProjectInspectionManagerTest {
   }
 
   @Test
-  fun profiles() = runBlocking {
-    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      it.path
-    }) { project ->
+  fun profiles() {
+    doTest { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
       projectInspectionProfileManager.forceLoadSchemes()
 
@@ -119,7 +124,7 @@ class ProjectInspectionManagerTest {
 
       project.stateStore.save()
 
-      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
+      val inspectionDir = Paths.get(project.stateStore.projectConfigDir, PROFILE_DIR)
       val file = inspectionDir.resolve("profiles_settings.xml")
 
       assertThat(file).doesNotExist()
@@ -140,9 +145,75 @@ class ProjectInspectionManagerTest {
         </profile>
       </component>""".trimIndent())
 
-      project.baseDir.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
-      assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
+      assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(
+        HighlightDisplayLevel.ERROR)
+    }
+  }
+
+  @Test
+  fun `detect externally added profiles`() {
+    doTest { project ->
+      val profileManager = ProjectInspectionProfileManager.getInstance(project)
+      profileManager.forceLoadSchemes()
+
+      assertThat(profileManager.profiles.joinToString { it.name }).isEqualTo("Project Default")
+      assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
+      assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
+
+      val projectConfigDir = Paths.get(project.stateStore.projectConfigDir!!)
+
+      // test creation of .idea/inspectionProfiles dir, not .idea itself
+      projectConfigDir.createDirectories()
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(projectConfigDir.toString())
+
+      val profileDir = projectConfigDir.resolve(PROFILE_DIR)
+      profileDir.writeChild("profiles_settings.xml", """<component name="InspectionProjectProfileManager">
+        <settings>
+          <option name="PROJECT_PROFILE" value="idea.default" />
+          <version value="1.0" />
+          <info color="eb9904">
+            <option name="FOREGROUND" value="0" />
+            <option name="BACKGROUND" value="eb9904" />
+            <option name="ERROR_STRIPE_COLOR" value="eb9904" />
+            <option name="myName" value="Strong Warning" />
+            <option name="myVal" value="50" />
+            <option name="myExternalName" value="Strong Warning" />
+            <option name="myDefaultAttributes">
+              <option name="ERROR_STRIPE_COLOR" value="eb9904" />
+            </option>
+          </info>
+        </settings>
+      </component>""")
+      writeDefaultProfile(profileDir)
+      profileDir.writeChild("idea_default_teamcity.xml", """
+        <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="idea.default.teamcity" />
+          <inspection_tool class="AbsoluteAlignmentInUserInterface" enabled="false" level="WARNING" enabled_by_default="false">
+            <scope name="android" level="WARNING" enabled="false" />
+          </inspection_tool>
+        </profile>
+      </component>""")
+
+      refreshProjectConfigDir(project)
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+
+      assertThat(profileManager.currentProfile.isProjectLevel).isTrue()
+      assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
+      assertThat(profileManager.profiles.joinToString { it.name }).isEqualTo("Project Default, idea.default.teamcity")
+
+      profileDir.delete()
+      writeDefaultProfile(profileDir)
+
+      refreshProjectConfigDir(project)
+      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+
+      assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
+
+      project.stateStore.save()
+      assertThat(profileDir.resolve("Project_Default.xml")).isEqualTo(DEFAULT_PROJECT_PROFILE_CONTENT)
     }
   }
 
@@ -190,4 +261,16 @@ class ProjectInspectionManagerTest {
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
   }
+}
+
+private val DEFAULT_PROJECT_PROFILE_CONTENT = """
+  <component name="InspectionProjectProfileManager">
+    <profile version="1.0">
+      <option name="myName" value="Project Default" />
+      <inspection_tool class="ActionCableChannelNotFound" enabled="false" level="WARNING" enabled_by_default="false" />
+    </profile>
+  </component>""".trimIndent()
+
+private fun writeDefaultProfile(profileDir: Path) {
+  profileDir.writeChild("Project_Default.xml", DEFAULT_PROJECT_PROFILE_CONTENT)
 }

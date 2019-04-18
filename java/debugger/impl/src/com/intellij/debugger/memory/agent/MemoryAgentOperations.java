@@ -13,6 +13,7 @@ import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
 import com.intellij.debugger.memory.agent.parsers.LongArrayParser;
 import com.intellij.debugger.memory.agent.parsers.LongValueParser;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +23,11 @@ import java.util.Collections;
 import java.util.List;
 
 class MemoryAgentOperations {
+  private static final Key<MemoryAgent> MEMORY_AGENT_KEY = Key.create("MEMORY_AGENT_KEY");
   private static final Logger LOG = Logger.getInstance(MemoryAgentOperations.class);
 
   static long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference)
     throws EvaluateException {
-    if (!capabilities(evaluationContext).canEstimateObjectSize()) {
-      throw new UnsupportedOperationException("Memory agent can't estimate object size");
-    }
-
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECT_SIZE, Collections.singletonList(reference));
     return LongValueParser.INSTANCE.parse(result);
   }
@@ -37,10 +35,6 @@ class MemoryAgentOperations {
   @NotNull
   static long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
     throws EvaluateException {
-    if (!capabilities(evaluationContext).canEstimateObjectsSizes()) {
-      throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
-    }
-
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.ESTIMATE_OBJECTS_SIZE, Collections.singletonList(array));
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
@@ -49,40 +43,42 @@ class MemoryAgentOperations {
   @NotNull
   static ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
                                                    @NotNull ObjectReference reference, int limit) throws EvaluateException {
-    if (!capabilities(evaluationContext).canGetReferringObjects()) {
-      throw new UnsupportedOperationException("Memory agent can't provide referring objects");
-    }
-
     IntegerValue limitValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(limit);
     Value value = callMethod(evaluationContext, MemoryAgentNames.Methods.FIND_GC_ROOTS, Arrays.asList(reference, limitValue));
     return GcRootsPathsParser.INSTANCE.parse(value);
   }
 
-  static void initializeCapabilities(@NotNull EvaluationContextImpl context) {
+  @NotNull
+  static MemoryAgent getAgent(@NotNull DebugProcessImpl debugProcess) {
+    MemoryAgent agent = debugProcess.getUserData(MEMORY_AGENT_KEY);
+    return agent == null ? MemoryAgentImpl.DISABLED : agent;
+  }
+
+  static void initializeAgent(@NotNull EvaluationContextImpl context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    MemoryAgent agent = MemoryAgentImpl.DISABLED;
     try {
-      initialize(context);
+      agent = new MemoryAgentImpl(initializeCapabilities(context));
     }
     catch (EvaluateException e) {
       LOG.error("Could not initialize memory agent. ", e);
-      MemoryAgentCapabilities.set(context.getDebugProcess(), MemoryAgentCapabilities.DISABLED);
     }
+    context.getDebugProcess().putUserData(MEMORY_AGENT_KEY, agent);
   }
 
-  private static void initialize(@NotNull EvaluationContextImpl context) throws EvaluateException {
+  private static MemoryAgentCapabilities initializeCapabilities(@NotNull EvaluationContextImpl context) throws EvaluateException {
     ClassType proxyType = getProxyType(context);
     boolean isAgentLoaded = checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.IS_LOADED);
     if (!isAgentLoaded) {
-      MemoryAgentCapabilities.set(context.getDebugProcess(), MemoryAgentCapabilities.DISABLED);
+      return MemoryAgentCapabilities.DISABLED;
     }
     else {
       MemoryAgentCapabilities.Builder builder = new MemoryAgentCapabilities.Builder();
-      MemoryAgentCapabilities capabilities = builder
+      return builder
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
         .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
         .buildLoaded();
-      MemoryAgentCapabilities.set(context.getDebugProcess(), capabilities);
     }
   }
 
@@ -99,33 +95,18 @@ class MemoryAgentOperations {
 
   private static ClassType getOrLoadProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     ClassObjectReference classObjectReference = evaluationContext.computeAndKeep(() -> {
-      ReferenceType referenceType = findProxy(evaluationContext);
+      long start = System.currentTimeMillis();
+      ReferenceType referenceType = loadUtilityClass(evaluationContext);
       if (referenceType == null) {
-        long start = System.currentTimeMillis();
-        referenceType = loadUtilityClass(evaluationContext);
-        if (referenceType == null) {
-          throw EvaluateExceptionUtil.createEvaluateException("Could not load memory agent proxy class");
-        }
-        long duration = System.currentTimeMillis() - start;
-        LOG.info("Loading of agent proxy class took " + duration + " ms");
+        throw EvaluateExceptionUtil.createEvaluateException("Could not load memory agent proxy class");
       }
+      long duration = System.currentTimeMillis() - start;
+      LOG.info("Loading of agent proxy class took " + duration + " ms");
 
       return referenceType.classObject();
     });
 
     return (ClassType)classObjectReference.reflectedType();
-  }
-
-  @Nullable
-  private static ReferenceType findProxy(@NotNull EvaluationContextImpl evaluationContext) {
-    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-
-    // We should use here this code to find proxy, but it will return nothing each time since we use newly created class loaded for every class loading
-    //debugProcess.findClass(evaluationContext, MemoryAgentNames.PROXY_CLASS_NAME, evaluationContext.getClassLoader());
-
-    // But since we use only JDI to access static methods we do not bother about visibility issues
-    List<ReferenceType> types = debugProcess.getVirtualMachineProxy().classesByName(MemoryAgentNames.PROXY_CLASS_NAME);
-    return types.isEmpty() ? null : types.get(0);
   }
 
   private static boolean checkAgentCapability(@NotNull EvaluationContextImpl evaluationContext,
@@ -182,13 +163,18 @@ class MemoryAgentOperations {
   }
 
   @Nullable
-  private static ClassType loadUtilityClass(@NotNull EvaluationContextImpl context) throws EvaluateException {
+  private static ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl context) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     byte[] bytes = readUtilityClass();
     context.setAutoLoadClasses(true);
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(context, debugProcess);
     ClassLoadingUtils.defineClass(MemoryAgentNames.PROXY_CLASS_NAME, bytes, context, debugProcess, classLoader);
-    return (ClassType)debugProcess.findClass(context, MemoryAgentNames.PROXY_CLASS_NAME, classLoader);
+    try {
+      return debugProcess.loadClass(context, MemoryAgentNames.PROXY_CLASS_NAME, classLoader);
+    }
+    catch (InvocationException | ClassNotLoadedException | IncompatibleThreadStateException | InvalidTypeException e) {
+      throw EvaluateExceptionUtil.createEvaluateException("Could not load proxy class", e);
+    }
   }
 
   @NotNull
@@ -205,9 +191,5 @@ class MemoryAgentOperations {
     }
     LOG.info("Wrapping values with array took " + (System.currentTimeMillis() - start) + " ms");
     return instancesArray;
-  }
-
-  private static MemoryAgentCapabilities capabilities(@NotNull EvaluationContextImpl evaluationContext) {
-    return MemoryAgent.capabilities(evaluationContext.getDebugProcess());
   }
 }

@@ -56,7 +56,6 @@ public class CheckboxTreeHelper {
     tree.setCellRenderer(cellRenderer);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.setLineStyleAngled();
     TreeUtil.installActions(tree);
 
     KeyListener keyListener = setupKeyListener(tree, mainComponent);

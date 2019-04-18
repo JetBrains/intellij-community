@@ -2,14 +2,15 @@
 package com.intellij.openapi.rd
 
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
 import com.jetbrains.rd.swing.awtMousePoint
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.map
 import com.jetbrains.rdclient.util.idea.createNestedDisposable
-import java.awt.Component
-import java.awt.Container
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import javax.swing.JComponent
@@ -43,3 +44,23 @@ fun JComponent.childAtMouse(): IPropertyView<Component?> = this@childAtMouse.awt
       this@childAtMouse.getComponentAt(it)
     }
   }
+
+fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
+  this.color = color
+  RectanglePainter2D.FILL.paint(this, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
+}
+
+fun Graphics2D.paint2DLine(from: Point, to: Point,
+                           strokeType: LinePainter2D.StrokeType,
+                           strokeWidth: Double, color: Color) {
+  this.paint2DLine(from.getX(), from.getY(), to.getX(), to.getY(), strokeType, strokeWidth, color)
+}
+
+fun Graphics2D.paint2DLine(x1: Double, y1: Double, x2: Double, y2: Double,
+                           strokeType: LinePainter2D.StrokeType,
+                           strokeWidth: Double, color: Color) {
+  this.color = color
+  LinePainter2D.paint(this, x1, y1, x2, y2, strokeType,
+                      strokeWidth)
+}
+

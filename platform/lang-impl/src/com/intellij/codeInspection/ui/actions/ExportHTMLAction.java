@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui.actions;
 
@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -42,6 +41,9 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -189,12 +191,17 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   public static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException {
     File file = getInspectionResultFile(outputDirectoryName, name);
     FileUtil.createParentDirs(file);
-    return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));
+    return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
   }
 
   @NotNull
   public static File getInspectionResultFile(String outputDirectoryName, String name) {
     return new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
+  }
+
+  @NotNull
+  public static Path getInspectionResultPath(String outputDirectoryName, String name) {
+    return Paths.get(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
   }
 
   @NotNull

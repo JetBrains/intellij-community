@@ -16,12 +16,14 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
   public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.superMethodsSearch");
   private static final SuperMethodsSearch SUPER_METHODS_SEARCH_INSTANCE = new SuperMethodsSearch();
 
-  public static class SearchParameters {
+  public static class SearchParameters implements QueryParameters {
     private final PsiMethod myMethod;
     //null means any class would be matched
     @Nullable private final PsiClass myClass;
@@ -47,6 +49,17 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
       myClass = aClass;
       myMethod = method;
       myAllowStaticMethod = allowStaticMethod;
+    }
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return myMethod.getProject();
+    }
+
+    @Override
+    public boolean isQueryValid() {
+      return myMethod.isValid() && (myClass == null || myClass.isValid());
     }
 
     public final boolean isCheckBases() {

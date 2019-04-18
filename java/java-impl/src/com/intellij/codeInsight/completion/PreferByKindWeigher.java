@@ -277,6 +277,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         return MyResult.classNameOrGlobalStatic;
       }
 
+      JavaConstructorCallElement constructorCall = item.as(JavaConstructorCallElement.class);
+      if (constructorCall != null) {
+        return myClassSuitability.apply(constructorCall.getConstructedClass());
+      }
+
       if (object instanceof PsiMethod && PsiUtil.isAnnotationMethod((PsiElement)object)) {
         return MyResult.annoMethod;
       }

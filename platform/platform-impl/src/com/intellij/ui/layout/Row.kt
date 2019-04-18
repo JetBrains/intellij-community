@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.RadioButton
+import com.intellij.ui.components.noteComponent
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
+import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 abstract class Row : Cell() {
@@ -24,12 +27,6 @@ abstract class Row : Cell() {
     label(gapLeft = gapLeft)
   }
 
-  fun <T : Any> LayoutBuilderWithButtonGroup<T>.radioButton(text: String, id: T) {
-    val component = RadioButton(text)
-    propertyManager.addRadioButton(component, id, this@Row)
-    component()
-  }
-
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */
@@ -41,6 +38,8 @@ abstract class Row : Cell() {
   @PublishedApi
   internal abstract fun alignRight()
 
+  abstract fun largeGapAfter()
+
   inline fun row(label: String, init: Row.() -> Unit): Row {
     val row = createRow(label)
     row.init()
@@ -49,6 +48,12 @@ abstract class Row : Cell() {
 
   inline fun row(init: Row.() -> Unit): Row {
     val row = createRow(null)
+    row.init()
+    return row
+  }
+
+  inline fun buttonGroup(init: Row.() -> Unit): Row {
+    val row = createRow(null, ButtonGroup())
     row.init()
     return row
   }
@@ -66,6 +71,12 @@ abstract class Row : Cell() {
   internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
+  internal abstract fun createRow(label: String?, buttonGroup: ButtonGroup?): Row
+
+  @PublishedApi
+  internal abstract fun createNoteOrCommentRow(component: JComponent): Row
+
+  @PublishedApi
   internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean)
 
   // backward compatibility
@@ -81,4 +92,9 @@ abstract class Row : Cell() {
 
 enum class GrowPolicy {
   SHORT_TEXT, MEDIUM_TEXT
+}
+
+fun Row.enableIf(predicate: ComponentPredicate) {
+  enabled = predicate()
+  predicate.addListener { enabled = it }
 }

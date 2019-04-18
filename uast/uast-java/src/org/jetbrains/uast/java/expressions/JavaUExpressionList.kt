@@ -23,7 +23,7 @@ import org.jetbrains.uast.UastSpecialExpressionKind
 import org.jetbrains.uast.java.JavaAbstractUExpression
 
 open class JavaUExpressionList(
-  override val psi: PsiElement?,
+  override val sourcePsi: PsiElement?,
   override val kind: UastSpecialExpressionKind, // original element
   givenParent: UElement?,
   expressionListInitializer: JavaUExpressionList.() -> List<UExpression> = { emptyList() }

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -440,13 +441,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public void initComponent() {
-    long started = System.nanoTime();
-    List<StubIndexExtension<?, ?>> extensions = IndexInfrastructure.hasIndices() ? initExtensions() : Collections.emptyList();
-    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.size());
-    started = System.nanoTime();
-
-    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));
-    LOG.info("stub exts update scheduled:" + (System.nanoTime() - started) / 1000000);
+    myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       try {
@@ -458,14 +453,11 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
-  @NotNull
-  static List<StubIndexExtension<?, ?>> initExtensions() {
-    List<StubIndexExtension<?, ?>> extensions = StubIndexExtension.EP_NAME.getExtensionList();
+  static void initExtensions() {
     // initialize stub index keys
-    for (StubIndexExtension extension : extensions) {
+    for (StubIndexExtension extension : StubIndexExtension.EP_NAME.getExtensionList()) {
       extension.getKey();
     }
-    return extensions;
   }
 
   public void dispose() {
@@ -573,7 +565,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     MyIndex(@NotNull IndexExtension<K, StubIdList, Void> extension, @NotNull IndexStorage<K, StubIdList> storage) throws IOException {
-      super(extension, storage, null, null);
+      super(extension, storage, null, null, null);
     }
 
     @Override
@@ -608,16 +600,20 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final StringBuilder updated = new StringBuilder();
-    private final List<? extends StubIndexExtension<?, ?>> myExtensions;
-
-    StubIndexInitialization(@NotNull List<? extends StubIndexExtension<?, ?>> extensions) {
-      myExtensions = extensions;
-    }
 
     @Override
     protected void prepare() {
+      Iterator<StubIndexExtension<?, ?>> extensionsIterator = 
+        IndexInfrastructure.hasIndices() ?
+          ((ExtensionPointImpl<StubIndexExtension<?, ?>>)StubIndexExtension.EP_NAME.getPoint(null)).iterator() :
+          Collections.emptyIterator();
+
       boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-      for (StubIndexExtension extension : myExtensions) {
+      while(extensionsIterator.hasNext()) {
+        StubIndexExtension extension = extensionsIterator.next();
+        if (extension == null) break;
+        extension.getKey(); // initialize stub index keys 
+        
         addNestedInitializationTask(() -> {
           @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean, state);
           if (rebuildRequested) {

@@ -68,17 +68,19 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
       if (op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(1), iconRect.y + scale(1), scale(20), scale(20), scale(12), scale(12)), false);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(4.5f), iconRect.y + scale(4.5f), scale(13), scale(13), scale(5), scale(5)), false);
+        outline.append(new RoundRectangle2D.Float(
+          iconRect.x + scale(1), iconRect.y + scale(1), scale(20), scale(20), scale(12), scale(12)), false);
+        outline.append(new RoundRectangle2D.Float(
+          iconRect.x + scale(4.5f), iconRect.y + scale(4.5f), scale(13), scale(13), scale(5), scale(5)), false);
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.fill(outline);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
-
 }

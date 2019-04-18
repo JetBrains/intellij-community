@@ -278,7 +278,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethodCallExpression call = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
       if (call == null) return;
-      PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      if (qualifier == null) return;
       CommentTracker ct = new CommentTracker();
       switch (myFixType) {
         case REPLACE_WITH_QUALIFIER: {

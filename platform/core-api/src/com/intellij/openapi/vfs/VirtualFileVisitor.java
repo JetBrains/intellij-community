@@ -15,14 +15,10 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -85,7 +81,6 @@ public abstract class VirtualFileVisitor<T> {
   private boolean mySkipRoot;
   private int myDepthLimit = -1;
 
-  private Map<VirtualFile, List<VirtualFile>> myVisitedTargets;
   private int myLevel;
   private Stack<T> myValueStack;
   private T myValue;
@@ -101,9 +96,6 @@ public abstract class VirtualFileVisitor<T> {
       else if (option instanceof Option.LimitOption) {
         myDepthLimit = ((Option.LimitOption)option).limit;
       }
-    }
-    if (myFollowSymLinks) {
-      myVisitedTargets = ContainerUtil.newHashMap();
     }
   }
 
@@ -180,26 +172,12 @@ public abstract class VirtualFileVisitor<T> {
       return true;
     }
 
-    if (!myFollowSymLinks || VfsUtilCore.isInvalidLink(file)) {
+    if (!myFollowSymLinks) {
       return false;
     }
 
-    VirtualFile target = file.getCanonicalFile();
-    List<VirtualFile> links = myVisitedTargets.get(target);
-    if (links == null) {
-      myVisitedTargets.put(target, ContainerUtil.newSmartList(file));
-      return true;
-    }
-
-    boolean hasLoop = false;
-    for (VirtualFile link : links) {
-      if (VfsUtilCore.isAncestor(link, file, true)) {
-        hasLoop = true;
-        break;
-      }
-    }
-    links.add(file);
-    return !hasLoop;
+    // ignore invalid or recursive link or the link with circular path (e.g. "/.../link1/.../link1") - to avoid visiting files twice
+    return !file.isRecursiveOrCircularSymLink();
   }
 
   final boolean depthLimitReached() {

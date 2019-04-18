@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -297,5 +298,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected boolean isGradleNewerOrSameThen_5_0() {
     return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("5.0")) >= 0;
+  }
+
+  protected String getExtraPropertiesExtensionFqn() {
+    return isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
+                                   : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
+  }
+
+  protected void enableGradleDebugWithSuspend() {
+    GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
@@ -138,10 +139,10 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
                                                            ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                           DateFormatUtil.formatDuration(uptime));
+                                                           StringUtil.formatDurationApproximate(uptime));
 
     final String idleTimeS = FeatureStatisticsBundle.message("feature.statistics.application.idle.time",
-                                                             DateFormatUtil.formatDuration(idleTime));
+                                                             StringUtil.formatDurationApproximate(idleTime));
 
     String labelText = uptimeS + ", " + idleTimeS;
     CompletionStatistics stats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics();

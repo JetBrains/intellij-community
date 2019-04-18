@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  *   <li>{@code C()} calls {@code A()} which calls {@code B()} which calls {@code C()} and gets {@code null} as the result (if {@code C()} is first in the stack)</li>
  * </ol>
  * Most likely, the results of {@code C()} would be different in those 3 cases, and it'd be unwise to cache just any of them randomly,
- * whatever is calculated first. In a multithreaded environment, that'd lead to unpredictability.<p></p>
+ * whatever is calculated first. In a multi-threaded environment, that'd lead to unpredictability.<p></p>
  * 
  * Of the 3 possible scenarios above, caching for {@code C()} makes sense only for the last one, because that's the result we'd get if there were no caching at all.
  * Therefore, if you use any kind of caching in an endless-recursion-prone environment, please ensure you don't cache incomplete results
@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * {@code RecursionManager} assists in distinguishing this situation and allowing caching outside that loop, but disallowing it inside.<p></p>
  *
  * To prevent caching incorrect values, please create a {@code private static final} field of {@link #createGuard} call, and then use
- * {@link RecursionGuard#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
+ * {@link RecursionManager#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
  * on it.<p></p>
  *
  * Note that the above only helps with idempotent recursion loops, that is, the ones that stabilize after one iteration, so that
@@ -73,12 +73,13 @@ public class RecursionManager {
   /**
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
+   * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
   @NotNull
-  public static RecursionGuard createGuard(@NonNls final String id) {
-    return new RecursionGuard() {
+  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+    return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
@@ -131,27 +132,16 @@ public class RecursionManager {
 
       @NotNull
       @Override
-      public StackStamp markStack() {
-        final int stamp = ourStack.get().reentrancyCount;
-        return new StackStamp() {
-          @Override
-          public boolean mayCacheNow() {
-            return stamp == ourStack.get().reentrancyCount;
-          }
-        };
-      }
-
-      @NotNull
-      @Override
-      public List<Object> currentStack() {
-        ArrayList<Object> result = new ArrayList<>();
+      public List<Key> currentStack() {
+        ArrayList<Key> result = new ArrayList<>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
           if (pair.guardId.equals(id)) {
-            result.add(pair.userObject);
+            //noinspection unchecked
+            result.add((Key)pair.userObject);
           }
         }
-        return result;
+        return Collections.unmodifiableList(result);
       }
 
       @Override
@@ -163,6 +153,34 @@ public class RecursionManager {
 
     };
   }
+
+  /**
+   * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
+   * not depending on anything incomplete due to recursive prevention policies.
+   * A typical usage is this:
+   * {@code
+   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
+   *
+   *   Result result = doComputation();
+   *
+   *   if (stamp.mayCacheNow()) {
+   *     cache(result);
+   *   }
+   *   return result;
+   * }
+   * @return an object representing the current stack state, managed by {@link RecursionManager}
+   */
+  @NotNull
+  public static RecursionGuard.StackStamp markStack() {
+    int stamp = ourStack.get().reentrancyCount;
+    return new RecursionGuard.StackStamp() {
+      @Override
+      public boolean mayCacheNow() {
+        return stamp == ourStack.get().reentrancyCount;
+      }
+    };
+  }
+
 
   private static class MyKey {
     final String guardId;
@@ -279,16 +297,10 @@ public class RecursionManager {
       }
 
       reentrancyCount = value;
-      checkZero();
-
     }
 
     private void prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
-
-      if (!checkZero()) {
-        throw new AssertionError("zero1");
-      }
 
       boolean inLoop = false;
       for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
@@ -300,10 +312,6 @@ public class RecursionManager {
           inLoop = true;
         }
       }
-
-      if (!checkZero()) {
-        throw new AssertionError("zero2");
-      }
     }
 
     private void checkDepth(String s) {
@@ -313,15 +321,6 @@ public class RecursionManager {
         throw new AssertionError("_Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
       }
     }
-
-    private boolean checkZero() {
-      if (!progressMap.isEmpty() && !new Integer(0).equals(progressMap.get(progressMap.keySet().iterator().next()))) {
-        LOG.error("Prisoner Zero has escaped: " + progressMap + "; value=" + progressMap.get(progressMap.keySet().iterator().next()));
-        return false;
-      }
-      return true;
-    }
-
   }
 
   private static class MemoizedValue {

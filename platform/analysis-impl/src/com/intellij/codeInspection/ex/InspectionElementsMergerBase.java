@@ -143,7 +143,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   private void copyDefaultSettings(@NotNull Element targetElement, @NotNull Map<String, Element> inspectionElements, @NotNull String sourceToolName) {
     Element oldElement = getSourceElement(inspectionElements, sourceToolName);
     if (oldElement != null) {
-      Element defaultElement = wrapElement(sourceToolName, oldElement, targetElement);
+      Element defaultElement = transformElement(sourceToolName, oldElement, targetElement);
       oldElement.getChildren().stream()
         .filter(child -> !"scope".equals(child.getName()))
         .forEach(child -> defaultElement.addContent(child.clone()));
@@ -159,7 +159,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
                               @NotNull Element toolElement,
                               @NotNull Map<String, Element> scopes,
                               @NotNull Map<String, Set<String>> mentionedTools) {
-    Element wrapElement = wrapElement(sourceToolName, sourceElement, toolElement);
+    Element wrapElement = transformElement(sourceToolName, sourceElement, toolElement);
     for (Element element : sourceElement.getChildren()) {
       if ("scope".equals(element.getName())) {
         String scopeName = element.getAttributeValue("name");
@@ -179,13 +179,13 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   }
 
   private void copyScopeContent(@NotNull String sourceToolName, @NotNull Element element, @NotNull Element scopeElement) {
-    Element wrappedScope = wrapElement(sourceToolName, element, scopeElement);
+    Element wrappedScope = transformElement(sourceToolName, element, scopeElement);
     for (Element scopeEl : element.getChildren()) {
       wrappedScope.addContent(scopeEl.clone());
     }
   }
 
-  protected Element wrapElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
+  protected Element transformElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
     return toolElement;
   }
 }

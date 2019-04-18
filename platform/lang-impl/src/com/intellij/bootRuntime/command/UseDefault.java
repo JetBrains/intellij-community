@@ -15,6 +15,9 @@ public class UseDefault extends Command {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    runWithProgress("Uninstalling...", indicator -> FileUtil.delete(BinTrayUtil.getJdkConfigFilePath()));
+    runWithProgress("Uninstalling...", indicator -> {
+      FileUtil.delete(BinTrayUtil.getJdkConfigFilePath());
+      myController.restart();
+    });
   }
 }

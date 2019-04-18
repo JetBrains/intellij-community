@@ -32,11 +32,6 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
   }
 
   @Override
-  public void moveText(int srcStart, int srcEnd, int dstOffset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setText(@NotNull CharSequence text) {
     String s = StringUtil.convertLineSeparators(text.toString());
     myChars = new char[s.length()];

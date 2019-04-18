@@ -1,16 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -376,6 +376,22 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(9, TEST_CHAR_WIDTH * 3);
     configureSoftWraps(10);
     verifySoftWrapPositions(5);
+  }
+
+  public void testBlockInlayImpactsEditorWidth() {
+    initText("");
+    myEditor.getSettings().setAdditionalColumnsCount(0);
+    myEditor.getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123;}
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
+    });
+    assertEquals(123, myEditor.getContentComponent().getPreferredSize().width);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

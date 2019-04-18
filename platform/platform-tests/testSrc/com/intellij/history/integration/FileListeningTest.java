@@ -67,17 +67,16 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   public void testIgnoringFilesRecursively() throws Exception {
-    String excluded = "dir/subdir";
+    String excluded = "dir/excluded";
     addExcludedDir(myRoot.getPath() + "/" + excluded);
-    String contentUnderExcluded = excluded + "/subsubdir1";
+    String contentUnderExcluded = excluded + "/content";
     addContentRoot(createModule("foo"), myRoot.getPath() + "/" + contentUnderExcluded);
 
     String dir = createDirectoryExternally("dir");
-    String dir1_file = createFileExternally("dir/f.txt");
+    String dir1_fTxt = createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
-    createFileExternally("dir/subdir/f.txt");
-    String subsubdir1 = createDirectoryExternally(contentUnderExcluded);
-    String subsubdir1_file = createFileExternally(contentUnderExcluded + "/f.txt");
+    String contentUnderExcludedPath = createDirectoryExternally(contentUnderExcluded);
+    String contentUnderExcluded_fTxt = createFileExternally(contentUnderExcluded + "/f.txt");
     createDirectoryExternally(excluded + "/subsubdir2");
     createFileExternally(excluded + "/subsubdir2/f.txt");
 
@@ -89,7 +88,7 @@ public class FileListeningTest extends IntegrationTestCase {
       actual.add(((StructuralChange)each).getPath());
     }
 
-    List<String> expected = new ArrayList<>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
+    List<String> expected = new ArrayList<>(Arrays.asList(dir, contentUnderExcludedPath, dir1_fTxt, contentUnderExcluded_fTxt));
 
     Collections.sort(actual);
     Collections.sort(expected);
@@ -97,12 +96,12 @@ public class FileListeningTest extends IntegrationTestCase {
 
     // ignored folders should not be loaded in VFS
     assertEquals("dir\n" +
+                 " excluded\n" +
+                 "  content\n" +
+                 "   f.txt\n" +
                  " f.class\n" +
-                 " f.txt\n" +
-                 " subdir\n" +
-                 "  subsubdir1\n" +
-                 "   f.txt\n",
-                 buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
+                 " f.txt\n"
+                 , buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
     );
   }
 

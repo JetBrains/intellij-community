@@ -1894,6 +1894,8 @@ class Abc {
 
   void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
 
+  void testSuggestCurrentClassInSecondSuperGenericParameter() { doTest('\n') }
+
   void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
     myFixture.addClass("class Super {}")
     myFixture.addClass("class Sub extends Super {}")
@@ -1906,5 +1908,12 @@ class Abc {
     myFixture.assertPreferredCompletionItems 0, 'Sub'
     myFixture.type('O')
     myFixture.assertPreferredCompletionItems 0, 'SubOther'
+  }
+
+  void "test correct typos"() {
+    myFixture.configureByText("a.java", "class MyClass { MyCals<caret> }")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class MyClass { MyClass<caret> }")
   }
 }

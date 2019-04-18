@@ -23,7 +23,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class InheritanceToDelegationAction extends BaseRefactoringAction {
+public class InheritanceToDelegationAction extends BaseJavaRefactoringAction {
   @Override
   public boolean isAvailableInEditorOnly() {
     return false;

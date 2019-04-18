@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
 import com.intellij.lang.surroundWith.Surrounder
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
@@ -21,11 +22,13 @@ class PyLenPostfixTemplate : SurroundPostfixTemplateBase("len", DESCR, PyPostfix
 
     val sizedFilter: Condition<PsiElement> = Condition { element ->
 
-      val expression = element as PyExpression
-      val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)
-      val type = context.getType(expression) ?: return@Condition false
-
-      return@Condition PyABCUtil.isSubtype(type, PyNames.SIZED, context)
+      if (!DumbService.isDumb(element.project)) {
+        val expression = element as PyExpression
+        val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)
+        val type = context.getType(expression) ?: return@Condition false
+        return@Condition PyABCUtil.isSubtype(type, PyNames.SIZED, context)
+      }
+      return@Condition false
     }
   }
 }

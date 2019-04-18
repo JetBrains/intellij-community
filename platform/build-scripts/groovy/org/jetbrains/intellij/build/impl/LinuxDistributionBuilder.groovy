@@ -32,11 +32,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "libyjpagent-linux*.so")
-        }
-      }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
 
@@ -117,10 +112,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String unixDistPath) {
     JvmArchitecture.values().each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName) +
-                      " -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine"
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
+                      " -Dawt.useSystemAAFontSettings=lcd" +
+                      " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
+                      " -Dsun.tools.attach.tmp.only=true"
       new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
   }

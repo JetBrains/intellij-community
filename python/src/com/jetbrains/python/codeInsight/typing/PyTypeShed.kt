@@ -39,7 +39,7 @@ import java.io.File
  */
 object PyTypeShed {
   private const val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = 2..7
+  private val SUPPORTED_PY3_MINORS = 2..8
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].

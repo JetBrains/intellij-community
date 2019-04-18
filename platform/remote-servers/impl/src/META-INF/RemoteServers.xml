@@ -21,8 +21,7 @@
                         serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"
-                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
+    <applicationService serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager"/>
     <applicationConfigurable groupId="build"
                              id="RemoteServers"
                              provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
@@ -61,9 +60,13 @@
               text="Debug" description="Deploy and debug a chosen item on the selected remote server" icon="AllIcons.Actions.StartDebugger"/>
 
       <action id="Servers.Deploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAction"
-              text="Deploy" description="Deploy the selected item" icon="AllIcons.Nodes.Deploy"/>
+              text="Deploy" description="Deploy the selected item" icon="AllIcons.Nodes.Deploy">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
       <action id="Servers.Undeploy" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.UndeployAction"
-              text="Undeploy" description="Undeploy the selected item" icon="AllIcons.Nodes.Undeploy"/>
+              text="Undeploy" description="Undeploy the selected item" icon="AllIcons.Nodes.Undeploy">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
       <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"
               text="Debug" description="Deploy and debug the selected item" icon="AllIcons.Actions.StartDebugger"/>
       <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"

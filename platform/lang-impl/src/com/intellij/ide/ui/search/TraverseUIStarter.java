@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
@@ -49,7 +49,7 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
  * Pass {@code true} as the second parameter to have searchable options split by modules.
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class TraverseUIStarter extends ApplicationStarterEx {
+public class TraverseUIStarter implements ApplicationStarter {
   private static final String OPTIONS = "options";
   private static final String CONFIGURABLE = "configurable";
   private static final String ID = "id";
@@ -63,11 +63,6 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   private String OUTPUT_PATH;
   private boolean SPLIT_BY_RESOURCE_PATH;
-
-  @Override
-  public boolean isHeadless() {
-    return true;
-  }
 
   @Override
   public String getCommandName() {

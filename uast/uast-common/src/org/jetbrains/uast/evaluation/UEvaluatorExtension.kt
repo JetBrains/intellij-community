@@ -28,10 +28,6 @@ interface UEvaluatorExtension {
       ExtensionPointName.create<UEvaluatorExtension>("org.jetbrains.uast.evaluation.UEvaluatorExtension")
   }
 
-  @Deprecated("kept for binary compatibility, will be removed in IDEA 2019.2",
-              ReplaceWith("org.jetbrains.uast.evaluation.UEvaluationInfoKt.to"))
-  fun UValue.to(state: UEvaluationState): UEvaluationInfo = UEvaluationInfo(this, state)
-
   val language: Language
 
   fun evaluatePostfix(

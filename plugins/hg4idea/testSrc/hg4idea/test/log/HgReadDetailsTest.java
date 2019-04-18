@@ -41,14 +41,6 @@ public class HgReadDetailsTest extends HgPlatformTest {
     super.tearDown();
   }
 
-  public void testReadAllFullDetails() throws IOException, VcsException {
-    Collection<String> commits = generateCommits().values();
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-    myProvider.readAllFullDetails(projectRoot, details::add);
-    assertSameElements(ContainerUtil.map(details.subList(0, details.size() - 1), // removing initial commit
-                                         d -> d.getFullMessage() + "\n" + getChanges(d)), commits);
-  }
-
   public void testReadFullDetailsByHash() throws IOException, VcsException {
     Map<String, String> commits = generateCommits();
     List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();

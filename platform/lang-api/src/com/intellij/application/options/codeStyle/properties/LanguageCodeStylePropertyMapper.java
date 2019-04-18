@@ -4,6 +4,7 @@ package com.intellij.application.options.codeStyle.properties;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -94,7 +95,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
                                  @NotNull CodeStyleSettings rootSettings,
                                  @NotNull List<? extends CodeStyleSettingsProvider> providerList) {
     for (CodeStyleSettingsProvider provider : providerList) {
-      if (provider.getLanguage() == myLanguage) {
+      if (provider.getLanguage() == myLanguage && isEnabled(provider)) {
         CustomCodeStyleSettings customSettingsTemplate = provider.createCustomSettings(rootSettings);
         if (customSettingsTemplate != null) {
           CustomCodeStyleSettings customSettings = rootSettings.getCustomSettings(customSettingsTemplate.getClass());
@@ -102,6 +103,12 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
         }
       }
     }
+  }
+
+  private static boolean isEnabled(@NotNull CodeStyleSettingsProvider provider) {
+    // Enable only providers defining a main language configurable in unit test mode, skip any secondary contributors
+    // to avoid test flickering on different class paths.
+    return !ApplicationManager.getApplication().isUnitTestMode() || provider.hasSettingsPage();
   }
 
   private Set<String> getSupportedIndentOptions() {

@@ -17,8 +17,12 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.serverBootstrap
 import com.intellij.util.net.NetUtils
-import org.jetbrains.builtInWebServer.*
+import org.jetbrains.builtInWebServer.BuiltInServerOptions
+import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
+import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
+import org.jetbrains.builtInWebServer.acquireToken
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.BuiltInServer.Companion.recommendedWorkerCount
 import org.jetbrains.io.NettyUtil
@@ -32,6 +36,8 @@ import java.util.concurrent.Future
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
+
+private val LOG = logger<BuiltInServerManager>()
 
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Future<*>? = null
@@ -54,10 +60,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
 
   companion object {
-    private val LOG = logger<BuiltInServerManager>()
-
     @JvmField
-    val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = object : NotNullLazyValue<NotificationGroup>() {
+    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = object : NotNullLazyValue<NotificationGroup>() {
       override fun compute(): NotificationGroup {
         return NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
       }
@@ -97,6 +101,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       }
     }
   }
+
+  fun createServerBootstrap() = serverBootstrap(server!!.eventLoopGroup)
 
   override fun waitForStart(): BuiltInServerManager {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode || !ApplicationManager.getApplication().isDispatchThread)

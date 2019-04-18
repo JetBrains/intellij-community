@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
+import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
@@ -31,6 +33,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
 
   private final ProjectLevelVcsManager myVcsManager;
+  private final VcsIgnoreManager myVcsIgnoreManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static class MovedFileInfo {
@@ -73,6 +76,7 @@ public abstract class VcsVFSListener implements Disposable {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
+    myVcsIgnoreManager = VcsIgnoreManager.getInstance(project);
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
@@ -84,6 +88,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
+    createIgnoredFilesProcessor();
   }
 
   @Override
@@ -98,7 +103,7 @@ public abstract class VcsVFSListener implements Disposable {
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
     return myVcsManager.getVcsFor(file) == myVcs &&
            myVcsManager.isFileInContent(file) &&
-           !myChangeListManager.isIgnoredFile(file);
+           !myVcsIgnoreManager.isPotentiallyIgnoredFile(file);
   }
 
   protected void executeAdd() {
@@ -330,6 +335,10 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
+
+  private void createIgnoredFilesProcessor() {
+    new IgnoreFilesProcessorImpl(myProject, this);
+  }
 
   @SuppressWarnings("unchecked")
   private FilesProcessor createExternalFilesProcessor() {

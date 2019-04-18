@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,25 +47,27 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module) {
-    final List<String> candidates = new ArrayList<>();
-    if (module != null) {
-      final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
-      if (baseDir != null) {
-        candidates.addAll(findInDirectory(baseDir));
+    return ReadAction.compute(() -> {
+      final List<String> candidates = new ArrayList<>();
+      if (module != null) {
+        final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        if (baseDir != null) {
+          candidates.addAll(findInBaseDirectory(baseDir));
+        }
       }
-    }
 
-    final VirtualFile path = getDefaultLocation();
-    if (path != null) {
-      candidates.addAll(findInDirectory(path));
-    }
+      final VirtualFile path = getDefaultLocation();
+      if (path != null) {
+        candidates.addAll(findInBaseDirectory(path));
+      }
 
-    final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
-    if (pyEnvLocation != null) {
-      candidates.addAll(findInDirectory(pyEnvLocation));
-    }
+      final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
+      if (pyEnvLocation != null) {
+        candidates.addAll(findInBaseDirectory(pyEnvLocation));
+      }
 
-    return candidates;
+      return candidates;
+    });
   }
 
   @Nullable
@@ -99,24 +102,35 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return null;
   }
 
-  public static Collection<String> findInDirectory(VirtualFile rootDir) {
+  public static Collection<String> findInBaseDirectory(@Nullable VirtualFile baseDir) {
     List<String> candidates = new ArrayList<>();
-    if (rootDir != null) {
-      rootDir.refresh(true, false);
-      VirtualFile[] suspects = rootDir.getChildren();
+    if (baseDir != null) {
+      baseDir.refresh(true, false);
+      VirtualFile[] suspects = baseDir.getChildren();
       for (VirtualFile child : suspects) {
-        if (child.isDirectory()) {
-          final VirtualFile bin = child.findChild("bin");
-          final VirtualFile scripts = child.findChild("Scripts");
-          if (bin != null) {
-            final String interpreter = findInterpreter(bin);
-            if (interpreter != null) candidates.add(interpreter);
-          }
-          if (scripts != null) {
-            final String interpreter = findInterpreter(scripts);
-            if (interpreter != null) candidates.add(interpreter);
-          }
-        }
+        candidates.addAll(findInRootDirectory(child));
+      }
+    }
+    return candidates;
+  }
+
+  @NotNull
+  public static Collection<String> findInRootDirectory(@Nullable VirtualFile rootDir) {
+    final List<String> candidates = new ArrayList<>();
+    if (rootDir != null && rootDir.isDirectory()) {
+      final VirtualFile bin = rootDir.findChild("bin");
+      final VirtualFile scripts = rootDir.findChild("Scripts");
+      if (bin != null) {
+        final String interpreter = findInterpreter(bin);
+        if (interpreter != null) candidates.add(interpreter);
+      }
+      if (scripts != null) {
+        final String interpreter = findInterpreter(scripts);
+        if (interpreter != null) candidates.add(interpreter);
+      }
+      if (candidates.isEmpty()) {
+        final String interpreter = findInterpreter(rootDir);
+        if (interpreter != null) candidates.add(interpreter);
       }
     }
     return candidates;

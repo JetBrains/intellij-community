@@ -48,11 +48,15 @@ class SnapshotInputMappings<Key, Value, Input> implements SnapshotInputMappingIn
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
-    myIndexingTrace = createIndexingTrace();
+    myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
   }
 
   HashIdForwardIndexAccessor<Key, Value, Input> getForwardIndexAccessor() {
     return myHashIdForwardIndexAccessor;
+  }
+
+  File getInputIndexStorageFile() {
+    return new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
   }
 
   @NotNull

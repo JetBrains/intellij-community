@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/common/26.3.0/common-26.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/common/26.3.0/common-26.3.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

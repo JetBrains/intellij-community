@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -64,6 +66,38 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   /**
    * Checks if we are going to wait for {@code processHandler} to finish on EDT or under ReadAction. Logs error if we do so.
+   * <br/><br/>
+   * HOW-TO fix an error from this method:
+   * <ul>
+   * <li>You are on the pooled thread under {@link com.intellij.openapi.application.ReadAction ReadAction}:
+   * <ul>
+   *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the ReadAction or synchronicity.
+   *    *     Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
+   *    *     {@link Task.Backgroundable other thread} and invoke a callback.</li>
+   *     <li>Non-synchronous (you don't need to return something) - execute on other thread. E.g. using {@link Task.Backgroundable}</li>
+   * </ul>
+   * </li>
+   *
+   * <li>You are on EDT:
+   * <ul>
+   *
+   * <li>Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
+   *   <ul>
+   *     <li>Synchronous (you need to return execution result or derived information to the caller) - execute under
+   *       {@link ProgressManager#runProcessWithProgressSynchronously(java.lang.Runnable, java.lang.String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
+   *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
+   *   </ul>
+   * </li>
+   *
+   * <li>Under {@link com.intellij.openapi.application.WriteAction WriteAction}
+   *   <ul>
+   *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the WriteAction or synchronicity.
+   *       Move execution part out of the code executed under WriteAction, or make your execution asynchronous - execute on
+   *      {@link Task.Backgroundable other thread} and invoke a callback.</li>
+   *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
+   *   </ul>
+   * </li>
+   * </ul></li></ul>
    *
    * @apiNote works only in internal mode with UI. Reports once per running session per stacktrace per cause.
    */

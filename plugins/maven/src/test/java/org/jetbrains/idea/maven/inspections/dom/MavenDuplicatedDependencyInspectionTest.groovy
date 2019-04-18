@@ -15,13 +15,14 @@
  */
 package org.jetbrains.idea.maven.inspections.dom
 
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+
+import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
 
 /**
  * @author Sergey Evdokimov
  */
-class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
+class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCase {
 
   void testDuplicatedInSameFile() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)

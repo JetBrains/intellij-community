@@ -1460,8 +1460,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = getDocument(getFile());
       data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
     }
-    //noinspection ResultOfMethodCallIgnored
-    hardRefToFileElement.hashCode(); // use it so gc won't collect it
+    ObjectUtils.reachabilityFence(hardRefToFileElement);
     return elapsed;
   }
 

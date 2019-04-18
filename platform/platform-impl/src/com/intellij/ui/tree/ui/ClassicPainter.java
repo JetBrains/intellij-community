@@ -1,14 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import javax.swing.UIManager;
 
 final class ClassicPainter implements Control.Painter {
+  static final Control.Painter DEFAULT = new ClassicPainter(null, null, null, null);
+  static final Control.Painter COMPACT = new ClassicPainter(true, 0, 0, 0);
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
@@ -50,8 +57,7 @@ final class ClassicPainter implements Control.Painter {
     if (!paintLines && leaf) return; // nothing to paint
     int controlWidth = control.getWidth();
     int left = getLeftIndent(controlWidth / 2);
-    int right = getRightIndent();
-    int indent = left + right;
+    int indent = left + getRightIndent();
     x += left - controlWidth / 2;
     int controlX = !leaf && depth > 1 ? (depth - 1) * indent + x : x;
     if (paintLines && (depth != 1 || (!leaf && expanded))) {
@@ -78,6 +84,8 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private int getRightIndent() {
+    int old = myRightIndent == null ? Registry.intValue("ide.ui.tree.indent", -1) : -1;
+    if (old >= 0) return JBUI.scale(old); // support old registry key temporarily
     return Math.max(0, myRightIndent != null ? JBUI.scale(myRightIndent) : UIManager.getInt("Tree.rightChildIndent"));
   }
 
@@ -86,7 +94,14 @@ final class ClassicPainter implements Control.Painter {
   }
 
   private static void paintLine(@NotNull Graphics g, int x, int y, int width, int height) {
-    x += width / 2;
-    g.drawLine(x, y, x, y + height);
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      double dx = x + width / 2.0 - PaintUtil.devPixel(g2d);
+      LinePainter2D.paint(g2d, dx, y, dx, y + height, LinePainter2D.StrokeType.CENTERED, 1, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    else {
+      x += width / 2;
+      g.drawLine(x, y, x, y + height);
+    }
   }
 }

@@ -113,6 +113,12 @@ public class IndentSelectionAction extends EditorAction {
                        final int blockIndent) {
     final int[] caretOffset = {editor.getCaretModel().getOffset()};
 
+    SelectionModel selectionModel = editor.getSelectionModel();
+    boolean extendSelection = selectionModel.hasSelection() &&
+                              DocumentUtil.isAtLineStart(selectionModel.getSelectionStart(), document) &&
+                              (selectionModel.getSelectionEnd() == document.getTextLength() ||
+                               DocumentUtil.isAtLineStart(selectionModel.getSelectionEnd(), document));
+
     boolean bulkMode = endIndex - startIndex > 50;
     DocumentUtil.executeInBulk(document, bulkMode, () -> {
       List<Integer> nonModifiableLines = new ArrayList<>();
@@ -136,6 +142,11 @@ public class IndentSelectionAction extends EditorAction {
         }
       }
     });
+
+    if (extendSelection) {
+      selectionModel.setSelection(DocumentUtil.getLineStartOffset(selectionModel.getSelectionStart(), document),
+                                  selectionModel.getSelectionEnd());
+    }
 
     editor.getCaretModel().moveToOffset(caretOffset[0]);
   }

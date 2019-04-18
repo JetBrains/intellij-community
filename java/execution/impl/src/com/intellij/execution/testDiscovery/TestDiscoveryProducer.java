@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public interface TestDiscoveryProducer {
         return new THashSet<>();
       }
     };
-    for (TestDiscoveryProducer producer : EP.getExtensions()) {
+    for (TestDiscoveryProducer producer : EP.getExtensionList()) {
       for (Map.Entry<String, Collection<String>> entry : ContainerUtil.concat(
         producer.getDiscoveredTests(project, classesAndMethods, frameworkId).entrySet(),
         producer.getDiscoveredTestsForFiles(project, filePaths, frameworkId).entrySet())) {
@@ -77,7 +77,7 @@ public interface TestDiscoveryProducer {
 
   // testFqn - (className, methodName)
   static void consumeAffectedPaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
-    for (TestDiscoveryProducer extension : EP.getExtensions()) {
+    for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
         pathsConsumer.consume(path);
       }
@@ -85,7 +85,7 @@ public interface TestDiscoveryProducer {
   }
 
   static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
-    for (TestDiscoveryProducer extension : EP.getExtensions()) {
+    for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePathsByClassName(project, testClassName, frameworkId)) {
         pathsConsumer.consume(path);
       }

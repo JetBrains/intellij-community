@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Stripped-down version of {@code com.intellij.openapi.util.io.FileUtil}.
+ * Stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")

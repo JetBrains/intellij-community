@@ -316,7 +316,10 @@ public class JsonSchemaObject {
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
     if (myRequired != null && other.myRequired != null) {
-      myRequired.addAll(other.myRequired);
+      Set<String> set = ContainerUtil.newHashSet(myRequired.size() + other.myRequired.size());
+      set.addAll(myRequired);
+      set.addAll(other.myRequired);
+      myRequired = set;
     }
     else if (other.myRequired != null) {
       myRequired = other.myRequired;

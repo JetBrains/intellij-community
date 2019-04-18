@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -59,7 +60,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   private String myName;
   private final boolean myLight;
-  private static boolean ourClassesAreLoaded;
+  static boolean ourClassesAreLoaded;
 
   /**
    * @param filePath System-independent path
@@ -268,7 +269,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     //noinspection CodeBlock2Expr
     init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    } : null, true);
+    } : null);
 
     if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
@@ -347,6 +348,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
+
     TimedReference.disposeTimed();
     LaterInvocator.purgeExpiredItems();
   }
@@ -375,7 +378,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
-           " " + getName();
+           " " + myName;
   }
 
   @Nullable

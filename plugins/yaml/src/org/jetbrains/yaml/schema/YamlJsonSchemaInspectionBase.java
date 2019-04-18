@@ -13,6 +13,8 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLFile;
 
+import java.util.Collection;
+
 public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
   @NotNull
   @Override
@@ -24,8 +26,8 @@ public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    PsiElement root = YamlJsonPsiWalker.INSTANCE.getRoot(file);
-    if (root == null) {
+    Collection<PsiElement> roots = YamlJsonPsiWalker.INSTANCE.getRoots(file);
+    if (roots.isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
@@ -37,11 +39,11 @@ public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
     if (rootSchema == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return doBuildVisitor(holder, session, root, rootSchema);
+    return doBuildVisitor(holder, session, roots, rootSchema);
   }
 
   protected abstract PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder,
                                                       @NotNull LocalInspectionToolSession session,
-                                                      PsiElement root,
+                                                      Collection<PsiElement> roots,
                                                       JsonSchemaObject object);
 }

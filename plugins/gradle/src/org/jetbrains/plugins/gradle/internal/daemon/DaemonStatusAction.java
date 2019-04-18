@@ -15,7 +15,6 @@ import org.gradle.launcher.daemon.registry.DaemonStopEvent;
 import org.gradle.launcher.daemon.registry.DaemonStopEvents;
 import org.gradle.launcher.daemon.server.expiry.DaemonExpirationStatus;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Field;

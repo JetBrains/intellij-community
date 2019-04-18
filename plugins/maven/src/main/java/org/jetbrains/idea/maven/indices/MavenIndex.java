@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -52,7 +38,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public class MavenIndex {
+public class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
@@ -71,10 +57,6 @@ public class MavenIndex {
   private static final String ARTIFACT_IDS_MAP_FILE = "artifactIds-map.dat";
   private static final String VERSIONS_MAP_FILE = "versions-map.dat";
   private static final String ARCHETYPES_MAP_FILE = "archetypes-map.dat";
-
-  public enum Kind {
-    LOCAL, REMOTE
-  }
 
   private final MavenIndexerWrapper myNexusIndexer;
   private final NotNexusIndexer myNotNexusIndexer;
@@ -170,6 +152,7 @@ public class MavenIndex {
     return null;
   }
 
+  @Override
   public void registerId(String repositoryId) throws MavenIndexException {
     if (myRegisteredRepositoryIds.add(repositoryId)) {
       save();
@@ -212,25 +195,19 @@ public class MavenIndex {
   }
 
   private void doOpen() throws Exception {
-    try {
-      File dataDir;
-      if (myDataDirName == null) {
-        dataDir = createNewDataDir();
-        myDataDirName = dataDir.getName();
-      }
-      else {
-        dataDir = new File(myDir, myDataDirName);
-        dataDir.mkdirs();
-      }
-      if (myData != null) {
-        myData.close(true);
-      }
-      myData = new IndexData(dataDir);
+    File dataDir;
+    if (myDataDirName == null) {
+      dataDir = createNewDataDir();
+      myDataDirName = dataDir.getName();
     }
-    catch (Exception e) {
-      cleanupBrokenData();
-      throw e;
+    else {
+      dataDir = new File(myDir, myDataDirName);
+      dataDir.mkdirs();
     }
+    if (myData != null) {
+      myData.close(true);
+    }
+    myData = new IndexData(dataDir);
   }
 
   private void cleanupBrokenData() {
@@ -252,6 +229,7 @@ public class MavenIndex {
     }
   }
 
+  @Override
   public synchronized void close(boolean releaseIndexContext) {
     try {
       if (myData != null) myData.close(releaseIndexContext);
@@ -289,40 +267,49 @@ public class MavenIndex {
     }
   }
 
+  @Override
   public String getRepositoryId() {
     return myId.getValue();
   }
 
+  @Override
   public File getRepositoryFile() {
     return myKind == Kind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
   }
 
+  @Override
   public String getRepositoryUrl() {
     return myKind == Kind.REMOTE ? myRepositoryPathOrUrl : null;
   }
 
+  @Override
   public String getRepositoryPathOrUrl() {
     return myRepositoryPathOrUrl;
   }
 
+  @Override
   public Kind getKind() {
     return myKind;
   }
 
+  @Override
   public boolean isFor(Kind kind, String pathOrUrl) {
     if (myKind != kind) return false;
     if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
     return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
   }
 
+  @Override
   public synchronized long getUpdateTimestamp() {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }
 
+  @Override
   public synchronized String getFailureMessage() {
     return myFailureMessage;
   }
 
+  @Override
   public void updateOrRepair(boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     try {
@@ -401,7 +388,7 @@ public class MavenIndex {
     synchronized (this) {
       IndexData oldData = myData;
 
-      if(oldData != null) {
+      if (oldData != null) {
         oldData.close(true);
       }
     }
@@ -449,6 +436,9 @@ public class MavenIndex {
       final StringBuilder builder = new StringBuilder();
       MavenIndicesProcessor mavenIndicesProcessor = artifacts -> {
         for (IndexedMavenId id : artifacts) {
+          if ("pom.lastUpdated".equals(id.packaging)) {
+            continue;
+          }
           builder.setLength(0);
 
           builder.append(id.groupId).append(":").append(id.artifactId);
@@ -746,10 +736,6 @@ public class MavenIndex {
       }
       return result;
     }
-  }
-
-  public interface IndexListener {
-    void indexIsBroken(@NotNull MavenIndex index);
   }
 
   private class MyIndexRepositoryIdsProvider implements CachedValueProvider<String> {

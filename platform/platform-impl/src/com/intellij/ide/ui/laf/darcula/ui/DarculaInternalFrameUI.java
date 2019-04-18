@@ -41,6 +41,4 @@ public class DarculaInternalFrameUI extends BasicInternalFrameUI {
     };
     return this.titlePane;
   }
-
-
 }

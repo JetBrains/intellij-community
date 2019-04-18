@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -24,7 +10,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -195,7 +180,7 @@ public class PersistentHashMapValueStorage {
 
   public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
     if (mySize == 0) {
-      byte[] bytes = "Header Record For PersistentHashMapValueStorage".getBytes(CharsetToolkit.UTF8_CHARSET);
+      byte[] bytes = "Header Record For PersistentHashMapValueStorage".getBytes(StandardCharsets.UTF_8);
       doAppendBytes(bytes, 0, bytes.length, 0);
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
@@ -466,7 +451,7 @@ public class PersistentHashMapValueStorage {
             if (retained > SOFT_MAX_RETAINED_LIMIT &&
                 accumulatedChunksBuffer.length > BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT ||
                 retained > MAX_RETAINED_LIMIT_WHEN_COMPACTING) {
-              // to avoid OOME we need to save bytes in accumulatedChunksBuffer 
+              // to avoid OOME we need to save bytes in accumulatedChunksBuffer
               newFragments +=
                 saveAccumulatedDataOnDiskPreservingWriteOrder(storage, info, prevChunkAddress, accumulatedChunksBuffer, chunkSize);
               retained -= accumulatedChunksBuffer.length;
@@ -504,7 +489,7 @@ public class PersistentHashMapValueStorage {
                                                             byte[] accumulatedChunksData,
                                                             int accumulatedChunkDataLength) throws IOException {
     ReadResult result = readBytes(prevChunkAddress);
-    // to avoid possible OOME result.bytes and accumulatedChunksData are not combined in one chunk, instead they are 
+    // to avoid possible OOME result.bytes and accumulatedChunksData are not combined in one chunk, instead they are
     // placed one after another, such near placement should be fine because of disk caching
     info.newValueAddress = storage.appendBytes(result.buffer, 0, result.buffer.length, info.newValueAddress);
     info.newValueAddress = storage.appendBytes(accumulatedChunksData, 0, accumulatedChunkDataLength, info.newValueAddress);

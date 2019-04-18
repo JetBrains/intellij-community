@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FindSymbolParameters {
+  @NotNull
   private final String myCompletePattern;
+  @NotNull
   private final String myLocalPatternName;
   private final GlobalSearchScope mySearchScope;
   private final IdFilter myIdFilter;
@@ -23,15 +25,18 @@ public class FindSymbolParameters {
     myIdFilter = idFilter;
   }
 
+  @NotNull
   public String getCompletePattern() {
     return myCompletePattern;
   }
 
+  @NotNull
   public String getLocalPatternName() {
     return myLocalPatternName;
   }
 
-  public @NotNull GlobalSearchScope getSearchScope() {
+  @NotNull
+  public GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -48,6 +53,7 @@ public class FindSymbolParameters {
     );
   }
 
+  @NotNull
   public static GlobalSearchScope searchScopeFor(@Nullable Project project, boolean searchInLibraries) {
     GlobalSearchScope baseScope =
       project == null ? new EverythingGlobalScope() :

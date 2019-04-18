@@ -30,7 +30,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -280,7 +280,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         }
       })
       .inSmartMode(myProject)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {

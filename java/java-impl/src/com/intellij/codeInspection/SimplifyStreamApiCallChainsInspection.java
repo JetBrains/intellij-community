@@ -469,7 +469,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     public PsiElement simplify(PsiMethodCallExpression streamMethodCall) {
       PsiMethodCallExpression collectionStreamCall = getQualifierMethodCall(streamMethodCall);
       if (collectionStreamCall == null) return null;
-      PsiExpression collectionExpression = collectionStreamCall.getMethodExpression().getQualifierExpression();
+      PsiExpression collectionExpression = ExpressionUtils.getEffectiveQualifier(collectionStreamCall.getMethodExpression());
       if (collectionExpression == null) return null;
       collectionStreamCall.replace(collectionExpression);
       ExpressionUtils.bindCallTo(streamMethodCall, myReplacementMethod);
@@ -479,6 +479,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_FOR_EACH, call -> {
         PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (qualifierCall == null || ExpressionUtils.getEffectiveQualifier(qualifierCall.getMethodExpression()) == null) return null;
         if (COLLECTION_STREAM.test(qualifierCall)) {
           return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true);
         }
@@ -1390,7 +1391,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private final String myQualifierText;
     private final boolean myParallel;
 
-    ReplaceStreamSupportWithCollectionStreamFix(PsiExpression qualifier, boolean parallel) {
+    ReplaceStreamSupportWithCollectionStreamFix(@NotNull PsiExpression qualifier, boolean parallel) {
       myQualifierText = PsiExpressionTrimRenderer.render(qualifier, 50);
       myParallel = parallel;
     }
@@ -1803,7 +1804,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         argList = StreamEx.of(args, 1, args.length - 1).map(ct::text).joining();
       }
       else if (COLLECTION_STREAM.matches(qualifier)) {
-        PsiExpression collection = ExpressionUtils.getQualifierOrThis(qualifier.getMethodExpression());
+        PsiExpression collection = ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression());
+        if (collection == null) return null;
         argList = ct.text(collection);
       }
       else {
@@ -1821,7 +1823,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (extractDelimiter(call) == null) return null;
         PsiMethodCallExpression qualifier = getQualifierMethodCall(call);
         if (qualifier == null) return null;
-        if (ARRAYS_STREAM.matches(qualifier) || COLLECTION_STREAM.matches(qualifier)) {
+        if (ARRAYS_STREAM.matches(qualifier) || 
+            (COLLECTION_STREAM.matches(qualifier) && ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression()) != null)) {
           PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
           if (InheritanceUtil.isInheritor(elementType, "java.lang.CharSequence")) {
             return new JoiningStringsFix();

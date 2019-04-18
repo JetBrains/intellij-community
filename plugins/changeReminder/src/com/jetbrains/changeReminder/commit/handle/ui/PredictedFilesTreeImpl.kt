@@ -8,7 +8,7 @@ import com.jetbrains.changeReminder.predict.PredictedChange
 import com.jetbrains.changeReminder.predict.PredictedFile
 import com.jetbrains.changeReminder.predict.PredictedFilePath
 
-class PredictedFilesTreeImpl(
+internal class PredictedFilesTreeImpl(
   project: Project,
   showCheckboxes: Boolean = false,
   highlightProblems: Boolean = false,

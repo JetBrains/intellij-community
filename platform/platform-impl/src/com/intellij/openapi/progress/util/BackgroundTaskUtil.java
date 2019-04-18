@@ -84,7 +84,7 @@ public class BackgroundTaskUtil {
     if (forceEDT) {
       ProgressIndicator indicator = new EmptyProgressIndicator(modality);
       try {
-        Runnable callback = backgroundTask.fun(indicator);
+        Runnable callback = ProgressManager.getInstance().runProcess(() -> backgroundTask.fun(indicator), indicator);
         finish(callback, indicator);
       }
       catch (ProcessCanceledException ignore) {

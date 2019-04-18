@@ -61,25 +61,25 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
-    return ContainerUtilRt.newTreeMap(map);
+    return new TreeMap<>(map);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
-    return ContainerUtilRt.newLinkedHashMap();
+    return new LinkedHashMap<>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
-    return ContainerUtilRt.newLinkedHashMap(capacity);
+    return new LinkedHashMap<>(capacity);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return ContainerUtilRt.newLinkedHashMap(map);
+    return new LinkedHashMap<>(map);
   }
 
   @NotNull
@@ -130,7 +130,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedList<T> newLinkedList() {
-    return ContainerUtilRt.newLinkedList();
+    return new LinkedList<>();
   }
 
   @SafeVarargs
@@ -297,7 +297,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
-    return ContainerUtilRt.newHashSet(elements);
+    return new HashSet<>(Arrays.asList(elements));
   }
 
   @NotNull
@@ -331,7 +331,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
-    return ContainerUtilRt.newLinkedHashSet();
+    return new LinkedHashSet<>();
   }
 
   @NotNull
@@ -411,7 +411,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
-    return ContainerUtilRt.newTreeSet();
+    return new TreeSet<>();
   }
 
   @NotNull
@@ -423,7 +423,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
-    return ContainerUtilRt.newTreeSet(comparator);
+    return new TreeSet<>(comparator);
   }
 
   @NotNull
@@ -558,12 +558,14 @@ public class ContainerUtil extends ContainerUtilRt {
   public static class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new THashMap<>();
 
+    @NotNull
     public ImmutableMapBuilder<K, V> put(K key, V value) {
       myMap.put(key, value);
       return this;
     }
 
     @Contract(pure=true)
+    @NotNull
     public Map<K, V> build() {
       return Collections.unmodifiableMap(myMap);
     }
@@ -1718,7 +1720,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Collection<T> subtract(@NotNull Collection<? extends T> from, @NotNull Collection<? extends T> what) {
-    final Set<T> set = ContainerUtilRt.newHashSet(from);
+    final Set<T> set = new HashSet<>(from);
     set.removeAll(what);
     return set.isEmpty() ? emptyList() : set;
   }
@@ -1855,6 +1857,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return sorted(list, Comparator.naturalOrder());
   }
 
+  /**
+   * @apiNote this sort implementation is NOT stable for element.length < INSERTION_SORT_THRESHOLD 
+   */
   public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
 
@@ -2434,20 +2439,20 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <T> Stack<T> newStack() {
-    return ContainerUtilRt.newStack();
+    return new Stack<>();
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> Stack<T> newStack(@NotNull Collection<? extends T> initial) {
-    return ContainerUtilRt.newStack(initial);
+    return new Stack<>(initial);
   }
 
   @SafeVarargs
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> Stack<T> newStack(@NotNull T... initial) {
-    return ContainerUtilRt.newStack(initial);
+    return new Stack<>(Arrays.asList(initial));
   }
 
   @NotNull

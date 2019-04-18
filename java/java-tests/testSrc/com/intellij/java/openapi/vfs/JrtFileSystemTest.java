@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -15,9 +14,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
-import org.assertj.core.api.Assertions;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,6 +24,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,7 +59,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
   private void setupJrtFileSystem() throws IOException {
     Files.createDirectories(myTempPath);
-    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9\n".getBytes(StandardCharsets.UTF_8));
     Path lib = Files.createDirectory(myTempPath.resolve("lib"));
     Files.copy(myTestData.resolve("jrt-fs.jar"), lib.resolve("jrt-fs.jar"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
@@ -98,7 +98,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Path modules = myTempPath.resolve("lib/modules");
     Files.move(modules, myTempPath.resolve("lib/modules.bak"), StandardCopyOption.ATOMIC_MOVE);
     Files.copy(myTestData.resolve("image2"), modules);
-    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(CharsetToolkit.UTF8_CHARSET));
+    Files.write(myTempPath.resolve("release"), "JAVA_VERSION=9.0.1\n".getBytes(StandardCharsets.UTF_8));
     List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
     Assertions.assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
 

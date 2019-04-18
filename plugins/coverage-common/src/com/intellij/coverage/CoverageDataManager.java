@@ -19,7 +19,7 @@ import java.util.List;
  * @author ven
  */
 public abstract class CoverageDataManager implements JDOMExternalizable {
-  public static CoverageDataManager getInstance(Project project) {
+  public static CoverageDataManager getInstance(@NotNull Project project) {
     return project.getComponent(CoverageDataManager.class);
   }
 

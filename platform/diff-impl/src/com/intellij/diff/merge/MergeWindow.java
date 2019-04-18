@@ -25,13 +25,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class MergeWindow {
@@ -92,13 +91,7 @@ public class MergeWindow {
     public void init() {
       super.init();
       Disposer.register(getDisposable(), myProcessor);
-      getWindow().addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          e.getWindow().removeWindowListener(this);
-          myProcessor.init();
-        }
-      });
+      UIUtil.runWhenWindowOpened(getWindow(), () -> myProcessor.init());
     }
 
     @Nullable

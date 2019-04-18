@@ -8,9 +8,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
@@ -19,38 +19,34 @@ import kotlin.coroutines.CoroutineContext
  * Only for configuration store usages.
  */
 internal val storeEdtCoroutineContext: CoroutineContext by lazy {
-  EdtPoolDispatcher(emptyList()) + coroutineExceptionHandler
+  EdtPoolDispatcher(null) + coroutineExceptionHandler
 }
 
-internal fun createStoreEdtCoroutineContext(rules: List<InTransactionRule>): CoroutineContext {
-  return when {
-    rules.isEmpty() -> storeEdtCoroutineContext
-    else -> EdtPoolDispatcher(rules) + coroutineExceptionHandler
-  }
-}
-
-internal abstract class EdtTaskRule {
-  abstract fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, block: Runnable)
-
-  protected fun computeRunnable(nextRuleIndex: Int, rules: List<EdtTaskRule>, block: Runnable): Runnable {
-    return when (nextRuleIndex) {
-      rules.size -> block
-      else -> Runnable { rules.get(nextRuleIndex).dispatch(rules, nextRuleIndex + 1, block) }
-    }
+internal fun createStoreEdtCoroutineContext(rule: InTransactionRule?): CoroutineContext {
+  return when (rule) {
+    null -> storeEdtCoroutineContext
+    else -> EdtPoolDispatcher(rule) + coroutineExceptionHandler
   }
 }
 
 // opposite to write actions and so on, submitted transaction is not executed immediately, so, we need dispatcher
-internal class InTransactionRule(private val disposable: Disposable) : EdtTaskRule() {
+internal class InTransactionRule(private val disposable: Disposable) {
   private val transactionId = TransactionGuard.getInstance().contextTransaction
 
-  override fun dispatch(rules: List<EdtTaskRule>, ruleIndex: Int, block: Runnable) {
-    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, computeRunnable(ruleIndex, rules, Runnable {
-      if (Disposer.isDisposed(disposable)) {
-        throw CancellationException()
-      }
+  fun dispatch(context: CoroutineContext, block: Runnable) {
+    if (ApplicationManager.getApplication().isDisposeInProgress) {
       block.run()
-    }))
+      return
+    }
+
+    TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transactionId, Runnable {
+      if (Disposer.isDisposed(disposable)) {
+        context.get(Job)?.cancel()
+      }
+
+      // execute block even if cancelled - it is not user code directly, and job state will be checked
+      block.run()
+    })
   }
 }
 
@@ -110,31 +106,29 @@ internal class EdtPoolDispatcherManager {
   }
 }
 
-private class EdtPoolDispatcher(private val rules: List<EdtTaskRule>) : CoroutineDispatcher() {
+private class EdtPoolDispatcher(private val rule: InTransactionRule?) : CoroutineDispatcher() {
   private val edtPoolDispatcherManager: EdtPoolDispatcherManager
     get() = (SaveAndSyncHandler.getInstance() as BaseSaveAndSyncHandler).edtPoolDispatcherManager
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    if (rules.isEmpty()) {
+    if (rule == null) {
       edtPoolDispatcherManager.dispatch(block)
     }
     else {
-      val wrappedTask = Runnable {
-        rules.get(0).dispatch(rules, 1, block)
-      }
-
       if (ApplicationManager.getApplication().isDispatchThread) {
-        wrappedTask.run()
+        rule.dispatch(context, block)
       }
       else {
-        edtPoolDispatcherManager.dispatch(wrappedTask)
+        edtPoolDispatcherManager.dispatch(Runnable {
+          rule.dispatch(context, block)
+        })
       }
     }
   }
 
   @ExperimentalCoroutinesApi
   override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-    return !rules.isEmpty() || !ApplicationManager.getApplication().isDispatchThread
+    return rule != null || !ApplicationManager.getApplication().isDispatchThread
   }
 
   override fun toString() = "store EDT dispatcher"

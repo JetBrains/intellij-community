@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +33,9 @@ import java.util.List;
  * - file system is unavailable form windows (for now at least)
  */
 public class WSLUtil {
+
+  public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
+
   /**
    * this listener is a hack for https://github.com/Microsoft/BashOnWindows/issues/2592
    * See RUBY-20358

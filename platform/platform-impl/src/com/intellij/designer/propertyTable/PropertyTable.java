@@ -159,8 +159,8 @@ public abstract class PropertyTable extends JBTable {
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow", new MySelectNextPreviousRowAction(false));
-    actionMap.put("selectNextRow", new MySelectNextPreviousRowAction(true));
+    actionMap.put(TableActions.Up.ID, new MySelectNextPreviousRowAction(false));
+    actionMap.put(TableActions.Down.ID, new MySelectNextPreviousRowAction(true));
 
     actionMap.put("startEditing", new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");

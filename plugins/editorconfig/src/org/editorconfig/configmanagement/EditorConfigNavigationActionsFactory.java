@@ -8,24 +8,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.editorconfig.core.DefaultParserCallback;
+import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-public class EditorConfigNavigationActionsFactory extends DefaultParserCallback {
+public class EditorConfigNavigationActionsFactory {
   private static final Key<EditorConfigNavigationActionsFactory> NAVIGATION_FACTORY_KEY = Key.create("editor.config.navigation.factory");
 
-  private final List<String> myEditorConfigFilePaths = Collections.synchronizedList(ContainerUtil.newArrayList());
+  private final List<String> myEditorConfigFilePaths = ContainerUtil.newArrayList();
+
+  private static final Object INSTANCE_LOCK = new Object();
 
   private EditorConfigNavigationActionsFactory() {
   }
@@ -33,25 +32,24 @@ public class EditorConfigNavigationActionsFactory extends DefaultParserCallback 
   @NotNull
   public List<AnAction> getNavigationActions(@NotNull Project project) {
     final List<AnAction> actions = ContainerUtil.newArrayList();
-    final List<VirtualFile> editorConfigFiles = getEditorConfigFiles();
-    for (VirtualFile editorConfigFile : getEditorConfigFiles()) {
-      actions.add(DumbAwareAction.create(
-        getActionName(editorConfigFile, editorConfigFiles.size() > 1),
-        event -> OpenFileAction.openFile(editorConfigFile, project)));
+    synchronized (myEditorConfigFilePaths) {
+      List<VirtualFile> editorConfigFiles = Utils.pathsToFiles(myEditorConfigFilePaths);
+      for (VirtualFile editorConfigFile : editorConfigFiles) {
+        if (editorConfigFile != null) {
+          actions.add(DumbAwareAction.create(
+            getActionName(editorConfigFile, editorConfigFiles.size() > 1),
+            event -> OpenFileAction.openFile(editorConfigFile, project)));
+        }
+      }
     }
     return actions.size() <= 1 ? actions : Collections.singletonList(new NavigationActionGroup(actions.toArray(AnAction.EMPTY_ARRAY)));
   }
 
-  @Override
-  public boolean processEditorConfig(File configFile) {
-    myEditorConfigFilePaths.add(configFile.getPath());
-    return true;
-  }
-
-  @Override
-  public boolean processFile(File file) {
-    myEditorConfigFilePaths.clear();
-    return true;
+  public void updateEditorConfigFilePaths(@NotNull List<String> editorConfigFilePaths) {
+    synchronized (myEditorConfigFilePaths) {
+      myEditorConfigFilePaths.clear();
+      myEditorConfigFilePaths.addAll(editorConfigFilePaths);
+    }
   }
 
   @NotNull
@@ -61,27 +59,15 @@ public class EditorConfigNavigationActionsFactory extends DefaultParserCallback 
   }
 
   @NotNull
-  public List<VirtualFile> getEditorConfigFiles() {
-    List<VirtualFile> files = ContainerUtil.newArrayList();
-    synchronized (myEditorConfigFilePaths) {
-      for (String path : myEditorConfigFilePaths) {
-        VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
-        if (file != null) {
-          files.add(file);
-        }
-      }
-    }
-    return files;
-  }
-
-  @NotNull
   public static EditorConfigNavigationActionsFactory getInstance(@NotNull VirtualFile file) {
-    EditorConfigNavigationActionsFactory instance = file.getUserData(NAVIGATION_FACTORY_KEY);
-    if (instance == null) {
-      instance = new EditorConfigNavigationActionsFactory();
-      file.putUserData(NAVIGATION_FACTORY_KEY, instance);
+    synchronized (INSTANCE_LOCK) {
+      EditorConfigNavigationActionsFactory instance = file.getUserData(NAVIGATION_FACTORY_KEY);
+      if (instance == null) {
+        instance = new EditorConfigNavigationActionsFactory();
+        file.putUserData(NAVIGATION_FACTORY_KEY, instance);
+      }
+      return instance;
     }
-    return instance;
   }
 
   private static class NavigationActionGroup extends ActionGroup {

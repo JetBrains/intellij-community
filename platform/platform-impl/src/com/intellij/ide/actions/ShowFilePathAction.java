@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.util.ExecUtil;
@@ -32,14 +31,13 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -49,7 +47,9 @@ import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -119,7 +119,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   private static String readDesktopEntryKey(File file, String key) {
     LOG.debug("looking for '" + key + "' in " + file);
     String prefix = key + '=';
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
       return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
     }
     catch (IOException | UncheckedIOException e) {
@@ -146,9 +146,7 @@ public class ShowFilePathAction extends DumbAwareAction {
       show(file, popup -> {
         DataManager dataManager = DataManager.getInstance();
         if (dataManager != null) {
-          dataManager
-            .getDataContextFromFocusAsync()
-            .onSuccess((popup::showInBestPositionFor));
+          dataManager.getDataContextFromFocusAsync().onSuccess((popup::showInBestPositionFor));
         }
       });
     }
@@ -156,8 +154,8 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFile(@NotNull AnActionEvent e) {
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    return files == null || files.length == 1 ? e.getData(CommonDataKeys.VIRTUAL_FILE) : null;
   }
 
   public static void show(@NotNull VirtualFile file, @NotNull MouseEvent e) {
@@ -244,18 +242,12 @@ public class ShowFilePathAction extends DumbAwareAction {
       return;
     }
 
-    try {
-      file = file.getAbsoluteFile();
-      File parent = file.getParentFile();
-      if (parent != null) {
-        doOpen(parent, file);
-      }
-      else {
-        doOpen(file, null);
-      }
+    File parent = file.getAbsoluteFile().getParentFile();
+    if (parent != null) {
+      doOpen(parent, file);
     }
-    catch (Exception e) {
-      LOG.warn(e);
+    else {
+      doOpen(file, null);
     }
   }
 
@@ -270,38 +262,40 @@ public class ShowFilePathAction extends DumbAwareAction {
       return;
     }
 
-    try {
-      doOpen(directory.getAbsoluteFile(), null);
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
+    doOpen(directory.getAbsoluteFile(), null);
   }
 
-  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) throws IOException, ExecutionException {
+  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) {
     String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
-      String cmd = toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"';
-      LOG.debug(cmd);
-      Process process = Runtime.getRuntime().exec(cmd);  // no advanced quoting/escaping is needed
-      new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
+      spawn(toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"');
     }
     else if (SystemInfo.isMac) {
-      GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
-      LOG.debug(cmd.toString());
-      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+      if (toSelect != null) {
+        spawn("open", "-R", toSelect);
+      }
+      else {
+        spawn("open", dir);
+      }
     }
     else if (fileManagerApp.getValue() != null) {
-      schedule(new GeneralCommandLine(fileManagerApp.getValue(), toSelect != null ? toSelect : dir));
+      spawn(fileManagerApp.getValue(), toSelect != null ? toSelect : dir);
     }
     else if (SystemInfo.hasXdgOpen()) {
-      schedule(new GeneralCommandLine("xdg-open", dir));
+      spawn("xdg-open", dir);
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      LOG.debug("opening " + dir + " via desktop API");
-      Desktop.getDesktop().open(new File(dir));
+      LOG.debug("opening " + dir + " via Desktop API");
+      AppExecutorUtil.getAppExecutorService().submit(() -> {
+        try {
+          Desktop.getDesktop().open(new File(dir));
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      });
     }
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
@@ -322,17 +316,20 @@ public class ShowFilePathAction extends DumbAwareAction {
     return path;
   }
 
-  private static void schedule(GeneralCommandLine cmd) {
-    PooledThreadExecutor.INSTANCE.submit(() -> {
+  private static void spawn(String... command) {
+    LOG.debug(Arrays.toString(command));
+
+    AppExecutorUtil.getAppExecutorService().submit(() -> {
       try {
-        LOG.debug(cmd.toString());
-        new CapturingProcessHandler(cmd) {
-          @NotNull
-          @Override
-          protected BaseOutputReader.Options readerOptions() {
-            return BaseOutputReader.Options.forMostlySilentProcess();
-          }
-        }.runProcess().checkSuccess(LOG);
+        CapturingProcessHandler handler;
+        if (SystemInfo.isWindows) {
+          Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
+          handler = new CapturingProcessHandler(process, null, command[0]);
+        }
+        else {
+          handler = new CapturingProcessHandler(new GeneralCommandLine(command));
+        }
+        handler.runProcess(10000, false).checkSuccess(LOG);
       }
       catch (Exception e) {
         LOG.warn(e);

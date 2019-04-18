@@ -9,6 +9,7 @@ import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
+import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl
@@ -48,6 +49,16 @@ object VcsLogFilterObject {
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
     return object : VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList()) {}
+  }
+
+  @JvmStatic
+  fun fromRange(exclusiveRef: String, inclusiveRef: String) : VcsLogRangeFilter {
+    return fromRange(listOf(RefRange(exclusiveRef, inclusiveRef)))
+  }
+
+  @JvmStatic
+  fun fromRange(ranges: List<RefRange>): VcsLogRangeFilter {
+    return VcsLogRangeFilterImpl(ranges)
   }
 
   @JvmStatic

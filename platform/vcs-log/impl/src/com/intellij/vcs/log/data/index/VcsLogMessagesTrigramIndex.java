@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.VoidDataExternalizer;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
+public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
   public static final String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
@@ -51,10 +51,10 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, Vcs
     return getCommitsWithAllKeys(trigramProcessor.map.keySet());
   }
 
-  public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
+  public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsCommitMetadata> {
     @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsFullCommitDetails inputData) {
+    public Map<Integer, Void> map(@NotNull VcsCommitMetadata inputData) {
       MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
       TrigramBuilder.processTrigrams(inputData.getFullMessage(), trigramProcessor);
 

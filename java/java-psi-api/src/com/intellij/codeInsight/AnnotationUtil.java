@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -208,7 +208,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner, 
+  public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner,
                                                         @NotNull Set<String> annotationNames, boolean skipExternal) {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames, skipExternal);
     if (directAnnotation != null) return directAnnotation;

@@ -12,10 +12,10 @@
               "version_added": false
             },
             "edge": {
-              "version_added": null
+              "version_added": false
             },
             "edge_mobile": {
-              "version_added": null
+              "version_added": false
             },
             "firefox": {
               "version_added": "1"
@@ -33,8 +33,7 @@
               "version_added": false
             },
             "safari": {
-              "version_added": true,
-              "notes": "See <a href='https://webkit.org/b/85734'>WebKit bug 85734</a>."
+              "version_added": "8"
             },
             "safari_ios": {
               "version_added": false
@@ -59,17 +58,17 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": null
+                "version_added": false
               },
               "edge_mobile": {
-                "version_added": null
+                "version_added": false
               },
               "firefox": {
-                "version_added": true,
+                "version_added": "1",
                 "notes": "<code>statusline</code> and <code>toggle</code> are supported, <code>tooltip</code> is not implemented, see <a href='https://bugzil.la/544001'>bug 544001</a>."
               },
               "firefox_android": {
-                "version_added": true,
+                "version_added": "4",
                 "notes": "<code>statusline</code> and <code>toggle</code> are supported, <code>tooltip</code> is not implemented, see <a href='https://bugzil.la/544001'>bug 544001</a>."
               },
               "ie": {
@@ -82,7 +81,7 @@
                 "version_added": false
               },
               "safari": {
-                "version_added": true,
+                "version_added": "8",
                 "notes": "<code>toggle</code> is supported, <code>statusline</code> and <code>tooltip</code> are not implemented, see <a href='https://webkit.org/b/120059'>WebKit bug 120059</a>."
               },
               "safari_ios": {
@@ -109,10 +108,10 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": null
+                "version_added": false
               },
               "edge_mobile": {
-                "version_added": null
+                "version_added": false
               },
               "firefox": {
                 "version_added": "7"
@@ -156,10 +155,10 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": null
+                "version_added": false
               },
               "edge_mobile": {
-                "version_added": null
+                "version_added": false
               },
               "firefox": {
                 "version_added": "4"
@@ -177,7 +176,7 @@
                 "version_added": false
               },
               "safari": {
-                "version_added": "5.1"
+                "version_added": "8"
               },
               "safari_ios": {
                 "version_added": false
@@ -203,10 +202,10 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": null
+                "version_added": false
               },
               "edge_mobile": {
-                "version_added": null
+                "version_added": false
               },
               "firefox": {
                 "version_added": "4"
@@ -224,7 +223,7 @@
                 "version_added": false
               },
               "safari": {
-                "version_added": "5.1"
+                "version_added": "8"
               },
               "safari_ios": {
                 "version_added": false

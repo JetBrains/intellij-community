@@ -243,7 +243,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
           @Override
           public void paint(Graphics g) {
             Dimension size = getSize();
-            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline;
+            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline && !myAllowAutoWrapping;
 
             if (!paintEllipsis) {
               super.paint(g);

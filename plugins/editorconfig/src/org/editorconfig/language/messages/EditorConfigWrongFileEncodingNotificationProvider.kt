@@ -20,7 +20,6 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants
-import java.nio.charset.StandardCharsets
 import java.util.*
 
 class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
@@ -32,7 +31,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
     if (editor.getUserData(HIDDEN_KEY) != null) return null
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
-    if (file.charset == StandardCharsets.UTF_8) return null
+    if (file.charset == Charsets.UTF_8) return null
     return buildPanel(project, editor, file)
   }
 
@@ -45,7 +44,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
       val text = editor.document.text
       val isSafeToConvert = isSafeToConvertTo(file, text)
       val isSafeToReload = isSafeToReloadIn(file, text)
-      ChangeFileEncodingAction.changeTo(project, editor.document, editor, file, StandardCharsets.UTF_8, isSafeToConvert, isSafeToReload)
+      ChangeFileEncodingAction.changeTo(project, editor.document, editor, file, Charsets.UTF_8, isSafeToConvert, isSafeToReload)
     }
 
     val hide = EditorConfigBundle["notification.action.hide.once"]
@@ -68,17 +67,17 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
     val bytes = file.contentsToByteArray()
     // file has BOM but the charset hasn't
     val bom = file.bom
-    if (bom != null && !CharsetToolkit.canHaveBom(StandardCharsets.UTF_8, bom)) return EncodingUtil.Magic8.NO_WAY
+    if (bom != null && !CharsetToolkit.canHaveBom(Charsets.UTF_8, bom)) return EncodingUtil.Magic8.NO_WAY
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
-    val mandatoryBom = CharsetToolkit.getMandatoryBom(StandardCharsets.UTF_8)
+    val mandatoryBom = CharsetToolkit.getMandatoryBom(Charsets.UTF_8)
     if (mandatoryBom != null && !ArrayUtil.startsWith(bytes, mandatoryBom)) return EncodingUtil.Magic8.NO_WAY
 
-    val loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, StandardCharsets.UTF_8).toString()
+    val loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, Charsets.UTF_8).toString()
 
     var bytesToSave: ByteArray = try {
       val separator = FileDocumentManager.getInstance().getLineSeparator(file, null)
-      StringUtil.convertLineSeparators(loaded, separator).toByteArray(StandardCharsets.UTF_8)
+      StringUtil.convertLineSeparators(loaded, separator).toByteArray(Charsets.UTF_8)
     }
     catch (e: UnsupportedOperationException) {
       return EncodingUtil.Magic8.NO_WAY
@@ -100,8 +99,8 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
     val bytesOnDisk = file.contentsToByteArray()
     val lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, null)
     val textToSave = if (lineSeparator == "\n") text else StringUtilRt.convertLineSeparators(text, lineSeparator)
-    val saved = LoadTextUtil.chooseMostlyHarmlessCharset(file.charset, StandardCharsets.UTF_8, textToSave.toString()).second
-    val textLoadedBack = LoadTextUtil.getTextByBinaryPresentation(saved, StandardCharsets.UTF_8)
+    val saved = LoadTextUtil.chooseMostlyHarmlessCharset(file.charset, Charsets.UTF_8, textToSave.toString()).second
+    val textLoadedBack = LoadTextUtil.getTextByBinaryPresentation(saved, Charsets.UTF_8)
     when {
       !StringUtil.equals(text, textLoadedBack) -> EncodingUtil.Magic8.NO_WAY
       Arrays.equals(saved, bytesOnDisk) -> EncodingUtil.Magic8.ABSOLUTELY

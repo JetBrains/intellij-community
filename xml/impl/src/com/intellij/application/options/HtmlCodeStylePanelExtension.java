@@ -4,13 +4,11 @@ package com.intellij.application.options;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-@ApiStatus.Experimental
 public interface HtmlCodeStylePanelExtension {
   ExtensionPointName<HtmlCodeStylePanelExtension> EP_NAME = ExtensionPointName.create("com.intellij.html.codestyle.panel");
 

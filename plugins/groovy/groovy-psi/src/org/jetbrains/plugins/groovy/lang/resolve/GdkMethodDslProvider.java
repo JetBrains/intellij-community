@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import java.util.function.Consumer;
 
@@ -50,14 +49,9 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
     consumer.addMemberHolder(new CustomMembersHolder() {
 
       @Override
-      public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor _processor, ResolveState state) {
-        for (PsiScopeProcessor each : MultiProcessor.allProcessors(_processor)) {
-          if (ResolveUtil.shouldProcessMethods(each.getHint(ElementClassHint.KEY)) &&
-              !methodsMap.getValue().processMethods(each, state, descriptor.getPsiType(), descriptor.getProject())) {
-            return false;
-          }
-        }
-        return true;
+      public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
+        return !ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY)) ||
+               methodsMap.getValue().processMethods(processor, state, descriptor.getPsiType(), descriptor.getProject());
       }
 
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,14 +34,24 @@ import javax.swing.*;
 public class ChainedMethodCallInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFieldInitializations = true;
+
+  @SuppressWarnings({"PublicField", "unused"})
+  public boolean m_ignoreThisSuperCalls = true; // keep for compatibility
+
   @SuppressWarnings("PublicField")
-  public boolean m_ignoreThisSuperCalls = true;
+  public boolean ignoreSelfTypes = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignoreSelfTypes");
+    writeBooleanOption(node, "ignoreSelfTypes", true);
+  }
 
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.option"), "m_ignoreFieldInitializations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.this.super.option"), "m_ignoreThisSuperCalls");
+    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.self.types.option"), "ignoreSelfTypes");
     return panel;
   }
 
@@ -76,11 +88,11 @@ public class ChainedMethodCallInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression reference = expression.getMethodExpression();
-      final PsiExpression qualifier = reference.getQualifierExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(reference.getQualifierExpression());
       if (qualifier == null) {
         return;
       }
-      if (!isCallExpression(qualifier)) {
+      if (!(qualifier instanceof PsiCallExpression)) {
         return;
       }
       if (m_ignoreFieldInitializations) {
@@ -89,21 +101,33 @@ public class ChainedMethodCallInspection extends BaseInspection {
           return;
         }
       }
-      if (m_ignoreThisSuperCalls) {
-        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
-        if (expressionList != null) {
-          final PsiElement parent = expressionList.getParent();
-          if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
+      final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
+      if (expressionList != null) {
+        final PsiElement parent = expressionList.getParent();
+        if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
+          return;
+        }
+      }
+      if (ignoreSelfTypes) {
+        if (qualifier instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifier;
+          final PsiMethod qualifierMethod = methodCallExpression.resolveMethod();
+          if (qualifierMethod == null) {
+            return;
+          }
+          PsiClass containingClass = qualifierMethod.getContainingClass();
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifierMethod.getReturnType());
+          if (containingClass == null || containingClass.equals(aClass)) {
             return;
           }
         }
+        PsiClass callClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+        PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+        if (qualifierClass == null || qualifierClass.equals(callClass)) {
+          return;
+        }
       }
       registerMethodCallError(expression);
-    }
-
-    private boolean isCallExpression(PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      return expression instanceof PsiMethodCallExpression || expression instanceof PsiNewExpression;
     }
   }
 }

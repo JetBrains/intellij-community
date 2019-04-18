@@ -148,7 +148,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         return;
       }
 
-      if(mySegments.getSegmentCount() == 0) {
+      if (mySegments.getSegmentCount() == 0) {
         setText(text);
         return;
       }
@@ -171,7 +171,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int startOffset = mySegments.getSegmentStart(startIndex);
       int newEndOffset = e.getOffset() + e.getNewLength();
 
-      myLexer.start(text, startOffset, text.length(), startOffset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
+      int textLength = text.length();
+      int initialState = startOffset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState;
+      myLexer.start(text, startOffset, textLength, initialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
@@ -288,8 +290,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         }
       }
 
-      if(repaintEnd == -1) {
-        repaintEnd = text.length();
+      if (repaintEnd == -1) {
+        repaintEnd = textLength;
       }
 
       if (oldEndIndex < 0){

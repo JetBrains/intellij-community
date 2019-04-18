@@ -25,7 +25,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.ForwardIndex;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
@@ -45,7 +45,7 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
+public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   public static final String USERS = "users";
   public static final String USERS_IDS = "users-ids";
@@ -63,7 +63,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
+  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsShortCommitDetails> extension)
     throws IOException {
     return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
       @NotNull
@@ -125,7 +125,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
     }
   }
 
-  private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
+  private static class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
@@ -135,7 +135,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
     @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsFullCommitDetails inputData) {
+    public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
       Map<Integer, Void> result = new THashMap<>();
 
       try {

@@ -22,13 +22,12 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBCachingScalableIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -191,10 +190,7 @@ public class DeferredIconImpl<T> extends JBCachingScalableIcon<DeferredIconImpl<
           // revalidate will not work: JTree caches size of nodes
           if (actualTarget instanceof JTree) {
             final TreeUI ui = ((JTree)actualTarget).getUI();
-            if (ui instanceof BasicTreeUI) {
-              // this call is "fake" and only need to reset tree layout cache
-              ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
-            }
+            TreeUtil.invalidateCacheAndRepaint(ui);
           }
         }
 

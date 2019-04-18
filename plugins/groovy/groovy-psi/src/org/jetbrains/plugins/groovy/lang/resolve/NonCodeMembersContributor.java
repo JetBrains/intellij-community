@@ -10,18 +10,24 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.scope.JavaScopeProcessorEvent.CHANGE_LEVEL;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static org.jetbrains.plugins.groovy.dgm.DGMMemberContributor.processDgmMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributorKt.processCategoriesInScope;
+import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
  * @author peter
@@ -47,23 +53,51 @@ public abstract class NonCodeMembersContributor {
     processDynamicElements(qualifierType, processor, place, state);
   }
 
+  protected boolean unwrapMultiprocessor() {
+    return true;
+  }
+
   @Nullable
   protected String getParentClassName() {
     return null;
   }
 
+  @NotNull
+  protected Collection<String> getClassNames() {
+    String className = getParentClassName();
+    return className == null ? Collections.emptyList() : Collections.singletonList(className);
+  }
+
   private static void ensureInit() {
     if (ourClassSpecifiedContributors != null) return;
 
-    MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
-
+    final Collection<NonCodeMembersContributor> allTypeContributors = new ArrayList<>();
+    final MultiMap<String, NonCodeMembersContributor> contributorMap = new MultiMap<>();
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
-      contributorMap.putValue(contributor.getParentClassName(), contributor);
+      Collection<String> fqns = contributor.getClassNames();
+      if (fqns.isEmpty()) {
+        allTypeContributors.add(contributor);
+      }
+      else {
+        for (String fqn : fqns) {
+          contributorMap.putValue(fqn, contributor);
+        }
+      }
     }
-
-    Collection<NonCodeMembersContributor> allTypeContributors = contributorMap.remove(null);
     ourAllTypeContributors = allTypeContributors.toArray(new NonCodeMembersContributor[0]);
     ourClassSpecifiedContributors = contributorMap;
+  }
+
+  @NotNull
+  private static Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
+    final List<NonCodeMembersContributor> result = new ArrayList<>();
+    if (clazz != null) {
+      for (String superClassName : ClassUtil.getSuperClassesWithCache(clazz).keySet()) {
+        result.addAll(ourClassSpecifiedContributors.get(superClassName));
+      }
+    }
+    ContainerUtil.addAll(result, ourAllTypeContributors);
+    return result;
   }
 
   public static boolean runContributors(@NotNull PsiType qualifierType,
@@ -75,47 +109,40 @@ public abstract class NonCodeMembersContributor {
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
     if (TransformationUtilKt.isUnderTransformation(aClass)) return true;
 
-    List<MyDelegatingScopeProcessor> allDelegates = map(MultiProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
+    final Iterable<? extends PsiScopeProcessor> unwrappedOriginals = MultiProcessor.allProcessors(processor);
+    for (PsiScopeProcessor each : unwrappedOriginals) {
+      if (!processClassMixins(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processCategoriesInScope(qualifierType, each, place, state)) {
+        return false;
+      }
+      if (!processDgmMethods(qualifierType, each, place, state)) {
+        return false;
+      }
+    }
 
-    if (aClass != null) {
-      for (String superClassName : ClassUtil.getSuperClassesWithCache(aClass).keySet()) {
+    final List<MyDelegatingScopeProcessor> wrapped = Collections.singletonList(new MyDelegatingScopeProcessor(processor));
+    final List<MyDelegatingScopeProcessor> unwrapped = map(MultiProcessor.allProcessors(processor), MyDelegatingScopeProcessor::new);
+
+    final Iterable<NonCodeMembersContributor> contributors = getApplicableContributors(aClass);
+    for (NonCodeMembersContributor contributor : contributors) {
+      ProgressManager.checkCanceled();
+      processor.handleEvent(CHANGE_LEVEL, null);
+      final List<MyDelegatingScopeProcessor> delegates = contributor.unwrapMultiprocessor() ? unwrapped : wrapped;
+      for (MyDelegatingScopeProcessor delegatingProcessor : delegates) {
         ProgressManager.checkCanceled();
-        for (NonCodeMembersContributor enhancer : ourClassSpecifiedContributors.get(superClassName)) {
-          ProgressManager.checkCanceled();
-          if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, enhancer)) return false;
+        contributor.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
+        if (!delegatingProcessor.wantMore) {
+          return false;
         }
       }
     }
 
-    for (NonCodeMembersContributor contributor : ourAllTypeContributors) {
-      ProgressManager.checkCanceled();
-      if (!invokeContributor(qualifierType, place, state, aClass, allDelegates, contributor)) return false;
-    }
-
-    return GroovyDslFileIndex.processExecutors(
-      qualifierType,
-      place,
-      (holder, descriptor) -> holder.processMembers(descriptor, processor, state)
-    );
-  }
-
-  private static boolean invokeContributor(@NotNull PsiType qualifierType,
-                                           @NotNull PsiElement place,
-                                           @NotNull ResolveState state,
-                                           PsiClass aClass,
-                                           List<MyDelegatingScopeProcessor> allDelegates,
-                                           NonCodeMembersContributor enhancer) {
-    for (MyDelegatingScopeProcessor delegatingProcessor : allDelegates) {
-      ProgressManager.checkCanceled();
-      enhancer.processDynamicElements(qualifierType, aClass, delegatingProcessor, place, state);
-      if (!delegatingProcessor.wantMore) {
-        return false;
-      }
-    }
     return true;
   }
 
-  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
+  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor implements MultiProcessor {
     public boolean wantMore = true;
 
     MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
@@ -129,6 +156,12 @@ public abstract class NonCodeMembersContributor {
       }
       wantMore = super.execute(element, state);
       return wantMore;
+    }
+
+    @NotNull
+    @Override
+    public Iterable<? extends PsiScopeProcessor> getProcessors() {
+      return MultiProcessor.allProcessors(getDelegate());
     }
   }
 }

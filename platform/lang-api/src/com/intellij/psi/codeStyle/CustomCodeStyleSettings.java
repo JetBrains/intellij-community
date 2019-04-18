@@ -43,10 +43,6 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     return myContainer;
   }
 
-  void setContainer(CodeStyleSettings container) {
-    myContainer = container;
-  }
-
   @NonNls @NotNull
   public final String getTagName() {
     return myTagName;
@@ -73,6 +69,12 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     if (!childElement.getContent().isEmpty()) {
       parentElement.addContent(childElement);
     }
+  }
+
+  CustomCodeStyleSettings copyWith(@NotNull CodeStyleSettings container) {
+    CustomCodeStyleSettings cloned = (CustomCodeStyleSettings)clone();
+    cloned.myContainer = container;
+    return cloned;
   }
 
   @Override

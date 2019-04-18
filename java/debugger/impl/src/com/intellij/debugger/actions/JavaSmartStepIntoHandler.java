@@ -298,8 +298,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               myInsideLambda || (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null),
               null
             );
-            target.setOrdinal(
-              (int)StreamEx.of(targets).select(MethodSmartStepTarget.class).filter(t -> t.getMethod().equals(psiMethod)).count());
+            target.setOrdinal((int)existingMethodCalls(targets, psiMethod).count());
             if (pos != -1) {
               targets.add(pos, target);
             }
@@ -362,8 +361,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                       iterator.remove();
                       MethodSmartStepTarget target = (MethodSmartStepTarget)e;
                       // fix ordinals
-                      StreamEx.of(targets).select(MethodSmartStepTarget.class)
-                        .filter(t -> t.getMethod().equals(target.getMethod()))
+                      existingMethodCalls(targets, target.getMethod())
                         .forEach(t -> {
                           int ordinal = t.getOrdinal();
                           if (ordinal > target.getOrdinal()) {
@@ -386,5 +384,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
     }
     return Collections.emptyList();
+  }
+
+  private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
+    return StreamEx.of(targets)
+      .select(MethodSmartStepTarget.class)
+      .filter(target -> !target.needsBreakpointRequest())
+      .filter(t -> t.getMethod().equals(psiMethod));
   }
 }

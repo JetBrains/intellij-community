@@ -1,5 +1,6 @@
 *.pyc
 .DS_Store
+.gradle
 .idea/gradle_extensions.xml
 .idea/libraries/Gradle__*.xml
 .idea/shelf
@@ -16,3 +17,4 @@ build/dependencies/.gradle
 build/dependencies/build
 edu/dependencies/.gradle
 edu/dependencies/build
+stale_outputs_checked

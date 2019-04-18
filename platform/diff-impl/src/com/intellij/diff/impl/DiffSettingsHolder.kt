@@ -45,6 +45,8 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
       @JvmStatic fun getSettings(): DiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): DiffSettings = service<DiffSettingsHolder>().getSettings(place)
+      internal fun getDefaultSettings(place: String): DiffSettings =
+        DiffSettings(SharedSettings(), service<DiffSettingsHolder>().defaultPlaceSettings(place))
     }
   }
 

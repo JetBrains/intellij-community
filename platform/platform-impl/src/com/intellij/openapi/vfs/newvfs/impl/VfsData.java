@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -77,7 +77,7 @@ public class VfsData {
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   public VfsData() {
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
         // after top-level write action is finished, all the deletion listeners should have processed the deleted files
@@ -86,7 +86,7 @@ public class VfsData {
           killInvalidatedFiles();
         }
       }
-    });
+    }, ApplicationManager.getApplication());
   }
 
   private void killInvalidatedFiles() {
@@ -206,9 +206,10 @@ public class VfsData {
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
 
+    @NotNull
     final VfsData vfsData;
 
-    Segment(VfsData vfsData) {
+    Segment(@NotNull VfsData vfsData) {
       this.vfsData = vfsData;
     }
 

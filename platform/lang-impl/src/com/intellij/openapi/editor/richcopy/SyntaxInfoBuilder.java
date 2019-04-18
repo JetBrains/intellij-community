@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Comparator;
 
-final class SyntaxInfoBuilder {
+public final class SyntaxInfoBuilder {
   private SyntaxInfoBuilder() { }
 
   @NotNull
@@ -38,7 +38,8 @@ final class SyntaxInfoBuilder {
                                                @NotNull MarkupModel markupModel,
                                                int startOffsetToUse,
                                                int endOffset) {
-    CompositeRangeIterator iterator = new CompositeRangeIterator(
+    
+    CompositeRangeIterator iterator =  new CompositeRangeIterator(
       schemeToUse,
       new HighlighterRangeIterator(highlighter, startOffsetToUse, endOffset),
       new MarkupModelRangeIterator(markupModel, schemeToUse, startOffsetToUse, endOffset)
@@ -47,7 +48,7 @@ final class SyntaxInfoBuilder {
     return new MyMarkupIterator(text, iterator, schemeToUse);
   }
 
-  private interface RangeIterator {
+  public interface RangeIterator {
     boolean atEnd();
 
     void advance();
@@ -60,7 +61,7 @@ final class SyntaxInfoBuilder {
 
     void dispose();
   }
-
+  
   static class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
@@ -68,9 +69,9 @@ final class SyntaxInfoBuilder {
     private Color myCurrentForegroundColor;
     private Color myCurrentBackgroundColor;
 
-    private MyMarkupIterator(@NotNull CharSequence charSequence,
-                             @NotNull RangeIterator rangeIterator,
-                             @NotNull EditorColorsScheme colorsScheme) {
+    MyMarkupIterator(@NotNull CharSequence charSequence,
+                     @NotNull RangeIterator rangeIterator,
+                     @NotNull EditorColorsScheme colorsScheme) {
       myRangeIterator = rangeIterator;
       mySegmentIterator = new SegmentIterator(charSequence, colorsScheme.getFontPreferences());
     }
@@ -123,7 +124,7 @@ final class SyntaxInfoBuilder {
     }
   }
 
-  private static class CompositeRangeIterator implements RangeIterator {
+  static class CompositeRangeIterator implements RangeIterator {
     private final @NotNull Color myDefaultForeground;
     private final @NotNull Color myDefaultBackground;
     private final IteratorWrapper[] myIterators;
@@ -403,7 +404,7 @@ final class SyntaxInfoBuilder {
     }
   }
 
-  private static class HighlighterRangeIterator implements RangeIterator {
+  static class HighlighterRangeIterator implements RangeIterator {
     private static final TextAttributes EMPTY_ATTRIBUTES = new TextAttributes();
 
     private final HighlighterIterator myIterator;

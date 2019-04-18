@@ -27,6 +27,10 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UVariable : UDeclaration, PsiVariable {
   override val psi: PsiVariable
 
+  @Suppress("DEPRECATION")
+  private val javaPsiInternal
+    get() = (this as? UVariableEx)?.javaPsi ?: psi
+
   /**
    * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
    */
@@ -51,7 +55,7 @@ interface UVariable : UDeclaration, PsiVariable {
     visitor.visitVariable(this, data)
 
   @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
-  override fun getInitializer(): PsiExpression? = psi.initializer
+  override fun getInitializer(): PsiExpression? = javaPsiInternal.initializer
 
   override fun asLogString(): String = log("name = $name")
 
@@ -59,8 +63,8 @@ interface UVariable : UDeclaration, PsiVariable {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
     }
-    append(psi.renderModifiers())
-    append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
+    append(javaPsiInternal.renderModifiers())
+    append("var ").append(javaPsiInternal.name).append(": ").append(javaPsiInternal.type.getCanonicalText(false))
     uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
   }
 }

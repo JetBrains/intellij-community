@@ -42,10 +42,6 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
   return expression.type
 }
 
-fun getTopLevelTypeCached(expression: GrExpression): PsiType? {
-  return GroovyPsiManager.getInstance(expression.project).getTopLevelType(expression)
-}
-
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
   val qualifierExpression = ref?.qualifierExpression
   val spreadState = state[SpreadState.SPREAD_STATE]

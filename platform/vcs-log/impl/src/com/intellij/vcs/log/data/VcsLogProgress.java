@@ -148,15 +148,19 @@ public class VcsLogProgress implements Disposable {
     }
 
     @Override
-    public synchronized void start() {
-      super.start();
-      started(this);
+    public void start() {
+      synchronized (getLock()) {
+        super.start();
+        started(this);
+      }
     }
 
     @Override
-    public synchronized void stop() {
-      super.stop();
-      stopped(this);
+    public void stop() {
+      synchronized (getLock()) {
+        super.stop();
+        stopped(this);
+      }
     }
 
     public void updateKey(@NotNull ProgressKey key) {

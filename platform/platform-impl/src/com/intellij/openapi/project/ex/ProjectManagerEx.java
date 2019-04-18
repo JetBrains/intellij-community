@@ -78,7 +78,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
   /**
    * The project and the app settings will be not saved.
    */
-  @TestOnly
   public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
 
   // return true if successful
@@ -101,4 +100,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
+
+  @NotNull
+  public abstract String[] getAllExcludedUrls();
 }

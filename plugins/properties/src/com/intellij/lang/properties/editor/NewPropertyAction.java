@@ -166,7 +166,7 @@ class NewPropertyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!myEnabledForce) {
-      final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
+      final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
       e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);
     }
   }

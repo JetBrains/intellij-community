@@ -10,18 +10,19 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-    @NonNls public static final String CLASS_NAME = DarculaLaf.class.getName();
-    public DarculaLookAndFeelInfo(){
-      super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
-    }
+  @NonNls public static final String CLASS_NAME = DarculaLaf.class.getName();
 
-    @Override
-    public boolean equals(Object obj){
-      return (obj instanceof DarculaLookAndFeelInfo);
-    }
+  public DarculaLookAndFeelInfo() {
+    super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
+  }
 
-    @Override
-    public int hashCode(){
-      return getName().hashCode();
-    }
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof DarculaLookAndFeelInfo);
+  }
+
+  @Override
+  public int hashCode() {
+    return getName().hashCode();
+  }
 }

@@ -38,6 +38,7 @@ import static com.intellij.internal.statistic.eventLog.EventLogStatisticsService
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class SendEventLogAction extends AnAction {
+  private static final String FUS_RECORDER = "FUS";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -49,7 +50,7 @@ public class SendEventLogAction extends AnAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Send Feature Usage Event Log", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final StatisticsResult result = send(new EventLogTestSettingsService(), new EventLogTestResultDecorator());
+        final StatisticsResult result = send(FUS_RECORDER, new EventLogTestSettingsService(), new EventLogTestResultDecorator());
         final StatisticsResult.ResultCode code = result.getCode();
         if (code == StatisticsResult.ResultCode.SENT_WITH_ERRORS || code == StatisticsResult.ResultCode.SEND) {
           final boolean succeed = tryToOpenInScratch(project, result.getDescription());
@@ -68,7 +69,7 @@ public class SendEventLogAction extends AnAction {
 
   private static class EventLogTestSettingsService extends EventLogExternalSettingsService implements EventLogSettingsService {
     private EventLogTestSettingsService() {
-      super();
+      super(FUS_RECORDER, true);
     }
 
     @Override
@@ -104,7 +105,7 @@ public class SendEventLogAction extends AnAction {
         myFailed.add(request);
       }
       else {
-        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", ContainerUtil.emptyList(), true));
+        myFailed.add(new LogEventRecordRequest("INVALID", "INVALID", "INVALID", ContainerUtil.emptyList(), true));
       }
     }
 

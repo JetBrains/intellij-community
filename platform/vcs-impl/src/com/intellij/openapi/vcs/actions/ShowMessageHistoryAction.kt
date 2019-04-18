@@ -91,6 +91,8 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
+          // IDEA-195094 Regression: New CTRL-E in "commit changes" breaks keyboard shortcuts
+          commitMessage.editorField.requestFocusInWindow()
           // Use invokeLater() as onClosed() is called before callback from setItemChosenCallback
           getApplication().invokeLater { chosenMessage ?: cancelPreview(project, commitMessage) }
         }

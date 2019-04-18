@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * @author Denis Zhdanov
@@ -46,7 +46,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
   private final AtomicReference<ExternalSystemTaskNotificationListener> myListener
     = new AtomicReference<>();
 
-  protected <T> T execute(@NotNull ExternalSystemTaskId id, @NotNull Producer<T> task) {
+  protected <T> T execute(@NotNull ExternalSystemTaskId id, @NotNull Supplier<? extends T> task) {
     Set<ExternalSystemTaskId> tasks = myTasksInProgress.get(id.getType());
     if (tasks == null) {
       myTasksInProgress.putIfAbsent(id.getType(), new HashSet<>());
@@ -54,7 +54,7 @@ public abstract class AbstractRemoteExternalSystemService<S extends ExternalSyst
     }
     tasks.add(id);
     try {
-      return task.produce();
+      return task.get();
     }
     finally {
       tasks.remove(id);

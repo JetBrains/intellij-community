@@ -270,6 +270,7 @@ object GuiTestLocalLauncher {
    */
   private fun getDefaultAndCustomVmOptions(ide: Ide, customVmOptions: List<String> = emptyList()): List<String> {
     return listOf<String>()
+      .plusIf(GuiTestOptions.xssSize != 0, "-Xss${GuiTestOptions.xssSize}m")
       .plus("-Xmx${GuiTestOptions.xmxSize}m")
       .plus("-XX:ReservedCodeCacheSize=240m")
       .plus("-XX:+UseConcMarkSweepGC")

@@ -36,13 +36,29 @@ import java.io.IOException;
  * @author anna
  */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
+  @Nullable
   private final T myBuilder;
 
+  /**
+   * @deprecated Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.
+   */
+  @Deprecated
   protected ProjectOpenProcessorBase(@NotNull final T builder) {
     myBuilder = builder;
   }
 
+  protected ProjectOpenProcessorBase() {
+    myBuilder = null;
+  }
+
+  @NotNull
+  protected T doGetBuilder() {
+    assert myBuilder != null;
+    return myBuilder;
+  }
+
   @Override
+  @NotNull
   public String getName() {
     return getBuilder().getName();
   }
@@ -56,24 +72,21 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
   @Override
   public boolean canOpenProject(@NotNull final VirtualFile file) {
     final String[] supported = getSupportedExtensions();
-    if (supported != null) {
-      if (file.isDirectory()) {
-        for (VirtualFile child : getFileChildren(file)) {
-          if (canOpenFile(child, supported)) return true;
-        }
-        return false;
+    if (file.isDirectory()) {
+      for (VirtualFile child : getFileChildren(file)) {
+        if (canOpenFile(child, supported)) return true;
       }
-      if (canOpenFile(file, supported)) return true;
+      return false;
     }
-    return false;
+    return canOpenFile(file, supported);
   }
 
   @NotNull
-  private static VirtualFile[] getFileChildren(VirtualFile file) {
+  private static VirtualFile[] getFileChildren(@NotNull VirtualFile file) {
     return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
-  protected static boolean canOpenFile(VirtualFile file, String[] supported) {
+  protected static boolean canOpenFile(@NotNull VirtualFile file, @NotNull String[] supported) {
     final String fileName = file.getName();
     for (String name : supported) {
       if (fileName.equals(name)) {
@@ -83,16 +96,16 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     return false;
   }
 
-  protected boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
+  protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
     return false;
   }
 
   @NotNull
   public T getBuilder() {
-    return myBuilder;
+    return doGetBuilder();
   }
 
-  @Nullable
+  @NotNull
   public abstract String[] getSupportedExtensions();
 
   @Override
@@ -227,11 +240,12 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     }
   }
 
-  public static String getUrl(@NonNls String path) {
+  @NotNull
+  public static String getUrl(@NonNls @NotNull String path) {
     try {
       path = FileUtil.resolveShortWindowsName(path);
     }
     catch (IOException ignored) { }
-    return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path));
+    return VfsUtilCore.pathToUrl(path);
   }
 }

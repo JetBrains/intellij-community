@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -43,7 +44,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       title = IdeBundle.message("title.new.directory");
     }
 
-    Messages.showInputDialog(project, message, title, Messages.getQuestionIcon(), validator.getInitialText(), validator);
+    String initialText = validator.getInitialText();
+    Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {
@@ -57,27 +59,23 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
     IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
     final PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 0) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
+    presentation.setEnabledAndVisible(true);
 
     boolean isPackage = false;
     final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);

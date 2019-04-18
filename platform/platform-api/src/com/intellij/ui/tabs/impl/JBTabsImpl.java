@@ -24,6 +24,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -139,6 +140,7 @@ public class JBTabsImpl extends JComponent
   private boolean myTabLabelActionsAutoHide;
 
   private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
+  private Disposable myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
   @NonNls public static final String STRETCHED_BY_WIDTH = "Layout.stretchedByWidth";
@@ -172,6 +174,7 @@ public class JBTabsImpl extends JComponent
   private boolean myAlphabeticalMode = false;
   private boolean mySupportsCompression = false;
   private String myEmptyText = null;
+  private boolean myMouseInsideTabsArea = false;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -236,10 +239,55 @@ public class JBTabsImpl extends JComponent
     });
     addMouseWheelListener(event -> {
       int units = event.getUnitsToScroll();
+
+      // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
+      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
         mySingleRowLayout.scroll(units * mySingleRowLayout.getScrollUnitIncrement());
         revalidateAndRepaint(false);
+      }
+    });
+    AWTEventListener listener = new AWTEventListener() {
+      Alarm afterScroll = new Alarm(JBTabsImpl.this);
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        MouseEvent me = (MouseEvent)event;
+        Point point = me.getPoint();
+        SwingUtilities.convertPointToScreen(point, me.getComponent());
+        Rectangle rect = JBTabsImpl.this.getVisibleRect();
+        if (mySingleRowLayout.myLastSingRowLayout == null) return;
+        rect = rect.intersection(mySingleRowLayout.myLastSingRowLayout.tabRectangle);
+        Point p = rect.getLocation();
+        SwingUtilities.convertPointToScreen(p, JBTabsImpl.this);
+        rect.setLocation(p);
+        boolean inside = rect.contains(point);
+        if (inside != myMouseInsideTabsArea) {
+          myMouseInsideTabsArea = inside;
+          afterScroll.cancelAllRequests();
+          if (!inside) {
+            afterScroll.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                if (!myMouseInsideTabsArea) {
+                  mySingleRowLayout.scrollSelectionInView();
+                  doLayout();
+                }
+              }
+            }, 500);
+          }
+        }
+      }
+    };
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, InputEvent.MOUSE_MOTION_EVENT_MASK);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (toolkit != null) {
+          toolkit.removeAWTEventListener(listener);
+        }
       }
     });
 
@@ -280,7 +328,9 @@ public class JBTabsImpl extends JComponent
         if (!myTestMode) {
           final IdeGlassPane gp = IdeGlassPaneUtil.find(child);
           if (gp != null) {
-            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, child);
+            myTabActionsAutoHideListenerDisposable = Disposer.newDisposable("myTabActionsAutoHideListener");
+            Disposer.register(child, myTabActionsAutoHideListenerDisposable);
+            gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
             myGlassPane = gp;
           }
 
@@ -309,6 +359,10 @@ public class JBTabsImpl extends JComponent
             info -> info.getComponent()).iterator();
         }
       });
+  }
+
+  public boolean isMouseInsideTabsArea() {
+    return myMouseInsideTabsArea;
   }
 
   @Override
@@ -475,7 +529,8 @@ public class JBTabsImpl extends JComponent
     removeTimerUpdate();
 
     if (ScreenUtil.isStandardAddRemoveNotify(this) && myGlassPane != null) {
-      myGlassPane.removeMouseMotionPreprocessor(myTabActionsAutoHideListener);
+      Disposer.dispose(myTabActionsAutoHideListenerDisposable);
+      myTabActionsAutoHideListenerDisposable = Disposer.newDisposable();
       myGlassPane = null;
     }
   }

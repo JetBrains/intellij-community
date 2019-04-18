@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
@@ -17,6 +18,7 @@ class WebServiceStatusProvider(private val requestSender: RequestService) : WebS
         const val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"
 
         private val GSON = Gson()
+        private val LOG = logger<WebServiceStatusProvider>()
 
         private const val SALT = "completion.stats.experiment.salt"
         private const val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
@@ -51,7 +53,7 @@ class WebServiceStatusProvider(private val requestSender: RequestService) : WebS
         assertNotEDT()
         val response = requestSender.get(STATUS_URL)
         if (response != null && response.isOK()) {
-            val map = parseServerResponse(response.text)
+            val map = parseServerResponse(response.text) ?: return
 
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
@@ -76,12 +78,13 @@ class WebServiceStatusProvider(private val requestSender: RequestService) : WebS
         }
     }
 
-    private fun parseServerResponse(responseText: String): LinkedTreeMap<*, *> {
+    private fun parseServerResponse(responseText: String): LinkedTreeMap<*, *>? {
         try {
             return GSON.fromJson(responseText, LinkedTreeMap::class.java)
         }
         catch (e: JsonSyntaxException) {
-            throw JsonSyntaxException("Expected valid JSON object, but received: $responseText", e)
+            LOG.warn("Could not parse server response")
+            return null
         }
     }
 

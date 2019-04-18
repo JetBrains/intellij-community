@@ -288,7 +288,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     POPUP_NOT_SHOWN
   }
 
+  @Override
+  public boolean fixSilently(@NotNull Editor editor) {
+    return doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
+  }
+
+  @NotNull
   public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<PsiClass> classesToImport = getClassesToImport();
     //do not show popups for already imported classes when library is missing (show them for explicit action)
     filterAlreadyImportedButUnresolved(classesToImport);
@@ -445,7 +452,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected AddImportAction createAddImportAction(PsiClass[] classes, Project project, Editor editor) {
     return new AddImportAction(project, myRef, editor, classes) {
       @Override
-      protected void bindReference(PsiReference ref, PsiClass targetClass) {
+      protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {
         ImportClassFixBase.this.bindReference(ref, targetClass);
       }
     };

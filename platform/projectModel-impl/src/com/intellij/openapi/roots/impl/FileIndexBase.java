@@ -22,9 +22,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -32,14 +34,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 /**
  * @author nik
  */
-public abstract class FileIndexBase implements FileIndex {
-  protected final FileTypeRegistry myFileTypeRegistry;
-  protected final DirectoryIndex myDirectoryIndex;
-  private final VirtualFileFilter myContentFilter = file -> {
-    assert file != null;
-    return ReadAction.compute(() ->
-      !isScopeDisposed() && isInContent(file));
-  };
+abstract class FileIndexBase implements FileIndex {
+  private final FileTypeRegistry myFileTypeRegistry;
+  final DirectoryIndex myDirectoryIndex;
 
   FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
     myDirectoryIndex = directoryIndex;
@@ -54,11 +51,28 @@ public abstract class FileIndexBase implements FileIndex {
   }
 
   @Override
-  public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
-                                              @NotNull ContentIterator processor,
+  public boolean iterateContentUnderDirectory(@NotNull final VirtualFile dir,
+                                              @NotNull final ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
-    VirtualFileFilter filter = customFilter != null ? file -> myContentFilter.accept(file) && customFilter.accept(file) : myContentFilter;
-    return iterateContentUnderDirectoryWithFilter(dir, processor, filter);
+    final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        DirectoryInfo info = getInfoForFileOrDirectory(file);
+        if (file.isDirectory()) {
+          if (info.isExcluded(file)) {
+            if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processor, customFilter))) {
+              return skipTo(dir);
+            }
+            return SKIP_CHILDREN;
+          }
+        }
+        boolean accepted = ReadAction.compute(() -> !isScopeDisposed() && isInContent(file, info))
+                           && (customFilter == null || customFilter.accept(file));
+        return !accepted || processor.processFile(file) ? CONTINUE : skipTo(dir);
+      }
+    });
+    return !Comparing.equal(result.skipToParent, dir);
   }
 
   @Override
@@ -66,15 +80,9 @@ public abstract class FileIndexBase implements FileIndex {
     return iterateContentUnderDirectory(dir, processor, null);
   }
 
-  protected boolean isTestSourcesRoot(@NotNull DirectoryInfo info) {
+  boolean isTestSourcesRoot(@NotNull DirectoryInfo info) {
     JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
     return rootType != null && rootType.isForTests();
-  }
-
-  private static boolean iterateContentUnderDirectoryWithFilter(@NotNull VirtualFile dir,
-                                                                @NotNull ContentIterator iterator,
-                                                                @NotNull VirtualFileFilter filter) {
-    return VfsUtilCore.iterateChildrenRecursively(dir, filter, iterator);
   }
 
   @NotNull
@@ -93,8 +101,12 @@ public abstract class FileIndexBase implements FileIndex {
   }
 
   @NotNull
-  protected static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
+  static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
     return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
       ModuleRootManager.getInstance(module).getSourceRoots()};
+  }
+
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+    return ProjectFileIndexImpl.isFileInContent(file, info);
   }
 }

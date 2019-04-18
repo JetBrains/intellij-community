@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -45,9 +45,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -60,7 +58,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -73,10 +73,13 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
@@ -151,7 +154,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
   public void launchInspectionsOffline(@NotNull final AnalysisScope scope,
                                        @Nullable final String outputPath,
                                        final boolean runGlobalToolsOnly,
-                                       @NotNull final List<? super File> inspectionsResults) {
+                                       @NotNull final List<? super Path> inspectionsResults) {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
@@ -159,7 +162,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
                                                              final boolean runGlobalToolsOnly,
                                                              final boolean isOfflineInspections,
                                                              @Nullable final String outputPath,
-                                                             @NotNull final List<? super File> inspectionsResults) {
+                                                             @NotNull final List<? super Path> inspectionsResults) {
     cleanupTools();
     setCurrentScope(scope);
 
@@ -181,7 +184,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
     }
   }
 
-  private void exportResults(@NotNull List<? super File> inspectionsResults, @Nullable String outputPath) {
+  private void exportResults(@NotNull List<? super Path> inspectionsResults, @Nullable String outputPath) {
     final List<Tools> globalToolsWithProblems = new ArrayList<>();
     for (Map.Entry<String,Tools> entry : getTools().entrySet()) {
       final Tools sameTools = entry.getValue();
@@ -208,9 +211,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
       // close "problem" tag for local inspections (see DefaultInspectionToolPresentation.addProblemElement())
       if (hasProblems) {
         try {
-          final File file = ExportHTMLAction.getInspectionResultFile(outputPath, sameTools.getShortName());
+          final Path file = ExportHTMLAction.getInspectionResultPath(outputPath, sameTools.getShortName());
           inspectionsResults.add(file);
-          FileUtil.writeToFile(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
+          Files.write(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -228,7 +231,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
         try {
           int i = 0;
           for (Tools inspection : inspections) {
-            inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
+            inspectionsResults.add(ExportHTMLAction.getInspectionResultPath(outputPath, inspection.getShortName()));
             try {
               BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
               writers[i] = writer;

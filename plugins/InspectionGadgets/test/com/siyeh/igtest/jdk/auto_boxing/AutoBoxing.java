@@ -1,6 +1,6 @@
 package com.siyeh.igtest.jdk.auto_boxing;
 
-import java.util.Arrays;
+import java.util.*;
 
 
 public class AutoBoxing {
@@ -105,5 +105,10 @@ public class AutoBoxing {
       case A -> <warning descr="Auto-boxing '1'">1</warning>;
       case B,C -> <warning descr="Auto-boxing '2'">2</warning>;
     };
+  }
+
+  // avoid ClassCastException on broken code
+  void nonPrimitive(List<? extends <error descr="Illegal type: 'void'">void</error>> list) {
+      <error descr="Cannot infer type: variable initializer is 'void'">var</error> x = list.get(0);
   }
 }

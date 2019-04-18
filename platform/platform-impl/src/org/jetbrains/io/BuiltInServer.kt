@@ -7,10 +7,10 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.MultiThreadEventLoopGroup
 import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
+import io.netty.channel.nio.NioEventLoopGroup
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.*
@@ -45,7 +45,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
 
     @Throws(Exception::class)
     fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (() -> ChannelHandler)? = null): BuiltInServer {
-      return start(MultiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
+      return start(multiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
 
     @Throws(Exception::class)
@@ -53,7 +53,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
     fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)?): BuiltInServer {
       val threadFactory = BuiltInServerThreadFactory()
       val loopGroup: EventLoopGroup = try {
-        MultiThreadEventLoopGroup(workerCount, threadFactory)
+        multiThreadEventLoopGroup(workerCount, threadFactory)
       }
       catch (e: IllegalStateException) {
         logger<BuiltInServer>().warn(e)
@@ -143,4 +143,17 @@ private class BuiltInServerThreadFactory : ThreadFactory {
   override fun newThread(r: Runnable): Thread {
     return Thread(r, "Netty Builtin Server " + counter.incrementAndGet())
   }
+}
+
+private fun multiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
+//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+//    try {
+//      return KQueueEventLoopGroup(workerCount, threadFactory)
+//    }
+//    catch (e: Throwable) {
+//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
+//    }
+//  }
+
+  return NioEventLoopGroup(workerCount, threadFactory)
 }

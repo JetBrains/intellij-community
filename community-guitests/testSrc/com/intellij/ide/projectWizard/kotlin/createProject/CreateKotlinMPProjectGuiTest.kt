@@ -52,9 +52,6 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     )
 
     waitAMoment()
-    step("wait for initial gradle import") {
-      waitForGradleReimport(projectName)
-    }
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -63,7 +60,6 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
 
     step("gradle reimport after editing gradle files") {
       gradleReimport()
-      assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
     }
     waitAMoment()
 

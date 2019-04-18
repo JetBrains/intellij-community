@@ -9,7 +9,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
@@ -23,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -110,7 +110,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   private static void readDescriptor(@NotNull File descriptor, @Nullable ProjectSetProcessor.Context context) throws IOException {
-    try (InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), CharsetToolkit.UTF8_CHARSET)) {
+    try (InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), StandardCharsets.UTF_8)) {
       JsonElement parse = new JsonParser().parse(input);
       new ProjectSetReader().readDescriptor(parse.getAsJsonObject(), context);
     }

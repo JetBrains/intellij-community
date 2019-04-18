@@ -56,7 +56,7 @@ class DoNotStorePasswordTest {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     ServiceManagerImpl.processAllImplementationClasses(app, processor)
     // yes, we don't use default project here to be sure
-    ServiceManagerImpl.processAllImplementationClasses(projectRule.project as ComponentManagerImpl, processor)
+    ServiceManagerImpl.processAllImplementationClasses(projectRule.project, processor)
 
     @Suppress("DEPRECATION")
     for (c in app.getComponentInstancesOfType(PersistentStateComponent::class.java)) {

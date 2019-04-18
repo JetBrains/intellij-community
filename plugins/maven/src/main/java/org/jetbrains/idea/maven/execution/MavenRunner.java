@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
@@ -161,10 +162,11 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                                            @NotNull String workingDirPath,
                                            @NotNull String title,
                                            long executionId) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) return null;
-      return doCreateConsole(title, workingDirPath, project, executionId);
-    });
+    boolean isDisposed = ReadAction.compute(() -> project.isDisposed());
+    if (isDisposed) {
+      return null;
+    }
+    return doCreateConsole(title, workingDirPath, project, executionId);
   }
 
   private void updateTargetFolders() {
@@ -176,7 +178,11 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new SoutMavenConsole();
     }
-    return MavenConsole.createGuiMavenConsole(project, title, workingDirPath, ToolWindowId.RUN, executionId);
+    AtomicReference<MavenConsole> result = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      result.set(MavenConsole.createGuiMavenConsole(project, title, workingDirPath, ToolWindowId.RUN, executionId));
+    });
+    return result.get();
   }
 
   private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,

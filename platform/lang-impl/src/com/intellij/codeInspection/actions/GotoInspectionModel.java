@@ -58,6 +58,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     return tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ") + " " + tool.getShortName();
   }
 
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return myListCellRenderer;
@@ -78,7 +79,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   }
 
   @Override
-  public String getElementName(final Object element) {
+  public String getElementName(@NotNull final Object element) {
     if (element instanceof InspectionElement) {
       return getSearchString(((InspectionElement)element).getToolWrapper());
     }

@@ -40,7 +40,7 @@ public class DaemonStopAction extends DaemonAction {
       public void onOutput(OutputEvent event) { }
     };
     BuildLayoutParameters layout = new BuildLayoutParameters();
-    DaemonParameters daemonParameters = new DaemonParameters(layout);
+    DaemonParameters daemonParameters = getDaemonParameters(layout);
     ServiceRegistry daemonServices = daemonClientFactory.createStopDaemonServices(outputEventListener, daemonParameters);
 
     DaemonRegistry daemonRegistry = daemonServices.get(DaemonRegistry.class);

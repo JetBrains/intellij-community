@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -72,6 +73,9 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
         }
         DomApplicationComponent.getInstance().initDescription(instance);
         lazyInstance = instance;
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         throw new RuntimeException(e);

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
+import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -78,8 +79,12 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
       branchFetchRequestValue.value.joinCancellable()
       val commitHashes = apiCommitsRequestValue.value.joinCancellable().map { it.sha }
       val gitCommits = mutableListOf<GitCommit>()
-      GitLogUtil.readFullDetailsForHashes(project, repository.root, repository.vcs, { gitCommits.add(it) }, commitHashes, false, false,
-                                          false, true, GitLogUtil.DiffRenameLimit.INFINITY)
+      val requirements = GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.INFINITY,
+                                               includeRootChanges = false)
+      GitLogUtil.readFullDetailsForHashes(project, repository.root, commitHashes, requirements) {
+        gitCommits.add(it)
+      }
+
       return gitCommits
     }
   }

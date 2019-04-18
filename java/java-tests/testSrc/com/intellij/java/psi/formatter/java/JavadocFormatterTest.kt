@@ -1115,19 +1115,19 @@ module M {
     /**
      * <h1>A description containing HTML tags</h1>
      * <p>
-     *     There might be lists in descriptions like this one:
-     *     <ul>
-     *         <li>Item one</li>
-     *         <li>Item two</li>
-     *         <li>Item three</li>
-     *     </ul>
-     *     which should be left as is, without any tags merged.
+     * There might be lists in descriptions like this one:
+     * <ul>
+     *     <li>Item one</li>
+     *     <li>Item two</li>
+     *     <li>Item three</li>
+     * </ul>
+     * which should be left as is, without any tags merged.
      * </p>
      * @param a Parameter descriptions can also be long but tag
      *          content should be left intact:
      *          <ol>
-     *          <li>Another item one</li>
-     *          <li>Item two</li>
+     *              <li>Another item one</li>
+     *              <li>Item two</li>
      *          </ol>
      */
     void test(int a) {
@@ -1143,19 +1143,18 @@ module M {
      * There might be lists in descriptions like
      * this one:
      * <ul>
-     * <li>Item one</li>
-     * <li>Item two</li>
-     * <li>Item three</li>
+     *     <li>Item one</li>
+     *     <li>Item two</li>
+     *     <li>Item three</li>
      * </ul>
-     * which should be left as is, without any
-     * tags merged.
+     * which should be left as is, without any tags merged.
      * </p>
      * @param a Parameter descriptions can also be
      *          long but tag content should be
      *          left intact:
      *          <ol>
-     *          <li>Another item one</li>
-     *          <li>Item two</li>
+     *              <li>Another item one</li>
+     *              <li>Item two</li>
      *          </ol>
      */
     void test(int a) {
@@ -1374,6 +1373,55 @@ public class Test {
               return new HashMap<>();
           }
 
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea147601() {
+    doTextTest(
+      """
+      public class Idea147601 {
+      /**
+       * <table summary="">
+       *     <thead>
+       *         <tr>
+       *             <td>ABC</td>
+       *             <td>DEF</td>
+       *         </tr>
+       *     </thead>
+       *     <tbody>
+       *         <tr>
+       *             <td>some data here</td>
+       *             <td>some more</td>
+       *         </tr>
+       *     </tbody>
+       * </table>
+       */
+      void docTest() {}
+      }
+      """.trimIndent(),
+
+      """
+      public class Idea147601 {
+          /**
+           * <table summary="">
+           *     <thead>
+           *         <tr>
+           *             <td>ABC</td>
+           *             <td>DEF</td>
+           *         </tr>
+           *     </thead>
+           *     <tbody>
+           *         <tr>
+           *             <td>some data here</td>
+           *             <td>some more</td>
+           *         </tr>
+           *     </tbody>
+           * </table>
+           */
+          void docTest() {
+          }
       }
       """.trimIndent()
     )

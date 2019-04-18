@@ -267,7 +267,7 @@
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
 
-    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider"/>
     <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
@@ -465,8 +465,8 @@
 
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
-    <extensionPoint name="executor"
-                    interface="com.intellij.execution.Executor"/>
+    <!-- e.g. TeamCity plugin wants DefaultDebugExecutor in constructor -->
+    <extensionPoint name="executor" interface="com.intellij.execution.Executor" registerInPicoContainer="true"/>
 
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
@@ -492,8 +492,8 @@
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="runDashboardContributor"
-                    interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
+    <extensionPoint name="runDashboardCustomizer"
+                    interface="com.intellij.execution.dashboard.RunDashboardCustomizer"/>
     <extensionPoint name="runDashboardGroupingRule"
                     interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
     <extensionPoint name="serviceViewContributor"
@@ -518,7 +518,9 @@
     <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
       <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>
     </extensionPoint>
-    <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>
+    <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean">
+      <with attribute="className" implements="java.lang.Object"/>
+    </extensionPoint>
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
@@ -661,7 +663,9 @@
                     interface="com.intellij.ide.actions.VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
-                    beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
+                    beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
+      <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
+    </extensionPoint>
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
@@ -887,8 +891,12 @@
       <with attribute="implementation" implements="com.intellij.semantic.SemContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
-    <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+    <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP">
+      <with attribute="className" implements="java.lang.Object"/>
+    </extensionPoint>
+    <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP">
+      <with attribute="className" implements="java.lang.Object"/>
+    </extensionPoint>
     <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
     </extensionPoint>

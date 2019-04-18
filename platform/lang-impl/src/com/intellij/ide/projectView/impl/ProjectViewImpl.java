@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -54,7 +54,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
@@ -174,7 +173,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final String ATTRIBUTE_ID = "id";
   private JPanel myViewContentPanel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = Comparator.comparingInt(AbstractProjectViewPane::getWeight);
-  private final FileEditorManager myFileEditorManager;
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final MessageBusConnection myConnection;
@@ -182,12 +180,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<>();
   private ContentManager myContentManager;
 
-  public ProjectViewImpl(@NotNull Project project, final FileEditorManager fileEditorManager, final ToolWindowManagerEx toolWindowManager) {
+  public ProjectViewImpl(@NotNull Project project) {
     myProject = project;
 
     constructUi();
-
-    myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
@@ -212,7 +208,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       @Override
       public void stateChanged() {
-        ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
         if (window == null || toolWindowVisible == window.isVisible()) return;
         myCurrentSelectionObsolete = ThreeState.NO;
         if (window.isVisible() && !toolWindowVisible) {
@@ -1902,9 +1898,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Nullable
     SimpleSelectInContext findSelectInContext() {
-      SimpleSelectInContext context = getSelectInContext(myFileEditorManager.getSelectedEditor());
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+      SimpleSelectInContext context = getSelectInContext(fileEditorManager.getSelectedEditor());
       if (context != null) return context;
-      for (FileEditor fileEditor : myFileEditorManager.getSelectedEditors()) {
+      for (FileEditor fileEditor : fileEditorManager.getSelectedEditors()) {
         context = getSelectInContext(fileEditor);
         if (context != null) return context;
       }
@@ -1965,7 +1962,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     @NotNull
     public FileEditorProvider getFileEditorProvider() {
-      return () -> ArrayUtil.getFirstElement(myFileEditorManager.openFile(getVirtualFile(), false));
+      return () -> ArrayUtil.getFirstElement(FileEditorManager.getInstance(myProject).openFile(getVirtualFile(), false));
     }
   }
 

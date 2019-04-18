@@ -2,22 +2,20 @@
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.hierarchy.HierarchyBrowserBase;
-import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -36,8 +34,8 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +46,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
   @NotNull
   @Override
-  public List<SearchScope> getPredefinedScopes(@NotNull final Project project,
-                                               @Nullable final DataContext dataContext,
+  public List<SearchScope> getPredefinedScopes(@NotNull Project project,
+                                               @Nullable DataContext dataContext,
                                                boolean suggestSearchInLibs,
                                                boolean prevSearchFiles,
                                                boolean currentSelection,
@@ -62,8 +60,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    for (SearchScopeProvider each : SearchScopeProvider.EP.getExtensions(project)) {
-      result.addAll(each.getGeneralProjectScopes());
+    for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
+      result.addAll(each.getGeneralSearchScopes(project));
     }
 
     if (ModuleUtil.hasTestSourceRoots(project)) {
@@ -73,15 +71,20 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
     result.add(ScratchesSearchScope.getScratchesScope(project));
 
-    final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
-    if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
-      result.add(openFilesScope);
-    }
-    else if (showEmptyScopes) {
-      result.add(new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")));
-    }
+    GlobalSearchScope recentFilesScope = recentFilesScope(project, false);
+    ContainerUtil.addIfNotNull(
+      result, recentFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.files")) : null);
+    GlobalSearchScope recentModFilesScope = recentFilesScope(project, true);
+    ContainerUtil.addIfNotNull(
+      result, recentModFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentModFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.modified.files")) : null);
+    GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
+    ContainerUtil.addIfNotNull(
+      result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")) : null);
 
-    final Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
+    Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
                                       ? FileEditorManager.getInstance(project).getSelectedTextEditor()
                                       : null;
     PsiFile psiFile = selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
@@ -207,36 +210,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       }
     }
 
-    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    if (favoritesManager != null) {
-      for (final String favorite : favoritesManager.getAvailableFavoritesListNames()) {
-        final Collection<TreeItem<Pair<AbstractUrl, String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
-        if (rootUrls.isEmpty()) continue;  // ignore unused root
-        result.add(new GlobalSearchScope(project) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return "Favorite \'" + favorite + "\'";
-          }
-
-          @Override
-          public boolean contains(@NotNull final VirtualFile file) {
-            return ReadAction.compute(() -> favoritesManager.contains(favorite, file));
-          }
-
-          @Override
-          public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-            return true;
-          }
-
-          @Override
-          public boolean isSearchInLibraries() {
-            return true;
-          }
-        });
-      }
-    }
-
     ContainerUtil.addIfNotNull(result, getSelectedFilesScope(project, dataContext));
 
     return ContainerUtil.newArrayList(result);
@@ -262,6 +235,16 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     if (elements.length > 0) {
       result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
     }
+  }
+
+  @NotNull
+  public static GlobalSearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
+    String name = changedOnly ? IdeBundle.message("scope.recent.modified.files") : IdeBundle.message("scope.recent.files");
+    List<VirtualFile> files = changedOnly ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles()) :
+                              JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
+                                .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
+
+    return files.isEmpty() ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.filesScope(project, files, name);
   }
 
   @Nullable

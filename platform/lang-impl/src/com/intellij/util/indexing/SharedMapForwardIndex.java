@@ -8,10 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.ByteSequenceDataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-class SharedMapForwardIndex implements ForwardIndex {
+public class SharedMapForwardIndex implements ForwardIndex {
   private static final Logger LOG = Logger.getInstance(SharedMapForwardIndex.class);
   private final ID<?, ?> myIndexId;
 
@@ -31,13 +28,17 @@ class SharedMapForwardIndex implements ForwardIndex {
   @Nullable
   private final AbstractForwardIndexAccessor<?, ?, ?, ?> myAccessor;
 
-  SharedMapForwardIndex(@NotNull IndexExtension<?, ?, ?> extension,
-                        @Nullable AbstractForwardIndexAccessor<?, ?, ?, ?> accessor) throws IOException {
+  public SharedMapForwardIndex(@NotNull IndexExtension<?, ?, ?> extension,
+                               @Nullable AbstractForwardIndexAccessor<?, ?, ?, ?> accessor,
+                               @NotNull File verificationIndexStorageFile,
+                               boolean verificationIndexWantNonNegativeIntegralValues,
+                               boolean verificationIndexHasChunks) throws IOException {
     myIndexId = (ID<?, ?>)extension.getName();
     if (!SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS) {
-      File sanityVerificationIndexFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+      Boolean old = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
       try {
-        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(sanityVerificationIndexFile) {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!verificationIndexHasChunks);
+        mySanityVerificationIndex = new PersistentMapBasedForwardIndex(verificationIndexStorageFile) {
           @NotNull
           @Override
           protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
@@ -47,15 +48,18 @@ class SharedMapForwardIndex implements ForwardIndex {
                                                                      4096) {
               @Override
               protected boolean wantNonNegativeIntegralValues() {
-                return true;
+                return verificationIndexWantNonNegativeIntegralValues;
               }
             };
           }
         };
       }
       catch (IOException e) {
-        IOUtil.deleteAllFilesStartingWith(sanityVerificationIndexFile);
+        IOUtil.deleteAllFilesStartingWith(verificationIndexStorageFile);
         throw e;
+      }
+      finally {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(old);
       }
     }
     else {
@@ -97,13 +101,11 @@ class SharedMapForwardIndex implements ForwardIndex {
 
   @Override
   public void put(@NotNull Integer inputId, @Nullable ByteArraySequence value) throws IOException {
-    if (value != null) {
-      if (SharedIndicesData.ourFileSharedIndicesEnabled) {
-        SharedIndicesData.associateFileData(inputId, myIndexId, value, ByteSequenceDataExternalizer.INSTANCE);
-      }
-      if (mySanityVerificationIndex != null) {
-        mySanityVerificationIndex.put(inputId, value);
-      }
+    if (SharedIndicesData.ourFileSharedIndicesEnabled) {
+      SharedIndicesData.associateFileData(inputId, myIndexId, value, ByteSequenceDataExternalizer.INSTANCE);
+    }
+    if (mySanityVerificationIndex != null) {
+      mySanityVerificationIndex.put(inputId, value);
     }
   }
 

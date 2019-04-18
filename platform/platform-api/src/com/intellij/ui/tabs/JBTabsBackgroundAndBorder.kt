@@ -10,7 +10,7 @@ import java.awt.Rectangle
 import javax.swing.border.Border
 
 abstract class JBTabsBackgroundAndBorder(val tabs: JBTabsImpl) : Border {
-  var thickness: Int = 1
+  var thickness: Int = JBUI.scale(1)
 
   override fun getBorderInsets(c: Component?): Insets = JBUI.emptyInsets()
 

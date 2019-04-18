@@ -468,6 +468,7 @@ public final class IconLoader {
   /**
    *  For internal usage. Converts the icon to 1x scale when applicable.
    */
+  @ApiStatus.Internal
   public static Icon getMenuBarIcon(Icon icon, boolean dark) {
     if (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -38,6 +39,8 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  * A collection of methods for retrieving history information from native Git.
  */
 public class GitHistoryUtils {
+  private static final Logger LOG = Logger.getInstance(GitHistoryUtils.class);
+
   private GitHistoryUtils() {
   }
 
@@ -56,7 +59,7 @@ public class GitHistoryUtils {
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
   }
 
   /**
@@ -109,8 +112,8 @@ public class GitHistoryUtils {
                                                                          @NotNull VirtualFile root,
                                                                          @NotNull String... hashes)
     throws VcsException {
-    List<? extends VcsCommitMetadata> result = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), root,
-                                                                              Arrays.asList(hashes));
+    List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root,
+                                                                          Arrays.asList(hashes));
     if (result.size() != hashes.length) return null;
     return result;
   }
@@ -135,7 +138,18 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return GitLogUtil.collectFullDetails(project, root, parameters);
+
+    List<GitCommit> commits = ContainerUtil.newArrayList();
+    try {
+      GitLogUtil.readFullDetails(project, root, commits::add, parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
+    return commits;
   }
 
   /**
@@ -171,7 +185,7 @@ public class GitHistoryUtils {
                                                      @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryForFile(project, filePath).getRoot(), GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
@@ -194,7 +208,8 @@ public class GitHistoryUtils {
     throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getRepositoryForFile(project, filePath).getRoot(), GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME,
+                                                                         SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     h.addParameters("--encoding=UTF-8");
@@ -235,7 +250,8 @@ public class GitHistoryUtils {
     }
     filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
+    GitLogParser<GitLogFullRecord> parser = GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS,
+                                                                             HASH, COMMIT_TIME, PARENTS);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty(), "--name-status", t.getFullName());
     h.endOptions();
@@ -244,7 +260,7 @@ public class GitHistoryUtils {
     if (result.length() == 0) {
       return null;
     }
-    GitLogRecord record = parser.parseOneRecord(result);
+    GitLogFullRecord record = parser.parseOneRecord(result);
     if (record == null) {
       return null;
     }
@@ -272,9 +288,9 @@ public class GitHistoryUtils {
 
   public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, AUTHOR_TIME);
     h.setSilent(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("-s", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(commitsId);
 
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
@@ -322,7 +338,7 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = VcsUtil.getLastCommitPath(project, path);
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
+    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");

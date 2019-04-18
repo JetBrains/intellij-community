@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -71,7 +71,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
-  private final WindowManagerEx myWindowManager;
   private final EventDispatcher<ToolWindowManagerListener> myDispatcher = EventDispatcher.create(ToolWindowManagerListener.class);
   private final DesktopLayout myLayout = new DesktopLayout();
   private final Map<String, InternalDecorator> myId2InternalDecorator = new HashMap<>();
@@ -120,11 +119,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   private final SingleAlarm myUpdateHeadersAlarm = new SingleAlarm(() -> updateToolWindowHeaders(), 50, this);
   private final CommandProcessor myCommandProcessor = new CommandProcessor();
 
-  public ToolWindowManagerImpl(final Project project,
-                               final WindowManagerEx windowManagerEx,
-                               final ActionManager actionManager) {
+  public ToolWindowManagerImpl(@NotNull Project project) {
     myProject = project;
-    myWindowManager = windowManagerEx;
 
     if (project.isDefault()) {
       return;
@@ -165,7 +161,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     });
 
-    myLayout.copyFrom(windowManagerEx.getLayout());
+    myLayout.copyFrom(WindowManagerEx.getInstanceEx().getLayout());
 
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
@@ -189,7 +185,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Windows.ToolWindowFilter
       .filterBySignal(new Windows.Signal(predicate))
-      .withEscAction(actionManager)
+      .withEscAction()
       .handleDocked(toolWindowId -> {})
       .handleFloating(toolWindowId -> {})
       .handleFocusLostOnPinned(toolWindowId -> {
@@ -201,7 +197,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .bind(myProject);
   }
 
-  private void focusDefaultElementInSelectedEditor() {
+  private static void focusDefaultElementInSelectedEditor() {
     EditorsSplitters splittersToFocus = getSplittersToFocus();
     if (splittersToFocus != null) {
     final EditorWindow window = splittersToFocus.getCurrentWindow();
@@ -381,7 +377,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    myFrame = myWindowManager.allocateFrame(myProject);
+    myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
     LOG.assertTrue(myFrame != null);
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
@@ -507,7 +503,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     // remove ToolWindowsPane
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-    myWindowManager.releaseFrame(myFrame);
+    WindowManagerEx.getInstanceEx().releaseFrame(myFrame);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -1661,8 +1657,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
-  private EditorsSplitters getSplittersToFocus() {
-    Window activeWindow = myWindowManager.getMostRecentFocusedWindow();
+  @Nullable
+  private static EditorsSplitters getSplittersToFocus() {
+    Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (activeWindow instanceof FloatingDecorator) {
       IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
@@ -1864,7 +1861,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
-          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
+          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         myFloatingDecorator.setBounds(new Rectangle(bounds));
       }
       else {
@@ -1939,7 +1936,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
-          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
+          WindowManager.getInstance().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         window.setBounds(new Rectangle(bounds));
       }
       else { // place new frame at the center of main frame if there are no floating bounds

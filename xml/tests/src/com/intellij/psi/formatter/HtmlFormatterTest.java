@@ -205,6 +205,10 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
+  public void testSmall() throws Exception {
+    doTest();
+  }
+
   public void testTableformatting() throws Exception {
     doTest();
   }

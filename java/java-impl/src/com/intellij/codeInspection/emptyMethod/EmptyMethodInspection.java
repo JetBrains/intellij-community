@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.ToolExtensionPoints;
@@ -166,8 +166,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS, 0)) {
       return false;
     }
-    for (final Object extension : Extensions.getExtensions(ToolExtensionPoints.EMPTY_METHOD_TOOL)) {
-      if (((Condition<RefMethod>) extension).value(refMethod)) {
+
+    for (final Condition<RefMethod> extension : Extensions.getRootArea().<Condition<RefMethod>>getExtensionPoint(ToolExtensionPoints.EMPTY_METHOD_TOOL).getExtensions()) {
+      if (extension.value(refMethod)) {
         return false;
       }
     }
@@ -258,7 +259,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
+  private static LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
     return new DeleteMethodQuickFix(processor, needToDeleteHierarchy);
   }
 

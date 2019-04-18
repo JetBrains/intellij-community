@@ -42,28 +42,40 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected boolean filterOutputByDirectoryForJunit5(Set<PsiClass> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<PsiMember> classNames) {
     return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) {
     searchTests(module, classFilter, classes, true);
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes) {
     searchTests(module, classFilter, classes, false);
   }
 
-  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes, boolean junit5) {
+  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
         if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
-          classes.add(psiClass); //with method, comma separated
+          if (className.contains(",")) {
+            String methodName = StringUtil.getShortName(className, ',');
+            PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
+            if (methods.length > 0) {
+              classes.add(methods[0]);
+            }
+            else {
+              classes.add(psiClass);
+            }
+          }
+          else {
+            classes.add(psiClass);
+          }
         }
       }
       else {
@@ -77,7 +89,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 

@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -192,7 +191,6 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               () -> copy.forEach((document, pair) -> {
                 if (!pair.second.isValid()) return;
 
-                PsiDocumentManager.getInstance(myProject).commitDocument(document);
                 Long beforeImport = pair.second.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
                 Long current = pair.second.getUserData(CRC_WITHOUT_SPACES_CURRENT);
                 if (current != null && current.equals(beforeImport)) {
@@ -725,9 +723,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     return canonized == null ? null : FileUtil.toSystemIndependentName(canonized);
   }
 
-  @NotNull
-  private Long calculateCrc(@NotNull VirtualFile file) {
-    return new ConfigurationFileCrcFactory(myProject, file).create();
+  private static long calculateCrc(@NotNull VirtualFile file) {
+    return new ConfigurationFileCrcFactory(file).create();
   }
 
   @ApiStatus.Experimental

@@ -12,7 +12,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>16</line>
+    <line>17</line>
     <description>Default constructor in 'a.A' is deprecated</description>
   </problem>
 </problems>

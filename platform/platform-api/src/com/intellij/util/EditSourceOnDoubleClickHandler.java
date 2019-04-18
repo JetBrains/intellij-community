@@ -104,8 +104,9 @@ public class EditSourceOnDoubleClickHandler {
 
     @Override
     public boolean onDoubleClick(MouseEvent e) {
-      final TreePath clickPath = myTree.getUI() instanceof WideSelectionTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
-                                                                               : myTree.getPathForLocation(e.getX(), e.getY());
+      TreePath clickPath = WideSelectionTreeUI.isWideSelection(myTree)
+                           ? myTree.getClosestPathForLocation(e.getX(), e.getY())
+                           : myTree.getPathForLocation(e.getX(), e.getY());
       if (clickPath == null) return false;
 
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);

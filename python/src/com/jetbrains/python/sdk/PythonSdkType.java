@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -102,7 +101,7 @@ public final class PythonSdkType extends SdkType {
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkType::isRemote;
 
-  public static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
+  private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -348,30 +347,23 @@ public final class PythonSdkType extends SdkType {
    * @param passParentEnvironment iff true, include system paths in PATH
    */
   public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvironment) {
-    File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
-    if (virtualEnvRoot != null) {
-      @NonNls final String PATH = "PATH";
+    final Map<String, String> virtualEnv = activateVirtualEnv(sdkHome);
+    if (!virtualEnv.isEmpty()) {
+      final Map<String, String> environment = commandLine.getEnvironment();
 
-      // prepend virtualenv bin if it's not already on PATH
-      File bin = new File(virtualEnvRoot, "bin");
-      if (!bin.exists()) {
-        bin = new File(virtualEnvRoot, "Scripts");   // on Windows
-      }
-      String virtualenvBin = bin.getPath();
+      for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
+        final String key = entry.getKey();
+        final String value = entry.getValue();
 
-      Map<String, String> env = commandLine.getEnvironment();
-      String pathValue;
-      if (env.containsKey(PATH)) {
-        pathValue = PythonEnvUtil.addToPathEnvVar(env.get(PATH), virtualenvBin, true);
+        if (environment.containsKey(key)) {
+          if (key.equalsIgnoreCase(PySdkUtil.PATH_ENV_VARIABLE)) {
+            PythonEnvUtil.addToPathEnvVar(environment.get(key), value, false);
+          }
+        }
+        else {
+          environment.put(key,value);
+        }
       }
-      else if (passParentEnvironment) {
-        // append to PATH
-        pathValue = PythonEnvUtil.addToPathEnvVar(System.getenv(PATH), virtualenvBin, true);
-      }
-      else {
-        pathValue = virtualenvBin;
-      }
-      env.put(PATH, pathValue);
     }
   }
 
@@ -571,25 +563,13 @@ public final class PythonSdkType extends SdkType {
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
-                                                               getVirtualEnvExtraEnv(binaryPath), MINUTE);
+                                                               activateVirtualEnv(binaryPath), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
                                                   runResult.getStdout(),
                                                   runResult.getStderr()));
     }
     return runResult.getStdoutLines();
-  }
-
-  /**
-   * Returns a piece of env good as additional env for getProcessOutput.
-   */
-  @Nullable
-  public static Map<String, String> getVirtualEnvExtraEnv(@NotNull String binaryPath) {
-    final File root = getVirtualEnvRoot(binaryPath);
-    if (root != null) {
-      return ImmutableMap.of("PATH", root.toString());
-    }
-    return null;
   }
 
   @Nullable
@@ -985,6 +965,18 @@ public final class PythonSdkType extends SdkType {
     return !isRemote(sdk);
   }
 
+  @NotNull
+  public static Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
+    final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
+    if (cached != null) return cached;
+
+    final String sdkHome = sdk.getHomePath();
+    if (sdkHome == null) return Collections.emptyMap();
+
+    final Map<String, String> environment = activateVirtualEnv(sdkHome);
+    sdk.putUserData(ENVIRONMENT_KEY, environment);
+    return environment;
+  }
 
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {

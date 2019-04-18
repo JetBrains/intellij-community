@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,6 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 /**
  * @author mikhail.sokolov
@@ -87,7 +87,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     String scenarioName = "Simple without collisions";
-    Map<SearchEverywhereContributor<?>, Integer> contributors = ContainerUtil.newHashMap(
+    Map<SearchEverywhereContributor<Object, ?>, Integer> contributors = ContainerUtil.newHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 12),
       Pair.create(createTestContributor("test2", 0, "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 10),
       Pair.create(createTestContributor("test3", 0, "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"), 10),
@@ -224,7 +224,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     String scenarioName = "Simple without collisions";
-    Map<SearchEverywhereContributor<?>, Integer> contributors = ContainerUtil.newLinkedHashMap(
+    Map<SearchEverywhereContributor<Object, ?>, Integer> contributors = ContainerUtil.newLinkedHashMap(
       Pair.create(createTestContributor("test1", 0, "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 12),
       Pair.create(createTestContributor("test2", 0, "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 10),
       Pair.create(createTestContributor("test3", 0, "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"), 10),
@@ -339,8 +339,8 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
 
-  private static SearchEverywhereContributor<?> createTestContributor(String id, int fixedPriority, String... items) {
-    return new SearchEverywhereContributor<Object>() {
+  private static SearchEverywhereContributor<Object, Object> createTestContributor(String id, int fixedPriority, String... items) {
+    return new SearchEverywhereContributor<Object, Object>() {
       @NotNull
       @Override
       public String getSearchProviderId() {
@@ -378,12 +378,12 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
                                 boolean everywhere,
                                 @Nullable SearchEverywhereContributorFilter<Object> filter,
                                 @NotNull ProgressIndicator progressIndicator,
-                                @NotNull Function<Object, Boolean> consumer) {
+                                @NotNull Processor<? super Object> consumer) {
         boolean flag = true;
         Iterator<String> iterator = Arrays.asList(items).iterator();
         while (flag && iterator.hasNext()) {
           String next = iterator.next();
-          flag = consumer.apply(next);
+          flag = consumer.process(next);
         }
       }
 
@@ -394,7 +394,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
 
       @NotNull
       @Override
-      public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+      public ListCellRenderer<? super Object> getElementsRenderer() {
         return null;
       }
 
@@ -406,11 +406,11 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   private static class Scenario {
-    private final Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits;
+    private final Map<SearchEverywhereContributor<Object, ?>, Integer> contributorsAndLimits;
     private final Map<String, List<String>> results;
     private final String description;
 
-    Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+    Scenario(Map<SearchEverywhereContributor<Object, ?>, Integer> contributorsAndLimits,
                     Map<String, List<String>> results, String description) {
       this.contributorsAndLimits = contributorsAndLimits;
       this.results = results;
@@ -457,7 +457,7 @@ public class MultiThreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     @Override
-    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+    public void searchFinished(@NotNull Map<SearchEverywhereContributor<?, ?>, Boolean> hasMoreContributors) {
       hasMoreContributors.entrySet()
         .stream()
         .filter(entry -> entry.getValue())

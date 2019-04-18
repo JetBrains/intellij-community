@@ -26,7 +26,7 @@ public final class SearchContext {
     this(project, null, null);
   }
 
-  public SearchContext(DataContext context) {
+  public SearchContext(@NotNull DataContext context) {
     myProject = ObjectUtils.coalesce(CommonDataKeys.PROJECT.getData(context), ProjectManager.getInstance().getDefaultProject());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);

@@ -160,7 +160,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
       myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
-      myWrapInQuotes = myWalker != null && myWalker.requiresNameQuotes() && !(position.getParent() instanceof JsonStringLiteral);
+      myWrapInQuotes = !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
     }
 
@@ -392,7 +392,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                  @SuppressWarnings("SameParameterValue") @Nullable final String description,
                                  @Nullable final String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
-      LookupElementBuilder builder = LookupElementBuilder.create(!myWrapInQuotes ? StringUtil.unquoteString(key) : key);
+      String unquoted = StringUtil.unquoteString(key);
+      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted) ? unquoted : key);
       if (altText != null) {
         builder = builder.withPresentableText(altText);
       }
@@ -405,13 +406,17 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myVariants.add(builder);
     }
 
+    private boolean shouldWrapInQuotes(String key) {
+      return myWrapInQuotes && myWalker != null && (myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key, myProject));
+    }
+
     private void addPropertyVariant(@NotNull String key,
                                     @NotNull JsonSchemaObject jsonSchemaObject,
                                     boolean hasValue,
                                     boolean insertComma) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
+      key = !shouldWrapInQuotes(key) ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
@@ -514,18 +519,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             // fix colon for YAML and alike
             if (offset < docChars.length() && docChars.charAt(offset) != ':') {
               editor.getDocument().insertString(initialOffset, ":");
+              handleWhitespaceAfterColon(editor, docChars, initialOffset + 1);
             }
             return;
           }
 
           if (offset < docChars.length() && docChars.charAt(offset) == ':') {
-            if (offset + 1 < docChars.length() && docChars.charAt(offset + 1) == ' ') {
-              editor.getCaretModel().moveToOffset(offset + 2);
-            }
-            else {
-              editor.getCaretModel().moveToOffset(offset + 1);
-              EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
-            }
+            handleWhitespaceAfterColon(editor, docChars, offset + 1);
           }
           else {
             // inserting longer string for proper formatting
@@ -537,6 +537,16 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           }
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
           AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+        }
+
+        public void handleWhitespaceAfterColon(Editor editor, CharSequence docChars, int nextOffset) {
+          if (nextOffset < docChars.length() && docChars.charAt(nextOffset) == ' ') {
+            editor.getCaretModel().moveToOffset(nextOffset + 1);
+          }
+          else {
+            editor.getCaretModel().moveToOffset(nextOffset);
+            EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
+          }
         }
       };
     }
@@ -731,7 +741,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
     boolean hasQuotes = isNumber || !walker.requiresValueQuotes();
-    final String colonWs = insertColon ? ": " : " ";
+    int offset = editor.getCaretModel().getOffset();
+    CharSequence charSequence = editor.getDocument().getCharsSequence();
+    final String ws = charSequence.length() > offset && charSequence.charAt(offset) == ' ' ? "" : " ";
+    final String colonWs = insertColon ? ":" + ws : ws;
     String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
                                                insertColon ? 2 : 1);

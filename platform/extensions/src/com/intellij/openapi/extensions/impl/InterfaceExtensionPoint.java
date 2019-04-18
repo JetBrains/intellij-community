@@ -1,14 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
-public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
+import java.util.List;
+
+public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull MutablePicoContainer picoContainer) {
     super(name, clazz.getName(), picoContainer, new UndefinedPluginDescriptor());
 
@@ -22,17 +25,8 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, picoContainer, pluginDescriptor);
   }
 
-  @Override
-  public synchronized void reset() {
-    // we don't check myLoadedAdapters because programmatically loaded extensions are not registered in pico container
-    //noinspection NonPrivateFieldAccessedInSynchronizedContext
-    for (ExtensionComponentAdapter adapter : myAdapters) {
-      if (adapter instanceof ComponentAdapter) {
-        myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
-      }
-    }
-
-    super.reset();
+  protected boolean isUsePicoComponentAdapter() {
+    return false;
   }
 
   @Override
@@ -43,10 +37,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    ExtensionComponentAdapter adapter = doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
-    // no need to register bean extension - only InterfaceExtensionPoint registers
-    picoContainer.registerComponent((ComponentAdapter)adapter);
-    return adapter;
+    return doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true, isUsePicoComponentAdapter());
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
@@ -63,5 +54,67 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       }
     }
     return false;
+  }
+
+  @Nullable
+  protected static <T> T findExtension(@NotNull BaseExtensionPointName pointName,
+                                       @NotNull Class<T> instanceOf,
+                                       @Nullable AreaInstance areaInstance,
+                                       boolean isRequired) {
+    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPoint(pointName.getName());
+
+    List<T> list = point.getExtensionList();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = list.size(); i < size; i++) {
+      T object = list.get(i);
+      if (instanceOf.isInstance(object)) {
+        return object;
+      }
+    }
+
+    if (isRequired) {
+      String message = "could not find extension implementation " + instanceOf;
+      if (((ExtensionPointImpl)point).isInReadOnlyMode()) {
+        message += " (point in read-only mode)";
+      }
+      throw new IllegalArgumentException(message);
+    }
+    return null;
+  }
+
+  static final class PicoContainerAwareInterfaceExtensionPoint<T> extends InterfaceExtensionPoint<T> {
+    PicoContainerAwareInterfaceExtensionPoint(@NotNull String name,
+                                              @NotNull String className,
+                                              @NotNull MutablePicoContainer picoContainer,
+                                              @NotNull PluginDescriptor pluginDescriptor) {
+      super(name, className, picoContainer, pluginDescriptor);
+    }
+
+    @Override
+    protected boolean isUsePicoComponentAdapter() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
+                                                                                        @NotNull PluginDescriptor pluginDescriptor,
+                                                                                        @NotNull MutablePicoContainer picoContainer) {
+      ExtensionComponentAdapter adapter = super.createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, picoContainer);
+      picoContainer.registerComponent((ComponentAdapter)adapter);
+      return adapter;
+    }
+
+    @Override
+    public synchronized void reset() {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      for (ExtensionComponentAdapter adapter : myAdapters) {
+        if (adapter instanceof ComponentAdapter) {
+          myPicoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+        }
+      }
+
+      super.reset();
+    }
   }
 }

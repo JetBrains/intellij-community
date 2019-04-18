@@ -28,16 +28,18 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Component;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
@@ -53,18 +55,11 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
-  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS() {
-    @Override
-    protected Component getRendererOwner(Component component) {
-      if (component instanceof JTree && !component.isShowing()) {
-        CellRendererPane pane = UIUtil.getParentOfType(CellRendererPane.class, component);
-        if (pane != null) return pane.getParent();
-      }
-      return null;
-    }
-  };
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
 
-  private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
+  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
+  private final AtomicInteger myErrors = new AtomicInteger();
+  private final AtomicInteger myWarnings = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -80,8 +75,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private Navigatable myNavigatable;
   @Nullable
   private NullableLazyValue<Icon> myPreferredIconValue;
-  private final AtomicInteger myErrors = new AtomicInteger();
-  private final AtomicInteger myWarnings = new AtomicInteger();
+  @Nullable
+  private Predicate<ExecutionNode> myFilter;
+  private volatile boolean myVisible = true;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode) {
     super(aProject, parentNode);
@@ -89,7 +85,12 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected SimpleNode[] buildChildren() {
-    return myChildrenList.toArray(NO_CHILDREN);
+    Stream<ExecutionNode> stream = myChildrenList.stream();
+    stream = stream.filter(node -> node.myVisible);
+    if (myFilter != null) {
+      stream = stream.filter(myFilter);
+    }
+    return stream.toArray(SimpleNode[]::new);
   }
 
   @Override
@@ -155,16 +156,15 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void add(ExecutionNode node) {
     myChildrenList.add(node);
-    cleanUpCache();
-  }
-
-  public void add(int index, ExecutionNode node) {
-    myChildrenList.add(index, node);
+    node.setFilter(myFilter);
     cleanUpCache();
   }
 
   void removeChildren() {
     myChildrenList.clear();
+    myErrors.set(0);
+    myWarnings.set(0);
+    myResult = null;
     cleanUpCache();
   }
 
@@ -201,20 +201,37 @@ public class ExecutionNode extends CachingSimpleNode {
     this.endTime = endTime;
   }
 
-  public static boolean isFailed(@Nullable EventResult result) {
-    return result instanceof FailureResult;
+  @Nullable
+  public Predicate<ExecutionNode> getFilter() {
+    return myFilter;
   }
 
-  public static boolean isSkipped(@Nullable EventResult result) {
-    return result instanceof SkippedResult;
+  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+    myFilter = filter;
+    for (ExecutionNode node : myChildrenList) {
+      node.setFilter(myFilter);
+    }
+    cleanUpCache();
+  }
+
+  public void setVisible(boolean visible) {
+    if (myVisible != visible) {
+      myVisible = visible;
+      SimpleNode parent = getParent();
+      if (parent instanceof CachingSimpleNode) {
+        ((CachingSimpleNode)parent).cleanUpCache();
+      }
+    }
   }
 
   public boolean isRunning() {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
 
-  public void setResult(@Nullable EventResult result) {
-    myResult = result;
+  public boolean isFailed() {
+    return isFailed(myResult) ||
+           myErrors.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.ERROR);
   }
 
   @Nullable
@@ -222,9 +239,16 @@ public class ExecutionNode extends CachingSimpleNode {
     return myResult;
   }
 
+  public void setResult(@Nullable EventResult result) {
+    myResult = result;
+    if (myFilter != null) {
+      cleanUpCache();
+    }
+  }
+
   @Override
   public boolean isAutoExpandNode() {
-    return myAutoExpandNode;
+    return myAutoExpandNode || (myFilter != null && (isRunning() || isFailed()));
   }
 
   public void setAutoExpandNode(boolean autoExpandNode) {
@@ -244,7 +268,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
     if (myResult instanceof FailureResult) {
       List<Navigatable> result = new SmartList<>();
-      for (Failure failure: ((FailureResult)myResult).getFailures()) {
+      for (Failure failure : ((FailureResult)myResult).getFailures()) {
         ContainerUtil.addIfNotNull(result, failure.getNavigatable());
       }
       return result;
@@ -269,6 +293,25 @@ public class ExecutionNode extends CachingSimpleNode {
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
+  }
+
+  ExecutionNode copy(ExecutionNode parent) {
+    ExecutionNode copy = new ExecutionNode(myProject, parent);
+    copy.startTime = startTime;
+    copy.endTime = endTime;
+    copy.myTitle = myTitle;
+    copy.myTooltip = myTooltip;
+    copy.myHint = myHint;
+    copy.myResult = myResult;
+    copy.myAutoExpandNode = myAutoExpandNode;
+    copy.myNavigatable = myNavigatable;
+    copy.myPreferredIconValue = myPreferredIconValue;
+    copy.myErrors.set(myErrors.get());
+    copy.myWarnings.set(myWarnings.get());
+    copy.myFilter = myFilter;
+    copy.myName = myName;
+    copy.myClosedIcon = myClosedIcon;
+    return copy;
   }
 
   private String getCurrentHint() {
@@ -311,6 +354,14 @@ public class ExecutionNode extends CachingSimpleNode {
              myWarnings.get() > 0 ? NODE_ICON_WARNING :
              NODE_ICON_OK;
     }
+  }
+
+  public static boolean isFailed(@Nullable EventResult result) {
+    return result instanceof FailureResult;
+  }
+
+  public static boolean isSkipped(@Nullable EventResult result) {
+    return result instanceof SkippedResult;
   }
 
   public static Icon getEventResultIcon(@Nullable EventResult result) {

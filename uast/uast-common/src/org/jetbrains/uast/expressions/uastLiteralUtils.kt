@@ -72,6 +72,7 @@ fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UE
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
 @Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("UExpression.evaluateString()"))
+@Suppress("Deprecation")
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
@@ -135,7 +136,7 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
  * NOTE: consider using [sourceInjectionHost] as more performant. Probably will be deprecated in future.
  */
 val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
-  get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+  get() = this.sourcePsi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
 
 // Workaround until everything will migrate to `UInjectionHost` from `ULiteralExpression`, see KT-27283
 @ApiStatus.Experimental

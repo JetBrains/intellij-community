@@ -9,17 +9,12 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
@@ -219,97 +214,19 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
-  public static class BrowseFolderActionListener<T extends JComponent> implements ActionListener {
-    private final String myTitle;
-    private final String myDescription;
-    protected ComponentWithBrowseButton<T> myTextComponent;
-    private final TextComponentAccessor<? super T> myAccessor;
-    private Project myProject;
-    protected final FileChooserDescriptor myFileChooserDescriptor;
-
+  public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
     public BrowseFolderActionListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
                                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                                      ComponentWithBrowseButton<T> textField,
+                                      @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super T> accessor) {
-      if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
-        LOG.error("multiple selection not supported");
-        fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {
-          @Override
-          public boolean isChooseMultiple() {
-            return false;
-          }
-        };
-      }
-
-      myTitle = title;
-      myDescription = description;
-      myTextComponent = textField;
-      myProject = project;
-      myFileChooserDescriptor = fileChooserDescriptor;
-      myAccessor = accessor;
-    }
-
-    @Nullable
-    protected Project getProject() {
-      return myProject;
-    }
-
-    protected void setProject(@Nullable Project project) {
-      myProject = project;
+      super(title, description, project, fileChooserDescriptor, textField != null ? textField.getChildComponent() : null, accessor);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      FileChooserDescriptor fileChooserDescriptor = myFileChooserDescriptor;
-      if (myTitle != null || myDescription != null) {
-        fileChooserDescriptor = (FileChooserDescriptor)myFileChooserDescriptor.clone();
-        if (myTitle != null) {
-          fileChooserDescriptor.setTitle(myTitle);
-        }
-        if (myDescription != null) {
-          fileChooserDescriptor.setDescription(myDescription);
-        }
-      }
-
-      FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
-    }
-
-    @Nullable
-    protected VirtualFile getInitialFile() {
-      String directoryName = getComponentText();
-      if (StringUtil.isEmptyOrSpaces(directoryName)) {
-        return null;
-      }
-
-      directoryName = FileUtil.toSystemIndependentName(directoryName);
-      VirtualFile path = LocalFileSystem.getInstance().findFileByPath(expandPath(directoryName));
-      while (path == null && directoryName.length() > 0) {
-        int pos = directoryName.lastIndexOf('/');
-        if (pos <= 0) break;
-        directoryName = directoryName.substring(0, pos);
-        path = LocalFileSystem.getInstance().findFileByPath(directoryName);
-      }
-      return path;
-    }
-
-    @NotNull
-    protected String expandPath(@NotNull String path) {
-      return path;
-    }
-
-    protected String getComponentText() {
-      return myAccessor.getText(myTextComponent.getChildComponent()).trim();
-    }
-
-    @NotNull
-    protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-      return chosenFile.getPresentableUrl();
-    }
-
-    protected void onFileChosen(@NotNull VirtualFile chosenFile) {
-      myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
+      run();
     }
   }
 

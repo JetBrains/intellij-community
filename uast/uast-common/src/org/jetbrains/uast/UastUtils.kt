@@ -95,7 +95,7 @@ fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpress
     }
   }?.firstOrNull()
 
-@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.2",
+@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.3",
             replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile(): UFile? = getContainingUFile()
 
@@ -105,13 +105,13 @@ fun UElement.getContainingUClass(): UClass? = getParentOfType(UClass::class.java
 fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.java)
 fun UElement.getContainingUVariable(): UVariable? = getParentOfType(UVariable::class.java)
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
-fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.psi
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
+fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.javaPsi
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
-fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.psi
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
+fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.javaPsi
 
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.1",
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
 fun PsiElement?.getContainingClass(): PsiClass? = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
 
@@ -137,10 +137,6 @@ fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): 
   return isChildOf(if (strict) uastParent else this, probablyParent)
 }
 
-@Deprecated("contains a bug in negation of `strict` parameter, will be removed in IDEA 2019.2",
-            replaceWith = ReplaceWith("isUastChildOf(probablyElement, strict)"))
-fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false) = isUastChildOf(probablyParent, !strict)
-
 /**
  * Resolves the receiver element if it implements [UResolvable].
  *
@@ -150,6 +146,9 @@ fun UElement.tryResolve(): PsiElement? = (this as? UResolvable)?.resolve()
 
 fun UElement.tryResolveNamed(): PsiNamedElement? = (this as? UResolvable)?.resolve() as? PsiNamedElement
 
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
+            replaceWith = ReplaceWith("(this as? UResolvable)?.resolve().toUElementOfType<UDeclaration>()"))
+@Suppress("Deprecation")
 fun UElement.tryResolveUDeclaration(context: UastContext): UDeclaration? {
   return (this as? UResolvable)?.resolve()?.let { context.convertElementWithParent(it, null) as? UDeclaration }
 }
@@ -164,10 +163,12 @@ fun UExpression.evaluateString(): String? = evaluate() as? String
 /**
  * Get a physical [File] for this file, or null if there is no such file on disk.
  */
-fun UFile.getIoFile(): File? = psi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
+fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
+@Deprecated("use UastFacade", ReplaceWith("UastFacade"))
+@Suppress("Deprecation")
 tailrec fun UElement.getUastContext(): UastContext {
-  val psi = this.psi
+  val psi = this.sourcePsi
   if (psi != null) {
     return ServiceManager.getService(psi.project, UastContext::class.java) ?: error("UastContext not found")
   }
@@ -176,16 +177,15 @@ tailrec fun UElement.getUastContext(): UastContext {
 }
 
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
-  val psi = this.psi
+  val psi = this.sourcePsi
   if (psi != null) {
-    val uastContext = ServiceManager.getService(psi.project, UastContext::class.java) ?: error("UastContext not found")
-    return uastContext.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
+    return UastFacade.findPlugin(psi) ?: error("Language plugin was not found for $this (${this.javaClass.name})")
   }
 
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
 }
 
-fun Collection<UElement?>.toPsiElements(): List<PsiElement> = mapNotNull { it?.psi }
+fun Collection<UElement?>.toPsiElements(): List<PsiElement> = mapNotNull { it?.sourcePsi }
 
 /**
  * A helper function for getting parents for given [PsiElement] that could be considered as identifier.

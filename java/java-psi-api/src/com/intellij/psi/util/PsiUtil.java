@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -108,7 +109,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
     if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
-    final JavaResolveResult accessObject = getAccessObjectClass(type, expression.getProject());
+    JavaResolveResult accessObject = getAccessObjectClass(type, expression);
     if (accessObject != null) return accessObject;
 
     if (type == null && expression instanceof PsiReferenceExpression) {
@@ -120,7 +121,8 @@ public final class PsiUtil extends PsiUtilCore {
     return JavaResolveResult.EMPTY;
   }
 
-  private static JavaResolveResult getAccessObjectClass(PsiType type, Project project) {
+  @Nullable
+  private static JavaResolveResult getAccessObjectClass(@Nullable PsiType type, @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
     }
@@ -140,14 +142,14 @@ public final class PsiUtil extends PsiUtilCore {
         String classText = StringUtil.isEmptyOrSpaces(packageName) ? "" : "package " + packageName + ";\n ";
         classText += "class I<T extends " + upperBound.getCanonicalText() + "> {}";
         final PsiJavaFile file =
-          (PsiJavaFile)PsiFileFactory.getInstance(project).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
+          (PsiJavaFile)PsiFileFactory.getInstance(place.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
         final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
         return new ClassCandidateInfo(freshParameter, PsiSubstitutor.EMPTY);
       }
     }
 
     if (type instanceof PsiArrayType) {
-      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), project);
+      return getAccessObjectClass(((PsiArrayType)type).getComponentType(), place);
     }
     return null;
   }
@@ -169,7 +171,9 @@ public final class PsiUtil extends PsiUtilCore {
   private static void addException(@NotNull PsiMethod method,
                                    @Nullable PsiClass exceptionClass,
                                    @Nullable String exceptionName) throws IncorrectOperationException {
-    assert exceptionClass != null || exceptionName != null : "One of exceptionName, exceptionClass must be not null";
+    if (exceptionClass == null && exceptionName == null) {
+      throw new IllegalArgumentException("One of exceptionName, exceptionClass must be not null");
+    }
     PsiReferenceList throwsList = method.getThrowsList();
     PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
     boolean replaced = false;
@@ -371,8 +375,8 @@ public final class PsiUtil extends PsiUtilCore {
     return Collections.emptyList();
   }
 
-  private static void collectSwitchResultExpressions(List<PsiExpression> result, PsiElement container) {
-    ArrayList<PsiBreakStatement> breaks = new ArrayList<>();
+  private static void collectSwitchResultExpressions(@NotNull List<? super PsiExpression> result, @NotNull PsiElement container) {
+    List<PsiBreakStatement> breaks = new ArrayList<>();
     addStatements(breaks, container, PsiBreakStatement.class, element -> element instanceof PsiSwitchBlock);
     for (PsiBreakStatement aBreak : breaks) {
       ContainerUtil.addIfNotNull(result, aBreak.getExpression());
@@ -402,7 +406,9 @@ public final class PsiUtil extends PsiUtilCore {
   @PsiModifier.ModifierConstant
   @NotNull
   public static String getAccessModifier(@AccessLevel int accessLevel) {
-    assert accessLevel > 0 && accessLevel <= accessModifiers.length : accessLevel;
+    if (accessLevel <= 0 || accessLevel > accessModifiers.length) {
+      throw new IllegalArgumentException("Unknown level:" + accessLevel);
+    }
     @SuppressWarnings("UnnecessaryLocalVariable") @PsiModifier.ModifierConstant
     final String modifier =  accessModifiers[accessLevel - 1];
     return modifier;
@@ -561,12 +567,12 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
-                                          @NotNull final PsiSubstitutor substitutorForMethod,
-                                          @NotNull final PsiType[] args,
-                                          @NotNull final LanguageLevel languageLevel,
-                                          final boolean allowUncheckedConversion,
-                                          final boolean checkVarargs) {
+  private static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                           @NotNull final PsiSubstitutor substitutorForMethod,
+                                           @NotNull final PsiType[] args,
+                                           @NotNull final LanguageLevel languageLevel,
+                                           final boolean allowUncheckedConversion,
+                                           final boolean checkVarargs) {
     return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel,
                                  allowUncheckedConversion, checkVarargs, ApplicabilityChecker.ASSIGNABILITY_CHECKER);
   }
@@ -667,9 +673,9 @@ public final class PsiUtil extends PsiUtilCore {
    * {@code class Foo<T extends Number>{}} types Foo&lt;?&gt; and Foo&lt;? extends Number&gt;
    * would be equivalent
    */
-  public static boolean equalOnEquivalentClasses(PsiClassType thisClassType,
+  public static boolean equalOnEquivalentClasses(@NotNull PsiClassType thisClassType,
                                                  @NotNull PsiClass aClass,
-                                                 PsiClassType otherClassType,
+                                                 @NotNull PsiClassType otherClassType,
                                                  @NotNull PsiClass bClass) {
     final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
                                   ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
@@ -1079,7 +1085,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    PsiResolveHelper instance = PsiResolveHelper.SERVICE.getInstance(element.getProject());
+    PsiResolveHelper instance = ServiceManager.getService(element.getProject(), PsiResolveHelper.class);
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
@@ -1336,14 +1342,17 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
-    ArrayList<PsiReturnStatement> vector = new ArrayList<>();
+    List<PsiReturnStatement> vector = new ArrayList<>();
     if (body != null) {
       addStatements(vector, body, PsiReturnStatement.class, statement -> false);
     }
     return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
-  private static <T extends PsiElement> void addStatements(List<? super T> vector, PsiElement element, Class<? extends T> clazz, Predicate<? super PsiElement> stopAt) {
+  private static <T extends PsiElement> void addStatements(@NotNull List<? super T> vector,
+                                                           @NotNull PsiElement element,
+                                                           @NotNull Class<? extends T> clazz,
+                                                           @NotNull Predicate<? super PsiElement> stopAt) {
     if (PsiTreeUtil.instanceOf(element, clazz)) {
       //noinspection unchecked
       vector.add((T)element);

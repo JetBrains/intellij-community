@@ -1,28 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.OneTimeString;
 import com.intellij.credentialStore.OneTimeStringKt;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Utilities used to encrypt/decrypt passwords in case of Java-based implementation of PasswordSafe.
  * The class internal and could change without notice.
  */
 public class EncryptionUtil {
-  /**
-   * The hash algorithm used for keys
-   */
-  private static final String HASH_ALGORITHM = "SHA-256";
   /**
    * The hash algorithm used for keys
    */
@@ -159,7 +155,7 @@ public class EncryptionUtil {
    * @return the UTF-8 encoded string
    */
   public static byte[] getUTF8Bytes(String string) {
-    return string.getBytes(CharsetToolkit.UTF8_CHARSET);
+    return string.getBytes(StandardCharsets.UTF_8);
   }
 
   /**
@@ -169,15 +165,10 @@ public class EncryptionUtil {
    * @return the digest value
    */
   public static byte[] hash(byte[]... data) {
-    try {
-      MessageDigest h = MessageDigest.getInstance(HASH_ALGORITHM);
-      for (byte[] d : data) {
-        h.update(d);
-      }
-      return h.digest();
+    MessageDigest h = DigestUtil.sha256();
+    for (byte[] d : data) {
+      h.update(d);
     }
-    catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("The hash algorithm " + HASH_ALGORITHM + " is not available", e);
-    }
+    return h.digest();
   }
 }

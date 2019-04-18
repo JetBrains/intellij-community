@@ -12,10 +12,10 @@
               "version_added": false
             },
             "edge": {
-              "version_added": null
+              "version_added": false
             },
             "edge_mobile": {
-              "version_added": null
+              "version_added": false
             },
             "firefox": {
               "version_added": "1"

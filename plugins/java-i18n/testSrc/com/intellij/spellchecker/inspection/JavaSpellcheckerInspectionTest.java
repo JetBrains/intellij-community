@@ -28,6 +28,7 @@ public class JavaSpellcheckerInspectionTest extends LightCodeInsightFixtureTestC
   public void testClassName() { doTest(); }
   public void testFieldName() { doTest(); }
   public void testMethodName() { doTest(); }
+  public void testConstructorIgnored() { doTest();}
   public void testLocalVariableName() { doTest(); }
   public void testDocComment() { doTest(); }
   public void testStringLiteral() { doTest(); }

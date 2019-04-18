@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
@@ -15,13 +15,15 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import java.util.*
 
-class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
+class JavaElementActionsFactory : JvmElementActionsFactory() {
+  private val renderer = JavaElementRenderer.getInstance()
 
-  override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = with(
-    request) {
-    val declaration = target as PsiModifierListOwner
-    if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
-    listOf(ModifierFix(declaration, renderer.render(modifier), shouldPresent, false))
+  override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
+    return with(request) {
+      val declaration = target as PsiModifierListOwner
+      if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
+      listOf(ModifierFix(declaration, renderer.render(modifier), shouldPresent, false))
+    }
   }
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {

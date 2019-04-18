@@ -14,6 +14,7 @@ import com.intellij.testFramework.PlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsUser
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -142,6 +143,13 @@ fun GitPlatformTest.makeCommit(file: String): String {
   append(file, "some content")
   addCommit("some message")
   return last()
+}
+
+fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
+  setupUsername(project, author.name, author.email)
+  val commit = modify(file)
+  setupDefaultUsername(project)
+  return commit
 }
 
 fun findGitLogProvider(project: Project): GitLogProvider {

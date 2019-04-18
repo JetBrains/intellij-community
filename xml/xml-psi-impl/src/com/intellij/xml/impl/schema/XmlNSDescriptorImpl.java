@@ -20,7 +20,6 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,9 +70,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<>();
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
   @NonNls private static final String REDEFINE_TAG_NAME = "redefine";
-  private static final RecursionGuard myRedefinedDescriptorsInProcessing = RecursionManager.createGuard("myRedefinedDescriptorsInProcessing");
-  private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<QNameKey, CachedValue<XmlElementDescriptor>>());
-  private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<QNameKey,XmlTag>, CachedValue<TypeDescriptor>>());
+  private final Map<QNameKey, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<>());
+  private final Map<Pair<QNameKey, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<>());
   private XmlFile myFile;
   private XmlTag myTag;
   private String myTargetNamespace;
@@ -104,7 +102,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
           addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
-        myRedefinedDescriptorsInProcessing.doPreventingRecursion(tag, false, () -> {
+        RecursionManager.doPreventingRecursion(tag, false, () -> {
           final XmlFile file = getRedefinedElementDescriptorFile(tag);
           addDependency(file, visited);
           return null;
@@ -136,7 +134,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
-  private static boolean checkSchemaNamespace(String name, XmlTag context){
+  private static boolean checkSchemaNamespace(String name, @NotNull XmlTag context){
     final String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(name));
     if(namespace.length() > 0){
       return checkSchemaNamespace(namespace);
@@ -426,7 +424,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         if (nsDescriptor != null) {
           final XmlElementDescriptor xmlElementDescriptor = nsDescriptor.getElementDescriptor(localName, namespace, visited, reference);
           if (xmlElementDescriptor instanceof XmlElementDescriptorImpl) {
-            return new RedefinedElementDescriptor((XmlElementDescriptorImpl)xmlElementDescriptor, this);
+            return new RedefinedElementDescriptor((XmlElementDescriptorImpl)xmlElementDescriptor, this, nsDescriptor);
           }
         }
       }
@@ -577,7 +575,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Nullable
-  private TypeDescriptor findTypeDescriptor(final String qname, XmlTag context) {
+  private TypeDescriptor findTypeDescriptor(final String qname, @NotNull XmlTag context) {
     String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(qname));
     String localName = XmlUtil.findLocalNameByQualifiedName(qname);
     return findTypeDescriptorImpl(myTag, localName, namespace.isEmpty() ? getDefaultNamespace() : namespace);
@@ -716,7 +714,18 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         if (nsDescriptor != null) {
           final XmlTag redefinedRootTag = ((XmlDocument)nsDescriptor.getDeclaration()).getRootTag();
           descriptor = doFindIn(redefinedRootTag.getSubTags(), name, namespace, pair, redefinedRootTag);
-          if (descriptor != null) return descriptor;
+          if (descriptor instanceof ComplexTypeDescriptor) {
+            TypeDescriptor finalDescriptor = descriptor;
+            CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(() -> {
+              RedefinedTypeDescriptor typeDescriptor = new RedefinedTypeDescriptor((ComplexTypeDescriptor)finalDescriptor, this, nsDescriptor);
+              return CachedValueProvider.Result.create(typeDescriptor, PsiModificationTracker.MODIFICATION_COUNT);
+            });
+            myTypesMap.put(pair, value);
+            return value.getValue();
+          }
+          if (descriptor != null) {
+            return descriptor;
+          }
         }
       }
     }

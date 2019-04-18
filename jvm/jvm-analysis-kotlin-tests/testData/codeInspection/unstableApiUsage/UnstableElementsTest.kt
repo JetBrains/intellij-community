@@ -27,7 +27,7 @@ class UnstableElementsTest {
   fun test() {
     var s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
     <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass()
-    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = AnnotatedClass()
+    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>()
     s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass 
     annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass() 
     s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS 

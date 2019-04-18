@@ -91,6 +91,7 @@ interface UastLanguagePlugin {
   fun isExpressionValueUsed(element: UExpression): Boolean
 
   @JvmDefault
+  @Suppress("UNCHECKED_CAST")
   fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
     when {
       requiredTypes.isEmpty() -> convertElementWithParent(element, null)

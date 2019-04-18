@@ -18,7 +18,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.text.View;
@@ -48,7 +47,6 @@ public abstract class CellPluginComponent extends JPanel {
     myPlugin = plugin;
   }
 
-  @TestOnly
   @NotNull
   public IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
@@ -199,6 +197,32 @@ public abstract class CellPluginComponent extends JPanel {
   public void handleKeyAction(int keyCode, @NotNull List<? extends CellPluginComponent> selection) {
   }
 
+  public abstract void showProgress();
+
+  public abstract void hideProgress(boolean success);
+
+  public void clearProgress() {
+    throw new UnsupportedOperationException();
+  }
+
   public void close() {
+  }
+
+  public abstract boolean isMarketplace();
+
+  public void updateEnabledState() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void updateAfterUninstall() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void updateErrors() {
+    throw new UnsupportedOperationException();
+  }
+
+  public void enableRestart() {
+    throw new UnsupportedOperationException();
   }
 }

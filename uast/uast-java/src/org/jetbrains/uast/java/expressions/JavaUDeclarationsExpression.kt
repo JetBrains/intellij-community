@@ -20,7 +20,9 @@ import org.jetbrains.uast.*
 
 class JavaUDeclarationsExpression(
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UDeclarationsExpression, JvmDeclarationUElement {
+) : JavaAbstractUElement(uastParent), UDeclarationsExpression, UElement {
+  override val sourcePsi: PsiElement?
+    get() = null
   override lateinit var declarations: List<UDeclaration>
     internal set
 
@@ -31,6 +33,7 @@ class JavaUDeclarationsExpression(
   override val annotations: List<UAnnotation>
     get() = emptyList()
 
+  @Suppress("OverridingDeprecatedMember")
   override val psi: PsiElement?
     get() = null
 

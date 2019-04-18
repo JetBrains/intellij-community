@@ -128,10 +128,12 @@ public interface Application extends ComponentManager {
   void assertIsDispatchThread();
 
   /**
+   * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
    * Adds an {@link ApplicationListener}.
    *
    * @param listener the listener to add
    */
+  @Deprecated
   void addApplicationListener(@NotNull ApplicationListener listener);
 
   /**
@@ -143,10 +145,12 @@ public interface Application extends ComponentManager {
   void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent);
 
   /**
+   * @deprecated Instead, just call {@code Disposer.dispose(disposable);} on disposable you've passed to {@link #addApplicationListener(ApplicationListener, Disposable)}
    * Removes an {@link ApplicationListener}.
    *
    * @param listener the listener to remove
    */
+  @Deprecated
   void removeApplicationListener(@NotNull ApplicationListener listener);
 
   /**

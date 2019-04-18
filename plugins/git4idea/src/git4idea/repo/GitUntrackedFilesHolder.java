@@ -252,9 +252,10 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (allChanged) {
-      LOG.debug(String.format("GitUntrackedFilesHolder: total refresh is needed, marking %s recursively dirty", myRoot));
-      myDirtyScopeManager.dirDirtyRecursively(myRoot);
-      rescanIgnoredFiles();
+      rescanIgnoredFiles(() -> {
+        LOG.debug(String.format("GitUntrackedFilesHolder: total refresh is needed, marking %s recursively dirty", myRoot));
+        myDirtyScopeManager.dirDirtyRecursively(myRoot);
+      });
       synchronized (LOCK) {
         myReady = false;
       }
@@ -296,8 +297,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     return path.endsWith(GitRepositoryFiles.GITIGNORE) || myRepositoryFiles.isExclude(path);
   }
 
-  private void rescanIgnoredFiles() { //TODO move to ignore manager
-    myRepository.getIgnoredFilesHolder().startRescan();
+  private void rescanIgnoredFiles(@NotNull Runnable doAfterRescan) { //TODO move to ignore manager
+    myRepository.getIgnoredFilesHolder().startRescan(doAfterRescan);
   }
 
   private boolean notIgnored(@Nullable VirtualFile file) {

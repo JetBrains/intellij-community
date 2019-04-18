@@ -95,7 +95,7 @@ public class JsonSchemaReader {
   public JsonSchemaObject read(@NotNull PsiFile file) {
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(file, JsonSchemaObject.NULL_OBJ);
     if (walker == null) return null;
-    PsiElement root = AstLoadingFilter.forceAllowTreeLoading(file, () -> walker.getRoot(file));
+    PsiElement root = AstLoadingFilter.forceAllowTreeLoading(file, () -> ContainerUtil.getFirstItem(walker.getRoots(file)));
     return root == null ? null : read(root, walker);
   }
 

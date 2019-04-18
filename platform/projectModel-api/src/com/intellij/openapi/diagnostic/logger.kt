@@ -3,8 +3,10 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import java.lang.reflect.Member
 import java.util.concurrent.CancellationException
 import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaGetter
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
@@ -19,7 +21,9 @@ fun logger(category: String) = Logger.getInstance(category)
 
  * Notice explicit type declaration which can't be skipped in this case.
  */
-fun logger(field: KProperty<Logger>) = Logger.getInstance(field.javaGetter!!.declaringClass)
+fun logger(field: KProperty<Logger>) = Logger.getInstance(field.declaringClass)
+
+private val KProperty<*>.declaringClass: Class<*> get() = (javaField ?: javaGetter as? Member)?.declaringClass!!
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   if (isDebugEnabled) {

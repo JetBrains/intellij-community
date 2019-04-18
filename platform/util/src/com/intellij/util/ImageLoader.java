@@ -32,6 +32,7 @@ import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
@@ -277,7 +278,7 @@ public class ImageLoader implements Serializable {
       Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
                                  FileUtilRt.getExtension(path),
                                  cls,
-                                 Registry.is("ide.svg.icon"),
+                                 true,
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
       if (path.contains("://") && !path.startsWith("file:")) {
@@ -486,18 +487,28 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
-    return loadFromStream(inputStream, 1);
+    // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
+    return loadFromStream(inputStream, ScaleContext.create(), null);
   }
 
+  @Deprecated
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
-    return loadFromStream(inputStream, scale, null);
+    return loadFromStream(inputStream, ScaleContext.create(OBJ_SCALE.of(scale)), null);
   }
 
+  @Deprecated
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
+    return loadFromStream(inputStream, ScaleContext.create(OBJ_SCALE.of(scale)), filter);
+  }
+
+  /**
+   * The scale context describes the image the stream presents.
+   */
+  public static Image loadFromStream(@NotNull final InputStream inputStream, final ScaleContext ctx, ImageFilter filter) {
     try {
-      ImageDesc desc = new ImageDesc(inputStream, scale);
+      ImageDesc desc = new ImageDesc(inputStream, ctx.getScale(PIX_SCALE));
       Image image = desc.load(false);
-      return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
+      return ImageConverterChain.create().withFilter(filter).withHiDPI(ctx).convert(image, desc);
     }
     catch (IOException ex) {
       LOG.error(ex);

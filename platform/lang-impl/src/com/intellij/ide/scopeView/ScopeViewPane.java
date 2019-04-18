@@ -78,11 +78,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return project;
   }
 
-  public ScopeViewPane(@NotNull Project project, @NotNull DependencyValidationManager dvm, @NotNull NamedScopeManager nsm) {
+  public ScopeViewPane(@NotNull Project project) {
     super(checkApplicability(project));
 
-    myDependencyValidationManager = dvm;
-    myNamedScopeManager = nsm;
+    myDependencyValidationManager = DependencyValidationManager.getInstance(project);
+    myNamedScopeManager = NamedScopeManager.getInstance(project);
     myFilters = map(myDependencyValidationManager, myNamedScopeManager);
 
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {

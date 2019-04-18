@@ -40,7 +40,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
@@ -75,7 +75,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     mySyncScrollable = new MySyncScrollable();
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(getEditors(), this);
+    myFoldingModel = new MyFoldingModel(getProject(), getEditors(), this);
 
     myModifierProvider = new ModifierProvider();
 
@@ -199,11 +199,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
                                 StringUtil.equals(texts[0], texts[1]);
 
       if (lineFragments == null) {
-        return apply(new CompareData(null, isContentsEqual));
+        return apply(createCompareData(null, isContentsEqual));
       }
       else {
         List<SimpleDiffChange> changes = ContainerUtil.map(lineFragments, fragment -> new SimpleDiffChange(this, fragment));
-        return apply(new CompareData(changes, isContentsEqual));
+        return apply(createCompareData(changes, isContentsEqual));
       }
     }
     catch (DiffTooBigException e) {
@@ -216,6 +216,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       LOG.error(e);
       return applyNotification(DiffNotifications.createError());
     }
+  }
+
+  @NotNull
+  protected CompareData createCompareData(@Nullable List<SimpleDiffChange> changes,
+                                          boolean isContentsEqual) {
+    List<SimpleDiffChange> nonSkipped = changes != null ? ContainerUtil.filter(changes, it -> !it.isSkipped()) : null;
+    FoldingModelSupport.Data foldingState = myFoldingModel.createState(nonSkipped, getFoldingModelSettings());
+    return new CompareData(changes, isContentsEqual, foldingState);
   }
 
   @NotNull
@@ -243,7 +251,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myDiffChanges.addAll(changes);
       }
 
-      myFoldingModel.install(getNonSkippedDiffChanges(), myRequest, getFoldingModelSettings());
+      myFoldingModel.install(data.getFoldingState(), myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -793,13 +801,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  protected static class CompareData {
+  private static class CompareData {
     @Nullable private final List<SimpleDiffChange> myChanges;
     private final boolean myIsContentsEqual;
+    @Nullable private final FoldingModelSupport.Data myFoldingState;
 
-    public CompareData(@Nullable List<SimpleDiffChange> changes, boolean isContentsEqual) {
+    private CompareData(@Nullable List<SimpleDiffChange> changes,
+                        boolean isContentsEqual,
+                        @Nullable FoldingModelSupport.Data state) {
       myChanges = changes;
       myIsContentsEqual = isContentsEqual;
+      myFoldingState = state;
     }
 
     @Nullable
@@ -809,6 +821,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public boolean isContentsEqual() {
       return myIsContentsEqual;
+    }
+
+    @Nullable
+    public FoldingModelSupport.Data getFoldingState() {
+      return myFoldingState;
     }
   }
 
@@ -826,15 +843,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
+    @Nullable private final Project myProject;
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
-    MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
+    MyFoldingModel(@Nullable Project project, @NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
       super(editors.toArray(new EditorEx[0]), disposable);
+      myProject = project;
     }
 
-    public void install(@NotNull List<SimpleDiffChange> changes,
-                        @NotNull UserDataHolder context,
-                        @NotNull Settings settings) {
+    @Nullable
+    public Data createState(@Nullable List<SimpleDiffChange> changes, @NotNull Settings settings) {
       Iterator<int[]> it = map(changes, change -> new int[]{
         change.getStartLine(Side.LEFT),
         change.getEndLine(Side.LEFT),
@@ -842,7 +860,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         change.getEndLine(Side.RIGHT),
       });
 
-      install(it, context, settings);
+      return computeFoldedRanges(myProject, it, settings);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {

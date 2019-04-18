@@ -66,7 +66,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     });
   }
 
-  public boolean filterElements(String pattern, Processor<MatchedValue> consumer) {
+  public boolean filterElements(@NotNull String pattern, @NotNull Processor<? super MatchedValue> consumer) {
     DataContext dataContext = DataManager.getInstance().getDataContext(myModel.getContextComponent());
 
     if (!processAbbreviations(pattern, consumer, dataContext)) return false;
@@ -79,7 +79,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return true;
   }
 
-  private boolean processAbbreviations(final String pattern, Processor<? super MatchedValue> consumer, DataContext context) {
+  private boolean processAbbreviations(@NotNull String pattern, Processor<? super MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
       .filterMap(myActionManager::getAction)
@@ -117,7 +117,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     }
     Collection<Object> result = collector.getResult();
     JBIterable<Comparable> wrappers = JBIterable.from(result)
-      .transform(object -> object instanceof AnAction ? wrapAnAction(((AnAction)object), dataContext) : object)
+      .transform(object -> object instanceof AnAction ? wrapAnAction((AnAction)object, dataContext) : object)
       .filter(Comparable.class);
     return processItems(pattern, wrappers, consumer);
   }
@@ -133,12 +133,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     for (String word : words) {
       final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
-        for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
-          OptionDescription description = iterator.next();
-          if (actionManagerName.equals(description.getPath())) {
-            iterator.remove();
-          }
-        }
+        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()));
         if (!descriptions.isEmpty()) {
           if (optionDescriptions == null) {
             optionDescriptions = descriptions;
@@ -222,7 +217,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, dataContext, myModel);
   }
 
-  private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
+  private static final Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
 
   private static boolean processItems(String pattern, JBIterable<?> items, Processor<? super MatchedValue> consumer) {
     List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));

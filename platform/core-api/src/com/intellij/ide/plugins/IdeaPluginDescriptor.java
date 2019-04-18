@@ -13,7 +13,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @author max
+ * Describes a plugin which may be installed into IntelliJ-based IDE. Use {@link com.intellij.ide.plugins.PluginManager#getPlugin(PluginId)}
+ * to get a descriptor by a plugin ID and {@link com.intellij.ide.plugins.PluginManagerCore#getPlugins()} to get all plugins.
  */
 public interface IdeaPluginDescriptor extends PluginDescriptor {
   File getPath();
@@ -80,8 +81,12 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getUntilBuild();
 
-  boolean isBundled();
   boolean allowBundledUpdate();
+
+  /**
+   * If true, this plugin is hidden from the list of installed plugins in Settings | Plugins.
+   */
+  boolean isImplementationDetail();
 
   boolean isEnabled();
   void setEnabled(boolean enabled);

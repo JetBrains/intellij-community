@@ -176,8 +176,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public int getRowHeight() {
+    int height = super.getRowHeight();
     if (myRowHeightIsComputing) {
-      return super.getRowHeight();
+      return height;
     }
 
     if (myRowHeight < 0) {
@@ -194,7 +195,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       myMinRowHeight = getFontMetrics(UIManager.getFont("Label.font")).getHeight();
     }
 
-    return Math.max(myRowHeight, myMinRowHeight);
+    return Math.max(myRowHeight, Math.max(myMinRowHeight, height));
   }
 
   protected int calculateRowHeight() {

@@ -24,6 +24,8 @@ public class MultiLineTodoRenderer extends JPanel implements TreeCellRenderer {
     GridBagConstraints c = new GridBagConstraints();
     add(myPrefixRenderer = new HighlightableCellRenderer(), c);
     c.gridx = 1;
+    c.weightx = 1;
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.WEST;
     for (int i = 0; i < MAX_DISPLAYED_LINES; i++) {
       c.gridy = i;

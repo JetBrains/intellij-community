@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
@@ -45,7 +43,7 @@ public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifier
   }
 
   @Override
-  protected Element wrapElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
+  protected Element transformElement(@NotNull String sourceToolName, @NotNull Element sourceElement, @NotNull Element toolElement) {
     Element element = new Element("extension").setAttribute("name", sourceToolName);
     element.setAttribute("enabled", ObjectUtils.notNull(sourceElement.getAttributeValue("enabled"), "false"));
     toolElement.addContent(element);

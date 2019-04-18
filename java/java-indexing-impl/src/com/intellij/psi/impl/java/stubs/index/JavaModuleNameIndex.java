@@ -11,7 +11,6 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   @Override
   public int getVersion() {
-    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
+    return super.getVersion() + 2;
   }
 
   @NotNull
@@ -80,7 +79,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
-    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return true;
   }
 
   public static @Nullable VirtualFile descriptorFile(@NotNull VirtualFile root) {

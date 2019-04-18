@@ -229,7 +229,6 @@ public class PluginGroups {
     featuredPlugins.put("Live Edit Tool",
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
-    featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
     featuredPlugins.put("Atlassian Connector",
                         "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
     addTrainingPlugin(featuredPlugins);
@@ -259,8 +258,8 @@ public class PluginGroups {
     featuredPlugins.put("Lua", "Custom Languages:Lua language support:Lua");
   }
 
-  public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language support:org.jetbrains.plugins.go");
+  public static void addRustPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Rust", "Custom Languages:Rust language support:org.rust.lang");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {

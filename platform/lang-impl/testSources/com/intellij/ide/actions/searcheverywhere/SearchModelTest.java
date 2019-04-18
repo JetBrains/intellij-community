@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -11,15 +12,14 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SearchListModel;
 
 public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  private final static SearchEverywhereContributor<?> STUB_CONTRIBUTOR_1 = createStubContributor(100);
-  private final static SearchEverywhereContributor<?> STUB_CONTRIBUTOR_2 = createStubContributor(200);
-  private final static SearchEverywhereContributor<?> STUB_CONTRIBUTOR_3 = createStubContributor(300);
+  private final static SearchEverywhereContributor<Object, ?> STUB_CONTRIBUTOR_1 = createStubContributor(100);
+  private final static SearchEverywhereContributor<Object, ?> STUB_CONTRIBUTOR_2 = createStubContributor(200);
+  private final static SearchEverywhereContributor<Object, ?> STUB_CONTRIBUTOR_3 = createStubContributor(300);
 
   public void testElementsAdding() {
     SearchListModel model = new SearchListModel();
@@ -108,9 +108,9 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private static SearchEverywhereContributor<Object> createStubContributor(int weight) {
+  private static SearchEverywhereContributor<Object, Object> createStubContributor(int weight) {
     String id = UUID.randomUUID().toString();
-    return new SearchEverywhereContributor<Object>() {
+    return new SearchEverywhereContributor<Object, Object>() {
       @NotNull
       @Override
       public String getSearchProviderId() {
@@ -144,7 +144,7 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
                                 boolean everywhere,
                                 @Nullable SearchEverywhereContributorFilter<Object> filter,
                                 @NotNull ProgressIndicator progressIndicator,
-                                @NotNull Function<Object, Boolean> consumer) {
+                                @NotNull Processor<? super Object> consumer) {
 
       }
 
@@ -155,7 +155,7 @@ public class SearchModelTest extends LightPlatformCodeInsightFixtureTestCase {
 
       @NotNull
       @Override
-      public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+      public ListCellRenderer<? super Object> getElementsRenderer() {
         return null;
       }
 

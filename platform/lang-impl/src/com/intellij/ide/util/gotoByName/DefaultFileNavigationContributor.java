@@ -27,7 +27,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
@@ -41,20 +40,16 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
-      final THashSet<String> names = new THashSet<>(1000);
-      IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
-      processNames(s -> {
-        names.add(s);
-        return true;
-      }, FindSymbolParameters.searchScopeFor(project, includeNonProjectItems), filter);
-      if (IdFilter.LOG.isDebugEnabled()) {
-        IdFilter.LOG.debug("All names retrieved2:" + names.size());
-      }
-      return ArrayUtil.toStringArray(names);
-    } else {
-      return FilenameIndex.getAllFilenames(project);
+    THashSet<String> names = new THashSet<>(1000);
+    IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
+    processNames(s -> {
+      names.add(s);
+      return true;
+    }, FindSymbolParameters.searchScopeFor(project, includeNonProjectItems), filter);
+    if (IdFilter.LOG.isDebugEnabled()) {
+      IdFilter.LOG.debug("All names retrieved2:" + names.size());
     }
+    return ArrayUtil.toStringArray(names);
   }
 
   @Override

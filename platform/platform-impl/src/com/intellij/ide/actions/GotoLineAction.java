@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -44,12 +44,10 @@ public class GotoLineAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-    presentation.setEnabled(editor != null);
-    presentation.setVisible(editor != null);
+    presentation.setEnabledAndVisible(editor != null);
   }
 }

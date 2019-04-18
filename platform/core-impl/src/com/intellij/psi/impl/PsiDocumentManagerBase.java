@@ -484,7 +484,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+  public void reparseFiles(@NotNull Collection<? extends VirtualFile> files, boolean includeOpenFiles) {
     FileContentUtilCore.reparseFiles(files);
   }
 
@@ -1074,5 +1074,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                                         @NotNull ASTNode oldRoot,
                                                         @NotNull ASTNode newRoot) {
     return Collections.emptyList();
+  }
+
+  @TestOnly
+  public boolean isDefaultProject() {
+    return myProject.isDefault();
   }
 }

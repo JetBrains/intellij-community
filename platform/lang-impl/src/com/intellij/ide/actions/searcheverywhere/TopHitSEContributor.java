@@ -25,6 +25,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +38,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
+public class TopHitSEContributor implements SearchEverywhereContributor<Object, Void> {
 
   private final Collection<SearchTopHitProvider> myTopHitProviders = Arrays.asList(SearchTopHitProvider.EP_NAME.getExtensions());
 
@@ -82,7 +82,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Void> filter,
-                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Processor<? super Object> consumer) {
     fill(pattern, consumer);
   }
 
@@ -131,11 +131,11 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
   @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+  public ListCellRenderer<? super Object> getElementsRenderer() {
     return new TopHitRenderer(myProject);
   }
 
-  private void fill(@NotNull String pattern, Function<Object, Boolean> consumer) {
+  private void fill(@NotNull String pattern, @NotNull Processor<Object> consumer) {
     if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
       return;
     }
@@ -147,17 +147,17 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     fillFromExtensions(pattern, consumer);
   }
 
-  private void fillFromExtensions(@NotNull String pattern, Function<Object, Boolean> consumer) {
+  private void fillFromExtensions(@NotNull String pattern, Processor<Object> consumer) {
     for (SearchTopHitProvider provider : myTopHitProviders) {
       boolean[] interrupted = {false};
-      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), myProject);
+      provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.process(o), myProject);
       if (interrupted[0]) {
         return;
       }
     }
   }
 
-  private boolean fillActions(String pattern, Function<Object, Boolean> consumer) {
+  private boolean fillActions(String pattern, Processor<Object> consumer) {
     ActionManager actionManager = ActionManager.getInstance();
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
@@ -166,7 +166,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
         continue;
       }
 
-      if (!consumer.apply(action)) {
+      if (!consumer.process(action)) {
         return true;
       }
     }
@@ -218,7 +218,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
       if (value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtil.getListBackground(selected));
+        panel.setBackground(UIUtil.getListBackground(selected, true));
         panel.add(cmp, BorderLayout.CENTER);
         final Component rightComponent;
 
@@ -232,7 +232,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
 
       Color bg = cmp.getBackground();
       if (bg == null) {
-        cmp.setBackground(UIUtil.getListBackground(selected));
+        cmp.setBackground(UIUtil.getListBackground(selected, true));
         bg = cmp.getBackground();
       }
 

@@ -32,8 +32,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
-    <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
-                    serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager"/>

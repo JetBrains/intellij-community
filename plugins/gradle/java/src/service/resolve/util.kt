@@ -1,13 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.util.Key
+import com.intellij.patterns.PatternCondition
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrMethodCallInfo
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -20,10 +23,24 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processAllDeclarations
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
+import org.jetbrains.plugins.groovy.lang.resolve.processReceiverType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor
 import java.util.*
+
+val projectTypeKey: Key<GradleProjectAwareType> = Key.create("gradle.current.project")
+val saveProjectType: PatternCondition<GroovyMethodResult> = object : PatternCondition<GroovyMethodResult>("saveProjectContext") {
+  override fun accepts(result: GroovyMethodResult, context: ProcessingContext?): Boolean {
+    // Given the closure matched some method,
+    // we want to determine what we know about this Project.
+    // This PatternCondition just saves the info into the ProcessingContext.
+    context?.put(projectTypeKey, result.candidate?.receiver as? GradleProjectAwareType)
+    return true
+  }
+}
+
+val DELEGATED_TYPE: Key<Boolean> = Key.create("gradle.delegated.type")
 
 /**
  * @author Vladislav.Soroka
@@ -32,7 +49,21 @@ internal fun PsiClass?.isResolvedInGradleScript() = this is GroovyScriptClass &&
 
 internal fun PsiFile?.isGradleScript() = this?.originalFile?.virtualFile?.extension == EXTENSION
 
-@JvmField val RESOLVED_CODE: Key<Boolean?> = Key.create<Boolean?>("gradle.resolved")
+@JvmField
+val RESOLVED_CODE: Key<Boolean?> = Key.create("gradle.resolved")
+
+// TODO extract API for delegation
+fun processDelegatedDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, vararg fqns: String): Boolean {
+  val javaPsiFacade = JavaPsiFacade.getInstance(place.project)
+  for (fqn in fqns) {
+    val clazz = javaPsiFacade.findClass(fqn, place.resolveScope) ?: continue
+    val type = javaPsiFacade.elementFactory.createType(clazz)
+    if (!type.processReceiverType(processor, state, place)) {
+      return false
+    }
+  }
+  return true
+}
 
 fun processDeclarations(aClass: PsiClass,
                         processor: PsiScopeProcessor,

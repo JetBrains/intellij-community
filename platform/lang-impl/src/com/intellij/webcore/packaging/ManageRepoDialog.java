@@ -15,6 +15,9 @@
  */
 package com.intellij.webcore.packaging;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
@@ -22,30 +25,52 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.CatchingConsumer;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
+import java.util.List;
 
 public class ManageRepoDialog extends DialogWrapper {
   private JPanel myMainPanel;
-  private final JBList myList;
+  private final JBList<String> myList;
   private boolean myEnabled;
+  private static final Logger LOG = Logger.getInstance(ManageRepoDialog.class);
 
   public ManageRepoDialog(Project project, final PackageManagementService controller) {
     super(project, false);
     init();
     setTitle("Manage Repositories");
-    final DefaultListModel repoModel = new DefaultListModel();
-    for(String repoUrl: controller.getAllRepositories()) {
-      repoModel.addElement(repoUrl);
-    }
-    myList = new JBList();
+    myList = new JBList<>();
+    myList.setPaintBusy(true);
+    final DefaultListModel<String> repoModel = new DefaultListModel<>();
+    controller.fetchAllRepositories(new CatchingConsumer<List<String>, Exception>() {
+      @Override
+      public void consume(List<String> repoUrls) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isDisposed()) return;
+          myList.setPaintBusy(false);
+          for (String repoUrl: repoUrls) {
+            repoModel.addElement(repoUrl);
+          }
+        }, ModalityState.any());
+      }
+
+      @Override
+      public void consume(Exception e) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (isDisposed()) return;
+          myList.setPaintBusy(false);
+          LOG.warn(e);
+        });
+      }
+    });
     myList.setModel(repoModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.addListSelectionListener(event -> {
-      final Object selected = myList.getSelectedValue();
-      myEnabled = controller.canModifyRepository((String) selected);
+      final String selected = myList.getSelectedValue();
+      myEnabled = controller.canModifyRepository(selected);
     });
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions();
@@ -61,7 +86,7 @@ public class ManageRepoDialog extends DialogWrapper {
       }
     });
     decorator.setEditAction(button -> {
-      final String oldValue = (String)myList.getSelectedValue();
+      final String oldValue = myList.getSelectedValue();
 
       String url = Messages.showInputDialog("Please edit repository URL", "Repository URL", null, oldValue, new InputValidator() {
         @Override
@@ -82,7 +107,7 @@ public class ManageRepoDialog extends DialogWrapper {
       }
     });
     decorator.setRemoveAction(button -> {
-      String selected = (String)myList.getSelectedValue();
+      String selected = myList.getSelectedValue();
       controller.removeRepository(selected);
       repoModel.removeElement(selected);
       button.setEnabled(false);

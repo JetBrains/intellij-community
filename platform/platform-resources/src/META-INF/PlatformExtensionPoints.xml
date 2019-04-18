@@ -8,8 +8,7 @@
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-    <extensionPoint name="postStartupActivity"
-                    interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -174,8 +173,8 @@
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider"/>
     <extensionPoint name="frameEditorComponentProvider" interface="com.intellij.openapi.wm.ex.FrameEditorComponentProvider"/>
 
-    <extensionPoint name="statistic.eventLog.fusEventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.FeatureUsageEventLoggerProvider"/>
-    <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.FeatureUsageStateEventTracker"/>
+    <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
+    <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
 
     <extensionPoint name="uiDropperActions" interface="com.intellij.internal.inspector.UiDropperActionExtension"/>
 
@@ -232,6 +231,8 @@
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean"/>
 
     <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
+
+    <extensionPoint name="schemesPanelCustomizer" interface="com.intellij.application.options.schemes.SchemePanelCustomizer"/>
 
     <extensionPoint name="search.topHitProvider" interface="com.intellij.ide.SearchTopHitProvider"/>
     <extensionPoint name="search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider"/>
@@ -314,7 +315,7 @@
     <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider"/>
     <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT"/>
 
-    <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider"/>
 
     <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider"/>
 

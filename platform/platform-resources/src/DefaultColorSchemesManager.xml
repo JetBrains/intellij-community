@@ -91,7 +91,20 @@
     </colors>
 
     <attributes>
-
+      <option name="DEBUGGER_SMART_STEP_INTO_TARGET">
+        <value>
+          <option name="BACKGROUND" value="E2D3F0" />
+          <option name="FOREGROUND" value="000" />
+        </value>
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_SELECTION">
+        <value>
+          <option name="BACKGROUND" value="F2B3FF" />
+          <option name="FOREGROUND" value="000" />
+          <option name="EFFECT_COLOR" value="CC29CC"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
           <option name="FOREGROUND" value="868686" />
@@ -1166,6 +1179,12 @@
              <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
+        <option name="CODE_LENS_BORDER_COLOR">
+          <value>
+            <option name="EFFECT_COLOR" value="595959"/>
+            <option name="EFFECT_TYPE" value="0"/>
+          </value>
+        </option>
     </attributes>
 
   </scheme>
@@ -1473,6 +1492,18 @@
       </option>
       <option name="Class">
         <value />
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_TARGET">
+        <value>
+          <option name="BACKGROUND" value="53385E" />
+        </value>
+      </option>
+      <option name="DEBUGGER_SMART_STEP_INTO_SELECTION">
+        <value>
+          <option name="BACKGROUND" value="824991" />
+          <option name="EFFECT_COLOR" value="C76DC7"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
       </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
@@ -1970,9 +2001,7 @@
       </option>
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
         <value>
-          <option name="FOREGROUND" value="808080" />
-          <option name="EFFECT_COLOR" value="808080" />
-          <option name="EFFECT_TYPE" value="2" />
+          <option name="FOREGROUND" value="72737A" />
         </value>
       </option>
       <option name="PROPERTIES.INVALID_STRING_ESCAPE">
@@ -2375,6 +2404,12 @@
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
          </value>
+      </option>
+      <option name="CODE_LENS_BORDER_COLOR">
+        <value>
+          <option name="EFFECT_COLOR" value="999999"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
       </option>
     </attributes>
   </scheme>

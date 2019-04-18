@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.Patches;
@@ -289,6 +289,10 @@ public class MethodBytecodeUtil {
   private static Collection<Location> removeMethodSameLineLocations(@NotNull Method method, @NotNull List<Location> locations) {
     int locationsSize = locations.size();
     if (locationsSize < 2) {
+      return locations;
+    }
+
+    if (!method.declaringType().virtualMachine().canGetConstantPool()) {
       return locations;
     }
 

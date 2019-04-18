@@ -3,20 +3,16 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.ui.AnimatedIcon;
 import org.jetbrains.annotations.ApiStatus;
-
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 @ApiStatus.Experimental
 public interface ServiceViewManager {
-  Icon RUNNING_ICON = new AnimatedIcon.Default();
-  Key<Boolean> SERVICE_VIEW_MASTER_COMPONENT = Key.create("SERVICE_VIEW_MASTER_COMPONENT");
-
-  void selectNode(Object node);
-
   static ServiceViewManager getInstance(Project project) {
     return ServiceManager.getService(project, ServiceViewManager.class);
   }
+
+  @NotNull
+  Promise<Void> selectNode(Object node, boolean activate, boolean focus);
 }

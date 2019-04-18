@@ -33,7 +33,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testTypeReference() {
-    doTest("Simple/TypeReference.java") { name, file ->
+    doTest("Simple/TypeReference.java") { _, file ->
       val localVar = file.findElementByText<ULocalVariable>("String s;")
       val typeRef = localVar.typeReference
       assertNotNull(typeRef)
@@ -42,33 +42,33 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testFields() {
-    doTest("Simple/Field.java") { name, file ->
+    doTest("Simple/Field.java") { _, file ->
       assertEquals(1, file.classes[0].fields.size)
     }
   }
 
   @Test
   fun testPackageInfo() {
-    doTest("Simple/package-info.java") { name, file ->
-      val index2 = file.psi.text.indexOf("foo")
-      val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
+    doTest("Simple/package-info.java") { _, file ->
+      val index2 = file.sourcePsi.text.indexOf("foo")
+      val literal = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index2), PsiLiteralExpression::class.java)!!
       val uLiteral = literal.toUElement()!!
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
       val uAnnotation = uLiteral.getParentOfType<UAnnotation>()
       TestCase.assertNotNull(uAnnotation)
-      TestCase.assertEquals("ParentPackage", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
+      TestCase.assertEquals("ParentPackage", (uAnnotation as UAnnotationEx).uastAnchor?.sourcePsi?.text)
     }
   }
 
   @Test
   fun testCallExpression() {
-    doTest("Simple/CallExpression.java") { name, file ->
-      val index = file.psi.text.indexOf("format")
-      val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+    doTest("Simple/CallExpression.java") { _, file ->
+      val index = file.sourcePsi.text.indexOf("format")
+      val callExpression = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), PsiCallExpression::class.java)!!
       assertNotNull(callExpression.toUElementOfType<UCallExpression>())
 
-      val index2 = file.psi.text.indexOf("q")
-      val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
+      val index2 = file.sourcePsi.text.indexOf("q")
+      val literal = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index2), PsiLiteralExpression::class.java)!!
       val uLiteral = literal.toUElement()!!
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
       UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UCallExpression::class.java)
@@ -79,9 +79,9 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testCallExpressionAlternatives() {
-    doTest("Simple/CallExpression.java") { name, file ->
-      val index = file.psi.text.indexOf("format")
-      val callExpression = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), PsiCallExpression::class.java)!!
+    doTest("Simple/CallExpression.java") { _, file ->
+      val index = file.sourcePsi.text.indexOf("format")
+      val callExpression = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), PsiCallExpression::class.java)!!
 
       val javaUastLanguagePlugin = UastLanguagePlugin.byLanguage(callExpression.language)!!
 
@@ -108,7 +108,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testCallExpressionArguments() {
-    doTest("Simple/CallExpression.java") { name, file ->
+    doTest("Simple/CallExpression.java") { _, file ->
       fun assertArguments(argumentsInPositionalOrder: List<String?>?, refText: String) =
         file.findElementByTextFromPsi<UCallExpression>(refText).let { call ->
           if (call !is UCallExpressionEx) throw AssertionError("${call.javaClass} is not a UCallExpressionEx")
@@ -131,7 +131,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testFunctionalInterfaceType() {
-    doTest("Simple/FunctionalInterfaceType.java") { name, file ->
+    doTest("Simple/FunctionalInterfaceType.java") { _, file ->
       val lambda = file.findElementByText<ULambdaExpression>("() -> { }")
       assertEquals(
         lambda.functionalInterfaceType?.canonicalText,
@@ -141,7 +141,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testReceiverType() {
-    doTest("Simple/ReceiverType.java") { name, file ->
+    doTest("Simple/ReceiverType.java") { _, file ->
       assertEquals("Test", file.findElementByText<UCallExpression>("foo(1)").receiverType?.canonicalText)
       assertEquals("Test", file.findElementByText<UCallExpression>("fooBase(1)").receiverType?.canonicalText)
       assertEquals("Test", file.findElementByText<UCallExpression>("this.barBase(1)").receiverType?.canonicalText)
@@ -175,7 +175,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testSuperTypes() {
-    doTest("Simple/SuperTypes.java") { name, file ->
+    doTest("Simple/SuperTypes.java") { _, file ->
       val testClass = file.findElementByTextFromPsi<UIdentifier>("Test").uastParent as UClass
       assertEquals("base class", "A", testClass.superClass?.qualifiedName)
       assertEquals("base classes", listOf("A", "B"), testClass.uastSuperTypes.map { it.getQualifiedName() })
@@ -184,7 +184,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
   @Test
   fun testSuperTypesForAnonymous() {
-    doTest("Simple/Anonymous.java") { name, file ->
+    doTest("Simple/Anonymous.java") { _, file ->
       val testClass = file.findElementByTextFromPsi<UElement>("""Runnable() {
 
             public void run() {
@@ -197,13 +197,13 @@ class JavaUastApiTest : AbstractJavaUastTest() {
   }
 
   @Test
-  fun testCanFindAWayFromBrokenSwitch() = doTest("BrokenCode/Switch.java") { name, file ->
+  fun testCanFindAWayFromBrokenSwitch() = doTest("BrokenCode/Switch.java") { _, file ->
     val testClass = file.findElementByTextFromPsi<UElement>("""return;""")
     TestCase.assertEquals(7, testClass.withContainingElements.count())
   }
 
   @Test
-  fun testDefaultConstructorRef() = doTest("Simple/ComplexCalls.java") { name, file ->
+  fun testDefaultConstructorRef() = doTest("Simple/ComplexCalls.java") { _, file ->
     val call = file.findElementByTextFromPsi<UCallExpression>("new A()")
     TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, call.kind)
     TestCase.assertEquals(null, call.resolve())

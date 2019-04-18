@@ -53,17 +53,6 @@ public class PyPackagesUpdater implements StartupActivity {
         }
       });
     }
-    if (checkCondaUpdateNeeded(project)) {
-      application.executeOnPooledThread(() -> PyCondaPackageService.getInstance().updatePackagesCache());
-    }
-  }
-
-  private static boolean checkCondaUpdateNeeded(Project project) {
-    if (!hasPython(project)) return false;
-    final long timeDelta = System.currentTimeMillis() - PyCondaPackageService.getInstance().LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
-    LOG.debug("Updating outdated Conda package cache");
-    return true;
   }
 
   private static boolean hasPython(Project project) {

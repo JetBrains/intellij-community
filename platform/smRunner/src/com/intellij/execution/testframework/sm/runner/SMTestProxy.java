@@ -505,7 +505,7 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
-    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null);
+    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null, true);
   }
 
   public void setTestComparisonFailed(@NotNull final String localizedMessage,
@@ -514,7 +514,8 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
     TestComparisionFailedState comparisionFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath());
+      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
+                              event.shouldPrintExpectedAndActualValues());
     comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
@@ -524,10 +525,14 @@ public class SMTestProxy extends AbstractTestProxy {
                                                             @NotNull final String actualText,
                                                             @NotNull final String expectedText,
                                                             @Nullable final String expectedFilePath,
-                                                            @Nullable final String actualFilePath) {
+                                                            @Nullable final String actualFilePath,
+                                                            boolean printExpectedAndActualValues) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
+    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(
+      localizedMessage, stackTrace, actualText, expectedText, printExpectedAndActualValues,
+      expectedFilePath, actualFilePath
+    );
     DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
     if (hyperlink != null) {
       hyperlink.setTestProxyName(getName());

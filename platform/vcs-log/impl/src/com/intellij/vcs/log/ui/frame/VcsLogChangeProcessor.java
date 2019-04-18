@@ -24,8 +24,9 @@ import java.util.List;
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
-  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
-    super(project, DiffPlaces.VCS_LOG_VIEW);
+  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,
+                        @NotNull Disposable disposable) {
+    super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);

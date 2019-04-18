@@ -822,7 +822,7 @@
               },
               "opera_android": {
                 "version_added": true,
-                "version_removed": "47"
+                "version_removed": "34"
               },
               "safari": {
                 "version_added": true

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 /**
  * @author peter
@@ -72,6 +72,18 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testclosures$param6() throws Throwable { doTest() }
 
   void testclosures$param7() throws Throwable { doTest() }
+
+  void testclosures$withDefaultParam1() throws Throwable { doTest() }
+
+  void testclosures$withDefaultParam2() throws Throwable { doTest() }
+
+  //IDEA-210585
+  void _testclosures$withDefaultParam3() throws Throwable { doTest() }
+
+  //IDEA-210585
+  void _testclosures$withDefaultParam4() throws Throwable { doTest() }
+
+  void testclosures$withDefaultParam5() throws Throwable { doTest() }
 
   void testconditional$con1() throws Throwable { doTest() }
 
@@ -341,6 +353,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path8() throws Throwable { doTest() }
 
   void testpath$path9() throws Throwable { doTest() }
+
+  void testpath$path16() throws Throwable { doTest() }
 
   void testpath$regexp() { doTest() }
 
@@ -839,6 +853,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testlambda$methodCall16() { doTest() }
 
   void testlambda$methodCall17() { doTest() }
+
+  void testlambda$methodCall18() { doTest() }
+
+  void testlambda$methodCall19() { doTest() }
 
   void testlambda$command1() { doTest() }
 

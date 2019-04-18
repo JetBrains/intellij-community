@@ -8,11 +8,6 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownConfigurationType;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,17 +22,12 @@ import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderMa
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -48,55 +38,21 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
-
 /**
  * Created by Nikita.Skvortsov
  */
-public class GradleSettingsImportingTest extends GradleImportingTestCase {
-  public static final String IDEA_EXT_PLUGIN_VERSION = "0.5";
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
-  }
-
-  @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).setValue(true);
-  }
-
-  @After
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).resetToDefault();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
+public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
   public void testInspectionSettingsImport() throws Exception {
     importProject(
@@ -112,7 +68,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     );
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
-      assertEquals("Gradle Imported", profile.getName());
+    assertEquals("Gradle Imported", profile.getName());
   }
 
   @Test
@@ -120,13 +76,13 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     importProject(
       withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.*\n" +
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    codeStyle {\n" +
-      "      hardWrapAt = 200\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    codeStyle {\n" +
+        "      hardWrapAt = 200\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
     );
 
     final CodeStyleScheme scheme = CodeStyleSchemes.getInstance().getCurrentScheme();
@@ -146,22 +102,22 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-      "import org.jetbrains.gradle.ext.*\n" +
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    runConfigurations {\n" +
-      "       app1(Application) {\n" +
-      "           mainClass = 'my.app.Class'\n" +
-      "           jvmArgs =   '-Xmx1g'\n" +
-      "           moduleName = 'moduleName'\n" +
-      "       }\n" +
-      "       app2(Application) {\n" +
-      "           mainClass = 'my.app.Class2'\n" +
-      "           moduleName = 'moduleName'\n" +
-      "       }\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    runConfigurations {\n" +
+        "       app1(Application) {\n" +
+        "           mainClass = 'my.app.Class'\n" +
+        "           jvmArgs =   '-Xmx1g'\n" +
+        "           moduleName = 'moduleName'\n" +
+        "       }\n" +
+        "       app2(Application) {\n" +
+        "           mainClass = 'my.app.Class2'\n" +
+        "           moduleName = 'moduleName'\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
     );
 
     final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
@@ -174,6 +130,43 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("my.app.Class2", app2Settings.get("mainClass"));
     assertEquals("-Xmx1g", app1Settings.get("jvmArgs"));
     assertNull(app2Settings.get("jvmArgs"));
+  }
+
+  @Test
+  @Ignore
+  public void testGradleRunConfigurationSettingsImport() throws Exception {
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
+    maskRunImporter(testExtension);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan("0.5.1")
+        .addPostfix(
+          "import org.jetbrains.gradle.ext.*",
+          "idea.project.settings {",
+          "  runConfigurations {",
+          "    gr1(Gradle) {",
+          "      project = rootProject",
+          "      taskNames = [':cleanTest', ':test']",
+          "      envs = ['env_key':'env_val']",
+          "      jvmArgs = '-DvmKey=vmVal'",
+          "      scriptParameters = '-PscriptParam'",
+          "    }",
+          "  }",
+          "}"
+        ).generate());
+
+
+    final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
+
+    assertContain(new ArrayList<>(configs.keySet()), "gr1");
+    Map<String, Object> gradleSettings = configs.get("gr1");
+
+    assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
+    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
+    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {
@@ -292,23 +285,23 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     importProject(
       withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.*\n" +
-      "idea {\n" +
-      "  module.settings {\n" +
-      "    facets {\n" +
-      "       spring(SpringFacet) {\n" +
-      "         contexts {\n" +
-      "            myParent {\n" +
-      "              file = 'parent_ctx.xml'\n" +
-      "            }\n" +
-      "            myChild {\n" +
-      "              file = 'child_ctx.xml'\n" +
-      "              parent = 'myParent'" +
-      "            }\n" +
-      "         }\n" +
-      "       }\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
+        "idea {\n" +
+        "  module.settings {\n" +
+        "    facets {\n" +
+        "       spring(SpringFacet) {\n" +
+        "         contexts {\n" +
+        "            myParent {\n" +
+        "              file = 'parent_ctx.xml'\n" +
+        "            }\n" +
+        "            myChild {\n" +
+        "              file = 'child_ctx.xml'\n" +
+        "              parent = 'myParent'" +
+        "            }\n" +
+        "         }\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
     );
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
@@ -358,7 +351,8 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
     if (extPluginVersionIsAtLeast("0.5")) {
       assertContain(beforeSyncTasks, "projects", "tasks");
-    } else {
+    }
+    else {
       assertContain(beforeSyncTasks, ":projects", ":tasks");
     }
   }
@@ -698,115 +692,5 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         .addPostfix("}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
-  }
-
-  /**
-   * This method needed for printing debug information about project
-   */
-  @SuppressWarnings("unused")
-  protected void printProjectStructure() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    for (Module module : moduleManager.getModules()) {
-      System.out.println(module);
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        System.out.println("content root = " + contentEntry.getUrl());
-        for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          System.out.println("source root = " + sourceFolder);
-          String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.isEmpty()) continue;
-          System.out.println("package prefix = " + packagePrefix);
-        }
-      }
-    }
-  }
-
-  protected boolean extPluginVersionIsAtLeast(@NotNull final String version) {
-    return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION).compareTo(Version.parseVersion(version)) >= 0;
-  }
-
-  @NotNull
-  @Override
-  protected String injectRepo(String config) {
-    return config; // Do not inject anything
-  }
-
-  @NotNull
-  protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
-    return
-      "plugins {\n" +
-      "  id \"org.jetbrains.gradle.plugin.idea-ext\" version \"" + IDEA_EXT_PLUGIN_VERSION + "\"\n" +
-      "}\n" +
-      script;
-  }
-
-  protected void assertSourceNotExists(@NotNull String moduleName, @NotNull String sourcePath) {
-    SourceFolder sourceFolder = findSource(moduleName, sourcePath);
-    assertNull("Source folder " + sourcePath + " found in module " + moduleName + "but shouldn't", sourceFolder);
-  }
-
-  protected void assertSourcePackagePrefix(@NotNull String moduleName, @NotNull String sourcePath, @NotNull String packagePrefix) {
-    SourceFolder sourceFolder = findSource(moduleName, sourcePath);
-    assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
-    assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
-  }
-}
-
-
-class TestRunConfigurationImporter implements RunConfigurationImporter {
-
-  private final String myTypeName;
-  private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
-
-  TestRunConfigurationImporter(@NotNull String typeName) {
-    myTypeName = typeName;
-  }
-
-  @Override
-  public void process(@NotNull Project project, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg,
-                      @NotNull IdeModifiableModelsProvider modelsProvider) {
-    myConfigs.put(runConfig.getName(), cfg);
-  }
-
-  @Override
-  public boolean canImport(@NotNull String typeName) {
-    return myTypeName.equals(typeName);
-  }
-
-  @NotNull
-  @Override
-  public ConfigurationFactory getConfigurationFactory() {
-    return UnknownConfigurationType.getInstance();
-  }
-
-  public Map<String, Map<String, Object>> getConfigs() {
-    return myConfigs;
-  }
-}
-
-class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet> {
-
-  private final String myTypeName;
-
-  private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
-
-  TestFacetConfigurationImporter(@NotNull String typeName) {
-    myTypeName = typeName;
-  }
-
-  @NotNull
-  @Override
-  public Collection<Facet> process(@NotNull Module module, @NotNull String name, @NotNull Map<String, Object> cfg, @NotNull FacetManager facetManager) {
-    myConfigs.put(name, cfg);
-    return Collections.emptySet();
-  }
-
-  @Override
-  public boolean canHandle(@NotNull String typeName) {
-    return myTypeName.equals(typeName);
-  }
-
-  public Map<String, Map<String, Object>> getConfigs() {
-    return myConfigs;
   }
 }

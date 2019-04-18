@@ -21,7 +21,7 @@ import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 class JavaUCompositeQualifiedExpression(
-  override val psi: PsiElement,
+  override val sourcePsi: PsiElement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
 

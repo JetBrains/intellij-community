@@ -43,7 +43,7 @@ public abstract class JavaValueModifier extends XValueModifier {
   public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
     final Value value = myJavaValue.getDescriptor().getValue();
     if (value == null || value instanceof PrimitiveValue) {
-      String valueString = myJavaValue.getValueText();
+      String valueString = myJavaValue.getDescriptor().getValueText();
       int pos = valueString.lastIndexOf('('); //skip hex presentation if any
       if (pos > 1) {
         valueString = valueString.substring(0, pos).trim();

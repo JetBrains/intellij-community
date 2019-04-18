@@ -4,20 +4,16 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -27,7 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement;
+import static java.util.Collections.emptyList;
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
@@ -37,14 +34,14 @@ class InferenceCache {
   private final Instruction[] myFlow;
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
-  private final TObjectIntHashMap<String> myVarIndexes;
+  private final TObjectIntHashMap<VariableDescriptor> myVarIndexes;
   private final List<DefinitionMap> myDefinitions;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
   InferenceCache(@NotNull GrControlFlowOwner scope,
-                 @NotNull TObjectIntHashMap<String> varIndexes,
+                 @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes,
                  @NotNull List<DefinitionMap> definitions) {
     myScope = scope;
     myFlow = scope.getControlFlow();
@@ -59,13 +56,13 @@ class InferenceCache {
   }
 
   @Nullable
-  PsiType getInferredType(@NotNull String variableName, @NotNull Instruction instruction, boolean mixinOnly) {
+  PsiType getInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction, boolean mixinOnly) {
     if (myTooComplexInstructions.contains(instruction)) return null;
 
     TypeDfaState cache = myVarTypes.get().get(instruction.num());
-    if (!cache.containsVariable(variableName)) {
+    if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
-      Couple<Set<Instruction>> interesting = collectRequiredInstructions(instruction, variableName, mixinPredicate);
+      Couple<Set<Instruction>> interesting = collectRequiredInstructions(instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, interesting);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(interesting.first);
@@ -74,7 +71,7 @@ class InferenceCache {
         cacheDfaResult(dfaResult);
       }
     }
-    DFAType dfaType = getCachedInferredType(variableName, instruction);
+    DFAType dfaType = getCachedInferredType(descriptor, instruction);
     return dfaType == null ? null : dfaType.getResultType();
   }
 
@@ -88,20 +85,20 @@ class InferenceCache {
   }
 
   @Nullable
-  DFAType getCachedInferredType(@NotNull String variableName, @NotNull Instruction instruction) {
-    return myVarTypes.get().get(instruction.num()).getVariableType(variableName);
+  DFAType getCachedInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction) {
+    return myVarTypes.get().get(instruction.num()).getVariableType(descriptor);
   }
 
   private Couple<Set<Instruction>> collectRequiredInstructions(@NotNull Instruction instruction,
-                                                               @NotNull String variableName,
+                                                               @NotNull VariableDescriptor descriptor,
                                                                @NotNull Predicate<? super Instruction> predicate) {
-    Map<Pair<Instruction, String>, Collection<Pair<Instruction, String>>> interesting = new LinkedHashMap<>();
-    LinkedList<Pair<Instruction, String>> queue = ContainerUtil.newLinkedList();
-    queue.add(Pair.create(instruction, variableName));
+    Map<Pair<Instruction, VariableDescriptor>, Collection<Pair<Instruction, VariableDescriptor>>> interesting = new LinkedHashMap<>();
+    LinkedList<Pair<Instruction, VariableDescriptor>> queue = ContainerUtil.newLinkedList();
+    queue.add(Pair.create(instruction, descriptor));
     while (!queue.isEmpty()) {
-      Pair<Instruction, String> pair = queue.removeFirst();
+      Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
-        Set<Pair<Instruction, String>> dependencies = findDependencies(pair.first, pair.second);
+        Set<Pair<Instruction, VariableDescriptor>> dependencies = findDependencies(pair.first, pair.second);
         interesting.put(pair, dependencies);
         dependencies.forEach(queue::addLast);
       }
@@ -117,54 +114,24 @@ class InferenceCache {
   }
 
   @NotNull
-  private Set<Pair<Instruction, String>> findDependencies(@NotNull Instruction instruction, @NotNull String varName) {
+  private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull Instruction instruction,
+                                                                      @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = myDefinitions.get(instruction.num());
-    int varIndex = myVarIndexes.get(varName);
+    int varIndex = myVarIndexes.get(descriptor);
     int[] definitions = definitionMap.getDefinitions(varIndex);
     if (definitions == null) return Collections.emptySet();
 
-    LinkedHashSet<Pair<Instruction, String>> pairs = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = ContainerUtil.newLinkedHashSet();
     for (int defIndex : definitions) {
       Instruction write = myFlow[defIndex];
-      pairs.add(Pair.create(write, varName));
-      PsiElement statement = findDependencyScope(write.getElement());
-      if (statement != null) {
-        pairs.addAll(findAllInstructionsInside(statement));
+      if (write != instruction) {
+        pairs.add(Pair.create(write, descriptor));
+      }
+      for (ReadWriteVariableInstruction dependency : findReadDependencies(write, it -> myFromByElements.getOrDefault(it, emptyList()))) {
+        pairs.add(Pair.create(dependency, dependency.getDescriptor()));
       }
     }
     return pairs;
-  }
-
-  @NotNull
-  private List<Pair<Instruction, String>> findAllInstructionsInside(@NotNull PsiElement scope) {
-    final List<Pair<Instruction, String>> result = ContainerUtil.newArrayList();
-    scope.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
-          String varName = ((GrReferenceExpression)element).getReferenceName();
-          List<Instruction> instructionList = myFromByElements.get(element);
-          if (varName != null && instructionList != null) {
-            for (Instruction dependency : instructionList) {
-              result.add(Pair.create(dependency, varName));
-            }
-          }
-        }
-        super.visitElement(element);
-      }
-    });
-    return result;
-  }
-
-  @Nullable
-  private static PsiElement findDependencyScope(@Nullable PsiElement element) {
-    return PsiTreeUtil.findFirstParent(
-      element,
-      element1 -> !(element1.getParent() instanceof GrExpression)
-                  || element1 instanceof GrBinaryExpression
-                  || element1 instanceof GrInstanceOfExpression
-                  || isExpressionStatement(element1)
-    );
   }
 
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {

@@ -29,13 +29,16 @@ import java.util.List;
 import static git4idea.GitProtectedBranchesKt.isCommitPublished;
 
 public class GitCherryPicker extends VcsCherryPicker {
-
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcsSettings mySettings;
+
+  public GitCherryPicker(@NotNull Project project) {
+    this(project, Git.getInstance());
+  }
 
   public GitCherryPicker(@NotNull Project project, @NotNull Git git) {
     myProject = project;

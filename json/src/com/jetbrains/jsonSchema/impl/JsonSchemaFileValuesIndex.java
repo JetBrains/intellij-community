@@ -105,7 +105,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     boolean idFound = false;
     boolean obsoleteIdFound = false;
     boolean schemaFound = false;
-    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
+    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getTokenStart() < lexer.getBufferEnd()) {
       IElementType token = lexer.getTokenType();
       // Nesting level can only change at curly braces.
       if (token == JsonElementTypes.L_CURLY) {

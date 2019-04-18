@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.rValueProcessor
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.resolveKinds
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 import org.jetbrains.plugins.groovy.lang.resolve.impl.filterByArgumentsCount
 import org.jetbrains.plugins.groovy.lang.resolve.impl.filterBySignature
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyRValueProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodProcessor
 
 class GrExplicitMethodCallReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
@@ -28,7 +28,7 @@ class GrExplicitMethodCallReference(ref: GrReferenceExpressionImpl) : GroovyCach
       return it
     }
 
-    val propertyProcessor = GroovyRValueProcessor(name, ref, ref.resolveKinds())
+    val propertyProcessor = rValueProcessor(name, ref, ref.resolveKinds())
     GrReferenceResolveRunner(ref, propertyProcessor).resolveReferenceExpression()
     val properties = propertyProcessor.results
     if (properties.size == 1) {

@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.*;
@@ -42,8 +43,6 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
@@ -89,7 +88,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final Tree myTree;
   private final SmartTreeStructure myTreeStructure;
 
-  private final StructureTreeModel myStructureTreeModel;
+  private final StructureTreeModel<SmartTreeStructure> myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
   private final SingleAlarm myUpdateAlarm;
 
@@ -141,7 +140,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     };
 
-    myStructureTreeModel = new StructureTreeModel(myTreeStructure);
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
@@ -204,6 +203,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
+    myProject.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, o -> rebuild());
 
     if (showScrollToFromSourceActions()) {
       myAutoScrollToSourceHandler.install(myTree);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unused;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -157,8 +157,9 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     UnusedPropertiesSearchHelper(Module module) {
       myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
       myModule = module;
-      mySearcher = (PropertySearcher)ContainerUtil.find(Extensions.getExtensions("com.intellij.referencesSearch"),
-                                                        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
+      mySearcher = (PropertySearcher)ContainerUtil.find(
+        Extensions.getRootArea().getExtensionPoint("com.intellij.referencesSearch").getExtensions(),
+        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
       mySearchHelper = PsiSearchHelper.getInstance(module.getProject());
     }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,18 +32,27 @@ public abstract class DialogWrapperPeerFactory {
 
   @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
+
   @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent);
 
   @NotNull
-  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper,
+                                               @Nullable Project project,
+                                               boolean canBeParent,
+                                               DialogWrapper.IdeModalityType ideModalityType);
 
-  @Deprecated
   @NotNull
   public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
 
   @NotNull
-  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper,
+                                               boolean canBeParent,
+                                               DialogWrapper.IdeModalityType ideModalityType);
+
   @NotNull
-  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper,
+                                               Window owner,
+                                               boolean canBeParent,
+                                               DialogWrapper.IdeModalityType ideModalityType);
 }

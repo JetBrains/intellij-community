@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +54,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myExcludeFromImportAndCompletionPanel.add(myExcludePackagesTable.getComponent(), BorderLayout.CENTER);
   }
 
-  public void addExcludePackage(String packageName) {
+  public void addExcludePackage(@NotNull String packageName) {
     myExcludePackagesTable.addExcludePackage(packageName);
   }
 

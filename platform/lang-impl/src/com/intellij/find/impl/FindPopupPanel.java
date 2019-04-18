@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -36,10 +37,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -56,10 +59,8 @@ import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.FindUsagesProcessPresentation;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,6 +73,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -486,7 +488,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         public int getPopState() {
           int state = super.getPopState();
           if (state != ActionButtonComponent.NORMAL) return state;
-          return mySelectedContextName.equals(FindDialog.getPresentableName(FindModel.SearchContext.ANY))
+          return mySelectedContextName.equals(FindInProjectUtil.getPresentableName(FindModel.SearchContext.ANY))
                  ? ActionButtonComponent.NORMAL
                  : ActionButtonComponent.PUSHED;
         }
@@ -987,7 +989,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
 
-    mySelectedContextName = FindDialog.getSearchContextName(myModel);
+    mySelectedContextName = getSearchContextName(myModel);
     if (myModel.isReplaceState()) {
       myCbPreserveCase.setSelected(myModel.isPreserveCase());
     }
@@ -1184,7 +1186,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
       FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(
-      new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false, scope));
+      new UsageTableCellRenderer(myCbFileFilter.isSelected(), false, scope));
     onStart(hash);
 
     final AtomicInteger resultsCount = new AtomicInteger();
@@ -1435,7 +1437,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     model.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
 
     String selectedSearchContextInUi = mySelectedContextName;
-    FindModel.SearchContext searchContext = FindDialog.parseSearchContext(selectedSearchContextInUi);
+    FindModel.SearchContext searchContext = parseSearchContext(selectedSearchContextInUi);
 
     model.setSearchContext(searchContext);
 
@@ -1533,9 +1535,40 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
 
+  @NotNull
+  private static String getSearchContextName(FindModel model) {
+    String searchContext = FindBundle.message("find.context.anywhere.scope.label");
+    if (model.isInCommentsOnly()) searchContext = FindBundle.message("find.context.in.comments.scope.label");
+    else if (model.isInStringLiteralsOnly()) searchContext = FindBundle.message("find.context.in.literals.scope.label");
+    else if (model.isExceptStringLiterals()) searchContext = FindBundle.message("find.context.except.literals.scope.label");
+    else if (model.isExceptComments()) searchContext = FindBundle.message("find.context.except.comments.scope.label");
+    else if (model.isExceptCommentsAndStringLiterals()) searchContext = FindBundle.message("find.context.except.comments.and.literals.scope.label");
+    return searchContext;
+  }
+
+  @NotNull
+  private static FindModel.SearchContext parseSearchContext(String presentableName) {
+    FindModel.SearchContext searchContext = FindModel.SearchContext.ANY;
+    if (FindBundle.message("find.context.in.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.IN_STRING_LITERALS;
+    }
+    else if (FindBundle.message("find.context.in.comments.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.IN_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.comments.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS;
+    }
+    else if (FindBundle.message("find.context.except.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_STRING_LITERALS;
+    } else if (FindBundle.message("find.context.except.comments.and.literals.scope.label").equals(presentableName)) {
+      searchContext = FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS;
+    }
+    return searchContext;
+  }
+
   private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(FindModel.SearchContext context) {
-      super(FindDialog.getPresentableName(context));
+      super(FindInProjectUtil.getPresentableName(context));
     }
 
     @Override
@@ -1608,11 +1641,110 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
+      if (e.getData(PlatformDataKeys.CONTEXT_COMPONENT) == null) return;
 
       ListPopup listPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
       listPopup.showUnderneathOf(myFilterContextButton);
+    }
+  }
+  static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
+    private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        if (value instanceof UsageInfo2UsageAdapter) {
+          if (!((UsageInfo2UsageAdapter)value).isValid()) {
+            myUsageRenderer.append(" " + UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          }
+          TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
+
+          // skip line number / file info
+          for (int i = 1; i < text.length; ++i) {
+            TextChunk textChunk = text[i];
+            SimpleTextAttributes attributes = getAttributes(textChunk);
+            myUsageRenderer.append(textChunk.getText(), attributes);
+          }
+        }
+        setBorder(null);
+      }
+
+      @NotNull
+      private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
+        SimpleTextAttributes at = textChunk.getSimpleAttributesIgnoreBackground();
+        if (myUseBold) return at;
+        boolean highlighted = textChunk.getType() != null || at.getFontStyle() == Font.BOLD;
+        return highlighted
+               ? new SimpleTextAttributes(null, at.getFgColor(), at.getWaveColor(),
+                                          at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD |
+                                          SimpleTextAttributes.STYLE_SEARCH_MATCH)
+               : at;
+      }
+    };
+
+    private final ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
+      private final SimpleTextAttributes REPEATED_FILE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0xCCCCCC, 0x5E5E5E));
+      private final SimpleTextAttributes ORDINAL_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, new JBColor(0x999999, 0x999999));
+
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        if (value instanceof UsageInfo2UsageAdapter) {
+          UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+          TextChunk[] text = usageAdapter.getPresentation().getText();
+          // line number / file info
+          VirtualFile file = usageAdapter.getFile();
+          String uniqueVirtualFilePath = getFilePath(usageAdapter);
+          VirtualFile prevFile = findPrevFile(table, row, column);
+          SimpleTextAttributes attributes = Comparing.equal(file, prevFile) ? REPEATED_FILE_ATTRIBUTES : ORDINAL_ATTRIBUTES;
+          append(uniqueVirtualFilePath, attributes);
+          if (text.length > 0) append(" " + text[0].getText(), ORDINAL_ATTRIBUTES);
+        }
+        setBorder(null);
+      }
+
+      @NotNull
+      private String getFilePath(@NotNull UsageInfo2UsageAdapter ua) {
+        String uniquePath =
+          UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(ua.getUsageInfo().getProject(), ua.getFile(), myScope);
+        return myOmitFileExtension ? FileUtilRt.getNameWithoutExtension(uniquePath) : uniquePath;
+      }
+
+      @Nullable
+      private VirtualFile findPrevFile(@NotNull JTable table, int row, int column) {
+        if (row <= 0) return null;
+        Object prev = table.getValueAt(row - 1, column);
+        return prev instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)prev).getFile() : null;
+      }
+    };
+
+    private static final int MARGIN = 2;
+    private final boolean myOmitFileExtension;
+    private final boolean myUseBold;
+    private final GlobalSearchScope myScope;
+
+    UsageTableCellRenderer(boolean omitFileExtension, boolean useBold, GlobalSearchScope scope) {
+      myOmitFileExtension = omitFileExtension;
+      myUseBold = useBold;
+      myScope = scope;
+      setLayout(new BorderLayout());
+      add(myUsageRenderer, BorderLayout.CENTER);
+      add(myFileAndLineNumber, BorderLayout.EAST);
+      setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      myUsageRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      myFileAndLineNumber.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      setBackground(myUsageRenderer.getBackground());
+      if (!isSelected && value instanceof UsageInfo2UsageAdapter) {
+        UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
+        Project project = usageAdapter.getUsageInfo().getProject();
+        Color color = VfsPresentationUtil.getFileBackgroundColor(project, usageAdapter.getFile());
+        setBackground(color);
+        myUsageRenderer.setBackground(color);
+        myFileAndLineNumber.setBackground(color);
+      }
+      return this;
     }
   }
 }

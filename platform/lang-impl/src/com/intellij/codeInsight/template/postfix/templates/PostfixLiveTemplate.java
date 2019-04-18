@@ -168,7 +168,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     }
     PsiFile contextFile = callback.getFile();
     Language language = PsiUtilCore.getLanguageAtOffset(contextFile, offset);
-    String fileText = contextFile.getText();
+    CharSequence fileText = callback.getEditor().getDocument().getImmutableCharSequence();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       if (StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, fileText, offset + 1))) {
         return true;

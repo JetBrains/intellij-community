@@ -109,6 +109,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
 
       TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
+      executeConsole.withEnterKeyDefaultCodeEnabled(true);
 
       executeConsole.addMessageFilter(myConfig.getProject(), new PythonTracebackFilter(myConfig.getProject()));
       executeConsole.addMessageFilter(myConfig.getProject(), new UrlFilter());

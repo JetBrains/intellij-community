@@ -49,13 +49,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     assert !contributors.contains(null);
   }
 
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new NavigationItemListCellRenderer();
   }
 
   public boolean sameNamesForProjectAndLibraries() {
-    return !ChooseByNameBase.ourLoadNamesEachTime;
+    return false;
   }
 
   private final ConcurrentMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = ContainerUtil.newConcurrentMap();
@@ -235,14 +236,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    */
   @NotNull
   @Override
-  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
+  public Object[] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
     return getElementsByName(name, FindSymbolParameters.wrap(pattern, myProject, checkBoxState), new ProgressIndicatorBase());
   }
 
   @Override
-  public String getElementName(Object element) {
+  public String getElementName(@NotNull Object element) {
     if (!(element instanceof NavigationItem)) {
-      throw new AssertionError((element == null ? "null" : element + " of " + element.getClass()) + " in " + this + " of " + getClass());
+      throw new AssertionError(element + " of " + element.getClass() + " in " + this + " of " + getClass());
     }
     return ((NavigationItem)element).getName();
   }

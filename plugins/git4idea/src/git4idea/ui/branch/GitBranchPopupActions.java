@@ -32,7 +32,7 @@ import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitProtectedBranchesKt;
-import git4idea.actions.GitAbstractRebaseAction;
+import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
@@ -79,10 +79,12 @@ class GitBranchPopupActions {
     LightActionGroup popupGroup = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
-    if (myRepository.isRebaseInProgress()) {
-      GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
-      popupGroup.addAll(
-        rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository) ? getRebaseActions() : createPerRepoRebaseActions(myRepository));
+    GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
+    if (rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository)) {
+      popupGroup.addAll(getRebaseActions());
+    }
+    else {
+      popupGroup.addAll(createPerRepoRebaseActions(myRepository));
     }
 
     popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
@@ -133,32 +135,28 @@ class GitBranchPopupActions {
 
   @NotNull
   private static List<AnAction> createPerRepoRebaseActions(@NotNull GitRepository repository) {
-    return asList(createRepositoryRebaseAction("Git.Rebase.Abort", repository),
-                  createRepositoryRebaseAction("Git.Rebase.Continue", repository),
-                  createRepositoryRebaseAction("Git.Rebase.Skip", repository));
+    return mapNotNull(getRebaseActions(), action -> createRepositoryRebaseAction(action, repository));
   }
 
   @NotNull
   static List<AnAction> getRebaseActions() {
-    ActionManager actionManager = ActionManager.getInstance();
-    return asList(actionManager.getAction("Git.Rebase.Abort"),
-                  actionManager.getAction("Git.Rebase.Continue"),
-                  actionManager.getAction("Git.Rebase.Skip"));
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Git.Ongoing.Rebase.Actions");
+    return asList(group.getChildren(null));
   }
 
-  @NotNull
-  private static AnAction createRepositoryRebaseAction(@NotNull String rebaseActionId, @NotNull GitRepository repository) {
-    GitAbstractRebaseAction rebaseAction = notNull((GitAbstractRebaseAction)ActionManager.getInstance().getAction(rebaseActionId));
+  @Nullable
+  private static AnAction createRepositoryRebaseAction(@NotNull AnAction rebaseAction, @NotNull GitRepository repository) {
+    if (!(rebaseAction instanceof GitOngoingOperationAction)) return null;
+    GitOngoingOperationAction ongoingAction = (GitOngoingOperationAction)rebaseAction;
     DumbAwareAction repositoryAction = new DumbAwareAction() {
-
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(repository.isRebaseInProgress());
+        e.getPresentation().setEnabledAndVisible(ongoingAction.isEnabled(repository));
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        rebaseAction.performInBackground(repository);
+        ongoingAction.performInBackground(repository);
       }
     };
     repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());

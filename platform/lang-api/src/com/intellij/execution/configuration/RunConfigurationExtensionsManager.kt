@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
 import com.intellij.execution.Location
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunConfigurationBase
@@ -9,14 +10,15 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
-import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.options.ExtensionSettingsEditor
+import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
@@ -79,7 +81,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
         return@processApplicableExtensions
       }
 
-      if (!element.content.isEmpty() || element.attributes.size > 1) {
+      if (element.content.isNotEmpty() || element.attributes.size > 1) {
         map.put(extension.serializationId, element)
       }
     }
@@ -128,6 +130,19 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
+  @ApiStatus.Experimental
+  @Throws(ExecutionException::class)
+  open fun patchCommandLine(configuration: U,
+                            runnerSettings: RunnerSettings?,
+                            cmdLine: GeneralCommandLine,
+                            runnerId: String,
+                            executor: Executor) {
+    // only for enabled extensions
+    processEnabledExtensions(configuration, runnerSettings) {
+      it.patchCommandLine(configuration, runnerSettings, cmdLine, runnerId, executor)
+    }
+  }
+
   @Throws(ExecutionException::class)
   open fun patchCommandLine(configuration: U, runnerSettings: RunnerSettings?, cmdLine: GeneralCommandLine, runnerId: String) {
     // only for enabled extensions
@@ -155,7 +170,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   protected inline fun processApplicableExtensions(configuration: U, handler: (T) -> Unit) {
-    for (extension in extensionPoint.extensionList) {
+    for (extension in extensionPoint.iterable) {
       if (extension.isApplicableFor(configuration)) {
         handler(extension)
       }
@@ -163,7 +178,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {
-    for (extension in extensionPoint.extensionList) {
+    for (extension in extensionPoint.iterable) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         handler(extension)
       }

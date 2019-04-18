@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Internal use only.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface SafeJdomFactory {
   @NotNull
   Element element(@NotNull String name, @Nullable Namespace namespace);

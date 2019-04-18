@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -71,6 +70,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -140,7 +140,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
+      ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed());
     }
   }
 
@@ -999,7 +999,7 @@ public class MavenUtil {
       try {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
-          Reader reader = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
+          Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
           NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
             @Override
             public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -19,7 +18,9 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
@@ -29,6 +30,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermission
+import java.util.concurrent.TimeUnit
 
 internal class ProjectStoreTest {
   companion object {
@@ -72,7 +74,7 @@ internal class ProjectStoreTest {
       val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
+      refreshProjectConfigDir(project)
       StoreReloadManager.getInstance().reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
@@ -211,6 +213,22 @@ internal class ProjectStoreTest {
         <component name="ValidComponent" foo="some data" />
       </project>
     """.trimIndent())
+    }
+  }
+
+  @Test
+  fun `save cancelled because project disposed`() = runBlocking {
+    withTimeout(TimeUnit.SECONDS.toMillis(10)) {
+      loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
+        it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
+        it.path
+      }) { project ->
+        val testComponent = test(project as ProjectEx)
+        testComponent.state!!.value = "s"
+        launch {
+          project.stateStore.save()
+        }
+      }
     }
   }
 
