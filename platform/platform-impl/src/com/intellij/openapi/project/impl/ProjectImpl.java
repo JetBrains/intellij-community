@@ -75,38 +75,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
-    getStateStore().setPath(filePath);
+    if (!isDefault()) {
+      getStateStore().setPath(filePath);
+    }
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
-  }
-
-  static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-  // default project constructor
-  ProjectImpl() {
-    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
-
-    putUserData(CREATION_TIME, System.nanoTime());
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
-    }
-
-    getPicoContainer().registerComponentInstance(Project.class, this);
-
-    myName = TEMPLATE_PROJECT_NAME;
-    myLight = false;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (isDefault()) return o instanceof Project && ((Project)o).isDefault();
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    return isDefault() ? DefaultProject.DEFAULT_HASH_CODE : super.hashCode();
   }
 
   @Override
