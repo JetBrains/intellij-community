@@ -78,8 +78,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     reset();
     return new HgCommitAdditionalComponent(myProject, panel);
   }
@@ -103,8 +103,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes,
-                                   String preparedComment,
+  public List<VcsException> commit(@NotNull List<Change> changes,
+                                   @NotNull String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<>();
@@ -212,12 +212,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
     final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
@@ -236,7 +236,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(final List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull final List<VirtualFile> files) {
     new HgAddCommand(myProject).addWithProgress(files);
     return null;
   }

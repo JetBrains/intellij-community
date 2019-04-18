@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.checkinProject;
 
 import com.intellij.CvsBundle;
@@ -44,18 +44,15 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull final CheckinProjectPanel panel,
+                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
     // TODO: shall these options be available elsewhere?
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/
   }
 
   @Override
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    if (filesToCheckin == null) {
-      return null;
-    }
+  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
     if (filesToCheckin.length != 1) {
       return null;
     }
@@ -73,8 +70,8 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes,
-                                   String preparedComment,
+  public List<VcsException> commit(@NotNull List<Change> changes,
+                                   @NotNull String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
@@ -111,12 +108,12 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
     for (FilePath file : files) {
       if (file.isDirectory()) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject,
@@ -135,7 +132,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, VfsUtil.toVirtualFileArray(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);

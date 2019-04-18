@@ -130,14 +130,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions(myProject, panel);
   }
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
+  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
     for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
@@ -768,7 +768,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
   @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
@@ -988,7 +988,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -1043,7 +1043,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
