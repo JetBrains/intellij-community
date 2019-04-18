@@ -12,12 +12,14 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 
 import java.nio.file.Paths
 
+@CompileStatic
 abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
 
   @NotNull
@@ -67,7 +69,7 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
 
   void doTest(@NotNull String text, @NotNull List<String> calls, Closure test) {
     List<String> testPatterns = [text]
-    calls.each { testPatterns.add("$it { $text }") }
+    calls.each { testPatterns.add("$it { $text }".toString()) }
     testPatterns.each {
       updateProjectFile(it)
       try {
