@@ -1148,9 +1148,11 @@
                     testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
     <projectService serviceImplementation="com.intellij.build.SyncViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
-    <projectService serviceImplementation="com.intellij.build.RunTasksViewManager"
+    <projectService serviceInterface="com.intellij.build.RunTasksViewManager"
+                    serviceImplementation="com.intellij.build.RunTasksViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
-    <projectService serviceImplementation="com.intellij.build.DebugTasksViewManager"
+    <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
+                    serviceImplementation="com.intellij.build.DebugTasksViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
 
     <moveLeftRightHandler language=""
