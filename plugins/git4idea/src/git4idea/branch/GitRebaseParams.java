@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,11 +19,20 @@ public class GitRebaseParams {
   @NotNull private final String myUpstream;
   private final boolean myInteractive;
   private final boolean myPreserveMerges;
+  private final Boolean myAutoSquash;
   @Nullable private final GitRebaseEditorHandler myEditorHandler;
 
   @NotNull
   public static GitRebaseParams editCommits(@NotNull String base, @Nullable GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
     return new GitRebaseParams(null, null, base, true, preserveMerges, editorHandler);
+  }
+
+  @NotNull
+  public static GitRebaseParams editCommits(@NotNull String base,
+                                            @Nullable GitRebaseEditorHandler editorHandler,
+                                            boolean preserveMerges,
+                                            boolean autoSquash) {
+    return new GitRebaseParams(null, null, base, true, preserveMerges, autoSquash, editorHandler);
   }
 
   public GitRebaseParams(@NotNull String upstream) {
@@ -63,6 +58,23 @@ public class GitRebaseParams {
     myUpstream = upstream;
     myInteractive = interactive;
     myPreserveMerges = preserveMerges;
+    myAutoSquash = null;
+    myEditorHandler = editorHandler;
+  }
+
+  private GitRebaseParams(@Nullable String branch,
+                          @Nullable String newBase,
+                          @NotNull String upstream,
+                          boolean interactive,
+                          boolean preserveMerges,
+                          boolean autoSquash,
+                          @Nullable GitRebaseEditorHandler editorHandler) {
+    myBranch = nullize(branch, true);
+    myNewBase = nullize(newBase, true);
+    myUpstream = upstream;
+    myInteractive = interactive;
+    myPreserveMerges = preserveMerges;
+    myAutoSquash = autoSquash;
     myEditorHandler = editorHandler;
   }
 
@@ -74,6 +86,14 @@ public class GitRebaseParams {
     }
     if (myPreserveMerges) {
       args.add("--preserve-merges");
+    }
+    if (myAutoSquash != null) {
+      if (myAutoSquash) {
+        args.add("--autosquash");
+      }
+      else {
+        args.add("--no-autosquash");
+      }
     }
     if (myNewBase != null) {
       args.addAll(asList("--onto", myNewBase));
