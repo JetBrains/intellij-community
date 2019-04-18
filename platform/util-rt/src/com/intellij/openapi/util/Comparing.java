@@ -31,12 +31,9 @@ public class Comparing {
     return arg1.equals(arg2);
   }
 
-  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
+  /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
+  @Deprecated
   public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
-    if (arr1 == null || arr2 == null) {
-      //noinspection ArrayEquality
-      return arr1 == arr2;
-    }
     return Arrays.equals(arr1, arr2);
   }
 

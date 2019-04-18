@@ -622,6 +622,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     private Map<String, String> myEnvs = new LinkedHashMap<>();
     private String myChangeList = "All";
 
+    @Override
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
       final Data second = (Data)object;
@@ -636,12 +637,13 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
              Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
-             Comparing.equal(UNIQUE_ID, second.UNIQUE_ID) &&
+             Arrays.equals(UNIQUE_ID, second.UNIQUE_ID) &&
              Comparing.equal(TAGS, second.TAGS) &&
              Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
 
+    @Override
     public int hashCode() {
       return Comparing.hashcode(TEST_OBJECT) ^
              Comparing.hashcode(getMainClassName()) ^

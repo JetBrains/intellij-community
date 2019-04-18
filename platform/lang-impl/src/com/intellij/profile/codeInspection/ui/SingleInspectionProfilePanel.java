@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.profile.codeInspection.ui;
 
@@ -1008,7 +1008,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
-    if (!Comparing.equal(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
+    if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
     return descriptorsAreChanged();
   }
 
