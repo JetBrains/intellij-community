@@ -98,7 +98,7 @@ def is_python(path):
     for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-    return is_executable(path) and starts_with_python_shebang(path)
+    return sys.platform != 'win32' and is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
