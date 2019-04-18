@@ -14,7 +14,6 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -55,7 +54,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   }
 
   @Override
-  public void loadState(@Nullable Object state) {
+  public void loadState(@NotNull Object state) {
   }
 
   @Override
