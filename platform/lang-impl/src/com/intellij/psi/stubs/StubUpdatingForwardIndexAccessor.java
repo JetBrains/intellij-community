@@ -43,8 +43,10 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
     public IndexedStubs read(@NotNull DataInput in) throws IOException {
       int fileId = DataInputOutputUtil.readINT(in);
       if (!myEnsuredStubElementTypesLoaded) {
-        SerializationManager.getInstance().initSerializers();
-        ProgressManager.getInstance().executeNonCancelableSection(() -> StubIndexImpl.initExtensions() );
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          SerializationManager.getInstance().initSerializers();
+          StubIndexImpl.initExtensions();
+        });
         myEnsuredStubElementTypesLoaded = true;
       }
       int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
