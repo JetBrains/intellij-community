@@ -741,7 +741,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
     boolean hasQuotes = isNumber || !walker.requiresValueQuotes();
-    final String ws = editor.getDocument().getCharsSequence().charAt(editor.getCaretModel().getOffset()) == ' ' ? "" : " ";
+    int offset = editor.getCaretModel().getOffset();
+    CharSequence charSequence = editor.getDocument().getCharsSequence();
+    final String ws = charSequence.length() > offset && charSequence.charAt(offset) == ' ' ? "" : " ";
     final String colonWs = insertColon ? ":" + ws : ws;
     String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
