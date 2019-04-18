@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -63,7 +64,7 @@ public abstract class DefaultVcsRootPolicy {
 
   protected void scheduleMappedRootsUpdate() {
     ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
-    if (vcsManager.haveDefaultMapping() != null) {
+    if (StringUtil.isNotEmpty(vcsManager.haveDefaultMapping())) {
       vcsManager.scheduleMappedRootsUpdate();
     }
   }
