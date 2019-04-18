@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,8 +53,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                             @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     return new KeepLocksComponent();
   }
 
@@ -166,8 +166,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes,
-                                   final String preparedComment,
+  public List<VcsException> commit(@NotNull List<Change> changes,
+                                   @NotNull final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    final Set<String> feedback) {
     final List<VcsException> exception = new ArrayList<>();
@@ -190,12 +190,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
 
@@ -212,7 +212,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 

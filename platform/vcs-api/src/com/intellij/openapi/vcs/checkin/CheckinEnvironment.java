@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -26,10 +26,11 @@ import java.util.Set;
  */
 public interface CheckinEnvironment extends VcsProviderMarker {
   @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel, PairConsumer<Object, Object> additionalDataConsumer);
+  RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                      @NotNull PairConsumer<Object, Object> additionalDataConsumer);
 
   @Nullable
-  default String getDefaultMessageFor(FilePath[] filesToCheckin) {
+  default String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
     return null;
   }
 
@@ -40,23 +41,24 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   String getCheckinOperationName();
 
   @Nullable
-  List<VcsException> commit(List<Change> changes, String preparedComment);
+  List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment);
 
   @Nullable
-  List<VcsException> commit(List<Change> changes,
-                            String preparedComment,
+  List<VcsException> commit(@NotNull List<Change> changes,
+                            @NotNull String preparedComment,
                             @NotNull NullableFunction<Object, Object> parametersHolder,
                             Set<String> feedback);
 
   @Nullable
-  List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
+  List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files);
 
   @Nullable
-  List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
+  List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files);
 
   /**
    * @deprecated use {@link com.intellij.openapi.vcs.VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}
    */
+  @SuppressWarnings("unused")
   @Deprecated
   default boolean keepChangeListAfterCommit(ChangeList changeList) {return false;}
 
