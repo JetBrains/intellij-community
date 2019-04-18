@@ -124,7 +124,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     private final Document myDocument;
     private int myIdx;
 
-    private ProxyIterator(@NotNull Document document, int idx) {
+    private ProxyIterator(Document document, int idx) {
       myDocument = document;
       myIdx = idx;
     }
@@ -168,7 +168,6 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       return myIdx < 0 || myIdx >= myPieces.size();
     }
 
-    @NotNull
     @Override
     public Document getDocument() {
       return myDocument;
