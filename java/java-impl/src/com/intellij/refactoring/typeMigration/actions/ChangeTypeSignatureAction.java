@@ -21,11 +21,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.BaseJavaRefactoringAction;
 import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangeTypeSignatureAction extends BaseRefactoringAction {
+public class ChangeTypeSignatureAction extends BaseJavaRefactoringAction {
   @Override
   public boolean isAvailableInEditorOnly() {
     return false;

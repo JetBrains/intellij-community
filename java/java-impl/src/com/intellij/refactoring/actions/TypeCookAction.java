@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -25,15 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class TypeCookAction extends BaseRefactoringAction {
+public class TypeCookAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
-  }
-
-  @Override
-  public boolean isAvailableForLanguage(Language language) {
-    return language.equals(JavaLanguage.INSTANCE);
   }
 
   @Override

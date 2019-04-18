@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryAction extends BaseRefactoringAction {
+public class ReplaceConstructorWithFactoryAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
