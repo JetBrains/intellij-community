@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -19,8 +18,11 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubCommit
+import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.model.GithubPullRequestFileCommentThread
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
@@ -37,7 +39,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val username: String,
                                                  private val repositoryName: String,
                                                  override val number: Long)
-  : GithubPullRequestDataProvider, Disposable {
+  : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
 
@@ -91,6 +93,32 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   override val logCommitsRequest
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { logCommitsRequestValue.value } }
 
+  private val diffFileRequestValue = object : LazyCancellableBackgroundProcessValue<String>(progressManager) {
+    override fun compute(indicator: ProgressIndicator): String {
+      return requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.getDiff(serverPath, username, repositoryName, number))
+    }
+  }
+
+  private val commentsRequestValue = object : LazyCancellableBackgroundProcessValue<List<GithubPullRequestCommentWithHtml>>(
+    progressManager) {
+    override fun compute(indicator: ProgressIndicator): List<GithubPullRequestCommentWithHtml> {
+      return GithubApiPagesLoader.loadAll(requestExecutor, indicator,
+                                          GithubApiRequests.Repos.PullRequests.Comments.pages(serverPath, username, repositoryName, number))
+    }
+  }
+
+  private val filesCommentsRequestValue = object : LazyCancellableBackgroundProcessValue<List<GithubPullRequestFileCommentThread>>(
+    progressManager) {
+    override fun compute(indicator: ProgressIndicator): List<GithubPullRequestFileCommentThread> {
+      return GithubPullRequestCommentsUtil.buildThreadsAndMapLines(repository,
+                                                                   logCommitsRequestValue.value.joinCancellable(),
+                                                                   diffFileRequestValue.value.joinCancellable(),
+                                                                   commentsRequestValue.value.joinCancellable())
+    }
+  }
+  override val filesCommentThreadsRequest: CompletableFuture<List<GithubPullRequestFileCommentThread>>
+    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { filesCommentsRequestValue.value } }
+
   @CalledInAwt
   override fun reloadDetails() {
     detailsRequestValue.drop()
@@ -111,6 +139,9 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     branchFetchRequestValue.drop()
     apiCommitsRequestValue.drop()
     logCommitsRequestValue.drop()
+    diffFileRequestValue.drop()
+    commentsRequestValue.drop()
+    filesCommentsRequestValue.drop()
   }
 
   @Throws(ProcessCanceledException::class)

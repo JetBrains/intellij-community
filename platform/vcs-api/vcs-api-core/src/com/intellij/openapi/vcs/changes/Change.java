@@ -181,6 +181,12 @@ public class Change {
     return false;
   }
 
+  public boolean affectsFile(@NotNull FilePath filePath) {
+    if (myBeforeRevision != null && myBeforeRevision.getFile().equals(filePath)) return true;
+    if (myAfterRevision != null && myAfterRevision.getFile().equals(filePath)) return true;
+    return false;
+  }
+
   public boolean isRenamed() {
     cacheRenameOrMove(null);
     return myRenamed;

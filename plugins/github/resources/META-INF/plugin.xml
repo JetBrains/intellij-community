@@ -42,6 +42,8 @@
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsDiffExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

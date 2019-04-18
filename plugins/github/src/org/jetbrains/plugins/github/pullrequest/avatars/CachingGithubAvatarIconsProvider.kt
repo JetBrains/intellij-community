@@ -21,15 +21,15 @@ import javax.swing.Icon
 /**
  * @param component which will be repainted when icons are loaded
  */
-internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubUserAvatarLoader,
-                                                private val imagesResizer: GithubImageResizer,
-                                                private val requestExecutor: GithubApiRequestExecutor,
-                                                private val iconSize: JBValue,
-                                                private val component: Component) {
+class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubUserAvatarLoader,
+                                       private val imagesResizer: GithubImageResizer,
+                                       private val requestExecutor: GithubApiRequestExecutor,
+                                       private val iconSize: JBValue,
+                                       private val component: Component) {
 
   private val scaleContext = JBUIScale.ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
-  private val icons = mutableMapOf<GithubUser, Icon>()
+  private val icons = mutableMapOf<String, Icon>()
 
   private fun createDefaultIcon(size: Int): Icon {
     val standardDefaultAvatar = GithubIcons.DefaultAvatar
@@ -38,7 +38,10 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
   }
 
   @CalledInAwt
-  fun getIcon(user: GithubUser): Icon {
+  fun getIcon(user: GithubUser): Icon = user.avatarUrl.let(::getIcon)
+
+  @CalledInAwt
+  fun getIcon(avatarUrl: String?): Icon {
     val iconSize = iconSize.get()
 
     // so that icons are rescaled when any scale changes (be it font size or current DPI)
@@ -47,11 +50,13 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
       icons.clear()
     }
 
+    avatarUrl ?: return defaultIcon
+
     val modality = ModalityState.stateForComponent(component)
-    return icons.getOrPut(user) {
+    return icons.getOrPut(avatarUrl) {
       val icon = DelegatingIcon(defaultIcon)
       avatarsLoader
-        .requestAvatar(requestExecutor, user)
+        .requestAvatar(requestExecutor, avatarUrl)
         .thenCompose<Image?> {
           if (it != null) imagesResizer.requestImageResize(it, iconSize, scaleContext)
           else CompletableFuture.completedFuture(null)

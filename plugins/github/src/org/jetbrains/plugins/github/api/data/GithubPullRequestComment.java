@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
@@ -23,22 +24,33 @@ import java.util.Date;
 
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubCommitComment {
-  @Mandatory private String htmlUrl;
+public class GithubPullRequestComment {
   private String url;
-
   @Mandatory private Long id;
-  @Mandatory private String commitId;
-  @Mandatory private String path;
-  @Mandatory private Long position;
-  private Long line;
-  private String body;
-  @Mandatory private String bodyHtml;
+  @Mandatory private Long pullRequestReviewId;
+
+  private String diffHunk;
+  private String path;
+  private Long position;
+  private Long originalPosition;
+  private String commitId;
+  private String originalCommitId;
+
+  private Long inReplyToId;
 
   @Mandatory private GithubUser user;
 
+  private String body;
+
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
+  @Mandatory private String htmlUrl;
+  @Mandatory private String pullRequestUrl;
+
+  public GithubPullRequestComment(@NotNull GithubUser user, @NotNull Date createdAt) {
+    this.user = user;
+    this.createdAt = createdAt;
+  }
 
   @NotNull
   public String getHtmlUrl() {
@@ -49,23 +61,29 @@ public class GithubCommitComment {
     return id;
   }
 
-  @NotNull
-  public String getSha() {
-    return commitId;
+  @Nullable
+  public String getOriginalCommitId() {
+    return originalCommitId;
   }
 
-  @NotNull
+  @Nullable
   public String getPath() {
     return path;
   }
 
-  public long getPosition() {
+  @Nullable
+  public Long getPosition() {
     return position;
   }
 
-  @NotNull
-  public String getBodyHtml() {
-    return bodyHtml;
+  @Nullable
+  public Long getOriginalPosition() {
+    return originalPosition;
+  }
+
+  @Nullable
+  public Long getInReplyToId() {
+    return inReplyToId;
   }
 
   @NotNull
