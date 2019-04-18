@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.containers.MultiMap;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
@@ -87,12 +88,26 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   public void writeSettings() throws IOException {
-    final List<AbstractCodeStylePropertyMapper> mappers = new ArrayList<>();
     writeGeneralSection();
-    CodeStylePropertiesUtil.collectMappers(mySettings, mapper -> mappers.add(mapper));
-    for (AbstractCodeStylePropertyMapper mapper : mappers) {
+    final MultiMap<String,LanguageCodeStylePropertyMapper> mappers = new MultiMap<>();
+    CodeStylePropertiesUtil.collectMappers(mySettings, mapper -> {
       if (mapper instanceof LanguageCodeStylePropertyMapper) {
-        writeLangSection((LanguageCodeStylePropertyMapper)mapper);
+        FileType fileType = ((LanguageCodeStylePropertyMapper)mapper).getLanguage().getAssociatedFileType();
+        if (fileType != null) {
+          String pattern = Utils.buildPattern(fileType);
+          mappers.putValue(pattern, (LanguageCodeStylePropertyMapper)mapper);
+        }
+      }
+    });
+    for (String pattern : mappers.keySet().stream().sorted().collect(Collectors.toList())) {
+      String currPattern = pattern;
+      for (
+        LanguageCodeStylePropertyMapper mapper :
+        mappers.get(pattern).stream()
+          .sorted(Comparator.comparing(mapper -> mapper.getLanguageDomainId())).collect(Collectors.toList())) {
+        if (writeLangSection(mapper, currPattern)) {
+          currPattern = null; // Do not write again
+        }
       }
     }
   }
@@ -106,19 +121,20 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
    writeProperties(pairs);
   }
 
-  private void writeLangSection(@NotNull LanguageCodeStylePropertyMapper mapper) throws IOException {
+  private boolean writeLangSection(@NotNull LanguageCodeStylePropertyMapper mapper, @Nullable String pattern) throws IOException {
     Language language = mapper.getLanguage();
     if (myLanguages == null || myLanguages.contains(language)) {
-      FileType fileType = language.getAssociatedFileType();
-      if (fileType != null) {
-        List<OutPair> optionValueList = getKeyValuePairs(mapper);
-        if (!optionValueList.isEmpty()) {
-          write("\n[" + Utils.buildPattern(fileType) + "]\n");
-          Collections.sort(optionValueList, PAIR_COMPARATOR);
-          writeProperties(optionValueList);
+      List<OutPair> optionValueList = getKeyValuePairs(mapper);
+      if (!optionValueList.isEmpty()) {
+        if (pattern != null) {
+          write("\n[" + pattern + "]\n");
         }
+        Collections.sort(optionValueList, PAIR_COMPARATOR);
+        writeProperties(optionValueList);
+        return true;
       }
     }
+    return false;
   }
 
   private List<OutPair> getKeyValuePairs(@NotNull AbstractCodeStylePropertyMapper mapper) {

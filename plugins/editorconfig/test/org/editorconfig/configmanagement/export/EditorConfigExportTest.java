@@ -39,18 +39,18 @@ public class EditorConfigExportTest extends LightPlatformTestCase {
       "ij_smart_tabs = false\n" +
       "ij_wrap_on_typing = false\n" +
       "\n" +
-      "[*.xml]\n" +
-      "ij_xml_block_comment_at_first_column = true\n" +
-      "ij_xml_keep_indents_on_empty_lines = false\n" +
-      "ij_xml_line_comment_at_first_column = true\n" +
-      "\n" +
       "[.editorconfig]\n" +
       "ij_editorconfig_align_group_field_declarations = false\n" +
       "ij_editorconfig_space_after_colon = false\n" +
       "ij_editorconfig_space_after_comma = true\n" +
       "ij_editorconfig_space_before_colon = false\n" +
       "ij_editorconfig_space_before_comma = false\n" +
-      "ij_editorconfig_spaces_around_assignment_operators = true\n",
+      "ij_editorconfig_spaces_around_assignment_operators = true\n" +
+      "\n" +
+      "[*.xml]\n" +
+      "ij_xml_block_comment_at_first_column = true\n" +
+      "ij_xml_keep_indents_on_empty_lines = false\n" +
+      "ij_xml_line_comment_at_first_column = true\n",
 
       result);
   }
