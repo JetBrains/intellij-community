@@ -60,10 +60,12 @@ public class Comparing {
     return arg1 == null ? arg2 == null : caseSensitive ? arg1.equals(arg2) : arg1.equalsIgnoreCase(arg2);
   }
 
+  /** Unlike {@link #equal(String, String)}, considers {@code null} and {@code ""} equal. */
   public static boolean strEqual(@Nullable String arg1, @Nullable String arg2) {
     return strEqual(arg1, arg2, true);
   }
 
+  /** Unlike {@link #equal(String, String, boolean)}, considers {@code null} and {@code ""} equal. */
   public static boolean strEqual(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
