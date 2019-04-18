@@ -13,6 +13,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import groovy.transform.CompileStatic
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -110,6 +111,10 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase {
   @Override
   void tearDownFixtures() {
     fixture.tearDown()
+  }
+
+  protected final boolean isGradleAtLeast(@NotNull String version) {
+    GradleVersion.version(gradleVersion) >= GradleVersion.version(version)
   }
 }
 
