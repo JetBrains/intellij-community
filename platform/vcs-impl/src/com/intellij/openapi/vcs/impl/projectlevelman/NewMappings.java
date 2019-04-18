@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -192,47 +194,54 @@ public class NewMappings implements Disposable {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
-    // direct mappings have priority over <Project> mappings
-    for (VcsDirectoryMapping mapping : mappings) {
-      if (mapping.isDefaultMapping()) continue;
-      AbstractVcs vcs = getMappingsVcs(mapping, allVcsesI);
-      String rootPath = mapping.getDirectory();
+    try {
+      // direct mappings have priority over <Project> mappings
+      for (VcsDirectoryMapping mapping : mappings) {
+        if (mapping.isDefaultMapping()) continue;
+        AbstractVcs vcs = getMappingsVcs(mapping, allVcsesI);
+        String rootPath = mapping.getDirectory();
 
-      ReadAction.run(() -> {
-        VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
+        ReadAction.run(() -> {
+          VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByPath(rootPath);
 
-        if (vcsRoot != null && vcsRoot.isDirectory()) {
-          if (checkMappedRoot(vcs, vcsRoot)) {
-            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-          }
-          else {
-            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
-          }
-        }
-
-        pointerManager.create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
-      });
-    }
-
-    for (VcsDirectoryMapping mapping : mappings) {
-      if (!mapping.isDefaultMapping()) continue;
-      AbstractVcs<?> vcs = getMappingsVcs(mapping, allVcsesI);
-      if (vcs == null) continue;
-
-      List<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs, myDefaultVcsRootPolicy.getDefaultVcsRoots());
-
-      ReadAction.run(() -> {
-        for (VirtualFile vcsRoot : defaultRoots) {
           if (vcsRoot != null && vcsRoot.isDirectory()) {
-            mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
-
-            pointerManager.create(vcsRoot, pointerDisposable, myFilePointerListener);
+            if (checkMappedRoot(vcs, vcsRoot)) {
+              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+            }
+            else {
+              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(null, mapping, vcsRoot));
+            }
           }
-        }
-      });
-    }
 
-    return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
+          pointerManager.create(VfsUtilCore.pathToUrl(rootPath), pointerDisposable, myFilePointerListener);
+        });
+      }
+
+      for (VcsDirectoryMapping mapping : mappings) {
+        if (!mapping.isDefaultMapping()) continue;
+        AbstractVcs<?> vcs = getMappingsVcs(mapping, allVcsesI);
+        if (vcs == null) continue;
+
+        List<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs, myDefaultVcsRootPolicy.getDefaultVcsRoots());
+
+        ReadAction.run(() -> {
+          for (VirtualFile vcsRoot : defaultRoots) {
+            if (vcsRoot != null && vcsRoot.isDirectory()) {
+              mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+
+              pointerManager.create(vcsRoot, pointerDisposable, myFilePointerListener);
+            }
+          }
+        });
+      }
+
+      return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
+    }
+    catch (Throwable e) {
+      Disposer.dispose(pointerDisposable);
+      ExceptionUtil.rethrow(e);
+      return null;
+    }
   }
 
   @Nullable
@@ -246,6 +255,9 @@ public class NewMappings implements Disposable {
       if (vcs == null) return false;
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
       return rootChecker.validateRoot(vcsRoot.getPath());
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -272,6 +284,9 @@ public class NewMappings implements Disposable {
         }
       }
       return vcsRoots;
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
