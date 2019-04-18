@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -34,6 +35,7 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
 
     myNewMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
                                     FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
     myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(myProject, myNewMappings, myMockLocalFileSystem));
     myNewMappings.activateActiveVcses();
