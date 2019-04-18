@@ -1188,7 +1188,7 @@ public class UIUtil {
 
   @NotNull
   public static Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", JBColor.GRAY);
+    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
   }
 
   /**
