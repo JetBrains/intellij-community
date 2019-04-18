@@ -4,8 +4,12 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfo
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
+
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * @author nik
@@ -72,8 +76,7 @@ class BundledJreManager {
       String destination = "$targetDir/jre64"
       def destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
-      // expected to be renamed to `jbr`
-      untar(archive, destination)
+      untar(archive, destination, isSecondBundledJreModular())
     }
     return targetDir
   }
@@ -132,11 +135,7 @@ class BundledJreManager {
         destination = "$targetDir/jre32"
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
-      untar(archive, destination,
-            // strip `jre` top level directory for jbr8
-            !isBundledJreModular() ||
-            // or `jbr` top level directory for jbr11+
-            buildContext.options.bundledJreRenamedToJbr)
+      untar(archive, destination, isBundledJreModular())
     }
     return targetDir
   }
@@ -145,10 +144,14 @@ class BundledJreManager {
    * @param archive linux or windows JRE archive
    */
   @CompileDynamic
-  private def untar(File archive, String destination, Boolean stripTopLevelDirectory = true) {
+  private def untar(File archive, String destination, boolean isModular) {
+    // strip `jre` root directory for jbr8
+    def stripRootDir = !isModular ||
+                       // or `jbr` root directory for jbr11+
+                       buildContext.bundledJreManager.hasJbrRootDir(archive)
     if (SystemInfo.isWindows) {
       buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
-        if (stripTopLevelDirectory) {
+        if (stripRootDir) {
           cutdirsmapper(dirs: 1)
         }
       }
@@ -159,7 +162,7 @@ class BundledJreManager {
       buildContext.ant.exec(executable: "tar", dir: archive.parent) {
         arg(value: "-xf")
         arg(value: archive.name)
-        if (stripTopLevelDirectory) {
+        if (stripRootDir) {
           arg(value: "--strip")
           arg(value: "1")
         }
@@ -277,5 +280,29 @@ class BundledJreManager {
    */
   boolean isBundledJreModular() {
     return buildContext.options.bundledJreVersion >= 9
+  }
+
+  /**
+   *  If {@code true} then second bundled JRE version is 9+
+   */
+  boolean isSecondBundledJreModular() {
+    return secondJreVersion.toInteger() >= 9
+  }
+
+  private final Map<File, Boolean> jbrArchiveInspectionCache = new ConcurrentHashMap<>()
+
+  /**
+   * If {@code true} then JRE top directory was renamed to JBR, see JBR-1295
+   */
+  boolean hasJbrRootDir(File archive) {
+    jbrArchiveInspectionCache.computeIfAbsent(archive) {
+      def tarArchive = new TarArchiveInputStream(
+        new CompressorStreamFactory().createCompressorInputStream(
+          new BufferedInputStream(new FileInputStream(archive))
+        ))
+      def entry = tarArchive.nextTarEntry?.name
+      if (entry == null) throw new IllegalStateException("Unable to read $archive")
+      entry.startsWith('jbr')
+    }
   }
 }

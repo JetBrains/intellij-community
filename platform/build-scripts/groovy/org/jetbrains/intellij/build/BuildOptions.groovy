@@ -129,11 +129,6 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * If {@code true} then JRE top directory was renamed to JBR, see JBR-1295
-   */
-  boolean bundledJreRenamedToJbr = Boolean.parseBoolean(System.getProperty('intellij.build.bundled.jreRenamedToJbr'))
-
-  /**
    * Directory path to unpack Jetbrains JDK builds into
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
