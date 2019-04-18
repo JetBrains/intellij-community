@@ -302,7 +302,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   public void setBuildFileProperties() {
     final AntBuildFileBase buildFile = getCurrentBuildFile();
-    if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile, myProject)) {
+    if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile)) {
       myConfig.updateBuildFile(buildFile);
     }
   }
