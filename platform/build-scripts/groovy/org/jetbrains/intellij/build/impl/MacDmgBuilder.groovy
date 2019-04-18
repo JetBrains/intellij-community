@@ -104,14 +104,15 @@ class MacDmgBuilder {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
 
     String suffix = "-no-jdk", javaExePath = null
-    def topLevelDir = buildContext.options.bundledJreRenamedToJbr ? 'jbr' : 'jdk'
     if (secondJreArchive != null) {
+      // expected to be renamed to `jbr`
       suffix = "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}"
-      javaExePath = "../${topLevelDir}/Contents/Home/bin/java"
+      javaExePath = "../jbr/Contents/Home/bin/java"
     }
     else if (jreArchivePath != null) {
       suffix = buildContext.bundledJreManager.jreSuffix()
-      javaExePath = "../${topLevelDir}/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java"
+      def topLevelDir = buildContext.bundledJreManager.isBundledJreModular() && buildContext.options.bundledJreRenamedToJbr ? 'jbr' : 'jdk'
+      javaExePath = "../${topLevelDir}/Contents/Home/${buildContext.bundledJreManager.isBundledJreModular() ? '' : 'jre/'}bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)

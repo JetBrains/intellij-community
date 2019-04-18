@@ -72,6 +72,7 @@ class BundledJreManager {
       String destination = "$targetDir/jre64"
       def destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
+      // expected to be renamed to `jbr`
       untar(archive, destination)
     }
     return targetDir
@@ -131,7 +132,11 @@ class BundledJreManager {
         destination = "$targetDir/jre32"
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
-      untar(archive, destination)
+      untar(archive, destination,
+            // strip `jre` top level directory for jbr8
+            !isBundledJreModular() ||
+            // or `jbr` top level directory for jbr11+
+            buildContext.options.bundledJreRenamedToJbr)
     }
     return targetDir
   }
@@ -140,14 +145,10 @@ class BundledJreManager {
    * @param archive linux or windows JRE archive
    */
   @CompileDynamic
-  private def untar(File archive, String destination) {
-    // jbr8 with `jre` top level directory
-    def unpackTopLevelDir = !buildContext.isBundledJreModular() ||
-                            // or jbr11+ with `jbr` top level directory
-                            buildContext.options.bundledJreRenamedToJbr
+  private def untar(File archive, String destination, Boolean stripTopLevelDirectory = true) {
     if (SystemInfo.isWindows) {
       buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
-        if (unpackTopLevelDir) {
+        if (stripTopLevelDirectory) {
           cutdirsmapper(dirs: 1)
         }
       }
@@ -158,7 +159,7 @@ class BundledJreManager {
       buildContext.ant.exec(executable: "tar", dir: archive.parent) {
         arg(value: "-xf")
         arg(value: archive.name)
-        if (unpackTopLevelDir) {
+        if (stripTopLevelDirectory) {
           arg(value: "--strip")
           arg(value: "1")
         }
@@ -210,7 +211,7 @@ class BundledJreManager {
     String suffix = jreArchiveSuffix(jreBuild, buildContext.options.bundledJreVersion.toString(), arch, osName)
     String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
     if (prefix == null) {
-      prefix = buildContext.isBundledJreModular() ? vendor.jreNamePrefix :
+      prefix = isBundledJreModular() ? vendor.jreNamePrefix :
                buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     }
     def jreArchive = new File(jreDir, "$prefix$suffix")
@@ -264,10 +265,17 @@ class BundledJreManager {
   }
 
   String jreSuffix() {
-    buildContext.isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
+    isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
   }
 
   boolean is32bitArchSupported() {
-    !buildContext.isBundledJreModular()
+    !isBundledJreModular()
+  }
+
+  /**
+   *  If {@code true} then bundled JRE version is 9+
+   */
+  boolean isBundledJreModular() {
+    return buildContext.options.bundledJreVersion >= 9
   }
 }
