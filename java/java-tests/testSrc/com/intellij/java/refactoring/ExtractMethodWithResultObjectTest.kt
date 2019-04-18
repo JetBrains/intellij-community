@@ -82,7 +82,10 @@ class ExtractMethodWithResultObjectTest : LightCodeInsightFixtureTestCase() {
   fun testConditionalWithTwoParameters() = doTest()
   fun testConflictingAnonymous() = doTest(false) // todo
   fun testConstantConditionsAffectingControlFlow1() = doTest()
-  fun _testConstantConditionsAffectingControlFlow() = doTest() // todo
+  fun testConstantConditionsAffectingControlFlow() = doTest() // todo
+  fun testConstantConditionsAffectingControlFlow2() = doTest() // todo
+  fun testConstantConditionsAffectingControlFlow3() = doTest() // todo
+  fun testConstantConditionsAffectingControlFlow4() = doTest() // todo
   fun testContinueInside() = doTest()
   fun testCopyParamAnnotations() = doTest()
   fun testDecrementDifferentChainedFieldsDuplicate() = doTest()

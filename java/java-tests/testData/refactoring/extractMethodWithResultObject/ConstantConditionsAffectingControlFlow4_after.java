@@ -1,13 +1,15 @@
 class WillWorkTest {
-    int opera() {
+    int opera(boolean b) {
         int i = 0;
+        int k;
+        if (b) k = 2;
+        else k = 3;
 
-        NewMethodResult x = newMethod(i);
+        NewMethodResult x = newMethod(i, k);
         return x.returnResult;
     }
 
-    NewMethodResult newMethod(int i) {
-        int k;
+    NewMethodResult newMethod(int i, int k) {
         if (true) k = i;
         return new NewMethodResult(k, (0 /* missing value */));
     }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,7 +49,15 @@ class ControlFlowWrapper {
     }
     myFlowEnd = getEndOffset(myControlFlow, myElements);
 
-    myInputVariables.addAll(ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd));
+    List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
+    for (PsiVariable inputVariable : inputVariables) {
+      if (inputVariable instanceof PsiLocalVariable) {
+        Boolean isAssigned = DefUseUtil.isVariableDefinitelyAssignedAt((PsiLocalVariable)inputVariable, myElements[0]);
+        if (isAssigned == null) return false;
+        if (!isAssigned) continue;
+      }
+      myInputVariables.add(inputVariable);
+    }
     return true;
   }
 

@@ -1,6 +1,8 @@
 class WillWorkTest {
-    int opera() {
+    int opera(boolean b) {
         int i = 0;
+        int k;
+        if (b) k = 2;
 
         NewMethodResult x = newMethod(i);
         return x.returnResult;
