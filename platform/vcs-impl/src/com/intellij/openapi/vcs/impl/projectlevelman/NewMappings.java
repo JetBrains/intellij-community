@@ -40,7 +40,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.unmodifiableList;
 
-public class NewMappings {
+public class NewMappings implements Disposable {
   private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparingInt(it -> -it.root.getPath().length());
   private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
@@ -73,7 +73,7 @@ public class NewMappings {
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
     myDefaultVcsRootPolicy = defaultVcsRootPolicy;
 
-    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
       if (!myProject.isDisposed()) {
@@ -345,8 +345,9 @@ public class NewMappings {
     });
   }
 
-  public void disposeMe() {
-    LOG.debug("dispose me");
+  @Override
+  public void dispose() {
+    LOG.debug("disposed");
 
     synchronized (myUpdateLock) {
       Disposer.dispose(myFilePointerDisposable);

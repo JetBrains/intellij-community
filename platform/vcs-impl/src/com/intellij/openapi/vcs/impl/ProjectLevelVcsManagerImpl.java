@@ -184,7 +184,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public void dispose() {
     releaseConsole();
-    myMappings.disposeMe();
+    Disposer.dispose(myMappings);
     Disposer.dispose(myAnnotationLocalChangesListener);
 
     if (myToolWindowManager != null && myToolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
