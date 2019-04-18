@@ -8,11 +8,11 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -76,7 +76,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Language> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
-    if (myProject == null || DumbService.getInstance(myProject).isDumb() || pattern.isEmpty()) {
+    if (myProject == null || pattern.isEmpty()) {
       return;
     }
 
@@ -113,9 +113,10 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
                         @NotNull String pattern,
                         boolean everywhere,
                         ProgressIndicator progressIndicator) {
-    if (myProject == null) {
+    if (ActionUtil.isDumbMode(myProject)) {
       return;
     }
+    assert myProject != null;
 
     Collection<String> allKeys = FileBasedIndex.getInstance().getAllKeys(YAMLKeysIndex.KEY, myProject);
 
