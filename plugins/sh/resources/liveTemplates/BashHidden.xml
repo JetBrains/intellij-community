@@ -45,7 +45,7 @@
             description="For loop by index" toReformat="true" toShortenFQNames="false">
     <variable name="INDEX" expression="" defaultValue="&quot;i&quot;" alwaysStopAt="true"/>
     <variable name="INIT_VALUE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
-    <variable name="LIMIT" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="LIMIT" expression="" defaultValue="&quot;n&quot;" alwaysStopAt="true"/>
     <context>
       <option name="BASH" value="true"/>
       <option name="OTHER" value="false"/>

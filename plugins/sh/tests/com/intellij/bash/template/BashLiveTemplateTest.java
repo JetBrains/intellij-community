@@ -1,74 +1,80 @@
 package com.intellij.bash.template;
 
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.util.List;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toList;
-
-public class BashLiveTemplateTest extends BashBaseFixtureTestCase {
-
-  private Set<String> BASH_LIVE_TEMPLATES = ContainerUtil.newHashSet(
-      "bash", "sh", "zsh", "fori"
-  );
-
-  @Override
-  protected String getDataPath() {
-    return "testData/liveTemplates";
-  }
+public class BashLiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   public void testBashShebang() {
-    doTest();
+    doTest("bash<caret>", "#!/usr/bin/env bash\n");
   }
-
   public void testShShebang() {
-    doTest();
+    doTest("sh<caret>", "#!/usr/bin/env sh\n");
   }
-
   public void testZshShebang() {
-    doTest();
+    doTest("zsh<caret>", "#!/usr/bin/env zsh\n");
   }
-
   public void testForiExpression() {
-    doTest();
+    doTest("fori<caret>", "for i in {1..5} ; do\n    \ndone");
+  }
+  public void testCmd() {
+    doTest("cmd<caret>", "`command`");
+  }
+  public void testCmdCheckResult() {
+    doTest("cmd success check<caret>", "if [[ $? == 0 ]]; then\n    echo \"Succeed\"\nelse\n    echo \"Failed\"\nfi");
+  }
+  public void testTarCompress() {
+    doTest("tar compress<caret>", "tar -czvf /path/to/archive.tar.gz /path/to/directory");
+  }
+  public void testTarDecompress() {
+    doTest("tar decompress<caret>", "tar -C /extract/to/path -xzvf /path/to/archive.tar.gz");
+  }
+  public void testMkdir() {
+    doTest("mkdir<caret>", "mkdir \"dirname\"");
+  }
+  public void testGitBranchCreate() {
+    doTest("git branch create<caret>", "git checkout -b branch_name");
+  }
+  public void testGitPush() {
+    doTest("git push<caret>", "git push origin branch_name");
+  }
+  public void testGitCommit() {
+    doTest("git commit<caret>", "git commit -m \"commit_message\"");
+  }
+  public void testCurl() {
+    doTest("curl<caret>", "curl --request GET -sL \\\n     --url 'http://example.com'");
+  }
+  public void testRm() {
+    doTest("rm<caret>", "rm -f ./path/file");
+  }
+  public void testFind() {
+    doTest("find<caret>", "result=`find ./path -type f -name \"file_name\"`");
+  }
+  public void testHeredoc() {
+    doTest("heredoc<caret>", "<<EOF\n    text\nEOF");
   }
 
-  private void doTest() {
-    configureByFile();
-
+  private void doTest(String actual, String expected) {
+    myFixture.configureByText("a.sh", actual);
     final Editor editor = myFixture.getEditor();
     final Project project = editor.getProject();
     assertNotNull(project);
     new ListTemplatesAction().actionPerformedImpl(project, editor);
     final LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(editor);
     assertNotNull(lookup);
-    final List<LookupElement> elements = lookup.getItems().stream()
-        .filter(item -> BASH_LIVE_TEMPLATES.contains(item.getLookupString()))
-        .collect(toList());
-    assertNotEmpty(elements);
-    lookup.setCurrentItem(elements.get(0));
     lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     TemplateState template = TemplateManagerImpl.getTemplateState(editor);
     if (template != null) {
       Disposer.dispose(template);
     }
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      CodeStyleManager.getInstance(myFixture.getProject()).reformat(myFixture.getFile());
-    });
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResultByFile(getAfterTestName());
+    myFixture.checkResult(expected);
   }
 }
