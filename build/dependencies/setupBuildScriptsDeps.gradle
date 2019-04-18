@@ -22,6 +22,7 @@ List<String> projectLibraries = [
   "OroMatcher",
   "commons-codec",
   "commons-logging",
+  "commons-compress",
   "Trove4j",
   "JDOM",
   "NanoXML",
