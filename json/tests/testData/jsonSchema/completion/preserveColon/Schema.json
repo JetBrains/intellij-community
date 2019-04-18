@@ -25,6 +25,43 @@
         }
       ]
     },
+    "stringOrNumber": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "stringOrNumberAndBothAreTypeArrayUnique": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/stringOrNumber"
+      }
+    },
+    "stringOrNumberOrAcceptBothTypeAsArrayUnique": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/stringOrNumber"
+        },
+        {
+          "$ref": "#/definitions/stringOrNumberAndBothAreTypeArrayUnique"
+        }
+      ]
+    },
+    "secretString": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secure": {
+          "$ref": "#/definitions/nonEmptyString"
+        }
+      }
+    },
     "possiblySecretString": {
       "oneOf": [
         {
@@ -98,6 +135,22 @@
         "npm"
       ]
     },
+    "xcodeVersions": {
+      "enum": [
+        "xcode6.4",
+        "xcode7.3",
+        "xcode8",
+        "xcode8.3",
+        "xcode9",
+        "xcode9.1",
+        "xcode9.2",
+        "xcode9.3",
+        "xcode9.4",
+        "xcode10",
+        "xcode10.1",
+        "xcode10.2"
+      ]
+    },
     "envVars": {
       "oneOf": [
         {
@@ -146,6 +199,7 @@
             "dart",
             "dartlang",
             "elixir",
+            "elm",
             "erlang",
             "generic",
             "go",
@@ -179,6 +233,15 @@
             "shell",
             "smalltalk"
           ]
+        },
+        "elm": {
+          "$ref": "#/definitions/stringOrStringArrayUnique"
+        },
+        "elm-test": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "elm-format": {
+          "$ref": "#/definitions/nonEmptyString"
         },
         "haxe": {
           "type": "array",
@@ -475,17 +538,7 @@
           ]
         },
         "rvm": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "$ref": "#/definitions/stringOrNumberOrAcceptBothTypeAsArrayUnique"
         },
         "gemfile": {
           "oneOf": [
@@ -586,36 +639,12 @@
         "osx_image": {
           "oneOf": [
             {
-              "enum": [
-                "xcode6.4",
-                "xcode7.3",
-                "xcode8",
-                "xcode8.3",
-                "xcode9",
-                "xcode9.1",
-                "xcode9.2",
-                "xcode9.3",
-                "xcode9.4",
-                "xcode10",
-                "xcode10.1"
-              ]
+              "$ref": "#/definitions/xcodeVersions"
             },
             {
               "type": "array",
               "items": {
-                "enum": [
-                  "xcode6.4",
-                  "xcode7.3",
-                  "xcode8",
-                  "xcode8.3",
-                  "xcode9",
-                  "xcode9.1",
-                  "xcode9.2",
-                  "xcode9.3",
-                  "xcode9.4",
-                  "xcode10",
-                  "xcode10.1"
-                ]
+                "$ref": "#/definitions/xcodeVersions"
               }
             }
           ],
@@ -715,12 +744,12 @@
                     "working_dir": {
                       "type": "string",
                       "description":
-                        "If youâ€™d like to upload file from a specific directory, you can change your working directory "
+                        "If you’d like to upload file from a specific directory, you can change your working directory "
                     },
                     "debug": {
                       "type": "boolean",
                       "description":
-                        "If youâ€™d like to see more detail about what the artifacts addon is doing"
+                        "If you’d like to see more detail about what the artifacts addon is doing"
                     }
                   }
                 }
@@ -782,12 +811,7 @@
                   "type": "string"
                 },
                 "token": {
-                  "type": "object",
-                  "properties": {
-                    "secure": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/definitions/secretString"
                 }
               }
             },
@@ -834,6 +858,7 @@
             "homebrew": {
               "description": "Homebrew addon",
               "type": "object",
+              "additionalProperties": false,
               "properties": {
                 "taps": {
                   "$ref": "#/definitions/stringOrStringArrayUnique"
@@ -870,6 +895,7 @@
                 },
                 {
                   "type": "object",
+                  "additionalProperties": false,
                   "properties": {
                     "debug": {
                       "type": "boolean",
@@ -878,6 +904,78 @@
                   }
                 }
               ]
+            },
+            "snaps": {
+              "description": "Snaps addon",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "minItems": 1,
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/definitions/nonEmptyString"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "name"
+                        ],
+                        "properties": {
+                          "name": {
+                            "$ref": "#/definitions/nonEmptyString"
+                          },
+                          "channel": {
+                            "$ref": "#/definitions/nonEmptyString"
+                          },
+                          "classic": {
+                            "type": "boolean",
+                            "default": true
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "browserstack": {
+              "description": "BrowserStack addon",
+              "type": "object",
+              "properties": {
+                "username": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "access_key": {
+                  "$ref": "#/definitions/possiblySecretString"
+                },
+                "app_path": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "proxyHost": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "proxyPort": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "proxyUser": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "proxyPass": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "forcelocal": {
+                  "type": "boolean"
+                },
+                "only": {
+                  "$ref": "#/definitions/nonEmptyString"
+                }
+              }
             }
           },
           "additionalProperties": false
@@ -989,7 +1087,7 @@
             },
             "quiet": {
               "type": "boolean",
-              "description": "Travis CI clones repositories without the quiet flag (-q) by default. Enabling the quiet flag can be useful if youâ€™re trying to avoid log file size limits or even if you just donâ€™t need to include it."
+              "description": "Travis CI clones repositories without the quiet flag (-q) by default. Enabling the quiet flag can be useful if you’re trying to avoid log file size limits or even if you just don’t need to include it."
             },
             "submodules": {
               "type": "boolean",
@@ -1555,7 +1653,7 @@
             "fast_finish": {
               "type": "boolean",
               "description":
-                "If some rows in the build matrix are allowed to fail, the build wonâ€™t be marked as finished until they have completed. To mark the build as finished as soon as possible, add fast_finish: true"
+                "If some rows in the build matrix are allowed to fail, the build won’t be marked as finished until they have completed. To mark the build as finished as soon as possible, add fast_finish: true"
             }
           },
           "additionalProperties": false
@@ -1620,3 +1718,4 @@
     }
   ]
 }
+

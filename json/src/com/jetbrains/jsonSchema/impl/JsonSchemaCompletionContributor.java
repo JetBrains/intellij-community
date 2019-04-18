@@ -519,18 +519,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             // fix colon for YAML and alike
             if (offset < docChars.length() && docChars.charAt(offset) != ':') {
               editor.getDocument().insertString(initialOffset, ":");
+              handleWhitespaceAfterColon(editor, docChars, initialOffset + 1);
             }
             return;
           }
 
           if (offset < docChars.length() && docChars.charAt(offset) == ':') {
-            if (offset + 1 < docChars.length() && docChars.charAt(offset + 1) == ' ') {
-              editor.getCaretModel().moveToOffset(offset + 2);
-            }
-            else {
-              editor.getCaretModel().moveToOffset(offset + 1);
-              EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
-            }
+            handleWhitespaceAfterColon(editor, docChars, offset + 1);
           }
           else {
             // inserting longer string for proper formatting
@@ -542,6 +537,16 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           }
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
           AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+        }
+
+        public void handleWhitespaceAfterColon(Editor editor, CharSequence docChars, int nextOffset) {
+          if (nextOffset < docChars.length() && docChars.charAt(nextOffset) == ' ') {
+            editor.getCaretModel().moveToOffset(nextOffset + 1);
+          }
+          else {
+            editor.getCaretModel().moveToOffset(nextOffset);
+            EditorModificationUtil.insertStringAtCaret(editor, " ", false, true, 1);
+          }
         }
       };
     }
@@ -736,7 +741,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
     boolean hasQuotes = isNumber || !walker.requiresValueQuotes();
-    final String colonWs = insertColon ? ": " : " ";
+    final String ws = editor.getDocument().getCharsSequence().charAt(editor.getCaretModel().getOffset()) == ' ' ? "" : " ";
+    final String colonWs = insertColon ? ":" + ws : ws;
     String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
                                                insertColon ? 2 : 1);
