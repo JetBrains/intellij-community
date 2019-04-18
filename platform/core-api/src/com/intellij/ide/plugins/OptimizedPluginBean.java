@@ -63,4 +63,7 @@ public class OptimizedPluginBean {
 
   @Attribute("allow-bundled-update")
   public boolean allowBundledUpdate;
+
+  @Attribute("implementation-detail")
+  public boolean implementationDetail;
 }

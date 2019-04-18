@@ -96,6 +96,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
+  private boolean myImplementationDetail;
   private String mySinceBuild;
   private String myUntilBuild;
 
@@ -168,6 +169,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
     myAllowBundledUpdate = pluginBean.allowBundledUpdate;
+    myImplementationDetail = pluginBean.implementationDetail;
     if (pluginBean.ideaVersion != null) {
       mySinceBuild = pluginBean.ideaVersion.sinceBuild;
       myUntilBuild = convertExplicitBigNumberInUntilBuildToStar(pluginBean.ideaVersion.untilBuild);
@@ -813,6 +815,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public boolean allowBundledUpdate() {
     return myAllowBundledUpdate;
+  }
+
+  @Override
+  public boolean isImplementationDetail() {
+    return myImplementationDetail;
   }
 
   @NotNull

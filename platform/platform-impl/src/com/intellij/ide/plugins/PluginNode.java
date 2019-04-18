@@ -361,6 +361,11 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  public boolean isImplementationDetail() {
+    return false;
+  }
+
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
