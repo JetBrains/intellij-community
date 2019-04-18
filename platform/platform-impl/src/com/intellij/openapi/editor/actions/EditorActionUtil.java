@@ -243,13 +243,15 @@ public class EditorActionUtil {
     final int offset = editor.getCaretModel().getOffset();
     if (offset == maxOffset) return maxOffset;
 
-    int newOffset = handleQuoted ? getNextQuoteStopOffset(editor, offset, maxOffset, isCamel) : offset;
-    if (newOffset != offset && wordStop.isAtEnd()) return newOffset;
+    if (handleQuoted) {
+      final int newOffset = getNextQuoteStopOffset(editor, offset, maxOffset, isCamel);
+      if (newOffset != offset && wordStop.isAtEnd()) return newOffset;
+    }
 
     final CharSequence text = editor.getDocument().getCharsSequence();
     final HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset);
 
-    return getNextWordStopOffset(text, wordStop, newOffset, maxOffset, isCamel, tokenIterator, false);
+    return getNextWordStopOffset(text, wordStop, offset, maxOffset, isCamel, tokenIterator, false);
   }
 
   @SuppressWarnings("Duplicates")
@@ -263,13 +265,15 @@ public class EditorActionUtil {
     final int offset = editor.getCaretModel().getOffset();
     if (offset == minOffset) return minOffset;
 
-    int newOffset = handleQuoted ? getPreviousQuoteStopOffset(editor, offset, minOffset, isCamel) : offset;
-    if (newOffset != offset && wordStop.isAtStart()) return newOffset;
+    if (handleQuoted) {
+      final int newOffset = getPreviousQuoteStopOffset(editor, offset, minOffset, isCamel);
+      if (newOffset != offset && wordStop.isAtStart()) return newOffset;
+    }
 
     final CharSequence text = editor.getDocument().getCharsSequence();
     HighlighterIterator tokenIterator = createHighlighterIteratorAtOffset(editor, offset - 1);
 
-    return getPreviousWordStopOffset(text, wordStop, newOffset, minOffset, isCamel, tokenIterator, false);
+    return getPreviousWordStopOffset(text, wordStop, offset, minOffset, isCamel, tokenIterator, false);
   }
 
   private static int getNextQuoteStopOffset(@NotNull Editor editor, int offset, int maxOffset, boolean isCamel) {
