@@ -28,20 +28,13 @@
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
                    serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
-                   serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
-                   serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.EmptyPool"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.EmptyPool"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SshConnectionPool"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.EmptyPool"/>
+    <applicationService serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
     <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
     <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>

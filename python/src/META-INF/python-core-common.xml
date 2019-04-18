@@ -110,10 +110,8 @@
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
-    <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
-                        serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
-    <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
-                        serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
@@ -146,14 +144,12 @@
 
     <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
 
-    <moduleService serviceInterface="com.jetbrains.python.ReSTService"
-                   serviceImplementation="com.jetbrains.python.ReSTService"/>
+    <moduleService serviceImplementation="com.jetbrains.python.ReSTService"/>
 
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
-    <applicationService serviceInterface="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"
-                        serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
+    <applicationService serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebugValueExecutionService"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
@@ -476,10 +472,8 @@
     <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
                                    implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
 
-    <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCodeInsightSettings"
-                        serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
-    <applicationService serviceInterface="com.jetbrains.python.testing.PyTestFrameworkService"
-                        serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <completion.contributor language="Python"
@@ -544,8 +538,7 @@
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor" language="Python"/>
 
-    <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
-                        serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
+    <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              displayName="Python External Documentation"/>
@@ -553,8 +546,7 @@
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
                          nonDefaultProject="true"/>
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
-    <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
-                   serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
+    <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"
@@ -606,8 +598,7 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
 
     <!-- TestRunnerService -->
-    <moduleService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
-                   serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
+    <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
 
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
@@ -619,8 +610,7 @@
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
     <!-- Packaging -->
-    <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
-                   serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
+    <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
@@ -635,8 +625,7 @@
 
     <!--folding-->
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
-    <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
-                        serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
@@ -645,7 +634,7 @@
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
 
-    <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
+    <projectService serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
 
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>

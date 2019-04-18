@@ -75,50 +75,30 @@
 
     <fileEditorProvider implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
 
-    <applicationService serviceInterface="com.intellij.uiDesigner.Properties"
-                   serviceImplementation="com.intellij.uiDesigner.Properties"/>
+    <applicationService serviceImplementation="com.intellij.uiDesigner.Properties"/>
 
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
-    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"
-                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
 
-    <moduleService serviceInterface="com.intellij.uiDesigner.StringDescriptorManager"
-                   serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
+    <moduleService serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
 
-    <projectService serviceInterface="com.intellij.uiDesigner.LoaderFactory"
-               serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
 
-    <projectService serviceInterface="com.intellij.uiDesigner.GuiDesignerConfiguration"
-               serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
     <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
@@ -147,8 +127,7 @@
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
     <gotoRelatedProvider implementation="com.intellij.uiDesigner.binding.FormRelatedFilesProvider"/>
 
-    <projectService serviceInterface="com.intellij.uiDesigner.palette.Palette"
-                    serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
+    <projectService serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
   </extensions>

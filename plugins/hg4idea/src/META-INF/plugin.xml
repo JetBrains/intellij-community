@@ -32,20 +32,14 @@
     <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
     <vcsRepositoryInitializer implementation="org.zmlx.hg4idea.repo.HgRepositoryInitializer"/>
 
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
-                        serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
-                        serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
-    <applicationService serviceInterface="org.zmlx.hg4idea.HgExecutableManager"
-                        serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <applicationService serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
-                    serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"
-                    serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
-                    serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.HgRootsHandler"/>
   </extensions>
 
   <actions>

@@ -22,8 +22,7 @@
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
-    <projectService serviceInterface="org.intellij.images.search.ImageTagManager"
-                    serviceImplementation="org.intellij.images.search.ImageTagManager"/>
+    <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
   </extensions>
 
   <actions>

@@ -50,13 +50,9 @@
 
     <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations" displayName="XSLT File Associations" nonDefaultProject="true" />
 
-    <projectService
-        serviceInterface="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState"
-        serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
+    <projectService serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable$UIState" />
 
-    <projectService
-      serviceInterface="org.intellij.plugins.xpathView.XPathProjectComponent"
-      serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
+    <projectService serviceImplementation="org.intellij.plugins.xpathView.XPathProjectComponent"/>
 
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
     <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />

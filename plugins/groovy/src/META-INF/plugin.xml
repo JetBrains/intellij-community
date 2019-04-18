@@ -368,8 +368,7 @@
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings"
-                    serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
     <spellchecker.support language="Groovy"
                           implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
@@ -416,8 +415,7 @@
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinControlStatementHandler"/>
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinStatementsHandler"/>
 
-    <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
-                        serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.dsl.DslErrorReporter"
                         serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslErrorReporterImpl"/>
 
@@ -651,8 +649,7 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
                     serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"
-                    serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
 
     <psi.referenceContributor language="Groovy"
                               implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
@@ -1649,10 +1646,8 @@
                               implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
 
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
-                    serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"
-                        serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory"
                         serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactoryImpl"/>
 

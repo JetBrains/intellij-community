@@ -26,8 +26,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
-                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
@@ -42,20 +41,15 @@
 
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
-                    serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
-    <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
-                    serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
-    <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
-                    serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
+    <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
+    <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
-    <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
-                        serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <projectService serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>

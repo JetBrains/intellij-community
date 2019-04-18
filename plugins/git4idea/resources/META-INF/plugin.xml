@@ -214,62 +214,38 @@
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
-    <projectService
-        serviceInterface="git4idea.annotate.GitAnnotationProvider"
-        serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
-    <projectService
-        serviceInterface="git4idea.diff.GitDiffProvider"
-        serviceImplementation="git4idea.diff.GitDiffProvider"/>
-    <projectService
-        serviceInterface="git4idea.checkin.GitCheckinEnvironment"
-        serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
-    <projectService
-        serviceInterface="git4idea.status.GitChangeProvider"
-        serviceImplementation="git4idea.status.GitChangeProvider"/>
-    <projectService
-        serviceInterface="git4idea.history.GitHistoryProvider"
-        serviceImplementation="git4idea.history.GitHistoryProvider"/>
-    <projectService
-        serviceInterface="git4idea.rollback.GitRollbackEnvironment"
-        serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
-    <projectService
-        serviceInterface="git4idea.config.GitVcsSettings"
-        serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
+    <projectService serviceImplementation="git4idea.diff.GitDiffProvider"/>
+    <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
+    <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
+    <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
+    <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
-    <projectService
-        serviceInterface="git4idea.config.GitExecutableValidator"
-        serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
-    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
-                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
+    <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
-    <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
-                        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"
-                        serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
-    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"
-                        serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
+    <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
+    <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcNativeSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
-    <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
-                        serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
-    <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"
-                        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
-    <applicationService serviceInterface="git4idea.remote.GitRememberedInputs"
-                        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
+    <applicationService serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
+    <applicationService serviceImplementation="git4idea.config.SSHConnectionSettings"/>
+    <applicationService serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
-    <applicationService serviceInterface="git4idea.DialogManager"
-                        serviceImplementation="git4idea.DialogManager" />
+    <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>

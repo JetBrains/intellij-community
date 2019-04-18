@@ -32,7 +32,7 @@
     <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problems" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
 
-    <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
     <applicationConfigurable groupId="language" displayName="JavaFX" id="preferences.JavaFX" instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex"/>

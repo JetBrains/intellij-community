@@ -11,8 +11,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.byteCodeViewer.ByteCodeViewerManager"
-                    serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
+    <projectService serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
   </extensions>
 
   <actions>

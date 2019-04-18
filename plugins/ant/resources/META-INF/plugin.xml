@@ -21,7 +21,7 @@
     <statistics.counterUsagesCollector groupId="build.ant.actions" version="1"/>
 
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
-    <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
+    <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>

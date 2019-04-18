@@ -72,16 +72,13 @@
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
-                        serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"
-                        serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
+    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
 
-    <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
-                        serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.impl.http.RemoteFileManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.http.RemoteFileManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.RefreshQueue"
@@ -112,12 +109,9 @@
                         serviceImplementation="com.intellij.diff.DiffRequestFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.diff.comparison.ComparisonManager"
                         serviceImplementation="com.intellij.diff.comparison.ComparisonManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.diff.impl.DiffSettingsHolder"
-                        serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
-    <applicationService serviceInterface="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"
-                        serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
-    <applicationService serviceInterface="com.intellij.diff.tools.external.ExternalDiffSettings"
-                        serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
+    <applicationService serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
+    <applicationService serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
+    <applicationService serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
     <applicationConfigurable groupId="tools" id="diff.base" displayName="Diff &amp; Merge"
                              instance="com.intellij.diff.settings.DiffSettingsConfigurable">
       <configurable id="diff.external" displayName="External Diff Tools"
@@ -150,22 +144,18 @@
                         serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
                         serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerUISettings"
-                        serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.hint.TooltipController"
-                        serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
                         serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
-                        serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
-    <applicationService serviceInterface="com.intellij.ide.plugins.InstalledPluginsState"
-                        serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
     <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
                         serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
 
@@ -177,8 +167,7 @@
                         serviceImplementation="com.intellij.reporting.FreezeLoggerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
                         serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
-    <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
-                        serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
+    <applicationService serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
 
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
@@ -186,19 +175,16 @@
     <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
                         serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.keymap.impl.DefaultKeymap"
-                        serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
-    <applicationService serviceInterface="com.intellij.credentialStore.PasswordSafeSettings"
-                        serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings"/>
+    <applicationService serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings"/>
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                         serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"
                         testServiceImplementation="com.intellij.ide.passwordSafe.impl.BasePasswordSafe"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.credentialStore.PasswordSafeConfigurable" id="application.passwordSafe"
                              displayName="Passwords"/>
-    <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
-                        serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
+    <applicationService serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
     <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
@@ -243,8 +229,7 @@
     <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
                         serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.RunnerRegistry"
-                        serviceImplementation="com.intellij.execution.RunnerRegistry"/>
+    <applicationService serviceImplementation="com.intellij.execution.RunnerRegistry"/>
 
     <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
                         serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
@@ -262,18 +247,16 @@
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
                     serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.project.ProjectTypeService"/>
-    <projectService serviceInterface="com.intellij.openapi.ui.MasterDetailsStateService" serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
-    <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
+    <projectService serviceImplementation="com.intellij.ide.SelectInManager"/>
 
-    <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
-                    serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
+    <projectService serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
 
     <projectService serviceInterface="com.intellij.ui.docking.DockManager"
                     serviceImplementation="com.intellij.ui.docking.impl.DockManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
                     serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
-    <projectService serviceInterface="com.intellij.ui.RecentsManager"
-                    serviceImplementation="com.intellij.ui.RecentsManager"/>
+    <projectService serviceImplementation="com.intellij.ui.RecentsManager"/>
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
@@ -287,19 +270,14 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
 
-    <projectService serviceInterface="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"
-                    serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
+    <projectService serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
 
-    <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
-                    serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
+    <projectService serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
-    <projectService serviceInterface="com.intellij.execution.testframework.sm.TestHistoryConfiguration"
-                    serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
-                    serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
+    <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
@@ -469,8 +447,7 @@
                 icon="AllIcons.Ide.Notification.NoEvents"
                 factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
 
-    <projectService serviceInterface="com.intellij.openapi.wm.impl.ProjectFrameBounds"
-                    serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
+    <projectService serviceImplementation="com.intellij.openapi.wm.impl.ProjectFrameBounds"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>

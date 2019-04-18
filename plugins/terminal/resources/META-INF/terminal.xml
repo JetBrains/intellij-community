@@ -20,7 +20,6 @@
 
   <project-components>
     <component>
-      <interface-class>org.jetbrains.plugins.terminal.TerminalView</interface-class>
       <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
     </component>
   </project-components>
