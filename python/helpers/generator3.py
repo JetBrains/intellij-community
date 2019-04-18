@@ -205,7 +205,7 @@ def is_text_file(path):
         with open(path, 'rb') as candidate_stream:
             # Buffer size like in libmagic
             buffer = candidate_stream.read(256 * 1024)
-    except (EnvironmentError, UnicodeDecodeError):
+    except EnvironmentError:
         return False
     return (it_looks_like_ascii_or_utf8(buffer)
             or it_looks_like_utf16(buffer)
