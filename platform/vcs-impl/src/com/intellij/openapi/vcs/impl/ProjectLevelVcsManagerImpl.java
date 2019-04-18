@@ -736,7 +736,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for (VcsRootChecker checker : VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList()) {
       if (checker.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) return checker;
     }
-    return new DefaultVcsRootChecker(myProject, vcs);
+    return new DefaultVcsRootChecker(vcs);
   }
 
   @Override

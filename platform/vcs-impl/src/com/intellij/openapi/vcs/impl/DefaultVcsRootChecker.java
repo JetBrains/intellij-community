@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
-import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +15,9 @@ public class DefaultVcsRootChecker extends VcsRootChecker {
   @NotNull private final AbstractVcs myVcs;
   private final VcsDescriptor myVcsDescriptor;
 
-  public DefaultVcsRootChecker(@NotNull Project project, @NotNull AbstractVcs vcs) {
+  public DefaultVcsRootChecker(@NotNull AbstractVcs vcs) {
     myVcs = vcs;
-    myVcsDescriptor = AllVcses.getInstance(project).getDescriptor(vcs.getName());
+    myVcsDescriptor = ProjectLevelVcsManager.getInstance(vcs.getProject()).getDescriptor(vcs.getName());
   }
 
   @NotNull
