@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -281,57 +281,12 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
-    int width = tabInsets.left + tabInsets.right;
-    Component tabComponent = tabPane.getTabComponentAt(tabIndex);
-    if (tabComponent != null) {
-      width += tabComponent.getPreferredSize().width;
-    }
-    else {
-      Icon icon = getIconForTab(tabIndex);
-      if (icon != null) {
-        width += icon.getIconWidth() + textIconGap;
-      }
-      View v = getTextViewForTab(tabIndex);
-      if (v != null) {
-        // html
-        width += (int)v.getPreferredSpan(View.X_AXIS);
-      }
-      else {
-        // plain text
-        String title = tabPane.getTitleAt(tabIndex);
-        width += UIUtilities.stringWidth(tabPane, metrics, title);
-      }
-    }
-    return width;
+    return super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
   }
 
   @Override
   protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
-    int height = 0;
-    Component c = tabPane.getTabComponentAt(tabIndex);
-    if (c != null) {
-      height = c.getPreferredSize().height;
-    }
-    else {
-      View v = getTextViewForTab(tabIndex);
-      if (v != null) {
-        // html
-        height += (int)v.getPreferredSpan(View.Y_AXIS);
-      }
-      else {
-        // plain text
-        height += fontHeight;
-      }
-      Icon icon = getIconForTab(tabIndex);
-
-      if (icon != null) {
-        height = Math.max(height, icon.getIconHeight());
-      }
-    }
-    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
-    height += tabInsets.top + tabInsets.bottom;
-
+    int height = super.calculateTabHeight(tabPlacement, tabIndex, fontHeight) - 2; //remove magic constant '2' added by parent
     int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : 0);
     return Math.max(height, minHeight);
   }
