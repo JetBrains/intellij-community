@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
@@ -53,20 +54,8 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
     myMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
                                  FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
+    Disposer.register(getTestRootDisposable(), myMappings);
     startupManager.runPostStartupActivities();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myMappings.disposeMe();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   public void testMappingsFilter() {
