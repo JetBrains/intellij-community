@@ -12,7 +12,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -220,7 +220,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
   }
 
   @NotNull
-  private List<HighlightSeverity> getSortedSeverities(OrderMap map) {
+  private static List<HighlightSeverity> getSortedSeverities(OrderMap map) {
     return Arrays.stream(map.keys())
                  .map(o -> (HighlightSeverity)o)
                  .sorted((o1, o2) -> compare(o1, o2, map))
@@ -244,11 +244,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
   }
 
   int getSeverityMaxIndex() {
-    int[] values = getOrderMap().getValues();
-    int max = values[0];
-    for(int i = 1; i < values.length; ++i) if (values[i] > max) max = values[i];
-
-    return max;
+    return ArrayUtil.max(getOrderMap().getValues());
   }
 
   @Nullable
@@ -279,9 +275,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
     return compare(s1, s2, getOrderMap());
   }
 
-  private int compare(@NotNull HighlightSeverity s1,
-                      @NotNull HighlightSeverity s2,
-                      @NotNull OrderMap orderMap) {
+  private static int compare(@NotNull HighlightSeverity s1,
+                             @NotNull HighlightSeverity s2,
+                             @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1);
     int o2 = orderMap.getOrder(s2);
     return o1 - o2;
@@ -443,9 +439,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
       final SeverityBasedTextAttributes that = (SeverityBasedTextAttributes)o;
 
       if (!myAttributes.equals(that.myAttributes)) return false;
-      if (!myType.equals(that.myType)) return false;
-
-      return true;
+      return myType.equals(that.myType);
     }
 
     @Override
