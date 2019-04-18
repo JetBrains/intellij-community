@@ -259,19 +259,19 @@ public class NewMappings implements Disposable {
       VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
       HashSet<VirtualFile> checkedDirs = new HashSet<>();
 
-      List<VirtualFile> gitRoots = new ArrayList<>();
+      List<VirtualFile> vcsRoots = new ArrayList<>();
       for (VirtualFile f : files) {
         while (f != null) {
           ProgressManager.checkCanceled();
           if (!checkedDirs.add(f)) break;
           if (rootChecker.isRoot(f.getPath())) {
-            gitRoots.add(f);
+            vcsRoots.add(f);
             break;
           }
           f = f.getParent();
         }
       }
-      return gitRoots;
+      return vcsRoots;
     }
     catch (Throwable e) {
       LOG.error(e);
