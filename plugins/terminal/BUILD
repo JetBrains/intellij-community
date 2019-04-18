@@ -46,5 +46,6 @@ iml_module(
         "//tools/idea/.idea/libraries:jediterm-pty",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",
+        "//tools/idea/.idea/libraries:winp",
     ],
 )

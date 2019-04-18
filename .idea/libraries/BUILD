@@ -286,8 +286,8 @@ java_library(
 java_library(
     name = "ASM",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0.1:jar"],
 )
 
 # managed by go/iml_to_build
@@ -510,12 +510,12 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.3:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.3:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
 )
