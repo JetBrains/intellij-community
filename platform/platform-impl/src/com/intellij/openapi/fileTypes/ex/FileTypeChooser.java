@@ -69,7 +69,7 @@ public class FileTypeChooser extends DialogWrapper {
     }
     myList.setModel(model);
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
-    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getName());
+    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
