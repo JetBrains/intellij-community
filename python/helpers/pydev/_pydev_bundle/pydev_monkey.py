@@ -79,13 +79,15 @@ def starts_with_python_shebang(path):
         with open(path) as f:
             for line in f:
                 line = line.strip()
-                if not line:
-                    continue
-                for name in PYTHON_NAMES:
-                    if line.startswith('#!/usr/bin/env %s' % name):
-                        return True
-                return False
+                if line:
+                    for name in PYTHON_NAMES:
+                        if line.startswith('#!/usr/bin/env %s' % name):
+                            return True
+                    return False
     except UnicodeDecodeError:
+        return False
+    except:
+        traceback.print_exc()
         return False
 
 
@@ -93,7 +95,6 @@ def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
-    python_names = ['python', 'jython', 'pypy']
     for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
@@ -157,7 +158,11 @@ def patch_args(args):
 
         if is_python(args[0]):
 
-            if len(args) == 1:  # Executable file with Python shebang.
+            for name in PYTHON_NAMES:
+                if args[0].find(name) != -1:
+                    break
+            else:
+                # Executable file with Python shebang.
                 args.insert(0, sys.executable)
 
             ind_c = get_c_option_index(args)
@@ -333,6 +338,10 @@ def patch_arg_str_win(arg_str):
 
 
 def patch_fork_exec_executable_list(args, other_args):
+    # When calling a Python executable script with `subprocess.call` the latest uses the first argument as an executable for `fork_exec`.
+    # This leads to `subprocess.call(["foo.py", "bar", "baz"])` after patching the args will be transformed into something like
+    # foo.py pydevd.py --port 59043 --client 127.0.0.1 --multiproc --file foo.py bar baz.
+    # To fix the issue we need to look inside the `fork_exec` executable list and, if necessary, replace an executable script with Python.
     i = 0
     for arg in args:
         i += 1
