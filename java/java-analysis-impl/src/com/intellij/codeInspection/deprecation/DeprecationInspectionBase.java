@@ -235,8 +235,9 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       qualifierText = qualifierExpression == null ? "" : qualifierExpression.getText() + ".";
 
-      PsiType qualifierType = ExpressionUtils.getQualifierOrThis(call.getMethodExpression()).getType();
-      PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+      if (qualifier == null) return false;
+      PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifier.getType());
       if (qualifierClass == null) return false;
       PsiClass suggestedClass = suggestedReplacement.getContainingClass();
       if (suggestedClass == null || !InheritanceUtil.isInheritorOrSelf(qualifierClass, suggestedClass, true)) return false;

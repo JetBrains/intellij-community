@@ -15,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -917,41 +916,48 @@ public class ExpressionUtils {
   }
 
   /**
-   * Returns a qualifier for reference or creates a corresponding {@link PsiThisExpression} statement if
-   * a qualifier is null
+   * Returns an effective qualifier for a reference. If qualifier is not specified, then tries to construct it
+   * e.g. creating a corresponding {@link PsiThisExpression}.
    *
-   * @param ref a reference expression to get a qualifier from
-   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   * @param ref a reference expression to get an effective qualifier for
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}. 
+   *         May return null if reference points to local or member of anonymous class referred from inner class
    */
-  @NotNull
-  public static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
+  @Nullable
+  public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiMember member = tryCast(ref.resolve(), PsiMember.class);
-    if (member != null) {
-      PsiClass memberClass = member.getContainingClass();
-      if (memberClass != null) {
-        PsiClass containingClass = ClassUtils.getContainingClass(ref);
-        if (containingClass == null) {
-          containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
-        }
-        if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+    if (member == null) {
+      // Reference resolves to non-member: probably variable/parameter/etc.
+      return null;
+    }
+    PsiClass memberClass = member.getContainingClass();
+    if (memberClass != null) {
+      PsiClass containingClass = ClassUtils.getContainingClass(ref);
+      if (containingClass == null) {
+        containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
+      }
+      if (containingClass != null && member.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.createReferenceExpression(containingClass);
+      }
+      if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        containingClass = ClassUtils.getContainingClass(containingClass);
+        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
           containingClass = ClassUtils.getContainingClass(containingClass);
-          while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-            containingClass = ClassUtils.getContainingClass(containingClass);
-          }
-          if (containingClass != null) {
-            String thisQualifier = containingClass.getQualifiedName();
-            if (thisQualifier == null) {
-              if (PsiUtil.isLocalClass(containingClass)) {
-                thisQualifier = containingClass.getName();
-              } else {
-                throw new IncorrectOperationException("Anonymous surrounding class");
-              }
+        }
+        if (containingClass != null) {
+          String thisQualifier = containingClass.getQualifiedName();
+          if (thisQualifier == null) {
+            if (PsiUtil.isLocalClass(containingClass)) {
+              thisQualifier = containingClass.getName();
+            } else {
+              // Cannot qualify anonymous class
+              return null;
             }
-            return factory.createExpressionFromText(thisQualifier + "." + PsiKeyword.THIS, ref);
           }
+          return factory.createExpressionFromText(thisQualifier + "." + PsiKeyword.THIS, ref);
         }
       }
     }

@@ -55,7 +55,7 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression argument = argumentList.getExpressions()[0];
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
+    final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
     final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
     final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
     if (strippedQualifier == null || strippedArgument == null) {

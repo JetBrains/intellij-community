@@ -251,7 +251,7 @@ public class JavaMethodContractUtil {
     ContractReturnValue returnValue = getNonFailingReturnValue(contracts);
     if (returnValue == null) return null;
     if (returnValue.equals(ContractReturnValue.returnThis())) {
-      return ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
+      return ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
     }
     if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
       int number = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
