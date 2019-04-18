@@ -76,7 +76,8 @@ class GitRewordOperation(private val repository: GitRepository,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
 
-    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true, false)
+    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true,
+                                             GitRebaseParams.AutoSquashOption.DISABLE)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
     val rewordProcess = RewordProcess(spec)
@@ -90,7 +91,7 @@ class GitRewordOperation(private val repository: GitRepository,
     try {
       messageFile = GitCheckinEnvironment.createCommitMessageFile(project, repository.root, newMessage)
     }
-    catch(e: IOException) {
+    catch (e: IOException) {
       LOG.warn("Couldn't create message file", e)
       return false
     }

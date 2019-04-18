@@ -1,136 +1,64 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.branch;
+package git4idea.branch
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.rebase.GitRebaseEditorHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import git4idea.rebase.GitRebaseEditorHandler
 
-import java.util.List;
-
-import static com.intellij.openapi.util.text.StringUtil.nullize;
-import static java.util.Arrays.asList;
-
-public class GitRebaseParams {
-
-  @Nullable private final String myBranch;
-  @Nullable private final String myNewBase;
-  @NotNull private final String myUpstream;
-  private final boolean myInteractive;
-  private final boolean myPreserveMerges;
-  private final Boolean myAutoSquash;
-  @Nullable private final GitRebaseEditorHandler myEditorHandler;
-
-  @NotNull
-  public static GitRebaseParams editCommits(@NotNull String base, @Nullable GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
-    return new GitRebaseParams(null, null, base, true, preserveMerges, editorHandler);
+class GitRebaseParams private constructor(branch: String?,
+                                          newBase: String?,
+                                          val upstream: String,
+                                          val interactive: Boolean,
+                                          private val preserveMerges: Boolean,
+                                          private val autoSquash: AutoSquashOption,
+                                          val editorHandler: GitRebaseEditorHandler? = null) {
+  companion object {
+    fun editCommits(base: String,
+                    editorHandler: GitRebaseEditorHandler?,
+                    preserveMerges: Boolean,
+                    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT): GitRebaseParams =
+      GitRebaseParams(null, null, base, true, preserveMerges, autoSquash, editorHandler)
   }
 
-  @NotNull
-  public static GitRebaseParams editCommits(@NotNull String base,
-                                            @Nullable GitRebaseEditorHandler editorHandler,
-                                            boolean preserveMerges,
-                                            boolean autoSquash) {
-    return new GitRebaseParams(null, null, base, true, preserveMerges, autoSquash, editorHandler);
+  enum class AutoSquashOption {
+    DEFAULT,
+    ENABLE,
+    DISABLE
   }
 
-  public GitRebaseParams(@NotNull String upstream) {
-    this(null, null, upstream, false, false);
-  }
+  val branch: String? = branch?.takeIf { it.isNotBlank() }
+  val newBase: String? = newBase?.takeIf { it.isNotBlank() }
 
-  public GitRebaseParams(@Nullable String branch,
-                         @Nullable String newBase,
-                         @NotNull String upstream,
-                         boolean interactive,
-                         boolean preserveMerges) {
-    this(branch, newBase, upstream, interactive, preserveMerges, null);
-  }
 
-  private GitRebaseParams(@Nullable String branch,
-                          @Nullable String newBase,
-                          @NotNull String upstream,
-                          boolean interactive,
-                          boolean preserveMerges,
-                          @Nullable GitRebaseEditorHandler editorHandler) {
-    myBranch = nullize(branch, true);
-    myNewBase = nullize(newBase, true);
-    myUpstream = upstream;
-    myInteractive = interactive;
-    myPreserveMerges = preserveMerges;
-    myAutoSquash = null;
-    myEditorHandler = editorHandler;
-  }
+  constructor(upstream: String) : this(null, null, upstream, false, false, AutoSquashOption.DEFAULT)
 
-  private GitRebaseParams(@Nullable String branch,
-                          @Nullable String newBase,
-                          @NotNull String upstream,
-                          boolean interactive,
-                          boolean preserveMerges,
-                          boolean autoSquash,
-                          @Nullable GitRebaseEditorHandler editorHandler) {
-    myBranch = nullize(branch, true);
-    myNewBase = nullize(newBase, true);
-    myUpstream = upstream;
-    myInteractive = interactive;
-    myPreserveMerges = preserveMerges;
-    myAutoSquash = autoSquash;
-    myEditorHandler = editorHandler;
-  }
+  constructor(branch: String?,
+              newBase: String?,
+              upstream: String,
+              interactive: Boolean,
+              preserveMerges: Boolean) : this(branch, newBase, upstream, interactive, preserveMerges, AutoSquashOption.DEFAULT)
 
-  @NotNull
-  public List<String> asCommandLineArguments() {
-    List<String> args = ContainerUtil.newArrayList();
-    if (myInteractive) {
-      args.add("--interactive");
+  fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
+    if (interactive) {
+      add("--interactive")
     }
-    if (myPreserveMerges) {
-      args.add("--preserve-merges");
+    if (preserveMerges) {
+      add("--preserve-merges")
     }
-    if (myAutoSquash != null) {
-      if (myAutoSquash) {
-        args.add("--autosquash");
+    when (autoSquash) {
+      AutoSquashOption.DEFAULT -> {
       }
-      else {
-        args.add("--no-autosquash");
-      }
+      AutoSquashOption.ENABLE -> add("--autosquash")
+      AutoSquashOption.DISABLE -> add("--no-autosquash")
     }
-    if (myNewBase != null) {
-      args.addAll(asList("--onto", myNewBase));
+    if (newBase != null) {
+      addAll(listOf("--onto", newBase))
     }
-    args.add(myUpstream);
-    if (myBranch != null) {
-      args.add(myBranch);
+    add(upstream)
+    if (branch != null) {
+      add(branch)
     }
-    return args;
   }
 
-  @Nullable
-  public String getNewBase() {
-    return myNewBase;
-  }
+  fun isInteractive(): Boolean = interactive
 
-  @NotNull
-  public String getUpstream() {
-    return myUpstream;
-  }
-
-  @Override
-  public String toString() {
-    return StringUtil.join(asCommandLineArguments(), " ");
-  }
-
-  public boolean isInteractive() {
-    return myInteractive;
-  }
-
-  @Nullable
-  public String getBranch() {
-    return myBranch;
-  }
-
-  @Nullable
-  public GitRebaseEditorHandler getEditorHandler() {
-    return myEditorHandler;
-  }
+  override fun toString(): String = asCommandLineArguments().joinToString(" ")
 }
