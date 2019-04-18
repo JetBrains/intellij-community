@@ -15,6 +15,8 @@ public final class TargetFilter implements JDOMExternalizable, Externalizer.Skip
   private boolean myVisible;
   private String myDescription = "";
 
+  public TargetFilter() {}
+
   public TargetFilter(String targetName, boolean isVisible) {
     myTargetName = targetName;
     myVisible = isVisible;
