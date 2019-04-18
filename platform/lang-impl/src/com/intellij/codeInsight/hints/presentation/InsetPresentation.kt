@@ -12,10 +12,10 @@ import java.awt.event.MouseEvent
  */
 class InsetPresentation(
   presentation: InlayPresentation,
-  val left: Int,
-  val right: Int,
-  val top: Int,
-  val down: Int
+  val left: Int = 0,
+  val right: Int = 0,
+  val top: Int = 0 ,
+  val down: Int = 0
 ) : StaticDelegatePresentation(presentation) {
   // TODO
   override val width: Int

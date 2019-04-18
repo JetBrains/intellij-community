@@ -10,10 +10,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Key
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.util.ui.UIUtil
 import java.awt.Font
+import java.awt.FontMetrics
 import java.awt.Point
 import java.awt.RenderingHints
 import java.awt.event.MouseEvent
@@ -22,31 +24,37 @@ import javax.swing.Icon
 import javax.swing.UIManager
 
 class PresentationFactory(val editor: EditorImpl) {
+  // TODO document, that this is not the same font (type, size) as in editor!
   fun text(text: String): InlayPresentation {
-    val plainFont = getFont()
+    val fontData = getFontData(editor)
+    val metrics = fontData.metrics
+    val plainFont = metrics.font
     val width = editor.contentComponent.getFontMetrics(plainFont).stringWidth(text)
     val ascent = editor.ascent
     val descent = editor.descent
-    val height = ascent - descent
+    val height = editor.lineHeight
+//    val yBaseline = Math.max(ascent, (height + metrics.ascent - metrics.descent) / 2) - 1
     val textWithoutBox = EffectInlayPresentation(
-      TextInlayPresentation(width, height, text, height) {
+      TextInlayPresentation(width, fontData.lineHeight, text, fontData.baseline) {
         plainFont
       },
-      plainFont, editor.lineHeight, ascent, descent
+      plainFont, height, ascent, descent
     )
     return withInlayAttributes(textWithoutBox)
   }
 
   fun roundWithBackground(base: InlayPresentation): InlayPresentation {
-      return rounding(8, 8, withInlayAttributes(BackgroundInlayPresentation(
-        InsetPresentation(
-          base,
-          left = 7,
-          right = 7,
-          top = 2,
-          down = 2
-        )
-      )))
+    val rounding = rounding(8, 8, withInlayAttributes(BackgroundInlayPresentation(
+      InsetPresentation(
+        base,
+        left = 7,
+        right = 7,
+        top = 0,
+        down = 0
+      )
+    )))
+    val offsetFromTop = getFontData(editor).offsetFromTop(editor)
+    return InsetPresentation(rounding, top = offsetFromTop)
   }
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
@@ -93,6 +101,7 @@ class PresentationFactory(val editor: EditorImpl) {
 
 
   // TODO ctrl + cmd handling (+ middle click)
+  // TODO resolve should not include PsiElement! Otherwise here may be memory leak?
   fun navigateSingle(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation {
     return onClick(hyperlink(base)) { _, _ ->
       val target = resolve()
@@ -112,13 +121,61 @@ class PresentationFactory(val editor: EditorImpl) {
     }
   }
 
-  private fun getFont(): Font {
+  fun rounding(arcWidth: Int, arcHeight: Int, presentation: InlayPresentation): InlayPresentation =
+    RoundPresentation(presentation, arcWidth, arcHeight)
+
+  private class FontData constructor(editor: Editor, familyName: String, size: Int) {
+    val metrics: FontMetrics
+    val lineHeight: Int
+    val baseline: Int
+
+    val font: Font
+      get() = metrics.font
+
+    init {
+      val font = UIUtil.getFontWithFallback(familyName, Font.PLAIN, size)
+      val context = getCurrentContext(editor)
+      metrics = FontInfo.getFontMetrics(font, context)
+      // We assume this will be a better approximation to a real line height for a given font
+      lineHeight = Math.ceil(font.createGlyphVector(context, "Albp").visualBounds.height).toInt()
+      baseline = Math.ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
+    }
+
+    fun isActual(editor: Editor, familyName: String, size: Int): Boolean {
+      val font = metrics.font
+      if (familyName != font.family || size != font.size) return false
+      val currentContext = getCurrentContext(editor)
+      return currentContext.equals(metrics.fontRenderContext)
+    }
+
+    private fun getCurrentContext(editor: Editor): FontRenderContext {
+      val editorContext = FontInfo.getFontRenderContext(editor.contentComponent)
+      return FontRenderContext(editorContext.transform,
+                               AntialiasingType.getKeyForCurrentScope(false),
+                               if (editor is EditorImpl)
+                                 editor.myFractionalMetricsHintValue
+                               else
+                                 RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+    }
+
+    /**
+     * Offset from the top edge of drawing rectangle to rectangle with text.
+     */
+    fun offsetFromTop(editor: Editor) : Int = (editor.lineHeight - lineHeight) / 2
+  }
+
+  private fun getFontData(editor: Editor): FontData {
     val familyName = UIManager.getFont("Label.font").family
     val size = Math.max(1, editor.colorsScheme.editorFontSize - 1)
-    val context = getCurrentContext(editor)
-    val font = UIUtil.getFontWithFallback(familyName, Font.PLAIN, size)
-    val metrics = FontInfo.getFontMetrics(font, context)
-    return metrics.font
+    var metrics = editor.getUserData(FONT_DATA)
+    if (metrics != null && !metrics.isActual(editor, familyName, size)) {
+      metrics = null
+    }
+    if (metrics == null) {
+      metrics = FontData(editor, familyName, size)
+      editor.putUserData(FONT_DATA, metrics)
+    }
+    return metrics
   }
 
   private fun getCurrentContext(editor: Editor): FontRenderContext {
@@ -131,8 +188,10 @@ class PresentationFactory(val editor: EditorImpl) {
                                RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
   }
 
-  fun rounding(arcWidth: Int, arcHeight: Int, presentation: InlayPresentation): InlayPresentation =
-    RoundPresentation(presentation, arcWidth, arcHeight)
+  companion object {
+    @JvmStatic
+    private val FONT_DATA = Key.create<FontData>("InlayHintFontData")
+  }
 }
 
 private fun TextAttributes.with(other: TextAttributes): TextAttributes {
