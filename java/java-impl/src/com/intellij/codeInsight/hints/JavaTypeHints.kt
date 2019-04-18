@@ -21,14 +21,58 @@ class JavaTypeHintsVisitor(val factory: PresentationFactory) : PsiTypeVisitor<In
   }
 
   override fun visitClassType(classType: PsiClassType): InlayPresentation {
+    val qualifierPresentation = when (val aClass = classType.resolve()) {
+      null -> null
+      else -> when (val qualifier = aClass.containingClass) {
+        null -> null
+        else -> classPresentation(qualifier)
+      }
+    }
     val className = factory.navigateSingle(factory.text(classType.className)) {
       classType.resolve()
     }
-    if (classType.parameterCount == 0) return className
-    val presentations = mutableListOf(className)
+    if (classType.parameterCount == 0) {
+      if (qualifierPresentation == null) {
+        return className
+      } else {
+        return joinWithDot(qualifierPresentation, className)
+      }
+    }
+    val presentations = mutableListOf(joinWithDot(qualifierPresentation, className))
     presentations.add(factory.text("<"))
     classType.parameters.mapTo(presentations) {
       it.accept(this)!!
+    }
+    presentations.add(factory.text(">"))
+    return SequencePresentation(presentations)
+  }
+
+  private fun joinWithDot(first: InlayPresentation?, second: InlayPresentation) : InlayPresentation {
+    if (first == null) {
+      return second
+    }
+    return factory.seq(first, factory.text("."), second)
+  }
+
+  private fun classPresentation(aClass: PsiClass) : InlayPresentation {
+    val containingClass = aClass.containingClass
+    val containingClassPresentation = when {
+      containingClass != null -> classPresentation(containingClass)
+      else -> null
+    }
+
+    val className = factory.navigateSingle(factory.text(aClass.name ?: NO_NAME_MARKER)) { aClass }
+    if (!aClass.hasTypeParameters()) {
+      return if (containingClassPresentation != null) {
+        factory.seq(containingClassPresentation, factory.text("."), className)
+      } else {
+        className
+      }
+    }
+    val presentations = mutableListOf(joinWithDot(containingClassPresentation, className))
+    presentations.add(factory.text("<"))
+    aClass.typeParameters.mapTo(presentations) {
+      factory.navigateSingle(factory.text(it.name ?: NO_NAME_MARKER)) { it }
     }
     presentations.add(factory.text(">"))
     return SequencePresentation(presentations)
@@ -46,6 +90,8 @@ class JavaTypeHintsVisitor(val factory: PresentationFactory) : PsiTypeVisitor<In
       val base = type.accept(JavaTypeHintsVisitor(factory))
       return factory.roundWithBackground(base)
     }
+
+    private const val NO_NAME_MARKER = "<NO NAME>"
   }
 
   //  override fun visitCapturedWildcardType(capturedWildcardType: PsiCapturedWildcardType): InlayPresentation {
