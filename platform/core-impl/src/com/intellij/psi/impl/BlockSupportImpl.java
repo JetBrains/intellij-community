@@ -28,6 +28,7 @@ import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IReparseableElementType;
+import com.intellij.psi.tree.IReparseableLeafElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
@@ -138,9 +139,8 @@ public class BlockSupportImpl extends BlockSupport {
 
     while (node != null && !(node instanceof FileElement)) {
       IElementType elementType = node.getElementType();
-      if (elementType instanceof IReparseableElementType) {
+      if (elementType instanceof IReparseableElementType || elementType instanceof IReparseableLeafElementType) {
         final TextRange textRange = node.getTextRange();
-        final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
         if (textRange.getLength() + lengthShift > 0) {
           final int start = textRange.getStartOffset();
@@ -152,29 +152,53 @@ public class BlockSupportImpl extends BlockSupport {
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
-          if (reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, project)) {
-            ASTNode chameleon = reparseable.createNode(newTextStr);
-            if (chameleon != null) {
-              DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), null, node.getPsi(), charTable);
-              holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+          ASTNode newNode;
+          if (elementType instanceof IReparseableElementType) {
+            newNode = tryReparseNode((IReparseableElementType)elementType, node, newTextStr, file.getManager(), baseLanguage, charTable);
+          }
+          else {
+            newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, node, newTextStr);
+          }
 
-              if (holder.getTextLength() != newTextStr.length()) {
-                String details = ApplicationManager.getApplication().isInternal()
-                                 ? "text=" + newTextStr + "; treeText=" + holder.getText() + ";"
-                                 : "";
-                LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
-              }
-
-              if (reparseable.isValidReparse(node, chameleon)) {
-                return Couple.of(node, chameleon);
-              }
+          if (newNode != null) {
+            if (newNode.getTextLength() != newTextStr.length()) {
+              String details = ApplicationManager.getApplication().isInternal()
+                               ? "text=" + newTextStr + "; treeText=" + newNode.getText() + ";"
+                               : "";
+              LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
             }
+
+            return Couple.of(node, newNode);
           }
         }
       }
       node = node.getTreeParent();
     }
     return null;
+  }
+
+  @Nullable
+  protected static ASTNode tryReparseNode(@NotNull IReparseableElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
+                                          @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
+    if (!reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, manager.getProject())) {
+      return null;
+    }
+    ASTNode chameleon = reparseable.createNode(newTextStr);
+    if (chameleon == null) {
+      return null;
+    }
+    DummyHolder holder = DummyHolderFactory.createHolder(manager, null, node.getPsi(), charTable);
+    holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+    if (!reparseable.isValidReparse(node, chameleon)) {
+      return null;
+    }
+    return chameleon;
+  }
+
+  @Nullable
+  @SuppressWarnings("unchecked")
+  protected static ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
+    return reparseable.reparseLeaf(node, newTextStr);
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
@@ -290,9 +314,14 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @NotNull
-  private static DiffLog replaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
+  private static DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
     DiffLog diffLog = new DiffLog();
-    diffLog.appendReplaceElementWithEvents(oldRoot, newRoot);
+    if (oldRoot instanceof CompositeElement) {
+      diffLog.appendReplaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
+    }
+    else {
+      diffLog.nodeReplaced(oldRoot, newRoot);
+    }
     return diffLog;
   }
 
@@ -313,7 +342,7 @@ public class BlockSupportImpl extends BlockSupport {
     try {
       newRoot.putUserData(TREE_TO_BE_REPARSED, Pair.create(oldRoot, lastCommittedText));
       if (isReplaceWholeNode(fileImpl, newRoot)) {
-        DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
+        DiffLog treeChangeEvent = replaceElementWithEvents(oldRoot, newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
 
         return treeChangeEvent;
