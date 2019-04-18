@@ -623,7 +623,7 @@
       <reference ref="CompareTwoFiles"/>
     </group>
 
-    <group id="EditorPopupMenu1.FindRefactor">
+    <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
