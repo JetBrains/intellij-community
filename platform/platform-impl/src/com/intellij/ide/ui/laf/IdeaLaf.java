@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -56,7 +56,6 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
     defaults.put("ButtonUI", BegButtonUI.class.getName());
     defaults.put("ToggleButtonUI", BegToggleButtonUI.class.getName());
-    defaults.put("ComboBoxUI", BegComboBoxUI.class.getName());
     defaults.put("RadioButtonUI", BegRadioButtonUI.class.getName());
     defaults.put("CheckBoxUI", BegCheckBoxUI.class.getName());
     defaults.put("TabbedPaneUI", BegTabbedPaneUI.class.getName());
