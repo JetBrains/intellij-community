@@ -17,8 +17,6 @@ package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +26,6 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -49,13 +46,11 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data, @Nullable FileContent input) {
+  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
-    boolean contentIsPhysical = input instanceof FileContentImpl && ((FileContentImpl)input).isPhysicalContent();
-    Object inputSource = contentIsPhysical ? new File(input.getFile().getPath()) : new ByteArrayInputStream(data);
-    return read(inputSource, input != null ? input.getFileName() : null);
+    return read(new ByteArrayInputStream(data), inputName);
   }
 
   @Nullable
@@ -87,6 +82,7 @@ public class ImageInfoReader {
 
   @Nullable
   private static Info read(@NotNull Object input, @Nullable String inputName) {
+    ImageIO.setUseCache(false);
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       if (isAppleOptimizedPNG(iis)) {
         // They are not supported by PNGImageReader
