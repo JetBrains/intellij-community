@@ -44,7 +44,7 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
   }
 
   @TestOnly
-  public void clearFieldsForLightProjectInTests() {
-    myProjectType = null;
+  public static void clearFieldsForLightProjectInTests(@NotNull Project project) {
+    getInstance(project).myProjectType = null;
   }
 }
