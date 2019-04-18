@@ -44,12 +44,10 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /**
- * Created by IntelliJ IDEA.
- *
- * @author: Roman Chernyatchik
- * @date: Oct 4, 2007
+ * @author Roman Chernyatchik
  */
 public class ExecutionHelper {
   private static final Logger LOG = Logger.getInstance(ExecutionHelper.class.getName());
@@ -146,8 +144,7 @@ public class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        Messages.showErrorDialog(stdOutTitle + "\n" + (stdout != null ? stdout : "<empty>") + "\n" + stderrTitle + "\n"
-                                 + (stderr != null ? stderr : "<empty>"), "Process Output");
+        Messages.showErrorDialog(stdOutTitle + "\n" + stdout + "\n" + stderrTitle + "\n" + stderr, "Process Output");
         return;
       }
 
@@ -272,7 +269,7 @@ public class ExecutionHelper {
           }
         })
         .setTitle(selectDialogTitle)
-        .setItemChosenCallback((descriptor) -> {
+        .setItemChosenCallback(descriptor -> {
           descriptorConsumer.consume(descriptor);
           descriptorToFront(project, descriptor);
         })
@@ -292,8 +289,8 @@ public class ExecutionHelper {
     }, project.getDisposed());
   }
 
-  public static class ErrorViewPanel extends NewErrorTreeViewPanel {
-    public ErrorViewPanel(final Project project) {
+  static class ErrorViewPanel extends NewErrorTreeViewPanel {
+    ErrorViewPanel(final Project project) {
       super(project, "reference.toolWindows.messages");
     }
 
@@ -352,7 +349,7 @@ public class ExecutionHelper {
   }
 
   private static Runnable createCancelableExecutionProcess(final ProcessHandler processHandler,
-                                                           final Function<Object, Boolean> cancelableFun) {
+                                                           final BooleanSupplier cancelableFun) {
     return new Runnable() {
       private ProgressIndicator myProgressIndicator;
       private final Semaphore mySemaphore = new Semaphore();
@@ -370,9 +367,8 @@ public class ExecutionHelper {
         @Override
         public void run() {
           while (true) {
-            if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
-                                                 || !myProgressIndicator.isRunning()))
-                || (cancelableFun != null && cancelableFun.fun(null).booleanValue())
+            if (myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())
+                || cancelableFun != null && cancelableFun.getAsBoolean()
                 || processHandler.isProcessTerminated()) {
 
               if (!processHandler.isProcessTerminated()) {
