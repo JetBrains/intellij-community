@@ -841,7 +841,6 @@
       <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
-      <reference ref="ChangeFileEncodingAction"/>
     </group>
 
     <group id="BasicEditorPopupMenu">
