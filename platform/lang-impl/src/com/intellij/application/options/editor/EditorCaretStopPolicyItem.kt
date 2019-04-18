@@ -33,10 +33,10 @@ internal interface EditorCaretStopPolicyItem {
                           override val isOsDefault: Boolean = false) : EditorCaretStopPolicyItem {
     STICK_TO_WORD_BOUNDARIES(ApplicationBundle.message("combobox.item.stick.to.word.boundaries"), CaretStopBoundary.CURRENT,
                              isOsDefault = SystemInfo.isUnix),
-    JUMP_TO_WORD_START(ApplicationBundle.message("combobox.item.jump.to.word.start"), CaretStopBoundary.NEIGHBOR,
+    JUMP_TO_WORD_START(ApplicationBundle.message("combobox.item.jump.to.word.start"), CaretStopBoundary.START,
                        isOsDefault = SystemInfo.isWindows),
-    JUMP_TO_WORD_END(ApplicationBundle.message("combobox.item.jump.to.word.end"), CaretStopBoundary.START),
-    JUMP_TO_NEIGHBORING_WORD(ApplicationBundle.message("combobox.item.jump.to.neighboring.word"), CaretStopBoundary.END),
+    JUMP_TO_WORD_END(ApplicationBundle.message("combobox.item.jump.to.word.end"), CaretStopBoundary.END),
+    JUMP_TO_NEIGHBORING_WORD(ApplicationBundle.message("combobox.item.jump.to.neighboring.word"), CaretStopBoundary.NEIGHBOR),
     STOP_AT_ALL_WORD_BOUNDARIES(ApplicationBundle.message("combobox.item.stop.at.all.word.boundaries"), CaretStopBoundary.BOTH);
 
     override fun toString(): String = title + osDefaultHint
