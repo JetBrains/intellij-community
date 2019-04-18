@@ -265,7 +265,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
+  private static String getNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
     String transformedPattern = base.transformPattern(pattern);
     return getNamePattern(base.getModel(), transformedPattern);
   }
@@ -285,7 +285,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, Object element) {
+  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, @NotNull Object element) {
     String fullName = model.getFullName(element);
     if (fullName == null) return null;
     

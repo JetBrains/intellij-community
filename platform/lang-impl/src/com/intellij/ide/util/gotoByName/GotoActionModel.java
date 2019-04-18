@@ -146,11 +146,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.enabled.actions.found");
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.actions.found");
@@ -264,6 +266,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
+  @NotNull
   @Override
   public ListCellRenderer getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
@@ -322,7 +325,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   @NotNull
-  public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
+  public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

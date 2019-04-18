@@ -333,13 +333,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
+  @NotNull
   @Override
-  public String transformPattern(String pattern) {
+  public String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+  @NotNull
+  public static String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;

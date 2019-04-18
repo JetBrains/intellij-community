@@ -18,11 +18,12 @@ package com.intellij.ide.util.gotoByName;
 import org.jetbrains.annotations.NotNull;
 
 public class MatchResult {
+  @NotNull
   public final String elementName;
   private final int matchingDegree;
   private final boolean startMatch;
 
-  public MatchResult(String elementName, int matchingDegree, boolean startMatch) {
+  public MatchResult(@NotNull String elementName, int matchingDegree, boolean startMatch) {
     this.elementName = elementName;
     this.matchingDegree = matchingDegree;
     this.startMatch = startMatch;

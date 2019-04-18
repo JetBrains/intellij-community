@@ -178,7 +178,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   @Nullable
-  private String getParentPath(PsiFileSystemItem item) {
+  private String getParentPath(@NotNull PsiFileSystemItem item) {
     String fullName = myModel.getFullName(item);
     return fullName == null ? null : StringUtil.getPackageName(FileUtilRt.toSystemIndependentName(fullName), '/') + '/';
   }

@@ -40,7 +40,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -339,7 +338,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     @Override
     @NotNull
-    public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
+    public Object[] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
       final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, name, scope);
       return filterFiles(psiFiles);
@@ -356,11 +355,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
 
+    @NotNull
     @Override
     public String getNotInMessage() {
       return "";
     }
 
+    @NotNull
     @Override
     public String getNotFoundMessage() {
       return "";
@@ -375,6 +376,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     public void saveInitialCheckBoxState(final boolean state) {
     }
 
+    @NotNull
     @Override
     public PsiElementListCellRenderer getListCellRenderer() {
       return new GotoFileCellRenderer(myMaxSize);
@@ -406,14 +408,14 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     @Override
-    public String getElementName(final Object element) {
+    public String getElementName(@NotNull final Object element) {
       if (!(element instanceof PsiFile)) return null;
       return ((PsiFile)element).getName();
     }
 
     @Override
     @Nullable
-    public String getFullName(final Object element) {
+    public String getFullName(@NotNull final Object element) {
       if (element instanceof PsiFile) {
         final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
         return virtualFile != null ? virtualFile.getPath() : null;

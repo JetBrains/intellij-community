@@ -337,6 +337,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }, getModalityState());
   }
 
+  @NotNull
   private ModalityState getModalityState() {
     return ModalityState.stateForComponent(getRootPane());
   }

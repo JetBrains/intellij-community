@@ -71,11 +71,13 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     return IdeBundle.message("checkbox.include.non.project.classes", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
+  @NotNull
   @Override
   public String getNotInMessage() {
     return IdeBundle.message("label.no.matches.found.in.project", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
+  @NotNull
   @Override
   public String getNotFoundMessage() {
     return IdeBundle.message("label.no.matches.found");
@@ -98,7 +100,7 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   }
 
   @Override
-  public String getFullName(final Object element) {
+  public String getFullName(@NotNull final Object element) {
     if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
       return null;
     }

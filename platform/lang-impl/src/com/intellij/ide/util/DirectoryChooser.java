@@ -107,7 +107,7 @@ public class DirectoryChooser extends DialogWrapper {
         super.close(isOk);
         if (isOk) {
           final List<Object> elements = getChosenElements();
-          if (elements.size() > 0) {
+          if (!elements.isEmpty()) {
             myActionListener.elementChosen(elements.get(0));
           }
           doOKAction();
