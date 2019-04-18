@@ -106,17 +106,12 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
 
   static String getType(object) {
     if (is35_OrBetter && object instanceof HasPublicType) {
-      def publicType = object.publicType
-      if (publicType.hasProperty('concreteClass')) {
-        return publicType.concreteClass.canonicalName
-      } else {
-        publicType.toString()
-      }
+      return object.publicType.toString()
     }
     def clazz = object?.getClass()?.canonicalName
     def decorIndex = clazz?.lastIndexOf('_Decorated')
     def result = !decorIndex || decorIndex == -1 ? clazz : clazz.substring(0, decorIndex)
-    if(!result && object instanceof Closure) return "groovy.lang.Closure"
+    if (!result && object instanceof Closure) return "groovy.lang.Closure"
     return result
   }
 }
