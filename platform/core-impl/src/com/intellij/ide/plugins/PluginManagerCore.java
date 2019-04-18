@@ -198,7 +198,7 @@ public class PluginManagerCore {
     if (ourDisabledPlugins == null) {
       List<String> result = new ArrayList<>();
       ourDisabledPlugins = result;
-      if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
+      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
         loadDisabledPlugins(PathManager.getConfigPath(), result);
       }
       ourDisabledPluginSet = new THashSet<>(result);
@@ -222,7 +222,7 @@ public class PluginManagerCore {
     if (ourBrokenPluginVersions == null) {
       ourBrokenPluginVersions = MultiMap.createSet();
 
-      if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
+      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
         try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
              BufferedReader br = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
           String s;
