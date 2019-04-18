@@ -109,4 +109,10 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   public Iterable<T> getIterable(@Nullable AreaInstance areaInstance) {
     return ((ExtensionPointImpl<T>)getPoint(areaInstance));
   }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public Iterable<T> getIterable() {
+    return getIterable(null);
+  }
 }
