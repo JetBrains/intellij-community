@@ -206,7 +206,7 @@ private fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: Object
   val diff = actualTotalDurationForAll - computedDurationForAll
   val diffInMs = TimeUnit.NANOSECONDS.toMillis(diff)
   if (diff < 0 || diffInMs > 3) {
-    LOG.warn("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
+    LOG.debug("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
   }
 }
 
