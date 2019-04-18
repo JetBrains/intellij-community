@@ -25,7 +25,6 @@ public class SearchEverywhereUsageTriggerCollector {
   public static final String COMMAND_COMPLETED = "commandCompleted";
 
   public static final String CONTRIBUTOR_ID_FIELD = "contributorID";
-  public static final String SHORTCUT_FIELD = "shortcut";
 
   public static void trigger(@NotNull Project project, @NotNull String feature) {
     trigger(project, feature, new FeatureUsageData());
@@ -36,13 +35,10 @@ public class SearchEverywhereUsageTriggerCollector {
   }
 
   @NotNull
-  public static FeatureUsageData createData(@Nullable String contributorID, @Nullable String shortcut) {
+  public static FeatureUsageData createData(@Nullable String contributorID) {
     FeatureUsageData res = new FeatureUsageData();
     if (contributorID != null) {
       res.addData(CONTRIBUTOR_ID_FIELD, contributorID);
-    }
-    if (shortcut != null) {
-      res.addData(SHORTCUT_FIELD, shortcut);
     }
 
     return res;

@@ -75,6 +75,8 @@ public class VcsImplUtil {
   public static void proposeUpdateIgnoreFile(@NotNull Project project,
                                              @NotNull AbstractVcs vcs,
                                              @NotNull VirtualFile ignoreFileRoot) {
+    if (!Registry.is("vcs.ignorefile.generation", true)) return;
+
     IgnoredFileContentProvider ignoreContentProvider = getIgnoredFileContentProvider(project, vcs);
 
     if (ignoreContentProvider == null) {
@@ -123,6 +125,8 @@ public class VcsImplUtil {
   public static boolean updateIgnoreFileIfNeeded(@NotNull Project project,
                                                  @NotNull AbstractVcs vcs,
                                                  @NotNull VirtualFile ignoreFileRoot, boolean append) {
+    if (!Registry.is("vcs.ignorefile.generation", true)) return false;
+
     IgnoredFileGenerator ignoredFileGenerator = ServiceManager.getService(project, IgnoredFileGenerator.class);
     if (ignoredFileGenerator == null) {
       LOG.debug("Cannot find ignore file ignoredFileGenerator for " + vcs.getName() + " VCS");

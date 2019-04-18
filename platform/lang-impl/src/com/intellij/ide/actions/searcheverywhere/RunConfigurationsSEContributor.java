@@ -5,7 +5,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
-import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
@@ -128,15 +127,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-    List<ChooseRunConfigurationPopup.ItemWrapper> wrappers =
-      ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
-        @Override
-        public Executor getExecutor() {
-          return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-        }
-      }, false);
-
-    for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
+    for (ChooseRunConfigurationPopup.ItemWrapper wrapper : ChooseRunConfigurationPopup.createFlatSettingsList(myProject)) {
       if (matcher.matches(wrapper.getText()) && !consumer.apply(wrapper)) {
         return;
       }

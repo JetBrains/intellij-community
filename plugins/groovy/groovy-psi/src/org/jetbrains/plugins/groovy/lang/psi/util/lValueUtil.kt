@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.POSTFIX_UNARY_OP_SET
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -45,7 +46,11 @@ fun GrExpression.getRValue(): Argument? {
         parent.rValue?.let(::ExpressionArgument) ?: UnknownArgument
       }
     }
-    parent is GrUnaryExpression && parent.operationTokenType in POSTFIX_UNARY_OP_SET -> ExpressionArgument(parent)
+    parent is GrUnaryExpression && parent.operationTokenType in POSTFIX_UNARY_OP_SET -> IncDecArgument(parent)
     else -> null
   }
+}
+
+private data class IncDecArgument(private val unary: GrUnaryExpression) : Argument {
+  override val type: PsiType? get() = unary.operationType
 }

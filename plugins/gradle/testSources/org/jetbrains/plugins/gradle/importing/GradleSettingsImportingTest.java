@@ -55,6 +55,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
@@ -174,6 +175,43 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("my.app.Class2", app2Settings.get("mainClass"));
     assertEquals("-Xmx1g", app1Settings.get("jvmArgs"));
     assertNull(app2Settings.get("jvmArgs"));
+  }
+
+  @Test
+  @Ignore
+  public void testGradleRunConfigurationSettingsImport() throws Exception {
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
+    maskRunImporter(testExtension);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan("0.5.1")
+        .addPostfix(
+          "import org.jetbrains.gradle.ext.*",
+          "idea.project.settings {",
+          "  runConfigurations {",
+          "    gr1(Gradle) {",
+          "      project = rootProject",
+          "      taskNames = [':cleanTest', ':test']",
+          "      envs = ['env_key':'env_val']",
+          "      jvmArgs = '-DvmKey=vmVal'",
+          "      scriptParameters = '-PscriptParam'",
+          "    }",
+          "  }",
+          "}"
+        ).generate());
+
+
+    final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
+
+    assertContain(new ArrayList<>(configs.keySet()), "gr1");
+    Map<String, Object> gradleSettings = configs.get("gr1");
+
+    assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
+    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
+    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {

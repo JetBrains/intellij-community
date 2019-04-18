@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -273,7 +272,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
       if(myProject.isDisposed()) return;
 
-      VcsFileUtil.markFilesDirty(myProject, ContainerUtil.newArrayList(ignoredPaths));
       myChangesViewI.scheduleRefresh();
     }
   }

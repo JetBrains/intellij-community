@@ -55,6 +55,9 @@ public interface JsonSchemaService {
   JsonSchemaObject getSchemaObject(@NotNull VirtualFile file);
 
   @Nullable
+  JsonSchemaObject getSchemaObject(@NotNull PsiFile file);
+
+  @Nullable
   JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile);
 
   @Nullable

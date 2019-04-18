@@ -10,10 +10,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UIfExpression;
+import org.jetbrains.uast.*;
 
 /**
  * @author cdr
@@ -77,7 +74,7 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
         return (psi == thenExprSrc || psi == elseExprSrc) && canBePropertyKeyRef((UExpression)parent);
       }
       else {
-        return parent instanceof UCallExpression;
+        return parent instanceof UCallExpression || parent instanceof UNamedExpression;
       }
     }
     else {

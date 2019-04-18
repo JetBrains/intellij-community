@@ -196,9 +196,11 @@ public class TypeInferenceHelper {
         }
       }
     }
-    if (parent instanceof GrUnaryExpression &&
-        TokenSets.POSTFIX_UNARY_OP_SET.contains(((GrUnaryExpression)parent).getOperationTokenType())) {
-      return ((GrUnaryExpression)parent).getType();
+    if (parent instanceof GrUnaryExpression) {
+      GrUnaryExpression unary = (GrUnaryExpression)parent;
+      if (TokenSets.POSTFIX_UNARY_OP_SET.contains(unary.getOperationTokenType())) {
+        return unary.getOperationType();
+      }
     }
 
     return null;

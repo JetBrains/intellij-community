@@ -144,6 +144,10 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
     }
   }
 
+  public void testPerformance7() {
+    PlatformTestUtil.startPerformanceTest("xml formatter", 3_000, createTestRunnable()).assertTiming();
+  }
+
   public void testPerformance() throws Exception {
     CodeStyleSettings settings = getSettings();
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);

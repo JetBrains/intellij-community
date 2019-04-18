@@ -55,6 +55,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SwingActionDelegate;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -214,6 +215,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (LookupManager.getActiveLookup(myEditor) != null) return; // let the lookup manage all the actions
           if (action instanceof HintManagerImpl.ActionToIgnore) return;
           if (action instanceof ScrollingUtil.ScrollingAction) return;
+          if (action instanceof SwingActionDelegate) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;

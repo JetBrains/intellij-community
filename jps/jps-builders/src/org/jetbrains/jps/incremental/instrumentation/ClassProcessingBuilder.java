@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
@@ -16,9 +17,6 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.ClassWriter;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -135,19 +133,18 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     };
   }
 
-  public static int getAsmClassWriterFlags(int version) {
-    return version >= Opcodes.V1_6 && version != Opcodes.V1_1 ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS;
+  /** @deprecated use {@link InstrumenterClassWriter#getAsmClassWriterFlags} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  public static int getAsmClassWriterFlags(int classFileVersion) {
+    return InstrumenterClassWriter.getAsmClassWriterFlags(classFileVersion);
   }
 
+  /** @deprecated use {@link InstrumenterClassWriter#getClassFileVersion */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static int getClassFileVersion(ClassReader reader) {
-    final Ref<Integer> result = new Ref<>(0);
-    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        result.set(version);
-      }
-    }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    return result.get();
+    return InstrumenterClassWriter.getClassFileVersion(reader);
   }
 
 }

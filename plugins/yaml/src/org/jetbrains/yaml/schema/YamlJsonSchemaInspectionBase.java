@@ -33,16 +33,11 @@ public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
     if (!service.isApplicableToFile(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(file);
     if (rootSchema == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-
-    JsonSchemaObject object = service.getSchemaObject(virtualFile);
-    if (object == null) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return doBuildVisitor(holder, session, root, object);
+    return doBuildVisitor(holder, session, root, rootSchema);
   }
 
   protected abstract PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder,

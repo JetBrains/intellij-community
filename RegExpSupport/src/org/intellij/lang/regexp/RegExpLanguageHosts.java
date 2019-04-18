@@ -151,6 +151,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
   }
+  
+  public boolean isValidPropertyValue(@NotNull PsiElement element, @NotNull String propertyName, @NotNull String propertyValue) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    return host == null || host.isValidPropertyValue(propertyName, propertyValue);
+  }
 
   public boolean supportsNamedCharacters(@NotNull final RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
@@ -183,6 +188,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
+  }
+
+  @NotNull
+  public String[][] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    return host != null ? host.getAllPropertyValues(propertyName) : RegExpLanguageHost.EMPTY_COMPLETION_ITEMS_ARRAY;
   }
 
   @Nullable

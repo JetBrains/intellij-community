@@ -203,8 +203,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           Rectangle outerRect = new Rectangle(getSize());
           JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
+          int bw = 1;
+          Object op = comboBox.getClientProperty("JComponent.outline");
+          if (op != null) {
+            Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+            bw = DarculaUIUtil.isTableCellEditor(comboBox) ? 1 : 2;
+          }
+
           Rectangle innerRect = new Rectangle(outerRect);
-          JBInsets.removeFrom(innerRect, JBUI.insets(1));
+          JBInsets.removeFrom(innerRect, JBUI.insets(bw));
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {

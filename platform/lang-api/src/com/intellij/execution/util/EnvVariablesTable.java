@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -221,7 +222,20 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     public void performPaste(@NotNull DataContext dataContext) {
       String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       Map<String, String> map = parseEnvsFromText(content);
-      if (map.isEmpty()) return;
+      if (map.isEmpty() && !StringUtil.isEmpty(content)) {
+        TableView<EnvironmentVariable> view = getTableView();
+        int row = view.getEditingRow();
+        int column = view.getEditingColumn();
+        if (row < 0 || column < 0) {
+          row = view.getSelectedRow();
+          column = view.getSelectedColumn();
+        }
+        if (row >= 0 && column >= 0) {
+          view.stopEditing();
+          view.getModel().setValueAt(content, row, column);
+        }
+        return;
+      }
       stopEditing();
       removeSelected();
       List<EnvironmentVariable> parsed = new ArrayList<>();

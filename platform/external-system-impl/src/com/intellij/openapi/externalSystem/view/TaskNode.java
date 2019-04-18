@@ -76,6 +76,10 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
     return !myTaskData.isInherited() || getExternalProjectsView().showInheritedTasks();
   }
 
+  public boolean isTest() {
+    return myTaskData.isTest();
+  }
+
   public String getModuleOwnerName() {
     return moduleOwnerName;
   }

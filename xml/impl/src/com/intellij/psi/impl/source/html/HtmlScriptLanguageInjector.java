@@ -19,9 +19,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.util.HtmlUtil;
@@ -71,10 +71,13 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
 
     if (LanguageUtil.isInjectableLanguage(language)) {
-      registrar
-        .startInjecting(language)
-        .addPlace(null, null, (PsiLanguageInjectionHost)host, TextRange.create(0, host.getTextLength()))
-        .doneInjecting();
+      registrar.startInjecting(language);
+      for (PsiElement child : host.getChildren()) {
+        if (!(child instanceof OuterLanguageElement)) {
+          registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, child.getTextRangeInParent());
+        }
+      }
+      registrar.doneInjecting();
     }
   }
 

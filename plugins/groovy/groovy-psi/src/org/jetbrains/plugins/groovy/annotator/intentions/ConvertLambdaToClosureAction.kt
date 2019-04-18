@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.annotator.intentions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.createSmartPointer
@@ -50,26 +49,5 @@ class ConvertLambdaToClosureAction(lambda: GrLambdaExpression) : IntentionAction
     }
     closureText.append("}")
     return closureText.toString()
-  }
-
-  /**
-   * Appends [text] to the [builder] cutting length of [left] text from the start and length of [right] text from the end.
-   */
-  private fun appendTextBetween(builder: StringBuilder, text: String, left: PsiElement?, right: PsiElement?) {
-    val start = left?.textLength ?: 0
-    val end = text.length - (right?.textLength ?: 0)
-    builder.append(text, start, end)
-  }
-
-  /**
-   * Appends text of elements to the [builder] between [start] and [stop].
-   * If [stop] is `null` then all siblings of [start] are processed.
-   */
-  private fun appendElements(builder: StringBuilder, start: PsiElement, stop: PsiElement) {
-    var current: PsiElement? = start.nextSibling
-    while (current !== null && current !== stop) {
-      builder.append(current.text)
-      current = current.nextSibling
-    }
   }
 }

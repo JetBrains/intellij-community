@@ -24,6 +24,20 @@ public abstract class PackageManagementService {
   }
 
   /**
+   * An async version of {@link #getAllRepositories()}.
+   */
+  public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {
+    consumer.consume(getAllRepositories());
+  }
+
+  /**
+   * Returns true if the service supports managing repositories.
+   */
+  public boolean canManageRepositories() {
+    return getAllRepositories() != null;
+  }
+
+  /**
    * Checks if the user can change the URL of the specified repository or remove it from the list.
    *
    * @param repositoryUrl the URL to check

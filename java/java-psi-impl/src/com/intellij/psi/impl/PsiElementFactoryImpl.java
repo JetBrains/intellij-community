@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.createConcurrentSoftMap();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);

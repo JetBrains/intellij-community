@@ -89,11 +89,6 @@ public class SidePanel extends JPanel {
       }
 
       @Override
-      protected Color getForeground() {
-        return new JBColor(Gray._60, Gray._140);
-      }
-
-      @Override
       protected SeparatorWithText createSeparator() {
         return new SidePanelSeparator();
       }

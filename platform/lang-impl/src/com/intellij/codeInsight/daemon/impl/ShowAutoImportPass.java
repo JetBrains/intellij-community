@@ -40,7 +40,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
+  ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -62,7 +62,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     TransactionGuard.submitTransaction(myProject, this::addImports);
   }
 
-  public void addImports() {
+  private void addImports() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (!application.isHeadlessEnvironment() && !myEditor.getContentComponent().hasFocus()) return;
@@ -108,7 +108,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
+  private static List<HighlightInfo> getVisibleHighlights(final int startOffset,
+                                                          final int endOffset,
+                                                          @NotNull Project project,
+                                                          @NotNull Editor editor) {
     final List<HighlightInfo> highlights = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
       if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
@@ -119,7 +122,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return highlights;
   }
 
-  private boolean showAddImportHint(HighlightInfo info) {
+  private boolean showAddImportHint(@NotNull HighlightInfo info) {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
     PsiElement element = myFile.findElementAt(info.startOffset);
@@ -135,7 +138,8 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  public static String getMessage(final boolean multiple, final String name) {
+  @NotNull
+  public static String getMessage(final boolean multiple, @NotNull String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

@@ -330,7 +330,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
+    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile(), null);
   }
 
   @NotNull
@@ -342,13 +342,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public static GlobalSearchScope fileScope(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable final String displayName) {
-    return new FileScope(project, virtualFile) {
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return displayName == null ? super.getDisplayName() : displayName;
-      }
-    };
+    return new FileScope(project, virtualFile, displayName);
   }
 
   /**
@@ -746,12 +740,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   private static class FileScope extends GlobalSearchScope implements Iterable<VirtualFile> {
     private final VirtualFile myVirtualFile; // files can be out of project roots
+    @Nullable private final String myDisplayName;
     private final Module myModule;
     private final boolean mySearchOutsideContent;
 
-    private FileScope(@NotNull Project project, @Nullable VirtualFile virtualFile) {
+    private FileScope(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable String displayName) {
       super(project);
       myVirtualFile = virtualFile;
+      myDisplayName = displayName;
       final FileIndexFacade facade = FileIndexFacade.getInstance(project);
       myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
       mySearchOutsideContent = virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
@@ -786,6 +782,28 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean isSearchOutsideRootModel() {
       return mySearchOutsideContent;
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return myDisplayName != null ? myDisplayName : super.getDisplayName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o.getClass() != getClass()) return false;
+      FileScope files = (FileScope)o;
+      return mySearchOutsideContent == files.mySearchOutsideContent &&
+             Objects.equals(myVirtualFile, files.myVirtualFile) &&
+             Objects.equals(myDisplayName, files.myDisplayName) &&
+             Objects.equals(myModule, files.myModule);
+    }
+
+    @Override
+    protected int calcHashCode() {
+      return Objects.hash(myVirtualFile, myModule, mySearchOutsideContent, myDisplayName);
     }
   }
 

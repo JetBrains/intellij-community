@@ -667,6 +667,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
+    myGradleJdkComboBox.setProjectJdk(null);
 
     Sdk projectJdk = wizardContext != null ? wizardContext.getProjectJdk() : null;
     final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s ->

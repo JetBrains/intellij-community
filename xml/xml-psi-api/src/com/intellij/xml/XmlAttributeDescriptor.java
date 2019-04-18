@@ -16,10 +16,15 @@
 
 package com.intellij.xml;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mike
@@ -43,4 +48,11 @@ public interface XmlAttributeDescriptor extends PsiMetaData {
 
   @Nullable
   String validateValue(XmlElement context, String value);
+
+  @NotNull
+  default Collection<PsiElement> getDeclarations() {
+    PsiElement declaration = getDeclaration();
+    return declaration != null ? Collections.singleton(declaration)
+                               : Collections.emptyList();
+  }
 }

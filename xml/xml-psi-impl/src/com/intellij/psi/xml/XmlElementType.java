@@ -56,7 +56,12 @@ public interface XmlElementType extends XmlTokenType {
   //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
   IElementType HTML_TAG = new IXmlElementType("HTML_TAG");
-  IFileElementType HTML_FILE = new IStubFileElementType(HTMLLanguage.INSTANCE);
+  IFileElementType HTML_FILE = new IStubFileElementType(HTMLLanguage.INSTANCE) {
+    @Override
+    public int getStubVersion() {
+      return super.getStubVersion() + 1;
+    }
+  };
   IElementType HTML_EMBEDDED_CONTENT = new EmbeddedHtmlContentElementType();
 
   IElementType XML_TEXT = new XmlTextElementType();

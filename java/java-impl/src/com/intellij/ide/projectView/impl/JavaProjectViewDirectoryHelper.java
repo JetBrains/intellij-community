@@ -65,6 +65,11 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
            !aPackage.getQualifiedName().isEmpty();
   }
 
+  @Override
+  public boolean shouldHideProjectConfigurationFilesDirectory() {
+    return false;
+  }
+
   @Nullable
   @Override
   public String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {

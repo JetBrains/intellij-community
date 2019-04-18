@@ -1,11 +1,12 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -45,15 +46,21 @@ public class UsePrimitiveTypesInspection extends DevKitInspectionBase {
       }
     };
   }
-  
+
   private static boolean isPrimitiveTypeRef(PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiField) {
-        final PsiClass containingClass = ((PsiField)target).getContainingClass();
-        return containingClass != null && 
-               PsiType.class.getName().equals(containingClass.getQualifiedName()) && 
-               !"NULL".equals(((PsiField)target).getName());
+        final PsiField psiField = (PsiField)target;
+        if (!psiField.hasModifierProperty(PsiModifier.STATIC) ||
+            !psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          return false;
+        }
+
+        final PsiClass containingClass = psiField.getContainingClass();
+        return containingClass != null &&
+               PsiType.class.getName().equals(containingClass.getQualifiedName()) &&
+               !"NULL".equals(psiField.getName());
       }
     }
     return false;

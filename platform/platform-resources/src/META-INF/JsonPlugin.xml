@@ -108,6 +108,7 @@
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
+    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
     <lang.lineWrapStrategy language="JSON" implementationClass="com.intellij.json.formatter.JsonLineWrapPositionStrategy"/>
     <gotoDeclarationHandler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>

@@ -890,8 +890,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByExtension(@NotNull String extension) {
-    FileType type = myPatternsTable.findByExtension(extension);
-    return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
+    return getFileTypeByFileName("IntelliJ_IDEA_RULES." + extension);
   }
 
   @Override

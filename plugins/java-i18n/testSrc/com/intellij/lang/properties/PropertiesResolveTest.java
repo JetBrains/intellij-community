@@ -31,6 +31,10 @@ public class PropertiesResolveTest extends CodeInsightTestCase{
     configure("Escaped.java");
     checkNavigation();
   }
+  public void testAnnotation() throws Exception{
+    configure("Annotation.java");
+    checkNavigation();
+  }
 
   public void testPropertiesUpdating() throws Exception{
     configure("C.java");

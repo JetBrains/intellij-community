@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
-  public QualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression methodCallExpression) {
-    super(methodCallExpression);
+  public QualifyStaticMethodCallFix(@NotNull PsiFile file, @NotNull PsiMethodCallExpression methodCallExpression) {
+    super(file, methodCallExpression);
   }
 
   @NotNull
@@ -37,13 +37,13 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<? extends PsiMethod> methodsToImport,
+  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
                                                                              @NotNull Project project,
                                                                              Editor editor) {
-    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myMethodCall) {
+    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myRef) {
       @Override
       protected void doImport(PsiMethod toImport) {
-        PsiMethodCallExpression element = myMethodCall.getElement();
+        PsiMethodCallExpression element = myRef.getElement();
         if (element == null) return;
         qualifyStatically(toImport, project, element.getMethodExpression());
       }
@@ -55,9 +55,9 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
     return false;
   }
 
-  public static void qualifyStatically(PsiMember toImport,
-                                       Project project,
-                                       PsiReferenceExpression qualifiedExpression) {
+  static void qualifyStatically(@NotNull PsiMember toImport,
+                                @NotNull Project project,
+                                @NotNull PsiReferenceExpression qualifiedExpression) {
     PsiClass containingClass = toImport.getContainingClass();
     if (containingClass == null) return;
     PsiReferenceExpression qualifier = JavaPsiFacade.getElementFactory(project).createReferenceExpression(containingClass);

@@ -278,7 +278,7 @@ public class InstalledPackagesPanel extends JPanel {
     return ObjectUtils.tryCast(myPackageManagementService, PackageManagementServiceEx.class);
   }
 
-  private void updateUninstallUpgrade() {
+  protected void updateUninstallUpgrade() {
     final int[] selected = myPackagesTable.getSelectedRows();
     boolean upgradeAvailable = false;
     boolean canUninstall = selected.length != 0;
@@ -349,7 +349,7 @@ public class InstalledPackagesPanel extends JPanel {
           ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
-            myPackagesTable.setPaintBusy(false);
+            myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
             if (errorDescription == null) {
               if (packageName != null) {
                 myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");

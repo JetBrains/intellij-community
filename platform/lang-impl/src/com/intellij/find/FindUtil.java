@@ -40,6 +40,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -73,7 +74,7 @@ public class FindUtil {
 
   public static void initStringToFindWithSelection(FindModel findModel, @Nullable Editor editor) {
     if (editor != null) {
-      String s = editor.getSelectionModel().getSelectedText();
+      String s = getSelectedText(editor);
       if (s != null && s.length() < 10000) {
         FindModel.initStringToFind(findModel, s);
       }
@@ -82,8 +83,7 @@ public class FindUtil {
 
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     String stringToFind = firstSearch ? "" : model.getStringToFind();
-    final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
-    String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
+    String selectedText = getSelectedText(editor);
     if (!StringUtil.isEmpty(selectedText)) {
       stringToFind = selectedText;
     }
@@ -133,7 +133,18 @@ public class FindUtil {
     UP, DOWN
   }
 
-  public static void findWordAtCaret(Project project, Editor editor) {
+  private static String getSelectedText(@Nullable Editor editor) {
+    if (editor == null) return null;
+    String selectedText = editor.getSelectionModel().getSelectedText();
+    if (selectedText == null && Registry.is("ide.find.select.word.at.caret")) {
+      selectedText  = getWordAtCaret(editor, true);
+    }
+    return selectedText;
+  }
+
+  @Nullable
+  private static String getWordAtCaret(@Nullable Editor editor, boolean selectWordIfFound) {
+    if (editor == null) return null;
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
@@ -154,17 +165,24 @@ public class FindUtil {
           break;
         }
       }
+      if (start < end && selectWordIfFound) {
+        editor.getSelectionModel().setSelection(start, end);
+      }
     }
     else {
       start = editor.getSelectionModel().getSelectionStart();
       end = editor.getSelectionModel().getSelectionEnd();
     }
-    if (start >= end) {
+    return start < end? text.subSequence(start, end).toString() : null;
+  }
+
+  public static void findWordAtCaret(Project project, @NotNull Editor editor) {
+    String s = getWordAtCaret(editor, false);
+    if (s == null) {
       return;
     }
     FindManager findManager = FindManager.getInstance(project);
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
-    String s = text.subSequence(start, end).toString();
     findInProjectSettings.addStringToFind(s);
     findManager.getFindInFileModel().setStringToFind(s);
     findManager.setFindWasPerformed();
@@ -180,13 +198,13 @@ public class FindUtil {
     }
 
     findManager.setFindNextModel(model);
-    doSearch(project, editor, caretOffset, true, model, true);
+    doSearch(project, editor, editor.getCaretModel().getOffset(), true, model, true);
   }
 
   public static void find(@NotNull final Project project, @NotNull final Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final FindManager findManager = FindManager.getInstance(project);
-    String s = editor.getSelectionModel().getSelectedText();
+    String s = getSelectedText(editor);
 
     final FindModel model = findManager.getFindInFileModel().clone();
     if (StringUtil.isEmpty(s)) {

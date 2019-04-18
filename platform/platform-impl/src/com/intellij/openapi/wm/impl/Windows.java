@@ -123,7 +123,9 @@ public class Windows {
 
               FocusEvent focusEvent = (FocusEvent)event;
 
-              if (isInActiveToolWindow(focusEvent.getSource()) && !isInActiveToolWindow(focusEvent.getOppositeComponent())) {
+              if (isInActiveToolWindow(focusEvent.getSource())
+                  && !isInActiveToolWindow(focusEvent.getOppositeComponent())
+                  && focusEvent.getOppositeComponent() != null) {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus

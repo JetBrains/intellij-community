@@ -53,9 +53,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
       ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
-        getDefaultIcon(), getHoveredIcon(),
-        UIBundle.message("component.with.browse.button.browse.button.tooltip.text"),
-        this::notifyActionListeners));
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -73,7 +71,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       add(myBrowseButton, BorderLayout.EAST);
     }
 
-    myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
+    myBrowseButton.setToolTipText(getIconTooltip());
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
@@ -92,6 +90,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   @NotNull
   protected Icon getHoveredIcon() {
     return AllIcons.General.OpenDiskHover;
+  }
+
+  @NotNull
+  protected String getIconTooltip() {
+    return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
+           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
 
   private void notifyActionListeners() {

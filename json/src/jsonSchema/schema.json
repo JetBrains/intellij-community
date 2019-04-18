@@ -49,6 +49,10 @@
       "type": "string",
       "description": "Description in html format"
     },
+    "x-intellij-language-injection": {
+      "type": "string",
+      "description": "IntelliJ language ID for language injection"
+    },
     "default": {},
     "multipleOf": {
       "type": "number",

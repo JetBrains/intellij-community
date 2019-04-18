@@ -61,6 +61,13 @@ public class CucumberJvm2SMFormatter implements Formatter {
     }
   };
 
+  private final EventHandler<WriteEvent> writeEventHandler = new EventHandler<WriteEvent>() {
+    @Override
+    public void receive(WriteEvent event) {
+      CucumberJvm2SMFormatter.this.handleWriteEvent(event);
+    }
+  };
+
   private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     @Override
     public void receive(TestStepStarted event) {
@@ -92,6 +99,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
     publisher.registerHandlerFor(TestSourceRead.class, this.testSourceReadHandler);
 
     publisher.registerHandlerFor(TestRunFinished.class, this.testRunFinishedHandler);
+    publisher.registerHandlerFor(WriteEvent.class, this.writeEventHandler);
   }
 
   private void handleTestCaseStarted(TestCaseStarted event) {
@@ -134,6 +142,11 @@ public class CucumberJvm2SMFormatter implements Formatter {
     closeCurrentScenarioOutline();
     outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getFeatureFileDescription(currentFilePath));
   }
+
+  private void handleWriteEvent(WriteEvent event) {
+    myOut.println(event.text);
+  }
+
   private void handleTestStepStarted(TestStepStarted event) {
     outCommand(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event), getStepName(event));
   }

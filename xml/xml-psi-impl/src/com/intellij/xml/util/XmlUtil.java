@@ -802,6 +802,11 @@ public class XmlUtil {
    * @return true if enumeration is exhaustive
    */
   public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
+    return processEnumerationValues(element, tagProcessor, new HashSet<>());
+  }
+
+  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<XmlTag> visited) {
+    if (!visited.add(element)) return true;
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
@@ -817,13 +822,13 @@ public class XmlUtil {
       }
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
-        processEnumerationValues(tag, tagProcessor);
+        processEnumerationValues(tag, tagProcessor, visited);
         XmlAttribute attribute = tag.getAttribute("memberTypes");
         if (attribute != null && attribute.getValueElement() != null) {
           for (PsiReference reference : attribute.getValueElement().getReferences()) {
             PsiElement resolve = reference.resolve();
             if (resolve instanceof XmlTag) {
-              processEnumerationValues((XmlTag)resolve, tagProcessor);
+              processEnumerationValues((XmlTag)resolve, tagProcessor, visited);
             }
           }
         }
@@ -831,12 +836,12 @@ public class XmlUtil {
       else if (localName.equals("extension")) {
         XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
         if (base != null) {
-          return processEnumerationValues(base, tagProcessor);
+          return processEnumerationValues(base, tagProcessor, visited);
         }
       }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
-        exhaustiveEnum &= processEnumerationValues(tag, tagProcessor);
+        exhaustiveEnum &= processEnumerationValues(tag, tagProcessor, visited);
       }
     }
     return exhaustiveEnum;

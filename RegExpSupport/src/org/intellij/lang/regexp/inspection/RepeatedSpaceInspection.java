@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -52,15 +52,17 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         return;
       }
       int count = 1;
+      int length = aChar.getTextLength();
       PsiElement next = aChar.getNextSibling();
       while (isSpace(next)) {
         count++;
+        length += next.getTextLength();
         next = next.getNextSibling();
       }
       if (count > 1) {
         final String message = count + " consecutive spaces in RegExp";
         final int offset = aChar.getStartOffsetInParent();
-        myHolder.registerProblem(parent, new TextRange(offset, offset + count), message, new RepeatedSpaceFix(count));
+        myHolder.registerProblem(parent, new TextRange(offset, offset + length), message, new RepeatedSpaceFix(count));
       }
     }
 
@@ -131,7 +133,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
           text.append(injectedLanguageManager.getUnescapedText(child));
         }
         else if (!inserted) {
-          text.append(" {").append(range.getLength()).append('}');
+          text.append(" {").append(myCount).append('}');
           inserted = true;
         }
         child = child.getNextSibling();

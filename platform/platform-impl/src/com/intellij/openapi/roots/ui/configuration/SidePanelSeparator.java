@@ -3,8 +3,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -43,9 +41,7 @@ public class SidePanelSeparator extends SeparatorWithText {
                            LEFT,
                            viewR, iconR, textR, 0);
     GraphicsUtil.setupAAPainting(g);
-    g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
-    g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
-    g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
+    g.setColor(UIUtil.getListForeground());
     g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
   }
 }

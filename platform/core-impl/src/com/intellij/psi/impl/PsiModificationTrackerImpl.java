@@ -213,7 +213,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     return () -> {
       long result = 0;
       for (Language l : myLanguageTrackers.keySet()) {
-        if (condition.value(l)) continue;
+        if (!condition.value(l)) continue;
         result += myLanguageTrackers.get(l).getModificationCount();
       }
       return result;

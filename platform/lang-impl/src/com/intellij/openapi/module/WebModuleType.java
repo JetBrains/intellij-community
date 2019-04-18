@@ -8,9 +8,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
+  /**
+   * @deprecated use {@link WebModuleTypeBase#getInstance} instead
+   */
+  @Deprecated
   @NotNull
   public static WebModuleType getInstance() {
-    return (WebModuleType)ModuleTypeManager.getInstance().findByID(WEB_MODULE);
+    return (WebModuleType)WebModuleTypeBase.getInstance();
   }
 
   @NotNull

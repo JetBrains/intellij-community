@@ -54,6 +54,12 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
+  @NotNull
+  @Override
+  public PySourcePosition create(@NotNull String file, int line) {
+    return convertPythonToFrame(file, line);
+  }
+
   @Override
   @NotNull
   public PySourcePosition convertPythonToFrame(@NotNull final String filePath, final int line) {

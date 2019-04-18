@@ -160,8 +160,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
         mySearchField.setForeground(UIUtil.getLabelForeground());
         mySearchField.selectAll();
         mySearchField.setColumns(SEARCH_FIELD_COLUMNS);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           final JComponent parent = (JComponent)mySearchField.getParent();
           parent.revalidate();
           parent.repaint();
@@ -179,8 +178,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
             }
             myAlarm.cancelAllRequests();
 
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+            ApplicationManager.getApplication().invokeLater(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
           }
           finally {
             result.setDone();
@@ -627,8 +625,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       try {
         check();
 
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
           myResultsList.getEmptyText().setText("Searching...");
 
@@ -642,7 +639,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
               if (!myDone.isRejected()) {
                 myResultsList.setModel(myListModel);
-                updatePopup();
               }
             }, LIST_REBUILD_DELAY);
           }
@@ -653,6 +649,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
         if (myPattern.trim().length() == 0) {
           buildGroups(true);
+          updatePopup();
           return;
         }
 
@@ -673,10 +670,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
       finally {
         if (!isCanceled()) {
-          //noinspection SSBasedInspection
-          SwingUtilities
+          ApplicationManager.getApplication()
             .invokeLater(() -> myResultsList.getEmptyText().setText(IdeBundle.message("run.anything.command.empty.list.title")));
-          updatePopup();
         }
         if (!myDone.isProcessed()) {
           myDone.setDone();
@@ -686,7 +681,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     private void buildGroups(boolean isRecent) {
       buildAllGroups(myPattern, () -> check(), isRecent);
-      updatePopup();
     }
 
     private void buildHelpGroups(@NotNull RunAnythingSearchListModel listModel) {
@@ -694,14 +688,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
         group.collectItems(myDataContext, myListModel, trimHelpPattern(), () -> check());
         check();
       });
-
-      updatePopup();
     }
 
     private void runReadAction(@NotNull Runnable action) {
       if (!DumbService.getInstance(myProject).isDumb()) {
         ApplicationManager.getApplication().runReadAction(action);
-        updatePopup();
       }
     }
 
@@ -738,9 +729,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       return myProgressIndicator.isCanceled() || myDone.isRejected();
     }
 
-    @SuppressWarnings("SSBasedInspection")
     void updatePopup() {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         myListModel.update();
         myResultsList.revalidate();
         myResultsList.repaint();
@@ -762,7 +752,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 
           check();
-          SwingUtilities.invokeLater(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             try {
               int shift = 0;
               int i = index + 1;
@@ -862,22 +852,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myListModel = new RunAnythingSearchListModel.RunAnythingMainListModel();
     addListDataListener(myListModel);
 
-    return new JBList<Object>(myListModel) {
-      @Override
-      public void clearSelection() {
-        //avoid blinking
-      }
-
-      @Override
-      public Object getSelectedValue() {
-        try {
-          return super.getSelectedValue();
-        }
-        catch (Exception e) {
-          return null;
-        }
-      }
-    };
+    return new JBList<>(myListModel);
   }
 
   private void initSearchActions() {
@@ -917,8 +892,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       model.shiftIndexes(index, -1);
       if (model.size() > 0) ScrollingUtil.selectItem(myResultsList, index < model.size() ? index : index - 1);
 
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myCalcThread != null) {
           myCalcThread.updatePopup();
         }

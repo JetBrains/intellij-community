@@ -165,6 +165,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   FOLLOW_IS_BUGGY_IN_THE_LOG {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

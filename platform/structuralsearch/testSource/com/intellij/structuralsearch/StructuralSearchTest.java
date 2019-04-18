@@ -410,6 +410,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String s85 = "class X {{ int a; a=1; a=1; return a; }}";
     assertEquals("two the same statements search", 1, findMatchesCount(s85, "'T; 'T;"));
+    assertEquals("simple statement search (ignoring whitespace)", 4, findMatchesCount(s85, "'T ;"));
 
     final String s87 = "class X {{ getSomething(\"2\"); getSomething(\"1\"); a.call(); }}";
     assertEquals("search for simple call", 1, findMatchesCount(s87, " '_Instance.'Call('_*); "));
@@ -2355,6 +2356,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "   };\n" +
                       "}";
     assertEquals("match statement body correctly", 1, findMatchesCount(source2, pattern7));
+
+    String source3 = "class LambdaParameter {\n" +
+                     "\n" +
+                     "    void x() {\n" +
+                     "        Runnable r = (var a) -> a = \"\";\n" +
+                     "    }\n" +
+                     "}";
+    String pattern8 = "String '_x;";
+    assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
   }
 
   public void testFindDefaultMethods() {
@@ -2489,6 +2499,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     options.fillSearchCriteria("void '_a:* ();");
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("if (true) '_st{0,0};");
+    assertEquals("MINIMUM ZERO not applicable for st", checkApplicableConstraints(options));
+
+    options.fillSearchCriteria("while (true) '_st+;");
+    assertEquals("MAXIMUM UNLIMITED not applicable for st", checkApplicableConstraints(options));
   }
 
   public void testFindInnerClass() {
@@ -3157,5 +3173,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                            "  @FindBy(name='_value)\n" +
                                                                            "  '_FieldType2 'field2 = '_init2?;\n" +
                                                                            "}"));
+  }
+
+  public void testForStatement() {
+    String in = "class X {{" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  " +
+                "  for (;;) {}" +
+                "  for (int i = 0; ;) {}" +
+                "  for (int i = 0; true; ) {}" +
+                "}}";
+    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
+    assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
+    assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
+    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
   }
 }

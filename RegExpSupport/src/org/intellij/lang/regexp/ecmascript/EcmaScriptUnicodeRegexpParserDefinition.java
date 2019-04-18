@@ -21,6 +21,7 @@ public class EcmaScriptUnicodeRegexpParserDefinition extends RegExpParserDefinit
   private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO,
                                                                     RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS,
                                                                     RegExpCapability.NO_DANGLING_METACHARACTERS,
+                                                                    RegExpCapability.PROPERTY_VALUES,
                                                                     RegExpCapability.EXTENDED_UNICODE_CHARACTER);
 
   @Override

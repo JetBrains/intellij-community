@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -482,11 +483,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitExpressionStatement(PsiExpressionStatement expressionStatement) {
     super.visitExpressionStatement(expressionStatement);
 
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final PsiElement child = expressionStatement.getLastChild();
-    if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment)) {
+    final PsiElement parent = expressionStatement.getParent();
+    if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment) &&
+        parent instanceof PsiCodeBlock && parent.getParent() instanceof JavaDummyHolder) {
       // search for expression or symbol
       final PsiElement reference = expressionStatement.getFirstChild();
-      final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
       MatchingHandler referenceHandler = pattern.getHandler(reference);
 
       if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
@@ -510,10 +513,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
     }
     else {
-      final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
       if (expressionStatement.getExpression() instanceof PsiReferenceExpression && pattern.isRealTypedVar(expressionStatement)) {
         // search for statement
-        final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expressionStatement);
+        final MatchingHandler handler = pattern.getHandler(expressionStatement);
         if (handler instanceof SubstitutionHandler) {
           final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
           substitutionHandler.setFilter(new StatementFilter());

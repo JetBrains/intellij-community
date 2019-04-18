@@ -68,14 +68,14 @@ fi
 
 function configureCommandHistory {
   local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
+  unset __INTELLIJ_COMMAND_HISTFILE__
   if [ -n "$commandHistoryFile" ] && [ -z "`trap -p EXIT`" ]
   then
-    if [ ! -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
+    trap "$(builtin printf 'history -w %q; HISTFILE=%q' "$commandHistoryFile" "$HISTFILE")" EXIT
+    if [ -s "$commandHistoryFile" ]
     then
-      command cp "$HISTFILE" "$commandHistoryFile"
+      HISTFILE="$commandHistoryFile"
     fi
-    trap "history -w $HISTFILE" EXIT
-    export HISTFILE="$commandHistoryFile"
   fi
 }
 configureCommandHistory

@@ -68,7 +68,7 @@
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
-    <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
+    <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider" order="first,after default"/>
     <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
                         serviceImplementation="com.intellij.codeInspection.BatchSuppressManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInspection.SuppressManager"

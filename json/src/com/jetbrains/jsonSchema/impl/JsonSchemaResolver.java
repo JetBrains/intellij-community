@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
@@ -44,44 +45,42 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchema
 public class JsonSchemaResolver {
   @NotNull private final Project myProject;
   @NotNull private final JsonSchemaObject mySchema;
-  private final boolean myIsName;
   @NotNull private final JsonPointerPosition myPosition;
 
   public JsonSchemaResolver(@NotNull Project project,
                             @NotNull JsonSchemaObject schema,
-                            boolean isName,
                             @NotNull JsonPointerPosition position) {
     myProject = project;
     mySchema = schema;
-    myIsName = isName;
     myPosition = position;
   }
 
   public JsonSchemaResolver(@NotNull Project project, @NotNull JsonSchemaObject schema) {
     myProject = project;
     mySchema = schema;
-    myIsName = true;
     myPosition = new JsonPointerPosition();
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(myProject, mySchema, myPosition, false, !myIsName);
+    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(myProject, mySchema, myPosition, false);
     return MatchResult.create(node);
   }
 
   @NotNull
   public Collection<JsonSchemaObject> resolve() {
     final MatchResult result = detailedResolve();
-    final List<JsonSchemaObject> list = new ArrayList<>(result.mySchemas);
-    list.addAll(result.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
+    final List<JsonSchemaObject> list = ContainerUtil.newLinkedList();
+    list.addAll(result.mySchemas);
+    for (Collection<? extends JsonSchemaObject> myExcludingSchema : result.myExcludingSchemas) {
+      list.addAll(myExcludingSchema);
+    }
     return list;
   }
 
   @Nullable
-  public PsiElement findNavigationTarget(@Nullable final PsiElement element,
-                                         boolean acceptAdditionalPropertiesSchema) {
+  public PsiElement findNavigationTarget(@Nullable final PsiElement element) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
-      .buildTree(myProject, mySchema, myPosition, true, acceptAdditionalPropertiesSchema || !myIsName);
+      .buildTree(myProject, mySchema, myPosition, true);
     final JsonSchemaObject schema = selectSchema(node, element, myPosition.isEmpty());
     if (schema == null) return null;
     VirtualFile file = JsonSchemaService.Impl.get(myProject).resolveSchemaFile(schema);

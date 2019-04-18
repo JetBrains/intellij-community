@@ -38,6 +38,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -151,25 +152,39 @@ public class MavenFoldersImporter {
   }
 
   private void addBuilderHelperPaths(String goal, Collection<String> folders) {
-    final Element configurationElement = myMavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", goal);
-    if (configurationElement != null) {
-      final Element sourcesElement = configurationElement.getChild("sources");
-      if (sourcesElement != null) {
-        for (Element element : sourcesElement.getChildren()) {
-          folders.add(element.getTextTrim());
+    final MavenPlugin plugin = myMavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+    if (plugin != null) {
+      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+        if (execution.getGoals().contains(goal)) {
+          final Element configurationElement = execution.getConfigurationElement();
+          if (configurationElement != null) {
+            final Element sourcesElement = configurationElement.getChild("sources");
+            if (sourcesElement != null) {
+              for (Element element : sourcesElement.getChildren()) {
+                folders.add(element.getTextTrim());
+              }
+            }
+          }
         }
       }
     }
   }
 
   private void addBuilderHelperResourcesPaths(String goal, Collection<String> folders) {
-    final Element configurationElement = myMavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", goal);
-    if (configurationElement != null) {
-      final Element sourcesElement = configurationElement.getChild("resources");
-      if (sourcesElement != null) {
-        for (Element element : sourcesElement.getChildren()) {
-          Element directory = element.getChild("directory");
-          if (directory != null) folders.add(directory.getTextTrim());
+    final MavenPlugin plugin = myMavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+    if (plugin != null) {
+      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+        if (execution.getGoals().contains(goal)) {
+          final Element configurationElement = execution.getConfigurationElement();
+          if (configurationElement != null) {
+            final Element sourcesElement = configurationElement.getChild("resources");
+            if (sourcesElement != null) {
+              for (Element element : sourcesElement.getChildren()) {
+                Element directory = element.getChild("directory");
+                if (directory != null) folders.add(directory.getTextTrim());
+              }
+            }
+          }
         }
       }
     }

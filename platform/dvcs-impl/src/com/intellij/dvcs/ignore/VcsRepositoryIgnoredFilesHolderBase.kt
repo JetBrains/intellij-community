@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -105,9 +106,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   protected abstract fun scanTurnedOff(): Boolean
 
   override fun startRescan() {
+    startRescan(null)
+  }
+
+  override fun startRescan(actionAfterRescan: Runnable?) {
     if (scanTurnedOff()) return
 
-    queueIgnoreUpdate(isFullRescan = true) {
+    queueIgnoreUpdate(isFullRescan = true, doAfterRescan = actionAfterRescan) {
       doRescan()
     }
   }
@@ -136,18 +141,22 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  private fun queueIgnoreUpdate(isFullRescan: Boolean, action: () -> Set<FilePath>) {
-    updateQueue.queue(object : Update(ObjectUtils.sentinel(rescanIdentityName)) {
+  private fun queueIgnoreUpdate(isFullRescan: Boolean, doAfterRescan: Runnable? = null, action: () -> Set<FilePath>) {
+    //full rescan should have the same update identity, so multiple full rescans can be swallowed instead of spawning new threads
+    val updateIdentity = if (isFullRescan) "${rescanIdentityName}_full" else ObjectUtils.sentinel(rescanIdentityName)
+    updateQueue.queue(object : Update(updateIdentity) {
       override fun canEat(update: Update) = isFullRescan
 
-      override fun run() {
-        if (inUpdateMode.compareAndSet(false, true)) {
-          fireUpdateStarted()
-          val ignored = action()
-          inUpdateMode.set(false)
-          fireUpdateFinished(ignored)
-        }
-      }
+      override fun run() =
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(repository.project, Runnable {
+          if (inUpdateMode.compareAndSet(false, true)) {
+            fireUpdateStarted()
+            val ignored = action()
+            inUpdateMode.set(false)
+            fireUpdateFinished(ignored)
+            doAfterRescan?.run()
+          }
+        })
     })
   }
 

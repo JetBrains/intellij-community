@@ -171,7 +171,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void addManageAction() {
-    if (myController.getAllRepositories() != null) {
+    if (myController.canManageRepositories()) {
       myManageButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent event) {

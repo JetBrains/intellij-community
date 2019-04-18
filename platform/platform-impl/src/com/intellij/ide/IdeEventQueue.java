@@ -64,7 +64,7 @@ public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
-  private static final boolean JAVA_11_OR_LATER = SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  public static final boolean JAVA_11_OR_LATER = SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -357,27 +357,21 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
       e = metaEvent;
     }
-    if (JAVA_11_OR_LATER && (SystemInfo.isMac || SystemInfo.isWindows)) {
-      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH) {
-        if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
-          ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
-        }
+    if (JAVA_11_OR_LATER && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT_GRAPH && !isAltGrExpected((KeyEvent)e)) {
+      ((KeyEvent)e).setKeyCode(KeyEvent.VK_ALT);
+    }
+    if (JAVA_11_OR_LATER && e instanceof InputEvent && ((InputEvent)e).isAltGraphDown() && !isAltGrExpected((InputEvent)e)) {
+      try {
+        Field field = InputEvent.class.getDeclaredField("modifiers");
+        field.setAccessible(true);
+        int modifiers = field.getInt(e);
+        modifiers |= InputEvent.ALT_MASK;
+        modifiers |= InputEvent.ALT_DOWN_MASK;
+        modifiers &= ~InputEvent.ALT_GRAPH_MASK;
+        modifiers &= ~InputEvent.ALT_GRAPH_DOWN_MASK;
+        field.setInt(e, modifiers);
       }
-      if (e instanceof InputEvent && ((InputEvent)e).isAltGraphDown()) {
-        if (!Registry.is("actionSystem.force.alt.gr") && Registry.is("actionSystem.fix.alt.gr")) {
-          try {
-            Field field = InputEvent.class.getDeclaredField("modifiers");
-            field.setAccessible(true);
-            int modifiers = field.getInt(e);
-            modifiers |= InputEvent.ALT_MASK;
-            modifiers |= InputEvent.ALT_DOWN_MASK;
-            modifiers &= ~InputEvent.ALT_GRAPH_MASK;
-            modifiers &= ~InputEvent.ALT_GRAPH_DOWN_MASK;
-            field.setInt(e, modifiers);
-          }
-          catch (Exception ignored) {
-          }
-        }
+      catch (Exception ignored) {
       }
     }
 
@@ -1375,5 +1369,13 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     r.run();
+  }
+
+  private static boolean isAltGrExpected(InputEvent event) {
+    if (SystemInfo.isMac) return false; // never use AltGr on Mac
+    if (!SystemInfo.isWindows) return true; // default behaviour on Linux
+    if (Registry.is("actionSystem.force.alt.gr")) return true;
+    if (!Registry.is("actionSystem.fix.alt.gr")) return false;
+    return IdeKeyEventDispatcher.isAltGrLayout(event.getComponent());
   }
 }

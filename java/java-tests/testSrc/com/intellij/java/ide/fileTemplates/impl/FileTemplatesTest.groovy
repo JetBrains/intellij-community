@@ -219,6 +219,16 @@ class FileTemplatesTest extends IdeaTestCase {
     }
   }
 
+  void testCanCreateDoubleExtension() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "my.txt")
+    disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
+
+    File temp = createTempDirectory(false)
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    def directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    assertTrue(FileTemplateUtil.canCreateFromTemplate([directory].toArray(PsiDirectory.EMPTY_ARRAY), template))
+  }
+
   private boolean checkFileWithUnicodeNameCanBeFound() {
     try {
       //noinspection GroovyAccessibility

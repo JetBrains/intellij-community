@@ -39,8 +39,7 @@ public class JsonSchemaVariantsTreeBuilder {
   public static JsonSchemaTreeNode buildTree(@NotNull Project project,
                                              @NotNull final JsonSchemaObject schema,
                                              @NotNull final JsonPointerPosition position,
-                                             final boolean skipLastExpand,
-                                             final boolean acceptAdditional) {
+                                             final boolean skipLastExpand) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
     JsonSchemaService service = JsonSchemaService.Impl.get(project);
     expandChildSchema(root, schema, service);
@@ -59,7 +58,7 @@ public class JsonSchemaVariantsTreeBuilder {
         node.nothingChild();
         continue;
       }
-      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), acceptAdditional, true);
+      final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, node.getSchema(), true);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
@@ -112,15 +111,14 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull
   public static Pair<ThreeState, JsonSchemaObject> doSingleStep(@NotNull JsonPointerPosition step,
                                                                 @NotNull JsonSchemaObject parent,
-                                                                boolean acceptAdditionalPropertiesSchemas,
                                                                 boolean processAllBranches) {
     final String name = step.getFirstName();
     if (name != null) {
-      return propertyStep(name, parent, acceptAdditionalPropertiesSchemas, processAllBranches);
+      return propertyStep(name, parent, processAllBranches);
     } else {
       final int index = step.getFirstIndex();
       assert index >= 0;
-      return arrayOrNumericPropertyElementStep(index, parent, acceptAdditionalPropertiesSchemas);
+      return arrayOrNumericPropertyElementStep(index, parent);
     }
   }
 
@@ -384,7 +382,6 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull
   private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
                                                                  @NotNull JsonSchemaObject parent,
-                                                                 boolean acceptAdditionalPropertiesSchemas,
                                                                  boolean processAllBranches) {
     final JsonSchemaObject child = parent.getProperties().get(name);
     if (child != null) {
@@ -394,13 +391,13 @@ public class JsonSchemaVariantsTreeBuilder {
     if (schema != null) {
       return Pair.create(ThreeState.UNSURE, schema);
     }
-    if (acceptAdditionalPropertiesSchemas) {
-      if (parent.getAdditionalPropertiesSchema() != null) {
-        return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
-      }
+    if (parent.getAdditionalPropertiesSchema() != null) {
+      return Pair.create(ThreeState.UNSURE, parent.getAdditionalPropertiesSchema());
+    }
 
+    if (processAllBranches) {
       List<IfThenElse> ifThenElseList = parent.getIfThenElse();
-      if (ifThenElseList != null && processAllBranches) {
+      if (ifThenElseList != null) {
         for (IfThenElse ifThenElse : ifThenElseList) {
           // resolve inside V7 if-then-else conditionals
           JsonSchemaObject childObject;
@@ -435,8 +432,7 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   @NotNull
-  private static Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent,
-                                                                                      boolean acceptAdditionalPropertiesSchemas) {
+  private static Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent) {
     if (parent.getItemsSchema() != null) {
       return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
     }
@@ -454,7 +450,7 @@ public class JsonSchemaVariantsTreeBuilder {
     if (matchingPatternPropertySchema != null) {
       return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
     }
-    if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
+    if (parent.getAdditionalItemsSchema() != null) {
       return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
     }
     if (Boolean.FALSE.equals(parent.getAdditionalItemsAllowed())) {

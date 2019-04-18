@@ -853,6 +853,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Xhtml = IconLoader.getIcon("/fileTypes/xhtml.svg");
     /** 16x16 */ public static final Icon Xml = IconLoader.getIcon("/fileTypes/xml.svg");
     /** 16x16 */ public static final Icon XsdFile = IconLoader.getIcon("/fileTypes/xsdFile.svg");
+    /** 16x16 */ public static final Icon Yaml = IconLoader.getIcon("/fileTypes/yaml.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use JsfIcons.Facelets */
     @SuppressWarnings("unused")

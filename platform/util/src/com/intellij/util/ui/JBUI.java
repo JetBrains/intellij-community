@@ -33,6 +33,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -195,10 +196,9 @@ public class JBUI {
       return type;
     }
 
-    @NotNull
-    Scale newOrThis(double value) {
-      if (this.value == value) return this;
-      return type.of(value);
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj; // can rely on default impl due to caching
     }
 
     @Override
@@ -799,9 +799,10 @@ public class JBUI {
   public static class BaseScaleContext {
     protected Scale usrScale = USR_SCALE.of(scale(1f));
     protected Scale objScale = OBJ_SCALE.of(1d);
-    protected Scale pixScale = PIX_SCALE.of(usrScale.value);
+    protected double pixScale = usrScale.value;
 
     private List<UpdateListener> listeners;
+    private EnumSet<ScaleType> overriddenScales;
 
     private BaseScaleContext() {
     }
@@ -847,6 +848,37 @@ public class JBUI {
     }
 
     /**
+     * Permanently overrides the provided scale (the scale won't be changed on subsequent {@link #update()}).
+     * Can be used to make a UI object user scale independent:
+     * <p>
+     * <code>
+     * ((ScaleContextAware)uiObject).getScaleContext().overrideScale(USR_SCALE.of(1.0));
+     * </code>
+     *
+     * @param scale the new scale to override
+     * @return whether the new scale updated the current value
+     * @see ScaleType#of(double)
+     */
+    public boolean overrideScale(@NotNull Scale scale) {
+      if (overriddenScales != null) {
+        overriddenScales.remove(scale.type); // previous override should not prevent this override
+      }
+      boolean updated = update(scale);
+
+      if (overriddenScales == null) {
+        overriddenScales = EnumSet.of(scale.type);
+      }
+      else {
+        overriddenScales.add(scale.type);
+      }
+      return updated;
+    }
+
+    protected boolean isScaleOverridden(@NotNull Scale scale) {
+      return overriddenScales != null && overriddenScales.contains(scale.type);
+    }
+
+    /**
      * @return the context scale factor of the provided type (1d for system scale)
      */
     public double getScale(@NotNull ScaleType type) {
@@ -854,7 +886,7 @@ public class JBUI {
         case USR_SCALE: return usrScale.value;
         case SYS_SCALE: return 1d;
         case OBJ_SCALE: return objScale.value;
-        case PIX_SCALE: return pixScale.value;
+        case PIX_SCALE: return pixScale;
       }
       return 1f; // unreachable
     }
@@ -876,7 +908,7 @@ public class JBUI {
 
     protected boolean onUpdated(boolean updated) {
       if (updated) {
-        update(pixScale, derivePixScale());
+        pixScale = derivePixScale();
         notifyUpdateListeners();
       }
       return updated;
@@ -888,7 +920,7 @@ public class JBUI {
      * @return whether any of the scale factors has been updated
      */
     public boolean update() {
-      return onUpdated(update(usrScale, scale(1f)));
+      return onUpdated(update(USR_SCALE.of(scale(1f))));
     }
 
     /**
@@ -898,12 +930,19 @@ public class JBUI {
      * @return whether the scale factor has been updated
      */
     public boolean update(@NotNull Scale scale) {
+      if (isScaleOverridden(scale)) return false;
+
       boolean updated = false;
       switch (scale.type) {
-        case USR_SCALE: updated = update(usrScale, scale.value); break;
-        case SYS_SCALE: break;
-        case OBJ_SCALE: updated = update(objScale, scale.value); break;
-        case PIX_SCALE: break;
+        case USR_SCALE:
+          updated = !usrScale.equals(scale);
+          usrScale = scale;
+          break;
+        case OBJ_SCALE:
+          updated = !objScale.equals(scale);
+          objScale = scale;
+          break;
+        case SYS_SCALE: return false;
       }
       return onUpdated(updated);
     }
@@ -920,8 +959,8 @@ public class JBUI {
     }
 
     protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = update(usrScale, ctx.usrScale.value);
-      return update(objScale, ctx.objScale.value) || updated;
+      boolean updated = update(ctx.usrScale);
+      return update(ctx.objScale) || updated;
     }
 
     @Override
@@ -973,17 +1012,6 @@ public class JBUI {
       for (UpdateListener l : listeners) {
         l.contextUpdated();
       }
-    }
-
-    protected boolean update(@NotNull Scale scale, double value) {
-      Scale newScale = scale.newOrThis(value);
-      if (newScale == scale) return false;
-      switch (scale.type) {
-        case USR_SCALE: usrScale = newScale; break;
-        case OBJ_SCALE: objScale = newScale; break;
-        case PIX_SCALE: pixScale = newScale; break;
-      }
-      return true;
     }
 
     @NotNull
@@ -1055,17 +1083,12 @@ public class JBUI {
     private WeakReference<Component> compRef;
 
     private ScaleContext() {
-      update(pixScale, derivePixScale());
+      pixScale = derivePixScale();
     }
 
     private ScaleContext(@NotNull Scale scale) {
-      switch (scale.type) {
-        case USR_SCALE: update(usrScale, scale.value); break;
-        case SYS_SCALE: update(sysScale, scale.value); break;
-        case OBJ_SCALE: update(objScale, scale.value); break;
-        case PIX_SCALE: break;
-      }
-      update(pixScale, derivePixScale());
+      this();
+      update(scale);
     }
 
     /**
@@ -1187,10 +1210,10 @@ public class JBUI {
      */
     @Override
     public boolean update() {
-      boolean updated = update(usrScale, scale(1f));
+      boolean updated = update(USR_SCALE.of(scale(1f)));
       if (compRef != null) {
         Component comp = compRef.get();
-        if (comp != null) updated = update(sysScale, sysScale(comp)) || updated;
+        if (comp != null) updated = update(SYS_SCALE.of(sysScale(comp))) || updated;
       }
       return onUpdated(updated);
     }
@@ -1201,7 +1224,13 @@ public class JBUI {
      */
     @Override
     public boolean update(@NotNull Scale scale) {
-      if (scale.type == SYS_SCALE) return onUpdated(update(sysScale, scale.value));
+      if (isScaleOverridden(scale)) return false;
+
+      if (scale.type == SYS_SCALE) {
+        boolean updated = !sysScale.equals(scale);
+        sysScale = scale;
+        return onUpdated(updated);
+      }
       return super.update(scale);
     }
 
@@ -1214,18 +1243,7 @@ public class JBUI {
       if (compRef != null) compRef.clear();
       compRef = context.compRef;
 
-      return update(sysScale, context.sysScale.value) || updated;
-    }
-
-    @Override
-    protected boolean update(@NotNull Scale scale, double value) {
-      if (scale.type == SYS_SCALE) {
-        Scale newScale = scale.newOrThis(value);
-        if (newScale == scale) return false;
-        sysScale = newScale;
-        return true;
-      }
-      return super.update(scale, value);
+      return update(context.sysScale) || updated;
     }
 
     @Override

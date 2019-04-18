@@ -141,7 +141,7 @@ public class OpenTaskDialog extends DialogWrapper {
     for (TaskDialogPanel panel : myPanels) {
       panel.commit();
     }
-    taskManager.activateTask(myTask, isClearContext());
+    taskManager.activateTask(myTask, isClearContext(), true);
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }

@@ -259,8 +259,8 @@ public class PluginGroups {
     featuredPlugins.put("Lua", "Custom Languages:Lua language support:Lua");
   }
 
-  public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language support:org.jetbrains.plugins.go");
+  public static void addRustPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("Rust", "Custom Languages:Rust language support:org.rust.lang");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {

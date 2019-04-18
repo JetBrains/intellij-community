@@ -25,7 +25,7 @@ public class SimpleMethodInliner implements CallInliner {
     if (!call.getArgumentList().isEmpty()) return false;
     if (!ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression())) return false;
     PsiMethod method = call.resolveMethod();
-    if (method == null || PsiUtil.canBeOverridden(method)) return false;
+    if (method == null || PsiUtil.canBeOverridden(method) || (call.isPhysical() && !method.isPhysical())) return false;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null || !PsiTreeUtil.isAncestor(aClass, call, true)) return false;
     if (PsiType.VOID.equals(method.getReturnType())) return false;
@@ -50,7 +50,7 @@ public class SimpleMethodInliner implements CallInliner {
       if (e instanceof PsiInstanceOfExpression || e instanceof PsiParenthesizedExpression || e instanceof PsiLiteralExpression ||
           e instanceof PsiPolyadicExpression || e instanceof PsiUnaryExpression || e instanceof PsiConditionalExpression ||
           e instanceof PsiTypeCastExpression || e instanceof PsiArrayAccessExpression || e instanceof PsiLambdaExpression ||
-          e instanceof PsiMethodReferenceExpression) {
+          e instanceof PsiMethodReferenceExpression || e instanceof PsiThisExpression) {
         return true;
       }
       if (e instanceof PsiReferenceExpression) {

@@ -43,6 +43,7 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ActionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.ActionUtil");
@@ -325,10 +326,18 @@ public class ActionUtil {
   }
 
   public static boolean recursiveContainsAction(@NotNull ActionGroup group, @NotNull AnAction action) {
+    return anyActionFromGroupMatches(group, true, Predicate.isEqual(action));
+  }
+
+  public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
+                                                  @NotNull Predicate<AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
-      if (action.equals(child)) return true;
-      if (child instanceof ActionGroup && recursiveContainsAction((ActionGroup)child, action)) {
-        return true;
+      if (condition.test(child)) return true;
+      if (child instanceof ActionGroup) {
+        ActionGroup childGroup = (ActionGroup)child;
+        if ((processPopupSubGroups || !childGroup.isPopup()) && anyActionFromGroupMatches(childGroup, processPopupSubGroups, condition)) {
+          return true;
+        }
       }
     }
     return false;

@@ -77,6 +77,10 @@ class ConditionalExpressionWithIdenticalBranches {
       default -> throw new InternalError((String) null); // different default body
     };
   }
+  
+  void testPrimitiveArrays(boolean b) {
+    System.out.println(b ? new int[1] : new long[1]);
+  }
 
   enum E {
     A, B, C

@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -67,7 +68,9 @@ public abstract class UndoRedoAction extends DumbAwareAction {
 
   private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    if (component instanceof JTextComponent && !UIUtil.isClientPropertyTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
+    Editor e = dataContext.getData(CommonDataKeys.EDITOR);
+    if (component instanceof JTextComponent &&
+        (e == null || component != e.getContentComponent() && !UIUtil.isClientPropertyTrue(component, IGNORE_SWING_UNDO_MANAGER))) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
     }
     JRootPane rootPane = null;
@@ -82,7 +85,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
       }
     }
     if (myActionInProgress) {
-      LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor +
+      LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor + ", editor: " + e +
                 ", rootPane: " + rootPane + ", popup: " + popup);
       return null;
     }
@@ -172,7 +175,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     @NotNull
-    private static Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
+    private Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
       String command = undo ? "undo" : "redo";
       return Pair.create(
         ActionsBundle.message("action." + command + ".text", "").trim(),

@@ -210,7 +210,6 @@ class CommunityRepositoryModules {
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
-      withModule("intellij.platform.coverage", mainJarName)
       withModule("intellij.java.coverage.rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },

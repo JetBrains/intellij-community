@@ -86,7 +86,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     MouseEventHandler dispatcher = new MouseEventHandler() {
       @Override
       protected void handle(MouseEvent event) {
-        myComponent.dispatchEvent(MouseEventAdapter.convert(event, myComponent));
+        MouseEventAdapter.redispatch(event, myComponent);
       }
 
       @Override

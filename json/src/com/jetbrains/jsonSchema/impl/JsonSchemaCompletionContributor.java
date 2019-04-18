@@ -9,6 +9,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
@@ -28,11 +30,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
@@ -64,7 +68,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
     if (!service.isApplicableToFile(file)) return;
-    final JsonSchemaObject rootSchema = service.getSchemaObject(file);
+    final JsonSchemaObject rootSchema = service.getSchemaObject(position.getContainingFile());
     if (rootSchema == null) return;
     PsiElement positionParent = position.getParent();
     if (positionParent != null) {
@@ -168,7 +172,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final JsonPointerPosition position = myWalker.findPosition(checkable, isName == ThreeState.NO);
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
-      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, false, position).resolve();
+      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, position).resolve();
       final Set<String> knownNames = ContainerUtil.newHashSet();
       // too long here, refactor further
       schemas.forEach(schema -> {
@@ -275,19 +279,47 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private void suggestSpecialValues(@Nullable JsonSchemaType type) {
       if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.getId()) && type == JsonSchemaType._string) {
         JsonPropertyAdapter propertyAdapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
-        if (propertyAdapter == null || !"required".equals(propertyAdapter.getName())) return;
-        PsiElement checkable = myWalker.findElementToCheck(myPosition);
-        if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
-        JsonObject propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable);
-        if (propertiesObject == null) return;
-        PsiElement parent = checkable.getParent();
-        Set<String> items = parent instanceof JsonArray
-                            ? ((JsonArray)parent).getValueList().stream()
-                              .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue())
-                              .collect(Collectors.toSet())
-                            : ContainerUtil.newHashSet();
-        propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n)).forEach(n -> addStringVariant(n));
+        if (propertyAdapter == null) {
+          return;
+        }
+        String name = propertyAdapter.getName();
+        if (name == null) {
+          return;
+        }
+        if (name.equals("required")) {
+          addRequiredPropVariants();
+        }
+        else if (name.equals(JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION)) {
+          addInjectedLanguageVariants();
+        }
       }
+    }
+
+    private void addInjectedLanguageVariants() {
+      PsiElement checkable = myWalker.findElementToCheck(myPosition);
+      if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
+      JBIterable.from(Language.getRegisteredLanguages())
+        .filter(LanguageUtil::isInjectableLanguage)
+        .map(Injectable::fromLanguage)
+        .forEach(it -> myVariants.add(LookupElementBuilder
+                                        .create(it.getId())
+                                        .withIcon(it.getIcon())
+                                        .withTailText("(" + it.getDisplayName() + ")", true)));
+    }
+
+    private void addRequiredPropVariants() {
+      PsiElement checkable = myWalker.findElementToCheck(myPosition);
+      if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
+      JsonObject propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable);
+      if (propertiesObject == null) return;
+      PsiElement parent = checkable.getParent();
+      Set<String> items = parent instanceof JsonArray
+                          ? ((JsonArray)parent).getValueList().stream()
+                            .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue())
+                            .collect(Collectors.toSet())
+                          : ContainerUtil.newHashSet();
+      propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n))
+        .forEach(n -> addStringVariant(n));
     }
 
     private void suggestByType(JsonSchemaObject schema, JsonSchemaType type) {

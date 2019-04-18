@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
+import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
 
@@ -362,5 +363,16 @@ class ExternalConcrete implements somepackage.GenericTrait<Pojo, String, PojoInh
   private testHighlighting(String text) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text)
     myFixture.testHighlighting(true, false, true)
+  }
+
+  void 'test trait with @Delegate'() {
+    def resolved = resolveByText '''\
+class Impl implements delegation.T {
+  void usage() {
+    <caret>hi()
+  }
+}
+'''
+    assert resolved instanceof DelegatedMethod
   }
 }

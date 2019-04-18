@@ -199,7 +199,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     Set<PluginId> dependentPlugins = new LinkedHashSet<>();
     Set<PluginId> nonOptionalDependentPlugins = new LinkedHashSet<>();
     if (pluginBean.dependencies != null) {
-      myOptionalConfigs = new THashMap<>();
+      myOptionalConfigs = new LinkedHashMap<>();
       for (PluginDependency dependency : pluginBean.dependencies) {
         String text = dependency.pluginId;
         if (!StringUtil.isEmptyOrSpaces(text)) {

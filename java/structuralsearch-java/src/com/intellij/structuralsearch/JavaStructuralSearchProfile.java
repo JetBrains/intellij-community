@@ -874,6 +874,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
       if (grandParent instanceof PsiBreakStatement) return true;
+      if (grandParent instanceof PsiForStatement) return true;
     }
     if (grandParent instanceof PsiExpressionList) {
       PsiElement label = grandParent.getParent();
@@ -894,11 +895,18 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
       }
     }
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+    if (grandParent instanceof PsiExpressionStatement) {
       final PsiElement greatGrandParent = grandParent.getParent();
-      return !(greatGrandParent instanceof PsiCodeBlock) ||
-             !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
-             PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;
+      if (greatGrandParent instanceof PsiForStatement &&
+          !PsiTreeUtil.isAncestor(((PsiForStatement)greatGrandParent).getBody(), variableNode, true)) {
+        return true;
+      }
+      if (hasSemicolon(grandParent)) {
+        if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
+        return !(greatGrandParent instanceof PsiCodeBlock) ||
+               !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
+               PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;
+      }
     }
     return false;
   }
@@ -916,11 +924,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
     if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
+    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+      final PsiElement greatGrandParent = grandParent.getParent();
+      return greatGrandParent instanceof PsiCodeBlock;
+    }
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();
       return !(greatGrandParent instanceof PsiClass) || ((PsiClass)greatGrandParent).getExtendsList() != grandParent ||
-        greatGrandParent instanceof PsiTypeParameter;
+             greatGrandParent instanceof PsiTypeParameter;
     }
     return false;
   }

@@ -120,7 +120,9 @@ public class HelpTooltip {
   private boolean neverHide;
   private Alignment alignment = Alignment.BOTTOM;
 
-  private BooleanSupplier masterPopupOpenCondition = () -> true;
+  private static final BooleanSupplier ALWAYS_OPEN = () -> true;
+  private BooleanSupplier masterPopupOpenCondition = ALWAYS_OPEN;
+
   private ComponentPopupBuilder myPopupBuilder;
   private Dimension myPopupSize;
   private JBPopup myPopup;
@@ -340,7 +342,7 @@ public class HelpTooltip {
         instance.uninstallMouseListeners(component);
 
         component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopupOpenCondition = null;
+        instance.masterPopupOpenCondition = ALWAYS_OPEN;
       }
     }
   }

@@ -7,6 +7,7 @@ import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -17,29 +18,35 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class DefaultMethodCallTypeCalculator : GrTypeCalculator<GrMethodCall> {
 
   override fun getType(expression: GrMethodCall): PsiType? {
+    val results = expression.multiResolve(false)
+    if (results.isEmpty()) {
+      return null
+    }
+    val arguments = expression.getArguments()
     var type: PsiType? = null
-    for (result in expression.multiResolve(false)) {
-      type = TypesUtil.getLeastUpperBoundNullable(type, getTypeFromResult(result, expression), expression.manager)
+    for (result in results) {
+      type = TypesUtil.getLeastUpperBoundNullable(type, getTypeFromResult(result, arguments, expression), expression.manager)
     }
     return type
   }
 }
 
-private fun getTypeFromResult(result: GroovyResolveResult, expression: GrMethodCall): PsiType? {
-  val baseType = getBaseTypeFromResult(result, expression).devoid(expression) ?: return null
+fun getTypeFromResult(result: GroovyResolveResult, arguments: Arguments?, context: GrExpression): PsiType? {
+  val baseType = getBaseTypeFromResult(result, arguments, context).devoid(context) ?: return null
   val substitutor = if (baseType !is GrLiteralClassType && hasGenerics(baseType)) result.substitutor else PsiSubstitutor.EMPTY
-  return TypesUtil.substituteAndNormalizeType(baseType, substitutor, result.spreadState, expression)
+  return TypesUtil.substituteAndNormalizeType(baseType, substitutor, result.spreadState, context)
 }
 
-private fun getBaseTypeFromResult(result: GroovyResolveResult, expression: GrMethodCall): PsiType? {
+private fun getBaseTypeFromResult(result: GroovyResolveResult, arguments: Arguments?, context: PsiElement): PsiType? {
   return when {
-    result.isInvokedOnProperty -> getTypeFromPropertyCall(result.element, expression)
-    result is GroovyMethodResult -> getTypeFromCandidate(result, expression)
+    result.isInvokedOnProperty -> getTypeFromPropertyCall(result.element, arguments, context)
+    result is GroovyMethodResult -> getTypeFromCandidate(result, context)
     else -> null
   }
 }
@@ -54,7 +61,7 @@ private fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement
 
 private val ep: ExtensionPointName<GrCallTypeCalculator> = ExtensionPointName.create("org.intellij.groovy.callTypeCalculator")
 
-private fun getTypeFromPropertyCall(element: PsiElement?, expression: GrMethodCall): PsiType? {
+private fun getTypeFromPropertyCall(element: PsiElement?, arguments: Arguments?, context: PsiElement): PsiType? {
   val type = when (element) { // TODO introduce property concept, resolve into it and get its type
     is GrField -> element.typeGroovy
     is GrMethod -> element.inferredReturnType
@@ -66,8 +73,8 @@ private fun getTypeFromPropertyCall(element: PsiElement?, expression: GrMethodCa
   if (type !is GrClosureType) {
     return null
   }
-  val argumentTypes = expression.getArguments()?.map(Argument::type)?.toTypedArray()
-  return GrClosureSignatureUtil.getReturnType(type.signatures, argumentTypes, expression)
+  val argumentTypes = arguments?.map(Argument::type)?.toTypedArray()
+  return GrClosureSignatureUtil.getReturnType(type.signatures, argumentTypes, context)
 }
 
 fun PsiType?.devoid(context: PsiElement): PsiType? {

@@ -40,7 +40,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="InspectCodeGroup">
+    <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
       <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
@@ -60,10 +60,11 @@
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
 
-    <reference ref="InspectCode">
+    <group id="InspectCodeActionInPopupMenus">
+      <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-    </reference>
+    </group>
   </actions>
 
 </idea-plugin>

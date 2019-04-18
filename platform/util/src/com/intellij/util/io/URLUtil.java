@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -246,9 +243,9 @@ public class URLUtil {
         String content = matcher.group(4);
         return ";base64".equalsIgnoreCase(matcher.group(3))
                ? Base64.decode(content)
-               : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+               : URLDecoder.decode(content, CharsetToolkit.UTF8).getBytes(CharsetToolkit.UTF8_CHARSET);
       }
-      catch (IllegalArgumentException e) {
+      catch (IllegalArgumentException | UnsupportedEncodingException e) {
         return null;
       }
     }

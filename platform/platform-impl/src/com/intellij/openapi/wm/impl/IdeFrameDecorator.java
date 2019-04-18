@@ -96,25 +96,28 @@ public abstract class IdeFrameDecorator implements Disposable {
     public ActionCallback toggleFullScreen(boolean state) {
       if (myFrame == null) return ActionCallback.REJECTED;
 
-      GraphicsDevice device = ScreenUtil.getScreenDevice(myFrame.getBounds());
+      Rectangle bounds = myFrame.getBounds();
+      if (state && myFrame.getExtendedState() == Frame.NORMAL) {
+        myFrame.getRootPane().putClientProperty("normalBounds", bounds);
+      }
+      GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       if (device == null) return ActionCallback.REJECTED;
-
+      Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
+        //if (IdeFrameDecorator.isCustomDecoration()) {
+        //  device.setFullScreenWindow(state? myFrame : null);
+        //  return ActionCallback.DONE;
+        //}
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-        if (state) {
-          myFrame.getRootPane().putClientProperty("oldBounds", myFrame.getBounds());
-        }
         myFrame.dispose();
-        if (!isCustomDecoration()) {
-          myFrame.setUndecorated(state);
-        }
+        myFrame.setUndecorated(state);
       }
       finally {
         if (state) {
-          myFrame.setBounds(device.getDefaultConfiguration().getBounds());
+          myFrame.setBounds(defaultBounds);
         }
         else {
-          Object o = myFrame.getRootPane().getClientProperty("oldBounds");
+          Object o = myFrame.getRootPane().getClientProperty("normalBounds");
           if (o instanceof Rectangle) {
             myFrame.setBounds((Rectangle)o);
           }

@@ -301,6 +301,7 @@ HEX_CHAR=[0-9a-fA-F]
 <EMBRACED> {
   "^"                 { return RegExpTT.CARET;  }
   {NAME}              { return RegExpTT.NAME;   }
+  "="                 { return RegExpTT.EQ; }
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
   {ANY}               { yypopstate(); yypushback(1); }
 }
