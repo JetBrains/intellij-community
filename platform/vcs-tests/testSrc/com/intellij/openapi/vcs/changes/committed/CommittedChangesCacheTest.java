@@ -38,7 +38,6 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   private MockDiffProvider myDiffProvider;
   private CommittedChangesCache myCache;
   private ProjectLevelVcsManagerImpl myVcsManager;
-  private File myTempDir;
   private VirtualFile myContentRoot;
   private MockListener myListener;
   private MessageBusConnection myConnection;
@@ -55,12 +54,12 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myDiffProvider = new MockDiffProvider();
     myVcs.setDiffProvider(myDiffProvider);
 
-    myTempDir = createTempDirectory();
-    myContentRoot = getVirtualFile(myTempDir);
+    File tempDir = createTempDirectory();
+    myContentRoot = getVirtualFile(tempDir);
     PsiTestUtil.addContentRoot(myModule, myContentRoot);
 
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(myTempDir.getPath(), myVcs.getName())));
+    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(myContentRoot.getPath(), myVcs.getName())));
     myVcsManager.waitForInitialized();
     assertTrue(myVcsManager.hasActiveVcss());
 
@@ -172,8 +171,8 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     final Change change = createChange("1.txt", 2);
     final CommittedChangeList list = myProvider.registerChangeList("test", change);
     myCache.refreshAllCaches();
-    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, myContentRoot,
-                                                                              myProvider.getLocationFor(VcsUtil.getFilePath(myTempDir)));
+    RepositoryLocation location = myProvider.getLocationFor(VcsUtil.getFilePath(myContentRoot));
+    final ChangesCacheFile cacheFile = myCache.getCachesHolder().getCacheFile(myVcs, myContentRoot, location);
     assertEquals(list.getCommitDate(), cacheFile.getLastCachedDate());
     assertEquals(list.getCommitDate(), cacheFile.getFirstCachedDate());
     assertEquals(list.getNumber(), cacheFile.getLastCachedChangelist());
@@ -208,7 +207,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   public void testDelete() throws Exception {
-    final Change change = MockCommittedChangesProvider.createMockDeleteChange(new File(myTempDir, "1.txt").toString(), 1);
+    final Change change = MockCommittedChangesProvider.createMockDeleteChange(new File(myContentRoot.getPath(), "1.txt").toString(), 1);
     myProvider.registerChangeList("test", change);
     myCache.refreshAllCaches();
     assertEquals(1, getIncomingChangesFromCache().size());
@@ -222,7 +221,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
 
   public void testRefreshIncomingDeleted() throws Exception {
     final Change change = createChange("1.txt", 2);
-    final Change change2 = MockCommittedChangesProvider.createMockDeleteChange(new File(myTempDir, "1.txt").toString(), 2);
+    final Change change2 = MockCommittedChangesProvider.createMockDeleteChange(new File(myContentRoot.getPath(), "1.txt").toString(), 2);
     myProvider.registerChangeList("test", change);
     myProvider.registerChangeList("test 2", change2);
     myCache.refreshAllCaches();
@@ -309,7 +308,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   private File createTestFile(final String fileName) throws IOException {
-    final File testFile = new File(myTempDir, fileName);
+    final File testFile = new File(myContentRoot.getPath(), fileName);
     testFile.createNewFile();
     ApplicationManager.getApplication().runWriteAction(() -> {
       VirtualFileManager.getInstance().syncRefresh();
@@ -336,7 +335,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
   }
 
   private Change createChange(final String path, final int revision) {
-    return MockCommittedChangesProvider.createMockChange(new File(myTempDir, path).toString(), revision);
+    return MockCommittedChangesProvider.createMockChange(new File(myContentRoot.getPath(), path).toString(), revision);
   }
 
   private static class MockListener extends CommittedChangesAdapter {
