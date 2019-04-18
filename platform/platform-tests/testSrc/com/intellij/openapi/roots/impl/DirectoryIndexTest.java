@@ -808,6 +808,11 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertIteratedContent(myFileIndex, Collections.singletonList(fileRoot), null);
   }
 
+  public void testIterateModuleLevelFileIndexMustStopBeforeTheNestingModule() {
+    ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
+    assertIteratedContent(moduleFileIndex, myModule1Dir, Arrays.asList(myModule1Dir, mySrcDir1, myResDir, myTestResDir, myLibAdditionalDir, myLibDir), Collections.singletonList(myModule2Dir));
+  }
+
   public void testFileLibraryInsideFolderLibrary() {
     VirtualFile file = createChildData(myLibSrcDir, "empty.txt");
     ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib2",
