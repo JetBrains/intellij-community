@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -941,7 +942,15 @@ public class ExpressionUtils {
             containingClass = ClassUtils.getContainingClass(containingClass);
           }
           if (containingClass != null) {
-            return factory.createExpressionFromText(containingClass.getQualifiedName() + "." + PsiKeyword.THIS, ref);
+            String thisQualifier = containingClass.getQualifiedName();
+            if (thisQualifier == null) {
+              if (PsiUtil.isLocalClass(containingClass)) {
+                thisQualifier = containingClass.getName();
+              } else {
+                throw new IncorrectOperationException("Anonymous surrounding class");
+              }
+            }
+            return factory.createExpressionFromText(thisQualifier + "." + PsiKeyword.THIS, ref);
           }
         }
       }
