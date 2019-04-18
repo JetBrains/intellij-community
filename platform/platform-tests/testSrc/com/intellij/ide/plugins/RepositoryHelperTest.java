@@ -100,7 +100,7 @@ public class RepositoryHelperTest {
       "    </idea-plugin>" +
       "  </category>\n" +
       "</plugin-repository>");
-    assertEquals(1, list.size());
+    assertEquals("Failed on '" + id + ':' + version + "'", 1, list.size());
   }
 
   @Test
