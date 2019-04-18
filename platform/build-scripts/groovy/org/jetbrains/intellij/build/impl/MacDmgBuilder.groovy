@@ -100,22 +100,19 @@ class MacDmgBuilder {
     }
   }
 
-  private def getJavaExePath(String archivePath, boolean isModular) {
-    def topLevelDir = isModular && buildContext.bundledJreManager.hasJbrRootDir(new File(archivePath)) ? 'jbr' : 'jdk'
-    return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
-  }
-
   private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreArchive = null) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
-    def jreManager = buildContext.bundledJreManager
+
     String suffix = "-no-jdk", javaExePath = null
     if (secondJreArchive != null) {
-      suffix = "-jbr${jreManager.getSecondJreVersion()}"
-      javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
+      // expected to be renamed to `jbr`
+      suffix = "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}"
+      javaExePath = "../jbr/Contents/Home/bin/java"
     }
     else if (jreArchivePath != null) {
-      suffix = jreManager.jreSuffix()
-      javaExePath = getJavaExePath(jreArchivePath, jreManager.isBundledJreModular())
+      suffix = buildContext.bundledJreManager.jreSuffix()
+      def topLevelDir = buildContext.bundledJreManager.isBundledJreModular() && buildContext.options.bundledJreRenamedToJbr ? 'jbr' : 'jdk'
+      javaExePath = "../${topLevelDir}/Contents/Home/${buildContext.bundledJreManager.isBundledJreModular() ? '' : 'jre/'}bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
