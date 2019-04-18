@@ -629,6 +629,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
+    public void addNotify() {
+      if (IdeFrameDecorator.isCustomDecoration()) {
+        JdkEx.setHasCustomDecoration(this);
+      }
+      super.addNotify();
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     public void show() {
 

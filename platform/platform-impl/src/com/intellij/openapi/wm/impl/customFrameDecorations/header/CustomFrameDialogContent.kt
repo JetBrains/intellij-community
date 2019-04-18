@@ -37,7 +37,6 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
                     get() = 0
             }
 
-            JdkEx.setHasCustomDecoration(window)
             return CustomFrameDialogContent(window, content, titleBackgroundColor)
 
         }
