@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -209,11 +208,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     );
     ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
-  }
-
-  @Override
-  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   @Override
