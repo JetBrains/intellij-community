@@ -155,6 +155,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   @Override
+  public void addNotify() {
+    if (IdeFrameDecorator.isCustomDecoration()) {
+      JdkEx.setHasCustomDecoration(this);
+    }
+    super.addNotify();
+  }
+
+  @Override
   public void dispose() {
     if (myDisposed) {
       return;
