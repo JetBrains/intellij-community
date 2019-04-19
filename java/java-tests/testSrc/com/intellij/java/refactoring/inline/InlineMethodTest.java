@@ -257,6 +257,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestAssertBadReturn();
   }
   
+  public void testSingleReturn1NotFinal() {
+    doTestAssertBadReturn();
+  }
+  
   public void testSingleReturn2() {
     doTestAssertBadReturn();
   }
@@ -472,6 +476,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testUnusedResult() {
+    doTest();
+  }
+  
+  public void testReuseResultVar() {
     doTest();
   }
 

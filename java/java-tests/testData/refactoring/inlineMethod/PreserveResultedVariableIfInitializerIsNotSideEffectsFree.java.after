@@ -19,8 +19,9 @@ class Main {
 
   public final void doSomething(Object obj) {
     try {
-        Object result;
-        result = null == null ? fooBar() : null;
+        if (null == null) {
+            fooBar();
+        }
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -65,6 +65,10 @@ public abstract class InlineTransformer {
     @Override
     public PsiLocalVariable transformBody(PsiMethod methodCopy, PsiReferenceExpression callSite, PsiType returnType) {
       if (returnType == null || PsiType.VOID.equals(returnType)) return null;
+      if (callSite.getParent() instanceof PsiMethodCallExpression && ExpressionUtils.isVoidContext((PsiExpression)callSite.getParent())) {
+        InlineTransformer.extractReturnValues(methodCopy, false);
+        return null;
+      }
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       Project project = methodCopy.getProject();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

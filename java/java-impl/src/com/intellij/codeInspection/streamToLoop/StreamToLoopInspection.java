@@ -14,7 +14,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -495,7 +494,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       if (kind != ResultKind.UNKNOWN && myStreamExpression.getParent() instanceof PsiVariable) {
         PsiVariable var = (PsiVariable)myStreamExpression.getParent();
         if (isCompatibleType(var, type, mostAbstractAllowedType) &&
-            var.getParent() instanceof PsiDeclarationStatement && (kind == ResultKind.FINAL || canUseAsNonFinal(var))) {
+            var.getParent() instanceof PsiDeclarationStatement && 
+            (kind == ResultKind.FINAL || VariableAccessUtils.canUseAsNonFinal(ObjectUtils.tryCast(var, PsiLocalVariable.class)))) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
           if(declaration.getDeclaredElements().length == 1) {
             myStreamExpression = declaration;
@@ -545,16 +545,6 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       PsiType[] superTypes = type.getSuperTypes();
       return Arrays.stream(superTypes).anyMatch(superType -> InheritanceUtil.isInheritor(superType, mostAbstractAllowedType) &&
                                                              isCompatibleType(var, superType, mostAbstractAllowedType));
-    }
-
-    @Contract("null -> false")
-    private static boolean canUseAsNonFinal(PsiVariable var) {
-      if (!(var instanceof PsiLocalVariable)) return false;
-      PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).allMatch(ref -> {
-        PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
-        return context == null || PsiTreeUtil.isAncestor(context, block, false);
-      });
     }
 
     public PsiElement makeFinalReplacement() {

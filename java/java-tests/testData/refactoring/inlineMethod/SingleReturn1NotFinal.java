@@ -8,7 +8,7 @@ class Tester {
     }
 
     void caller(String v) {
-        final String g = <caret>callee(v);
-        System.out.println(g);
+        String g = <caret>callee(v);
+        Runnable r = () -> System.out.println(g);
     }
 }

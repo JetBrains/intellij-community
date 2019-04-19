@@ -1,11 +1,10 @@
 class Tester {
 
     void caller(String v) {
-        String result = null;
+        String g = null;
         if (v != null) {
-            result = v;
+            g = v;
         }
-        String g = result;
         System.out.println(g);
     }
 }
