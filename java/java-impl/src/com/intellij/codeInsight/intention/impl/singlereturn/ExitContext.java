@@ -27,8 +27,8 @@ class ExitContext {
   private final @NotNull PsiCodeBlock myBlock;
   private final @NotNull String myReturnVariable;
   private final @NotNull PsiElementFactory myFactory;
-  boolean myReturnVariableUsed = false;
-  final PsiExpression myReturnVariableDefaultValue;
+  private boolean myReturnVariableUsed = false;
+  private final PsiExpression myReturnVariableDefaultValue;
 
   ExitContext(@NotNull PsiCodeBlock block, @NotNull PsiType returnType, @NotNull FinishMarker marker) {
     myBlock = block;
