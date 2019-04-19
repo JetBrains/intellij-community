@@ -13,9 +13,9 @@ public class AbsoluteEditorPosition {
     this.verticalScrollOffset = verticalScrollOffset;
   }
 
-  void set(long firstInDocumentPageNumber, int localScrollBarValue) {
-    this.pageNumber = firstInDocumentPageNumber;
-    this.verticalScrollOffset = localScrollBarValue;
+  void set(long newPageNumber, int newVerticalScrollBarOffset) {
+    this.pageNumber = newPageNumber;
+    this.verticalScrollOffset = newVerticalScrollBarOffset;
   }
 
   void copyFrom(@NotNull AbsoluteEditorPosition from) {
