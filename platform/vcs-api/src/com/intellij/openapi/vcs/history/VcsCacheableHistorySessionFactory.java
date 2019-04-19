@@ -27,21 +27,21 @@ import java.util.List;
  */
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
 
-  T createFromCachedData(@Nullable final Cacheable cacheable,
-                         @NotNull final List<VcsFileRevision> revisions,
-                         @NotNull final FilePath filePath,
-                         @Nullable final VcsRevisionNumber currentRevision);
+  T createFromCachedData(@Nullable Cacheable cacheable,
+                         @NotNull List<VcsFileRevision> revisions,
+                         @NotNull FilePath filePath,
+                         @Nullable VcsRevisionNumber currentRevision);
 
   /**
    * define if path should be changed for session construction (file can be moved)
    */
   @Nullable
-  default FilePath getUsedFilePath(final T session) {
+  default FilePath getUsedFilePath(T session) {
     return null;
   }
 
   @Nullable
-  default Cacheable getAdditionallyCachedData(final T session) {
+  default Cacheable getAdditionallyCachedData(T session) {
     return getAddinionallyCachedData(session);
   }
 
@@ -50,7 +50,7 @@ public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializabl
    */
   @Deprecated
   @Nullable
-  default Cacheable getAddinionallyCachedData(final T session) {
+  default Cacheable getAddinionallyCachedData(T session) {
     return null;
   }
 }
