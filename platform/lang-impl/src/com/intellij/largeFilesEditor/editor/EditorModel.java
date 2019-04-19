@@ -391,11 +391,9 @@ class EditorModel {
 
   private void tryReflectTargetCaretPositionToReal() {
     int targetCaretOffsetInDocument = tryGetTargetCaretOffsetInDocumentWithMargin();
-
     if (targetCaretOffsetInDocument != -1) {
-      isRealCaretCanAffectOnTarget = false;
-      editor.getCaretModel().moveToOffset(targetCaretOffsetInDocument);
-      isRealCaretCanAffectOnTarget = true;
+      runCaretListeningTransparentCommand(
+        () -> editor.getCaretModel().moveToOffset(targetCaretOffsetInDocument));
     }
   }
 
@@ -550,7 +548,7 @@ class EditorModel {
 
     if (targetVisiblePosition.verticalScrollOffset < 0) {
       if (targetVisiblePosition.pageNumber == 0) {
-        targetVisiblePosition.set(0,0);
+        targetVisiblePosition.set(0, 0);
         return true;
       }
 
@@ -716,27 +714,34 @@ class EditorModel {
 
   private void setFirstPageIntoEmptyDocument(Page page) {
     pagesInDocument.add(page);
-    isRealCaretCanAffectOnTarget = false;
-    WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
-                                             () -> document.setText(page.getText()));
-    isRealCaretCanAffectOnTarget = true;
+    runCaretListeningTransparentCommand(
+      () -> WriteCommandAction.runWriteCommandAction(dataProvider.getProject(),
+                                                     () -> document.setText(page.getText())));
   }
 
   private void setNextPageIntoDocument(Page page) {
     pagesInDocument.add(page);
-    isRealCaretCanAffectOnTarget = false;
-    WriteCommandAction.runWriteCommandAction(
-      dataProvider.getProject(),
-      document.getTextLength() == 0 ? () -> document.setText(page.getText())
-                                    : () -> document.insertString(document.getTextLength(), page.getText()));
-    isRealCaretCanAffectOnTarget = true;
+    runCaretListeningTransparentCommand(
+      () -> WriteCommandAction.runWriteCommandAction(
+        dataProvider.getProject(),
+        document.getTextLength() == 0 ? () -> document.setText(page.getText())
+                                      : () -> document.insertString(document.getTextLength(), page.getText()))
+    );
   }
 
   private void deleteAllPagesFromDocument() {
     pagesCash.addAll(pagesInDocument);
     pagesInDocument.clear();
+    runCaretListeningTransparentCommand(
+      () -> WriteCommandAction.runWriteCommandAction(
+        dataProvider.getProject(),
+        () -> document.deleteString(0, document.getTextLength()))
+    );
+  }
+
+  private void runCaretListeningTransparentCommand(Runnable command) {
     isRealCaretCanAffectOnTarget = false;
-    WriteCommandAction.runWriteCommandAction(dataProvider.getProject(), () -> document.deleteString(0, document.getTextLength()));
+    command.run();
     isRealCaretCanAffectOnTarget = true;
   }
 
