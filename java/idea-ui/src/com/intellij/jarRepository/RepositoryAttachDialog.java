@@ -398,6 +398,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
   }
 
+  @Nullable
   public String getPackaging() {
     List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
     return parts.size() == 4 ? parts.get(2) : null;
