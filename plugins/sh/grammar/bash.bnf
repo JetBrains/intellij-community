@@ -198,7 +198,8 @@ shell_command ::=   for_command
                   | if_command
                   | subshell_command
                   | block
-                  | function_definition
+//                  | function_definition
+                  | &(function | word '(') function_definition
 
 private any_block ::= block | do_block
 do_block ::= do  block_compound_list done {pin(".*")=1 extends=block}

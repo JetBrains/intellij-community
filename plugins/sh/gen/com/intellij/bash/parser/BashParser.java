@@ -2416,7 +2416,8 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                   | if_command
   //                   | subshell_command
   //                   | block
-  //                   | function_definition
+  // //                  | function_definition
+  //                   | &(function | word '(') function_definition
   public static boolean shell_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_command")) return false;
     boolean r;
@@ -2429,8 +2430,40 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = if_command(b, l + 1);
     if (!r) r = subshell_command(b, l + 1);
     if (!r) r = block(b, l + 1);
-    if (!r) r = function_definition(b, l + 1);
+    if (!r) r = shell_command_8(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // &(function | word '(') function_definition
+  private static boolean shell_command_8(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_command_8")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = shell_command_8_0(b, l + 1);
+    r = r && function_definition(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &(function | word '(')
+  private static boolean shell_command_8_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_command_8_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = shell_command_8_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // function | word '('
+  private static boolean shell_command_8_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shell_command_8_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, FUNCTION);
+    if (!r) r = parseTokens(b, 0, WORD, LEFT_PAREN);
+    exit_section_(b, m, null, r);
     return r;
   }
 
