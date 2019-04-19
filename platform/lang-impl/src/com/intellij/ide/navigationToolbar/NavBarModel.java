@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -118,7 +117,7 @@ public class NavBarModel {
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
     Module root = LangDataKeys.MODULE.getData(dataContext);
-    if (root != null && !(ModuleType.get(root) instanceof InternalModuleType)) return root;
+    if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;

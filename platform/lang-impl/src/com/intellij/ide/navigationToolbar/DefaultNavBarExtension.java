@@ -18,7 +18,6 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -106,7 +105,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   private static boolean processChildren(final Project object, final Processor<Object> processor) {
     return ReadAction.compute(() -> {
       for (Module module : ModuleManager.getInstance(object).getModules()) {
-        if (!(ModuleType.get(module) instanceof InternalModuleType) && !processor.process(module)) return false;
+        if (!ModuleType.isInternal(module) && !processor.process(module)) return false;
       }
       return true;
     });
