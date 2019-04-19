@@ -470,14 +470,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
-    if (Registry.is("ide.tree.ui.experimental")) {
-      uiDefaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
-      uiDefaults.put("Tree.repaintWholeRow", true);
-    }
 
     patchFileChooserStrings(uiDefaults);
 
     patchLafFonts(uiDefaults);
+
+    patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
 
@@ -534,6 +532,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
+  }
+
+  private static void patchTreeUI(UIDefaults defaults) {
+    if (Registry.is("ide.tree.ui.experimental")) {
+      defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
+      defaults.put("Tree.repaintWholeRow", true);
+    }
+    Icon collapsedIcon = defaults.getIcon("Tree.collapsedIcon");
+    if (collapsedIcon == null || collapsedIcon instanceof UIResource) {
+      defaults.put("Tree.collapsedIcon", LafIconLookup.getIcon("treeCollapsed"));
+      defaults.put("Tree.collapsedSelectedIcon", LafIconLookup.getSelectedIcon("treeCollapsed"));
+    }
+    Icon expandedIcon = defaults.getIcon("Tree.expandedIcon");
+    if (expandedIcon == null || collapsedIcon instanceof UIResource) {
+      defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
+      defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
+    }
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
