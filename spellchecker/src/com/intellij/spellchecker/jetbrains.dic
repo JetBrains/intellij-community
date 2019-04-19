@@ -265,7 +265,9 @@ goto
 gradle
 grapheme
 graphemes
+grayscale
 greenplum
+greyscale
 gruntfile
 gruntfiles
 guid
@@ -796,6 +798,7 @@ subpackages
 subpage
 subpartition
 subpartitions
+subpixel
 subscripting
 subsequence
 subsequences
